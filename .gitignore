@@ -66,6 +66,6 @@ uv.lock
 react_tui_smoke.txt
 *.log
 
-# Temporary / scratch files
-_*.py
-_*.txt
+# Temporary / scratch files (root only, so __init__.py is not ignored)
+/_*.py
+/_*.txt

@@ -1,0 +1,1 @@
+"""Impact Vision Streamlit Dashboard."""
