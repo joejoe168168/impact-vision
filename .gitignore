@@ -67,5 +67,5 @@ react_tui_smoke.txt
 *.log
 
 # Temporary / scratch files
-_*.py
-_*.txt
+/_*.py
+/_*.txt
