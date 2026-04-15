@@ -1,0 +1,854 @@
+# Impact Due Diligence Checklist
+# Sources: GIIN Impact Toolkit, Pacific Community Ventures, Seraf Impact DD Checklist,
+#          IMP Five Dimensions, IRIS+ for Impact Due Diligence
+# Organized by phase and category. Each question has:
+#   - id: unique identifier
+#   - question: the DD question text
+#   - category: thematic category
+#   - phase: when in the DD process this applies
+#   - dimension: which of the 5 Dimensions of Impact it relates to (if any)
+#   - priority: high/medium/low -- how critical for early-stage DD
+#   - keywords: terms to match against pitch deck text to detect if already addressed
+#   - follow_up: optional deeper question if the primary is addressed
+
+meta:
+  version: "1.1"
+  sources:
+    - "GIIN Impact Toolkit - The Impact Due Diligence Guide"
+    - "Pacific Community Ventures - Impact DD Emerging Best Practices"
+    - "Seraf Toolbox - Impact Investing Due Diligence Checklist"
+    - "IMP Five Dimensions of Impact"
+    - "IRIS+ for Impact Due Diligence (GIIN/PCV, 2020)"
+    - "Sector-specific questions from CGAP, WHO, FAO, IRENA best practices"
+
+categories:
+  - impact_thesis
+  - theory_of_change
+  - what_outcomes
+  - who_stakeholders
+  - how_much_scale
+  - contribution
+  - risk
+  - measurement_systems
+  - governance_esg
+  - sdg_alignment
+  - negative_impact
+  - exit_sustainability
+  - sector_fintech
+  - sector_health
+  - sector_agriculture
+  - sector_energy
+  - sector_education
+  - financial_sustainability
+  - team_capability
+  - market_context
+  - product_design
+  - supply_chain
+  - stakeholder_voice
+  - investor_alignment
+
+questions:
+  # ===== IMPACT THESIS & STRATEGY =====
+  - id: IT01
+    question: "What is the company's core impact thesis? How does it articulate the social or environmental problem it aims to solve?"
+    category: impact_thesis
+    phase: screening
+    dimension: what
+    priority: high
+    keywords: ["impact thesis", "mission", "social problem", "environmental problem", "purpose", "vision"]
+
+  - id: IT02
+    question: "Does the company have a clearly defined theory of change that links its activities to intended outcomes?"
+    category: theory_of_change
+    phase: screening
+    dimension: what
+    priority: high
+    keywords: ["theory of change", "logic model", "causal chain", "pathway", "if-then"]
+    follow_up: "Can they provide a visual or written theory of change document?"
+
+  - id: IT03
+    question: "How does the impact thesis align with the fund's investment mandate and impact goals?"
+    category: impact_thesis
+    phase: screening
+    dimension: what
+    priority: high
+    keywords: ["fund mandate", "investment thesis", "alignment", "strategic fit"]
+
+  - id: IT04
+    question: "Is the impact embedded in the core business model, or is it peripheral/CSR-adjacent?"
+    category: impact_thesis
+    phase: screening
+    dimension: contribution
+    priority: high
+    keywords: ["business model", "core product", "revenue model", "embedded", "CSR"]
+    follow_up: "What percentage of revenue comes from impact-generating products/services?"
+
+  - id: IT05
+    question: "What specific UN SDGs does the company claim to contribute to, and at the goal or target level?"
+    category: sdg_alignment
+    phase: screening
+    dimension: what
+    priority: high
+    keywords: ["SDG", "sustainable development", "goal", "target", "UN"]
+
+  # ===== WHAT (Outcomes) =====
+  - id: WH01
+    question: "What specific outcomes (not just outputs) does the company generate for its stakeholders?"
+    category: what_outcomes
+    phase: deep_diligence
+    dimension: what
+    priority: high
+    keywords: ["outcome", "result", "change", "improvement", "reduction", "increase"]
+    follow_up: "Can they distinguish between outputs (units delivered) and outcomes (changes in lives)?"
+
+  - id: WH02
+    question: "Are the intended outcomes positive, and have potential negative outcomes been identified?"
+    category: what_outcomes
+    phase: deep_diligence
+    dimension: what
+    priority: high
+    keywords: ["positive impact", "negative impact", "unintended", "harm", "side effect", "trade-off"]
+
+  - id: WH03
+    question: "How important are these outcomes to the stakeholders experiencing them?"
+    category: what_outcomes
+    phase: deep_diligence
+    dimension: what
+    priority: medium
+    keywords: ["stakeholder needs", "demand", "importance", "materiality", "relevance"]
+
+  - id: WH04
+    question: "Does the company track outcome-level data, or only activity/output metrics?"
+    category: what_outcomes
+    phase: deep_diligence
+    dimension: what
+    priority: high
+    keywords: ["outcome data", "outcome metrics", "track", "measure", "KPI", "indicator"]
+
+  # ===== WHO (Stakeholders) =====
+  - id: WO01
+    question: "Who are the primary target stakeholders/beneficiaries, and what are their demographics?"
+    category: who_stakeholders
+    phase: deep_diligence
+    dimension: who
+    priority: high
+    keywords: ["beneficiar", "target population", "demographic", "customer", "client", "user", "stakeholder"]
+    follow_up: "What is the geographic distribution of stakeholders?"
+
+  - id: WO02
+    question: "Are the target stakeholders underserved, marginalized, or vulnerable? How is this defined?"
+    category: who_stakeholders
+    phase: deep_diligence
+    dimension: who
+    priority: high
+    keywords: ["underserved", "marginalized", "vulnerable", "low-income", "bottom of pyramid", "BoP", "poverty", "excluded"]
+
+  - id: WO03
+    question: "What is the current state of the target stakeholders before the company's intervention (baseline)?"
+    category: who_stakeholders
+    phase: deep_diligence
+    dimension: who
+    priority: medium
+    keywords: ["baseline", "current state", "before", "pre-intervention", "status quo"]
+
+  - id: WO04
+    question: "How does the company engage with or gather feedback from its stakeholders?"
+    category: who_stakeholders
+    phase: deep_diligence
+    dimension: who
+    priority: medium
+    keywords: ["feedback", "engagement", "voice", "survey", "interview", "participat"]
+
+  - id: WO05
+    question: "Are there stakeholders who may be negatively affected by the company's activities?"
+    category: who_stakeholders
+    phase: deep_diligence
+    dimension: who
+    priority: medium
+    keywords: ["negative", "harm", "displaced", "affected", "adversely"]
+
+  # ===== HOW MUCH (Scale, Depth, Duration) =====
+  - id: HM01
+    question: "How many stakeholders/beneficiaries does the company currently reach (scale)?"
+    category: how_much_scale
+    phase: deep_diligence
+    dimension: how_much
+    priority: high
+    keywords: ["number of", "total", "reach", "served", "beneficiar", "clients", "users", "scale"]
+
+  - id: HM02
+    question: "What is the degree of change experienced by stakeholders (depth of impact)?"
+    category: how_much_scale
+    phase: deep_diligence
+    dimension: how_much
+    priority: high
+    keywords: ["degree of change", "depth", "significant", "meaningful", "transformative", "quality"]
+
+  - id: HM03
+    question: "How long do the outcomes last for stakeholders (duration)?"
+    category: how_much_scale
+    phase: deep_diligence
+    dimension: how_much
+    priority: medium
+    keywords: ["duration", "lasting", "sustainable", "permanent", "temporary", "long-term"]
+
+  - id: HM04
+    question: "What are the company's growth projections for impact scale over the next 3-5 years?"
+    category: how_much_scale
+    phase: deep_diligence
+    dimension: how_much
+    priority: medium
+    keywords: ["growth", "projection", "forecast", "target", "plan", "scale up", "expand"]
+
+  - id: HM05
+    question: "Are there quantitative metrics being tracked for scale, depth, and duration?"
+    category: how_much_scale
+    phase: deep_diligence
+    dimension: how_much
+    priority: high
+    keywords: ["metric", "KPI", "indicator", "quantitative", "data", "track", "measure"]
+
+  # ===== CONTRIBUTION =====
+  - id: CO01
+    question: "Would the outcomes have occurred anyway without this company's intervention (additionality)?"
+    category: contribution
+    phase: deep_diligence
+    dimension: contribution
+    priority: high
+    keywords: ["additionality", "counterfactual", "would have happened", "without", "alternative", "unique"]
+
+  - id: CO02
+    question: "How does the company's approach compare to existing alternatives or competitors in delivering impact?"
+    category: contribution
+    phase: deep_diligence
+    dimension: contribution
+    priority: medium
+    keywords: ["alternative", "competitor", "comparison", "benchmark", "unique approach", "differentiat"]
+
+  - id: CO03
+    question: "Does the company have any evidence of its contribution (e.g., comparison groups, before/after data)?"
+    category: contribution
+    phase: deep_diligence
+    dimension: contribution
+    priority: medium
+    keywords: ["evidence", "proof", "study", "evaluation", "comparison group", "control", "before and after"]
+
+  - id: CO04
+    question: "Is the investor's capital itself additional — would the company have raised from non-impact sources?"
+    category: contribution
+    phase: deep_diligence
+    dimension: contribution
+    priority: medium
+    keywords: ["capital additionality", "investor contribution", "catalytic", "concessionary"]
+
+  # ===== RISK =====
+  - id: RI01
+    question: "What is the evidence risk — how strong is the evidence that the claimed impact actually occurs?"
+    category: risk
+    phase: deep_diligence
+    dimension: risk
+    priority: high
+    keywords: ["evidence", "proof", "data quality", "verified", "validated", "third-party"]
+
+  - id: RI02
+    question: "What is the execution risk — can the management team deliver the impact as planned?"
+    category: risk
+    phase: deep_diligence
+    dimension: risk
+    priority: high
+    keywords: ["execution", "team", "capability", "experience", "track record", "management"]
+
+  - id: RI03
+    question: "What external risks could prevent impact from materializing (regulatory, market, political, climate)?"
+    category: risk
+    phase: deep_diligence
+    dimension: risk
+    priority: high
+    keywords: ["external risk", "regulatory", "market risk", "political", "climate risk", "macro"]
+
+  - id: RI04
+    question: "Does the company have impact risk mitigation strategies in place?"
+    category: risk
+    phase: deep_diligence
+    dimension: risk
+    priority: medium
+    keywords: ["mitigation", "contingency", "risk management", "safeguard", "backup plan"]
+
+  - id: RI05
+    question: "Is there a risk of impact washing — are claims disproportionate to evidence?"
+    category: risk
+    phase: deep_diligence
+    dimension: risk
+    priority: high
+    keywords: ["impact washing", "greenwashing", "exaggerat", "overstat", "unsupported claim"]
+
+  # ===== MEASUREMENT & MANAGEMENT SYSTEMS =====
+  - id: MM01
+    question: "Does the company have an impact measurement and management (IMM) system in place?"
+    category: measurement_systems
+    phase: deep_diligence
+    dimension: null
+    priority: high
+    keywords: ["impact measurement", "IMM", "monitoring", "evaluation", "M&E", "data system"]
+
+  - id: MM02
+    question: "What metrics or indicators does the company currently track? Are they aligned with IRIS+ or other standards?"
+    category: measurement_systems
+    phase: deep_diligence
+    dimension: null
+    priority: high
+    keywords: ["IRIS", "metric", "indicator", "standard", "framework", "GRI", "SASB"]
+
+  - id: MM03
+    question: "How frequently does the company collect and report impact data?"
+    category: measurement_systems
+    phase: deep_diligence
+    dimension: null
+    priority: medium
+    keywords: ["frequency", "reporting", "quarterly", "annual", "regular", "data collection"]
+
+  - id: MM04
+    question: "Does the company have dedicated staff or resources for impact measurement?"
+    category: measurement_systems
+    phase: deep_diligence
+    dimension: null
+    priority: medium
+    keywords: ["impact team", "dedicated staff", "impact officer", "resource", "capacity"]
+
+  - id: MM05
+    question: "Has the company engaged third-party evaluators or auditors for impact verification?"
+    category: measurement_systems
+    phase: deep_diligence
+    dimension: null
+    priority: medium
+    keywords: ["third-party", "audit", "evaluation", "external", "independent", "verification"]
+
+  - id: MM06
+    question: "How does the company use impact data to improve its products, services, or operations?"
+    category: measurement_systems
+    phase: deep_diligence
+    dimension: null
+    priority: medium
+    keywords: ["improve", "iterate", "feedback loop", "adapt", "learn", "data-driven"]
+
+  # ===== GOVERNANCE & ESG =====
+  - id: GE01
+    question: "Does the board or leadership include impact expertise or oversight?"
+    category: governance_esg
+    phase: deep_diligence
+    dimension: null
+    priority: medium
+    keywords: ["board", "governance", "oversight", "impact committee", "leadership"]
+
+  - id: GE02
+    question: "What are the company's environmental policies and practices (energy, waste, emissions)?"
+    category: governance_esg
+    phase: deep_diligence
+    dimension: null
+    priority: medium
+    keywords: ["environmental", "energy", "waste", "emission", "carbon", "footprint", "sustainability"]
+
+  - id: GE03
+    question: "What are the company's labor practices, employee welfare, and diversity policies?"
+    category: governance_esg
+    phase: deep_diligence
+    dimension: null
+    priority: medium
+    keywords: ["labor", "employee", "welfare", "diversity", "inclusion", "equity", "DEI", "gender"]
+
+  - id: GE04
+    question: "Does the company have anti-corruption, ethical conduct, and data privacy policies?"
+    category: governance_esg
+    phase: deep_diligence
+    dimension: null
+    priority: medium
+    keywords: ["corruption", "ethics", "compliance", "privacy", "data protection", "GDPR"]
+
+  - id: GE05
+    question: "Are financial incentives (management compensation, bonus structures) linked to impact performance?"
+    category: governance_esg
+    phase: deep_diligence
+    dimension: null
+    priority: medium
+    keywords: ["incentive", "compensation", "bonus", "tied to impact", "performance"]
+
+  # ===== NEGATIVE IMPACT & DO NO HARM =====
+  - id: NI01
+    question: "Has the company assessed potential negative impacts on people, communities, or the environment?"
+    category: negative_impact
+    phase: deep_diligence
+    dimension: risk
+    priority: high
+    keywords: ["negative impact", "harm", "do no harm", "assessment", "unintended consequence"]
+
+  - id: NI02
+    question: "Are there populations or ecosystems that could be harmed by the company's activities?"
+    category: negative_impact
+    phase: deep_diligence
+    dimension: risk
+    priority: medium
+    keywords: ["harmed", "displaced", "ecosystem", "community impact", "environmental damage"]
+
+  - id: NI03
+    question: "Does the company have a grievance mechanism or way for affected stakeholders to raise concerns?"
+    category: negative_impact
+    phase: deep_diligence
+    dimension: risk
+    priority: medium
+    keywords: ["grievance", "complaint", "feedback", "mechanism", "recourse", "whistleblow"]
+
+  # ===== EXIT & SUSTAINABILITY =====
+  - id: EX01
+    question: "Will the impact be sustained if the investor exits? What is the impact exit strategy?"
+    category: exit_sustainability
+    phase: deep_diligence
+    dimension: contribution
+    priority: medium
+    keywords: ["exit", "sustain", "continuity", "after investment", "long-term"]
+
+  - id: EX02
+    question: "Could a future acquirer or investor change the mission or reduce impact?"
+    category: exit_sustainability
+    phase: deep_diligence
+    dimension: risk
+    priority: medium
+    keywords: ["acquisition", "mission drift", "dilution", "acquirer", "takeover"]
+
+  - id: EX03
+    question: "Are there legal structures (e.g., B Corp, mission lock) protecting the impact mission?"
+    category: exit_sustainability
+    phase: deep_diligence
+    dimension: null
+    priority: medium
+    keywords: ["B Corp", "mission lock", "legal structure", "social enterprise", "charter"]
+
+  # ===== FINANCIAL SUSTAINABILITY =====
+  - id: FS01
+    question: "What is the company's revenue model and path to financial sustainability?"
+    category: financial_sustainability
+    phase: deep_diligence
+    dimension: null
+    priority: high
+    keywords: ["revenue model", "business model", "profitability", "unit economics", "margin", "monetiz"]
+    follow_up: "What are the unit economics and when does the company expect to break even?"
+
+  - id: FS02
+    question: "Is there tension between impact maximization and financial returns? How is it managed?"
+    category: financial_sustainability
+    phase: deep_diligence
+    dimension: null
+    priority: high
+    keywords: ["trade-off", "tension", "financial return", "impact return", "concessionary", "blended"]
+
+  - id: FS03
+    question: "What are the economic assumptions underlying the financial projections?"
+    category: financial_sustainability
+    phase: deep_diligence
+    dimension: null
+    priority: medium
+    keywords: ["assumption", "projection", "forecast", "scenario", "sensitivity"]
+
+  - id: FS04
+    question: "Does the company depend on grants, subsidies, or concessionary capital? What happens if they end?"
+    category: financial_sustainability
+    phase: deep_diligence
+    dimension: null
+    priority: medium
+    keywords: ["grant", "subsidy", "donor", "concessionary", "philanthrop", "government fund"]
+
+  - id: FS05
+    question: "What is the customer acquisition cost and lifetime value? Is the pricing accessible to the target population?"
+    category: financial_sustainability
+    phase: deep_diligence
+    dimension: null
+    priority: medium
+    keywords: ["acquisition cost", "CAC", "lifetime value", "LTV", "pricing", "affordable", "accessible"]
+
+  # ===== TEAM & CAPABILITY =====
+  - id: TC01
+    question: "Does the founding/leadership team have relevant experience in the impact sector?"
+    category: team_capability
+    phase: deep_diligence
+    dimension: null
+    priority: high
+    keywords: ["founder", "team", "experience", "leadership", "background", "track record", "CEO"]
+    follow_up: "What is their specific domain expertise related to the impact thesis?"
+
+  - id: TC02
+    question: "Does the team include members from or with deep ties to the target community?"
+    category: team_capability
+    phase: deep_diligence
+    dimension: who
+    priority: medium
+    keywords: ["community", "local", "lived experience", "representation", "from the community", "diverse"]
+
+  - id: TC03
+    question: "Is there a key person risk? What happens if the founder/CEO departs?"
+    category: team_capability
+    phase: deep_diligence
+    dimension: risk
+    priority: medium
+    keywords: ["key person", "founder risk", "succession", "key man", "departure"]
+
+  - id: TC04
+    question: "Does the team have capacity to measure and manage impact alongside business operations?"
+    category: team_capability
+    phase: deep_diligence
+    dimension: null
+    priority: medium
+    keywords: ["capacity", "impact team", "dedicated", "resource", "bandwidth"]
+
+  # ===== MARKET & CONTEXT =====
+  - id: MC01
+    question: "What is the size and characteristics of the target market? Is it growing?"
+    category: market_context
+    phase: screening
+    dimension: how_much
+    priority: high
+    keywords: ["market size", "TAM", "SAM", "addressable", "market growth", "demand"]
+
+  - id: MC02
+    question: "What is the regulatory environment? Are there supportive or restrictive policies?"
+    category: market_context
+    phase: deep_diligence
+    dimension: risk
+    priority: medium
+    keywords: ["regulatory", "regulation", "policy", "government", "compliance", "legal", "license"]
+
+  - id: MC03
+    question: "Are there systemic barriers (infrastructure, literacy, connectivity) that could limit impact?"
+    category: market_context
+    phase: deep_diligence
+    dimension: risk
+    priority: medium
+    keywords: ["barrier", "infrastructure", "literacy", "connectivity", "access", "systemic"]
+
+  - id: MC04
+    question: "What is the competitive landscape? Who else serves this population and how?"
+    category: market_context
+    phase: deep_diligence
+    dimension: contribution
+    priority: medium
+    keywords: ["competitor", "competitive", "landscape", "alternative", "market share", "peer"]
+
+  # ===== PRODUCT / SERVICE DESIGN =====
+  - id: PD01
+    question: "Is the product/service designed with the target stakeholders' needs and constraints in mind?"
+    category: product_design
+    phase: deep_diligence
+    dimension: what
+    priority: high
+    keywords: ["design", "user-centered", "human-centered", "co-design", "accessible", "appropriate"]
+    follow_up: "Has the company done user research or pilot testing with the target population?"
+
+  - id: PD02
+    question: "Are there product safety, data privacy, or customer protection concerns?"
+    category: product_design
+    phase: deep_diligence
+    dimension: risk
+    priority: high
+    keywords: ["safety", "privacy", "protection", "data", "security", "consent", "harm"]
+
+  - id: PD03
+    question: "Does the company have a responsible pricing strategy that ensures affordability for target users?"
+    category: product_design
+    phase: deep_diligence
+    dimension: who
+    priority: medium
+    keywords: ["pricing", "affordable", "cost", "free", "subsidiz", "sliding scale", "tiered"]
+
+  - id: PD04
+    question: "Is the product/service culturally appropriate for the target population?"
+    category: product_design
+    phase: deep_diligence
+    dimension: who
+    priority: medium
+    keywords: ["cultural", "language", "local", "appropriate", "context", "adapt"]
+
+  # ===== SUPPLY CHAIN & OPERATIONS =====
+  - id: SC01
+    question: "Does the company have visibility into its supply chain ESG practices?"
+    category: supply_chain
+    phase: deep_diligence
+    dimension: null
+    priority: medium
+    keywords: ["supply chain", "supplier", "sourcing", "procurement", "vendor"]
+
+  - id: SC02
+    question: "Are there risks of forced labor, child labor, or exploitative practices in the supply chain?"
+    category: supply_chain
+    phase: deep_diligence
+    dimension: risk
+    priority: high
+    keywords: ["forced labor", "child labor", "exploitation", "modern slavery", "human rights"]
+
+  - id: SC03
+    question: "What is the company's environmental footprint from operations (energy, water, waste, emissions)?"
+    category: supply_chain
+    phase: deep_diligence
+    dimension: null
+    priority: medium
+    keywords: ["footprint", "energy use", "water use", "waste", "emissions", "operational"]
+
+  # ===== STAKEHOLDER VOICE & ENGAGEMENT =====
+  - id: SV01
+    question: "Does the company have a formal mechanism for stakeholders/beneficiaries to provide feedback?"
+    category: stakeholder_voice
+    phase: deep_diligence
+    dimension: who
+    priority: high
+    keywords: ["feedback", "voice", "survey", "complaint", "grievance", "input", "participat"]
+
+  - id: SV02
+    question: "Have stakeholders been consulted in the design of the product/service or impact strategy?"
+    category: stakeholder_voice
+    phase: deep_diligence
+    dimension: who
+    priority: medium
+    keywords: ["consult", "co-create", "participatory", "input", "stakeholder engagement"]
+
+  - id: SV03
+    question: "Does the company publish impact results to stakeholders and the public?"
+    category: stakeholder_voice
+    phase: deep_diligence
+    dimension: null
+    priority: medium
+    keywords: ["publish", "transparent", "report", "disclose", "public", "annual report"]
+
+  # ===== INVESTOR ALIGNMENT =====
+  - id: IA01
+    question: "Does the company accept impact-linked covenants, reporting requirements, or side letters?"
+    category: investor_alignment
+    phase: deep_diligence
+    dimension: null
+    priority: medium
+    keywords: ["covenant", "side letter", "reporting requirement", "impact clause", "obligation"]
+
+  - id: IA02
+    question: "What non-financial support (beyond capital) can the investor provide to enhance impact?"
+    category: investor_alignment
+    phase: deep_diligence
+    dimension: contribution
+    priority: medium
+    keywords: ["value-add", "technical assistance", "mentoring", "network", "beyond capital", "support"]
+
+  - id: IA03
+    question: "How does this investment fit within the fund's portfolio-level impact strategy?"
+    category: investor_alignment
+    phase: screening
+    dimension: null
+    priority: medium
+    keywords: ["portfolio", "strategy", "thesis", "mandate", "allocation", "fit"]
+
+  # ---- SECTOR-SPECIFIC: FINTECH / FINANCIAL INCLUSION ----
+
+  - id: SF01
+    question: "Does the company have an over-indebtedness prevention policy for its borrowers?"
+    category: sector_fintech
+    phase: deep_diligence
+    dimension: risk
+    priority: high
+    keywords: ["over-indebtedness", "debt trap", "responsible lending", "credit assessment", "affordability"]
+    follow_up: "What credit scoring or affordability checks are in place?"
+
+  - id: SF02
+    question: "What client protection principles (Smart Campaign / CGAP) does the company follow?"
+    category: sector_fintech
+    phase: deep_diligence
+    dimension: what
+    priority: high
+    keywords: ["client protection", "smart campaign", "CGAP", "transparent pricing", "fair treatment", "privacy"]
+
+  - id: SF03
+    question: "How does the company measure financial health improvement of its clients beyond access?"
+    category: sector_fintech
+    phase: deep_diligence
+    dimension: how_much_depth
+    priority: medium
+    keywords: ["financial health", "financial literacy", "savings", "income growth", "resilience", "client outcome"]
+
+  - id: SF04
+    question: "What is the effective annual interest rate and how does it compare to local alternatives?"
+    category: sector_fintech
+    phase: screening
+    dimension: what
+    priority: high
+    keywords: ["interest rate", "APR", "pricing", "cost to client", "affordable", "competitive"]
+
+  - id: SF05
+    question: "How does the company handle collections and loan defaults to avoid harm?"
+    category: sector_fintech
+    phase: deep_diligence
+    dimension: risk
+    priority: medium
+    keywords: ["collection", "default", "recovery", "restructuring", "grace period", "hardship"]
+
+  # ---- SECTOR-SPECIFIC: HEALTHCARE ----
+
+  - id: SH01
+    question: "Does the company comply with local health regulations and international quality standards (WHO, ISO 13485)?"
+    category: sector_health
+    phase: screening
+    dimension: what
+    priority: high
+    keywords: ["WHO", "ISO", "regulation", "clinical", "quality standard", "accreditation", "certification"]
+
+  - id: SH02
+    question: "How are patient safety outcomes tracked and adverse events reported?"
+    category: sector_health
+    phase: deep_diligence
+    dimension: risk
+    priority: high
+    keywords: ["patient safety", "adverse event", "pharmacovigilance", "safety monitoring", "incident", "morbidity"]
+
+  - id: SH03
+    question: "What evidence exists for clinical efficacy or health outcome improvements?"
+    category: sector_health
+    phase: deep_diligence
+    dimension: how_much_depth
+    priority: high
+    keywords: ["clinical efficacy", "health outcome", "clinical trial", "evidence-based", "mortality", "morbidity reduction"]
+    follow_up: "Has a clinical study or independent evaluation been conducted?"
+
+  - id: SH04
+    question: "How does the company ensure affordability and equity of access for low-income populations?"
+    category: sector_health
+    phase: deep_diligence
+    dimension: who
+    priority: medium
+    keywords: ["affordability", "equity", "low-income", "insurance", "subsidy", "sliding scale", "universal"]
+
+  - id: SH05
+    question: "How are informed consent and patient data privacy handled?"
+    category: sector_health
+    phase: deep_diligence
+    dimension: risk
+    priority: medium
+    keywords: ["informed consent", "patient privacy", "HIPAA", "data protection", "medical record", "confidential"]
+
+  # ---- SECTOR-SPECIFIC: AGRICULTURE ----
+
+  - id: SA01
+    question: "How does the company measure improvement in smallholder farmer incomes or yields?"
+    category: sector_agriculture
+    phase: deep_diligence
+    dimension: how_much_depth
+    priority: high
+    keywords: ["farmer income", "yield increase", "crop yield", "productivity", "smallholder", "harvest"]
+
+  - id: SA02
+    question: "What sustainable farming practices does the company promote (regenerative, organic, IPM)?"
+    category: sector_agriculture
+    phase: deep_diligence
+    dimension: what
+    priority: medium
+    keywords: ["regenerative", "organic", "IPM", "sustainable farming", "soil health", "agroecology", "conservation"]
+
+  - id: SA03
+    question: "How is climate resilience addressed (drought-tolerant, irrigation, crop insurance)?"
+    category: sector_agriculture
+    phase: deep_diligence
+    dimension: risk
+    priority: medium
+    keywords: ["climate resilience", "drought", "irrigation", "crop insurance", "weather", "adaptation"]
+
+  - id: SA04
+    question: "Does the company address food safety and post-harvest loss reduction?"
+    category: sector_agriculture
+    phase: deep_diligence
+    dimension: what
+    priority: medium
+    keywords: ["food safety", "post-harvest", "storage", "cold chain", "spoilage", "quality control"]
+
+  - id: SA05
+    question: "What is the company's land tenure and natural resource impact policy?"
+    category: sector_agriculture
+    phase: deep_diligence
+    dimension: risk
+    priority: medium
+    keywords: ["land tenure", "land rights", "deforestation", "water use", "biodiversity", "natural resource"]
+
+  # ---- SECTOR-SPECIFIC: ENERGY / CLEAN ENERGY ----
+
+  - id: SE01
+    question: "What is the measured CO2e avoided or reduced per unit of product/service?"
+    category: sector_energy
+    phase: deep_diligence
+    dimension: how_much_depth
+    priority: high
+    keywords: ["CO2 avoided", "emissions reduced", "carbon offset", "tCO2e", "GHG reduction", "carbon intensity"]
+
+  - id: SE02
+    question: "How does the company ensure energy access reaches underserved populations (last-mile, off-grid)?"
+    category: sector_energy
+    phase: deep_diligence
+    dimension: who
+    priority: high
+    keywords: ["energy access", "off-grid", "last mile", "rural electrification", "underserved", "energy poverty"]
+
+  - id: SE03
+    question: "What end-of-life / e-waste management plan exists for hardware (solar panels, batteries)?"
+    category: sector_energy
+    phase: deep_diligence
+    dimension: risk
+    priority: medium
+    keywords: ["e-waste", "end of life", "recycling", "disposal", "battery", "panel waste", "circular"]
+
+  - id: SE04
+    question: "How are energy affordability and payment models designed for low-income customers?"
+    category: sector_energy
+    phase: deep_diligence
+    dimension: what
+    priority: medium
+    keywords: ["pay-as-you-go", "PAYG", "affordability", "tariff", "energy cost", "subsidy", "financing"]
+
+  - id: SE05
+    question: "What grid reliability or energy quality improvements result from the solution?"
+    category: sector_energy
+    phase: deep_diligence
+    dimension: how_much_depth
+    priority: medium
+    keywords: ["reliability", "uptime", "power quality", "grid", "generation capacity", "hours of power"]
+
+  # ---- SECTOR-SPECIFIC: EDUCATION ----
+
+  - id: SED01
+    question: "What learning outcome data exists (test scores, competency gains, completion rates)?"
+    category: sector_education
+    phase: deep_diligence
+    dimension: how_much_depth
+    priority: high
+    keywords: ["learning outcome", "test score", "competency", "completion rate", "graduation", "assessment", "grade"]
+    follow_up: "Has an independent evaluation of learning outcomes been conducted?"
+
+  - id: SED02
+    question: "How does the solution reach underserved learners (low-income, girls, disabled, rural)?"
+    category: sector_education
+    phase: deep_diligence
+    dimension: who
+    priority: high
+    keywords: ["underserved", "low-income", "girls education", "disability", "rural", "marginalized", "inclusive"]
+
+  - id: SED03
+    question: "What is the company's pedagogical approach and evidence for its effectiveness?"
+    category: sector_education
+    phase: deep_diligence
+    dimension: what
+    priority: medium
+    keywords: ["pedagogy", "curriculum", "evidence-based", "adaptive learning", "methodology", "teacher training"]
+
+  - id: SED04
+    question: "How is digital safety and age-appropriate content ensured for minors?"
+    category: sector_education
+    phase: deep_diligence
+    dimension: risk
+    priority: medium
+    keywords: ["child safety", "digital safety", "COPPA", "age-appropriate", "content moderation", "screen time"]
+
+  - id: SED05
+    question: "What employment or livelihood outcomes result from the education provided?"
+    category: sector_education
+    phase: deep_diligence
+    dimension: how_much_depth
+    priority: medium
+    keywords: ["employment", "livelihood", "job placement", "career", "skill", "employability", "wage premium"]

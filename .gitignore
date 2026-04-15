@@ -1,0 +1,71 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.so
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+.openharness-venv/
+venv/
+env/
+
+# Environment / secrets
+.env
+.env.local
+.env.production
+*.pem
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.python-version
+
+# React TUI frontend
+frontend/terminal/node_modules/
+
+# User data (never commit API keys or session data)
+.openharness/
+
+# Impact Vision data
+data/raw/*.xlsx
+data/processed/*.json
+
+# Reference source files (forked upstream, not our code)
+/OpenHarness/
+
+# Large reference documents (DD checklist PDFs, etc.)
+/dd checklist/
+
+# Large Excel files at root (data/raw is already ignored)
+/IRIS*.xlsx
+
+# LinkedIn reference file
+linkedin_post_marine.docx
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Misc build artifacts
+uv.lock
+react_tui_smoke.txt
+*.log
+
+# Temporary / scratch files
+_*.py
+_*.txt

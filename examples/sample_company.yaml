@@ -1,0 +1,43 @@
+# Sample company data for Impact Vision assessment
+# This example shows a microfinance company with financial inclusion focus
+
+company:
+  name: "BrightPath Finance"
+  description: "A digital microfinance platform providing affordable credit and savings products to smallholder farmers and women-led micro-enterprises in Sub-Saharan Africa."
+  sector: "Financial Services"
+  impact_themes:
+    - "Financial Inclusion"
+    - "Smallholder Agriculture"
+    - "Gender Lens"
+
+  sdg_claims:
+    - 1   # No Poverty
+    - 5   # Gender Equality
+    - 8   # Decent Work & Economic Growth
+    - 10  # Reduced Inequalities
+
+  reported_metrics:
+    # Client / Beneficiary metrics
+    PI4060: "45,000"          # Client Individuals: Total
+    OI4753: "Yes"             # Client Protection Policy
+    OI5049: "NPS surveys + grievance system"  # Client Feedback System
+    OD8350: "Direct-to-consumer lending"      # Client Model
+
+    # Employee metrics
+    OI8869: "180"             # Permanent Employees: Total
+    OI6213: "85"              # Full-time Employees: Female
+    OI1571: "12"              # Full-time Employees: Female Managers
+    OI1582: "0.92"            # Wage Equity
+
+    # Governance
+    OI1075: "7"               # Board of Directors: Total
+    OD4091: "3 social targets, 2 environmental targets"  # Social and Environmental Targets
+    OI4732: "Annual impact report published"             # Social and Environmental Performance Reporting
+    OI4324: "Community advisory boards"                  # Community Service Policy
+
+    # Financial
+    FP4761: "32%"             # Revenue Growth
+
+    # Environmental
+    OI1479: "120 tCO2e"       # Greenhouse Gas Emissions: Total
+    OI4112: "80 tCO2e"        # Greenhouse Gas Emissions: Direct (Scope 1)
