@@ -72,29 +72,28 @@ pip install -e ".[dev]"
 
 After this, you'll have two commands available: `impact-vision` and `iv` (shorthand).
 
-> **Windows: `'impact-vision' is not recognized`?**
+> **`'impact-vision' is not recognized`?** Run the auto-fix script:
 >
-> This means Python's Scripts folder isn't on your system PATH. Three ways to fix it:
+> ```bash
+> # Windows PowerShell
+> powershell -ExecutionPolicy Bypass -File scripts\add-to-path.ps1
 >
-> **Option A -- Add to PATH (recommended, one-time fix):**
+> # Windows CMD
+> scripts\add-to-path.bat
 >
-> 1. Copy the path shown in the install warning (e.g., `C:\Users\YOU\AppData\Local\Python\pythoncore-3.14-64\Scripts`)
-> 2. Press `Win + R`, type `sysdm.cpl`, click OK
-> 3. Go to **Advanced** tab > **Environment Variables**
-> 4. Under "User variables", select **Path**, click **Edit**
-> 5. Click **New**, paste the Scripts path, click **OK** on all dialogs
-> 6. **Restart your terminal** (close and reopen CMD/PowerShell)
-> 7. Now `impact-vision --help` should work
+> # Mac/Linux
+> bash scripts/add-to-path.sh
+> ```
 >
-> **Option B -- Use `python -m` (no setup needed):**
+> Then restart your terminal and try `impact-vision --help`.
+>
+> **Alternative:** Use `python -m openharness` instead (works without PATH changes):
 >
 > ```bash
 > python -m openharness --help
 > python -m openharness catalog stats
 > python -m openharness dd list
 > ```
->
-> **Option C -- Use a virtual environment** (Step 2 above). When a venv is active, scripts are always on PATH automatically.
 
 ### 3. Try the CLI tools (no API key needed)
 
