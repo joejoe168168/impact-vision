@@ -156,7 +156,7 @@ Done! You can now start the agent (Step 4).
 > | `google/gemini-2.5-flash:free` | Fast, good for quick tasks |
 > | `meta-llama/llama-4-maverick:free` | Open-source, balanced performance |
 >
-> You can change your model later by running `impact-vision setup` again.
+> You can change your model or update your API key later by running `impact-vision setup` again.
 
 #### Option B: Anthropic (Claude Sonnet) -- best quality for impact analysis
 

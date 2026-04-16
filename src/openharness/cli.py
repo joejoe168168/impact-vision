@@ -1088,6 +1088,15 @@ def setup_cmd(
         print(f"{info['label']} requires {source_label}.", flush=True)
         _ensure_profile_auth(manager, target)
         manager = AuthManager()
+    else:
+        reauth = _select_from_menu(
+            f"{info['label']} is already configured. Update API key?",
+            [("no", "No, keep current key"), ("yes", "Yes, enter a new key")],
+            default_value="no",
+        )
+        if reauth == "yes":
+            _ensure_profile_auth(manager, target)
+            manager = AuthManager()
 
     profile_obj = manager.list_profiles()[target]
     model_setting = _prompt_model_for_profile(profile_obj)
