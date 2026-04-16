@@ -762,17 +762,34 @@ MIT License. See [LICENSE](LICENSE) for details.
 
 ## Roadmap
 
-Impact Vision is actively evolving. Here's where we're headed:
+Impact Vision v0.3 completed 149 improvement items across 6 phases. Here's what's next:
 
-- **Deeper SDG/impact mapping with evidence** -- Through detailed mapping of potential SDG alignment and impact opportunities, with adequate evidence for why each claim is fulfilled (or on track). Expanding the interactive HTML report with overlay details and drill-down views for each dimension and metric.
-- **Project/pipeline management** -- Support for managing investment pipelines with stages: under review, invested, passed, exited. Track each company's impact journey over time.
-- **Continuous monitoring** -- Ongoing impact monitoring for portfolio companies with automated data collection, trend analysis, and alert triggers when metrics deviate from targets.
-- **Per-project impact reporting** -- Individual impact reports for each portfolio company with period-over-period comparisons, progress toward targets, and LP-ready formatting.
-- **Aggregate portfolio impact** -- Roll-up impact analytics across the entire portfolio: total beneficiaries reached, aggregate SDG coverage, fund-level 5D scores, and cross-company benchmarking.
-- **LLM-guided impact improvement** -- Intelligent recommendations (powered by LLM) to guide target companies toward achieving greater impact: suggest specific metrics to track, programs to implement, and partnerships to pursue.
-- **Multi-language support** -- Localization of reports, DD questionnaires, and agent interactions for global impact investors.
-- **MCP server mode** -- Expose Impact Vision tools as an MCP server so other AI agents and platforms can access them programmatically.
-- **Claude Code / AI agent integration** -- First-class support for Claude Code and other AI coding agents as impact analysis tools via MCP, enabling developers to embed impact assessment directly into their workflows.
+### Phase 7: Enhanced Analysis & Reporting UX 📊
+- **Interactive report overlays** -- Click any 5D dimension or SDG bar to expand detailed overlays showing tracked vs. untracked metrics, evidence quality, claim evidence cards, and improvement suggestions
+- **Evidence chain visualization** -- For each SDG mapping, see the full chain: claim → metric → evidence → SDG target, with confidence at each step
+- **Impact pathway diagrams** -- Auto-generated Theory of Change flow diagrams from assessed data
+- **PDF export** -- LP-ready PDF reports via WeasyPrint/Playwright
+- **Report comparison mode** -- Side-by-side diff view comparing two assessments of the same company
+
+### Phase 8: Pipeline & Portfolio Management 📁
+- **Investment pipeline** -- Manage deal stages (sourcing → screening → DD → IC review → invested → monitoring → exited) with transition tracking and decision logs
+- **Continuous monitoring** -- Schedule metric updates (quarterly/semi-annual/annual), auto-detect deviations, trigger alerts when scores drop or targets are missed
+- **Per-project reporting** -- Period-over-period comparison reports, target progress with trajectory projections, LP-ready individual company reports
+- **Aggregate portfolio impact** -- Fund-level roll-ups: total beneficiaries, aggregate SDG coverage, weighted 5D scores, cross-company benchmarking, impact attribution by sector/geography/SDG
+
+### Phase 9: LLM Intelligence & Automation 🧠
+- **Improvement advisor** -- For each weak dimension, generate specific recommendations: metrics to track, programs to implement, partnerships to pursue, with peer comparison insights
+- **Smart document analysis** -- Multi-document comparison, version change detection, and automated claim verification against external sources
+- **Conversational assessment** -- Guided step-by-step assessment workflow, progressive data collection across sessions, deal-stage-appropriate assessment templates
+- **Narrative drafting** -- LLM-generated executive summaries, impact narratives, and case studies from structured data
+
+### Phase 10: Platform Integration & Developer Experience 🔌
+- **MCP server mode** -- Expose all 17 Impact Vision tools as MCP resources/tools for AI agents (Claude Code, Cursor, etc.)
+- **Claude Code integration** -- Ready-to-use configs and documentation for using Impact Vision as an MCP tool in Claude Code and Cursor IDE
+- **Full REST API** -- Expand from 5 endpoints to full tool coverage, with API auth, batch processing, and webhook notifications
+- **Multi-language support** -- Localized reports, DD questionnaires, and agent interactions in Spanish, French, Portuguese, Chinese, and Arabic
+
+See the full [ROADMAP.md](ROADMAP.md) for detailed item-by-item tracking (45 items across 4 phases).
 
 Have ideas? Open an [issue](https://github.com/joejoe168168/impact-vision/issues) or submit a PR!
 

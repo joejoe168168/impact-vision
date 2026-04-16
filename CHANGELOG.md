@@ -4,6 +4,17 @@ All notable changes to Impact Vision are recorded here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.3.2] - 2026-04-16
+
+### Changed — Documentation
+
+- README.md: comprehensive update reflecting all v0.3.1 features (10 frameworks, 17 tools, 18 sectors, 122 DD questions, 59 cross-references, 820+ tests)
+- README.md: added new usage examples for ISSB, ESRS, greenwashing, compliance, verification, and product passport
+- README.md: DD categories reorganized into collapsible sections (core + 15 sector-specific)
+- README.md: added Regulatory Compliance and Greenwashing/NLP detection tables to Standards Supported
+- CLAUDE.md: full rewrite to match current v0.3.1 architecture
+- ROADMAP.md: added Phase 7-10 next-version roadmap (see below)
+
 ## [0.3.1] - 2026-04-16
 
 ### Added — Phase 6: Architecture & Quality
