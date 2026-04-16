@@ -447,6 +447,20 @@ class FrameworkTool(BaseTool):
         toc = assess_toc_alignment(args.description, args.document_text)
         lines.append(f"ToC (RS Group): {toc['coverage_pct']}% alignment ({toc['addressed']}/{toc['total_principles']} principles)")
 
+        score_map = {
+            "TCFD/IFRS S2": tcfd["overall_coverage"],
+            "SFDR PAI": sfdr["coverage_pct"],
+            "EDCI": edci["coverage_pct"],
+            "UNPRI": unpri["overall_coverage"],
+            "ToC (RS Group)": toc["coverage_pct"],
+        }
+        avg = round(sum(score_map.values()) / len(score_map), 1)
+        lines.append(f"\nAverage framework readiness: {avg}%")
+        weakest = sorted(score_map.items(), key=lambda item: item[1])[:2]
+        lines.append("Priority improvement areas:")
+        for name, score in weakest:
+            lines.append(f"  - {name}: {score}%")
+
         lines.append("")
         lines.append("Use framework='<name>' with action='assess' for detailed analysis.")
 

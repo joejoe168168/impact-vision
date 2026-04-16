@@ -46,6 +46,10 @@ class PortfolioInput(BaseModel):
     output_format: Literal["text", "json", "csv"] = Field(
         default="text", description="Output format: 'text', 'json', 'csv'"
     )
+    weight_by_metrics: bool = Field(
+        default=False,
+        description="If true, aggregate scores weighted by each company's number of reported metrics.",
+    )
 
 
 class PortfolioTool(BaseTool):
@@ -88,7 +92,7 @@ class PortfolioTool(BaseTool):
             result = _analyze_company(company, store)
             results.append(result)
 
-        aggregate = _aggregate_results(results)
+        aggregate = _aggregate_results(results, weight_by_metrics=args.weight_by_metrics)
 
         if args.output_format == "json":
             return ToolResult(output=json.dumps({
@@ -191,14 +195,17 @@ def _analyze_company(company: Company, store) -> dict:
     }
 
 
-def _aggregate_results(results: list[dict]) -> dict:
+def _aggregate_results(results: list[dict], weight_by_metrics: bool = False) -> dict:
     """Compute portfolio-level aggregated metrics."""
     n = len(results)
     if n == 0:
         return {}
 
-    avg_5d = round(sum(r["five_dim_score"] for r in results) / n, 2)
-    avg_gap = round(sum(r["gap_coverage"] for r in results) / n, 1)
+    weights = [max(1, r["metrics_reported"]) for r in results] if weight_by_metrics else [1 for _ in results]
+    total_weight = sum(weights)
+
+    avg_5d = round(sum(r["five_dim_score"] * w for r, w in zip(results, weights, strict=False)) / total_weight, 2)
+    avg_gap = round(sum(r["gap_coverage"] * w for r, w in zip(results, weights, strict=False)) / total_weight, 1)
 
     all_sdg_goals: dict[int, int] = {}
     for r in results:
@@ -210,7 +217,7 @@ def _aggregate_results(results: list[dict]) -> dict:
 
     dim_avgs = {}
     for dim in ("what", "who", "how_much", "contribution", "risk"):
-        dim_avgs[dim] = round(sum(r[dim] for r in results) / n, 2)
+        dim_avgs[dim] = round(sum(r[dim] * w for r, w in zip(results, weights, strict=False)) / total_weight, 2)
 
     grade_dist: dict[str, int] = {}
     for r in results:
@@ -225,6 +232,7 @@ def _aggregate_results(results: list[dict]) -> dict:
         "grade_distribution": grade_dist,
         "sdg_distribution": [{"goal": g, "companies": c} for g, c in sdg_distribution[:10]],
         "total_metrics_reported": sum(r["metrics_reported"] for r in results),
+        "weighted": weight_by_metrics,
     }
 
 

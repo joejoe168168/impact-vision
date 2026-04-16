@@ -1,6 +1,7 @@
 """Impact-specific tools for IRIS+ metrics, SDG alignment, and impact assessment."""
 
 from openharness.tools.impact.cross_reference_tool import CrossReferenceTool
+from openharness.tools.impact.data_quality_tool import DataQualityTool
 from openharness.tools.impact.dd_checklist_tool import DdChecklistTool
 from openharness.tools.impact.five_dimension_assess_tool import FiveDimensionAssessTool
 from openharness.tools.impact.framework_tool import FrameworkTool
@@ -14,6 +15,7 @@ from openharness.tools.impact.sdg_mapper_tool import SdgMapperTool
 
 __all__ = [
     "CrossReferenceTool",
+    "DataQualityTool",
     "DdChecklistTool",
     "FiveDimensionAssessTool",
     "FrameworkTool",

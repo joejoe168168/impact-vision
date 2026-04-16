@@ -110,7 +110,7 @@ class PitchDeckAnalyzeTool(BaseTool):
             return ToolResult(output=f"Failed to extract document text: {e}", is_error=True)
 
         if not text.strip():
-            return ToolResult(output="No text could be extracted from the PDF", is_error=True)
+            return ToolResult(output="No text could be extracted from the document", is_error=True)
 
         store = get_metric_store()
         claims = _extract_impact_claims(page_texts, store)

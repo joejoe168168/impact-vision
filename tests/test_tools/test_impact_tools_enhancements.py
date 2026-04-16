@@ -5,6 +5,8 @@ import asyncio
 
 from openharness.tools.base import ToolExecutionContext
 from openharness.tools.impact.common import normalize_metric_map, normalize_sdg_goals, normalize_str_list
+from openharness.tools.impact.data_quality_tool import DataQualityInput, DataQualityTool
+from openharness.tools.impact.dd_checklist_tool import _flatten_json_text
 from openharness.tools.impact.lp_ddq_export_tool import LpDdqExportInput, LpDdqExportTool
 from openharness.tools.impact.pitch_deck_analyze_tool import PitchDeckAnalyzeInput, PitchDeckAnalyzeTool
 from openharness.tools.impact.portfolio_tool import _load_portfolio_file
@@ -72,3 +74,28 @@ def test_portfolio_loader_supports_json(tmp_path) -> None:
     assert companies[0].impact_themes == ["Clean Energy"]
     assert companies[0].reported_metrics == {"PI4060": "4"}
     assert companies[0].sdg_claims == [7]
+
+
+def test_flatten_json_text_extracts_values() -> None:
+    raw = {"company": {"name": "Acme", "claims": ["SDG 1", "SDG 7"]}}
+    flat = _flatten_json_text(raw)
+    assert "Acme" in flat
+    assert "SDG 7" in flat
+
+
+def test_impact_data_quality_tool_flags_issues(tmp_path) -> None:
+    tool = DataQualityTool()
+    ctx = ToolExecutionContext(cwd=tmp_path)
+    result = asyncio.run(
+        tool.execute(
+            DataQualityInput(
+                reported_metrics={"pi4060": "N/A", "BAD123": "10", "OI1479": "many"},
+                required_metrics=["PI4060", "OI1479", "OI2913"],
+            ),
+            ctx,
+        )
+    )
+    assert result.is_error is False
+    assert "Quality score:" in result.output
+    assert "Unknown metric IDs" in result.output
+    assert "Missing required metrics" in result.output

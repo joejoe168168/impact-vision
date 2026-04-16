@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Literal
 
@@ -225,5 +226,19 @@ def _extract_text(file_path: str, context: ToolExecutionContext) -> str:
     elif path.suffix.lower() in (".txt", ".md", ".rst"):
         return path.read_text(encoding="utf-8", errors="replace")
     elif path.suffix.lower() == ".json":
-        return path.read_text(encoding="utf-8", errors="replace")
+        try:
+            parsed = json.loads(path.read_text(encoding="utf-8", errors="replace"))
+            return _flatten_json_text(parsed)
+        except Exception:
+            return path.read_text(encoding="utf-8", errors="replace")
     return ""
+
+
+def _flatten_json_text(value: object) -> str:
+    if isinstance(value, dict):
+        return "\n".join(_flatten_json_text(v) for v in value.values())
+    if isinstance(value, list):
+        return "\n".join(_flatten_json_text(v) for v in value)
+    if value is None:
+        return ""
+    return str(value)
