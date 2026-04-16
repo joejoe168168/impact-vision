@@ -910,12 +910,21 @@ def _specialize_setup_target(manager, target: str) -> str:
             [
                 ("openai-compatible", "OpenAI official"),
                 ("openrouter", "OpenRouter"),
+                ("custom-openai", "Custom endpoint (any OpenAI-compatible API)"),
             ],
             default_value="openai-compatible",
         )
         if choice == "openai-compatible":
             return choice
-        base_url = _text_prompt("Base URL", default="https://openrouter.ai/api/v1").strip()
+        if choice == "openrouter":
+            default_url = "https://openrouter.ai/api/v1"
+            profile_name = "openrouter"
+            profile_label = "OpenRouter"
+        else:
+            default_url = ""
+            profile_label = _text_prompt("Display name", default="Custom OpenAI").strip() or "Custom OpenAI"
+            profile_name = profile_label.lower().replace(" ", "-")
+        base_url = _text_prompt("Base URL", default=default_url).strip()
         if not base_url:
             raise typer.BadParameter("Base URL cannot be empty.")
         model = _text_prompt("Default model", default="").strip()
@@ -923,8 +932,8 @@ def _specialize_setup_target(manager, target: str) -> str:
             raise typer.BadParameter("Default model cannot be empty.")
         return _ensure_preset_profile(
             manager,
-            name="openrouter",
-            label="OpenRouter",
+            name=profile_name,
+            label=profile_label,
             provider="openai",
             api_format="openai",
             auth_source=default_auth_source_for_provider("openai", "openai"),
