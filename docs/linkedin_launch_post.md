@@ -1,115 +1,116 @@
 # LinkedIn Launch Post - Impact Vision
 
-*(Copy below for LinkedIn. ~1,800 words. Formatting preserved for LinkedIn.)*
+*(Copy below for LinkedIn. ~2,000 words. Formatting preserved for LinkedIn.)*
 
 ---
 
-**The Impact Measurement Problem Nobody Wants to Talk About**
+**I've spent 8 years in impact investment. Now I'm giving the tools away for free.**
 
-I was sitting in a due diligence call last week when the founder said something that stopped me cold: "We align with SDG 1, 3, 5, 8, and 10." Five goals. A 12-person startup. And not a single metric to back it up.
+After nearly a decade in this space—evaluating deals, writing DD memos, mapping SDGs, wrestling with IRIS+ spreadsheets, and explaining to LPs why our metrics don't perfectly map to theirs—I've come to a frustrating conclusion:
 
-Here's the thing—they weren't trying to greenwash. They genuinely believed in their mission. They just didn't have the tools. And honestly? Neither did we.
+The impact measurement tools we need either cost US$50-100k/year or don't exist.
 
-That's the dirty secret of impact investing: we have 14 different ESG frameworks, 787 IRIS+ metrics, 169 SDG targets, and 14 mandatory EU disclosure indicators—and almost no free, open-source tools to actually use them. The industry is drowning in standards and starving for infrastructure.
+I've always been enthusiastic about what AI can do. So during evenings and weekends, I built what I wish I'd had on Day 1 of my career. Today I'm open-sourcing it.
 
-**The Scale of the Gap**
+**The Problem Nobody Wants to Talk About**
 
-If you're an impact fund manager today, here's what your "toolbox" looks like:
+Impact investing has grown to over US$1 trillion in AUM. We have 14 ESG frameworks, 787 IRIS+ metrics, 169 SDG targets, and 14 mandatory EU disclosure indicators. Yet the typical early-stage impact fund still runs their DD on Excel spreadsheets and Word documents.
 
-- GIIN's IRIS+ catalog: 787 metrics across 263 columns in an Excel spreadsheet. Free, comprehensive, essential—and nearly impossible to work with manually.
-- SASB: 77 materiality topics across 17 industries. Different taxonomy, different naming.
-- GRI: 34 standards, 120+ disclosures. Yet another mapping system.
-- SFDR PAI: 14 mandatory indicators for EU compliance. Required by law, reported in yet another format.
-- EDCI: 17 core PE/VC metrics. Overlaps with some of the above, but with its own codes.
-- TCFD/IFRS S2: 11 climate disclosures across 4 pillars. Critical for climate-focused funds.
-- UNPRI: 6 principles, 27 action items. Self-assessment with no standardised scoring.
+I've been in that room. Probably so have you:
 
-And every LP wants their DDQ in a slightly different format.
+- A founder claims alignment with 5 SDGs but can't name a single metric they track
+- Your DD analyst spends 3 days cross-referencing IRIS+ codes with GRI disclosures
+- Your LP asks for EDCI-formatted data, but your system uses SFDR categories
+- You know the company *could* be impactful, but the evidence is at NESTA Level 1 (anecdotal)
 
-The funds that can afford it pay US$50-100k/year for proprietary platforms. The rest? They cobble together Excel spreadsheets, hope they're not missing anything, and lose countless hours on manual cross-referencing.
+The enterprise platforms solve this—if you can afford them. The rest of us cobble together spreadsheets and hope we're not missing anything.
 
-**Why This Matters**
+**So I Built Impact Vision**
 
-This isn't just an operational headache. It's a market failure that actively harms the impact ecosystem:
+Impact Vision is an open-source, AI-powered impact measurement and SDG alignment agent. Think of it as your impact analyst co-pilot—one that has memorized every IRIS+ metric, every SDG target, every framework cross-reference, and can run a full DD checklist in seconds.
 
-🔹 **Early-stage startups** rarely have ESG teams. They need guidance on *which* metrics matter for *their* sector and *their* SDG claims. Instead, they get a 787-row Excel file.
+Here's what it actually does:
 
-🔹 **Emerging market fund managers** can't afford enterprise ESG platforms but are held to the same LP reporting standards as billion-dollar funds.
+📄 **Upload a pitch deck or investment memo** → It extracts impact claims, maps them to IRIS+ metrics and SDG targets, runs a 96-question DD checklist (sourced from GIIN, PCV, Seraf, IMP, AFME), scores evidence quality using NESTA levels 1-5, and suggests the most important follow-up questions. One command.
 
-🔹 **Impact claims go unverified** because there's no scalable way to cross-check a pitch deck against a DD checklist, score evidence quality, or compare against sector benchmarks.
+📊 **Generate visual impact reports** → HTML reports with interactive Plotly charts: 5-Dimension radar plots, SDG alignment bars in official UN colors, gap analysis trackers, and sector benchmark comparisons. Also exports to Excel, CSV, and JSON for LP reporting.
 
-🔹 **LP DDQ responses** are copy-pasted between funds, often using outdated data, because nobody has automated the data pipeline from assessment to disclosure.
+🎯 **Interactive score improvement** → The HTML report includes checkboxes for impact practices (beneficiary tracking, GHG measurement, Theory of Change, third-party audits). Check what applies to your company and watch the scores update in real-time with a before/after radar overlay. The AI agent can also ask you targeted questions to improve specific weak dimensions—and show you exactly how each answer improves your score.
 
-**So We Built Something About It**
+🔗 **Cross-reference any metric across 6 frameworks** → "What's the GRI equivalent of IRIS+ OI4112?" → "GRI 305-1, EDCI-E1, SFDR PAI #1, TCFD MET-B, SDG 13." One lookup. Six standards.
 
-Today I'm open-sourcing **Impact Vision**—an AI-powered impact measurement and SDG alignment engine, purpose-built for VC and impact investment funds.
+📋 **LP DDQ generation** in ILPA, GIIN/IRIS+, EDCI, or custom formats—pulling directly from your assessment data. No more copy-paste between reporting cycles.
 
-It's built on HKU's OpenHarness agent framework (shoutout to the team for creating such a clean, extensible agent infrastructure) and uses GIIN's IRIS+ 5.3c as the foundational standard.
-
-What it does:
-
-📄 **Upload a pitch deck** → Impact Vision extracts claims, maps them to IRIS+ metrics and SDG targets, runs a 96-question DD checklist, scores evidence quality (NESTA levels 1-5), identifies gaps, and suggests follow-up questions. Automatically.
-
-📊 **Generate reports** with Plotly radar charts for the 5 Dimensions of Impact, SDG alignment bars with official UN colors, gap analysis coverage trackers, and sector benchmark comparisons. In HTML, Excel, CSV, or plain text.
-
-🔗 **Cross-reference any metric** across 6 frameworks instantly. "What's the GRI equivalent of IRIS+ OI4112?" → "GRI 305-1 (GHG Emissions - Scope 1), also mapped to EDCI-E1, SFDR PAI #1, TCFD MET-B, SDG 13." One lookup. Six standards.
-
-📋 **LP DDQ generation** in ILPA, GIIN/IRIS+, EDCI, or custom formats—pulling directly from your assessment data. No more copy-paste.
-
-🏢 **Portfolio batch analysis** with aggregated SDG coverage, 5-Dimension scoring, and grade distributions across your entire portfolio.
+🏢 **Portfolio batch analysis** → Aggregated SDG coverage, 5D scoring distributions, and framework compliance across your entire portfolio.
 
 **What's Under the Hood**
 
-This isn't a wrapper around ChatGPT. It's a structured impact measurement engine with:
+This isn't a ChatGPT wrapper with a prompt. It's a structured impact measurement engine:
 
-- **787 IRIS+ metrics** fully parsed from the official 263-column catalog, with SDG mappings, 5-Dimension tags, and stakeholder classifications
-- **7 ESG framework modules**: SASB, GRI, TCFD/IFRS S2, SFDR PAI, EDCI, UNPRI, and Theory of Change (incorporating RS Group's Blended Value approach)
-- **96 DD questions** across 24 categories—including sector-specific questions for fintech, healthcare, agriculture, energy, and education—sourced from GIIN, PCV, Seraf, IMP, and AFME
-- **NESTA Standards of Evidence** scoring (1-5 scale) that automatically assesses whether claims are backed by narrative, output data, outcome measurement, controlled comparison, or rigorous evaluation
-- **40+ cross-reference mappings** between IRIS+, GRI, EDCI, SFDR PAI, SASB, and TCFD
-- **Sector benchmarks** for 8 industries from GIIN survey data
-- **12 LLM-callable tools** that work together as an AI agent—you can have a conversation about impact assessment, and the agent knows which tools to invoke
+- **787 IRIS+ 5.3c metrics** fully parsed, with SDG mappings, 5-Dimension tags, and smart search (synonym expansion for terms like "climate" → greenhouse gas, carbon, emissions)
+- **7 ESG framework modules**: SASB (17 industries), GRI (34 standards), TCFD/IFRS S2 (4 pillars), SFDR PAI (14 mandatory indicators), EDCI (17 PE/VC metrics), UNPRI (6 principles), Theory of Change (RS Group + GIIN)
+- **96 DD questions** across 24 categories—including sector-specific questions for fintech, healthcare, agriculture, energy, and education
+- **Sector-aware scoring** that infers meaningful baselines from company description and sector, so even a company with zero reported metrics gets an actionable starting assessment (not just all F grades)
+- **40+ cross-reference mappings** between all frameworks
+- **12 LLM-callable tools** that work as an AI agent—have a natural language conversation about impact, and it knows which analyses to run
+- **Interactive HTML reports** with real-time score adjustment via checkboxes
 
-All of it is Python, MIT-licensed, and runs locally. You can plug in Anthropic Claude, OpenAI, or spin up Ollama with a single CLI command for fully local, private assessment.
+Built on HKU's OpenHarness agent framework. Python, MIT-licensed, runs locally. Works with OpenRouter (free models available), Anthropic Claude, OpenAI, or fully offline via Ollama.
 
-**The Theory of Change for Open-Source Impact Infrastructure**
+**Who Is This For**
 
-I believe the impact investing ecosystem has a structural underinvestment in shared infrastructure. Every fund reinvents the same measurement workflows. Every LP reporting cycle is a manual reconciliation exercise. Every DD process starts from scratch.
+🔹 **Emerging market fund managers** who can't afford enterprise ESG platforms but are held to the same LP reporting standards
 
-If we want capital to flow more efficiently toward impact—especially in emerging markets and for early-stage ventures—we need to make measurement accessible, not proprietary.
+🔹 **Early-stage startups** who need guidance on which metrics matter for their sector and their SDG claims—not a 787-row Excel file
 
-Impact Vision is one step in that direction. It won't replace deep impact expertise, but it can eliminate the hours of manual cross-referencing, standardize the DD baseline, and give emerging fund managers the same analytical foundation that well-resourced funds take for granted.
+🔹 **Impact analysts** who spend days on manual DD and cross-referencing that could take minutes
+
+🔹 **LP reporting teams** who need DDQ responses in multiple formats from the same underlying data
+
+🔹 **Impact ecosystem builders** who believe measurement should be accessible, not proprietary
+
+**The Theory of Change**
+
+The impact investing ecosystem has a structural underinvestment in shared infrastructure. Every fund reinvents the same measurement workflows. Every LP reporting cycle is a manual reconciliation exercise. Every DD process starts from scratch.
+
+If we want capital to flow more efficiently toward impact—especially in emerging markets and for early-stage ventures—we need to make measurement accessible.
+
+Impact Vision won't replace deep impact expertise, but it can eliminate the hours of manual cross-referencing, standardize the DD baseline, and give every fund manager the same analytical foundation that well-resourced funds take for granted.
 
 **Try It**
 
-The repo is live:
-
-🔗 [GitHub - Impact Vision] (link)
+The repo is live: 🔗 [github.com/joejoe168168/impact-vision](https://github.com/joejoe168168/impact-vision)
 
 Quick start:
 ```
-pip install -e .
-impact-vision catalog load
-impact-vision
+pip install -e ".[dev]"
+impact-vision setup      # Configure your LLM (free models available via OpenRouter)
+impact-vision            # Start the AI agent
 ```
 
-Then just say: "Analyze this pitch deck for impact: /path/to/deck.pdf"
+Then just say: *"Analyze this pitch deck for impact: /path/to/deck.pdf"*
 
-Or try the visual dashboard: `streamlit run src/openharness/dashboard/app.py`
+Or try the CLI tools (no API key needed):
+```
+impact-vision catalog search "climate"
+impact-vision dd categories
+impact-vision framework scan "Solar energy company providing clean power to 50,000 rural households"
+```
 
 **What's Next**
 
-This is v0.1. The roadmap includes:
+This is v0.1.2. The roadmap includes:
 - LLM-enhanced claim extraction with chain-of-thought reasoning
 - Automated LP reporting pipelines
 - Integration with data rooms (not just individual documents)
 - Community-contributed sector DD question packs
 - Multilingual support (starting with Chinese, French, Spanish)
+- More interactive assessment workflows through the AI agent
 
-If you work in impact investing, fund management, ESG advisory, or impact measurement—I'd love your feedback. If you're a developer who cares about this space, PRs are welcome.
+If you work in impact investing, fund management, ESG advisory, or impact measurement—I'd love your feedback. If you're a developer who cares about this space, PRs and contributions are welcome.
 
-The standards exist. The data exists. The gap is in the tooling. Let's close it.
+The standards exist. The data exists. The gap is in the tooling. Let's close it together.
 
 ---
 
-#ImpactInvesting #OpenSource #SDG #ImpactMeasurement #ESG #IRIS #GIIN #SustainableFinance #VentureCapital #ImpactDD #ClimateFinance #DueDiligence #TheoryOfChange #OpenHarness #HKU
+#ImpactInvesting #OpenSource #SDG #ImpactMeasurement #ESG #IRIS #GIIN #SustainableFinance #VentureCapital #ImpactDD #ClimateFinance #DueDiligence #TheoryOfChange #AI #OpenHarness
