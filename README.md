@@ -137,7 +137,17 @@ Without the full catalog, Impact Vision still works using the bundled 16 GIIN Co
 
 ### 5. Set up an LLM provider (required for the AI agent)
 
-The CLI tools in Step 3 work without an API key, but the interactive AI agent needs a language model. Pick **one** option below.
+The CLI tools in Step 3 work without an API key, but the interactive AI agent needs a language model.
+
+**Quickest way -- use the interactive setup wizard:**
+
+```bash
+impact-vision setup
+```
+
+This walks you through choosing a provider and entering your API key interactively. You can also use `impact-vision auth login` to authenticate with a specific provider.
+
+If you prefer manual setup, pick **one** option below.
 
 #### Option A: OpenRouter (easiest to get started)
 
