@@ -103,7 +103,7 @@
   - File: `src/openharness/tools/impact/pitch_deck_analyze_tool.py`
   - Ref: Review §5.1
 
-- [ ] **1.4.8** Update sample data files to include geography fields
+- [x] **1.4.8** Update sample data files to include geography fields
   - Files: `examples/sample_company.yaml`, `examples/sample_portfolio.csv`
   - Ref: Review §5.1
 
@@ -205,7 +205,7 @@
   - File: `src/openharness/impact/models.py`
   - Ref: Review §5.3
 
-- [ ] **2.1.2** Update `Company.reported_metrics` type from `dict[str, Any]` to support both legacy format and new `MetricValue` list
+- [x] **2.1.2** Update `Company.reported_metrics` type from `dict[str, Any]` to support both legacy format and new `MetricValue` list
   - File: `src/openharness/impact/models.py`
   - Ref: Review §5.3
 
@@ -217,7 +217,7 @@
   - File: `src/openharness/impact/trend_analysis.py` (new)
   - Ref: Review §2.7
 
-- [ ] **2.1.5** Add year-over-year comparison to portfolio analysis
+- [x] **2.1.5** Add year-over-year comparison to portfolio analysis
   - File: `src/openharness/tools/impact/portfolio_tool.py`
   - Ref: Review §2.7
 
@@ -249,7 +249,7 @@
 
 ### 2.3 Impact Target Tracking
 
-- [ ] **2.3.1** Create `ImpactTarget` model — `metric_id`, `target_value`, `target_date`, `actual_value`, `period`
+- [x] **2.3.1** Create `ImpactTarget` model — `metric_id`, `target_value`, `target_date`, `actual_value`, `period`
   - File: `src/openharness/impact/models.py`
   - Ref: Review §4.3
   - ⚠️ Audit note: `ImpactTarget` class does NOT exist (ImportError). `Company.impact_targets` is `dict[str, str]` instead
@@ -259,7 +259,7 @@
   - Ref: Review §5.1
   - ⚠️ Note: `impact_targets: dict[str, str]` exists but is NOT the structured `ImpactTarget` model type originally intended
 
-- [ ] **2.3.3** Parse `OD4091` (Social and Environmental Targets) metric value into structured `ImpactTarget` objects
+- [x] **2.3.3** Parse `OD4091` (Social and Environmental Targets) metric value into structured `ImpactTarget` objects
   - File: `src/openharness/tools/impact/common.py`
   - Ref: Review §4.3
 
