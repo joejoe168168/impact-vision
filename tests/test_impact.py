@@ -342,3 +342,14 @@ class TestBenchmarks:
         from openharness.impact.benchmarks import compare_to_benchmark
         result = compare_to_benchmark("Unknown Sector", {}, 0, 0)
         assert result["benchmark_available"] is False
+
+
+class TestRiskOpportunity:
+    def test_assess_risk_opportunity(self, sample_company: Company) -> None:
+        from openharness.impact.risk_opportunity import assess_impact_risk_opportunity
+
+        result = assess_impact_risk_opportunity(sample_company)
+        assert "risk_score" in result
+        assert "opportunity_score" in result
+        assert isinstance(result["risks"], list)
+        assert isinstance(result["opportunities"], list)

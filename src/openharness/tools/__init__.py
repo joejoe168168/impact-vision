@@ -74,6 +74,7 @@ def create_default_tool_registry(mcp_manager: McpClientManager | None = None) ->
         ("impact.gap_analysis_tool", "GapAnalysisTool"),
         ("impact.dd_checklist_tool", "DdChecklistTool"),
         ("impact.pitch_deck_analyze_tool", "PitchDeckAnalyzeTool"),
+        ("impact.impact_risk_opportunity_tool", "ImpactRiskOpportunityTool"),
         ("impact.impact_report_tool", "ImpactReportTool"),
         ("impact.framework_tool", "FrameworkTool"),
         ("impact.cross_reference_tool", "CrossReferenceTool"),

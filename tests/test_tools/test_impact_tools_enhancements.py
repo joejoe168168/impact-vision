@@ -8,6 +8,10 @@ from openharness.tools.impact.common import normalize_metric_map, normalize_sdg_
 from openharness.tools.impact.data_quality_tool import DataQualityInput, DataQualityTool
 from openharness.tools.impact.dd_checklist_tool import _flatten_json_text
 from openharness.tools.impact.metric_recommender_tool import MetricRecommenderInput, MetricRecommenderTool
+from openharness.tools.impact.impact_risk_opportunity_tool import (
+    ImpactRiskOpportunityInput,
+    ImpactRiskOpportunityTool,
+)
 from openharness.tools.impact.lp_ddq_export_tool import LpDdqExportInput, LpDdqExportTool
 from openharness.tools.impact.pitch_deck_analyze_tool import PitchDeckAnalyzeInput, PitchDeckAnalyzeTool
 from openharness.tools.impact.portfolio_tool import _load_portfolio_file
@@ -137,3 +141,24 @@ def test_metric_recommender_returns_results(tmp_path) -> None:
     assert "IRIS+ METRIC RECOMMENDATIONS" in result.output
     assert result.metadata is not None
     assert result.metadata["count"] > 0
+
+
+def test_impact_risk_opportunity_tool_returns_scores(tmp_path) -> None:
+    tool = ImpactRiskOpportunityTool()
+    ctx = ToolExecutionContext(cwd=tmp_path)
+    result = asyncio.run(
+        tool.execute(
+            ImpactRiskOpportunityInput(
+                company_name="RiskyCo",
+                company_description="Climate fintech platform with strong focus on financial inclusion and data privacy.",
+                sector="Fintech",
+                impact_themes=["Financial Inclusion", "Climate"],
+                reported_metrics={"PI4060": "1000"},
+                sdg_claims=[1, 8, 13],
+            ),
+            ctx,
+        )
+    )
+    assert result.is_error is False
+    assert "Risk score:" in result.output
+    assert "Opportunity score:" in result.output

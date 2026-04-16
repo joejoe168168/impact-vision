@@ -15,6 +15,7 @@ from openharness.impact.database import get_metric_store
 from openharness.impact.five_dimensions import assess_five_dimensions
 from openharness.impact.gap_analysis import analyze_gaps
 from openharness.impact.models import Company
+from openharness.impact.risk_opportunity import assess_impact_risk_opportunity
 from openharness.impact.sdg_mapper import map_sdg_alignment
 from openharness.tools.impact.common import normalize_metric_map, normalize_sdg_goals, normalize_str_list
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
@@ -208,6 +209,7 @@ class ImpactReportTool(BaseTool):
             report_data["gap_analysis"] = gap_result
 
         report_data["impact_analysis"] = _infer_opportunities_and_risks(company)
+        report_data["risk_opportunity_assessment"] = assess_impact_risk_opportunity(company)
 
         from openharness.impact.benchmarks import compare_to_benchmark
         if "five_dimensions" in report_data and company.sector:
@@ -316,6 +318,22 @@ def _to_text(data: dict) -> str:
             lines.append(f"  ! {r}")
         lines.append("")
 
+    if "risk_opportunity_assessment" in data:
+        roa = data["risk_opportunity_assessment"]
+        lines.append("STRUCTURED RISK/OPPORTUNITY ASSESSMENT")
+        lines.append("-" * 40)
+        lines.append(f"  Risk score: {roa.get('risk_score', 0)}/100")
+        lines.append(f"  Opportunity score: {roa.get('opportunity_score', 0)}/100")
+        if roa.get("priority_risks"):
+            lines.append("  Priority risks:")
+            for item in roa["priority_risks"]:
+                lines.append(f"    - [{item.get('severity', 'medium')}] {item.get('risk', '')}")
+        if roa.get("priority_opportunities"):
+            lines.append("  Priority opportunities:")
+            for item in roa["priority_opportunities"]:
+                lines.append(f"    + {item.get('opportunity', '')}")
+        lines.append("")
+
     if "benchmark_comparison" in data:
         bm = data["benchmark_comparison"]
         lines.append("SECTOR BENCHMARK COMPARISON")
@@ -364,6 +382,15 @@ def _to_csv(data: dict) -> str:
             writer.writerow(["Gap", m["id"], "MISSING", m["name"]])
         for m in ga.get("reported", []):
             writer.writerow(["Gap", m["id"], m.get("value", ""), m["name"]])
+
+    if "risk_opportunity_assessment" in data:
+        roa = data["risk_opportunity_assessment"]
+        writer.writerow(["Risk/Opportunity", "Risk Score", roa.get("risk_score", 0), ""])
+        writer.writerow(["Risk/Opportunity", "Opportunity Score", roa.get("opportunity_score", 0), ""])
+        for risk in roa.get("priority_risks", []):
+            writer.writerow(["Risk/Opportunity", "Priority Risk", risk.get("risk", ""), risk.get("severity", "")])
+        for opp in roa.get("priority_opportunities", []):
+            writer.writerow(["Risk/Opportunity", "Priority Opportunity", opp.get("opportunity", ""), opp.get("category", "")])
 
     return buf.getvalue()
 
@@ -755,6 +782,16 @@ Plotly.newPlot('sdg-chart', [{{
         for r in ia.get("risks", []):
             sections.append(f'<div class="rec" style="border-left-color:var(--danger);background:var(--danger-light)">! {r}</div>')
         sections.append("</div></div>")
+
+    if "risk_opportunity_assessment" in data:
+        roa = data["risk_opportunity_assessment"]
+        sections.append(f"""
+<h2>Structured Risk/Opportunity Scores</h2>
+<div class="chart-row">
+  <div class="chart-box"><h3 style="color:var(--danger)">Risk Score</h3><div style="font-size:2em;font-weight:700">{roa.get('risk_score', 0)}</div></div>
+  <div class="chart-box"><h3 style="color:var(--success)">Opportunity Score</h3><div style="font-size:2em;font-weight:700">{roa.get('opportunity_score', 0)}</div></div>
+</div>
+""")
 
     if "gap_analysis" in data:
         ga = data["gap_analysis"]
