@@ -302,6 +302,7 @@ Opens a web dashboard at http://localhost:8501 with 5 tabs: Assessment, IRIS+ Ca
 | `iv dd categories` | List DD categories |
 | `iv dd analyze "text"` | Check text against DD checklist |
 | `iv ollama-setup` | Configure local LLM |
+| `iv serve-mcp` | Start MCP server for AI agents |
 | `iv` | Start interactive AI agent |
 
 (`iv` is a shorthand for `impact-vision`)
@@ -441,6 +442,35 @@ The agent will:
 ```
 > Analyze this portfolio CSV file: examples/sample_portfolio.csv
 > Generate aggregated SDG coverage for the portfolio
+> Run portfolio roll-up with fund-level 5D scores
+> Generate an LP report for our fund
+> Show impact attribution by sector and geography
+```
+
+### Pipeline Management
+
+```
+> Add EcoFinance to the pipeline at screening stage
+> Transition EcoFinance to DD in progress with rationale "Strong SDG alignment"
+> Show the pipeline dashboard
+> List all companies at IC review stage
+```
+
+### Continuous Monitoring
+
+```
+> Set quarterly monitoring for EcoFinance
+> Record metric PI4060 = 15000 for EcoFinance
+> Check alerts for our portfolio
+> Run a full re-assessment for EcoFinance
+```
+
+### Guided Assessment
+
+```
+> Start a screening assessment for BrightPath Finance
+> What's the next step in the assessment?
+> Submit company description data for the current step
 ```
 
 ### Single-Prompt Mode
@@ -482,6 +512,10 @@ impact-vision setup                        # Interactive provider setup
 impact-vision provider list                # List configured providers
 impact-vision provider use NAME            # Switch active provider
 impact-vision auth login                   # Authenticate with a provider
+
+# MCP Server & API
+impact-vision serve-mcp                    # Start MCP server (stdio transport)
+impact-vision serve-mcp --transport sse    # Start MCP server (SSE, port 8765)
 ```
 
 ## Architecture
@@ -517,14 +551,14 @@ impact-vision/
 │   │       ├── esrs.py               # EU CSRD/ESRS Double Materiality (11 standards)
 │   │       ├── ifc_opim.py           # IFC Operating Principles for Impact Management
 │   │       └── cross_reference.py    # 59 cross-framework metric mappings
-│   ├── tools/impact/                  # Agent tools (17 LLM-callable tools)
+│   ├── tools/impact/                  # Agent tools (25 LLM-callable tools)
 │   │   ├── pitch_deck_analyze_tool.py # PDF/TXT/MD intake + full pipeline
 │   │   ├── dd_checklist_tool.py       # DD question list/analyze/suggest
 │   │   ├── iris_catalog_tool.py       # IRIS+ catalog search/browse
 │   │   ├── sdg_mapper_tool.py         # SDG alignment scoring
 │   │   ├── five_dimension_assess_tool.py # 5-Dimension assessment + additionality
 │   │   ├── gap_analysis_tool.py       # Metric gap analysis
-│   │   ├── impact_report_tool.py      # Report generation (HTML/CSV/JSON/text/XLSX)
+│   │   ├── impact_report_tool.py      # Report generation (HTML/CSV/JSON/text/XLSX/PDF)
 │   │   ├── framework_tool.py          # Multi-framework ESG assessment (10 frameworks)
 │   │   ├── cross_reference_tool.py    # Cross-framework metric lookup
 │   │   ├── data_quality_tool.py       # Metric data quality assessment
@@ -534,8 +568,19 @@ impact-vision/
 │   │   ├── beneficiary_feedback_tool.py # Beneficiary feedback import & analysis
 │   │   ├── verification_prep_tool.py  # Impact verification readiness (IFC OPIM)
 │   │   ├── product_passport_tool.py   # EU Digital Product Passport import/mapping
+│   │   ├── pipeline_tool.py           # Investment pipeline management (8 stages)
+│   │   ├── monitoring_tool.py         # Continuous monitoring, alerts, re-assessment
+│   │   ├── improvement_advisor_tool.py # LLM-guided improvement recommendations
+│   │   ├── narrative_tool.py          # Impact narrative & case study generation
+│   │   ├── document_analysis_tool.py  # Multi-document comparison & verification
+│   │   ├── guided_assessment_tool.py  # Step-by-step assessment workflow
+│   │   ├── trend_analysis_tool.py     # Time-series metric trend analysis
+│   │   ├── greenwashing_tool.py       # Greenwashing detection tool
+│   │   ├── exclusion_screening_tool.py # Exclusion criteria screening
 │   │   ├── common.py                  # Shared input normalization helpers
 │   │   └── portfolio_tool.py          # Portfolio batch analysis + scenario modeling
+│   ├── impact/mcp_server.py          # MCP server (FastMCP, 25 tools + 5 resources)
+│   ├── api_gateway/router.py         # FastAPI REST API (25+ endpoints)
 │   ├── dashboard/                     # Streamlit visual dashboard
 │   │   └── app.py                     # 5-tab dashboard (Assessment/Catalog/DD/Framework/Portfolio)
 │   ├── skills/bundled/content/        # Agent knowledge (markdown)
@@ -545,16 +590,23 @@ impact-vision/
 │   │   ├── impact-dd-guide.md
 │   │   └── theory-of-change.md       # RS Group + GIIN ToC workflow
 │   ├── prompts/system_prompt.py       # Impact Vision persona + instructions
-│   └── cli.py                         # CLI with catalog subcommands
+│   └── cli.py                         # CLI with catalog subcommands + serve-mcp
 ├── data/
 │   ├── raw/                           # IRIS+ Excel file (not committed)
 │   ├── processed/                     # JSON catalog cache (auto-generated)
 │   ├── dd_checklist.yaml              # 122 DD questions (GIIN/PCV/Seraf/IMP/AFME + 15 sectors)
 │   ├── scoring_config.yaml           # Sector baselines, keyword boosts, risk/opportunity rules
-│   └── sdg_keywords.yaml             # SDG keyword mappings for 20+ sectors
+│   ├── sdg_keywords.yaml             # SDG keyword mappings for 20+ sectors
+│   └── i18n/                          # Localization (6 languages: en/es/fr/pt/zh/ar)
+│       ├── report_strings.yaml        # Report labels in 6 languages
+│       ├── dd_checklist_*.yaml        # Localized DD questions (5 languages)
+│       └── system_prompts.yaml        # Agent persona preambles
 ├── examples/
 │   ├── sample_company.yaml            # Example company with IRIS+ metrics
-│   └── sample_portfolio.csv           # Portfolio of 5 companies
+│   ├── sample_portfolio.csv           # Portfolio of 5 companies
+│   └── claude_desktop_config.json     # MCP config for Claude Desktop/Code
+├── docs/
+│   └── cursor-integration.md          # Cursor/VS Code MCP integration guide
 ├── scripts/
 │   └── check_imports.py              # CI import smoke checks (verify __init__.py + exports)
 ├── .github/workflows/
@@ -680,26 +732,34 @@ All accessible via the `framework_assess` tool:
 | Claim Decomposition | Breaks claims into verifiable components |
 | ClimateBERT integration | Stub for deep NLP classification (ready for model integration) |
 
-### Tools (17 Impact Tools)
+### Tools (25 Impact Tools)
 | Tool | Description |
 |------|-------------|
 | `pitch_deck_analyze` | PDF/TXT/MD intake with impact claim extraction and Company model |
 | `dd_checklist` | DD question list, document analysis, and targeted suggestions |
 | `iris_catalog` | IRIS+ catalog search, browse, filter by SDG/theme |
-| `sdg_mapper` | SDG alignment scoring with theme inference |
+| `sdg_mapper` | SDG alignment scoring with theme inference and evidence chains |
 | `five_dimension_assess` | 5-Dimension assessment with additionality & counterfactual prompts |
 | `gap_analysis` | Metric gap analysis vs Core Metric Set |
-| `impact_report` | Interactive HTML reports with Plotly charts (+ CSV/JSON/XLSX) |
+| `impact_report` | Interactive HTML reports with Plotly charts, PDF export, comparison mode |
 | `framework_assess` | Multi-framework ESG assessment (10 frameworks including ISSB, ESRS) |
 | `cross_reference` | Cross-framework metric lookup (59 mappings, PAI-prefix support) |
 | `impact_data_quality` | Assess quality of reported metrics -- flags placeholders, unknown IDs |
 | `impact_metric_recommender` | Recommend IRIS+ metrics based on themes, SDGs, and sector |
 | `impact_risk_opportunity` | Risk/opportunity with 14 risk categories, likelihood x severity matrix |
 | `lp_ddq_export` | Generate LP DDQ responses in ILPA, GIIN, EDCI, SFDR formats (XLSX/CSV) |
-| `portfolio_analyze` | Portfolio batch analysis with scenario modeling |
+| `portfolio_analyze` | Portfolio batch analysis, roll-ups, benchmarking, attribution |
 | `beneficiary_feedback` | Import and analyze beneficiary feedback data |
 | `verification_prep` | Impact verification readiness assessment (IFC OPIM 9 principles) |
 | `product_passport` | EU Digital Product Passport data import and IRIS+/ESRS mapping |
+| `pipeline` | Investment pipeline management (8 stages, transition tracking, dashboard) |
+| `monitoring` | Continuous monitoring, metric updates, alerts, automated re-assessment |
+| `improvement_advisor` | LLM-guided improvement recs, peer insights, SDG opportunity finder |
+| `narrative` | Impact narrative drafting (exec summary, key findings, case studies) |
+| `document_analysis` | Multi-document comparison, change detection, claim verification |
+| `guided_assessment` | Step-by-step assessment workflow with deal-stage templates |
+| `trend_analysis` | Time-series metric trend analysis with trajectory projection |
+| `exclusion_screening` | Exclusion criteria screening (UNGC, weapons, fossil fuel, etc.) |
 
 ## Streamlit Dashboard
 
@@ -760,36 +820,72 @@ GitHub Actions runs on every push/PR to `main`:
 
 MIT License. See [LICENSE](LICENSE) for details.
 
+## MCP Server (Use with Claude, Cursor, VS Code)
+
+Impact Vision can run as an **MCP server**, exposing all 25 tools to any MCP-compatible AI client.
+
+```bash
+# Start the MCP server (stdio transport, default)
+impact-vision serve-mcp
+
+# Or with SSE transport for remote access
+impact-vision serve-mcp --transport sse --port 8765
+```
+
+### Cursor / VS Code Setup
+
+Add to `.cursor/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "impact-vision": {
+      "command": "impact-vision",
+      "args": ["serve-mcp"]
+    }
+  }
+}
+```
+
+### Claude Desktop Setup
+
+Copy `examples/claude_desktop_config.json` to your Claude Desktop config directory.
+
+See [docs/cursor-integration.md](docs/cursor-integration.md) for full setup guide, available tools/resources, and examples.
+
+## REST API
+
+Full FastAPI REST API with 25+ endpoints:
+
+```bash
+# Start the API server
+uvicorn openharness.api_gateway.router:app --reload
+
+# Authenticated (set env var for production)
+IMPACT_VISION_API_KEY=your-secret-key uvicorn openharness.api_gateway.router:app
+```
+
+Key endpoints: `/api/v1/score`, `/api/v1/sdg-map`, `/api/v1/greenwashing`, `/api/v1/report`, `/api/v1/pipeline`, `/api/v1/batch`, and more. See the auto-generated docs at `/docs`.
+
 ## Roadmap
 
-Impact Vision v0.3 completed 149 improvement items across 6 phases. Here's what's next:
+Impact Vision has completed **197 improvement items across 10 phases**:
 
-### Phase 7: Enhanced Analysis & Reporting UX 📊
-- **Interactive report overlays** -- Click any 5D dimension or SDG bar to expand detailed overlays showing tracked vs. untracked metrics, evidence quality, claim evidence cards, and improvement suggestions
-- **Evidence chain visualization** -- For each SDG mapping, see the full chain: claim → metric → evidence → SDG target, with confidence at each step
-- **Impact pathway diagrams** -- Auto-generated Theory of Change flow diagrams from assessed data
-- **PDF export** -- LP-ready PDF reports via WeasyPrint/Playwright
-- **Report comparison mode** -- Side-by-side diff view comparing two assessments of the same company
+| Phase | Items | Status |
+|-------|------:|--------|
+| Phase 1: Critical Fixes | 38 | ✅ Complete |
+| Phase 2: Important Improvements | 39 | ✅ Complete |
+| Phase 3: Missing Features | 27 | ✅ Complete |
+| Phase 4: Regulatory & Advanced | 14 | ✅ Complete |
+| Phase 5: Scoring Engine | 23 | ✅ Complete |
+| Phase 6: Architecture & Quality | 8 | ✅ Complete |
+| Phase 7: Analysis & Reporting UX | 9 | ✅ Complete |
+| Phase 8: Pipeline & Portfolio | 15 | ✅ Complete |
+| Phase 9: LLM Intelligence | 10 | ✅ Complete |
+| Phase 10: Platform Integration | 14 | ✅ Complete |
+| **Total** | **197** | **All complete** |
 
-### Phase 8: Pipeline & Portfolio Management 📁
-- **Investment pipeline** -- Manage deal stages (sourcing → screening → DD → IC review → invested → monitoring → exited) with transition tracking and decision logs
-- **Continuous monitoring** -- Schedule metric updates (quarterly/semi-annual/annual), auto-detect deviations, trigger alerts when scores drop or targets are missed
-- **Per-project reporting** -- Period-over-period comparison reports, target progress with trajectory projections, LP-ready individual company reports
-- **Aggregate portfolio impact** -- Fund-level roll-ups: total beneficiaries, aggregate SDG coverage, weighted 5D scores, cross-company benchmarking, impact attribution by sector/geography/SDG
-
-### Phase 9: LLM Intelligence & Automation 🧠
-- **Improvement advisor** -- For each weak dimension, generate specific recommendations: metrics to track, programs to implement, partnerships to pursue, with peer comparison insights
-- **Smart document analysis** -- Multi-document comparison, version change detection, and automated claim verification against external sources
-- **Conversational assessment** -- Guided step-by-step assessment workflow, progressive data collection across sessions, deal-stage-appropriate assessment templates
-- **Narrative drafting** -- LLM-generated executive summaries, impact narratives, and case studies from structured data
-
-### Phase 10: Platform Integration & Developer Experience 🔌
-- **MCP server mode** -- Expose all 17 Impact Vision tools as MCP resources/tools for AI agents (Claude Code, Cursor, etc.)
-- **Claude Code integration** -- Ready-to-use configs and documentation for using Impact Vision as an MCP tool in Claude Code and Cursor IDE
-- **Full REST API** -- Expand from 5 endpoints to full tool coverage, with API auth, batch processing, and webhook notifications
-- **Multi-language support** -- Localized reports, DD questionnaires, and agent interactions in Spanish, French, Portuguese, Chinese, and Arabic
-
-See the full [ROADMAP.md](ROADMAP.md) for detailed item-by-item tracking (45 items across 4 phases).
+See the full [ROADMAP.md](ROADMAP.md) for detailed item-by-item tracking.
 
 Have ideas? Open an [issue](https://github.com/joejoe168168/impact-vision/issues) or submit a PR!
 
