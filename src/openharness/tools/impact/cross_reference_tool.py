@@ -6,6 +6,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from openharness.tools.impact.common import normalize_metric_ids
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 
@@ -84,7 +85,7 @@ class CrossReferenceTool(BaseTool):
                 return ToolResult(output="Provide a 'metric_id' for lookup action", is_error=True)
 
             results = []
-            mid = args.metric_id.strip()
+            mid = args.metric_id.strip().upper()
 
             if args.standard in ("iris", "any"):
                 results.extend(lookup_by_iris(mid))
@@ -94,12 +95,16 @@ class CrossReferenceTool(BaseTool):
                 results.extend(lookup_by_edci(mid))
             if args.standard in ("sfdr", "any"):
                 try:
-                    results.extend(lookup_by_sfdr(int(mid)))
+                    sfdr_id = int(mid.replace("PAI", "").strip())
+                    results.extend(lookup_by_sfdr(sfdr_id))
                 except ValueError:
                     pass
 
             if not results and args.standard == "any":
-                results = search_cross_references(mid)
+                normalized_ids, _ = normalize_metric_ids([mid])
+                for normalized_id in normalized_ids:
+                    results.extend(lookup_by_iris(normalized_id))
+                results.extend(search_cross_references(mid))
 
             seen = set()
             deduped = []

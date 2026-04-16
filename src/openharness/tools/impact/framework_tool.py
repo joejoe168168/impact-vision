@@ -9,6 +9,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from openharness.tools.impact.common import infer_themes, normalize_metric_map
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 
@@ -64,9 +65,20 @@ class FrameworkTool(BaseTool):
 
     async def execute(self, arguments: BaseModel, context: ToolExecutionContext) -> ToolResult:
         args = arguments if isinstance(arguments, FrameworkInput) else FrameworkInput.model_validate(arguments)
+        normalized_metrics, warnings = normalize_metric_map(args.reported_metrics)
+        normalized = FrameworkInput(**{
+            **args.model_dump(),
+            "themes": infer_themes(f"{args.sector} {args.description} {args.document_text}", args.themes),
+            "reported_metrics": normalized_metrics,
+            "description": args.description or (args.document_text[:600] if args.document_text else ""),
+        })
 
-        if args.framework == "all" and args.action == "assess":
-            return self._assess_all(args)
+        if normalized.framework == "all" and normalized.action in ("assess", "match"):
+            result = self._assess_all(normalized)
+            if warnings:
+                result.output += "\n\nWarnings:\n" + "\n".join(f"  - {w}" for w in warnings[:8])
+                result.metadata = {**(result.metadata or {}), "warnings": warnings}
+            return result
 
         handlers = {
             "sasb": self._handle_sasb,
@@ -79,11 +91,15 @@ class FrameworkTool(BaseTool):
             "all": self._handle_all_list,
         }
 
-        handler = handlers.get(args.framework)
+        handler = handlers.get(normalized.framework)
         if not handler:
-            return ToolResult(output=f"Unknown framework: {args.framework}", is_error=True)
+            return ToolResult(output=f"Unknown framework: {normalized.framework}", is_error=True)
 
-        return handler(args)
+        result = handler(normalized)
+        if warnings:
+            result.output += "\n\nWarnings:\n" + "\n".join(f"  - {w}" for w in warnings[:8])
+            result.metadata = {**(result.metadata or {}), "warnings": warnings}
+        return result
 
     def _handle_sasb(self, args: FrameworkInput) -> ToolResult:
         from openharness.impact.frameworks.sasb import get_sasb_industries, match_sasb_industry

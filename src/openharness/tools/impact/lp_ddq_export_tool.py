@@ -7,6 +7,8 @@ by combining data from the impact engine, framework assessments, and DD checklis
 from __future__ import annotations
 
 import json
+import csv
+import io
 from pathlib import Path
 from typing import Literal
 
@@ -17,6 +19,7 @@ from openharness.impact.five_dimensions import assess_five_dimensions
 from openharness.impact.gap_analysis import analyze_gaps
 from openharness.impact.models import Company
 from openharness.impact.sdg_mapper import map_sdg_alignment
+from openharness.tools.impact.common import infer_themes, normalize_metric_map, normalize_sdg_goals
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 
@@ -149,9 +152,9 @@ class LpDdqExportTool(BaseTool):
             name=args.company_name,
             description=args.company_description,
             sector=args.sector,
-            impact_themes=args.impact_themes,
-            reported_metrics=args.reported_metrics,
-            sdg_claims=args.sdg_claims,
+            impact_themes=infer_themes(f"{args.company_description} {args.sector}", args.impact_themes),
+            reported_metrics=normalize_metric_map(args.reported_metrics)[0],
+            sdg_claims=normalize_sdg_goals(args.sdg_claims)[0],
         )
 
         data_cache: dict = {}
@@ -192,6 +195,21 @@ class LpDdqExportTool(BaseTool):
                     for s in template["sections"]
                 ],
             }, indent=2))
+
+        if args.output_format == "csv":
+            output = io.StringIO()
+            writer = csv.writer(output)
+            writer.writerow(["Template", template["name"]])
+            writer.writerow(["Company", company.name])
+            writer.writerow([])
+            writer.writerow(["Section ID", "Question", "Response"])
+            for section in template["sections"]:
+                writer.writerow([
+                    section["id"],
+                    section["question"],
+                    self._generate_section_data(section, company, store, data_cache),
+                ])
+            return ToolResult(output=output.getvalue())
 
         if args.output_format == "xlsx":
             return self._generate_xlsx(args, template, company, store, data_cache, context)

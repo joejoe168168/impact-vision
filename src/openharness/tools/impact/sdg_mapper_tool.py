@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 from openharness.impact.database import get_metric_store
 from openharness.impact.models import Company
 from openharness.impact.sdg_mapper import map_sdg_alignment
+from openharness.tools.impact.common import infer_themes, normalize_metric_map, normalize_sdg_goals
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 
@@ -47,17 +48,21 @@ class SdgMapperTool(BaseTool):
         except FileNotFoundError as e:
             return ToolResult(output=str(e), is_error=True)
 
+        reported_metrics, metric_warnings = normalize_metric_map(args.reported_metrics)
+        sdg_claims, sdg_warnings = normalize_sdg_goals(args.sdg_claims)
+        requested_goals, requested_warnings = normalize_sdg_goals(args.sdg_goals)
+
         company = Company(
             name=args.company_name,
             description=args.company_description,
             sector=args.sector,
-            impact_themes=args.impact_themes,
-            reported_metrics=args.reported_metrics,
-            sdg_claims=args.sdg_claims,
+            impact_themes=infer_themes(f"{args.company_description} {args.sector}", args.impact_themes),
+            reported_metrics=reported_metrics,
+            sdg_claims=sdg_claims,
         )
 
         alignments = map_sdg_alignment(
-            company, store, goals=args.sdg_goals or None
+            company, store, goals=requested_goals or None
         )
 
         output_lines = [f"SDG Alignment Analysis: {company.name}\n"]
@@ -78,10 +83,15 @@ class SdgMapperTool(BaseTool):
 
         output_lines.append("\n" + "=" * 60)
         output_lines.append(f"Total SDGs with alignment: {len(top)}/17")
+        warnings = metric_warnings + sdg_warnings + requested_warnings
+        if warnings:
+            output_lines.append("Warnings:")
+            for warning in warnings[:8]:
+                output_lines.append(f"  - {warning}")
 
         return ToolResult(
             output="\n".join(output_lines),
-            metadata={"alignments": [a.model_dump() for a in alignments]},
+            metadata={"alignments": [a.model_dump() for a in alignments], "warnings": warnings},
         )
 
 

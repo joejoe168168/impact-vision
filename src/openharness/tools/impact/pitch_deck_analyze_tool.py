@@ -11,6 +11,7 @@ from openharness.impact.database import get_metric_store
 from openharness.impact.dd_checklist import analyze_document_coverage, select_questions_for_document
 from openharness.impact.models import ImpactClaim
 from openharness.impact.sdg_taxonomy import get_sdg_goal
+from openharness.tools.impact.common import normalize_metric_ids
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 logger = logging.getLogger(__name__)
@@ -96,13 +97,16 @@ class PitchDeckAnalyzeTool(BaseTool):
         if not path.exists():
             return ToolResult(output=f"File not found: {path}", is_error=True)
 
-        if path.suffix.lower() != ".pdf":
-            return ToolResult(output=f"Expected PDF file, got: {path.suffix}", is_error=True)
-
-        try:
-            text, page_texts = _extract_pdf_text(path)
-        except Exception as e:
-            return ToolResult(output=f"Failed to extract PDF text: {e}", is_error=True)
+        if path.suffix.lower() == ".pdf":
+            try:
+                text, page_texts = _extract_pdf_text(path)
+            except Exception as e:
+                return ToolResult(output=f"Failed to extract PDF text: {e}", is_error=True)
+        elif path.suffix.lower() in {".txt", ".md"}:
+            text = path.read_text(encoding="utf-8", errors="replace")
+            page_texts = [{"page": 1, "text": text}]
+        else:
+            return ToolResult(output=f"Unsupported file format: {path.suffix} (supported: .pdf, .txt, .md)", is_error=True)
 
         if not text.strip():
             return ToolResult(output="No text could be extracted from the PDF", is_error=True)
@@ -437,7 +441,8 @@ def _extract_company_model(
                 break
 
     sector = _detect_sector(text)
-    reported = {mid: "pending" for mid in suggested_metric_ids}
+    normalized_metric_ids, _ = normalize_metric_ids(suggested_metric_ids)
+    reported = {mid: "pending" for mid in normalized_metric_ids}
 
     return Company(
         name=company_name,

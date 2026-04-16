@@ -16,6 +16,7 @@ from openharness.impact.five_dimensions import assess_five_dimensions
 from openharness.impact.gap_analysis import analyze_gaps
 from openharness.impact.models import Company
 from openharness.impact.sdg_mapper import map_sdg_alignment
+from openharness.tools.impact.common import infer_themes, normalize_metric_map, normalize_sdg_goals
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 _SECTOR_OPPORTUNITIES: dict[str, list[str]] = {
@@ -179,19 +180,23 @@ class ImpactReportTool(BaseTool):
         except FileNotFoundError as e:
             return ToolResult(output=str(e), is_error=True)
 
+        reported_metrics, metric_warnings = normalize_metric_map(args.reported_metrics)
+        sdg_claims, sdg_warnings = normalize_sdg_goals(args.sdg_claims)
+        warnings = metric_warnings + sdg_warnings
         company = Company(
             name=args.company_name,
             description=args.company_description,
             sector=args.sector,
-            impact_themes=args.impact_themes,
-            reported_metrics=args.reported_metrics,
-            sdg_claims=args.sdg_claims,
+            impact_themes=infer_themes(f"{args.company_description} {args.sector}", args.impact_themes),
+            reported_metrics=reported_metrics,
+            sdg_claims=sdg_claims,
         )
 
         report_data: dict = {
             "company": company.model_dump(),
             "generated_at": datetime.now(timezone.utc).isoformat(),
             "catalog_version": "IRIS+ 5.3c",
+            "warnings": warnings,
         }
 
         if args.include_five_dimensions:
@@ -328,6 +333,13 @@ def _to_text(data: dict) -> str:
             lines.append(f"    {dim}: {vals['actual']:.1f} vs {vals['benchmark']:.1f} ({arrow} {vals['delta']:+.1f})")
         cov = bm["coverage"]
         lines.append(f"  Coverage: {cov['actual']:.0f}% vs {cov['benchmark']:.0f}% benchmark ({cov['delta']:+.1f}%)")
+        lines.append("")
+
+    if data.get("warnings"):
+        lines.append("INPUT WARNINGS")
+        lines.append("-" * 40)
+        for warning in data["warnings"][:10]:
+            lines.append(f"  - {warning}")
         lines.append("")
 
     return "\n".join(lines)

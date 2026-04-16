@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 from openharness.impact.database import get_metric_store
 from openharness.impact.gap_analysis import analyze_gaps
 from openharness.impact.models import Company
+from openharness.tools.impact.common import infer_themes, normalize_metric_ids, normalize_metric_map
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 
@@ -44,13 +45,16 @@ class GapAnalysisTool(BaseTool):
         except FileNotFoundError as e:
             return ToolResult(output=str(e), is_error=True)
 
+        reported_metrics, warnings = normalize_metric_map(args.reported_metrics)
         company = Company(
             name=args.company_name,
-            reported_metrics=args.reported_metrics,
-            impact_themes=args.impact_themes,
+            reported_metrics=reported_metrics,
+            impact_themes=infer_themes(args.company_name, args.impact_themes),
         )
 
-        core_set = set(args.custom_metric_set) if args.custom_metric_set else None
+        custom_metric_set, custom_warnings = normalize_metric_ids(args.custom_metric_set)
+        warnings.extend(custom_warnings)
+        core_set = set(custom_metric_set) if custom_metric_set else None
         result = analyze_gaps(company, store, core_set=core_set)
 
         lines = [
@@ -91,8 +95,13 @@ class GapAnalysisTool(BaseTool):
             lines.append("Recommendations:")
             for rec in result["recommendations"]:
                 lines.append(f"  > {rec}")
+        if warnings:
+            lines.append("")
+            lines.append("Warnings:")
+            for warning in warnings[:8]:
+                lines.append(f"  - {warning}")
 
         return ToolResult(
             output="\n".join(lines),
-            metadata={"gap_analysis": result},
+            metadata={"gap_analysis": result, "warnings": warnings},
         )

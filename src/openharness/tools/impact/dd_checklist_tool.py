@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Literal
 
+import yaml
 from pydantic import BaseModel, Field
 
 from openharness.impact.dd_checklist import (
@@ -101,7 +102,7 @@ class DdChecklistTool(BaseTool):
             cat_set = set(args.categories)
             questions = [q for q in questions if q.category in cat_set]
         if args.priority:
-            questions = [q for q in questions if q.priority == args.priority]
+            questions = [q for q in questions if q.priority == args.priority.lower().strip()]
 
         if not questions:
             return ToolResult(output="No questions match the filter criteria.")
@@ -224,4 +225,19 @@ def _extract_text(file_path: str, context: ToolExecutionContext) -> str:
             return ""
     elif path.suffix.lower() in (".txt", ".md"):
         return path.read_text(encoding="utf-8", errors="replace")
+    elif path.suffix.lower() in (".yaml", ".yml"):
+        data = yaml.safe_load(path.read_text(encoding="utf-8", errors="replace"))
+        if isinstance(data, dict):
+            return "\n".join(f"{k}: {v}" for k, v in data.items())
+        if isinstance(data, list):
+            return "\n".join(str(item) for item in data)
+        return str(data)
+    elif path.suffix.lower() == ".json":
+        import json
+        data = json.loads(path.read_text(encoding="utf-8", errors="replace"))
+        if isinstance(data, dict):
+            return "\n".join(f"{k}: {v}" for k, v in data.items())
+        if isinstance(data, list):
+            return "\n".join(str(item) for item in data)
+        return str(data)
     return ""

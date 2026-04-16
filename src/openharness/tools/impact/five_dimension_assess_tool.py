@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 from openharness.impact.database import get_metric_store
 from openharness.impact.five_dimensions import assess_five_dimensions
 from openharness.impact.models import Company
+from openharness.tools.impact.common import infer_themes, normalize_metric_map
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 
@@ -45,12 +46,13 @@ class FiveDimensionAssessTool(BaseTool):
         except FileNotFoundError as e:
             return ToolResult(output=str(e), is_error=True)
 
+        reported_metrics, warnings = normalize_metric_map(args.reported_metrics)
         company = Company(
             name=args.company_name,
             description=args.company_description,
             sector=args.sector,
-            impact_themes=args.impact_themes,
-            reported_metrics=args.reported_metrics,
+            impact_themes=infer_themes(f"{args.company_description} {args.sector}", args.impact_themes),
+            reported_metrics=reported_metrics,
         )
 
         result = assess_five_dimensions(
@@ -77,10 +79,15 @@ class FiveDimensionAssessTool(BaseTool):
             lines.append("Recommendations:")
             for i, rec in enumerate(result.recommendations, 1):
                 lines.append(f"  {i}. {rec}")
+        if warnings:
+            lines.append("")
+            lines.append("Warnings:")
+            for warning in warnings[:8]:
+                lines.append(f"  - {warning}")
 
         return ToolResult(
             output="\n".join(lines),
-            metadata={"assessment": result.model_dump()},
+            metadata={"assessment": result.model_dump(), "warnings": warnings},
         )
 
 
