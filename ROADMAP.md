@@ -371,117 +371,117 @@
 
 ### 3.1 LLM-Assisted Narrative Generation
 
-- [ ] **3.1.1** Add LLM-assisted DDQ narrative generation mode — use the agent's LLM to write paragraph-length responses
+- [x] **3.1.1** Add LLM-assisted DDQ narrative generation mode — use the agent's LLM to write paragraph-length responses
   - File: `src/openharness/tools/impact/lp_ddq_export_tool.py`
   - Ref: Review §2.6
 
-- [ ] **3.1.2** Add LLM-assisted impact report narratives — executive summary, key findings, recommendations
+- [x] **3.1.2** Add LLM-assisted impact report narratives — executive summary, key findings, recommendations
   - File: `src/openharness/tools/impact/impact_report_tool.py`
   - Ref: Review §7 (rec #13)
 
-- [ ] **3.1.3** Add "draft review" mode — generate narrative, then flag for human review before final output
+- [x] **3.1.3** Add "draft review" mode — generate narrative, then flag for human review before final output
   - Files: `lp_ddq_export_tool.py`, `impact_report_tool.py`
   - Ref: Review §9.4
 
 ### 3.2 Beneficiary Feedback Integration
 
-- [ ] **3.2.1** Add `beneficiary_feedback` field to `Company` model — structured data (satisfaction scores, NPS, qualitative themes)
+- [x] **3.2.1** Add `beneficiary_feedback` field to `Company` model — structured data (satisfaction scores, NPS, qualitative themes)
   - File: `src/openharness/impact/models.py`
   - Ref: Review §4.2, §10.3
 
-- [ ] **3.2.2** Add beneficiary feedback data import — accept 60 Decibels Lean Data format
+- [x] **3.2.2** Add beneficiary feedback data import — accept 60 Decibels Lean Data format
   - File: `src/openharness/tools/impact/beneficiary_feedback_tool.py` (new)
   - Ref: Review §4.2, §10.3
 
-- [ ] **3.2.3** Integrate beneficiary feedback into DD checklist responses (SV01-SV03)
+- [x] **3.2.3** Integrate beneficiary feedback into DD checklist responses (SV01-SV03)
   - File: `src/openharness/tools/impact/dd_checklist_tool.py`
   - Ref: Review §4.2
 
-- [ ] **3.2.4** Include beneficiary feedback section in HTML impact reports
+- [x] **3.2.4** Include beneficiary feedback section in HTML impact reports
   - File: `src/openharness/tools/impact/impact_report_tool.py`
   - Ref: Review §4.2
 
 ### 3.3 Real Benchmarking with Peer Data
 
-- [ ] **3.3.1** Add peer data upload capability — accept anonymized CSV/JSON peer metrics for comparison
+- [x] **3.3.1** Add peer data upload capability — accept anonymized CSV/JSON peer metrics for comparison
   - File: `src/openharness/tools/impact/portfolio_tool.py`
   - Ref: Review §4.8
 
-- [ ] **3.3.2** Add percentile ranking calculation — "this company is in the Xth percentile for sector Y"
+- [x] **3.3.2** Add percentile ranking calculation — "this company is in the Xth percentile for sector Y"
   - File: `src/openharness/impact/benchmarks.py`
   - Ref: Review §4.8
 
-- [ ] **3.3.3** Add GIIN Annual Impact Investor Survey data as benchmark source
+- [x] **3.3.3** Add GIIN Annual Impact Investor Survey data as benchmark source
   - File: `src/openharness/impact/benchmarks.py`
   - Ref: Review §10.2
 
-- [ ] **3.3.4** Add fund-level benchmarking — compare portfolio aggregate against GIIN survey data
+- [x] **3.3.4** Add fund-level benchmarking — compare portfolio aggregate against GIIN survey data
   - File: `src/openharness/tools/impact/portfolio_tool.py`
   - Ref: Review §4.8
 
 ### 3.4 API / Data Pipeline Integration
 
-- [ ] **3.4.1** Add REST API endpoints for key tools — impact scoring, SDG mapping, data quality
+- [x] **3.4.1** Add REST API endpoints for key tools — impact scoring, SDG mapping, data quality
   - File: `src/openharness/gateway/router.py` (extend)
   - Ref: Review §4.7
 
-- [ ] **3.4.2** Add webhook support for metric update events
+- [x] **3.4.2** Add webhook support for metric update events
   - File: `src/openharness/gateway/router.py` (extend)
   - Ref: Review §4.7
 
-- [ ] **3.4.3** Add data validation pipeline for incoming metric data
+- [x] **3.4.3** Add data validation pipeline for incoming metric data
   - File: `src/openharness/tools/impact/data_quality_tool.py` (extend)
   - Ref: Review §4.7
 
 ### 3.5 Scenario Modeling
 
-- [ ] **3.5.1** Add "what-if" analysis — calculate portfolio score change when adding/removing a company
+- [x] **3.5.1** Add "what-if" analysis — calculate portfolio score change when adding/removing a company
   - File: `src/openharness/tools/impact/portfolio_tool.py`
   - Ref: Review §4.6
 
-- [ ] **3.5.2** Add metric optimization — suggest which metrics each company should add to maximize portfolio SDG coverage
+- [x] **3.5.2** Add metric optimization — suggest which metrics each company should add to maximize portfolio SDG coverage
   - File: `src/openharness/tools/impact/metric_recommender_tool.py` (extend)
   - Ref: Review §4.6
 
-- [ ] **3.5.3** Persist interactive HTML checkbox state — save and reload scenario changes
+- [x] **3.5.3** Persist interactive HTML checkbox state — save and reload scenario changes
   - File: `src/openharness/tools/impact/impact_report_tool.py`
   - Ref: Review §4.6
 
 ### 3.6 Audit Trail & Verification
 
-- [ ] **3.6.1** Add `verification_status` field to `MetricValue` model — enum: `self_reported`, `management_verified`, `third_party_verified`
+- [x] **3.6.1** Add `verification_status` field to `MetricValue` model — enum: `self_reported`, `management_verified`, `third_party_verified`
   - File: `src/openharness/impact/models.py`
   - Ref: Review §4.5
 
-- [ ] **3.6.2** Add audit trail — who reported what, when, with what evidence
+- [x] **3.6.2** Add audit trail — who reported what, when, with what evidence
   - File: `src/openharness/impact/models.py` (extend)
   - Ref: Review §4.5
 
-- [ ] **3.6.3** Add pre-verification preparation mode — organize evidence and gaps for BlueMark/IFC OPIM verification
+- [x] **3.6.3** Add pre-verification preparation mode — organize evidence and gaps for BlueMark/IFC OPIM verification
   - File: `src/openharness/tools/impact/verification_prep_tool.py` (new)
   - Ref: Review §10.5
 
-- [ ] **3.6.4** Add IFC Operating Principles alignment checker
+- [x] **3.6.4** Add IFC Operating Principles alignment checker
   - File: `src/openharness/impact/frameworks/ifc_opim.py` (new)
   - Ref: Review §10.4
 
 ### 3.7 Localization
 
-- [ ] **3.7.1** Add multi-language document support for pitch deck analysis (PDF text extraction with encoding detection)
+- [x] **3.7.1** Add multi-language document support for pitch deck analysis (PDF text extraction with encoding detection)
   - File: `src/openharness/tools/impact/pitch_deck_analyze_tool.py`
   - Ref: Review §7 (rec #19)
 
-- [ ] **3.7.2** Add localized keyword dictionaries — at minimum Spanish, French, Portuguese for emerging markets
+- [x] **3.7.2** Add localized keyword dictionaries — at minimum Spanish, French, Portuguese for emerging markets
   - Files: `data/sdg_keyword_map_es.yaml`, `data/sdg_keyword_map_fr.yaml`, etc.
   - Ref: Review §7 (rec #19)
 
 ### 3.8 Dashboard Enhancement
 
-- [ ] **3.8.1** Expand Streamlit dashboard — portfolio overview, fund-level KPIs, trend charts
+- [x] **3.8.1** Expand Streamlit dashboard — portfolio overview, fund-level KPIs, trend charts
   - File: `src/openharness/dashboard/app.py`
   - Ref: Review §7 (rec #20)
 
-- [ ] **3.8.2** Add interactive drill-down from portfolio to company to metric level
+- [x] **3.8.2** Add interactive drill-down from portfolio to company to metric level
   - File: `src/openharness/dashboard/app.py`
   - Ref: Review §7 (rec #20)
 
@@ -735,4 +735,4 @@
 
 ---
 
-*Last updated: 2026-04-16 (v0.1.8). Derived from `IMPACT_MANAGER_REVIEW.md`.*
+*Last updated: 2026-04-16 (v0.2.0). Derived from `IMPACT_MANAGER_REVIEW.md`.*

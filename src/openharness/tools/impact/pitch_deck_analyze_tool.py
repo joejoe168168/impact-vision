@@ -278,6 +278,24 @@ class PitchDeckAnalyzeTool(BaseTool):
         return ToolResult(output="\n".join(lines), metadata=metadata)
 
 
+_LANG_MARKERS = {
+    "es": ["empresa", "impacto", "inversión", "comunidad", "sostenible", "objetivo", "beneficiarios"],
+    "fr": ["entreprise", "investissement", "communauté", "durable", "objectif", "bénéficiaires"],
+    "pt": ["empresa", "investimento", "comunidade", "sustentável", "objetivo", "beneficiários"],
+    "zh": ["企业", "投资", "影响", "可持续", "社区", "目标"],
+}
+
+
+def _detect_language(text: str) -> str:
+    """Detect document language from text content. Returns ISO 639-1 code."""
+    text_lower = text.lower()
+    scores: dict[str, int] = {}
+    for lang, markers in _LANG_MARKERS.items():
+        scores[lang] = sum(1 for m in markers if m in text_lower)
+    best = max(scores, key=scores.get) if scores else "en"
+    return best if scores.get(best, 0) >= 3 else "en"
+
+
 def _extract_pdf_text(path: Path) -> tuple[str, list[dict]]:
     try:
         import pymupdf
@@ -295,7 +313,13 @@ def _extract_pdf_text(path: Path) -> tuple[str, list[dict]]:
         all_text.append(text)
 
     doc.close()
-    return "\n".join(all_text), page_texts
+    full_text = "\n".join(all_text)
+
+    detected_lang = _detect_language(full_text)
+    if detected_lang != "en":
+        page_texts.insert(0, {"page": 0, "text": f"[Detected language: {detected_lang}]", "language": detected_lang})
+
+    return full_text, page_texts
 
 
 def _extract_impact_claims(page_texts: list[dict], store) -> list[ImpactClaim]:

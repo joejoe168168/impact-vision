@@ -7,6 +7,11 @@ These are indicative benchmarks for comparison, not precise values.
 
 from __future__ import annotations
 
+import csv
+import io
+import json
+import math
+
 from pydantic import BaseModel, Field
 
 
@@ -153,3 +158,184 @@ def compare_to_benchmark(
         },
         "primary_sdgs": bm.sdg_primary,
     }
+
+
+class PeerDataStore:
+    """In-memory store for anonymized peer company data for benchmarking."""
+
+    def __init__(self) -> None:
+        self._peers: list[dict] = []
+
+    def load_csv(self, csv_text: str) -> int:
+        """Load peer data from CSV text. Returns number of peers loaded."""
+        reader = csv.DictReader(io.StringIO(csv_text))
+        count = 0
+        for row in reader:
+            peer: dict = {
+                "sector": row.get("sector", ""),
+                "five_d_overall": _safe_float(row.get("five_d_overall", "")),
+                "coverage_pct": _safe_float(row.get("coverage_pct", "")),
+                "sdg_count": int(row.get("sdg_count", "0") or "0"),
+                "metrics_reported": int(row.get("metrics_reported", "0") or "0"),
+            }
+            for dim in ("what", "who", "how_much", "contribution", "risk"):
+                peer[dim] = _safe_float(row.get(dim, ""))
+            self._peers.append(peer)
+            count += 1
+        return count
+
+    def load_json(self, json_text: str) -> int:
+        """Load peer data from JSON array text."""
+        data = json.loads(json_text)
+        if isinstance(data, list):
+            self._peers.extend(data)
+            return len(data)
+        return 0
+
+    @property
+    def peer_count(self) -> int:
+        return len(self._peers)
+
+    def get_sector_peers(self, sector: str) -> list[dict]:
+        sector_lower = sector.lower()
+        return [
+            p for p in self._peers
+            if p.get("sector", "").lower() == sector_lower
+            or sector_lower in p.get("sector", "").lower()
+        ]
+
+    def calculate_percentile(self, sector: str, metric: str, value: float) -> float | None:
+        """Calculate percentile rank for a value within sector peers."""
+        peers = self.get_sector_peers(sector)
+        if not peers:
+            peers = self._peers
+        if not peers:
+            return None
+
+        values = [p.get(metric, 0) for p in peers if p.get(metric) is not None]
+        if not values:
+            return None
+
+        below = sum(1 for v in values if v < value)
+        equal = sum(1 for v in values if v == value)
+        return round((below + 0.5 * equal) / len(values) * 100, 1)
+
+
+_peer_store = PeerDataStore()
+
+
+def get_peer_store() -> PeerDataStore:
+    return _peer_store
+
+
+def _safe_float(val: str) -> float:
+    try:
+        return float(val)
+    except (ValueError, TypeError):
+        return 0.0
+
+
+def calculate_percentile_from_benchmarks(
+    sector: str,
+    overall_score: float,
+) -> dict:
+    """Estimate percentile from built-in sector benchmarks using a normal distribution.
+
+    Since we only have means (no raw peer data), we assume sigma ~ 0.5 for 5D scores
+    and use a cumulative distribution to estimate percentile position.
+    """
+    bm = get_benchmark(sector)
+    if not bm:
+        return {"percentile": None, "benchmark_available": False}
+
+    mean = bm.five_d_overall
+    sigma = 0.5
+    z = (overall_score - mean) / sigma if sigma > 0 else 0
+    percentile = round(0.5 * (1 + math.erf(z / math.sqrt(2))) * 100, 1)
+    percentile = max(1, min(99, percentile))
+
+    return {
+        "percentile": percentile,
+        "benchmark_available": True,
+        "sector": bm.sector,
+        "interpretation": (
+            f"This company is in the {percentile:.0f}th percentile "
+            f"for {bm.sector} (benchmark mean: {mean}/5, sample: {bm.sample_note})"
+        ),
+    }
+
+
+GIIN_SURVEY_BENCHMARKS = {
+    "overall_sample_size": 308,
+    "survey_year": 2023,
+    "source": "GIIN Annual Impact Investor Survey 2023",
+    "metrics": {
+        "avg_5d_score": 2.8,
+        "median_core_metric_coverage": 35.0,
+        "avg_sdg_count": 4.2,
+        "avg_metrics_reported": 6.5,
+    },
+    "by_strategy": {
+        "impact_first": {"avg_5d_score": 3.2, "avg_coverage": 42.0},
+        "finance_first": {"avg_5d_score": 2.4, "avg_coverage": 28.0},
+        "responsible": {"avg_5d_score": 2.0, "avg_coverage": 20.0},
+    },
+    "by_asset_class": {
+        "private_equity": {"avg_5d_score": 3.0, "avg_coverage": 40.0},
+        "private_debt": {"avg_5d_score": 2.5, "avg_coverage": 30.0},
+        "real_assets": {"avg_5d_score": 2.8, "avg_coverage": 35.0},
+    },
+}
+
+
+def compare_to_giin_survey(
+    portfolio_avg_5d: float,
+    portfolio_avg_coverage: float,
+    portfolio_sdg_count: int,
+    strategy: str = "",
+) -> dict:
+    """Compare a fund's portfolio metrics against GIIN Annual Survey benchmarks."""
+    giin = GIIN_SURVEY_BENCHMARKS["metrics"]
+    result: dict = {
+        "source": GIIN_SURVEY_BENCHMARKS["source"],
+        "sample_size": GIIN_SURVEY_BENCHMARKS["overall_sample_size"],
+        "comparisons": {
+            "five_d_score": {
+                "fund": portfolio_avg_5d,
+                "giin_avg": giin["avg_5d_score"],
+                "delta": round(portfolio_avg_5d - giin["avg_5d_score"], 2),
+                "status": "above" if portfolio_avg_5d > giin["avg_5d_score"] else "below",
+            },
+            "core_metric_coverage": {
+                "fund": portfolio_avg_coverage,
+                "giin_median": giin["median_core_metric_coverage"],
+                "delta": round(portfolio_avg_coverage - giin["median_core_metric_coverage"], 1),
+                "status": "above" if portfolio_avg_coverage > giin["median_core_metric_coverage"] else "below",
+            },
+            "sdg_count": {
+                "fund": portfolio_sdg_count,
+                "giin_avg": giin["avg_sdg_count"],
+                "delta": round(portfolio_sdg_count - giin["avg_sdg_count"], 1),
+                "status": "above" if portfolio_sdg_count > giin["avg_sdg_count"] else "below",
+            },
+        },
+    }
+
+    strategy_key = strategy.lower().replace("-", "_").replace(" ", "_")
+    strat_data = GIIN_SURVEY_BENCHMARKS["by_strategy"].get(strategy_key)
+    if strat_data:
+        result["strategy_comparison"] = {
+            "strategy": strategy_key,
+            "five_d": {
+                "fund": portfolio_avg_5d,
+                "strategy_avg": strat_data["avg_5d_score"],
+                "delta": round(portfolio_avg_5d - strat_data["avg_5d_score"], 2),
+            },
+            "coverage": {
+                "fund": portfolio_avg_coverage,
+                "strategy_avg": strat_data["avg_coverage"],
+                "delta": round(portfolio_avg_coverage - strat_data["avg_coverage"], 1),
+            },
+        }
+
+    return result

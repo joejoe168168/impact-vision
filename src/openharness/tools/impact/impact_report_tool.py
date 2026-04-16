@@ -158,6 +158,18 @@ class ImpactReportInput(BaseModel):
     include_gap_analysis: bool = Field(default=True)
     include_sdg_mapping: bool = Field(default=True)
     include_five_dimensions: bool = Field(default=True)
+    narrative_mode: Literal["data", "narrative_prompt"] = Field(
+        default="data",
+        description=(
+            "'data': Standard data-driven output. "
+            "'narrative_prompt': Append LLM writing prompts for executive summary, "
+            "key findings, and recommendations so the agent can generate polished narratives."
+        ),
+    )
+    draft_review: bool = Field(
+        default=False,
+        description="If True, output is wrapped with DRAFT markers for human review.",
+    )
 
 
 class ImpactReportTool(BaseTool):
@@ -216,6 +228,9 @@ class ImpactReportTool(BaseTool):
             from openharness.impact.trend_analysis import assess_target_progress
             report_data["target_tracking"] = assess_target_progress(company)
 
+        if company.beneficiary_feedback:
+            report_data["beneficiary_feedback"] = company.beneficiary_feedback.model_dump()
+
         from openharness.impact.benchmarks import compare_to_benchmark
         if "five_dimensions" in report_data and company.sector:
             fd = report_data["five_dimensions"]
@@ -241,6 +256,12 @@ class ImpactReportTool(BaseTool):
             output = _to_html(report_data)
         else:
             output = _to_text(report_data)
+
+        if args.narrative_mode == "narrative_prompt":
+            output += "\n\n" + _generate_report_narrative_prompt(report_data)
+
+        if args.draft_review:
+            output = _wrap_report_draft(output, company.name)
 
         if args.output_path:
             path = Path(args.output_path)
@@ -354,6 +375,98 @@ def _to_text(data: dict) -> str:
     return "\n".join(lines)
 
 
+def _generate_report_narrative_prompt(data: dict) -> str:
+    """Generate structured LLM prompts for executive summary, findings, and recommendations."""
+    company = data.get("company", {})
+    fd = data.get("five_dimensions", {})
+    sdg = data.get("sdg_alignments", [])
+    gaps = data.get("gap_analysis", {})
+    gw = data.get("greenwashing", {})
+
+    sections = []
+
+    sections.append("=== NARRATIVE GENERATION PROMPTS ===\n")
+    sections.append("The following prompts provide structured context for the agent to generate")
+    sections.append("investor-quality narratives. Each section includes data points and writing instructions.\n")
+
+    # Executive Summary prompt
+    exec_data = [f"Company: {company.get('name', 'Unknown')} ({company.get('sector', 'N/A')})"]
+    if company.get("geography"):
+        exec_data.append(f"Geography: {company['geography']}")
+    if fd:
+        exec_data.append(f"5D Score: {fd.get('overall_score', 'N/A')}/5 (Grade: {fd.get('overall_grade', 'N/A')})")
+    top_sdgs = sorted(sdg, key=lambda s: s.get("score", 0), reverse=True)[:3]
+    if top_sdgs:
+        sdg_str = ", ".join(f"SDG {s['goal']} ({s.get('score', 0):.0f}/100)" for s in top_sdgs)
+        exec_data.append(f"Top SDGs: {sdg_str}")
+    if gaps:
+        exec_data.append(f"Core Metric Coverage: {gaps.get('coverage_percentage', 0)}%")
+    if isinstance(gw, dict):
+        exec_data.append(f"Greenwashing Risk: {gw.get('overall_score', 'N/A')}/100 ({gw.get('classification', 'N/A')})")
+
+    sections.append("--- EXECUTIVE SUMMARY ---")
+    sections.append("Data points:")
+    for d_item in exec_data:
+        sections.append(f"  - {d_item}")
+    sections.append("Instructions: Write a 200-word executive summary covering the company's impact profile,")
+    sections.append("key strengths, primary risks, and recommended next steps. Use formal investor language.\n")
+
+    # Key Findings prompt
+    findings_data = []
+    if fd:
+        dims = fd.get("dimension_averages", {}) if "dimension_averages" in fd else {}
+        if not dims:
+            for dim_name in ("what", "who", "how_much", "contribution", "risk"):
+                dim = fd.get(dim_name, {})
+                if isinstance(dim, dict) and "score" in dim:
+                    findings_data.append(f"{dim_name}: {dim['score']}/5 [{dim.get('provenance', 'N/A')}]")
+    if gaps:
+        findings_data.append(f"Metrics reported: {gaps.get('metrics_reported', 0)}/{gaps.get('metrics_reported', 0) + gaps.get('metrics_missing', 0)}")
+        recs = gaps.get("recommendations", [])[:3]
+        for r in recs:
+            findings_data.append(f"Gap recommendation: {r}")
+
+    sections.append("--- KEY FINDINGS ---")
+    sections.append("Data points:")
+    for f_item in findings_data:
+        sections.append(f"  - {f_item}")
+    sections.append("Instructions: Summarize 3-5 key findings about the company's impact measurement maturity,")
+    sections.append("data quality, and alignment with international standards. Be specific and data-driven.\n")
+
+    # Recommendations prompt
+    sections.append("--- RECOMMENDATIONS ---")
+    sections.append("Instructions: Based on the full report data above, write 3-5 prioritized recommendations")
+    sections.append("for improving the company's impact measurement and reporting. Each recommendation should:")
+    sections.append("  1. Identify the specific gap or weakness")
+    sections.append("  2. Propose a concrete action")
+    sections.append("  3. Reference the relevant framework or standard (IRIS+, SDG, SASB, etc.)")
+    sections.append("  4. Estimate the effort level (quick win / medium-term / strategic)")
+    sections.append("================================\n")
+
+    return "\n".join(sections)
+
+
+def _wrap_report_draft(output: str, company_name: str) -> str:
+    """Wrap report output with DRAFT review markers."""
+    header = (
+        "╔══════════════════════════════════════════════════════════════════╗\n"
+        "║  DRAFT IMPACT REPORT — FOR INTERNAL REVIEW ONLY               ║\n"
+        "╚══════════════════════════════════════════════════════════════════╝\n"
+        f"Company: {company_name}\n"
+        "Status: PENDING HUMAN REVIEW\n"
+        "Instructions: Review all scores, claims, and recommendations for\n"
+        "accuracy before sharing with stakeholders or including in LP reports.\n"
+        "─" * 66 + "\n"
+    )
+    footer = (
+        "\n" + "─" * 66 + "\n"
+        "╔══════════════════════════════════════════════════════════════════╗\n"
+        "║  END OF DRAFT — REQUIRES INVESTMENT TEAM SIGN-OFF             ║\n"
+        "╚══════════════════════════════════════════════════════════════════╝"
+    )
+    return header + output + footer
+
+
 def _to_csv(data: dict) -> str:
     buf = io.StringIO()
     writer = csv.writer(buf)
@@ -388,7 +501,7 @@ def _to_csv(data: dict) -> str:
     return buf.getvalue()
 
 
-def _interactive_scoring_section(fd: dict, sdg_alignments: list) -> str:
+def _interactive_scoring_section(fd: dict, sdg_alignments: list, company_name: str = "") -> str:
     """Generate an interactive HTML section with checkboxes that adjust scores."""
     base_scores = {
         "what": fd["what"]["score"],
@@ -427,8 +540,10 @@ def _interactive_scoring_section(fd: dict, sdg_alignments: list) -> str:
     ]
 
     import json as _json
+    import re as _re
     items_json = _json.dumps(items)
     base_json = _json.dumps(base_scores)
+    company_name_safe = _re.sub(r'[^a-zA-Z0-9]', '-', company_name).lower().strip('-') or 'default'
 
     return f"""
 <h3 style="margin-top:24px">Improve Your Score</h3>
@@ -476,6 +591,30 @@ Check practices your organization follows. The radar chart and scores above upda
   }}
   function gradeClass(g) {{ return 'grade-'+g[0]; }}
 
+  const STORAGE_KEY = 'impact-vision-scenario-' + '{company_name_safe}';
+
+  function saveState() {{
+    const state = {{}};
+    items.forEach(function(item) {{
+      const cb = document.getElementById('chk-'+item.id);
+      if (cb) state[item.id] = cb.checked;
+    }});
+    try {{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }} catch(e) {{}}
+  }}
+
+  function loadState() {{
+    try {{
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (!saved) return;
+      const state = JSON.parse(saved);
+      items.forEach(function(item) {{
+        const cb = document.getElementById('chk-'+item.id);
+        if (cb && state[item.id]) cb.checked = true;
+      }});
+      recalc();
+    }} catch(e) {{}}
+  }}
+
   function recalc() {{
     const scores = {{}};
     dimNames.forEach(function(d) {{ scores[d] = baseScores[d]; }});
@@ -489,6 +628,7 @@ Check practices your organization follows. The radar chart and scores above upda
         }});
       }}
     }});
+    saveState();
     const avg = dimNames.reduce(function(s,d){{ return s+scores[d]; }}, 0) / 5;
     const grade = getGrade(avg);
     const delta = avg - origOverall;
@@ -546,6 +686,7 @@ Check practices your organization follows. The radar chart and scores above upda
       font:{{family:'Inter, -apple-system, sans-serif'}}
     }}, {{responsive:true}});
   }}
+  loadState();
 }})();
 </script>"""
 
@@ -728,7 +869,7 @@ Plotly.newPlot('radar-chart', [{{
 }}, {{responsive: true}});
 </script>""")
 
-        sections.append(_interactive_scoring_section(fd, data.get("sdg_alignments", [])))
+        sections.append(_interactive_scoring_section(fd, data.get("sdg_alignments", []), company.get("name", "")))
 
         if fd.get("recommendations"):
             sections.append("<h3>Recommendations</h3>")
@@ -767,6 +908,44 @@ Plotly.newPlot('radar-chart', [{{
                 sections.append(f"""<div style="margin-top:12px;padding:12px 16px;background:var(--primary-light);border-radius:var(--radius-sm);font-size:0.85em">
 <strong>Target Summary:</strong> {summary.get('on_track', 0)} on track, {summary.get('behind', 0)} behind, {summary.get('exceeded', 0)} exceeded, {summary.get('at_risk', 0)} at risk
 </div>""")
+
+    if "beneficiary_feedback" in data:
+        bf = data["beneficiary_feedback"]
+        sections.append("<h2>Beneficiary Feedback</h2>")
+        sections.append('<div class="chart-row">')
+        if bf.get("satisfaction_score") is not None:
+            sat = bf["satisfaction_score"]
+            sat_color = "var(--success)" if sat >= 4 else "var(--warning)" if sat >= 3 else "var(--danger)"
+            sections.append(f'<div class="score-card"><div class="value" style="color:{sat_color}">{sat}/5</div><div class="label">Satisfaction</div></div>')
+        if bf.get("nps") is not None:
+            nps = bf["nps"]
+            nps_color = "var(--success)" if nps >= 50 else "var(--warning)" if nps >= 0 else "var(--danger)"
+            sections.append(f'<div class="score-card"><div class="value" style="color:{nps_color}">{nps}</div><div class="label">NPS</div></div>')
+        if bf.get("sample_size"):
+            sections.append(f'<div class="score-card"><div class="value">{bf["sample_size"]}</div><div class="label">Sample Size</div></div>')
+        if bf.get("quality_of_life_improvement") is not None:
+            sections.append(f'<div class="score-card"><div class="value" style="color:var(--success)">{bf["quality_of_life_improvement"]}%</div><div class="label">QoL Improvement</div></div>')
+        if bf.get("would_recommend") is not None:
+            sections.append(f'<div class="score-card"><div class="value">{bf["would_recommend"]}%</div><div class="label">Would Recommend</div></div>')
+        sections.append('</div>')
+        if bf.get("methodology"):
+            sections.append(f'<p style="font-size:0.85em;color:var(--text-secondary)">Methodology: {bf["methodology"]}')
+            if bf.get("survey_date"):
+                sections[-1] += f' | Survey date: {bf["survey_date"]}'
+            sections[-1] += '</p>'
+        if bf.get("themes"):
+            sections.append('<div style="margin-top:8px"><strong>Positive Themes:</strong> ')
+            sections.append(', '.join(f'<span style="background:var(--primary-light);padding:2px 8px;border-radius:12px;font-size:0.85em">{t}</span>' for t in bf["themes"][:5]))
+            sections.append('</div>')
+        if bf.get("challenges"):
+            sections.append('<div style="margin-top:8px"><strong>Challenges:</strong> ')
+            sections.append(', '.join(f'<span style="background:#fff3e0;padding:2px 8px;border-radius:12px;font-size:0.85em">{c}</span>' for c in bf["challenges"][:5]))
+            sections.append('</div>')
+        if bf.get("quotes"):
+            sections.append('<div style="margin-top:12px">')
+            for q in bf["quotes"][:3]:
+                sections.append(f'<blockquote style="border-left:3px solid var(--primary);padding:8px 16px;margin:8px 0;font-style:italic;color:var(--text-secondary)">&ldquo;{q}&rdquo;</blockquote>')
+            sections.append('</div>')
 
     if "sdg_alignments" in data:
         aligned = [a for a in data["sdg_alignments"] if a["score"] > 0]

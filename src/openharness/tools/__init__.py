@@ -68,6 +68,7 @@ def create_default_tool_registry(mcp_manager: McpClientManager | None = None) ->
         _register_if_available(registry, module_name, class_name)
 
     impact_tools: tuple[tuple[str, str], ...] = (
+        ("impact.beneficiary_feedback_tool", "BeneficiaryFeedbackTool"),
         ("impact.iris_catalog_tool", "IrisCatalogTool"),
         ("impact.sdg_mapper_tool", "SdgMapperTool"),
         ("impact.five_dimension_assess_tool", "FiveDimensionAssessTool"),
@@ -85,6 +86,7 @@ def create_default_tool_registry(mcp_manager: McpClientManager | None = None) ->
         ("impact.metric_recommender_tool", "MetricRecommenderTool"),
         ("impact.portfolio_tool", "PortfolioTool"),
         ("impact.trend_analysis_tool", "TrendAnalysisTool"),
+        ("impact.verification_prep_tool", "VerificationPrepTool"),
     )
     for module_name, class_name in impact_tools:
         _register_if_available(registry, module_name, class_name)

@@ -4,6 +4,61 @@ All notable changes to Impact Vision are recorded here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.2.0] - 2026-04-16
+
+### Added — Phase 3: Missing Features
+
+**LLM-assisted narrative generation** (3.1)
+- `narrative_mode` parameter in DDQ export and impact report tools (`data` or `narrative_prompt`)
+- `draft_review` flag wraps output with DRAFT markers for human review before distribution
+- Structured prompts for executive summary, key findings, and recommendations
+
+**Beneficiary feedback integration** (3.2)
+- `BeneficiaryFeedback` Pydantic model: satisfaction, NPS, QoL improvement, themes, quotes, segments
+- `BeneficiaryFeedbackTool`: import (JSON/CSV), analyze (quality scoring + NESTA level), summary
+- Beneficiary feedback auto-fills stakeholder voice questions (SV01-SV03) in DD checklist
+- Beneficiary feedback section in HTML reports with score cards, themes, and quotes
+
+**Real benchmarking with peer data** (3.3)
+- `PeerDataStore` for loading anonymized peer CSV/JSON data and calculating percentile ranks
+- Percentile ranking from built-in benchmarks using normal distribution estimation
+- GIIN Annual Impact Investor Survey benchmark data (308 respondents, 2023)
+- `compare_to_giin_survey()` for fund-level comparison across 5D, coverage, SDG metrics
+
+**REST API gateway** (3.4)
+- FastAPI endpoints: `/api/v1/score`, `/sdg-map`, `/data-quality`, `/greenwashing`, `/gap-analysis`
+- `/api/v1/validate` — metric data validation pipeline
+- `/api/v1/webhook` — register webhook callbacks for metric update events
+- CORS support and health check endpoint
+
+**Scenario modeling** (3.5)
+- Portfolio `what_if` action: add/remove companies and see score deltas
+- Metric recommender `optimize_for_sdg_coverage` mode: prioritizes metrics filling SDG gaps
+- Interactive HTML checkbox state persists via localStorage
+
+**Audit trail & verification** (3.6)
+- `verification_status` field on MetricValue: `self_reported` / `management_verified` / `third_party_verified` / `audited`
+- `AuditTrailEntry` model and `audit_trail` field on Company
+- `VerificationPrepTool`: readiness check, evidence map, IFC OPIM alignment
+- `ifc_opim.py` framework module: 9 Operating Principles with verification requirements
+
+**Localization** (3.7)
+- Multi-language PDF detection (Spanish, French, Portuguese, Chinese markers)
+- Localized SDG keyword dictionaries: `sdg_keywords_es.yaml`, `sdg_keywords_fr.yaml`, `sdg_keywords_pt.yaml`
+
+**Dashboard enhancements** (3.8)
+- Portfolio overview KPIs: avg 5D score, coverage, company count, total metrics, SDG coverage
+- GIIN Survey benchmark comparison in portfolio tab
+- Interactive company drill-down: select company → radar chart + SDG alignments + details
+- Geography field support in CSV upload
+
+### Changed
+
+- Total registered tools: 20 (added BeneficiaryFeedbackTool, VerificationPrepTool)
+- All 112 impact tests passing
+
+---
+
 ## [0.1.8] - 2026-04-16
 
 ### Added

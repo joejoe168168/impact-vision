@@ -402,7 +402,7 @@ def _framework_scan_tab():
 
 def _portfolio_tab():
     st.header("Portfolio Batch Analysis")
-    st.info("Upload a CSV file with columns: name, sector, description, impact_themes, sdg_claims, and any IRIS+ metric IDs as columns.")
+    st.info("Upload a CSV file with columns: name, sector, geography, description, impact_themes, sdg_claims, and any IRIS+ metric IDs as columns.")
 
     uploaded = st.file_uploader("Upload portfolio CSV", type=["csv"])
     if uploaded:
@@ -420,8 +420,9 @@ def _portfolio_tab():
                 if key.startswith(("PI", "OI", "OD", "FP", "PD")) and val:
                     metrics[key] = val
             companies.append(Company(
-                name=row.get("name", row.get("company", "")),
+                name=row.get("name", row.get("company_name", row.get("company", ""))),
                 sector=row.get("sector", ""),
+                geography=row.get("geography", ""),
                 description=row.get("description", ""),
                 impact_themes=[t.strip() for t in row.get("impact_themes", "").split(",") if t.strip()],
                 reported_metrics=metrics,
@@ -434,30 +435,124 @@ def _portfolio_tab():
             from openharness.impact.five_dimensions import assess_five_dimensions
             from openharness.impact.sdg_mapper import map_sdg_alignment
             from openharness.impact.gap_analysis import analyze_gaps
+            from openharness.impact.benchmarks import compare_to_giin_survey
 
             store = _load_store()
             results = []
+            company_details = {}
             for c in companies:
                 fd = assess_five_dimensions(c, store)
                 gaps = analyze_gaps(c, store)
                 sdg = map_sdg_alignment(c, store)
                 top_sdgs = [a for a in sdg if a.score > 0]
-                results.append({
+                result = {
                     "Company": c.name,
                     "Sector": c.sector,
+                    "Geography": c.geography,
                     "5D Score": round(fd.overall_score, 2),
                     "Grade": fd.overall_grade,
+                    "What": round(fd.what.score, 1),
+                    "Who": round(fd.who.score, 1),
+                    "How Much": round(fd.how_much.score, 1),
+                    "Contribution": round(fd.contribution.score, 1),
+                    "Risk": round(fd.risk.score, 1),
                     "Gap Coverage %": gaps["coverage_percentage"],
                     "SDGs": len(top_sdgs),
                     "Metrics": len(c.reported_metrics),
-                })
+                }
+                results.append(result)
+                company_details[c.name] = {
+                    "fd": fd, "gaps": gaps, "sdg": sdg, "company": c,
+                }
 
             df = pd.DataFrame(results)
+
+            st.subheader("Portfolio Overview KPIs")
+            kpi_cols = st.columns(5)
+            avg_5d = df["5D Score"].mean()
+            avg_coverage = df["Gap Coverage %"].mean()
+            total_sdgs = df["SDGs"].sum()
+            total_metrics = df["Metrics"].sum()
+            kpi_cols[0].metric("Avg 5D Score", f"{avg_5d:.2f}/5")
+            kpi_cols[1].metric("Avg Coverage", f"{avg_coverage:.0f}%")
+            kpi_cols[2].metric("Companies", len(companies))
+            kpi_cols[3].metric("Total Metrics", total_metrics)
+            kpi_cols[4].metric("SDG Coverage", f"{total_sdgs} alignments")
+
+            giin_comparison = compare_to_giin_survey(avg_5d, avg_coverage, len(set().union(*[set(c.sdg_claims) for c in companies])))
+            if giin_comparison:
+                st.subheader("GIIN Survey Benchmark Comparison")
+                giin_cols = st.columns(3)
+                for i, (key, label) in enumerate([
+                    ("five_d_score", "5D Score"),
+                    ("core_metric_coverage", "Metric Coverage"),
+                    ("sdg_count", "SDG Count"),
+                ]):
+                    comp = giin_comparison["comparisons"].get(key, {})
+                    if comp:
+                        delta = comp.get("delta", 0)
+                        giin_cols[i].metric(
+                            label,
+                            f"{comp.get('fund', 0)}",
+                            delta=f"{delta:+.1f} vs GIIN",
+                            delta_color="normal" if delta >= 0 else "inverse",
+                        )
+
+            st.subheader("Company Comparison")
             st.dataframe(df, use_container_width=True)
 
-            fig = px.bar(df, x="Company", y="5D Score", color="Grade",
-                         title="5-Dimension Scores by Company")
-            st.plotly_chart(fig, use_container_width=True)
+            col_chart1, col_chart2 = st.columns(2)
+            with col_chart1:
+                fig = px.bar(df, x="Company", y="5D Score", color="Grade",
+                             title="5-Dimension Scores by Company")
+                st.plotly_chart(fig, use_container_width=True)
+
+            with col_chart2:
+                if "Sector" in df.columns:
+                    sector_df = df.groupby("Sector").agg({"5D Score": "mean", "Company": "count"}).reset_index()
+                    sector_df.columns = ["Sector", "Avg 5D Score", "Count"]
+                    fig2 = px.bar(sector_df, x="Sector", y="Avg 5D Score", text="Count",
+                                  title="Average Score by Sector")
+                    st.plotly_chart(fig2, use_container_width=True)
+
+            st.subheader("Company Drill-Down")
+            selected = st.selectbox("Select a company", [c.name for c in companies])
+            if selected and selected in company_details:
+                detail = company_details[selected]
+                fd = detail["fd"]
+                gaps = detail["gaps"]
+                sdg_list = detail["sdg"]
+                c = detail["company"]
+
+                dc1, dc2 = st.columns(2)
+                with dc1:
+                    st.write(f"**{c.name}** ({c.sector})")
+                    if c.geography:
+                        st.write(f"Geography: {c.geography}")
+                    st.write(f"Description: {c.description[:300]}")
+                    st.write(f"5D Score: **{fd.overall_score:.1f}/5** (Grade: {fd.overall_grade})")
+                    st.write(f"Core Metric Coverage: {gaps['coverage_percentage']}%")
+
+                with dc2:
+                    dims = ["What", "Who", "How Much", "Contribution", "Risk"]
+                    scores = [fd.what.score, fd.who.score, fd.how_much.score, fd.contribution.score, fd.risk.score]
+                    fig_radar = go.Figure(data=go.Scatterpolar(
+                        r=scores + [scores[0]], theta=dims + [dims[0]],
+                        fill='toself', fillcolor='rgba(25,118,210,0.12)',
+                        line=dict(color='#1976d2', width=2.5),
+                    ))
+                    fig_radar.update_layout(
+                        polar=dict(radialaxis=dict(visible=True, range=[0, 5])),
+                        height=300, margin=dict(l=60, r=60, t=30, b=30),
+                        showlegend=False,
+                    )
+                    st.plotly_chart(fig_radar, use_container_width=True)
+
+                top_sdgs = sorted([a for a in sdg_list if a.score > 0], key=lambda a: a.score, reverse=True)[:5]
+                if top_sdgs:
+                    st.write("**Top SDG Alignments:**")
+                    for a in top_sdgs:
+                        st.write(f"  SDG {a.goal} ({a.goal_name}): {a.score:.0f}/100 [{a.confidence}]")
 
 
 if __name__ == "__main__":

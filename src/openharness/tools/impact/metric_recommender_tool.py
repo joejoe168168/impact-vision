@@ -23,6 +23,14 @@ class MetricRecommenderInput(BaseModel):
     max_metrics: int = Field(default=20, ge=5, le=100, description="Maximum recommendations to return.")
     include_core_set: bool = Field(default=True, description="Prioritize IRIS+ core metric set entries.")
     output_format: Literal["text", "json"] = Field(default="text")
+    optimize_for_sdg_coverage: bool = Field(
+        default=False,
+        description="If True, prioritize metrics that maximize portfolio-level SDG coverage",
+    )
+    current_portfolio_sdgs: list[int] = Field(
+        default_factory=list,
+        description="SDGs already covered by the portfolio (for optimization mode)",
+    )
 
 
 class MetricRecommenderTool(BaseTool):
@@ -80,6 +88,14 @@ class MetricRecommenderTool(BaseTool):
                 metric_scores[metric.id] += 1.5
                 reasons[metric.id].append("keyword")
                 metric_map[metric.id] = metric
+
+        if args.optimize_for_sdg_coverage and args.current_portfolio_sdgs:
+            covered = set(args.current_portfolio_sdgs)
+            for metric_id, metric in metric_map.items():
+                uncovered_sdgs = [g for g in metric.sdg_goals if g not in covered]
+                if uncovered_sdgs:
+                    metric_scores[metric_id] += 3.0 * len(uncovered_sdgs)
+                    reasons[metric_id].append(f"fills-sdg-gap:{','.join(str(g) for g in uncovered_sdgs)}")
 
         ranked = sorted(
             metric_scores.items(),

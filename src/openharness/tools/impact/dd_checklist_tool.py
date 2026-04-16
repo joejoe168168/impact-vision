@@ -50,6 +50,13 @@ class DdChecklistInput(BaseModel):
         default="",
         description="Filter by priority: 'high', 'medium', or 'low'",
     )
+    beneficiary_feedback: dict = Field(
+        default_factory=dict,
+        description=(
+            "Optional beneficiary feedback data (from beneficiary_feedback tool) "
+            "to auto-fill stakeholder voice questions (SV01-SV03)"
+        ),
+    )
 
 
 class DdChecklistTool(BaseTool):
@@ -164,6 +171,35 @@ class DdChecklistTool(BaseTool):
                 lines.append(f"OTHER GAPS ({len(other_gaps)} questions):")
                 for q in other_gaps[:10]:
                     lines.append(f"  {q.id}: {q.question}")
+
+        bf = args.beneficiary_feedback
+        if bf:
+            lines.append("")
+            lines.append("BENEFICIARY FEEDBACK DATA (auto-filled for SV01-SV03)")
+            lines.append("-" * 40)
+            if bf.get("satisfaction_score") is not None:
+                lines.append(f"  Satisfaction: {bf['satisfaction_score']}/5")
+            if bf.get("nps") is not None:
+                lines.append(f"  NPS: {bf['nps']}")
+            if bf.get("sample_size"):
+                lines.append(f"  Sample size: {bf['sample_size']}")
+            if bf.get("methodology"):
+                lines.append(f"  Methodology: {bf['methodology']}")
+            sv_addressed = [m for m in result.addressed if m.question.id.startswith("SV")]
+            sv_gaps = [q for q in result.unanswered if q.id.startswith("SV")]
+            if sv_gaps:
+                lines.append(f"\n  Stakeholder voice questions addressed by feedback: {len(sv_addressed)}")
+                lines.append(f"  Remaining SV gaps: {len(sv_gaps)}")
+                for q in sv_gaps:
+                    lines.append(f"    - {q.id}: {q.question}")
+                    if q.id == "SV01" and bf.get("methodology"):
+                        lines.append(f"      → Feedback mechanism: {bf['methodology']}")
+                    elif q.id == "SV02" and bf.get("themes"):
+                        lines.append(f"      → Stakeholder themes: {', '.join(bf['themes'][:3])}")
+                    elif q.id == "SV03" and bf.get("would_recommend") is not None:
+                        lines.append(f"      → {bf['would_recommend']}% would recommend")
+            else:
+                lines.append("  All stakeholder voice questions (SV01-SV03) addressed ✓")
 
         return ToolResult(
             output="\n".join(lines),

@@ -1,5 +1,6 @@
 """Impact-specific tools for IRIS+ metrics, SDG alignment, and impact assessment."""
 
+from openharness.tools.impact.beneficiary_feedback_tool import BeneficiaryFeedbackTool
 from openharness.tools.impact.cross_reference_tool import CrossReferenceTool
 from openharness.tools.impact.data_quality_tool import DataQualityTool
 from openharness.tools.impact.dd_checklist_tool import DdChecklistTool
@@ -17,8 +18,10 @@ from openharness.tools.impact.pitch_deck_analyze_tool import PitchDeckAnalyzeToo
 from openharness.tools.impact.portfolio_tool import PortfolioTool
 from openharness.tools.impact.sdg_mapper_tool import SdgMapperTool
 from openharness.tools.impact.trend_analysis_tool import TrendAnalysisTool
+from openharness.tools.impact.verification_prep_tool import VerificationPrepTool
 
 __all__ = [
+    "BeneficiaryFeedbackTool",
     "CrossReferenceTool",
     "DataQualityTool",
     "DdChecklistTool",
@@ -36,4 +39,5 @@ __all__ = [
     "PortfolioTool",
     "SdgMapperTool",
     "TrendAnalysisTool",
+    "VerificationPrepTool",
 ]

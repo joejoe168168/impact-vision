@@ -100,7 +100,47 @@ class MetricValue(BaseModel):
     timestamp: str = Field(default="", description="ISO date when value was reported (e.g. '2026-04-16')")
     source: str = Field(default="", description="Source of data (e.g. 'pitch_deck', 'self_reported', 'audited')")
     verified: bool = Field(default=False, description="Whether value has been third-party verified")
+    verification_status: Literal[
+        "self_reported", "management_verified", "third_party_verified", "audited"
+    ] = Field(default="self_reported", description="Verification level")
+    reported_by: str = Field(default="", description="Name/role of person who reported this value")
     notes: str = ""
+
+
+class AuditTrailEntry(BaseModel):
+    """A single audit trail entry tracking who reported what and when."""
+
+    metric_id: str = Field(description="IRIS+ metric ID")
+    action: Literal["created", "updated", "verified", "deleted"] = Field(description="Action taken")
+    timestamp: str = Field(description="ISO datetime of action")
+    actor: str = Field(default="", description="Who performed the action (name, role, or system)")
+    old_value: Any = Field(default=None, description="Previous value (for updates)")
+    new_value: Any = Field(default=None, description="New value")
+    evidence: str = Field(default="", description="Link/reference to supporting evidence")
+    notes: str = ""
+
+
+class BeneficiaryFeedback(BaseModel):
+    """Structured beneficiary feedback data (e.g. 60 Decibels Lean Data)."""
+
+    satisfaction_score: float | None = Field(default=None, description="Overall satisfaction (1-5 scale)")
+    nps: float | None = Field(default=None, description="Net Promoter Score (-100 to 100)")
+    sample_size: int = Field(default=0, description="Number of beneficiaries surveyed")
+    survey_date: str = Field(default="", description="Date of survey (e.g. '2026-Q1')")
+    methodology: str = Field(default="", description="Survey methodology (e.g. '60 Decibels Lean Data', 'in-person')")
+    quality_of_life_improvement: float | None = Field(
+        default=None, description="% reporting quality of life improvement",
+    )
+    would_recommend: float | None = Field(
+        default=None, description="% who would recommend the product/service",
+    )
+    themes: list[str] = Field(default_factory=list, description="Qualitative themes from open-ended responses")
+    challenges: list[str] = Field(default_factory=list, description="Reported challenges or negative feedback")
+    quotes: list[str] = Field(default_factory=list, description="Representative beneficiary quotes")
+    segments: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Disaggregated data by segment (e.g. {'gender': {'female': 4.2, 'male': 3.8}})",
+    )
 
 
 class Company(BaseModel):
@@ -136,6 +176,14 @@ class Company(BaseModel):
     metric_history: list[MetricValue] = Field(
         default_factory=list,
         description="Time-series metric values for progress tracking across periods",
+    )
+    beneficiary_feedback: BeneficiaryFeedback | None = Field(
+        default=None,
+        description="Structured beneficiary feedback data (satisfaction, NPS, qualitative themes)",
+    )
+    audit_trail: list[AuditTrailEntry] = Field(
+        default_factory=list,
+        description="Chronological log of metric changes and verification events",
     )
 
 

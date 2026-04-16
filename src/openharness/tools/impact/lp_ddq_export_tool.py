@@ -95,6 +95,18 @@ class LpDdqExportInput(BaseModel):
     reported_metrics: dict[str, str] = Field(default_factory=dict, description="IRIS+ metric ID -> value")
     output_format: Literal["text", "json", "csv", "xlsx"] = Field(default="text", description="Output format ('xlsx' for Excel)")
     output_path: str = Field(default="", description="File path to save the output (required for xlsx)")
+    narrative_mode: Literal["data", "narrative_prompt"] = Field(
+        default="data",
+        description=(
+            "'data': Standard data-driven output. "
+            "'narrative_prompt': Output includes structured LLM prompts for each section "
+            "so the agent can generate polished prose narratives."
+        ),
+    )
+    draft_review: bool = Field(
+        default=False,
+        description="If True, output is wrapped with DRAFT markers for human review before finalization.",
+    )
 
 
 class LpDdqExportTool(BaseTool):
@@ -186,10 +198,16 @@ class LpDdqExportTool(BaseTool):
             "",
         ]
 
+        gen_fn = (
+            self._generate_narrative_prompt
+            if args.narrative_mode == "narrative_prompt"
+            else self._generate_section_data
+        )
+
         for section in template["sections"]:
             lines.append(f"--- [{section['id']}] {section['question']} ---")
             lines.append("")
-            response = self._generate_section_data(section, company, store, data_cache)
+            response = gen_fn(section, company, store, data_cache)
             lines.append(response)
             lines.append("")
 
@@ -197,9 +215,10 @@ class LpDdqExportTool(BaseTool):
             return ToolResult(output=json.dumps({
                 "template": template["name"],
                 "company": company.name,
+                "narrative_mode": args.narrative_mode,
                 "sections": [
                     {"id": s["id"], "question": s["question"],
-                     "response": self._generate_section_data(s, company, store, data_cache)}
+                     "response": gen_fn(s, company, store, data_cache)}
                     for s in template["sections"]
                 ],
             }, indent=2))
@@ -222,7 +241,10 @@ class LpDdqExportTool(BaseTool):
         if args.output_format == "xlsx":
             return self._generate_xlsx(args, template, company, store, data_cache, context)
 
-        return ToolResult(output="\n".join(lines))
+        text_output = "\n".join(lines)
+        if args.draft_review:
+            text_output = self._wrap_draft_review(text_output, template["name"], company.name)
+        return ToolResult(output=text_output)
 
     def _generate_xlsx(self, args: LpDdqExportInput, template: dict, company: Company, store, data_cache: dict, context: ToolExecutionContext | None = None) -> ToolResult:
         """Generate an Excel workbook with DDQ responses."""
@@ -431,3 +453,54 @@ class LpDdqExportTool(BaseTool):
             parts.append("[Data not available — provide company description, sector, reported metrics, and SDG claims for comprehensive responses.]")
 
         return "\n".join(parts)
+
+    def _generate_narrative_prompt(self, section: dict, company: Company, store, data_cache: dict) -> str:
+        """Generate a structured prompt for LLM-assisted narrative generation.
+
+        Returns the data context plus writing instructions so the agent can
+        produce investor-quality prose for this DDQ section.
+        """
+        data_content = self._generate_section_data(section, company, store, data_cache)
+        question = section.get("question", "")
+
+        prompt_parts = [
+            "=== NARRATIVE GENERATION PROMPT ===",
+            f"Question: {question}",
+            f"Company: {company.name} ({company.sector})",
+            "",
+            "--- DATA CONTEXT ---",
+            data_content,
+            "",
+            "--- WRITING INSTRUCTIONS ---",
+            "Using the data above, write a polished, investor-quality paragraph response to the DDQ question.",
+            "Requirements:",
+            "- Write in formal third-person prose (not bullet points)",
+            "- Reference specific data points (metrics, scores, SDGs) from the context",
+            "- Be candid about gaps: acknowledge where data is incomplete",
+            "- Use 150-300 words per section",
+            "- Maintain factual accuracy: do not invent data not present in the context",
+            "- Include quantified outcomes where available",
+            "================================",
+        ]
+        return "\n".join(prompt_parts)
+
+    def _wrap_draft_review(self, output: str, template_name: str, company_name: str) -> str:
+        """Wrap output with DRAFT review markers."""
+        header = (
+            "╔══════════════════════════════════════════════════════════╗\n"
+            "║  DRAFT — FOR REVIEW ONLY — NOT FOR DISTRIBUTION        ║\n"
+            "╚══════════════════════════════════════════════════════════╝\n"
+            f"Template: {template_name}\n"
+            f"Company: {company_name}\n"
+            "Status: PENDING HUMAN REVIEW\n"
+            "Instructions: Review each section for accuracy, completeness,\n"
+            "and appropriateness before sharing with LPs.\n"
+            "─" * 60 + "\n"
+        )
+        footer = (
+            "\n" + "─" * 60 + "\n"
+            "╔══════════════════════════════════════════════════════════╗\n"
+            "║  END OF DRAFT — REQUIRES SIGN-OFF BEFORE DISTRIBUTION  ║\n"
+            "╚══════════════════════════════════════════════════════════╝"
+        )
+        return header + output + footer

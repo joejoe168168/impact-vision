@@ -30,11 +30,12 @@ from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 
 class PortfolioInput(BaseModel):
-    action: Literal["analyze_file", "analyze_companies", "aggregate"] = Field(
+    action: Literal["analyze_file", "analyze_companies", "aggregate", "what_if"] = Field(
         description=(
             "'analyze_file': Analyze a portfolio CSV/YAML file. "
             "'analyze_companies': Analyze a list of companies provided inline. "
-            "'aggregate': Generate aggregated portfolio metrics."
+            "'aggregate': Generate aggregated portfolio metrics. "
+            "'what_if': Scenario analysis — add/remove companies and see portfolio impact."
         )
     )
     file_path: str = Field(
@@ -53,6 +54,14 @@ class PortfolioInput(BaseModel):
     )
     output_format: Literal["text", "json", "csv"] = Field(
         default="text", description="Output format: 'text', 'json', 'csv'"
+    )
+    add_companies: list[dict] = Field(
+        default_factory=list,
+        description="Companies to add in 'what_if' mode (same format as 'companies')",
+    )
+    remove_companies: list[str] = Field(
+        default_factory=list,
+        description="Company names to remove in 'what_if' mode",
     )
 
 
@@ -85,6 +94,9 @@ class PortfolioTool(BaseTool):
                 return ToolResult(output=companies, is_error=True)
         elif args.action in ("analyze_companies", "aggregate"):
             companies = [_dict_to_company(d) for d in args.companies]
+        elif args.action == "what_if":
+            companies = [_dict_to_company(d) for d in args.companies]
+            return self._what_if(companies, args, store)
         else:
             return ToolResult(output=f"Unknown action: {args.action}", is_error=True)
 
@@ -109,6 +121,60 @@ class PortfolioTool(BaseTool):
             return ToolResult(output=_to_csv(results, aggregate))
 
         return ToolResult(output=_to_text(results, aggregate))
+
+    def _what_if(self, base_companies: list[Company], args: PortfolioInput, store) -> ToolResult:
+        """Scenario analysis: show how adding/removing companies changes portfolio scores."""
+        base_results = [_analyze_company(c, store) for c in base_companies]
+        base_aggregate = _aggregate_results(base_results)
+
+        remove_names = {n.lower() for n in args.remove_companies}
+        scenario_results = [r for r in base_results if r["name"].lower() not in remove_names]
+        for d in args.add_companies:
+            new_company = _dict_to_company(d)
+            scenario_results.append(_analyze_company(new_company, store))
+
+        scenario_aggregate = _aggregate_results(scenario_results) if scenario_results else {}
+
+        lines = [
+            "WHAT-IF SCENARIO ANALYSIS",
+            "=" * 60,
+            f"Baseline: {len(base_results)} companies",
+            f"Scenario: {len(scenario_results)} companies",
+        ]
+        if args.remove_companies:
+            lines.append(f"  Removed: {', '.join(args.remove_companies)}")
+        if args.add_companies:
+            lines.append(f"  Added: {', '.join(d.get('name', 'Unknown') for d in args.add_companies)}")
+        lines.append("")
+
+        comparisons = [
+            ("5D Score (avg)", "avg_five_dim_score"),
+            ("Gap Coverage (avg %)", "avg_gap_coverage"),
+            ("SDG Coverage", "sdg_coverage"),
+            ("Total Metrics", "total_metrics_reported"),
+        ]
+        lines.append(f"{'Metric':<30} {'Baseline':>10} {'Scenario':>10} {'Delta':>10}")
+        lines.append("-" * 60)
+        for label, key in comparisons:
+            base_val = base_aggregate.get(key, 0)
+            scen_val = scenario_aggregate.get(key, 0)
+            delta = round(scen_val - base_val, 2) if isinstance(base_val, (int, float)) else "N/A"
+            arrow = "↑" if isinstance(delta, (int, float)) and delta > 0 else "↓" if isinstance(delta, (int, float)) and delta < 0 else "="
+            lines.append(f"{label:<30} {base_val:>10} {scen_val:>10} {f'{delta:+}':>8} {arrow}")
+
+        lines.append("")
+        additionality_base = base_aggregate.get("additionality", {})
+        additionality_scen = scenario_aggregate.get("additionality", {})
+        if additionality_base and additionality_scen:
+            lines.append(f"Additionality: {additionality_base.get('additionality_score', 0)} → {additionality_scen.get('additionality_score', 0)}")
+
+        return ToolResult(
+            output="\n".join(lines),
+            metadata={
+                "baseline": base_aggregate,
+                "scenario": scenario_aggregate,
+            },
+        )
 
 
 def _load_portfolio_file(file_path: str, context: ToolExecutionContext) -> list[Company] | str:
