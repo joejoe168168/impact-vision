@@ -238,6 +238,9 @@ class OpenAICompatibleClient:
             kwargs["base_url"] = normalized_base_url
         if timeout is not None:
             kwargs["timeout"] = timeout
+        # Some proxy endpoints block the default "OpenAI/Python" user-agent.
+        # Use a neutral user-agent to avoid false-positive request blocking.
+        kwargs["default_headers"] = {"User-Agent": "impact-vision/0.1.0"}
         self._client = AsyncOpenAI(**kwargs)
 
     async def stream_message(self, request: ApiMessageRequest) -> AsyncIterator[ApiStreamEvent]:
@@ -299,6 +302,9 @@ class OpenAICompatibleClient:
         finish_reason: str | None = None
         usage_data: dict[str, int] = {}
 
+        log.debug("OpenAI API request: model=%s, tools=%d, msgs=%d, params_keys=%s",
+                  params.get("model"), len(params.get("tools", [])),
+                  len(params.get("messages", [])), list(params.keys()))
         stream = await self._client.chat.completions.create(**params)
         async for chunk in stream:
             if not chunk.choices:
