@@ -271,8 +271,13 @@ impact-vision/
 ├── examples/
 │   ├── sample_company.yaml            # Example company with IRIS+ metrics
 │   └── sample_portfolio.csv           # Portfolio of 5 companies
+├── scripts/
+│   └── check_imports.py              # CI import smoke checks (verify __init__.py + exports)
+├── .github/workflows/
+│   └── ci.yml                        # GitHub Actions: import checks, tests, lint
 └── tests/
-    └── test_impact.py                 # 41 tests covering all modules + frameworks
+    ├── test_impact.py                # 41 tests covering all impact modules + frameworks
+    └── ...                           # 700+ tests across all subsystems
 ```
 
 ## DD Checklist
@@ -374,12 +379,36 @@ The dashboard has 5 tabs:
 # Install with dev dependencies
 pip install -e ".[dev]"
 
-# Run tests
+# Run all tests
 python -m pytest tests/ -v
+
+# Run just the impact module tests (41 tests, no external dependencies)
+python -m pytest tests/test_impact.py -v
+
+# Run import smoke checks (verifies all package exports work)
+python scripts/check_imports.py --all
 
 # Lint
 ruff check src/
 ```
+
+### Testing Coverage
+
+| Test area | Tests | What it covers |
+|-----------|------:|----------------|
+| Impact engine | 41 | IRIS+ catalog, SDG mapping, 5D scoring, gap analysis, DD checklist, benchmarks, all 7 frameworks, cross-references |
+| Tools | ~40 | Tool registry bootstrap, file/grep/glob tools, bash tool, MCP tools, integration flows |
+| Services | 14 | Compaction system, session storage, token estimation |
+| Config/bridge/hooks | ~30 | Settings load/save, work secrets, hook execution, hot reload |
+| Commands | ~20 | CLI commands, command registry |
+| Other | ~550+ | Permissions, memory, plugins, skills, swarm, coordinator, auth, prompts, sandbox, UI |
+
+### CI
+
+GitHub Actions runs on every push/PR to `main`:
+1. **Import smoke check** -- verifies all `__init__.py` files exist and critical imports resolve
+2. **Full test suite** -- `pytest tests/ -q --tb=short -x`
+3. **Lint** -- `ruff check src/`
 
 ## License
 
@@ -391,4 +420,4 @@ MIT License. See [LICENSE](LICENSE) for details.
 - [Pacific Community Ventures](https://www.pacificcommunityventures.org/) for DD emerging best practices
 - [Seraf](https://seraf-investor.com/) for the impact investing DD checklist
 - [Impact Management Project](https://impactfrontiers.org/) for the 5 Dimensions of Impact
-- [OpenHarness](https://github.com/novix-sa/OpenHarness) for the agent infrastructure
+- [OpenHarness](https://github.com/HKUDS/OpenHarness) for the agent infrastructure
