@@ -1,0 +1,65 @@
+# Impact Vision - DD Checklist (Arabic / العربية)
+
+categories:
+  impact_thesis: "أطروحة الأثر"
+  theory_of_change: "نظرية التغيير"
+  measurement_system: "نظام القياس"
+  sdg_alignment: "التوافق مع أهداف التنمية المستدامة"
+  beneficiary_voice: "صوت المستفيدين"
+  governance: "الحوكمة"
+  risk_management: "إدارة المخاطر"
+  data_quality: "جودة البيانات"
+  additionality: "الإضافية"
+  negative_impact: "الأثر السلبي"
+  exit_strategy: "استراتيجية الخروج"
+  reporting: "التقارير"
+
+questions:
+  - id: IT01
+    category: impact_thesis
+    question: "ما هي أطروحة الأثر الأساسية للشركة وكيف ترتبط بالمهمة؟"
+    nesta_level: 1
+  - id: IT02
+    category: impact_thesis
+    question: "ما المشكلة الاجتماعية أو البيئية المحددة التي تعالجها الشركة؟"
+    nesta_level: 1
+  - id: TC01
+    category: theory_of_change
+    question: "هل تستطيع الشركة صياغة نظرية تغيير واضحة (مدخلات ← أنشطة ← مخرجات ← نتائج ← أثر)؟"
+    nesta_level: 2
+  - id: TC02
+    category: theory_of_change
+    question: "ما الأدلة التي تدعم الروابط السببية في نظرية التغيير؟"
+    nesta_level: 3
+  - id: MS01
+    category: measurement_system
+    question: "ما مقاييس IRIS+ أو المؤشرات المعيارية التي تستخدمها الشركة لقياس الأثر؟"
+    nesta_level: 2
+  - id: MS02
+    category: measurement_system
+    question: "ما معدل تكرار جمع مقاييس الأثر والإبلاغ عنها؟"
+    nesta_level: 2
+  - id: SA01
+    category: sdg_alignment
+    question: "في أي أهداف للتنمية المستدامة تساهم الشركة وبأي دليل؟"
+    nesta_level: 2
+  - id: BV01
+    category: beneficiary_voice
+    question: "كيف تدمج الشركة ملاحظات المستفيدين في القرارات؟"
+    nesta_level: 3
+  - id: GO01
+    category: governance
+    question: "هل يوجد إشراف على مستوى مجلس الإدارة لإدارة الأثر؟"
+    nesta_level: 2
+  - id: RM01
+    category: risk_management
+    question: "ما المخاطر التي يمكن أن تمنع الشركة من تحقيق أثرها المقصود؟"
+    nesta_level: 2
+  - id: AD01
+    category: additionality
+    question: "ماذا سيحدث بدون هذا الاستثمار؟ ما هي إضافية المستثمر؟"
+    nesta_level: 3
+  - id: NI01
+    category: negative_impact
+    question: "هل حددت الشركة الآثار السلبية المحتملة ولديها خطط للتخفيف منها؟"
+    nesta_level: 2

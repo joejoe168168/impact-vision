@@ -1,0 +1,66 @@
+# Impact Vision - DD Checklist (Spanish / Español)
+# Translated categories and representative questions from the 96-question English checklist.
+
+categories:
+  impact_thesis: "Tesis de Impacto"
+  theory_of_change: "Teoría del Cambio"
+  measurement_system: "Sistema de Medición"
+  sdg_alignment: "Alineación con ODS"
+  beneficiary_voice: "Voz del Beneficiario"
+  governance: "Gobernanza"
+  risk_management: "Gestión de Riesgos"
+  data_quality: "Calidad de Datos"
+  additionality: "Adicionalidad"
+  negative_impact: "Impacto Negativo"
+  exit_strategy: "Estrategia de Salida"
+  reporting: "Reportes"
+
+questions:
+  - id: IT01
+    category: impact_thesis
+    question: "¿Cuál es la tesis de impacto central de la empresa y cómo se relaciona con la misión?"
+    nesta_level: 1
+  - id: IT02
+    category: impact_thesis
+    question: "¿Qué problema social o ambiental específico aborda la empresa?"
+    nesta_level: 1
+  - id: TC01
+    category: theory_of_change
+    question: "¿Puede la empresa articular una teoría del cambio clara (insumos → actividades → productos → resultados → impacto)?"
+    nesta_level: 2
+  - id: TC02
+    category: theory_of_change
+    question: "¿Qué evidencia respalda los vínculos causales en la teoría del cambio?"
+    nesta_level: 3
+  - id: MS01
+    category: measurement_system
+    question: "¿Qué métricas IRIS+ o indicadores estandarizados utiliza la empresa para medir el impacto?"
+    nesta_level: 2
+  - id: MS02
+    category: measurement_system
+    question: "¿Con qué frecuencia se recopilan y reportan las métricas de impacto?"
+    nesta_level: 2
+  - id: SA01
+    category: sdg_alignment
+    question: "¿A qué Objetivos de Desarrollo Sostenible contribuye la empresa y con qué evidencia?"
+    nesta_level: 2
+  - id: BV01
+    category: beneficiary_voice
+    question: "¿Cómo incorpora la empresa la retroalimentación de los beneficiarios en las decisiones?"
+    nesta_level: 3
+  - id: GO01
+    category: governance
+    question: "¿Existe supervisión a nivel de directorio para la gestión del impacto?"
+    nesta_level: 2
+  - id: RM01
+    category: risk_management
+    question: "¿Qué riesgos podrían impedir que la empresa logre su impacto previsto?"
+    nesta_level: 2
+  - id: AD01
+    category: additionality
+    question: "¿Qué pasaría sin esta inversión? ¿Cuál es la adicionalidad del inversor?"
+    nesta_level: 3
+  - id: NI01
+    category: negative_impact
+    question: "¿Ha identificado la empresa posibles impactos negativos y tiene planes de mitigación?"
+    nesta_level: 2

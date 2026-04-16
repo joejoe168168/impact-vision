@@ -1,0 +1,65 @@
+# Impact Vision - DD Checklist (Chinese / 中文)
+
+categories:
+  impact_thesis: "影响力论点"
+  theory_of_change: "变革理论"
+  measurement_system: "测量体系"
+  sdg_alignment: "可持续发展目标对齐"
+  beneficiary_voice: "受益人反馈"
+  governance: "治理"
+  risk_management: "风险管理"
+  data_quality: "数据质量"
+  additionality: "额外性"
+  negative_impact: "负面影响"
+  exit_strategy: "退出策略"
+  reporting: "报告"
+
+questions:
+  - id: IT01
+    category: impact_thesis
+    question: "公司的核心影响力论点是什么？它与公司使命有何关联？"
+    nesta_level: 1
+  - id: IT02
+    category: impact_thesis
+    question: "公司解决的具体社会或环境问题是什么？"
+    nesta_level: 1
+  - id: TC01
+    category: theory_of_change
+    question: "公司是否能清晰阐述变革理论（投入→活动→产出→成果→影响）？"
+    nesta_level: 2
+  - id: TC02
+    category: theory_of_change
+    question: "有什么证据支持变革理论中的因果关系？"
+    nesta_level: 3
+  - id: MS01
+    category: measurement_system
+    question: "公司使用哪些IRIS+指标或标准化指标来衡量影响力？"
+    nesta_level: 2
+  - id: MS02
+    category: measurement_system
+    question: "影响力指标的收集和报告频率是多少？"
+    nesta_level: 2
+  - id: SA01
+    category: sdg_alignment
+    question: "公司对哪些可持续发展目标有贡献？有何证据？"
+    nesta_level: 2
+  - id: BV01
+    category: beneficiary_voice
+    question: "公司如何将受益人反馈纳入决策？"
+    nesta_level: 3
+  - id: GO01
+    category: governance
+    question: "董事会层面是否有影响力管理的监督机制？"
+    nesta_level: 2
+  - id: RM01
+    category: risk_management
+    question: "哪些风险可能阻碍公司实现预期影响力？"
+    nesta_level: 2
+  - id: AD01
+    category: additionality
+    question: "如果没有这笔投资会怎样？投资者的额外性是什么？"
+    nesta_level: 3
+  - id: NI01
+    category: negative_impact
+    question: "公司是否识别了潜在的负面影响并制定了缓解计划？"
+    nesta_level: 2

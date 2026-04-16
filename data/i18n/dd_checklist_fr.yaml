@@ -1,0 +1,65 @@
+# Impact Vision - DD Checklist (French / Français)
+
+categories:
+  impact_thesis: "Thèse d'Impact"
+  theory_of_change: "Théorie du Changement"
+  measurement_system: "Système de Mesure"
+  sdg_alignment: "Alignement ODD"
+  beneficiary_voice: "Voix des Bénéficiaires"
+  governance: "Gouvernance"
+  risk_management: "Gestion des Risques"
+  data_quality: "Qualité des Données"
+  additionality: "Additionnalité"
+  negative_impact: "Impact Négatif"
+  exit_strategy: "Stratégie de Sortie"
+  reporting: "Reporting"
+
+questions:
+  - id: IT01
+    category: impact_thesis
+    question: "Quelle est la thèse d'impact principale de l'entreprise et comment est-elle liée à sa mission ?"
+    nesta_level: 1
+  - id: IT02
+    category: impact_thesis
+    question: "Quel problème social ou environnemental spécifique l'entreprise aborde-t-elle ?"
+    nesta_level: 1
+  - id: TC01
+    category: theory_of_change
+    question: "L'entreprise peut-elle articuler une théorie du changement claire (intrants → activités → produits → résultats → impact) ?"
+    nesta_level: 2
+  - id: TC02
+    category: theory_of_change
+    question: "Quelles preuves soutiennent les liens causaux dans la théorie du changement ?"
+    nesta_level: 3
+  - id: MS01
+    category: measurement_system
+    question: "Quelles métriques IRIS+ ou indicateurs standardisés l'entreprise utilise-t-elle pour mesurer l'impact ?"
+    nesta_level: 2
+  - id: MS02
+    category: measurement_system
+    question: "À quelle fréquence les métriques d'impact sont-elles collectées et rapportées ?"
+    nesta_level: 2
+  - id: SA01
+    category: sdg_alignment
+    question: "À quels Objectifs de Développement Durable l'entreprise contribue-t-elle et avec quelles preuves ?"
+    nesta_level: 2
+  - id: BV01
+    category: beneficiary_voice
+    question: "Comment l'entreprise intègre-t-elle les retours des bénéficiaires dans ses décisions ?"
+    nesta_level: 3
+  - id: GO01
+    category: governance
+    question: "Existe-t-il une supervision au niveau du conseil d'administration pour la gestion de l'impact ?"
+    nesta_level: 2
+  - id: RM01
+    category: risk_management
+    question: "Quels risques pourraient empêcher l'entreprise d'atteindre son impact prévu ?"
+    nesta_level: 2
+  - id: AD01
+    category: additionality
+    question: "Que se passerait-il sans cet investissement ? Quelle est l'additionnalité de l'investisseur ?"
+    nesta_level: 3
+  - id: NI01
+    category: negative_impact
+    question: "L'entreprise a-t-elle identifié les impacts négatifs potentiels et dispose-t-elle de plans d'atténuation ?"
+    nesta_level: 2

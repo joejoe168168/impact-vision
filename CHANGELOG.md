@@ -4,6 +4,32 @@ All notable changes to Impact Vision are recorded here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.0] - 2026-04-16
+
+### Added — Phase 10: Platform Integration & Developer Experience
+
+**MCP Server** (10.1)
+- New `mcp_server.py`: FastMCP-based MCP server exposing all 25 impact tools as MCP tools with proper JSON Schema
+- 5 MCP resources: `impact://catalog/stats`, `impact://dd-checklist/categories`, `impact://frameworks/list`, `impact://cross-reference/{metric_id}`, `impact://sdg/goals`
+- CLI command: `impact-vision serve-mcp` with stdio (default) and SSE transport options (`--transport sse --port 8765`)
+
+**Claude Code / AI Agent Integration** (10.2)
+- Ready-to-use `examples/claude_desktop_config.json` with 3 connection methods (global install, uv, python module)
+- `docs/cursor-integration.md`: comprehensive guide for Cursor, VS Code, and Claude Desktop with tool table, resource table, usage examples, agent-to-agent protocol, and troubleshooting
+
+**Full REST API** (10.3)
+- Expanded `api_gateway/router.py` from 7 to 25+ endpoints covering all impact tools
+- New endpoints: `/api/v1/framework`, `/api/v1/cross-reference`, `/api/v1/risk-opportunity`, `/api/v1/metric-recommend`, `/api/v1/exclusion-screen`, `/api/v1/report`, `/api/v1/pitch-deck`, `/api/v1/ddq-export`, `/api/v1/pipeline`, `/api/v1/monitoring`, `/api/v1/improvement-advisor`, `/api/v1/narrative`
+- API key authentication via Bearer token or `X-API-Key` header (env: `IMPACT_VISION_API_KEY`)
+- Batch API: `POST /api/v1/batch` for multi-company assessment with async job processing and `GET /api/v1/batch/{job_id}` status polling
+- Enhanced webhooks: HMAC signature verification, 5 event types (assessment_complete, score_change, alert_fired, metric_update, threshold_breach), webhook CRUD (create/list/delete)
+
+**Multi-Language & Localization** (10.4)
+- New `data/i18n/report_strings.yaml`: 30+ report labels in 6 languages (en, es, fr, pt, zh, ar)
+- New `data/i18n/dd_checklist_*.yaml`: localized DD questions and categories in 5 languages (es, fr, pt, zh, ar)
+- New `data/i18n/system_prompts.yaml`: agent persona preambles in 6 languages
+- New `src/openharness/impact/i18n.py`: i18n utility module with fallback to English
+
 ## [0.5.0] - 2026-04-16
 
 ### Added — Phase 9: LLM Intelligence & Automation

@@ -886,59 +886,59 @@
 
 ---
 
-## Phase 10: Platform Integration & Developer Experience 🔌
+## Phase 10: Platform Integration & Developer Experience 🔌 ✅
 
 > Make Impact Vision accessible as a platform service and developer tool.
 
 ### 10.1 MCP Server Mode
 
-- [ ] **10.1.1** MCP server implementation — expose all 17 Impact Vision tools as MCP resources/tools
+- [x] **10.1.1** MCP server implementation — expose all 25 Impact Vision tools as MCP tools via FastMCP
   - Files: `src/openharness/impact/mcp_server.py` (new)
 
-- [ ] **10.1.2** MCP resource endpoints — company assessments, IRIS+ catalog, DD checklist, cross-reference data as MCP resources
+- [x] **10.1.2** MCP resource endpoints — IRIS+ catalog stats, DD checklist categories, frameworks list, cross-reference lookup, SDG goals
   - Files: `src/openharness/impact/mcp_server.py`
 
-- [ ] **10.1.3** MCP tool schemas — proper JSON Schema for all tool inputs/outputs for MCP tool discovery
+- [x] **10.1.3** MCP tool schemas — JSON Schema auto-generated from Pydantic input models via FastMCP
   - Files: `src/openharness/impact/mcp_server.py`
 
-- [ ] **10.1.4** MCP server CLI — `impact-vision serve-mcp` command to start the MCP server
+- [x] **10.1.4** MCP server CLI — `impact-vision serve-mcp` command with stdio/SSE transport options
   - Files: `src/openharness/cli.py`
 
 ### 10.2 Claude Code / AI Agent Integration
 
-- [ ] **10.2.1** Claude Code MCP config — provide ready-to-use `claude_desktop_config.json` for connecting Claude Code to Impact Vision MCP server
+- [x] **10.2.1** Claude Code MCP config — ready-to-use `claude_desktop_config.json` with 3 connection methods
   - Files: `examples/claude_desktop_config.json` (new)
 
-- [ ] **10.2.2** Agent-to-agent protocol — define clear input/output contracts for AI agents calling Impact Vision tools
-  - Files: documentation, `src/openharness/impact/mcp_server.py`
+- [x] **10.2.2** Agent-to-agent protocol — documented input/output contracts, error handling, idempotency
+  - Files: `docs/cursor-integration.md`
 
-- [ ] **10.2.3** Cursor/VS Code integration guide — documentation for using Impact Vision as an MCP tool within Cursor IDE
+- [x] **10.2.3** Cursor/VS Code integration guide — full setup, tool table, resource table, examples, troubleshooting
   - Files: `docs/cursor-integration.md` (new)
 
 ### 10.3 API & Webhook Enhancements
 
-- [ ] **10.3.1** Full REST API coverage — expose all tools via FastAPI endpoints (not just the 5 current ones)
-  - Files: `src/openharness/impact/api.py`
+- [x] **10.3.1** Full REST API coverage — 25+ endpoints covering all impact tools via FastAPI
+  - Files: `src/openharness/api_gateway/router.py`
 
-- [ ] **10.3.2** API authentication — API key or OAuth2 authentication for production deployments
-  - Files: `src/openharness/impact/api.py`
+- [x] **10.3.2** API authentication — API key via Bearer token or X-API-Key header (env: IMPACT_VISION_API_KEY)
+  - Files: `src/openharness/api_gateway/router.py`
 
-- [ ] **10.3.3** Batch API — submit multiple companies for assessment in a single API call with async processing
-  - Files: `src/openharness/impact/api.py`
+- [x] **10.3.3** Batch API — POST /api/v1/batch for multi-company assessment with async job processing
+  - Files: `src/openharness/api_gateway/router.py`
 
-- [ ] **10.3.4** Webhook notifications — trigger webhooks when assessments complete, scores change, or alerts fire
-  - Files: `src/openharness/impact/api.py`
+- [x] **10.3.4** Webhook notifications — HMAC-signed webhooks for assessment_complete, score_change, alert_fired, metric_update
+  - Files: `src/openharness/api_gateway/router.py`
 
 ### 10.4 Multi-Language & Localization
 
-- [ ] **10.4.1** Full report localization — HTML/text reports in Spanish, French, Portuguese, Chinese, Arabic
-  - Files: `src/openharness/impact/report_templates/`, `data/i18n/` (new)
+- [x] **10.4.1** Full report localization — report_strings.yaml with 30+ labels in en/es/fr/pt/zh/ar
+  - Files: `data/i18n/report_strings.yaml` (new), `src/openharness/impact/i18n.py` (new)
 
-- [ ] **10.4.2** DD questionnaire translation — localized DD questions and categories
-  - Files: `data/dd_checklist_*.yaml` (new)
+- [x] **10.4.2** DD questionnaire translation — localized DD questions and categories in es/fr/pt/zh/ar
+  - Files: `data/i18n/dd_checklist_*.yaml` (new)
 
-- [ ] **10.4.3** Agent persona localization — system prompt and conversational responses in multiple languages
-  - Files: `src/openharness/prompts/`
+- [x] **10.4.3** Agent persona localization — system prompt preambles in 6 languages
+  - Files: `data/i18n/system_prompts.yaml` (new), `src/openharness/impact/i18n.py`
 
 ---
 
@@ -949,9 +949,9 @@
 | Phase 7: Analysis & Reporting UX 📊 ✅ | 9 | Interactive reports, evidence mapping, impact pathways |
 | Phase 8: Pipeline & Portfolio 📁 ✅ | 15 | Pipeline stages, monitoring, per-project & aggregate reporting |
 | Phase 9: LLM Intelligence 🧠 ✅ | 10 | Improvement advisor, smart docs, conversational assessment |
-| Phase 10: Platform Integration 🔌 | 11 | MCP server, Claude Code, full API, localization |
-| **Total Next Version** | **45** | |
+| Phase 10: Platform Integration 🔌 ✅ | 14 | MCP server, Claude Code, full API, localization |
+| **Total Next Version** | **48** | |
 
 ---
 
-*Last updated: 2026-04-16 (v0.5.0). Phases 1-9 complete (183/183 items). Next version roadmap (11 remaining items) defined.*
+*Last updated: 2026-04-16 (v0.6.0). All 10 phases complete (197/197 items). Full roadmap delivered.*

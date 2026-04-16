@@ -55,6 +55,23 @@ app.add_typer(framework_app)
 app.add_typer(dd_app)
 
 
+# ---- serve-mcp command (Impact Vision MCP server) ----
+
+@app.command("serve-mcp")
+def serve_mcp(
+    transport: str = typer.Option("stdio", help="Transport: stdio or sse"),
+    host: str = typer.Option("0.0.0.0", help="Host for SSE transport"),
+    port: int = typer.Option(8765, help="Port for SSE transport"),
+) -> None:
+    """Start the Impact Vision MCP server exposing all 25 impact tools."""
+    from openharness.impact.mcp_server import mcp as mcp_server  # noqa: F811
+
+    if transport == "sse":
+        mcp_server.settings.host = host
+        mcp_server.settings.port = port
+    mcp_server.run(transport=transport)
+
+
 # ---- mcp subcommands ----
 
 @mcp_app.command("list")

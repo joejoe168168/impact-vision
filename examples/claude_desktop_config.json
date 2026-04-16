@@ -1,0 +1,23 @@
+{
+  "$schema": "https://raw.githubusercontent.com/anthropics/claude-desktop/main/config-schema.json",
+  "_comment": "Impact Vision MCP server configuration for Claude Desktop / Claude Code. Copy this into your claude_desktop_config.json and adjust the paths.",
+  "mcpServers": {
+    "impact-vision": {
+      "command": "impact-vision",
+      "args": ["serve-mcp"],
+      "env": {}
+    },
+    "impact-vision-uv": {
+      "_comment": "Alternative: run via uv without installing globally",
+      "command": "uv",
+      "args": ["run", "--directory", "/path/to/impact-vision", "impact-vision", "serve-mcp"],
+      "env": {}
+    },
+    "impact-vision-python": {
+      "_comment": "Alternative: run the MCP server module directly",
+      "command": "python",
+      "args": ["-m", "openharness.impact.mcp_server"],
+      "env": {}
+    }
+  }
+}
