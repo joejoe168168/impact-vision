@@ -8,8 +8,9 @@ Impact Vision is an open-source AI-powered impact measurement and SDG alignment 
 2. `pitch_deck_analyze` extracts text, identifies impact claims, maps to IRIS+/SDGs, runs DD checklist, auto-extracts a Company model
 3. Agent presents gaps and asks the most important unanswered DD questions (with NESTA evidence levels)
 4. Deeper scoring via `sdg_mapper`, `five_dimension_assess`, `gap_analysis` with sector benchmarks
-5. `cross_reference` tool maps metrics across all 7 frameworks
-6. `impact_report` generates the final assessment (HTML with Plotly charts, XLSX, CSV, JSON)
+5. `cross_reference` tool maps metrics across all 10 frameworks
+6. Greenwashing detection (standard + EU Green Claims + UK FCA + NLP) and regulatory compliance checks
+7. `impact_report` generates the final assessment (HTML with Plotly charts, XLSX, CSV, JSON)
 
 ## Project Structure
 
@@ -20,39 +21,48 @@ src/openharness/
 │   ├── catalog.py                 # IRIS+ 5.3c Excel ETL (263-column parser)
 │   ├── database.py                # In-memory MetricStore with query API
 │   ├── sdg_taxonomy.py            # UN SDG 17 goals + 169 targets reference data
-│   ├── five_dimensions.py         # 5-Dimension scoring logic
+│   ├── five_dimensions.py         # 5-Dimension scoring logic + additionality assessment
 │   ├── sdg_mapper.py              # SDG alignment scoring algorithm
 │   ├── gap_analysis.py            # Core Metric Set gap analysis
 │   ├── dd_checklist.py            # DD checklist engine (load YAML, analyze, suggest, evidence scoring)
-│   ├── benchmarks.py              # Sector benchmarks for 5D/SDG comparison
-│   └── frameworks/                # ESG/sustainability frameworks
+│   ├── benchmarks.py              # Sector benchmarks for 18 sectors (GIIN survey data)
+│   ├── greenwashing.py            # Greenwashing detection (standard + Green Claims + FCA + NLP)
+│   ├── risk_opportunity.py        # Risk/opportunity with likelihood x severity matrix
+│   ├── storage.py                 # SQLite persistence layer for assessments & session history
+│   ├── report_templates/          # Jinja2-based HTML report template engine
+│   │   └── html_template.py       # Shared CSS, header/footer, SDG colors
+│   └── frameworks/                # ESG/sustainability frameworks (10 frameworks)
 │       ├── sasb.py                # SASB industry-specific materiality (17 industries)
 │       ├── gri.py                 # GRI Universal + Topic Standards (34 standards)
 │       ├── tcfd.py                # TCFD / IFRS S2 climate disclosure (4 pillars)
-│       ├── sfdr_pai.py            # SFDR 14 mandatory PAI indicators
+│       ├── sfdr_pai.py            # SFDR 14+9 PAI indicators + Article 6/8/9
 │       ├── edci.py                # EDCI 17 PE/VC ESG metrics
 │       ├── unpri.py               # UNPRI 6 Principles (27 actions)
 │       ├── theory_of_change.py    # RS Group + GIIN ToC framework
-│       └── cross_reference.py     # 40+ cross-framework metric mappings
-├── tools/impact/                  # Agent tools for LLM orchestration (18 tools)
-│   ├── pitch_deck_analyze_tool.py # PDF/TXT/MD intake + full pipeline + greenwashing + Company extraction
+│       ├── issb_ifrs_s1.py        # ISSB IFRS S1 General Requirements
+│       ├── issb_ifrs_s2.py        # ISSB IFRS S2 Climate Disclosures
+│       ├── esrs.py                # EU CSRD/ESRS Double Materiality (11 standards)
+│       ├── ifc_opim.py            # IFC Operating Principles for Impact Management
+│       └── cross_reference.py     # 59 cross-framework metric mappings
+├── tools/impact/                  # Agent tools for LLM orchestration (17 tools)
+│   ├── pitch_deck_analyze_tool.py # PDF/TXT/MD intake + full pipeline + Company extraction
 │   ├── dd_checklist_tool.py       # DD question list/analyze/suggest
 │   ├── iris_catalog_tool.py       # Search/filter IRIS+ catalog
-│   ├── sdg_mapper_tool.py         # SDG alignment mapping (with provenance)
-│   ├── five_dimension_assess_tool.py  # 5-Dimension assessment (with provenance)
+│   ├── sdg_mapper_tool.py         # SDG alignment mapping
+│   ├── five_dimension_assess_tool.py  # 5-Dimension assessment + additionality
 │   ├── gap_analysis_tool.py       # Gap analysis vs Core Metrics
-│   ├── impact_report_tool.py      # Report generation (HTML/CSV/JSON/text/XLSX) + greenwashing
-│   ├── framework_tool.py          # Multi-framework ESG assessment (8 frameworks incl. ISSB S1)
+│   ├── impact_report_tool.py      # Report generation (HTML/CSV/JSON/text/XLSX)
+│   ├── framework_tool.py          # Multi-framework ESG assessment (10 frameworks)
 │   ├── cross_reference_tool.py    # Cross-framework metric lookup
 │   ├── data_quality_tool.py       # Metric data quality assessment
 │   ├── metric_recommender_tool.py # IRIS+ metric recommendation engine
-│   ├── impact_risk_opportunity_tool.py # Risk/opportunity assessment
-│   ├── greenwashing_tool.py       # Greenwashing/impact-washing detection
-│   ├── exclusion_screening_tool.py # Norms-based exclusion screening
-│   ├── trend_analysis_tool.py     # Metric trend analysis + target tracking
-│   ├── lp_ddq_export_tool.py      # LP DDQ exporter (ILPA/GIIN/EDCI/custom, XLSX/CSV)
+│   ├── impact_risk_opportunity_tool.py # Risk/opportunity with 14 risk categories
+│   ├── lp_ddq_export_tool.py      # LP DDQ exporter (ILPA/GIIN/EDCI/SFDR, XLSX/CSV)
+│   ├── beneficiary_feedback_tool.py # Beneficiary feedback import & analysis
+│   ├── verification_prep_tool.py  # Impact verification readiness (IFC OPIM)
+│   ├── product_passport_tool.py   # EU Digital Product Passport import/mapping
 │   ├── common.py                  # Shared input normalization helpers
-│   └── portfolio_tool.py          # Portfolio batch analysis + fund analytics
+│   └── portfolio_tool.py          # Portfolio batch analysis + scenario modeling
 ├── dashboard/                     # Streamlit dashboard (5 tabs, optional auth)
 │   └── app.py
 ├── skills/bundled/content/        # Agent skills (markdown knowledge)
@@ -67,7 +77,9 @@ src/openharness/
 data/
 ├── raw/                           # IRIS+ Excel file
 ├── processed/                     # JSON catalog cache
-├── dd_checklist.yaml              # 96 DD questions (GIIN/PCV/Seraf/IMP/AFME + sector-specific)
+├── dd_checklist.yaml              # 122 DD questions (GIIN/PCV/Seraf/IMP/AFME + 15 sectors)
+├── scoring_config.yaml            # Sector baselines, keyword boosts, risk/opportunity rules
+├── sdg_keywords.yaml              # SDG keyword mappings for 20+ sectors
 └── sdg/                           # SDG reference data
 ```
 
@@ -89,21 +101,25 @@ impact-vision                       # Start interactive agent session
 
 ## DD Checklist
 
-96 questions across 24 categories sourced from GIIN, PCV, Seraf, IMP, AFME,
-plus sector-specific questions for fintech, healthcare, agriculture, energy,
-and education. Stored in `data/dd_checklist.yaml`. Includes NESTA Standards
-of Evidence scoring (levels 1-5) for assessing evidence quality.
+122 questions across 34 categories sourced from GIIN, PCV, Seraf, IMP, AFME,
+plus sector-specific questions for 15 sectors (fintech, healthcare, agriculture,
+energy, education, manufacturing, transport, construction, tourism, retail,
+mining, media, professional services, waste management, ICT).
+Stored in `data/dd_checklist.yaml`. Includes NESTA Standards of Evidence
+scoring (levels 1-5) for assessing evidence quality.
 
 ## Cross-Reference Mapping
 
-40+ concepts mapped across IRIS+, GRI, EDCI, SFDR PAI, TCFD, and SASB.
+59 concepts mapped across IRIS+, GRI, EDCI, SFDR PAI, TCFD, SASB, ESRS, and ISSB.
 Enables lookup in any direction (e.g., "what GRI disclosure corresponds to
 IRIS+ OI4112?").
 
 ## Sector Benchmarks
 
-8 sectors with benchmark data from GIIN survey: Financial Services, Healthcare,
-Education, Agriculture, Energy, Technology, Real Estate, Water & Sanitation.
+18 sectors with benchmark data from GIIN survey: Financial Services, Healthcare,
+Education, Agriculture, Energy, Technology, Real Estate, Water & Sanitation,
+Manufacturing, Transport & Logistics, Construction, Tourism, Retail,
+Mining & Extractives, Media, Professional Services, Waste Management, ICT.
 Used for comparing 5D scores and metric coverage.
 
 ## Dependencies

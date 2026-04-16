@@ -37,7 +37,7 @@ Key concepts Impact Vision helps with:
 | **SDGs** | 17 UN Sustainable Development Goals (e.g., No Poverty, Clean Energy, Climate Action) with 169 targets |
 | **5 Dimensions** | The standard framework for assessing impact quality: What outcome? Who benefits? How much? Would it happen anyway? What could go wrong? |
 | **Impact DD** | Due diligence focused on whether an investment will actually generate the claimed impact |
-| **ESG** | Environmental, Social, Governance -- risk management frameworks (SASB, GRI, TCFD, SFDR, EDCI, UNPRI) |
+| **ESG** | Environmental, Social, Governance -- risk management frameworks (SASB, GRI, TCFD, SFDR, EDCI, UNPRI, ISSB, ESRS) |
 | **NESTA Evidence** | 5 levels rating how strong the evidence is: Level 1 (narrative) to Level 5 (rigorous RCT) |
 
 ## Core Use Case
@@ -47,7 +47,7 @@ Key concepts Impact Vision helps with:
 1. Extract and classify impact claims (outcome / output / activity / intent / risk)
 2. Map claims to relevant **IRIS+ metrics** from the 787-metric catalog
 3. Detect **SDG goal/target alignment** from the content
-4. Run an **impact DD checklist** (96 questions across 24 categories from GIIN, PCV, Seraf, IMP, AFME + sector-specific for fintech/health/agri/energy/education)
+4. Run an **impact DD checklist** (122 questions across 34 categories from GIIN, PCV, Seraf, IMP, AFME + sector-specific for 15 sectors)
 5. Assess **evidence strength** using NESTA Standards of Evidence (levels 1-5)
 6. Auto-extract a **Company model** for immediate use with downstream assessment tools
 7. Compare against **sector benchmarks** from GIIN survey data
@@ -259,7 +259,7 @@ impact-vision framework scan "Solar energy company providing clean power to 50,0
 # Cross-reference a metric across all frameworks
 impact-vision framework xref OI4112
 
-# Browse the Due Diligence checklist (96 questions)
+# Browse the Due Diligence checklist (122 questions across 34 categories)
 impact-vision dd list
 impact-vision dd categories
 
@@ -295,10 +295,10 @@ Opens a web dashboard at http://localhost:8501 with 5 tabs: Assessment, IRIS+ Ca
 | `iv --help` | Show all commands |
 | `iv catalog stats` | Show catalog statistics |
 | `iv catalog search "query"` | Search IRIS+ metrics |
-| `iv framework list` | List all 7 ESG frameworks |
+| `iv framework list` | List all 10 ESG frameworks |
 | `iv framework scan "text"` | Quick multi-framework scan |
 | `iv framework xref OI4112` | Cross-reference a metric |
-| `iv dd list` | Show all 96 DD questions |
+| `iv dd list` | Show all 122 DD questions |
 | `iv dd categories` | List DD categories |
 | `iv dd analyze "text"` | Check text against DD checklist |
 | `iv ollama-setup` | Configure local LLM |
@@ -396,6 +396,10 @@ The agent will:
 > Check SFDR PAI compliance for the portfolio
 > Show the 17 EDCI PE/VC metrics and which we're reporting
 > Run a UNPRI self-assessment for our fund
+> Assess ISSB IFRS S1 general disclosure readiness
+> Check ISSB IFRS S2 climate disclosure for our carbon data
+> Run EU CSRD/ESRS double materiality assessment
+> Classify our fund under SFDR Article 6/8/9
 ```
 
 ### Theory of Change Assessment
@@ -405,6 +409,23 @@ The agent will:
 > Check our ToC against the GIIN IRIS+ checklist
 > Help me develop a Theory of Change for our microfinance investment
 > List all RS Group principles and GIIN ToC steps
+```
+
+### Greenwashing & Compliance Checks
+
+```
+> Run a greenwashing check on this pitch deck
+> Assess EU Green Claims Directive compliance
+> Check UK FCA Anti-Greenwashing Rule alignment
+> Compute the Green Authenticity Index and Cheap Talk Index for this report
+```
+
+### Impact Verification & Product Passport
+
+```
+> Check our readiness for IFC OPIM verification
+> Import Digital Product Passport data from this JSON file
+> Map DPP categories to IRIS+ and ESRS metrics
 ```
 
 ### LP DDQ Export
@@ -477,32 +498,44 @@ impact-vision/
 │   │   ├── sdg_mapper.py              # Per-goal SDG alignment scorer (0-100)
 │   │   ├── gap_analysis.py            # Core Metric Set coverage analysis
 │   │   ├── dd_checklist.py            # DD question engine (load, analyze, suggest, evidence scoring)
-│   │   ├── benchmarks.py             # Sector benchmarks for 5D/SDG comparison
-│   │   └── frameworks/               # ESG/sustainability frameworks
+│   │   ├── benchmarks.py             # Sector benchmarks for 18 sectors
+│   │   ├── greenwashing.py           # Greenwashing detection (standard + Green Claims + FCA + NLP)
+│   │   ├── risk_opportunity.py       # Risk/opportunity with likelihood x severity matrix
+│   │   ├── storage.py                # SQLite persistence layer for assessments
+│   │   ├── report_templates/         # Jinja2-based HTML report template engine
+│   │   │   └── html_template.py      # Shared CSS, header/footer, SDG colors
+│   │   └── frameworks/               # ESG/sustainability frameworks (10 frameworks)
 │   │       ├── sasb.py                # SASB industry materiality (17 industries)
 │   │       ├── gri.py                 # GRI Universal + Topic Standards (34 standards)
 │   │       ├── tcfd.py                # TCFD / IFRS S2 climate disclosure (4 pillars)
-│   │       ├── sfdr_pai.py            # SFDR 14 mandatory PAI indicators
+│   │       ├── sfdr_pai.py            # SFDR 14+9 PAI indicators + Article 6/8/9
 │   │       ├── edci.py                # EDCI 17 PE/VC ESG metrics
 │   │       ├── unpri.py              # UNPRI 6 Principles (27 actions)
 │   │       ├── theory_of_change.py   # RS Group + GIIN ToC framework
-│   │       └── cross_reference.py    # 40+ cross-framework metric mappings
-│   ├── tools/impact/                  # Agent tools (14 LLM-callable tools)
+│   │       ├── issb_ifrs_s1.py       # ISSB IFRS S1 General Requirements
+│   │       ├── issb_ifrs_s2.py       # ISSB IFRS S2 Climate Disclosures
+│   │       ├── esrs.py               # EU CSRD/ESRS Double Materiality (11 standards)
+│   │       ├── ifc_opim.py           # IFC Operating Principles for Impact Management
+│   │       └── cross_reference.py    # 59 cross-framework metric mappings
+│   ├── tools/impact/                  # Agent tools (17 LLM-callable tools)
 │   │   ├── pitch_deck_analyze_tool.py # PDF/TXT/MD intake + full pipeline
 │   │   ├── dd_checklist_tool.py       # DD question list/analyze/suggest
 │   │   ├── iris_catalog_tool.py       # IRIS+ catalog search/browse
 │   │   ├── sdg_mapper_tool.py         # SDG alignment scoring
-│   │   ├── five_dimension_assess_tool.py # 5-Dimension assessment
+│   │   ├── five_dimension_assess_tool.py # 5-Dimension assessment + additionality
 │   │   ├── gap_analysis_tool.py       # Metric gap analysis
 │   │   ├── impact_report_tool.py      # Report generation (HTML/CSV/JSON/text/XLSX)
-│   │   ├── framework_tool.py          # Multi-framework ESG assessment
+│   │   ├── framework_tool.py          # Multi-framework ESG assessment (10 frameworks)
 │   │   ├── cross_reference_tool.py    # Cross-framework metric lookup
 │   │   ├── data_quality_tool.py       # Metric data quality assessment
 │   │   ├── metric_recommender_tool.py # IRIS+ metric recommendation engine
-│   │   ├── impact_risk_opportunity_tool.py # Risk/opportunity assessment
-│   │   ├── lp_ddq_export_tool.py      # LP DDQ exporter (ILPA/GIIN/EDCI/custom, XLSX/CSV)
+│   │   ├── impact_risk_opportunity_tool.py # Risk/opportunity with 14 risk categories
+│   │   ├── lp_ddq_export_tool.py      # LP DDQ exporter (ILPA/GIIN/EDCI/SFDR, XLSX/CSV)
+│   │   ├── beneficiary_feedback_tool.py # Beneficiary feedback import & analysis
+│   │   ├── verification_prep_tool.py  # Impact verification readiness (IFC OPIM)
+│   │   ├── product_passport_tool.py   # EU Digital Product Passport import/mapping
 │   │   ├── common.py                  # Shared input normalization helpers
-│   │   └── portfolio_tool.py          # Portfolio batch analysis
+│   │   └── portfolio_tool.py          # Portfolio batch analysis + scenario modeling
 │   ├── dashboard/                     # Streamlit visual dashboard
 │   │   └── app.py                     # 5-tab dashboard (Assessment/Catalog/DD/Framework/Portfolio)
 │   ├── skills/bundled/content/        # Agent knowledge (markdown)
@@ -516,7 +549,9 @@ impact-vision/
 ├── data/
 │   ├── raw/                           # IRIS+ Excel file (not committed)
 │   ├── processed/                     # JSON catalog cache (auto-generated)
-│   └── dd_checklist.yaml              # 96 DD questions (GIIN/PCV/Seraf/IMP/AFME + sector-specific)
+│   ├── dd_checklist.yaml              # 122 DD questions (GIIN/PCV/Seraf/IMP/AFME + 15 sectors)
+│   ├── scoring_config.yaml           # Sector baselines, keyword boosts, risk/opportunity rules
+│   └── sdg_keywords.yaml             # SDG keyword mappings for 20+ sectors
 ├── examples/
 │   ├── sample_company.yaml            # Example company with IRIS+ metrics
 │   └── sample_portfolio.csv           # Portfolio of 5 companies
@@ -525,20 +560,21 @@ impact-vision/
 ├── .github/workflows/
 │   └── ci.yml                        # GitHub Actions: import checks, tests, lint
 └── tests/
-    ├── test_impact.py                # 54 tests covering all impact modules, tools + frameworks
-    └── ...                           # 700+ tests across all subsystems
+    ├── test_impact.py                # 54+ tests covering impact modules, tools + 10 frameworks
+    ├── test_report_generation.py     # 23 tests for reports, templates, and persistence
+    └── ...                           # 820+ tests across all subsystems
 ```
 
 ## DD Checklist
 
-The built-in due diligence checklist includes **96 questions** across **24 categories**, sourced from:
+The built-in due diligence checklist includes **122 questions** across **34 categories**, sourced from:
 
 - **GIIN Impact Toolkit** - The Impact Due Diligence Guide
 - **Pacific Community Ventures** - Impact DD Emerging Best Practices
 - **Seraf Toolbox** - Impact Investing Due Diligence Checklist
 - **Impact Management Project (IMP)** - Five Dimensions of Impact
 - **AFME / Neotas / OECD** - ESG Due Diligence frameworks
-- **Sector-specific**: CGAP (fintech), WHO (health), FAO (agriculture), IRENA (energy), education best practices
+- **Sector-specific**: 15 sectors including fintech, healthcare, agriculture, energy, education, manufacturing, transport, construction, tourism, retail, mining, media, professional services, waste management, and ICT
 
 Each addressed question is assessed using **NESTA Standards of Evidence** (levels 1-5):
 
@@ -550,7 +586,10 @@ Each addressed question is assessed using **NESTA Standards of Evidence** (level
 | 4 | Controlled comparison (quasi-experimental, benchmarks) |
 | 5 | Rigorous evaluation (RCT, independent audit, causal attribution) |
 
-Questions are organized into **24 categories**:
+Questions are organized into **34 categories** (18 core + 15 sector-specific + 1 SDG):
+
+<details>
+<summary><strong>Core Categories (18)</strong></summary>
 
 | Category | Qs | Covers |
 |----------|---:|--------|
@@ -572,51 +611,95 @@ Questions are organized into **24 categories**:
 | Supply Chain | 3 | ESG practices, forced/child labor risk, environmental footprint |
 | Stakeholder Voice | 3 | Feedback mechanisms, co-design, transparency |
 | Investor Alignment | 3 | Impact covenants, value-add beyond capital, portfolio fit |
-| **Sector: Fintech** | 5 | Over-indebtedness, client protection, effective interest rate, digital literacy, responsible AI |
-| **Sector: Healthcare** | 5 | Health regulations, patient safety, clinical efficacy, affordability, data privacy |
-| **Sector: Agriculture** | 5 | Farmer income, sustainable farming, climate resilience, food safety, land tenure |
-| **Sector: Energy** | 5 | CO2e avoided, energy access, e-waste, affordability, grid reliability |
-| **Sector: Education** | 5 | Learning outcomes, underserved learners, pedagogy, digital safety, employment |
+
+</details>
+
+<details>
+<summary><strong>Sector-Specific Categories (15 sectors)</strong></summary>
+
+| Sector | Qs | Covers |
+|--------|---:|--------|
+| Fintech | 5 | Over-indebtedness, client protection, effective interest rate, digital literacy, responsible AI |
+| Healthcare | 5 | Health regulations, patient safety, clinical efficacy, affordability, data privacy |
+| Agriculture | 5 | Farmer income, sustainable farming, climate resilience, food safety, land tenure |
+| Energy | 5 | CO2e avoided, energy access, e-waste, affordability, grid reliability |
+| Education | 5 | Learning outcomes, underserved learners, pedagogy, digital safety, employment |
+| Manufacturing | 2 | Circular economy, pollution prevention, worker safety |
+| Transport & Logistics | 2 | Emissions reduction, last-mile accessibility |
+| Construction | 3 | Green building standards, affordable housing, waste diversion |
+| Tourism | 2 | Cultural preservation, community benefit-sharing |
+| Retail | 3 | Ethical sourcing, plastic waste reduction, fair labor |
+| Mining & Extractives | 3 | Tailings management, community consent (FPIC), rehabilitation |
+| Media | 2 | Misinformation safeguards, digital inclusion |
+| Professional Services | 2 | Pro-bono access, diversity metrics |
+| Waste Management | 3 | Recycling rates, informal worker integration, hazardous waste |
+| ICT | 3 | E-waste, data sovereignty, digital divide |
+
+</details>
 
 ## Standards Supported
 
 ### Core (v0.1)
 - **GIIN IRIS+ 5.3c**: Full catalog (~787 metrics), SDG mappings, 5-Dimension tags
 - **UN SDGs**: 17 Goals, 169 Targets with structured taxonomy
-- **Impact DD Checklist**: 96 questions across 24 categories (GIIN, PCV, Seraf, IMP, AFME + sector-specific) with NESTA evidence scoring
-- **Sector Benchmarks**: 8 sectors with aggregated 5D scores, SDG coverage, and metric reporting benchmarks
-- **Cross-Reference Mapping**: 40+ entries mapping equivalent metrics across IRIS+, GRI, EDCI, SFDR PAI, SASB, and TCFD
+- **Impact DD Checklist**: 122 questions across 34 categories (GIIN, PCV, Seraf, IMP, AFME + 15 sectors) with NESTA evidence scoring
+- **Sector Benchmarks**: 18 sectors with aggregated 5D scores, SDG coverage, and metric reporting benchmarks (GIIN survey data)
+- **Cross-Reference Mapping**: 59 entries mapping equivalent metrics across IRIS+, GRI, EDCI, SFDR PAI, SASB, TCFD, ESRS, and ISSB
 
-### ESG Frameworks (v0.2)
+### ESG & Regulatory Frameworks (v0.3)
 All accessible via the `framework_assess` tool:
 
 | Framework | Coverage | Cross-references |
 |-----------|----------|------------------|
-| **SASB** | 17 industries, 77+ material topics | IRIS+ metric IDs |
+| **SASB** | 17 industries, 77+ material topics (YAML-externalized) | IRIS+ metric IDs |
 | **GRI** | 34 standards (Universal + Topic), 120+ disclosures | IRIS+ metric IDs |
 | **TCFD / IFRS S2** | 4 pillars, 11 disclosures, scenario analysis | IRIS+, Scope 1/2/3 |
-| **SFDR PAI** | 14 mandatory EU indicators | IRIS+, GRI |
+| **SFDR PAI** | 14 mandatory + 9 optional PAI indicators, Article 6/8/9 classification | IRIS+, GRI |
 | **EDCI** | 17 core PE/VC metrics (Environment/Social/Governance) | IRIS+, GRI, SFDR PAI |
 | **UNPRI** | 6 Principles, 27 actions | ESG integration assessment |
 | **Theory of Change** | RS Group 8 Blended Value Principles + GIIN 8-step ToC Checklist | IMP, SDGs |
+| **ISSB IFRS S1** | General sustainability disclosure requirements (4 pillars) | TCFD, ESRS |
+| **ISSB IFRS S2** | Climate-related disclosures, Scope 1/2/3 | TCFD, ESRS, GRI |
+| **EU CSRD/ESRS** | 11 standards, double materiality assessment, data points | IRIS+, GRI, SFDR |
 
-### Tools (14 Impact Tools)
+### Regulatory Compliance (v0.2+)
+| Standard | Coverage |
+|----------|----------|
+| **EU Green Claims Directive** | Evidence, comparability, third-party verification, carbon offset rules |
+| **UK FCA Anti-Greenwashing Rule** | Fair/clear/not-misleading assessment, sustainability reference checks |
+| **EU Digital Product Passport (ESPR)** | Import DPP data, map to IRIS+/ESRS/SDG, assess completeness |
+| **IFC Operating Principles for Impact Management** | 9-principle verification readiness assessment |
+
+### Greenwashing & NLP Detection (v0.2+)
+| Capability | Description |
+|------------|-------------|
+| Standard greenwashing scoring | Vague language detection, quantitative evidence checks |
+| Green Authenticity Index (GAI) | Ratio of substantive to vague claims |
+| Cheap Talk Index (CTI) | Forward-looking vs. evidenced statement analysis |
+| Sentiment Deflection | Detects positive-framing bias around negative topics |
+| Claim Decomposition | Breaks claims into verifiable components |
+| ClimateBERT integration | Stub for deep NLP classification (ready for model integration) |
+
+### Tools (17 Impact Tools)
 | Tool | Description |
 |------|-------------|
 | `pitch_deck_analyze` | PDF/TXT/MD intake with impact claim extraction and Company model |
 | `dd_checklist` | DD question list, document analysis, and targeted suggestions |
 | `iris_catalog` | IRIS+ catalog search, browse, filter by SDG/theme |
 | `sdg_mapper` | SDG alignment scoring with theme inference |
-| `five_dimension_assess` | 5-Dimension impact assessment with sector baselines |
+| `five_dimension_assess` | 5-Dimension assessment with additionality & counterfactual prompts |
 | `gap_analysis` | Metric gap analysis vs Core Metric Set |
 | `impact_report` | Interactive HTML reports with Plotly charts (+ CSV/JSON/XLSX) |
-| `framework_assess` | Multi-framework ESG assessment (SASB, GRI, TCFD, SFDR, EDCI, UNPRI, ToC) |
-| `cross_reference` | Cross-framework metric lookup (PAI-prefix support) |
+| `framework_assess` | Multi-framework ESG assessment (10 frameworks including ISSB, ESRS) |
+| `cross_reference` | Cross-framework metric lookup (59 mappings, PAI-prefix support) |
 | `impact_data_quality` | Assess quality of reported metrics -- flags placeholders, unknown IDs |
 | `impact_metric_recommender` | Recommend IRIS+ metrics based on themes, SDGs, and sector |
-| `impact_risk_opportunity` | Structured risk/opportunity assessment with mitigation suggestions |
-| `lp_ddq_export` | Generate LP DDQ responses in ILPA, GIIN/IRIS+, EDCI, or custom formats (XLSX/CSV) |
-| `portfolio_analyze` | Batch analyze portfolio companies with aggregated metrics and SDG coverage |
+| `impact_risk_opportunity` | Risk/opportunity with 14 risk categories, likelihood x severity matrix |
+| `lp_ddq_export` | Generate LP DDQ responses in ILPA, GIIN, EDCI, SFDR formats (XLSX/CSV) |
+| `portfolio_analyze` | Portfolio batch analysis with scenario modeling |
+| `beneficiary_feedback` | Import and analyze beneficiary feedback data |
+| `verification_prep` | Impact verification readiness assessment (IFC OPIM 9 principles) |
+| `product_passport` | EU Digital Product Passport data import and IRIS+/ESRS mapping |
 
 ## Streamlit Dashboard
 
@@ -642,8 +725,8 @@ pip install -e ".[dev]"
 # Run all tests
 python -m pytest tests/ -v
 
-# Run impact module tests (54 tests, no external dependencies)
-python -m pytest tests/test_impact.py tests/test_tools/test_impact_tools_enhancements.py -v
+# Run impact module tests (77+ tests, no external dependencies)
+python -m pytest tests/test_impact.py tests/test_report_generation.py tests/test_tools/test_impact_tools_enhancements.py -v
 
 # Run import smoke checks (verifies all package exports work)
 python scripts/check_imports.py --all
@@ -654,14 +737,17 @@ ruff check src/
 
 ### Testing Coverage
 
+820+ tests across all subsystems:
+
 | Test area | Tests | What it covers |
 |-----------|------:|----------------|
-| Impact engine | 41 | IRIS+ catalog, SDG mapping, 5D scoring, gap analysis, DD checklist, benchmarks, all 7 frameworks, cross-references |
+| Impact engine | 54+ | IRIS+ catalog, SDG mapping, 5D scoring, gap analysis, DD checklist, benchmarks, 10 frameworks, cross-references, ISSB, ESRS, greenwashing |
+| Report generation | 23+ | HTML/CSV/JSON/text report output, Jinja2 template engine, SQLite persistence layer |
 | Tools | ~40 | Tool registry bootstrap, file/grep/glob tools, bash tool, MCP tools, integration flows |
 | Services | 14 | Compaction system, session storage, token estimation |
 | Config/bridge/hooks | ~30 | Settings load/save, work secrets, hook execution, hot reload |
 | Commands | ~20 | CLI commands, command registry |
-| Other | ~550+ | Permissions, memory, plugins, skills, swarm, coordinator, auth, prompts, sandbox, UI |
+| Other | ~650+ | Permissions, memory, plugins, skills, swarm, coordinator, auth, prompts, sandbox, UI |
 
 ### CI
 
