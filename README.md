@@ -686,6 +686,7 @@ Impact Vision is actively evolving. Here's where we're headed:
 - **LLM-guided impact improvement** -- Intelligent recommendations (powered by LLM) to guide target companies toward achieving greater impact: suggest specific metrics to track, programs to implement, and partnerships to pursue.
 - **Multi-language support** -- Localization of reports, DD questionnaires, and agent interactions for global impact investors.
 - **MCP server mode** -- Expose Impact Vision tools as an MCP server so other AI agents and platforms can access them programmatically.
+- **Claude Code / AI agent integration** -- First-class support for Claude Code and other AI coding agents as impact analysis tools via MCP, enabling developers to embed impact assessment directly into their workflows.
 
 Have ideas? Open an [issue](https://github.com/joejoe168168/impact-vision/issues) or submit a PR!
 
