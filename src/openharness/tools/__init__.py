@@ -79,6 +79,7 @@ def create_default_tool_registry(mcp_manager: McpClientManager | None = None) ->
         ("impact.cross_reference_tool", "CrossReferenceTool"),
         ("impact.data_quality_tool", "DataQualityTool"),
         ("impact.lp_ddq_export_tool", "LpDdqExportTool"),
+        ("impact.metric_recommender_tool", "MetricRecommenderTool"),
         ("impact.portfolio_tool", "PortfolioTool"),
     )
     for module_name, class_name in impact_tools:

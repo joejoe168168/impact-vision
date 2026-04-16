@@ -29,6 +29,7 @@ class CrossReferenceInput(BaseModel):
         default="",
         description="Concept name to search for (e.g., 'GHG emissions', 'gender', 'energy').",
     )
+    limit: int = Field(default=25, ge=1, le=100, description="Maximum mappings to return for list/search.")
 
 
 class CrossReferenceTool(BaseTool):
@@ -61,6 +62,7 @@ class CrossReferenceTool(BaseTool):
 
         if args.action == "list":
             refs = get_all_cross_references()
+            refs = refs[: args.limit]
             lines = [f"Cross-Reference Map ({len(refs)} concepts):", "=" * 60, ""]
             for xref in refs:
                 lines.append(format_cross_reference(xref))
@@ -73,6 +75,7 @@ class CrossReferenceTool(BaseTool):
             results = search_cross_references(args.query)
             if not results:
                 return ToolResult(output=f"No cross-references found for: {args.query}")
+            results = results[: args.limit]
             lines = [f"Cross-references matching '{args.query}' ({len(results)} found):", ""]
             for xref in results:
                 lines.append(format_cross_reference(xref))

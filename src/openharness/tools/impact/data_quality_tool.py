@@ -24,6 +24,10 @@ class DataQualityInput(BaseModel):
         default_factory=list,
         description="Optional required metrics to verify (e.g., a fund's core reporting set).",
     )
+    output_format: Literal["text", "json"] = Field(
+        default="text",
+        description="Return either human-readable text or JSON payload.",
+    )
 
 
 class DataQualityTool(BaseTool):
@@ -76,6 +80,21 @@ class DataQualityTool(BaseTool):
         )
         quality_score = max(0, 100 - penalties)
 
+        payload = {
+            "metrics_provided": len(metrics),
+            "quality_score": quality_score,
+            "unknown_ids": unknown_ids,
+            "placeholder_values": placeholder_values,
+            "non_numeric_values": non_numeric_values,
+            "missing_required": missing_required,
+            "recommendations": _recommendations(unknown_ids, placeholder_values, non_numeric_values, missing_required),
+        }
+
+        if args.output_format == "json":
+            import json
+
+            return ToolResult(output=json.dumps(payload, indent=2), metadata=payload)
+
         lines = [
             "IMPACT DATA QUALITY ASSESSMENT",
             "=" * 50,
@@ -98,7 +117,7 @@ class DataQualityTool(BaseTool):
         if not any((unknown_ids, placeholder_values, non_numeric_values, missing_required)):
             lines.append("No major quality issues detected.")
 
-        recommendations = _recommendations(unknown_ids, placeholder_values, non_numeric_values, missing_required)
+        recommendations = payload["recommendations"]
         if recommendations:
             lines.append("")
             lines.append("Recommended fixes:")
@@ -107,13 +126,7 @@ class DataQualityTool(BaseTool):
 
         return ToolResult(
             output="\n".join(lines),
-            metadata={
-                "quality_score": quality_score,
-                "unknown_ids": unknown_ids,
-                "placeholder_values": placeholder_values,
-                "non_numeric_values": non_numeric_values,
-                "missing_required": missing_required,
-            },
+            metadata=payload,
         )
 
 
