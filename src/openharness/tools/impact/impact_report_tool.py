@@ -16,6 +16,7 @@ from openharness.impact.five_dimensions import assess_five_dimensions
 from openharness.impact.gap_analysis import analyze_gaps
 from openharness.impact.models import Company
 from openharness.impact.sdg_mapper import map_sdg_alignment
+from openharness.tools.impact.common import normalize_metric_map, normalize_sdg_goals, normalize_str_list
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 _SECTOR_OPPORTUNITIES: dict[str, list[str]] = {
@@ -183,9 +184,9 @@ class ImpactReportTool(BaseTool):
             name=args.company_name,
             description=args.company_description,
             sector=args.sector,
-            impact_themes=args.impact_themes,
-            reported_metrics=args.reported_metrics,
-            sdg_claims=args.sdg_claims,
+            impact_themes=normalize_str_list(args.impact_themes),
+            reported_metrics=normalize_metric_map(args.reported_metrics),
+            sdg_claims=normalize_sdg_goals(args.sdg_claims),
         )
 
         report_data: dict = {

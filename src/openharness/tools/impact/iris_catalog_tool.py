@@ -8,6 +8,7 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 from openharness.impact.database import get_metric_store
+from openharness.tools.impact.common import normalize_str_list
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 
@@ -56,8 +57,14 @@ class IrisCatalogTool(BaseTool):
             return ToolResult(output=json.dumps(stats, indent=2))
 
         if args.action == "get":
-            metric = store.get(args.query)
+            metric = store.get(args.query.strip().upper())
             if metric is None:
+                fallback = store.search(args.query, limit=5)
+                if fallback:
+                    return ToolResult(
+                        output=f"Metric '{args.query}' not found.\n\nClosest matches:\n{_format_metric_list(fallback, 5)}",
+                        is_error=True,
+                    )
                 return ToolResult(output=f"Metric '{args.query}' not found", is_error=True)
             return ToolResult(output=json.dumps(metric.model_dump(), indent=2))
 
@@ -72,7 +79,8 @@ class IrisCatalogTool(BaseTool):
             return ToolResult(output=_format_metric_list(results, args.limit))
 
         if args.action == "filter_theme":
-            results = store.filter_by_theme(args.query)
+            theme = normalize_str_list([args.query])[0] if args.query.strip() else args.query
+            results = store.filter_by_theme(theme)
             return ToolResult(output=_format_metric_list(results, args.limit))
 
         if args.action == "filter_dimension":

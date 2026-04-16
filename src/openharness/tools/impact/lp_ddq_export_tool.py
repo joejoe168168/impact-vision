@@ -9,6 +9,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 from typing import Literal
+import csv
+import io
 
 from pydantic import BaseModel, Field
 
@@ -17,6 +19,7 @@ from openharness.impact.five_dimensions import assess_five_dimensions
 from openharness.impact.gap_analysis import analyze_gaps
 from openharness.impact.models import Company
 from openharness.impact.sdg_mapper import map_sdg_alignment
+from openharness.tools.impact.common import normalize_metric_map, normalize_sdg_goals, normalize_str_list
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 
@@ -149,9 +152,9 @@ class LpDdqExportTool(BaseTool):
             name=args.company_name,
             description=args.company_description,
             sector=args.sector,
-            impact_themes=args.impact_themes,
-            reported_metrics=args.reported_metrics,
-            sdg_claims=args.sdg_claims,
+            impact_themes=normalize_str_list(args.impact_themes),
+            reported_metrics=normalize_metric_map(args.reported_metrics),
+            sdg_claims=normalize_sdg_goals(args.sdg_claims),
         )
 
         data_cache: dict = {}
@@ -195,6 +198,8 @@ class LpDdqExportTool(BaseTool):
 
         if args.output_format == "xlsx":
             return self._generate_xlsx(args, template, company, store, data_cache, context)
+        if args.output_format == "csv":
+            return ToolResult(output=self._to_csv(template, company, store, data_cache))
 
         return ToolResult(output="\n".join(lines))
 
@@ -303,3 +308,20 @@ class LpDdqExportTool(BaseTool):
             parts.append("[Data not available - provide more company information]")
 
         return "\n".join(parts)
+
+    def _to_csv(self, template: dict, company: Company, store, data_cache: dict) -> str:
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(["Template", template["name"]])
+        writer.writerow(["Company", company.name])
+        writer.writerow([])
+        writer.writerow(["Section ID", "Question", "Response"])
+        for section in template["sections"]:
+            writer.writerow(
+                [
+                    section["id"],
+                    section["question"],
+                    self._generate_section_data(section, company, store, data_cache),
+                ]
+            )
+        return output.getvalue()

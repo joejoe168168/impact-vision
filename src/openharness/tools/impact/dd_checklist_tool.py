@@ -46,7 +46,7 @@ class DdChecklistInput(BaseModel):
         default=15, ge=1, le=50,
         description="Max questions to return (for 'suggest')",
     )
-    priority: str = Field(
+    priority: Literal["", "high", "medium", "low"] = Field(
         default="",
         description="Filter by priority: 'high', 'medium', or 'low'",
     )
@@ -222,6 +222,8 @@ def _extract_text(file_path: str, context: ToolExecutionContext) -> str:
             return text
         except Exception:
             return ""
-    elif path.suffix.lower() in (".txt", ".md"):
+    elif path.suffix.lower() in (".txt", ".md", ".rst"):
+        return path.read_text(encoding="utf-8", errors="replace")
+    elif path.suffix.lower() == ".json":
         return path.read_text(encoding="utf-8", errors="replace")
     return ""

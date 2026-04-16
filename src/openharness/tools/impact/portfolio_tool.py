@@ -10,6 +10,7 @@ import csv
 import io
 import json
 from pathlib import Path
+from typing import Literal
 
 import yaml
 from pydantic import BaseModel, Field
@@ -19,11 +20,12 @@ from openharness.impact.five_dimensions import assess_five_dimensions
 from openharness.impact.gap_analysis import analyze_gaps
 from openharness.impact.models import Company
 from openharness.impact.sdg_mapper import map_sdg_alignment
+from openharness.tools.impact.common import normalize_metric_map, normalize_sdg_goals, normalize_str_list
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 
 class PortfolioInput(BaseModel):
-    action: str = Field(
+    action: Literal["analyze_file", "analyze_companies", "aggregate"] = Field(
         description=(
             "'analyze_file': Analyze a portfolio CSV/YAML file. "
             "'analyze_companies': Analyze a list of companies provided inline. "
@@ -41,7 +43,7 @@ class PortfolioInput(BaseModel):
             "name, sector, description, impact_themes, reported_metrics, sdg_claims"
         ),
     )
-    output_format: str = Field(
+    output_format: Literal["text", "json", "csv"] = Field(
         default="text", description="Output format: 'text', 'json', 'csv'"
     )
 
@@ -119,6 +121,15 @@ def _load_portfolio_file(file_path: str, context: ToolExecutionContext) -> list[
             return [_dict_to_company(d) for d in data["companies"]]
         return "YAML must contain a list of companies or a dict with 'companies' key"
 
+    if path.suffix.lower() == ".json":
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        if isinstance(data, list):
+            return [_dict_to_company(d) for d in data]
+        if isinstance(data, dict) and "companies" in data:
+            return [_dict_to_company(d) for d in data["companies"]]
+        return "JSON must contain a list of companies or an object with 'companies' key"
+
     if path.suffix.lower() == ".csv":
         with open(path, "r", encoding="utf-8") as f:
             reader = csv.DictReader(f)
@@ -132,9 +143,11 @@ def _load_portfolio_file(file_path: str, context: ToolExecutionContext) -> list[
                     name=row.get("name", row.get("company", "")),
                     sector=row.get("sector", ""),
                     description=row.get("description", ""),
-                    impact_themes=[t.strip() for t in row.get("impact_themes", "").split(",") if t.strip()],
-                    reported_metrics=metrics,
-                    sdg_claims=[int(x.strip()) for x in row.get("sdg_claims", "").split(",") if x.strip().isdigit()],
+                    impact_themes=normalize_str_list(row.get("impact_themes", "").split(",")),
+                    reported_metrics=normalize_metric_map(metrics),
+                    sdg_claims=normalize_sdg_goals(
+                        [x.strip() for x in row.get("sdg_claims", "").split(",") if x.strip()]
+                    ),
                 ))
             return companies
 
@@ -146,9 +159,9 @@ def _dict_to_company(d: dict) -> Company:
         name=d.get("name", ""),
         sector=d.get("sector", ""),
         description=d.get("description", ""),
-        impact_themes=d.get("impact_themes", []),
-        reported_metrics=d.get("reported_metrics", {}),
-        sdg_claims=d.get("sdg_claims", []),
+        impact_themes=normalize_str_list(d.get("impact_themes", [])),
+        reported_metrics=normalize_metric_map(d.get("reported_metrics", {})),
+        sdg_claims=normalize_sdg_goals(d.get("sdg_claims", [])),
     )
 
 

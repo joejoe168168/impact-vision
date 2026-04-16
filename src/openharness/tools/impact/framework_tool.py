@@ -9,6 +9,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from openharness.tools.impact.common import normalize_metric_map, normalize_str_list
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 
@@ -64,9 +65,18 @@ class FrameworkTool(BaseTool):
 
     async def execute(self, arguments: BaseModel, context: ToolExecutionContext) -> ToolResult:
         args = arguments if isinstance(arguments, FrameworkInput) else FrameworkInput.model_validate(arguments)
+        args = FrameworkInput(
+            **{
+                **args.model_dump(),
+                "themes": normalize_str_list(args.themes),
+                "reported_metrics": normalize_metric_map(args.reported_metrics),
+            }
+        )
 
         if args.framework == "all" and args.action == "assess":
             return self._assess_all(args)
+        if args.framework == "all" and args.action in ("list", "match"):
+            return self._handle_all_list(args)
 
         handlers = {
             "sasb": self._handle_sasb,

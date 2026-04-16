@@ -11,6 +11,7 @@ from openharness.impact.database import get_metric_store
 from openharness.impact.dd_checklist import analyze_document_coverage, select_questions_for_document
 from openharness.impact.models import ImpactClaim
 from openharness.impact.sdg_taxonomy import get_sdg_goal
+from openharness.tools.impact.common import normalize_str_list
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 logger = logging.getLogger(__name__)
@@ -96,20 +97,24 @@ class PitchDeckAnalyzeTool(BaseTool):
         if not path.exists():
             return ToolResult(output=f"File not found: {path}", is_error=True)
 
-        if path.suffix.lower() != ".pdf":
-            return ToolResult(output=f"Expected PDF file, got: {path.suffix}", is_error=True)
-
+        suffix = path.suffix.lower()
         try:
-            text, page_texts = _extract_pdf_text(path)
+            if suffix == ".pdf":
+                text, page_texts = _extract_pdf_text(path)
+            elif suffix in (".txt", ".md"):
+                raw = path.read_text(encoding="utf-8", errors="replace")
+                text, page_texts = raw, [{"page": 1, "text": raw}]
+            else:
+                return ToolResult(output=f"Unsupported file type: {path.suffix}. Use PDF, TXT, or MD.", is_error=True)
         except Exception as e:
-            return ToolResult(output=f"Failed to extract PDF text: {e}", is_error=True)
+            return ToolResult(output=f"Failed to extract document text: {e}", is_error=True)
 
         if not text.strip():
             return ToolResult(output="No text could be extracted from the PDF", is_error=True)
 
         store = get_metric_store()
         claims = _extract_impact_claims(page_texts, store)
-        detected_themes = _detect_themes(text)
+        detected_themes = normalize_str_list(_detect_themes(text))
         detected_sdgs = _detect_sdg_goals(text, claims)
         suggested_metrics = _suggest_iris_metrics(text, detected_themes, store) if args.include_iris_suggestions else []
 

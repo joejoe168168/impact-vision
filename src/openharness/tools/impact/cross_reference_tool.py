@@ -84,22 +84,25 @@ class CrossReferenceTool(BaseTool):
                 return ToolResult(output="Provide a 'metric_id' for lookup action", is_error=True)
 
             results = []
-            mid = args.metric_id.strip()
+            metric_ids = [m.strip() for m in args.metric_id.split(",") if m.strip()]
+            if not metric_ids:
+                return ToolResult(output="Provide a valid metric_id for lookup action", is_error=True)
 
-            if args.standard in ("iris", "any"):
-                results.extend(lookup_by_iris(mid))
-            if args.standard in ("gri", "any"):
-                results.extend(lookup_by_gri(mid))
-            if args.standard in ("edci", "any"):
-                results.extend(lookup_by_edci(mid))
-            if args.standard in ("sfdr", "any"):
-                try:
-                    results.extend(lookup_by_sfdr(int(mid)))
-                except ValueError:
-                    pass
+            for mid in metric_ids:
+                if args.standard in ("iris", "any"):
+                    results.extend(lookup_by_iris(mid))
+                if args.standard in ("gri", "any"):
+                    results.extend(lookup_by_gri(mid))
+                if args.standard in ("edci", "any"):
+                    results.extend(lookup_by_edci(mid))
+                if args.standard in ("sfdr", "any"):
+                    try:
+                        results.extend(lookup_by_sfdr(int(mid)))
+                    except ValueError:
+                        pass
 
             if not results and args.standard == "any":
-                results = search_cross_references(mid)
+                results = search_cross_references(" ".join(metric_ids))
 
             seen = set()
             deduped = []
@@ -109,9 +112,9 @@ class CrossReferenceTool(BaseTool):
                     deduped.append(r)
 
             if not deduped:
-                return ToolResult(output=f"No cross-references found for metric: {mid}")
+                return ToolResult(output=f"No cross-references found for metric(s): {', '.join(metric_ids)}")
 
-            lines = [f"Cross-references for '{mid}':", ""]
+            lines = [f"Cross-references for '{', '.join(metric_ids)}':", ""]
             for xref in deduped:
                 lines.append(format_cross_reference(xref))
                 lines.append("")

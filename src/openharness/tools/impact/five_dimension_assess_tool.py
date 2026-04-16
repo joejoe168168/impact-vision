@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 from openharness.impact.database import get_metric_store
 from openharness.impact.five_dimensions import assess_five_dimensions
 from openharness.impact.models import Company
+from openharness.tools.impact.common import normalize_metric_map, normalize_str_list
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 
@@ -49,8 +50,8 @@ class FiveDimensionAssessTool(BaseTool):
             name=args.company_name,
             description=args.company_description,
             sector=args.sector,
-            impact_themes=args.impact_themes,
-            reported_metrics=args.reported_metrics,
+            impact_themes=normalize_str_list(args.impact_themes),
+            reported_metrics=normalize_metric_map(args.reported_metrics),
         )
 
         result = assess_five_dimensions(
@@ -72,6 +73,13 @@ class FiveDimensionAssessTool(BaseTool):
             if dim.gaps:
                 lines.append(f"  Gaps: {', '.join(dim.gaps[:3])}")
             lines.append("")
+
+        dims = [result.what, result.who, result.how_much, result.contribution, result.risk]
+        weakest = sorted(dims, key=lambda d: d.score)[:2]
+        lines.append("Priority focus areas:")
+        for dim in weakest:
+            lines.append(f"  - {dim.dimension} ({dim.score}/5)")
+        lines.append("")
 
         if result.recommendations:
             lines.append("Recommendations:")

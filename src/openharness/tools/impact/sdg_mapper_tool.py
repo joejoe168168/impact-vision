@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 from openharness.impact.database import get_metric_store
 from openharness.impact.models import Company
 from openharness.impact.sdg_mapper import map_sdg_alignment
+from openharness.tools.impact.common import normalize_metric_map, normalize_sdg_goals, normalize_str_list
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 
@@ -51,13 +52,13 @@ class SdgMapperTool(BaseTool):
             name=args.company_name,
             description=args.company_description,
             sector=args.sector,
-            impact_themes=args.impact_themes,
-            reported_metrics=args.reported_metrics,
-            sdg_claims=args.sdg_claims,
+            impact_themes=normalize_str_list(args.impact_themes),
+            reported_metrics=normalize_metric_map(args.reported_metrics),
+            sdg_claims=normalize_sdg_goals(args.sdg_claims),
         )
 
         alignments = map_sdg_alignment(
-            company, store, goals=args.sdg_goals or None
+            company, store, goals=normalize_sdg_goals(args.sdg_goals) or None
         )
 
         output_lines = [f"SDG Alignment Analysis: {company.name}\n"]
@@ -78,6 +79,11 @@ class SdgMapperTool(BaseTool):
 
         output_lines.append("\n" + "=" * 60)
         output_lines.append(f"Total SDGs with alignment: {len(top)}/17")
+        if company.sdg_claims:
+            aligned = {a.goal for a in top}
+            unmatched_claims = [g for g in company.sdg_claims if g not in aligned]
+            if unmatched_claims:
+                output_lines.append(f"Claimed but weakly evidenced SDGs: {', '.join(f'SDG {g}' for g in unmatched_claims)}")
 
         return ToolResult(
             output="\n".join(output_lines),

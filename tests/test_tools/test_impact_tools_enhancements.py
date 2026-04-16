@@ -1,0 +1,74 @@
+from __future__ import annotations
+
+import json
+import asyncio
+
+from openharness.tools.base import ToolExecutionContext
+from openharness.tools.impact.common import normalize_metric_map, normalize_sdg_goals, normalize_str_list
+from openharness.tools.impact.lp_ddq_export_tool import LpDdqExportInput, LpDdqExportTool
+from openharness.tools.impact.pitch_deck_analyze_tool import PitchDeckAnalyzeInput, PitchDeckAnalyzeTool
+from openharness.tools.impact.portfolio_tool import _load_portfolio_file
+
+
+def test_common_normalizers() -> None:
+    assert normalize_metric_map({" pi4060 ": " 100 ", "": "x", "oi1479": ""}) == {"PI4060": "100"}
+    assert normalize_sdg_goals([1, 1, 18, 7, "3"]) == [1, 7, 3]
+    assert normalize_str_list([" Health ", "", "health", "Climate"]) == ["Health", "Climate"]
+
+
+def test_lp_ddq_supports_csv_output(tmp_path) -> None:
+    tool = LpDdqExportTool()
+    ctx = ToolExecutionContext(cwd=tmp_path)
+    result = asyncio.run(
+        tool.execute(
+            LpDdqExportInput(
+                template="giin_iris",
+                action="generate",
+                company_name="Acme Impact",
+                sector="Fintech",
+                reported_metrics={"pi4060": "1000"},
+                output_format="csv",
+            ),
+            ctx,
+        )
+    )
+    assert result.is_error is False
+    assert "Section ID,Question,Response" in result.output
+    assert "giin-1" in result.output
+
+
+def test_pitch_deck_supports_markdown_input(tmp_path) -> None:
+    path = tmp_path / "memo.md"
+    path.write_text("# Memo\nWe support financial inclusion and SDG 1.", encoding="utf-8")
+
+    tool = PitchDeckAnalyzeTool()
+    ctx = ToolExecutionContext(cwd=tmp_path)
+    result = asyncio.run(
+        tool.execute(
+            PitchDeckAnalyzeInput(file_path="memo.md", include_dd_checklist=False),
+            ctx,
+        )
+    )
+    assert result.is_error is False
+    assert "Detected SDGs: SDG 1" in result.output
+
+
+def test_portfolio_loader_supports_json(tmp_path) -> None:
+    data = {
+        "companies": [
+            {
+                "name": "A",
+                "sector": "Energy",
+                "impact_themes": [" Clean Energy ", "clean energy"],
+                "reported_metrics": {"pi4060": "4"},
+                "sdg_claims": [7, 7, 99],
+            }
+        ]
+    }
+    path = tmp_path / "portfolio.json"
+    path.write_text(json.dumps(data), encoding="utf-8")
+    companies = _load_portfolio_file(str(path), ToolExecutionContext(cwd=tmp_path))
+    assert not isinstance(companies, str)
+    assert companies[0].impact_themes == ["Clean Energy"]
+    assert companies[0].reported_metrics == {"PI4060": "4"}
+    assert companies[0].sdg_claims == [7]
