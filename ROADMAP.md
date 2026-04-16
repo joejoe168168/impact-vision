@@ -577,93 +577,93 @@
 
 ### 5.1 Expand Sector Coverage
 
-- [ ] **5.1.1** Add 5D sector baselines for: Manufacturing, Transport/Logistics, Construction, Tourism, Retail, Mining/Extractives, Media, Professional Services, Waste Management, ICT
-  - File: `data/sector_baselines.yaml` (after §1.3.1)
+- [x] **5.1.1** Add 5D sector baselines for: Manufacturing, Transport/Logistics, Construction, Tourism, Retail, Mining/Extractives, Media, Professional Services, Waste Management, ICT
+  - File: `data/scoring_config.yaml`, `src/openharness/impact/five_dimensions.py`
   - Ref: Review §2.2
 
-- [ ] **5.1.2** Add SDG sector relevance for all new sectors
-  - File: `data/sdg_keyword_map.yaml` (after §1.3.2)
+- [x] **5.1.2** Add SDG sector relevance for all new sectors
+  - File: `data/sdg_keywords.yaml`
   - Ref: Review §2.2
 
-- [ ] **5.1.3** Add benchmark data for new sectors
+- [x] **5.1.3** Add benchmark data for new sectors
   - File: `src/openharness/impact/benchmarks.py`
   - Ref: Review §2.2
 
-- [ ] **5.1.4** Add sector-specific DD questions for new sectors (manufacturing, transport, etc.)
+- [x] **5.1.4** Add sector-specific DD questions for new sectors (manufacturing, transport, etc.)
   - File: `data/dd_checklist.yaml`
   - Ref: Review §2.2
 
 ### 5.2 Improve Contribution / Additionality Assessment
 
-- [ ] **5.2.1** Add additionality heuristics — check for "unique", "first-of-kind", "underserved market", "no existing solution" language
+- [x] **5.2.1** Add additionality heuristics — check for "unique", "first-of-kind", "underserved market", "no existing solution" language
   - File: `src/openharness/impact/five_dimensions.py`
   - Ref: Review §2.9
 
-- [ ] **5.2.2** Add benchmark comparison for contribution — compare against market alternatives
+- [x] **5.2.2** Add benchmark comparison for contribution — compare against market alternatives
   - File: `src/openharness/impact/five_dimensions.py`
   - Ref: Review §2.9
 
-- [ ] **5.2.3** Add counterfactual prompt — flag for human review: "What would happen without this intervention?"
+- [x] **5.2.3** Add counterfactual prompt — flag for human review: "What would happen without this intervention?"
   - File: `src/openharness/tools/impact/five_dimension_assess_tool.py`
   - Ref: Review §2.9
 
 ### 5.3 Add Negative Impact / Do No Harm Assessment
 
-- [ ] **5.3.1** Add negative impact penalty to 5D risk dimension — reduce score when adverse impact risks are identified without mitigation
+- [x] **5.3.1** Add negative impact penalty to 5D risk dimension — reduce score when adverse impact risks are identified without mitigation
   - File: `src/openharness/impact/five_dimensions.py`
   - Ref: Review §2.10
 
-- [ ] **5.3.2** Add controversy check integration stub — placeholder for external data source
+- [x] **5.3.2** Add controversy check integration stub — placeholder for external data source
   - File: `src/openharness/impact/risk_opportunity.py`
   - Ref: Review §2.10
 
-- [ ] **5.3.3** Integrate exclusion screening results into risk scoring
+- [x] **5.3.3** Integrate exclusion screening results into risk scoring
   - File: `src/openharness/impact/five_dimensions.py`
   - Ref: Review §2.10
 
 ### 5.4 Expand Cross-Reference Map
 
-- [ ] **5.4.1** Add cross-references for: land use, community development, training/education outcomes, financial inclusion depth, access metrics, product safety, customer satisfaction
+- [x] **5.4.1** Add cross-references for: land use, community development, training/education outcomes, financial inclusion depth, access metrics, product safety, customer satisfaction
   - File: `src/openharness/impact/frameworks/cross_reference.py`
   - Ref: Review §2.4
 
-- [ ] **5.4.2** Add metric-level SASB cross-references (not just dimension-level)
+- [x] **5.4.2** Add metric-level SASB cross-references (not just dimension-level)
   - File: `src/openharness/impact/frameworks/cross_reference.py`
   - Ref: Review §2.4
 
-- [ ] **5.4.3** Expand GRI cross-references for IRIS+ metrics that currently lack equivalents
+- [x] **5.4.3** Expand GRI cross-references for IRIS+ metrics that currently lack equivalents
   - File: `src/openharness/impact/frameworks/cross_reference.py`
   - Ref: Review §2.4
 
 ### 5.5 Enhance Risk/Opportunity Assessment
 
-- [ ] **5.5.1** Add missing risk categories: concentration risk, regulatory/policy risk, reputational risk, exit risk, data integrity risk
-  - File: `data/risk_rules.yaml` (after §1.3.4)
+- [x] **5.5.1** Add missing risk categories: concentration risk, regulatory/policy risk, reputational risk, exit risk, data integrity risk
+  - File: `data/scoring_config.yaml`, `src/openharness/impact/risk_opportunity.py`
   - Ref: Review §2.8
 
-- [ ] **5.5.2** Add risk matrix (likelihood × severity) instead of severity-only
+- [x] **5.5.2** Add risk matrix (likelihood × severity) instead of severity-only
   - File: `src/openharness/impact/risk_opportunity.py`
   - Ref: Review §2.8
 
-- [ ] **5.5.3** Add more opportunity triggers — beyond 6 keywords
-  - File: `data/risk_rules.yaml` (after §1.3.4)
+- [x] **5.5.3** Add more opportunity triggers — beyond 6 keywords
+  - File: `data/scoring_config.yaml`, `src/openharness/impact/risk_opportunity.py`
   - Ref: Review §2.8
 
 ### 5.6 Improve ImpactClaim Model
 
-- [ ] **5.6.1** Fix confidence calculation — replace `min(1.0, keyword_hits * 0.15)` with more calibrated formula
+- [x] **5.6.1** Fix confidence calculation — replace `min(1.0, keyword_hits * 0.15)` with more calibrated formula
   - File: `src/openharness/impact/models.py`
   - Ref: Review §5.2
 
-- [ ] **5.6.2** Add `evidence_strength` field — NESTA-inspired 1-5 scale
+- [x] **5.6.2** Add `evidence_strength` field — NESTA-inspired 1-5 scale
   - File: `src/openharness/impact/models.py`
   - Ref: Review §5.2
 
-- [ ] **5.6.3** Add `negation_detected` field — flag claims with negation context
+- [x] **5.6.3** Add `negation_detected` field — flag claims with negation context
   - File: `src/openharness/impact/models.py`
   - Ref: Review §5.2
 
-- [ ] **5.6.4** Add `entities` field — extracted stakeholders, geographies, outcomes
+- [x] **5.6.4** Add `entities` field — extracted stakeholders, geographies, outcomes
   - File: `src/openharness/impact/models.py`
   - Ref: Review §5.2
 
@@ -735,4 +735,4 @@
 
 ---
 
-*Last updated: 2026-04-16 (v0.2.1). Derived from `IMPACT_MANAGER_REVIEW.md`.*
+*Last updated: 2026-04-16 (v0.3.0). Derived from `IMPACT_MANAGER_REVIEW.md`.*

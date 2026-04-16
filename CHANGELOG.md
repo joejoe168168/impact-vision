@@ -4,6 +4,45 @@ All notable changes to Impact Vision are recorded here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.3.0] - 2026-04-16
+
+### Added — Phase 5: Scoring Engine Improvements
+
+**Expanded Sector Coverage** (5.1)
+- 10 new sectors with 5D baselines: Manufacturing, Transport/Logistics, Construction, Tourism, Retail, Mining/Extractives, Media, Professional Services, Waste Management, ICT
+- SDG sector relevance mappings for all new sectors in `sdg_keywords.yaml`
+- Sector benchmark data for all new sectors (5D averages, SDG primaries, coverage, typical metrics)
+- 26 sector-specific DD questions across 10 new categories (manufacturing, transport, construction, tourism, retail, mining, media, waste management, ICT, professional services)
+- Theme inference keywords for new sectors in `scoring_config.yaml`
+
+**Improved Contribution / Additionality Assessment** (5.2)
+- `assess_additionality()` function with 20+ additionality signal phrases (first-of-kind, catalytic, underserved market, etc.)
+- Additionality heuristics boost the contribution baseline when multiple signals detected
+- Counterfactual review prompt generated for human review when contribution score is low
+- Additionality signals and counterfactual prompt surfaced in 5D assessment tool output
+
+**Negative Impact / Do No Harm Assessment** (5.3)
+- Adverse impact penalty (0–1.5) on risk dimension when harm indicators found without mitigation language
+- Exclusion flag penalty (0–1.0) reduces risk score for companies with norms-based exclusion flags
+- `check_controversy_signals()` stub for future external data source integration (RepRisk, Sustainalytics)
+
+**Expanded Cross-Reference Map** (5.4)
+- 15+ new cross-framework mappings: land use, community development, training outcomes, financial inclusion depth, access to services, product safety, customer satisfaction
+- Metric-level SASB cross-references: employee turnover, benefits, product design, lifecycle management
+- Expanded GRI mappings: tax transparency, indirect economic impact, non-discrimination, freedom of association, indigenous rights, human rights assessment, marketing/labeling
+
+**Enhanced Risk/Opportunity Assessment** (5.5)
+- 8 new risk categories: concentration, regulatory/policy, compliance, reputational, greenwashing, exit, data integrity, single-source
+- Likelihood x severity risk matrix (low/medium/high) replaces severity-only scoring
+- `risk_level` field (critical/high/medium/low) added to each detected risk
+- 10 new opportunity triggers: circular economy, digital, affordable housing, clean water, nutrition, climate adaptation, youth, biodiversity, electrification, telemedicine
+
+**Improved ImpactClaim Model** (5.6)
+- `calibrated_confidence()` static method: logarithmic curve replacing naive `min(1.0, hits*0.15)`; bonuses for metrics, quantitative data, and evidence level
+- `evidence_strength` field: NESTA-inspired 1–5 scale (narrative → RCT/meta-analysis)
+- `negation_detected` field: flags claims found in negation context
+- `entities` field: extracted stakeholders, geographies, and outcomes from claim text
+
 ## [0.2.1] - 2026-04-16
 
 ### Added — Phase 4: Regulatory & Advanced Detection

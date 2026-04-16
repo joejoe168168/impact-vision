@@ -304,6 +304,137 @@ CROSS_REFERENCE_MAP: list[CrossReference] = [
         edci=["EDCI-S8"],
         sdg_goals=[1, 8],
     ),
+    # Land Use
+    CrossReference(
+        concept="Land Use & Land-Use Change",
+        gri=["304-1"],
+        sasb_dimension="Environment",
+        esrs=["E4-5"],
+        sdg_goals=[15],
+    ),
+    # Community Development
+    CrossReference(
+        concept="Community Development & Investment",
+        iris_plus=["OI4324"],
+        gri=["203-1", "413-1"],
+        sasb_dimension="Social Capital",
+        esrs=["S3-4"],
+        sdg_goals=[11],
+    ),
+    # Training & Education Outcomes
+    CrossReference(
+        concept="Training & Education Outcomes",
+        iris_plus=["PI2998"],
+        gri=["404-1", "404-2"],
+        sasb_dimension="Human Capital",
+        esrs=["S1-13"],
+        sdg_goals=[4, 8],
+    ),
+    # Financial Inclusion Depth
+    CrossReference(
+        concept="Financial Inclusion Depth",
+        iris_plus=["PI4060", "PI2740"],
+        sasb_dimension="Social Capital",
+        sdg_goals=[1, 8, 10],
+    ),
+    # Access Metrics
+    CrossReference(
+        concept="Access to Essential Services",
+        iris_plus=["PI4060"],
+        gri=["203-2"],
+        sdg_goals=[1, 3, 4, 6, 7, 10],
+    ),
+    # Product Safety
+    CrossReference(
+        concept="Product Safety & Quality",
+        gri=["416-1", "416-2"],
+        sasb_dimension="Social Capital",
+        sdg_goals=[3, 12],
+    ),
+    # Customer Satisfaction
+    CrossReference(
+        concept="Customer Satisfaction & NPS",
+        iris_plus=["OI5049"],
+        sasb_dimension="Social Capital",
+        sdg_goals=[8],
+    ),
+    # SASB metric-level: Human Capital - Labor Practices
+    CrossReference(
+        concept="Employee Turnover Rate",
+        gri=["401-1"],
+        sasb_dimension="Human Capital",
+        esrs=["S1-6"],
+        sdg_goals=[8],
+    ),
+    CrossReference(
+        concept="Employee Benefits & Parental Leave",
+        gri=["401-2", "401-3"],
+        sasb_dimension="Human Capital",
+        esrs=["S1-11"],
+        sdg_goals=[5, 8],
+    ),
+    # SASB: Business Model & Innovation
+    CrossReference(
+        concept="Product Design for Sustainability",
+        gri=["301-1", "301-2"],
+        sasb_dimension="Business Model & Innovation",
+        esrs=["E5-4"],
+        sdg_goals=[12],
+    ),
+    CrossReference(
+        concept="Product Lifecycle Management",
+        gri=["301-3"],
+        sasb_dimension="Business Model & Innovation",
+        esrs=["E5-5"],
+        sdg_goals=[12],
+    ),
+    # GRI expansion: tax & economic impact
+    CrossReference(
+        concept="Tax Transparency",
+        gri=["207-1", "207-4"],
+        sasb_dimension="Leadership & Governance",
+        esrs=["G1-4"],
+        sdg_goals=[16, 17],
+    ),
+    CrossReference(
+        concept="Indirect Economic Impact",
+        gri=["203-2"],
+        iris_plus=["OI4324"],
+        sdg_goals=[1, 8, 10],
+    ),
+    CrossReference(
+        concept="Non-Discrimination",
+        gri=["406-1"],
+        sasb_dimension="Human Capital",
+        esrs=["S1-9"],
+        sdg_goals=[5, 10],
+    ),
+    CrossReference(
+        concept="Freedom of Association",
+        gri=["407-1"],
+        sasb_dimension="Human Capital",
+        sfdr_pai=[11],
+        sdg_goals=[8],
+    ),
+    CrossReference(
+        concept="Indigenous Peoples' Rights",
+        gri=["411-1"],
+        sasb_dimension="Social Capital",
+        sdg_goals=[10, 16],
+    ),
+    CrossReference(
+        concept="Human Rights Assessment",
+        gri=["412-1", "412-2"],
+        sfdr_pai=[10, 11],
+        esrs=["S1-1"],
+        sdg_goals=[16],
+    ),
+    CrossReference(
+        concept="Marketing & Labeling",
+        gri=["417-1", "417-2"],
+        sasb_dimension="Social Capital",
+        sdg_goals=[12],
+    ),
 ]
 
 # Build reverse-lookup indexes

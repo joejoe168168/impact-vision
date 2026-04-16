@@ -24,6 +24,18 @@ _DEFAULTS_SECTOR_BASELINE: dict[str, dict[str, float]] = {
     "water": {"what": 2.0, "who": 1.8, "how_much": 1.5, "contribution": 1.5, "risk": 1.0},
     "technology": {"what": 1.2, "who": 1.2, "how_much": 1.0, "contribution": 1.0, "risk": 0.8},
     "real estate": {"what": 1.0, "who": 1.0, "how_much": 1.0, "contribution": 0.8, "risk": 0.8},
+    "manufacturing": {"what": 1.2, "who": 1.0, "how_much": 1.2, "contribution": 1.0, "risk": 1.2},
+    "transport": {"what": 1.2, "who": 1.0, "how_much": 1.0, "contribution": 1.0, "risk": 1.2},
+    "logistics": {"what": 1.2, "who": 1.0, "how_much": 1.0, "contribution": 1.0, "risk": 1.2},
+    "construction": {"what": 1.0, "who": 1.0, "how_much": 1.2, "contribution": 1.0, "risk": 1.3},
+    "tourism": {"what": 1.0, "who": 1.2, "how_much": 1.0, "contribution": 0.8, "risk": 1.0},
+    "retail": {"what": 1.0, "who": 1.2, "how_much": 1.0, "contribution": 0.8, "risk": 1.0},
+    "mining": {"what": 0.8, "who": 0.8, "how_much": 1.0, "contribution": 0.8, "risk": 1.5},
+    "extractives": {"what": 0.8, "who": 0.8, "how_much": 1.0, "contribution": 0.8, "risk": 1.5},
+    "media": {"what": 1.0, "who": 1.2, "how_much": 1.0, "contribution": 1.0, "risk": 0.8},
+    "professional services": {"what": 1.0, "who": 1.0, "how_much": 0.8, "contribution": 0.8, "risk": 0.8},
+    "waste management": {"what": 1.5, "who": 1.2, "how_much": 1.2, "contribution": 1.2, "risk": 1.2},
+    "ict": {"what": 1.2, "who": 1.2, "how_much": 1.0, "contribution": 1.2, "risk": 1.0},
 }
 
 _DEFAULTS_KEYWORD_BOOST: dict[str, dict[str, float]] = {
@@ -101,6 +113,53 @@ def _keyword_not_negated(text: str, keyword: str) -> bool:
     return False
 
 
+_ADDITIONALITY_PHRASES = (
+    "first-of-kind", "first of kind", "first mover",
+    "unique", "novel", "pioneering", "no existing solution",
+    "underserved market", "unserved", "underbanked", "unbanked",
+    "market gap", "white space", "blue ocean",
+    "counterfactual", "would not have happened",
+    "catalytic", "catalyst", "crowding in", "crowd-in",
+    "additional", "additionality",
+    "transformative", "systemic change",
+)
+
+
+def assess_additionality(company: Company) -> dict:
+    """Assess contribution/additionality signals from company data.
+
+    Returns a dict with additionality_score (0-5), signals found, and
+    a counterfactual prompt for human review.
+    """
+    text = f"{company.description} {company.sector} {' '.join(company.impact_themes)}".lower()
+    signals: list[str] = []
+    for phrase in _ADDITIONALITY_PHRASES:
+        if phrase in text and _keyword_not_negated(text, phrase):
+            signals.append(phrase)
+
+    score = min(5.0, 1.0 + len(signals) * 0.6)
+
+    counterfactual = (
+        f"What would happen to {company.name or 'the target beneficiaries'} "
+        "without this intervention? Would outcomes be significantly different? "
+        "Consider: (1) Are comparable alternatives available in this market? "
+        "(2) Is the investor contribution catalytic or substitutional? "
+        "(3) What is the depth of engagement beyond capital?"
+    )
+
+    return {
+        "additionality_score": round(score, 1),
+        "signals_found": signals,
+        "signal_count": len(signals),
+        "counterfactual_prompt": counterfactual,
+        "assessment": (
+            "Strong additionality signals" if len(signals) >= 3
+            else "Moderate additionality signals" if len(signals) >= 1
+            else "Weak additionality — consider documenting counterfactual"
+        ),
+    }
+
+
 def _infer_baseline(company: Company) -> dict[str, float]:
     """Infer baseline 5D scores from sector and description keywords."""
     text = f"{company.description} {company.sector} {' '.join(company.impact_themes)}".lower()
@@ -115,6 +174,12 @@ def _infer_baseline(company: Company) -> dict[str, float]:
         if keyword in text and _keyword_not_negated(text, keyword):
             for dim, val in boosts.items():
                 baseline[dim] = baseline[dim] + val
+
+    additionality = assess_additionality(company)
+    if additionality["signal_count"] >= 2:
+        baseline["contribution"] += 0.3
+    if additionality["signal_count"] >= 4:
+        baseline["contribution"] += 0.3
 
     return {dim: min(2.5, max(0.5, val)) for dim, val in baseline.items()}
 
@@ -202,6 +267,38 @@ def _score_dimension(
     )
 
 
+_ADVERSE_IMPACT_PATTERNS = (
+    "adverse impact", "negative impact", "harm", "pollution", "displacement",
+    "deforestation", "child labor", "forced labor", "corruption", "bribery",
+    "toxic", "hazardous", "contamination", "exploitation",
+)
+
+_MITIGATION_PATTERNS = (
+    "mitigation", "mitigate", "remediation", "remedy", "safeguard",
+    "prevention", "grievance mechanism", "corrective action",
+    "environmental management plan", "social impact assessment",
+)
+
+
+def _compute_negative_impact_penalty(company: Company) -> float:
+    """Compute a risk dimension penalty (0-1.5) for adverse impacts without mitigation."""
+    text = f"{company.description} {company.sector} {' '.join(company.impact_themes)}".lower()
+    adverse_count = sum(1 for p in _ADVERSE_IMPACT_PATTERNS if p in text)
+    mitigation_count = sum(1 for p in _MITIGATION_PATTERNS if p in text)
+
+    if adverse_count == 0:
+        return 0.0
+    unmitigated = max(0, adverse_count - mitigation_count)
+    return min(1.5, unmitigated * 0.3)
+
+
+def _compute_exclusion_penalty(company: Company) -> float:
+    """Compute a risk penalty from exclusion flags."""
+    if not company.exclusion_flags:
+        return 0.0
+    return min(1.0, len(company.exclusion_flags) * 0.5)
+
+
 def assess_five_dimensions(
     company: Company,
     store: MetricStore,
@@ -243,6 +340,19 @@ def assess_five_dimensions(
         gaps=scores["how_much_scale"].gaps[:5] + how_much_depth.gaps[:3] + how_much_duration.gaps[:2],
         notes=f"Scale={scores['how_much_scale'].score}, Depth={how_much_depth.score}, Duration={how_much_duration.score}",
     )
+
+    neg_penalty = _compute_negative_impact_penalty(company)
+    excl_penalty = _compute_exclusion_penalty(company)
+    total_penalty = neg_penalty + excl_penalty
+    if total_penalty > 0:
+        risk_score_obj = scores["risk"]
+        risk_score_obj.score = round(max(0.5, risk_score_obj.score - total_penalty), 1)
+        penalty_notes = []
+        if neg_penalty > 0:
+            penalty_notes.append(f"adverse impact penalty -{neg_penalty:.1f}")
+        if excl_penalty > 0:
+            penalty_notes.append(f"exclusion flag penalty -{excl_penalty:.1f}")
+        risk_score_obj.notes += f" ({'; '.join(penalty_notes)})"
 
     total_metrics = len(reported_ids)
     if 0 < total_metrics < MIN_METRICS_FOR_ABOVE_BASELINE:

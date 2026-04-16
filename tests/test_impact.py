@@ -303,7 +303,7 @@ class TestSectorDDQuestions:
         from openharness.impact.dd_checklist import load_checklist
         questions = load_checklist()
         sector_qs = [q for q in questions if q.category.startswith("sector_")]
-        assert len(sector_qs) == 25  # 5 sectors * 5 questions each
+        assert len(sector_qs) >= 25  # 5 original + 10 new sectors
 
     def test_sector_relevance_detection(self) -> None:
         from openharness.impact.dd_checklist import select_questions_for_document

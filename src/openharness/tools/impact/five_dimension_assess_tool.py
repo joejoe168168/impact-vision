@@ -5,7 +5,7 @@ from __future__ import annotations
 from pydantic import BaseModel, Field
 
 from openharness.impact.database import get_metric_store
-from openharness.impact.five_dimensions import assess_five_dimensions
+from openharness.impact.five_dimensions import assess_five_dimensions, assess_additionality
 from openharness.impact.models import Company
 from openharness.tools.impact.common import infer_themes, normalize_metric_map
 from openharness.tools.impact.exclusion_screening_tool import quick_exclusion_check
@@ -95,6 +95,16 @@ class FiveDimensionAssessTool(BaseTool):
                 lines.append(f"  Gaps: {', '.join(dim.gaps[:3])}")
             lines.append("")
 
+        additionality = assess_additionality(company)
+        if additionality["signals_found"]:
+            lines.append(f"Additionality: {additionality['assessment']} ({additionality['signal_count']} signals)")
+            lines.append(f"  Signals: {', '.join(additionality['signals_found'][:5])}")
+            lines.append("")
+        if result.contribution.score < 3.0:
+            lines.append("Counterfactual Review (flag for human review):")
+            lines.append(f"  {additionality['counterfactual_prompt']}")
+            lines.append("")
+
         if result.recommendations:
             lines.append("Recommendations:")
             for i, rec in enumerate(result.recommendations, 1):
@@ -102,7 +112,10 @@ class FiveDimensionAssessTool(BaseTool):
 
         return ToolResult(
             output="\n".join(lines),
-            metadata={"assessment": result.model_dump()},
+            metadata={
+                "assessment": result.model_dump(),
+                "additionality": additionality,
+            },
         )
 
 

@@ -82,7 +82,7 @@ class ImpactTarget(BaseModel):
     """A structured impact target for tracking progress."""
 
     metric_id: str = Field(description="IRIS+ metric ID (e.g. OI4112)")
-    target_value: float = Field(description="Numeric target value")
+    target_value: float | None = Field(default=None, description="Numeric target value (None for qualitative targets)")
     target_unit: str = Field(default="", description="Unit (e.g. 'tCO2e', 'count')")
     target_date: str = Field(default="", description="Target achievement date (e.g. '2027')")
     baseline_value: float | None = Field(default=None, description="Baseline value at start")
@@ -164,9 +164,9 @@ class Company(BaseModel):
         default_factory=list,
         description="SDG goals the company claims alignment with",
     )
-    impact_targets: dict[str, str] = Field(
-        default_factory=dict,
-        description="Forward-looking impact targets (e.g. {'OI4112': '500 tCO2e by 2027'})",
+    impact_targets: list[ImpactTarget] = Field(
+        default_factory=list,
+        description="Structured impact targets for metric tracking",
     )
     reporting_period: str = Field(default="", description="Reporting period (e.g. 'FY2025', 'Q1 2026')")
     exclusion_flags: list[str] = Field(
@@ -249,3 +249,37 @@ class ImpactClaim(BaseModel):
     mapped_sdg_targets: list[str] = Field(default_factory=list)
     confidence: float = Field(ge=0, le=1, default=0.5)
     category: Literal["outcome", "output", "activity", "intent", "risk"] = "intent"
+    evidence_strength: int = Field(
+        default=1,
+        ge=1,
+        le=5,
+        description="NESTA-inspired evidence strength (1=narrative only, 2=correlation, 3=causation shown, 4=independent evaluation, 5=RCT/meta-analysis)",
+    )
+    negation_detected: bool = Field(
+        default=False,
+        description="True if the claim was found in a negation context",
+    )
+    entities: dict[str, list[str]] = Field(
+        default_factory=dict,
+        description="Extracted entities: {'stakeholders': [...], 'geographies': [...], 'outcomes': [...]}",
+    )
+
+    @staticmethod
+    def calibrated_confidence(
+        keyword_hits: int,
+        has_metric: bool = False,
+        has_quantitative_data: bool = False,
+        evidence_level: int = 1,
+    ) -> float:
+        """Compute a calibrated confidence score replacing the naive linear formula.
+
+        Uses a logarithmic curve for keywords with bonuses for metrics and evidence.
+        """
+        import math
+        base = 0.15 + 0.25 * math.log1p(keyword_hits)
+        if has_metric:
+            base += 0.15
+        if has_quantitative_data:
+            base += 0.10
+        base += (evidence_level - 1) * 0.05
+        return round(min(1.0, max(0.0, base)), 2)

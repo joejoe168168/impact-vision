@@ -39,6 +39,16 @@ categories:
   - sector_agriculture
   - sector_energy
   - sector_education
+  - sector_manufacturing
+  - sector_transport
+  - sector_construction
+  - sector_tourism
+  - sector_retail
+  - sector_mining
+  - sector_media
+  - sector_waste_management
+  - sector_ict
+  - sector_professional_services
   - financial_sustainability
   - team_capability
   - market_context
@@ -852,3 +862,231 @@ questions:
     dimension: how_much_depth
     priority: medium
     keywords: ["employment", "livelihood", "job placement", "career", "skill", "employability", "wage premium"]
+
+  # ---- SECTOR-SPECIFIC: MANUFACTURING ----
+
+  - id: SMAN01
+    question: "What worker health and safety measures are in place, and what is the injury/incident rate?"
+    category: sector_manufacturing
+    phase: deep_diligence
+    dimension: risk
+    priority: high
+    keywords: ["worker safety", "injury rate", "OHS", "occupational health", "incident", "PPE", "safety audit"]
+
+  - id: SMAN02
+    question: "How does the company manage supply chain labor standards and prevent forced/child labor?"
+    category: sector_manufacturing
+    phase: deep_diligence
+    dimension: risk
+    priority: high
+    keywords: ["supply chain", "forced labor", "child labor", "labor standards", "fair labor", "audit", "modern slavery"]
+
+  - id: SMAN03
+    question: "What waste reduction, circular economy, or clean production practices are implemented?"
+    category: sector_manufacturing
+    phase: deep_diligence
+    dimension: what
+    priority: medium
+    keywords: ["waste reduction", "circular economy", "clean production", "zero waste", "recycling", "lean manufacturing"]
+
+  # ---- SECTOR-SPECIFIC: TRANSPORT & LOGISTICS ----
+
+  - id: STR01
+    question: "What is the fleet's emissions profile, and what decarbonization roadmap exists?"
+    category: sector_transport
+    phase: deep_diligence
+    dimension: what
+    priority: high
+    keywords: ["fleet emissions", "decarbonization", "EV", "electric vehicle", "fuel efficiency", "carbon intensity"]
+
+  - id: STR02
+    question: "How does the solution improve last-mile access for underserved communities?"
+    category: sector_transport
+    phase: deep_diligence
+    dimension: who
+    priority: high
+    keywords: ["last mile", "underserved", "rural access", "connectivity", "mobility", "affordable transport"]
+
+  - id: STR03
+    question: "What road safety and accident prevention measures are in place?"
+    category: sector_transport
+    phase: deep_diligence
+    dimension: risk
+    priority: medium
+    keywords: ["road safety", "accident", "safety record", "driver training", "fatality", "vehicle maintenance"]
+
+  # ---- SECTOR-SPECIFIC: CONSTRUCTION ----
+
+  - id: SCON01
+    question: "What green building standards or certifications does the company follow (LEED, BREEAM, EDGE)?"
+    category: sector_construction
+    phase: deep_diligence
+    dimension: what
+    priority: high
+    keywords: ["green building", "LEED", "BREEAM", "EDGE", "certification", "energy efficient", "net zero building"]
+
+  - id: SCON02
+    question: "How does the company address affordable housing needs in its target market?"
+    category: sector_construction
+    phase: deep_diligence
+    dimension: who
+    priority: high
+    keywords: ["affordable housing", "low-income", "social housing", "housing gap", "shelter", "affordable"]
+
+  - id: SCON03
+    question: "What measures reduce construction waste and embodied carbon in materials?"
+    category: sector_construction
+    phase: deep_diligence
+    dimension: risk
+    priority: medium
+    keywords: ["construction waste", "embodied carbon", "sustainable materials", "recycled", "timber", "prefab"]
+
+  # ---- SECTOR-SPECIFIC: TOURISM ----
+
+  - id: STOUR01
+    question: "How does tourism revenue benefit local communities rather than extracting value?"
+    category: sector_tourism
+    phase: deep_diligence
+    dimension: contribution
+    priority: high
+    keywords: ["community benefit", "local employment", "revenue sharing", "ecotourism", "community-based", "leakage"]
+
+  - id: STOUR02
+    question: "What environmental impact management exists for natural site preservation?"
+    category: sector_tourism
+    phase: deep_diligence
+    dimension: risk
+    priority: high
+    keywords: ["environmental impact", "carrying capacity", "conservation", "biodiversity", "protected area", "overtourism"]
+
+  # ---- SECTOR-SPECIFIC: RETAIL ----
+
+  - id: SRET01
+    question: "How does the company ensure ethical sourcing and fair trade across its supply chain?"
+    category: sector_retail
+    phase: deep_diligence
+    dimension: what
+    priority: high
+    keywords: ["ethical sourcing", "fair trade", "supply chain transparency", "traceability", "responsible sourcing"]
+
+  - id: SRET02
+    question: "What product safety and consumer protection measures are in place?"
+    category: sector_retail
+    phase: deep_diligence
+    dimension: risk
+    priority: medium
+    keywords: ["product safety", "consumer protection", "quality control", "recall", "consumer rights"]
+
+  # ---- SECTOR-SPECIFIC: MINING & EXTRACTIVES ----
+
+  - id: SMIN01
+    question: "What community consent and benefit-sharing mechanisms exist (FPIC, royalties)?"
+    category: sector_mining
+    phase: deep_diligence
+    dimension: who
+    priority: high
+    keywords: ["FPIC", "free prior informed consent", "community consent", "benefit sharing", "royalty", "resettlement"]
+
+  - id: SMIN02
+    question: "How are environmental restoration and mine closure plans funded and governed?"
+    category: sector_mining
+    phase: deep_diligence
+    dimension: risk
+    priority: high
+    keywords: ["mine closure", "restoration", "rehabilitation", "environmental bond", "remediation", "tailings"]
+
+  - id: SMIN03
+    question: "What water management and pollution prevention measures protect local water sources?"
+    category: sector_mining
+    phase: deep_diligence
+    dimension: risk
+    priority: high
+    keywords: ["water management", "acid mine drainage", "water pollution", "tailings dam", "water quality", "effluent"]
+
+  # ---- SECTOR-SPECIFIC: MEDIA ----
+
+  - id: SMED01
+    question: "How does the company ensure content accuracy, misinformation prevention, and editorial independence?"
+    category: sector_media
+    phase: deep_diligence
+    dimension: risk
+    priority: high
+    keywords: ["misinformation", "fact-checking", "editorial independence", "content moderation", "media literacy"]
+
+  - id: SMED02
+    question: "What measures promote diverse voices, inclusive representation, and media access?"
+    category: sector_media
+    phase: deep_diligence
+    dimension: who
+    priority: medium
+    keywords: ["diversity", "inclusion", "representation", "media access", "local content", "underrepresented"]
+
+  # ---- SECTOR-SPECIFIC: WASTE MANAGEMENT ----
+
+  - id: SWM01
+    question: "What waste diversion rate is achieved, and how is it measured?"
+    category: sector_waste_management
+    phase: deep_diligence
+    dimension: how_much_depth
+    priority: high
+    keywords: ["diversion rate", "recycling rate", "landfill diversion", "waste recovery", "composting", "waste audit"]
+
+  - id: SWM02
+    question: "How does the company protect informal waste workers' livelihoods and health?"
+    category: sector_waste_management
+    phase: deep_diligence
+    dimension: who
+    priority: high
+    keywords: ["informal workers", "waste pickers", "livelihood", "worker health", "formalization", "fair wage"]
+
+  - id: SWM03
+    question: "What pollution and emissions controls exist for waste processing facilities?"
+    category: sector_waste_management
+    phase: deep_diligence
+    dimension: risk
+    priority: medium
+    keywords: ["emissions", "pollution control", "dioxin", "leachate", "air quality", "incineration", "scrubber"]
+
+  # ---- SECTOR-SPECIFIC: ICT ----
+
+  - id: SICT01
+    question: "How does the solution address the digital divide and ensure equitable access?"
+    category: sector_ict
+    phase: deep_diligence
+    dimension: who
+    priority: high
+    keywords: ["digital divide", "digital inclusion", "equitable access", "connectivity", "broadband", "affordability"]
+
+  - id: SICT02
+    question: "What data privacy, security, and algorithmic fairness measures are in place?"
+    category: sector_ict
+    phase: deep_diligence
+    dimension: risk
+    priority: high
+    keywords: ["data privacy", "cybersecurity", "algorithmic bias", "GDPR", "data protection", "AI ethics", "fairness"]
+
+  - id: SICT03
+    question: "What is the environmental footprint of the ICT infrastructure (data centers, e-waste)?"
+    category: sector_ict
+    phase: deep_diligence
+    dimension: risk
+    priority: medium
+    keywords: ["data center", "e-waste", "energy consumption", "carbon footprint", "PUE", "green computing"]
+
+  # ---- SECTOR-SPECIFIC: PROFESSIONAL SERVICES ----
+
+  - id: SPRO01
+    question: "How does the company measure the downstream impact of its advisory/consulting services?"
+    category: sector_professional_services
+    phase: deep_diligence
+    dimension: how_much_depth
+    priority: high
+    keywords: ["downstream impact", "client outcome", "advisory impact", "capacity building", "knowledge transfer"]
+
+  - id: SPRO02
+    question: "What pro bono or reduced-fee services are offered to underserved clients?"
+    category: sector_professional_services
+    phase: deep_diligence
+    dimension: who
+    priority: medium
+    keywords: ["pro bono", "reduced fee", "access to justice", "underserved", "legal aid", "affordable services"]

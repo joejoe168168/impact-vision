@@ -76,13 +76,78 @@ sector_baselines:
     how_much: 1.0
     contribution: 0.8
     risk: 0.8
-  # Add your own sectors below:
-  # manufacturing:
-  #   what: 1.0
-  #   who: 1.0
-  #   how_much: 1.0
-  #   contribution: 0.8
-  #   risk: 1.0
+  manufacturing:
+    what: 1.2
+    who: 1.0
+    how_much: 1.2
+    contribution: 1.0
+    risk: 1.2
+  transport:
+    what: 1.2
+    who: 1.0
+    how_much: 1.0
+    contribution: 1.0
+    risk: 1.2
+  logistics:
+    what: 1.2
+    who: 1.0
+    how_much: 1.0
+    contribution: 1.0
+    risk: 1.2
+  construction:
+    what: 1.0
+    who: 1.0
+    how_much: 1.2
+    contribution: 1.0
+    risk: 1.3
+  tourism:
+    what: 1.0
+    who: 1.2
+    how_much: 1.0
+    contribution: 0.8
+    risk: 1.0
+  retail:
+    what: 1.0
+    who: 1.2
+    how_much: 1.0
+    contribution: 0.8
+    risk: 1.0
+  mining:
+    what: 0.8
+    who: 0.8
+    how_much: 1.0
+    contribution: 0.8
+    risk: 1.5
+  extractives:
+    what: 0.8
+    who: 0.8
+    how_much: 1.0
+    contribution: 0.8
+    risk: 1.5
+  media:
+    what: 1.0
+    who: 1.2
+    how_much: 1.0
+    contribution: 1.0
+    risk: 0.8
+  professional services:
+    what: 1.0
+    who: 1.0
+    how_much: 0.8
+    contribution: 0.8
+    risk: 0.8
+  waste management:
+    what: 1.5
+    who: 1.2
+    how_much: 1.2
+    contribution: 1.2
+    risk: 1.2
+  ict:
+    what: 1.2
+    who: 1.2
+    how_much: 1.0
+    contribution: 1.2
+    risk: 1.0
 
 # Keyword-to-dimension boosts
 # When these keywords appear in company description/sector, add these scores.
@@ -171,6 +236,32 @@ theme_hints:
     - Gender Equality
   women:
     - Gender Equality
+  manufacturing:
+    - Sustainable Production
+    - Decent Work
+  transport:
+    - Sustainable Transport
+    - Climate Mitigation
+  logistics:
+    - Sustainable Transport
+  construction:
+    - Affordable Housing
+    - Green Buildings
+  tourism:
+    - Sustainable Tourism
+  retail:
+    - Responsible Consumption
+  mining:
+    - Responsible Mining
+  waste:
+    - Circular Economy
+    - Waste Management
+  recycling:
+    - Circular Economy
+  media:
+    - Media & Information
+  ict:
+    - Digital Inclusion
 
 # Risk assessment rules
 # Keywords that trigger specific risk categories in impact_risk_opportunity tool.
@@ -179,32 +270,68 @@ risk_rules:
     category: social_harm
     risk: Potential over-indebtedness of vulnerable clients
     severity: high
+    likelihood: medium
     mitigation: Set affordability limits and monitor repayment stress signals.
   privacy:
     category: data_governance
     risk: Data privacy and consent risk
     severity: high
+    likelihood: medium
     mitigation: Adopt privacy-by-design and third-party security audits.
   climate:
     category: environmental
     risk: Climate transition and physical risk exposure
     severity: medium
+    likelihood: high
     mitigation: Define adaptation plans and emissions reduction targets.
   waste:
     category: environmental
     risk: Waste and pollution externalities
     severity: medium
+    likelihood: medium
     mitigation: Track waste streams and implement circular mitigation plans.
   labor:
     category: social
     risk: Labor standards and worker welfare risk
     severity: medium
+    likelihood: medium
     mitigation: Implement supplier and workforce labor compliance controls.
   grant:
     category: business_model
     risk: Grant dependence threatens long-term impact sustainability
     severity: medium
+    likelihood: medium
     mitigation: Diversify revenue and test unit economics of impact model.
+  concentration:
+    category: concentration
+    risk: Revenue or beneficiary concentration in single geography or client
+    severity: medium
+    likelihood: medium
+    mitigation: Diversify across geographies and client segments.
+  regulatory:
+    category: regulatory_policy
+    risk: Regulatory or policy change may undermine the business model
+    severity: high
+    likelihood: low
+    mitigation: Monitor regulatory landscape and build adaptability into the business model.
+  reputation:
+    category: reputational
+    risk: Reputational risk from impact-washing or unintended harm
+    severity: high
+    likelihood: low
+    mitigation: Implement transparent reporting and independent verification.
+  exit:
+    category: exit
+    risk: Exit strategy may erode impact outcomes for beneficiaries
+    severity: medium
+    likelihood: medium
+    mitigation: Include impact preservation clauses in shareholder agreements.
+  data integrity:
+    category: data_integrity
+    risk: Self-reported data with no third-party verification
+    severity: medium
+    likelihood: high
+    mitigation: Establish data validation processes and plan for third-party audit.
 
 # Opportunity rules
 opportunity_rules:
@@ -232,3 +359,27 @@ opportunity_rules:
     category: wellbeing
     opportunity: Improve affordability and reach of essential health services
     time_horizon: mid_term
+  circular economy:
+    category: environment
+    opportunity: Capture value from waste streams and reduce resource dependence
+    time_horizon: mid_term
+  digital:
+    category: technology
+    opportunity: Scale impact through digital delivery channels and data-driven insights
+    time_horizon: near_term
+  affordable housing:
+    category: livelihoods
+    opportunity: Address housing gap with scalable affordable solutions
+    time_horizon: mid_term
+  clean water:
+    category: environment
+    opportunity: Improve access to safe water and sanitation infrastructure
+    time_horizon: mid_term
+  youth:
+    category: human_capital
+    opportunity: Create pathways for youth employment and skills development
+    time_horizon: mid_term
+  biodiversity:
+    category: environment
+    opportunity: Protect and restore biodiversity through nature-based solutions
+    time_horizon: long_term
