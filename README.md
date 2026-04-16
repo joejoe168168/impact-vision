@@ -200,6 +200,11 @@ No API key needed -- everything runs locally on your GPU/CPU.
 | OpenAI (GPT-5) | General purpose | Pay-per-use |
 | Ollama (local) | Privacy, offline use | Free (your hardware) |
 
+> **Model quality note:** Impact analysis requires models that support **tool calling** (function calling). Free models vary in quality -- some may not follow the impact expert persona or use the analysis tools correctly. For best results:
+> - **Recommended:** Claude Sonnet, GPT-5, or `google/gemini-2.5-flash` (via OpenRouter)
+> - **Good free options:** `google/gemini-2.5-flash:free`, `meta-llama/llama-4-maverick:free`
+> - **May struggle:** Very small models or models without tool-calling support
+
 ### 4. Start the AI agent
 
 ```bash
