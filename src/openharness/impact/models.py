@@ -187,6 +187,82 @@ class Company(BaseModel):
     )
 
 
+PIPELINE_STAGES = (
+    "sourcing",
+    "screening",
+    "dd_in_progress",
+    "ic_review",
+    "invested",
+    "monitoring",
+    "exited",
+    "passed",
+)
+
+
+class StageTransition(BaseModel):
+    """Record of a company moving between pipeline stages."""
+
+    from_stage: str = ""
+    to_stage: str
+    timestamp: str = Field(default="", description="ISO datetime of transition")
+    actor: str = Field(default="", description="Who made the decision")
+    rationale: str = Field(default="", description="Why the transition was made")
+    notes: str = ""
+
+
+class PipelineEntry(BaseModel):
+    """A company's position in the investment pipeline."""
+
+    company_name: str
+    pipeline_stage: str = Field(default="sourcing", description="Current pipeline stage")
+    assigned_to: str = Field(default="", description="Analyst/partner responsible")
+    priority: Literal["high", "medium", "low"] = "medium"
+    tags: list[str] = Field(default_factory=list)
+    sector: str = ""
+    geography: str = ""
+    sdg_focus: list[int] = Field(default_factory=list, description="Primary SDG goals")
+    investment_size: float | None = Field(default=None, description="Investment amount (USD)")
+    created_at: str = ""
+    updated_at: str = ""
+    transitions: list[StageTransition] = Field(default_factory=list)
+    notes: str = ""
+
+
+class MonitoringSchedule(BaseModel):
+    """Monitoring configuration for an invested company."""
+
+    company_name: str
+    frequency: Literal["monthly", "quarterly", "semi_annual", "annual"] = "quarterly"
+    next_review_date: str = Field(default="", description="ISO date of next review")
+    last_review_date: str = Field(default="", description="ISO date of last review")
+    alert_thresholds: dict[str, float] = Field(
+        default_factory=dict,
+        description="Metric ID -> threshold value; alert when deviation exceeds this",
+    )
+    watch_metrics: list[str] = Field(
+        default_factory=list,
+        description="Metric IDs to track for this company",
+    )
+    status: Literal["active", "paused", "completed"] = "active"
+
+
+class MonitoringAlert(BaseModel):
+    """An alert triggered by monitoring threshold breach or schedule event."""
+
+    company_name: str
+    alert_type: Literal[
+        "metric_deviation", "target_at_risk", "evidence_expired",
+        "review_due", "score_change", "risk_increase",
+    ]
+    severity: Literal["info", "warning", "critical"] = "warning"
+    message: str = ""
+    metric_id: str = Field(default="", description="Related metric ID if applicable")
+    current_value: float | None = None
+    threshold_value: float | None = None
+    created_at: str = ""
+    acknowledged: bool = False
+
+
 class DimensionScore(BaseModel):
     """Score for a single dimension of impact."""
 
@@ -269,18 +345,23 @@ class ImpactClaim(BaseModel):
     )
 
     def model_post_init(self, __context: Any) -> None:
-        """Auto-populate confidence from calibrated formula after model initialization."""
+        """Auto-populate confidence from calibrated formula after model initialization.
+
+        Only overrides confidence when it is still at the default value (0.5),
+        preserving any explicitly set confidence.
+        """
+        if self.confidence != 0.5:
+            return  # Respect explicitly set confidence
         has_metric = len(self.mapped_metrics) > 0
         has_quant = any(c.isdigit() for c in self.text)
-        calibrated = self.calibrated_confidence(
-            keyword_hits=len(self.mapped_metrics) + len(self.mapped_sdg_targets),
-            has_metric=has_metric,
-            has_quantitative_data=has_quant,
-            evidence_level=self.evidence_strength,
-        )
-        # Only override default confidence if we have any signal
+        # Only calibrate if we have any signal beyond a bare claim
         if has_metric or has_quant or self.evidence_strength > 1:
-            self.confidence = calibrated
+            self.confidence = self.calibrated_confidence(
+                keyword_hits=len(self.mapped_metrics) + len(self.mapped_sdg_targets),
+                has_metric=has_metric,
+                has_quantitative_data=has_quant,
+                evidence_level=self.evidence_strength,
+            )
 
     def recalibrate_confidence(self) -> None:
         """Update confidence using the calibrated formula based on current fields.

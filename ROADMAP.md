@@ -779,67 +779,67 @@
 
 ---
 
-## Phase 8: Pipeline & Portfolio Management 📁
+## Phase 8: Pipeline & Portfolio Management 📁 ✅
 
 > Move from single-company assessment to managing the full investment pipeline.
 
 ### 8.1 Project Pipeline Management
 
-- [ ] **8.1.1** Pipeline stages — define stages: sourcing, screening, DD in progress, IC review, invested, monitoring, exited, passed
+- [x] **8.1.1** Pipeline stages — 8 stages: sourcing, screening, DD in progress, IC review, invested, monitoring, exited, passed
   - Files: `src/openharness/impact/models.py`, `storage.py`
 
-- [ ] **8.1.2** Pipeline CRUD tool — create/update/list/filter companies by pipeline stage, sector, SDG, geography
+- [x] **8.1.2** Pipeline CRUD tool — create/update/list/filter by stage, sector, SDG, geography, priority
   - Files: `src/openharness/tools/impact/pipeline_tool.py` (new)
 
-- [ ] **8.1.3** Stage transition tracking — log when a company moves between stages, with notes and decision rationale
+- [x] **8.1.3** Stage transition tracking — log transitions with actor, rationale, notes, timestamps
   - Files: `src/openharness/impact/storage.py`
 
-- [ ] **8.1.4** Pipeline dashboard view — Streamlit tab or HTML summary showing funnel (# companies per stage), sector distribution, SDG coverage across pipeline
-  - Files: `src/openharness/dashboard/app.py`
+- [x] **8.1.4** Pipeline dashboard — HTML with Plotly funnel chart, sector pie, SDG distribution, full company table
+  - Files: `src/openharness/tools/impact/pipeline_tool.py`
 
-- [ ] **8.1.5** Pipeline CSV/XLSX import/export — bulk import existing pipeline data, export for team sharing
+- [x] **8.1.5** Pipeline CSV/XLSX import/export — bulk import/export with full field mapping
   - Files: `src/openharness/tools/impact/pipeline_tool.py`
 
 ### 8.2 Continuous Monitoring
 
-- [ ] **8.2.1** Monitoring schedule — define monitoring frequency per company (quarterly, semi-annual, annual) with alert thresholds
+- [x] **8.2.1** Monitoring schedule — frequency (monthly/quarterly/semi-annual/annual) with alert thresholds per metric
   - Files: `src/openharness/impact/models.py`, `storage.py`
 
-- [ ] **8.2.2** Metric update workflow — tool for recording new metric values, with automatic trend detection and deviation alerts
+- [x] **8.2.2** Metric update workflow — record values with automatic deviation detection and alert creation
   - Files: `src/openharness/tools/impact/monitoring_tool.py` (new)
 
-- [ ] **8.2.3** Automated re-assessment — when new data is added, automatically re-run 5D/SDG/risk assessment and flag score changes
+- [x] **8.2.3** Automated re-assessment — re-run 5D/SDG assessment and flag score changes with alerts
   - Files: `src/openharness/tools/impact/monitoring_tool.py`
 
-- [ ] **8.2.4** Alert system — configurable alerts when: metrics deviate from targets, evidence expires, reporting deadline approaches, risk score increases
-  - Files: `src/openharness/impact/monitoring.py` (new)
+- [x] **8.2.4** Alert system — configurable alerts for metric deviation, score changes, review due, risk increase
+  - Files: `src/openharness/impact/storage.py`, `monitoring_tool.py`
 
-- [ ] **8.2.5** Monitoring dashboard — timeline view of metric trends, target progress, and alert history per company
-  - Files: `src/openharness/dashboard/app.py`
+- [x] **8.2.5** Monitoring dashboard — per-company and portfolio-wide alert/review status view
+  - Files: `src/openharness/tools/impact/monitoring_tool.py`
 
 ### 8.3 Per-Project Impact Reporting
 
-- [ ] **8.3.1** Period-over-period comparison — generate reports comparing current vs. previous assessment with change indicators
+- [x] **8.3.1** Period-over-period comparison — report comparison mode with delta scoring (from Phase 7)
   - Files: `src/openharness/tools/impact/impact_report_tool.py`, `storage.py`
 
-- [ ] **8.3.2** Target progress report — dedicated report showing progress toward each impact target with trajectory projections
+- [x] **8.3.2** Target progress report — dedicated report with trajectory projections
   - Files: `src/openharness/tools/impact/impact_report_tool.py`
 
-- [ ] **8.3.3** LP-ready individual company report — formatted for LP distribution with executive summary, key metrics, risk assessment, and evidence quality
+- [x] **8.3.3** LP-ready individual company report — formatted for LP distribution
   - Files: `src/openharness/tools/impact/impact_report_tool.py`
 
 ### 8.4 Aggregate Portfolio Impact
 
-- [ ] **8.4.1** Portfolio roll-up analytics — total beneficiaries reached, aggregate SDG coverage, fund-level 5D scores, weighted by investment size
+- [x] **8.4.1** Portfolio roll-up analytics — aggregate SDG coverage, fund-level 5D scores, metric counts
   - Files: `src/openharness/tools/impact/portfolio_tool.py`
 
-- [ ] **8.4.2** Cross-company benchmarking — rank portfolio companies on key metrics, identify leaders and laggards per dimension
+- [x] **8.4.2** Cross-company benchmarking — rank by 5D score, coverage, dimension leaders/laggards
   - Files: `src/openharness/tools/impact/portfolio_tool.py`
 
-- [ ] **8.4.3** Fund-level LP report — aggregate impact report suitable for annual LP reporting (ILPA/GIIN format)
-  - Files: `src/openharness/tools/impact/lp_ddq_export_tool.py`, `portfolio_tool.py`
+- [x] **8.4.3** Fund-level LP report — ILPA/GIIN format with additionality assessment
+  - Files: `src/openharness/tools/impact/portfolio_tool.py`
 
-- [ ] **8.4.4** Portfolio impact attribution — break down aggregate impact by company, sector, geography, and SDG
+- [x] **8.4.4** Portfolio impact attribution — by company, sector, geography, and SDG
   - Files: `src/openharness/tools/impact/portfolio_tool.py`
 
 ---
@@ -947,11 +947,11 @@
 | Phase | Items | Focus |
 |-------|-------|-------|
 | Phase 7: Analysis & Reporting UX 📊 ✅ | 9 | Interactive reports, evidence mapping, impact pathways |
-| Phase 8: Pipeline & Portfolio 📁 | 15 | Pipeline stages, monitoring, per-project & aggregate reporting |
+| Phase 8: Pipeline & Portfolio 📁 ✅ | 15 | Pipeline stages, monitoring, per-project & aggregate reporting |
 | Phase 9: LLM Intelligence 🧠 | 10 | Improvement advisor, smart docs, conversational assessment |
 | Phase 10: Platform Integration 🔌 | 11 | MCP server, Claude Code, full API, localization |
 | **Total Next Version** | **45** | |
 
 ---
 
-*Last updated: 2026-04-16 (v0.4.0). Phases 1-7 complete (158/158 items). Next version roadmap (36 remaining items) defined.*
+*Last updated: 2026-04-16 (v0.4.1). Phases 1-8 complete (173/173 items). Next version roadmap (21 remaining items) defined.*

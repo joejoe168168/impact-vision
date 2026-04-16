@@ -47,6 +47,67 @@ CREATE TABLE IF NOT EXISTS session_history (
 CREATE INDEX IF NOT EXISTS idx_session_company ON session_history(company_name);
 CREATE INDEX IF NOT EXISTS idx_session_session ON session_history(session_id);
 CREATE INDEX IF NOT EXISTS idx_session_ts ON session_history(timestamp);
+
+CREATE TABLE IF NOT EXISTS pipeline (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    company_name TEXT NOT NULL UNIQUE,
+    pipeline_stage TEXT NOT NULL DEFAULT 'sourcing',
+    assigned_to TEXT DEFAULT '',
+    priority TEXT DEFAULT 'medium',
+    tags_json TEXT DEFAULT '[]',
+    sector TEXT DEFAULT '',
+    geography TEXT DEFAULT '',
+    sdg_focus_json TEXT DEFAULT '[]',
+    investment_size REAL,
+    notes TEXT DEFAULT '',
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_pipeline_stage ON pipeline(pipeline_stage);
+CREATE INDEX IF NOT EXISTS idx_pipeline_sector ON pipeline(sector);
+
+CREATE TABLE IF NOT EXISTS stage_transitions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    company_name TEXT NOT NULL,
+    from_stage TEXT DEFAULT '',
+    to_stage TEXT NOT NULL,
+    actor TEXT DEFAULT '',
+    rationale TEXT DEFAULT '',
+    notes TEXT DEFAULT '',
+    timestamp TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_transitions_company ON stage_transitions(company_name);
+
+CREATE TABLE IF NOT EXISTS monitoring_schedules (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    company_name TEXT NOT NULL UNIQUE,
+    frequency TEXT DEFAULT 'quarterly',
+    next_review_date TEXT DEFAULT '',
+    last_review_date TEXT DEFAULT '',
+    alert_thresholds_json TEXT DEFAULT '{}',
+    watch_metrics_json TEXT DEFAULT '[]',
+    status TEXT DEFAULT 'active',
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS monitoring_alerts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    company_name TEXT NOT NULL,
+    alert_type TEXT NOT NULL,
+    severity TEXT DEFAULT 'warning',
+    message TEXT DEFAULT '',
+    metric_id TEXT DEFAULT '',
+    current_value REAL,
+    threshold_value REAL,
+    created_at TEXT NOT NULL,
+    acknowledged INTEGER DEFAULT 0
+);
+
+CREATE INDEX IF NOT EXISTS idx_alerts_company ON monitoring_alerts(company_name);
+CREATE INDEX IF NOT EXISTS idx_alerts_ack ON monitoring_alerts(acknowledged);
 """
 
 
@@ -228,6 +289,314 @@ class AssessmentStore:
             for r in rows
         ]
 
+    # --- Pipeline Management ---
+
+    def upsert_pipeline_entry(
+        self,
+        company_name: str,
+        pipeline_stage: str = "sourcing",
+        assigned_to: str = "",
+        priority: str = "medium",
+        tags: list[str] | None = None,
+        sector: str = "",
+        geography: str = "",
+        sdg_focus: list[int] | None = None,
+        investment_size: float | None = None,
+        notes: str = "",
+    ) -> int:
+        """Create or update a pipeline entry. Returns the row ID."""
+        now = datetime.now(timezone.utc).isoformat()
+        conn = self._get_conn()
+        existing = conn.execute(
+            "SELECT id, pipeline_stage FROM pipeline WHERE company_name = ?",
+            (company_name,),
+        ).fetchone()
+
+        if existing:
+            old_stage = existing["pipeline_stage"]
+            conn.execute(
+                """UPDATE pipeline SET pipeline_stage=?, assigned_to=?, priority=?,
+                   tags_json=?, sector=?, geography=?, sdg_focus_json=?,
+                   investment_size=?, notes=?, updated_at=?
+                   WHERE id=?""",
+                (
+                    pipeline_stage, assigned_to, priority,
+                    json.dumps(tags or []), sector, geography,
+                    json.dumps(sdg_focus or []), investment_size, notes, now,
+                    existing["id"],
+                ),
+            )
+            if old_stage != pipeline_stage:
+                self._log_transition(company_name, old_stage, pipeline_stage, "", "", now)
+            conn.commit()
+            return existing["id"]
+
+        cursor = conn.execute(
+            """INSERT INTO pipeline
+               (company_name, pipeline_stage, assigned_to, priority, tags_json,
+                sector, geography, sdg_focus_json, investment_size, notes,
+                created_at, updated_at)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
+            (
+                company_name, pipeline_stage, assigned_to, priority,
+                json.dumps(tags or []), sector, geography,
+                json.dumps(sdg_focus or []), investment_size, notes, now, now,
+            ),
+        )
+        conn.commit()
+        return cursor.lastrowid  # type: ignore[return-value]
+
+    def get_pipeline_entry(self, company_name: str) -> dict | None:
+        conn = self._get_conn()
+        row = conn.execute(
+            "SELECT * FROM pipeline WHERE company_name = ?", (company_name,),
+        ).fetchone()
+        return _row_to_pipeline(row) if row else None
+
+    def list_pipeline(
+        self,
+        stage: str | None = None,
+        sector: str | None = None,
+        sdg: int | None = None,
+        priority: str | None = None,
+        limit: int = 200,
+    ) -> list[dict]:
+        conn = self._get_conn()
+        query = "SELECT * FROM pipeline"
+        params: list[Any] = []
+        conditions = []
+        if stage:
+            conditions.append("pipeline_stage = ?")
+            params.append(stage)
+        if sector:
+            conditions.append("sector = ?")
+            params.append(sector)
+        if priority:
+            conditions.append("priority = ?")
+            params.append(priority)
+        if conditions:
+            query += " WHERE " + " AND ".join(conditions)
+        query += " ORDER BY updated_at DESC LIMIT ?"
+        params.append(limit)
+        rows = conn.execute(query, params).fetchall()
+        results = [_row_to_pipeline(r) for r in rows]
+        if sdg is not None:
+            results = [r for r in results if sdg in r.get("sdg_focus", [])]
+        return results
+
+    def transition_stage(
+        self,
+        company_name: str,
+        new_stage: str,
+        actor: str = "",
+        rationale: str = "",
+        notes: str = "",
+    ) -> bool:
+        """Move a company to a new pipeline stage with a recorded transition."""
+        now = datetime.now(timezone.utc).isoformat()
+        conn = self._get_conn()
+        row = conn.execute(
+            "SELECT id, pipeline_stage FROM pipeline WHERE company_name = ?",
+            (company_name,),
+        ).fetchone()
+        if not row:
+            return False
+        old_stage = row["pipeline_stage"]
+        conn.execute(
+            "UPDATE pipeline SET pipeline_stage=?, updated_at=? WHERE id=?",
+            (new_stage, now, row["id"]),
+        )
+        self._log_transition(company_name, old_stage, new_stage, actor, rationale, now, notes)
+        conn.commit()
+        return True
+
+    def _log_transition(
+        self, company: str, from_s: str, to_s: str,
+        actor: str, rationale: str, ts: str, notes: str = "",
+    ) -> None:
+        conn = self._get_conn()
+        conn.execute(
+            """INSERT INTO stage_transitions
+               (company_name, from_stage, to_stage, actor, rationale, notes, timestamp)
+               VALUES (?,?,?,?,?,?,?)""",
+            (company, from_s, to_s, actor, rationale, notes, ts),
+        )
+
+    def get_transitions(self, company_name: str) -> list[dict]:
+        conn = self._get_conn()
+        rows = conn.execute(
+            "SELECT * FROM stage_transitions WHERE company_name = ? ORDER BY timestamp",
+            (company_name,),
+        ).fetchall()
+        return [
+            {
+                "from_stage": r["from_stage"], "to_stage": r["to_stage"],
+                "actor": r["actor"], "rationale": r["rationale"],
+                "notes": r["notes"], "timestamp": r["timestamp"],
+            }
+            for r in rows
+        ]
+
+    def delete_pipeline_entry(self, company_name: str) -> bool:
+        conn = self._get_conn()
+        cursor = conn.execute("DELETE FROM pipeline WHERE company_name = ?", (company_name,))
+        conn.execute("DELETE FROM stage_transitions WHERE company_name = ?", (company_name,))
+        conn.commit()
+        return cursor.rowcount > 0
+
+    def pipeline_summary(self) -> dict:
+        """Get pipeline funnel summary: count per stage."""
+        conn = self._get_conn()
+        rows = conn.execute(
+            "SELECT pipeline_stage, COUNT(*) as cnt FROM pipeline GROUP BY pipeline_stage"
+        ).fetchall()
+        return {r["pipeline_stage"]: r["cnt"] for r in rows}
+
+    # --- Monitoring ---
+
+    def upsert_monitoring_schedule(
+        self,
+        company_name: str,
+        frequency: str = "quarterly",
+        next_review_date: str = "",
+        alert_thresholds: dict | None = None,
+        watch_metrics: list[str] | None = None,
+        status: str = "active",
+    ) -> int:
+        now = datetime.now(timezone.utc).isoformat()
+        conn = self._get_conn()
+        existing = conn.execute(
+            "SELECT id FROM monitoring_schedules WHERE company_name = ?",
+            (company_name,),
+        ).fetchone()
+        if existing:
+            conn.execute(
+                """UPDATE monitoring_schedules SET frequency=?, next_review_date=?,
+                   alert_thresholds_json=?, watch_metrics_json=?, status=?, updated_at=?
+                   WHERE id=?""",
+                (
+                    frequency, next_review_date,
+                    json.dumps(alert_thresholds or {}),
+                    json.dumps(watch_metrics or []), status, now, existing["id"],
+                ),
+            )
+            conn.commit()
+            return existing["id"]
+        cursor = conn.execute(
+            """INSERT INTO monitoring_schedules
+               (company_name, frequency, next_review_date, last_review_date,
+                alert_thresholds_json, watch_metrics_json, status, created_at, updated_at)
+               VALUES (?,?,?,?,?,?,?,?,?)""",
+            (
+                company_name, frequency, next_review_date, "",
+                json.dumps(alert_thresholds or {}),
+                json.dumps(watch_metrics or []), status, now, now,
+            ),
+        )
+        conn.commit()
+        return cursor.lastrowid  # type: ignore[return-value]
+
+    def get_monitoring_schedule(self, company_name: str) -> dict | None:
+        conn = self._get_conn()
+        row = conn.execute(
+            "SELECT * FROM monitoring_schedules WHERE company_name = ?",
+            (company_name,),
+        ).fetchone()
+        if not row:
+            return None
+        return {
+            "company_name": row["company_name"],
+            "frequency": row["frequency"],
+            "next_review_date": row["next_review_date"],
+            "last_review_date": row["last_review_date"],
+            "alert_thresholds": json.loads(row["alert_thresholds_json"]),
+            "watch_metrics": json.loads(row["watch_metrics_json"]),
+            "status": row["status"],
+        }
+
+    def list_monitoring_due(self, as_of: str = "") -> list[dict]:
+        """List companies with reviews due on or before the given date."""
+        if not as_of:
+            as_of = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        conn = self._get_conn()
+        rows = conn.execute(
+            "SELECT * FROM monitoring_schedules WHERE status='active' AND next_review_date <= ? AND next_review_date != ''",
+            (as_of,),
+        ).fetchall()
+        return [
+            {
+                "company_name": r["company_name"],
+                "frequency": r["frequency"],
+                "next_review_date": r["next_review_date"],
+                "last_review_date": r["last_review_date"],
+            }
+            for r in rows
+        ]
+
+    def create_alert(
+        self,
+        company_name: str,
+        alert_type: str,
+        message: str,
+        severity: str = "warning",
+        metric_id: str = "",
+        current_value: float | None = None,
+        threshold_value: float | None = None,
+    ) -> int:
+        now = datetime.now(timezone.utc).isoformat()
+        conn = self._get_conn()
+        cursor = conn.execute(
+            """INSERT INTO monitoring_alerts
+               (company_name, alert_type, severity, message, metric_id,
+                current_value, threshold_value, created_at)
+               VALUES (?,?,?,?,?,?,?,?)""",
+            (company_name, alert_type, severity, message, metric_id,
+             current_value, threshold_value, now),
+        )
+        conn.commit()
+        return cursor.lastrowid  # type: ignore[return-value]
+
+    def list_alerts(
+        self,
+        company_name: str | None = None,
+        unacknowledged_only: bool = False,
+        limit: int = 100,
+    ) -> list[dict]:
+        conn = self._get_conn()
+        query = "SELECT * FROM monitoring_alerts"
+        params: list[Any] = []
+        conds = []
+        if company_name:
+            conds.append("company_name = ?")
+            params.append(company_name)
+        if unacknowledged_only:
+            conds.append("acknowledged = 0")
+        if conds:
+            query += " WHERE " + " AND ".join(conds)
+        query += " ORDER BY created_at DESC LIMIT ?"
+        params.append(limit)
+        rows = conn.execute(query, params).fetchall()
+        return [
+            {
+                "id": r["id"], "company_name": r["company_name"],
+                "alert_type": r["alert_type"], "severity": r["severity"],
+                "message": r["message"], "metric_id": r["metric_id"],
+                "current_value": r["current_value"],
+                "threshold_value": r["threshold_value"],
+                "created_at": r["created_at"],
+                "acknowledged": bool(r["acknowledged"]),
+            }
+            for r in rows
+        ]
+
+    def acknowledge_alert(self, alert_id: int) -> bool:
+        conn = self._get_conn()
+        cursor = conn.execute(
+            "UPDATE monitoring_alerts SET acknowledged = 1 WHERE id = ?", (alert_id,),
+        )
+        conn.commit()
+        return cursor.rowcount > 0
+
     def close(self) -> None:
         """Close the database connection."""
         if hasattr(self._local, "conn") and self._local.conn:
@@ -249,6 +618,25 @@ def _row_to_assessment(row: sqlite3.Row) -> dict:
         val = row[json_field]
         result[field] = json.loads(val) if val else None
     return result
+
+
+def _row_to_pipeline(row: sqlite3.Row) -> dict:
+    """Convert a pipeline database row to a dict."""
+    return {
+        "id": row["id"],
+        "company_name": row["company_name"],
+        "pipeline_stage": row["pipeline_stage"],
+        "assigned_to": row["assigned_to"],
+        "priority": row["priority"],
+        "tags": json.loads(row["tags_json"]) if row["tags_json"] else [],
+        "sector": row["sector"],
+        "geography": row["geography"],
+        "sdg_focus": json.loads(row["sdg_focus_json"]) if row["sdg_focus_json"] else [],
+        "investment_size": row["investment_size"],
+        "notes": row["notes"],
+        "created_at": row["created_at"],
+        "updated_at": row["updated_at"],
+    }
 
 
 _global_store: AssessmentStore | None = None

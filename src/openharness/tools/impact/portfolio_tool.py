@@ -30,12 +30,19 @@ from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 
 class PortfolioInput(BaseModel):
-    action: Literal["analyze_file", "analyze_companies", "aggregate", "what_if"] = Field(
+    action: Literal[
+        "analyze_file", "analyze_companies", "aggregate", "what_if",
+        "rollup", "benchmark", "lp_report", "attribution",
+    ] = Field(
         description=(
             "'analyze_file': Analyze a portfolio CSV/YAML file. "
             "'analyze_companies': Analyze a list of companies provided inline. "
             "'aggregate': Generate aggregated portfolio metrics. "
-            "'what_if': Scenario analysis — add/remove companies and see portfolio impact."
+            "'what_if': Scenario analysis — add/remove companies and see portfolio impact. "
+            "'rollup': Portfolio roll-up analytics (beneficiaries, SDG coverage, fund-level 5D). "
+            "'benchmark': Cross-company benchmarking (rank by key metrics). "
+            "'lp_report': Fund-level LP report (ILPA/GIIN format). "
+            "'attribution': Impact attribution by company, sector, geography, and SDG."
         )
     )
     file_path: str = Field(
@@ -97,6 +104,24 @@ class PortfolioTool(BaseTool):
         elif args.action == "what_if":
             companies = [_dict_to_company(d) for d in args.companies]
             return self._what_if(companies, args, store)
+        elif args.action in ("rollup", "benchmark", "lp_report", "attribution"):
+            companies = [_dict_to_company(d) for d in args.companies]
+            if not companies and args.file_path:
+                companies = _load_portfolio_file(args.file_path, context)
+                if isinstance(companies, str):
+                    return ToolResult(output=companies, is_error=True)
+            if not companies:
+                return ToolResult(output="No companies provided.", is_error=True)
+            results = [_analyze_company(c, store) for c in companies]
+            aggregate = _aggregate_results(results)
+            if args.action == "rollup":
+                return ToolResult(output=_portfolio_rollup(results, aggregate, companies))
+            elif args.action == "benchmark":
+                return ToolResult(output=_cross_company_benchmark(results))
+            elif args.action == "lp_report":
+                return ToolResult(output=_fund_lp_report(results, aggregate))
+            else:
+                return ToolResult(output=_impact_attribution(results, aggregate))
         else:
             return ToolResult(output=f"Unknown action: {args.action}", is_error=True)
 
@@ -471,3 +496,176 @@ def _to_csv(results: list[dict], aggregate: dict) -> str:
     writer.writerow(["Avg Gap Coverage", aggregate.get("avg_gap_coverage", "")])
 
     return output.getvalue()
+
+
+def _portfolio_rollup(results: list[dict], aggregate: dict, companies: list) -> str:
+    """Generate portfolio roll-up analytics."""
+    lines = [
+        "PORTFOLIO ROLL-UP ANALYTICS",
+        "=" * 60,
+        f"Portfolio Size: {len(results)} companies",
+        "",
+        "FUND-LEVEL 5D SCORES",
+        "-" * 40,
+        f"  Average: {aggregate.get('avg_five_dim_score', 0)}/5",
+        f"  Median:  {aggregate.get('median_five_dim_score', 0)}/5",
+        f"  Range:   {aggregate.get('min_five_dim_score', 0)} - {aggregate.get('max_five_dim_score', 0)}",
+        "",
+    ]
+
+    dim_avgs = aggregate.get("dimension_averages", {})
+    if dim_avgs:
+        lines.append("  Dimension Averages:")
+        for dim, avg in dim_avgs.items():
+            lines.append(f"    {dim.replace('_', ' ').title():20s}: {avg}/5")
+
+    lines.extend(["", "SDG COVERAGE", "-" * 40])
+    lines.append(f"  Goals covered: {aggregate.get('sdg_coverage', 0)}/17")
+    sdg_dist = aggregate.get("sdg_distribution", [])
+    for item in sdg_dist:
+        pct = round(item["companies"] / len(results) * 100) if results else 0
+        lines.append(f"    SDG {item['goal']:2d}: {item['companies']} companies ({pct}%)")
+
+    lines.extend(["", "AGGREGATE METRICS", "-" * 40])
+    lines.append(f"  Total Metrics Reported: {aggregate.get('total_metrics_reported', 0)}")
+    lines.append(f"  Avg Metric Coverage: {aggregate.get('avg_gap_coverage', 0)}%")
+    lines.append(f"  Reporting Quality: {aggregate.get('reporting_quality', 'unknown')}")
+
+    grade_dist = aggregate.get("grade_distribution", {})
+    if grade_dist:
+        lines.append(f"  Grade Distribution: {', '.join(f'{g}:{c}' for g, c in sorted(grade_dist.items()))}")
+
+    return "\n".join(lines)
+
+
+def _cross_company_benchmark(results: list[dict]) -> str:
+    """Rank portfolio companies on key metrics."""
+    lines = [
+        "CROSS-COMPANY BENCHMARKING",
+        "=" * 60, "",
+    ]
+
+    by_5d = sorted(results, key=lambda r: r["five_dim_score"], reverse=True)
+    lines.append("By 5D Score (ranked):")
+    for i, r in enumerate(by_5d, 1):
+        marker = " ★" if i <= 3 else " ▼" if i >= len(by_5d) - 1 else ""
+        lines.append(f"  {i:2d}. {r['name']:30s} {r['five_dim_score']}/5 ({r['five_dim_grade']}){marker}")
+
+    lines.append("")
+    by_coverage = sorted(results, key=lambda r: r["gap_coverage"], reverse=True)
+    lines.append("By Metric Coverage (ranked):")
+    for i, r in enumerate(by_coverage, 1):
+        lines.append(f"  {i:2d}. {r['name']:30s} {r['gap_coverage']}%")
+
+    lines.append("")
+    dims = ("what", "who", "how_much", "contribution", "risk")
+    lines.append("Dimension Leaders:")
+    for dim in dims:
+        leader = max(results, key=lambda r: r.get(dim, 0))
+        laggard = min(results, key=lambda r: r.get(dim, 0))
+        lines.append(
+            f"  {dim.replace('_', ' ').title():15s} | "
+            f"Leader: {leader['name']} ({leader[dim]}) | "
+            f"Laggard: {laggard['name']} ({laggard[dim]})"
+        )
+
+    return "\n".join(lines)
+
+
+def _fund_lp_report(results: list[dict], aggregate: dict) -> str:
+    """Generate a fund-level LP report in ILPA/GIIN format."""
+    lines = [
+        "=" * 70,
+        "FUND IMPACT REPORT — FOR LP DISTRIBUTION",
+        "=" * 70, "",
+        "FUND OVERVIEW",
+        "-" * 40,
+        f"Portfolio Size: {aggregate.get('portfolio_size', 0)} companies",
+        f"Fund-Level 5D Score: {aggregate.get('avg_five_dim_score', 0)}/5",
+        f"SDG Coverage: {aggregate.get('sdg_coverage', 0)}/17 goals",
+        f"Core Metric Coverage: {aggregate.get('avg_gap_coverage', 0)}%",
+        f"Reporting Quality: {aggregate.get('reporting_quality', 'N/A')}",
+        "",
+    ]
+
+    additionality = aggregate.get("additionality", {})
+    if additionality:
+        lines.append("ADDITIONALITY ASSESSMENT")
+        lines.append("-" * 40)
+        lines.append(f"  Score: {additionality.get('additionality_score', 0)}/100 ({additionality.get('classification', 'N/A')})")
+        lines.append("")
+
+    lines.append("PORTFOLIO COMPANIES")
+    lines.append("-" * 40)
+    for r in results:
+        sdg_str = ", ".join(f"SDG {s['goal']}" for s in r.get("top_sdgs", [])[:3])
+        lines.append(f"  {r['name']}")
+        lines.append(f"    Sector: {r.get('sector', 'N/A')} | Geography: {r.get('geography', 'N/A')}")
+        lines.append(f"    5D: {r['five_dim_score']}/5 ({r['five_dim_grade']}) | Coverage: {r['gap_coverage']}% | SDGs: {sdg_str}")
+        lines.append("")
+
+    dim_avgs = aggregate.get("dimension_averages", {})
+    if dim_avgs:
+        lines.append("DIMENSION PERFORMANCE (Fund Average)")
+        lines.append("-" * 40)
+        for dim, avg in dim_avgs.items():
+            bar = "█" * int(avg) + "░" * (5 - int(avg))
+            lines.append(f"  {dim.replace('_', ' ').title():15s} {bar} {avg}/5")
+
+    lines.extend([
+        "", "─" * 70,
+        "Generated by Impact Vision. This report follows ILPA/GIIN format guidelines.",
+        "All scores should be validated through independent verification.",
+        "─" * 70,
+    ])
+    return "\n".join(lines)
+
+
+def _impact_attribution(results: list[dict], aggregate: dict) -> str:
+    """Break down portfolio impact by company, sector, geography, and SDG."""
+    lines = [
+        "IMPACT ATTRIBUTION ANALYSIS",
+        "=" * 60, "",
+    ]
+
+    total_score = sum(r["five_dim_score"] for r in results)
+    lines.append("BY COMPANY (% of total impact)")
+    lines.append("-" * 40)
+    for r in sorted(results, key=lambda x: x["five_dim_score"], reverse=True):
+        pct = round(r["five_dim_score"] / total_score * 100, 1) if total_score else 0
+        lines.append(f"  {r['name']:30s} {r['five_dim_score']}/5 ({pct}%)")
+    lines.append("")
+
+    sector_scores: dict[str, list[float]] = {}
+    for r in results:
+        s = r.get("sector") or "Unknown"
+        sector_scores.setdefault(s, []).append(r["five_dim_score"])
+    lines.append("BY SECTOR")
+    lines.append("-" * 40)
+    for sect, scores in sorted(sector_scores.items(), key=lambda x: sum(x[1]) / len(x[1]), reverse=True):
+        avg = round(sum(scores) / len(scores), 2)
+        lines.append(f"  {sect:20s} {len(scores)} companies | Avg 5D: {avg}/5")
+    lines.append("")
+
+    geo_scores: dict[str, list[float]] = {}
+    for r in results:
+        g = r.get("geography") or "Not specified"
+        geo_scores.setdefault(g, []).append(r["five_dim_score"])
+    if geo_scores and not (len(geo_scores) == 1 and "Not specified" in geo_scores):
+        lines.append("BY GEOGRAPHY")
+        lines.append("-" * 40)
+        for geo, scores in sorted(geo_scores.items(), key=lambda x: sum(x[1]) / len(x[1]), reverse=True):
+            avg = round(sum(scores) / len(scores), 2)
+            lines.append(f"  {geo:20s} {len(scores)} companies | Avg 5D: {avg}/5")
+        lines.append("")
+
+    sdg_companies: dict[int, list[str]] = {}
+    for r in results:
+        for sdg in r.get("top_sdgs", []):
+            sdg_companies.setdefault(sdg["goal"], []).append(r["name"])
+    lines.append("BY SDG")
+    lines.append("-" * 40)
+    for goal, names in sorted(sdg_companies.items()):
+        lines.append(f"  SDG {goal:2d}: {len(names)} companies — {', '.join(names[:5])}")
+
+    return "\n".join(lines)

@@ -159,6 +159,14 @@ class ImpactReportInput(BaseModel):
     include_gap_analysis: bool = Field(default=True)
     include_sdg_mapping: bool = Field(default=True)
     include_five_dimensions: bool = Field(default=True)
+    report_type: Literal["full", "target_progress", "lp_ready"] = Field(
+        default="full",
+        description=(
+            "'full': Complete assessment report. "
+            "'target_progress': Focused report on target progress and trajectory projections. "
+            "'lp_ready': LP-formatted individual company report with executive summary."
+        ),
+    )
     narrative_mode: Literal["data", "narrative_prompt"] = Field(
         default="data",
         description=(
@@ -280,6 +288,10 @@ class ImpactReportTool(BaseTool):
             output = _to_csv(report_data)
         elif args.output_format in ("html", "pdf"):
             output = _to_html(report_data)
+        elif args.report_type == "target_progress":
+            output = _to_target_progress_text(report_data)
+        elif args.report_type == "lp_ready":
+            output = _to_lp_ready_text(report_data)
         else:
             output = _to_text(report_data)
 
@@ -1749,6 +1761,114 @@ def _comparison_section(data: dict) -> str:
         parts.append("</table>")
 
     return "\n".join(parts)
+
+
+def _to_target_progress_text(data: dict) -> str:
+    """Generate a focused target progress report with trajectory projections."""
+    company = data.get("company", {})
+    lines = [
+        "=" * 60,
+        f"TARGET PROGRESS REPORT: {company.get('name', 'Unknown')}",
+        f"Generated: {data.get('generated_at', '')}",
+        "=" * 60, "",
+    ]
+    tt = data.get("target_tracking", {})
+    targets = tt.get("targets", [])
+    if not targets:
+        lines.append("No impact targets defined. Set targets to enable progress tracking.")
+        return "\n".join(lines)
+
+    summary = tt.get("summary", {})
+    lines.append(f"Total Targets: {len(targets)}")
+    lines.append(f"  On Track: {summary.get('on_track', 0)} | Behind: {summary.get('behind', 0)}")
+    lines.append(f"  Exceeded: {summary.get('exceeded', 0)} | At Risk: {summary.get('at_risk', 0)}")
+    lines.append("")
+
+    for t in targets:
+        status = t.get("status", "no_data")
+        pct = t.get("progress_pct", 0)
+        lines.append(f"  {t['metric_id']}: {status.replace('_', ' ').upper()}")
+        lines.append(f"    Target: {t.get('target_description', 'N/A')}")
+        lines.append(f"    Current: {t.get('current_value', 'N/A')} | Progress: {pct:.0f}%")
+        if pct > 0 and pct < 100:
+            remaining = 100 - pct
+            if remaining > 50:
+                lines.append(f"    Trajectory: At risk — {remaining:.0f}% remaining, consider intervention")
+            elif remaining > 20:
+                lines.append(f"    Trajectory: On track — {remaining:.0f}% remaining")
+            else:
+                lines.append(f"    Trajectory: Near completion — {remaining:.0f}% remaining")
+        lines.append("")
+
+    if data.get("five_dimensions"):
+        fd = data["five_dimensions"]
+        lines.append(f"5D Score Context: {fd.get('overall_score', 0):.1f}/5 (Grade: {fd.get('overall_grade', 'N/A')})")
+
+    return "\n".join(lines)
+
+
+def _to_lp_ready_text(data: dict) -> str:
+    """Generate an LP-formatted individual company report."""
+    company = data.get("company", {})
+    fd = data.get("five_dimensions", {})
+    sdg = data.get("sdg_alignments", [])
+    ga = data.get("gap_analysis", {})
+    gw = data.get("greenwashing", {})
+
+    lines = [
+        "=" * 70,
+        "CONFIDENTIAL — FOR LP DISTRIBUTION",
+        "=" * 70,
+        f"Company: {company.get('name', 'Unknown')}",
+        f"Sector: {company.get('sector', 'N/A')}",
+        f"Geography: {company.get('geography', 'N/A')}",
+        f"Assessment Date: {data.get('generated_at', '')[:10]}",
+        f"Standard: {data.get('catalog_version', 'IRIS+ 5.3c')}",
+        "", "─" * 70, "",
+        "EXECUTIVE SUMMARY",
+        "─" * 40,
+    ]
+
+    if fd:
+        lines.append(f"Overall Impact Score: {fd.get('overall_score', 0):.1f}/5.0 (Grade: {fd.get('overall_grade', 'N/A')})")
+        lines.append(f"Assessment Confidence: {fd.get('overall_provenance', 'estimated').replace('-', ' ').title()}")
+
+    top_sdgs = sorted(sdg, key=lambda s: s.get("score", 0), reverse=True)[:3]
+    if top_sdgs:
+        lines.append("Top SDG Alignments: " + ", ".join(
+            f"SDG {s['goal']} ({s.get('score', 0):.0f}%)" for s in top_sdgs if s.get("score", 0) > 0
+        ))
+
+    if ga:
+        lines.append(f"Core Metric Coverage: {ga.get('coverage_percentage', 0)}%")
+
+    if isinstance(gw, dict) and gw.get("classification"):
+        lines.append(f"Greenwashing Risk: {gw.get('classification', 'N/A')} ({gw.get('overall_score', 0)}/100)")
+
+    lines.extend(["", "─" * 70, "", "IMPACT DIMENSIONS", "─" * 40])
+    if fd:
+        for dim_name in ("what", "who", "how_much", "contribution", "risk"):
+            dim = fd.get(dim_name, {})
+            lines.append(f"  {dim.get('dimension', dim_name)}: {dim.get('score', 0)}/5 | {dim.get('notes', '')}")
+
+    lines.extend(["", "KEY RISKS AND RECOMMENDATIONS", "─" * 40])
+    if fd and fd.get("recommendations"):
+        for r in fd["recommendations"][:5]:
+            lines.append(f"  • {r}")
+
+    ia = data.get("impact_analysis", {})
+    if ia.get("risks"):
+        for r in ia["risks"][:3]:
+            lines.append(f"  ⚠ {r}")
+
+    lines.extend([
+        "", "─" * 70,
+        "This assessment was generated by Impact Vision using IRIS+ metrics,",
+        "5 Dimensions of Impact scoring, and multi-framework ESG analysis.",
+        "All scores should be validated with additional evidence and due diligence.",
+        "─" * 70,
+    ])
+    return "\n".join(lines)
 
 
 def _to_xlsx(data: dict, output_path: str, context) -> ToolResult:

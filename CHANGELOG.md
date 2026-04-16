@@ -4,6 +4,36 @@ All notable changes to Impact Vision are recorded here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.4.1] - 2026-04-16
+
+### Added — Phase 8: Pipeline & Portfolio Management
+
+**Pipeline Management** (8.1)
+- New `pipeline_tool.py`: CRUD operations for managing companies through 8 pipeline stages (sourcing → screening → DD → IC review → invested → monitoring → exited → passed)
+- Pipeline models: `PIPELINE_STAGES`, `PipelineEntry`, `StageTransition`, `MonitoringSchedule`, `MonitoringAlert` in `models.py`
+- SQLite tables: `pipeline`, `stage_transitions`, `monitoring_schedules`, `monitoring_alerts` in `storage.py`
+- Stage transition tracking with actor, rationale, and audit log
+- HTML pipeline dashboard with Plotly funnel chart, sector pie, SDG distribution, and company table
+- Pipeline CSV/XLSX import/export with full field mapping
+
+**Continuous Monitoring** (8.2)
+- New `monitoring_tool.py`: set monitoring schedules, record metric updates, detect deviations, trigger re-assessments, manage alerts
+- Monitoring schedules with configurable frequency (monthly/quarterly/semi-annual/annual) and per-metric alert thresholds
+- Automated re-assessment: re-runs 5D/SDG scoring and creates alerts for significant score changes
+- Alert system: metric_deviation, target_at_risk, evidence_expired, review_due, score_change, risk_increase
+
+**Per-Project Reporting** (8.3)
+- `report_type="target_progress"`: focused target progress report with trajectory projections
+- `report_type="lp_ready"`: LP-formatted individual company report with executive summary
+- Period-over-period comparison (via Phase 7's comparison mode)
+
+**Aggregate Portfolio** (8.4)
+- `portfolio_analyze` new actions: `rollup`, `benchmark`, `lp_report`, `attribution`
+- Portfolio roll-up analytics: fund-level 5D scores, SDG coverage, aggregate metrics
+- Cross-company benchmarking: rank by 5D score, coverage, dimension leaders/laggards
+- Fund-level LP report in ILPA/GIIN format with additionality assessment
+- Impact attribution by company, sector, geography, and SDG
+
 ## [0.4.0] - 2026-04-16
 
 ### Added — Phase 7: Enhanced Analysis & Reporting UX
