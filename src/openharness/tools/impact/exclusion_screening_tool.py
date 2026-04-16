@@ -65,6 +65,7 @@ class ExclusionScreeningInput(BaseModel):
     company_name: str = Field(description="Name of the company")
     company_description: str = Field(default="", description="Company description")
     sector: str = Field(default="")
+    geography: str = Field(default="", description="Country or region")
     severity_filter: Literal["all", "mandatory", "common", "watch"] = Field(
         default="all", description="Filter by severity level"
     )

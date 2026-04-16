@@ -13,7 +13,7 @@ from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 
 class FrameworkInput(BaseModel):
-    framework: Literal["sasb", "gri", "tcfd", "sfdr_pai", "edci", "unpri", "toc", "all"] = Field(
+    framework: Literal["sasb", "gri", "tcfd", "sfdr_pai", "edci", "unpri", "toc", "issb_s1", "all"] = Field(
         description=(
             "Which framework to query. 'all' runs a quick scan across all frameworks."
         )
@@ -54,6 +54,7 @@ class FrameworkTool(BaseTool):
         "- **UNPRI**: Self-assess alignment with the 6 Principles for Responsible Investment\n"
         "- **ToC**: Theory of Change assessment using RS Group's Blended Value principles "
         "and GIIN IRIS+ ToC Checklist\n"
+        "- **ISSB S1**: IFRS S1 General Sustainability Disclosure readiness (4 pillars, 12 disclosures)\n"
         "- **all**: Quick scan across all frameworks\n\n"
         "Actions: 'list' (browse), 'match' (find relevant topics), 'assess' (coverage analysis)"
     )
@@ -76,6 +77,7 @@ class FrameworkTool(BaseTool):
             "edci": self._handle_edci,
             "unpri": self._handle_unpri,
             "toc": self._handle_toc,
+            "issb_s1": self._handle_issb_s1,
             "all": self._handle_all_list,
         }
 
@@ -376,18 +378,64 @@ class FrameworkTool(BaseTool):
 
         return ToolResult(output=f"ToC does not support action: {args.action}", is_error=True)
 
+    def _handle_issb_s1(self, args: FrameworkInput) -> ToolResult:
+        from openharness.impact.frameworks.issb_ifrs_s1 import get_ifrs_s1_framework, assess_ifrs_s1_readiness
+
+        if args.action == "list":
+            fw = get_ifrs_s1_framework()
+            lines = [f"IFRS S1 — General Sustainability Disclosure ({sum(len(p.disclosures) for p in fw.pillars)} disclosures)\n"]
+            for pillar in fw.pillars:
+                lines.append(f"\n{pillar.name} ({len(pillar.disclosures)} disclosures)")
+                lines.append(f"  {pillar.description}")
+                for d in pillar.disclosures:
+                    lines.append(f"    [{d.code}] {d.name}")
+                    if d.guidance:
+                        lines.append(f"      {d.guidance[:150]}")
+            return ToolResult(output="\n".join(lines))
+
+        if args.action in ("match", "assess"):
+            text = f"{args.description} {args.document_text}"
+            if not text.strip():
+                return ToolResult(output="Provide description or document_text for ISSB S1 assessment", is_error=True)
+
+            result = assess_ifrs_s1_readiness(
+                description=text,
+                reported_metrics=args.reported_metrics,
+                targets_set=bool(args.reported_metrics),
+            )
+
+            lines = [
+                "IFRS S1 READINESS ASSESSMENT",
+                "=" * 50,
+                f"Overall Readiness: {result['overall_readiness']}%",
+                "",
+            ]
+            for pillar_name, info in result["pillar_scores"].items():
+                status_icon = "[OK]" if info["status"] == "addressed" else "[GAP]"
+                lines.append(f"  {status_icon} {pillar_name.replace('_', ' ').title()}: {info['score']}%")
+
+            if result["recommendations"]:
+                lines.append(f"\nRecommendations ({len(result['recommendations'])}):")
+                for r in result["recommendations"]:
+                    lines.append(f"  - {r}")
+
+            return ToolResult(output="\n".join(lines), metadata=result)
+
+        return ToolResult(output=f"ISSB S1 does not support action: {args.action}", is_error=True)
+
     def _handle_all_list(self, args: FrameworkInput) -> ToolResult:
         lines = [
             "Available Sustainability & ESG Frameworks:",
             "=" * 50,
             "",
-            "  sasb      - SASB Industry-Specific Materiality (17 industries, 77+ topics)",
+            "  sasb      - SASB Industry-Specific Materiality (25 industries, 120+ topics)",
             "  gri       - GRI Universal + Topic Standards (30+ standards, 120+ disclosures)",
             "  tcfd      - TCFD / IFRS S2 Climate Disclosure (4 pillars, 11 disclosures)",
             "  sfdr_pai  - SFDR PAI Indicators (14 mandatory EU indicators)",
             "  edci      - EDCI PE/VC Metrics (17 core ESG metrics with cross-references)",
             "  unpri     - UN PRI Self-Assessment (6 principles, 27 actions)",
             "  toc       - Theory of Change (RS Group Blended Value + GIIN ToC Checklist)",
+            "  issb_s1   - IFRS S1 General Sustainability Disclosure (4 pillars, 12 disclosures)",
             "",
             "Use framework='<name>' with action='list' to browse, 'match' to find relevant topics,",
             "or 'assess' to check coverage. Use framework='all' with action='assess' to scan all.",
@@ -397,6 +445,7 @@ class FrameworkTool(BaseTool):
     def _assess_all(self, args: FrameworkInput) -> ToolResult:
         """Run a quick scan across all frameworks."""
         from openharness.impact.frameworks.edci import assess_edci_coverage
+        from openharness.impact.frameworks.issb_ifrs_s1 import assess_ifrs_s1_readiness
         from openharness.impact.frameworks.sasb import match_sasb_industry
         from openharness.impact.frameworks.sfdr_pai import assess_sfdr_compliance
         from openharness.impact.frameworks.tcfd import assess_tcfd_alignment
@@ -436,6 +485,12 @@ class FrameworkTool(BaseTool):
         # Theory of Change
         toc = assess_toc_alignment(args.description, args.document_text)
         lines.append(f"ToC (RS Group): {toc['coverage_pct']}% alignment ({toc['addressed']}/{toc['total_principles']} principles)")
+
+        issb = assess_ifrs_s1_readiness(
+            description=text, reported_metrics=args.reported_metrics,
+            targets_set=bool(args.reported_metrics),
+        )
+        lines.append(f"ISSB IFRS S1: {issb['overall_readiness']}% readiness ({issb['total_disclosures']} disclosures)")
 
         lines.append("")
         lines.append("Use framework='<name>' with action='assess' for detailed analysis.")

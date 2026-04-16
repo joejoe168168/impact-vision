@@ -9,7 +9,8 @@ from pydantic import BaseModel, Field
 
 from openharness.impact.database import get_metric_store
 from openharness.impact.dd_checklist import analyze_document_coverage, select_questions_for_document
-from openharness.impact.models import ImpactClaim
+from openharness.impact.greenwashing import assess_greenwashing
+from openharness.impact.models import Company, ImpactClaim
 from openharness.impact.sdg_taxonomy import get_sdg_goal
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
@@ -53,6 +54,10 @@ class PitchDeckAnalyzeInput(BaseModel):
     include_iris_suggestions: bool = Field(
         default=True,
         description="Suggest relevant IRIS+ metrics based on document content",
+    )
+    include_greenwashing_check: bool = Field(
+        default=True,
+        description="Run greenwashing / impact-washing risk detection on extracted claims",
     )
     extract_company: bool = Field(
         default=True,
@@ -204,7 +209,28 @@ class PitchDeckAnalyzeTool(BaseTool):
                     if q.follow_up:
                         lines.append(f"       Follow-up: {q.follow_up}")
 
-        # Section 5: Extracted Company Model
+        # Section 5: Greenwashing Risk
+        gw_result = None
+        if args.include_greenwashing_check and extracted_company:
+            gw_result = assess_greenwashing(extracted_company)
+            lines.append("")
+            lines.append("GREENWASHING / IMPACT-WASHING RISK")
+            lines.append("-" * 50)
+            lines.append(f"  Overall Risk Score: {gw_result['overall_score']}/100 — {gw_result['classification']}")
+            lines.append(f"  Sub-scores:")
+            for sub_name, sub_val in gw_result.get("sub_scores", {}).items():
+                lines.append(f"    {sub_name}: {sub_val}/100")
+            if gw_result.get("flags"):
+                lines.append(f"  Flags ({len(gw_result['flags'])}):")
+                for flag in gw_result["flags"][:5]:
+                    lines.append(f"    - {flag}")
+            if gw_result.get("recommendations"):
+                lines.append(f"  Recommendations:")
+                for rec in gw_result["recommendations"][:3]:
+                    lines.append(f"    - {rec}")
+            lines.append("")
+
+        # Section 6: Extracted Company Model
         if extracted_company:
             lines.append("")
             lines.append("EXTRACTED COMPANY MODEL (for downstream tools)")
@@ -230,6 +256,8 @@ class PitchDeckAnalyzeTool(BaseTool):
         }
         if extracted_company:
             metadata["extracted_company"] = extracted_company.model_dump()
+        if gw_result:
+            metadata["greenwashing"] = gw_result
 
         return ToolResult(output="\n".join(lines), metadata=metadata)
 

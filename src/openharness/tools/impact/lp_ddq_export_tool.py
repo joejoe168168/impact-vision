@@ -278,48 +278,110 @@ class LpDdqExportTool(BaseTool):
         )
 
     def _generate_section_data(self, section: dict, company: Company, store, data_cache: dict) -> str:
-        """Generate data-driven content for a DDQ section."""
+        """Generate data-driven narrative content for a DDQ section."""
         sources = section.get("data_sources", [])
         parts: list[str] = []
 
         if "impact_thesis" in sources:
-            parts.append(f"Company: {company.name}")
-            if company.description:
-                parts.append(f"Description: {company.description}")
+            thesis_parts = [f"{company.name}"]
             if company.sector:
-                parts.append(f"Sector: {company.sector}")
+                thesis_parts.append(f"operates in the {company.sector} sector")
+            if company.geography:
+                thesis_parts.append(f"in {company.geography}")
+            parts.append(". ".join(thesis_parts) + ".")
+            if company.description:
+                parts.append(f"\n{company.description[:500]}")
             if company.impact_themes:
-                parts.append(f"Impact Themes: {', '.join(company.impact_themes)}")
+                parts.append(f"\nCore impact themes: {', '.join(company.impact_themes)}.")
+            if company.sdg_claims:
+                parts.append(f"The company contributes to {len(company.sdg_claims)} SDGs: {', '.join(f'SDG {g}' for g in company.sdg_claims)}.")
+            if company.stage:
+                parts.append(f"Investment stage: {company.stage}.")
+            if company.impact_targets:
+                parts.append(f"\nImpact targets set for {len(company.impact_targets)} metrics.")
 
         if "sdg_alignment" in sources and "sdg" in data_cache:
             alignments = data_cache["sdg"]
-            top = [a for a in alignments if a.score > 0]
+            top = sorted([a for a in alignments if a.score > 0], key=lambda a: a.score, reverse=True)
             if top:
-                parts.append("SDG Alignment:")
+                parts.append(f"\nSDG Alignment ({len(top)} goals with positive alignment):")
                 for a in top[:5]:
-                    parts.append(f"  SDG {a.goal} ({a.goal_name}): {a.score}/100 [{a.confidence}]")
+                    prov_note = f" [{a.provenance}]" if a.provenance != "evidence-based" else " [evidence-based]"
+                    metric_note = f" ({len(a.matched_metrics)} metrics matched)" if a.matched_metrics else ""
+                    parts.append(f"  - SDG {a.goal} ({a.goal_name}): {a.score:.0f}/100 [{a.confidence} confidence]{prov_note}{metric_note}")
+                if len(top) > 5:
+                    parts.append(f"  ... and {len(top) - 5} additional SDG alignments.")
 
         if "five_dimensions" in sources and "five_dim" in data_cache:
             fd = data_cache["five_dim"]
-            parts.append(f"5 Dimensions of Impact: Overall {fd.overall_score:.1f}/5 ({fd.overall_grade})")
-            parts.append(f"  What: {fd.what.score:.1f}/5 | Who: {fd.who.score:.1f}/5 | How Much: {fd.how_much.score:.1f}/5")
-            parts.append(f"  Contribution: {fd.contribution.score:.1f}/5 | Risk: {fd.risk.score:.1f}/5")
+            parts.append(f"\n5 Dimensions of Impact Assessment:")
+            parts.append(f"  Overall Score: {fd.overall_score:.1f}/5.0 (Grade: {fd.overall_grade})")
+            parts.append(f"  Confidence: {fd.overall_provenance}")
+            dims = [
+                ("What (outcome type)", fd.what),
+                ("Who (stakeholders)", fd.who),
+                ("How Much (scale/depth)", fd.how_much),
+                ("Contribution (additionality)", fd.contribution),
+                ("Risk (impact risk)", fd.risk),
+            ]
+            for label, dim in dims:
+                parts.append(f"  - {label}: {dim.score:.1f}/5.0 [{dim.provenance}]")
+                if dim.notes:
+                    parts.append(f"    {dim.notes[:150]}")
 
         if "iris_metrics" in sources:
             if company.reported_metrics:
-                parts.append(f"IRIS+ Metrics Reported ({len(company.reported_metrics)}):")
+                parts.append(f"\nIRIS+ Metrics Reported ({len(company.reported_metrics)}):")
                 for mid, val in list(company.reported_metrics.items())[:10]:
                     m = store.get(mid)
-                    parts.append(f"  {mid} ({m.name if m else '?'}): {val}")
+                    name = m.name if m else "Unknown metric"
+                    parts.append(f"  - {mid} ({name}): {val}")
+                if len(company.reported_metrics) > 10:
+                    parts.append(f"  ... and {len(company.reported_metrics) - 10} additional metrics.")
             else:
-                parts.append("No IRIS+ metrics currently reported.")
+                parts.append("\nNo IRIS+ metrics currently reported. Recommend establishing baseline measurement.")
 
         if "gap_analysis" in sources and "gaps" in data_cache:
             gaps = data_cache["gaps"]
-            parts.append(f"Core Metric Set Coverage: {gaps['coverage_percentage']}%")
-            parts.append(f"  Reported: {gaps['metrics_reported']} | Missing: {gaps['metrics_missing']}")
+            parts.append(f"\nCore Metric Set Coverage: {gaps['coverage_percentage']}%")
+            parts.append(f"  Metrics reported: {gaps['metrics_reported']} of {gaps['metrics_reported'] + gaps['metrics_missing']} required")
+            if gaps.get("recommendations"):
+                parts.append("  Priority actions:")
+                for rec in gaps["recommendations"][:3]:
+                    parts.append(f"    - {rec}")
+
+        if "dd_checklist" in sources:
+            from openharness.impact.dd_checklist import analyze_document_coverage
+            if company.description:
+                dd_result = analyze_document_coverage(company.description)
+                parts.append(f"\nDue Diligence Coverage: {dd_result.coverage_pct}% of {dd_result.total_questions} questions addressed")
+                if dd_result.high_priority_gaps:
+                    parts.append(f"  High-priority gaps: {len(dd_result.high_priority_gaps)}")
+                    for q in dd_result.high_priority_gaps[:3]:
+                        parts.append(f"    - {q.question}")
+
+        if "risk" in sources:
+            risk_note = "Impact risk management includes ongoing monitoring of:"
+            parts.append(f"\n{risk_note}")
+            if company.sector:
+                parts.append(f"  - Sector-specific risks for {company.sector}")
+            if company.exclusion_flags:
+                parts.append(f"  - Exclusion flags: {', '.join(company.exclusion_flags)}")
+            else:
+                parts.append("  - No exclusion flags identified")
+
+        if any(src in sources for src in ("edci_environment", "edci_social", "edci_governance")):
+            parts.append("\nEDCI Reporting:")
+            if "edci_environment" in sources:
+                env_metrics = {mid: val for mid, val in company.reported_metrics.items() if mid.startswith("OI")}
+                parts.append(f"  Environment: {len(env_metrics)} environmental metrics reported")
+            if "edci_social" in sources:
+                social_metrics = {mid: val for mid, val in company.reported_metrics.items() if mid.startswith("PI")}
+                parts.append(f"  Social: {len(social_metrics)} social metrics reported")
+            if "edci_governance" in sources:
+                parts.append("  Governance: Board composition and oversight data pending")
 
         if not parts:
-            parts.append("[Data not available - provide more company information]")
+            parts.append("[Data not available — provide company description, sector, reported metrics, and SDG claims for comprehensive responses.]")
 
         return "\n".join(parts)

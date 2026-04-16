@@ -84,6 +84,7 @@ def create_default_tool_registry(mcp_manager: McpClientManager | None = None) ->
         ("impact.lp_ddq_export_tool", "LpDdqExportTool"),
         ("impact.metric_recommender_tool", "MetricRecommenderTool"),
         ("impact.portfolio_tool", "PortfolioTool"),
+        ("impact.trend_analysis_tool", "TrendAnalysisTool"),
     )
     for module_name, class_name in impact_tools:
         _register_if_available(registry, module_name, class_name)

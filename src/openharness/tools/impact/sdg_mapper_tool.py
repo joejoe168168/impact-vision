@@ -16,6 +16,7 @@ class SdgMapperInput(BaseModel):
     company_name: str = Field(description="Name of the company to assess")
     company_description: str = Field(default="", description="Brief description of the company's activities")
     sector: str = Field(default="", description="Industry sector")
+    geography: str = Field(default="", description="Country or region (e.g. 'Kenya', 'Southeast Asia')")
     impact_themes: list[str] = Field(default_factory=list, description="Impact themes claimed (e.g. 'Financial Inclusion')")
     reported_metrics: dict[str, str] = Field(
         default_factory=dict,
@@ -56,6 +57,7 @@ class SdgMapperTool(BaseTool):
             name=args.company_name,
             description=args.company_description,
             sector=args.sector,
+            geography=args.geography,
             impact_themes=infer_themes(f"{args.company_description} {args.sector}", args.impact_themes),
             reported_metrics=reported_metrics,
             sdg_claims=sdg_claims,
@@ -75,7 +77,8 @@ class SdgMapperTool(BaseTool):
             for a in top:
                 bar = _score_bar(a.score)
                 output_lines.append(f"\nSDG {a.goal}: {a.goal_name}")
-                output_lines.append(f"  Score: {a.score}/100 {bar} [{a.confidence} confidence]")
+                prov_tag = f" [{a.provenance}]" if a.provenance != "evidence-based" else ""
+                output_lines.append(f"  Score: {a.score}/100 {bar} [{a.confidence} confidence]{prov_tag}")
                 if a.matched_metrics:
                     output_lines.append(f"  Matched metrics: {', '.join(a.matched_metrics[:5])}")
                 if a.matched_targets:

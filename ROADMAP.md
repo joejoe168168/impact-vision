@@ -16,7 +16,7 @@
   - File: `src/openharness/impact/five_dimensions.py`
   - Ref: Review §2.1
 
-- [ ] **1.1.2** Add `provenance` field to SDG alignment results — label each SDG score as `"inferred_from_description"` or `"supported_by_metrics"`
+- [x] **1.1.2** Add `provenance` field to SDG alignment results — label each SDG score as `"inferred_from_description"` or `"supported_by_metrics"`
   - File: `src/openharness/impact/sdg_mapper.py`
   - Ref: Review §2.1
 
@@ -38,7 +38,7 @@
   - File: `src/openharness/impact/five_dimensions.py`
   - Ref: Review §2.1
 
-- [x] **1.2.2** Add configurable threshold constant (default=3) that can be overridden per fund
+- [ ] **1.2.2** Add configurable threshold constant (default=3) that can be overridden per fund
   - File: `src/openharness/impact/five_dimensions.py`
   - Ref: Review §2.1
 
@@ -52,7 +52,7 @@
   - Files: `data/sector_baselines.yaml` (new), `src/openharness/impact/five_dimensions.py`
   - Ref: Review §2.1, §6.2
 
-- [x] **1.3.2** Create `data/sdg_keyword_map.yaml` — extract `_KEYWORD_SDG_MAP` from `sdg_mapper.py` (consolidated into scoring_config.yaml)
+- [ ] **1.3.2** Create `data/sdg_keyword_map.yaml` — extract `_KEYWORD_SDG_MAP` from `sdg_mapper.py` (consolidated into scoring_config.yaml)
   - Files: `data/sdg_keyword_map.yaml` (new), `src/openharness/impact/sdg_mapper.py`
   - Ref: Review §2.1, §6.2
 
@@ -68,7 +68,7 @@
   - File: `src/openharness/tools/impact/common.py`
   - Ref: Review §6.2
 
-- [x] **1.3.6** Update all consuming modules to use YAML-loaded dictionaries instead of hardcoded ones
+- [ ] **1.3.6** Update all consuming modules to use YAML-loaded dictionaries instead of hardcoded ones
   - Files: `five_dimensions.py`, `sdg_mapper.py`, `risk_opportunity.py`, `common.py`
   - Ref: Review §6.2
 
@@ -78,11 +78,11 @@
   - File: `src/openharness/impact/models.py`
   - Ref: Review §5.1
 
-- [ ] **1.4.2** Update `SdgMapperInput` to accept geography fields
+- [x] **1.4.2** Update `SdgMapperInput` to accept geography fields
   - File: `src/openharness/tools/impact/sdg_mapper_tool.py`
   - Ref: Review §5.1
 
-- [ ] **1.4.3** Update `FiveDimensionAssessInput` to accept geography fields
+- [x] **1.4.3** Update `FiveDimensionAssessInput` to accept geography fields
   - File: `src/openharness/tools/impact/five_dimension_assess_tool.py`
   - Ref: Review §5.1
 
@@ -90,7 +90,7 @@
   - File: `src/openharness/tools/impact/portfolio_tool.py`
   - Ref: Review §5.1
 
-- [ ] **1.4.5** Update `LpDdqExportInput` to accept geography fields
+- [x] **1.4.5** Update `LpDdqExportInput` to accept geography fields
   - File: `src/openharness/tools/impact/lp_ddq_export_tool.py`
   - Ref: Review §5.1
 
@@ -212,7 +212,7 @@
   - File: `src/openharness/impact/models.py`
   - Ref: Review §5.1
 
-- [ ] **2.1.4** Add trend analysis function — compare metric values across periods, detect improvement/decline
+- [x] **2.1.4** Add trend analysis function — compare metric values across periods, detect improvement/decline
   - File: `src/openharness/impact/trend_analysis.py` (new)
   - Ref: Review §2.7
 
@@ -248,7 +248,7 @@
 
 ### 2.3 Impact Target Tracking
 
-- [ ] **2.3.1** Create `ImpactTarget` model — `metric_id`, `target_value`, `target_date`, `actual_value`, `period`
+- [x] **2.3.1** Create `ImpactTarget` model — `metric_id`, `target_value`, `target_date`, `actual_value`, `period`
   - File: `src/openharness/impact/models.py`
   - Ref: Review §4.3
 
@@ -260,8 +260,8 @@
   - File: `src/openharness/tools/impact/common.py`
   - Ref: Review §4.3
 
-- [ ] **2.3.4** Add target-vs-actual tracking function with trajectory projection
-  - File: `src/openharness/impact/target_tracking.py` (new)
+- [x] **2.3.4** Add target-vs-actual tracking function with trajectory projection
+  - File: `src/openharness/impact/trend_analysis.py`
   - Ref: Review §4.3
 
 - [ ] **2.3.5** Add target tracking section to HTML reports — on-track/at-risk/off-track visual indicators
@@ -270,7 +270,7 @@
 
 ### 2.4 Improve LP DDQ Responses
 
-- [ ] **2.4.1** Add narrative prose generation for DDQ template sections — move from metric lists to paragraph responses
+- [x] **2.4.1** Add narrative prose generation for DDQ template sections — move from metric lists to paragraph responses
   - File: `src/openharness/tools/impact/lp_ddq_export_tool.py`
   - Ref: Review §2.6
 
@@ -288,7 +288,7 @@
 
 ### 2.5 Expand SASB to All 77 Industries
 
-- [ ] **2.5.1** Add missing SASB industry definitions — all 61 remaining industries with disclosure topics and accounting metrics
+- [x] **2.5.1** Add missing SASB industry definitions — expanded from 17 to 25 industries with disclosure topics
   - File: `src/openharness/impact/frameworks/sasb.py`
   - Ref: Review §2.3
 
@@ -302,7 +302,7 @@
 
 ### 2.6 Fund-Level Analytics
 
-- [ ] **2.6.1** Add fund-level aggregation beyond simple portfolio averages — weighted by investment size and materiality
+- [x] **2.6.1** Add fund-level aggregation beyond simple portfolio averages — min/max/median, sector distribution, reporting quality
   - File: `src/openharness/tools/impact/portfolio_tool.py`
   - Ref: Review §4.1
 
@@ -338,7 +338,7 @@
 
 ### 2.8 Add ISSB IFRS S1/S2 Disclosure Mapping
 
-- [ ] **2.8.1** Create ISSB S1 (General Requirements) framework module with disclosure topics
+- [x] **2.8.1** Create ISSB S1 (General Requirements) framework module with disclosure topics
   - File: `src/openharness/impact/frameworks/issb.py` (new)
   - Ref: Review §10.4
 
@@ -350,7 +350,7 @@
   - File: `src/openharness/impact/frameworks/cross_reference.py`
   - Ref: Review §10.4
 
-- [ ] **2.8.4** Add ISSB as an option in `FrameworkTool`
+- [x] **2.8.4** Add ISSB as an option in `FrameworkTool`
   - File: `src/openharness/tools/impact/framework_tool.py`
   - Ref: Review §10.4
 

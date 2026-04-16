@@ -183,7 +183,7 @@ def _analyze_company(company: Company, store) -> dict:
 
 
 def _aggregate_results(results: list[dict]) -> dict:
-    """Compute portfolio-level aggregated metrics."""
+    """Compute portfolio-level aggregated metrics with fund analytics."""
     n = len(results)
     if n == 0:
         return {}
@@ -208,14 +208,39 @@ def _aggregate_results(results: list[dict]) -> dict:
         g = r["five_dim_grade"]
         grade_dist[g] = grade_dist.get(g, 0) + 1
 
+    five_d_scores = [r["five_dim_score"] for r in results]
+    min_5d = round(min(five_d_scores), 2)
+    max_5d = round(max(five_d_scores), 2)
+    median_5d = round(sorted(five_d_scores)[n // 2], 2) if n > 0 else 0
+
+    sector_dist: dict[str, int] = {}
+    for r in results:
+        s = r.get("sector") or "Unknown"
+        sector_dist[s] = sector_dist.get(s, 0) + 1
+
+    weakest_dim = min(dim_avgs, key=dim_avgs.get) if dim_avgs else ""
+    strongest_dim = max(dim_avgs, key=dim_avgs.get) if dim_avgs else ""
+
+    sdg_coverage = len(all_sdg_goals)
+
+    reporting_quality = "high" if avg_gap >= 60 else "medium" if avg_gap >= 30 else "low"
+
     return {
         "portfolio_size": n,
         "avg_five_dim_score": avg_5d,
+        "min_five_dim_score": min_5d,
+        "max_five_dim_score": max_5d,
+        "median_five_dim_score": median_5d,
         "avg_gap_coverage": avg_gap,
         "dimension_averages": dim_avgs,
+        "strongest_dimension": strongest_dim,
+        "weakest_dimension": weakest_dim,
         "grade_distribution": grade_dist,
-        "sdg_distribution": [{"goal": g, "companies": c} for g, c in sdg_distribution[:10]],
+        "sector_distribution": sector_dist,
+        "sdg_distribution": [{"goal": g, "companies": c} for g, c in sdg_distribution[:17]],
+        "sdg_coverage": sdg_coverage,
         "total_metrics_reported": sum(r["metrics_reported"] for r in results),
+        "reporting_quality": reporting_quality,
     }
 
 
@@ -234,21 +259,35 @@ def _to_text(results: list[dict], aggregate: dict) -> str:
         lines.append(f"    SDGs: {sdg_str or 'None'} | Metrics: {r['metrics_reported']}")
         lines.append("")
 
-    lines.append("PORTFOLIO AGGREGATES")
+    lines.append("FUND-LEVEL ANALYTICS")
     lines.append("-" * 40)
-    lines.append(f"  Avg 5D Score: {aggregate.get('avg_five_dim_score', 0)}/5")
-    lines.append(f"  Avg Core Metric Coverage: {aggregate.get('avg_gap_coverage', 0)}%")
+    lines.append(f"  5D Score: avg {aggregate.get('avg_five_dim_score', 0)}/5 | "
+                 f"min {aggregate.get('min_five_dim_score', 0)} | "
+                 f"max {aggregate.get('max_five_dim_score', 0)} | "
+                 f"median {aggregate.get('median_five_dim_score', 0)}")
+    lines.append(f"  Core Metric Coverage: avg {aggregate.get('avg_gap_coverage', 0)}% "
+                 f"(reporting quality: {aggregate.get('reporting_quality', 'unknown')})")
+    lines.append(f"  Total IRIS+ Metrics Reported: {aggregate.get('total_metrics_reported', 0)}")
+    lines.append(f"  SDG Coverage: {aggregate.get('sdg_coverage', 0)}/17 goals")
 
     dim_avgs = aggregate.get("dimension_averages", {})
     if dim_avgs:
         lines.append("  Dimension Averages:")
         for dim, avg in dim_avgs.items():
-            lines.append(f"    {dim}: {avg}/5")
+            lines.append(f"    {dim.replace('_', ' ').title()}: {avg}/5")
+        lines.append(f"  Strongest: {aggregate.get('strongest_dimension', '').replace('_', ' ').title()}")
+        lines.append(f"  Weakest:   {aggregate.get('weakest_dimension', '').replace('_', ' ').title()}")
+
+    sector_dist = aggregate.get("sector_distribution", {})
+    if sector_dist:
+        lines.append("  Sector Distribution:")
+        for sect, count in sorted(sector_dist.items(), key=lambda x: x[1], reverse=True):
+            lines.append(f"    {sect}: {count} companies")
 
     sdg_dist = aggregate.get("sdg_distribution", [])
     if sdg_dist:
         lines.append("  SDG Distribution:")
-        for item in sdg_dist[:5]:
+        for item in sdg_dist[:10]:
             lines.append(f"    SDG {item['goal']}: {item['companies']} companies")
 
     grade_dist = aggregate.get("grade_distribution", {})

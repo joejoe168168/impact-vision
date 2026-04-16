@@ -15,6 +15,7 @@ class FiveDimensionInput(BaseModel):
     company_name: str = Field(description="Name of the company")
     company_description: str = Field(default="", description="Brief company description")
     sector: str = Field(default="")
+    geography: str = Field(default="", description="Country or region (e.g. 'Kenya', 'Southeast Asia')")
     impact_themes: list[str] = Field(default_factory=list, description="Impact themes (e.g. 'Health', 'Climate')")
     reported_metrics: dict[str, str] = Field(
         default_factory=dict,
@@ -51,6 +52,7 @@ class FiveDimensionAssessTool(BaseTool):
             name=args.company_name,
             description=args.company_description,
             sector=args.sector,
+            geography=args.geography,
             impact_themes=infer_themes(f"{args.company_description} {args.sector}", args.impact_themes),
             reported_metrics=reported_metrics,
         )

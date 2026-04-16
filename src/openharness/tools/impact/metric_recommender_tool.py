@@ -16,6 +16,7 @@ from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 class MetricRecommenderInput(BaseModel):
     sector: str = Field(default="", description="Sector/industry context.")
+    geography: str = Field(default="", description="Country or region.")
     description: str = Field(default="", description="Company or thesis description.")
     impact_themes: list[str] = Field(default_factory=list, description="Impact themes.")
     sdg_goals: list[int] = Field(default_factory=list, description="Target SDG goals (1-17).")

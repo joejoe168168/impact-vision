@@ -4,6 +4,56 @@ All notable changes to Impact Vision are recorded here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.1.6] - 2026-04-16
+
+### Added
+
+**SDG provenance tracking**
+- SDG alignment results now include `provenance` field (`evidence-based`, `partial`, `estimated`)
+- SDG mapper sets provenance based on matched metric count (≥3 = evidence-based)
+- Provenance labels shown in SDG mapper tool output
+
+**Geography field across all tools**
+- Added `geography` input to all major tools: SDG mapper, 5D assessment, greenwashing, exclusion screening, risk/opportunity, metric recommender, impact report
+- Geography passed through to Company model for all downstream analyses
+
+**Greenwashing integration into pipeline**
+- Pitch deck analyzer now runs greenwashing detection automatically (configurable)
+- Impact reports (HTML + text) include greenwashing risk section with sub-scores, flags, and recommendations
+- HTML report shows visual risk score card with color-coded classification
+
+**Trend analysis engine** (new tool: `trend_analysis`)
+- Analyze metric trends over time using `metric_history` data
+- Detects direction (improving/declining/stable), percentage change, and volatility
+- Supports period sorting across FY, quarterly, and half-year formats
+- Tracks verification status of data points
+
+**Impact target tracking**
+- Compare current metric values against `impact_targets`
+- Status classification: exceeded (≥100%), on_track (≥70%), behind (≥40%), at_risk (<40%)
+- Aggregate completion percentage across all targets
+- Integrated into trend analysis tool output
+
+**ISSB IFRS S1 framework** (new framework: `issb_s1`)
+- Full IFRS S1 General Sustainability Disclosure structure (4 pillars, 12 disclosures)
+- Readiness assessment with per-pillar scoring and recommendations
+- Integrated into framework tool (`framework='issb_s1'`) and multi-framework scan
+
+**Expanded SASB industries** (17 → 25)
+- Added: Hotels & Lodging, Telecommunication Services, Electric Utilities, Water Utilities, Managed Care, Medical Equipment, Mortgage Finance, Consumer Finance
+- Updated sector keyword mapping for better matching
+
+**Enhanced fund-level analytics**
+- Portfolio aggregation now includes: min/max/median 5D scores, sector distribution, strongest/weakest dimensions, SDG coverage breadth, reporting quality tier
+- Richer text output format for portfolio analysis
+
+**Improved LP DDQ narratives**
+- Section responses now include provenance labels, geography context, DD coverage, EDCI breakdown, target counts
+- Richer narrative structure with better formatting
+- Handles `risk`, `dd_checklist`, and `edci_*` data sources
+
+**10 new tests** (47 total): SDG provenance, geography fields, greenwashing integration, trend analysis, target tracking, ISSB S1, expanded SASB
+
 ## [0.1.5] - 2026-04-16
 
 ### Added

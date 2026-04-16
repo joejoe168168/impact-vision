@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 from openharness.impact.database import get_metric_store
 from openharness.impact.five_dimensions import assess_five_dimensions
 from openharness.impact.gap_analysis import analyze_gaps
+from openharness.impact.greenwashing import assess_greenwashing
 from openharness.impact.models import Company
 from openharness.impact.sdg_mapper import map_sdg_alignment
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
@@ -143,6 +144,7 @@ class ImpactReportInput(BaseModel):
     company_name: str = Field(description="Name of the company")
     company_description: str = Field(default="")
     sector: str = Field(default="")
+    geography: str = Field(default="", description="Country or region")
     impact_themes: list[str] = Field(default_factory=list)
     reported_metrics: dict[str, str] = Field(default_factory=dict)
     sdg_claims: list[int] = Field(default_factory=list)
@@ -183,6 +185,7 @@ class ImpactReportTool(BaseTool):
             name=args.company_name,
             description=args.company_description,
             sector=args.sector,
+            geography=args.geography,
             impact_themes=args.impact_themes,
             reported_metrics=args.reported_metrics,
             sdg_claims=args.sdg_claims,
@@ -207,6 +210,7 @@ class ImpactReportTool(BaseTool):
             report_data["gap_analysis"] = gap_result
 
         report_data["impact_analysis"] = _infer_opportunities_and_risks(company)
+        report_data["greenwashing"] = assess_greenwashing(company)
 
         from openharness.impact.benchmarks import compare_to_benchmark
         if "five_dimensions" in report_data and company.sector:
@@ -313,6 +317,19 @@ def _to_text(data: dict) -> str:
         lines.append("-" * 40)
         for r in ia.get("risks", []):
             lines.append(f"  ! {r}")
+        lines.append("")
+
+    if "greenwashing" in data:
+        gw = data["greenwashing"]
+        lines.append("GREENWASHING / IMPACT-WASHING RISK")
+        lines.append("-" * 40)
+        lines.append(f"  Risk Score: {gw.get('overall_score', 0)}/100 — {gw.get('classification', 'Unknown')}")
+        for sname, sval in gw.get("sub_scores", {}).items():
+            lines.append(f"    {sname.replace('_', ' ').title()}: {sval}/100")
+        for flag in gw.get("flags", []):
+            lines.append(f"  ! {flag}")
+        for rec in gw.get("recommendations", []):
+            lines.append(f"  > {rec}")
         lines.append("")
 
     if "benchmark_comparison" in data:
@@ -781,6 +798,36 @@ Plotly.newPlot('sdg-chart', [{{
             sections.append("<h3>Recommendations</h3>")
             for r in ga["recommendations"]:
                 sections.append(f'<div class="rec">{r}</div>')
+
+    if "greenwashing" in data:
+        gw = data["greenwashing"]
+        gw_score = gw.get("overall_score", 0)
+        gw_class = gw.get("classification", "Unknown")
+        gw_color = "#2e7d32" if gw_score < 30 else "#f57c00" if gw_score < 60 else "#c62828"
+        sections.append(f"""
+<h2>Greenwashing / Impact-Washing Risk</h2>
+<div class="cards-row">
+<div class="score-card" style="border-left:4px solid {gw_color}">
+  <div class="value" style="color:{gw_color}">{gw_score}</div>
+  <div class="label">Risk Score (0-100)</div>
+</div>
+<div class="score-card"><div class="value" style="font-size:1.2em;color:{gw_color}">{gw_class}</div><div class="label">Classification</div></div>
+</div>""")
+        sub = gw.get("sub_scores", {})
+        if sub:
+            sections.append('<table><tr><th>Sub-Score</th><th>Value</th></tr>')
+            for sname, sval in sub.items():
+                display = sname.replace("_", " ").title()
+                sections.append(f'<tr><td>{display}</td><td>{sval}/100</td></tr>')
+            sections.append('</table>')
+        if gw.get("flags"):
+            sections.append('<h3>Flags</h3>')
+            for flag in gw["flags"]:
+                sections.append(f'<div class="rec" style="border-left-color:{gw_color}">{flag}</div>')
+        if gw.get("recommendations"):
+            sections.append('<h3>Recommendations</h3>')
+            for rec in gw["recommendations"]:
+                sections.append(f'<div class="rec">{rec}</div>')
 
     if "benchmark_comparison" in data:
         bm = data["benchmark_comparison"]

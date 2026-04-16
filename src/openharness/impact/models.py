@@ -163,6 +163,7 @@ class SDGAlignment(BaseModel):
     matched_targets: list[str] = Field(default_factory=list)
     matched_metrics: list[str] = Field(default_factory=list)
     confidence: Literal["high", "medium", "low"] = "low"
+    provenance: Literal["evidence-based", "estimated", "partial"] = "estimated"
 
 
 class Assessment(BaseModel):

@@ -289,3 +289,206 @@ class TestExclusionScreening:
         result = asyncio.run(tool.execute(args, ctx))
         assert not result.is_error
         assert "FAIL" in result.output
+
+
+class TestSDGProvenance:
+    def test_sdg_estimated_with_no_metrics(self):
+        from openharness.impact.database import get_metric_store
+        from openharness.impact.models import Company
+        from openharness.impact.sdg_mapper import map_sdg_alignment
+
+        store = get_metric_store()
+        company = Company(
+            name="Vague Inc",
+            description="We work in healthcare and education",
+            sector="healthcare",
+            sdg_claims=[3],
+        )
+        alignments = map_sdg_alignment(company, store)
+        for a in alignments:
+            if a.score > 0:
+                assert a.provenance in ("estimated", "partial")
+
+    def test_sdg_provenance_field_exists(self):
+        from openharness.impact.models import SDGAlignment
+        a = SDGAlignment(goal=1, goal_name="No Poverty", score=50.0)
+        assert a.provenance == "estimated"
+
+
+class TestGeographyInTools:
+    def test_sdg_mapper_has_geography(self):
+        from openharness.tools.impact.sdg_mapper_tool import SdgMapperInput
+        inp = SdgMapperInput(company_name="Test", geography="Kenya")
+        assert inp.geography == "Kenya"
+
+    def test_five_dimension_has_geography(self):
+        from openharness.tools.impact.five_dimension_assess_tool import FiveDimensionInput
+        inp = FiveDimensionInput(company_name="Test", geography="Southeast Asia")
+        assert inp.geography == "Southeast Asia"
+
+    def test_greenwashing_has_geography(self):
+        from openharness.tools.impact.greenwashing_tool import GreenwashingInput
+        inp = GreenwashingInput(company_name="Test", geography="Brazil")
+        assert inp.geography == "Brazil"
+
+    def test_report_has_geography(self):
+        from openharness.tools.impact.impact_report_tool import ImpactReportInput
+        inp = ImpactReportInput(company_name="Test", geography="India")
+        assert inp.geography == "India"
+
+    def test_risk_opportunity_has_geography(self):
+        from openharness.tools.impact.impact_risk_opportunity_tool import ImpactRiskOpportunityInput
+        inp = ImpactRiskOpportunityInput(company_name="Test", geography="Nigeria")
+        assert inp.geography == "Nigeria"
+
+
+class TestGreenwashingIntegration:
+    def test_greenwashing_assess_returns_dict(self):
+        from openharness.impact.greenwashing import assess_greenwashing
+        from openharness.impact.models import Company
+
+        company = Company(
+            name="Test Co",
+            description="We aim to build sustainable solutions for climate change",
+            sector="energy",
+        )
+        result = assess_greenwashing(company)
+        assert hasattr(result, "overall_score")
+        assert hasattr(result, "classification")
+        assert hasattr(result, "flags")
+
+    def test_report_text_includes_greenwashing(self):
+        from openharness.tools.impact.impact_report_tool import _to_text
+
+        data = {
+            "company": {"name": "Test Co", "sector": "energy", "description": ""},
+            "generated_at": "2026-01-01",
+            "catalog_version": "IRIS+ 5.3c",
+            "greenwashing": {
+                "overall_score": 45,
+                "classification": "Moderate Risk",
+                "sub_scores": {"claim_metric_gap": 50, "specificity": 40},
+                "flags": ["Vague language detected"],
+                "recommendations": ["Add concrete metrics"],
+            },
+        }
+        output = _to_text(data)
+        assert "GREENWASHING" in output
+        assert "Moderate Risk" in output
+        assert "Vague language detected" in output
+
+
+class TestPortfolioTool:
+    def test_portfolio_tool_import(self):
+        from openharness.tools.impact.portfolio_tool import PortfolioTool
+        tool = PortfolioTool()
+        assert tool.name == "portfolio_analyze"
+
+
+class TestTrendAnalysis:
+    def test_trend_analysis_improving(self):
+        from openharness.impact.models import MetricValue
+        from openharness.impact.trend_analysis import analyze_metric_trend
+
+        values = [
+            MetricValue(metric_id="OI4112", value="100", period="FY2023"),
+            MetricValue(metric_id="OI4112", value="200", period="FY2024"),
+            MetricValue(metric_id="OI4112", value="350", period="FY2025"),
+        ]
+        result = analyze_metric_trend(values)
+        assert result["direction"] == "improving"
+        assert result["data_points"] == 3
+        assert result["change_pct"] > 0
+
+    def test_trend_analysis_insufficient(self):
+        from openharness.impact.models import MetricValue
+        from openharness.impact.trend_analysis import analyze_metric_trend
+
+        values = [MetricValue(metric_id="PI4060", value="500", period="FY2025")]
+        result = analyze_metric_trend(values)
+        assert result["direction"] == "insufficient_data"
+
+    def test_company_trends(self):
+        from openharness.impact.models import Company, MetricValue
+        from openharness.impact.trend_analysis import analyze_company_trends
+
+        company = Company(
+            name="Test Co",
+            metric_history=[
+                MetricValue(metric_id="OI4112", value="100", period="FY2023"),
+                MetricValue(metric_id="OI4112", value="200", period="FY2024"),
+                MetricValue(metric_id="PI4060", value="1000", period="FY2023"),
+                MetricValue(metric_id="PI4060", value="1200", period="FY2024"),
+            ],
+        )
+        result = analyze_company_trends(company)
+        assert result["metrics_analyzed"] == 2
+        assert result["overall_direction"] in ("mostly_improving", "mixed")
+
+    def test_trend_tool_import(self):
+        from openharness.tools.impact.trend_analysis_tool import TrendAnalysisTool
+        tool = TrendAnalysisTool()
+        assert tool.name == "trend_analysis"
+
+
+class TestTargetTracking:
+    def test_target_progress(self):
+        from openharness.impact.models import Company, MetricValue
+        from openharness.impact.trend_analysis import assess_target_progress
+
+        company = Company(
+            name="Target Co",
+            impact_targets={"OI4112": "500 tCO2e by 2027"},
+            reported_metrics={"OI4112": "350"},
+        )
+        result = assess_target_progress(company)
+        assert result["total_targets"] == 1
+        assert result["targets"][0]["status"] in ("on_track", "behind")
+        assert result["targets"][0]["progress_pct"] == 70.0
+
+    def test_target_exceeded(self):
+        from openharness.impact.models import Company
+        from openharness.impact.trend_analysis import assess_target_progress
+
+        company = Company(
+            name="Over Achiever",
+            impact_targets={"PI4060": "1000 clients"},
+            reported_metrics={"PI4060": "1500"},
+        )
+        result = assess_target_progress(company)
+        assert result["targets"][0]["status"] == "exceeded"
+        assert result["targets"][0]["progress_pct"] == 150.0
+
+
+class TestISSBS1:
+    def test_ifrs_s1_framework_structure(self):
+        from openharness.impact.frameworks.issb_ifrs_s1 import get_ifrs_s1_framework
+
+        fw = get_ifrs_s1_framework()
+        assert len(fw.pillars) == 4
+        total_disclosures = sum(len(p.disclosures) for p in fw.pillars)
+        assert total_disclosures >= 12
+
+    def test_ifrs_s1_readiness(self):
+        from openharness.impact.frameworks.issb_ifrs_s1 import assess_ifrs_s1_readiness
+
+        result = assess_ifrs_s1_readiness(
+            description="The board oversees sustainability strategy and risk management",
+            reported_metrics={"OI4112": "100"},
+            targets_set=True,
+        )
+        assert "overall_readiness" in result
+        assert result["overall_readiness"] > 0
+        assert len(result["pillar_scores"]) == 4
+
+    def test_issb_framework_tool_handler(self):
+        from openharness.tools.impact.framework_tool import FrameworkInput
+        inp = FrameworkInput(framework="issb_s1", action="list")
+        assert inp.framework == "issb_s1"
+
+
+class TestSASBExpanded:
+    def test_sasb_has_25_industries(self):
+        from openharness.impact.frameworks.sasb import get_sasb_industries
+        industries = get_sasb_industries()
+        assert len(industries) >= 25

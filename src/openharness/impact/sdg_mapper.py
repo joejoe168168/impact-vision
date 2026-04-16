@@ -124,6 +124,7 @@ def map_sdg_alignment(
                     goal_name=sdg.name,
                     score=score,
                     confidence="low",
+                    provenance="estimated",
                 ))
             continue
 
@@ -134,14 +135,11 @@ def map_sdg_alignment(
             if m.id in matched_metric_ids:
                 matched_targets.update(m.sdg_targets)
 
-        # Score: metric coverage (up to 60)
         coverage = len(matched_metric_ids) / len(goal_metric_ids) if goal_metric_ids else 0
         metric_score = min(60.0, coverage * 60.0)
 
-        # Score: description/sector inference (up to 25)
         inferred_score = inferred_sdg.get(goal_num, 0) * 25.0
 
-        # Score: theme alignment (up to 15)
         theme_score = 0.0
         if company.impact_themes:
             themes_lower = {t.lower() for t in company.impact_themes}
@@ -155,6 +153,13 @@ def map_sdg_alignment(
         total_score = round(metric_score + inferred_score + theme_score, 1)
         confidence = "high" if total_score >= 50 else "medium" if total_score >= 20 else "low"
 
+        if len(matched_metric_ids) >= 3:
+            provenance = "evidence-based"
+        elif matched_metric_ids:
+            provenance = "partial"
+        else:
+            provenance = "estimated"
+
         alignments.append(SDGAlignment(
             goal=goal_num,
             goal_name=sdg.name,
@@ -162,6 +167,7 @@ def map_sdg_alignment(
             matched_targets=sorted(matched_targets),
             matched_metrics=sorted(matched_metric_ids),
             confidence=confidence,
+            provenance=provenance,
         ))
 
     alignments.sort(key=lambda a: a.score, reverse=True)

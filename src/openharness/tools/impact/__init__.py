@@ -16,6 +16,7 @@ from openharness.tools.impact.metric_recommender_tool import MetricRecommenderTo
 from openharness.tools.impact.pitch_deck_analyze_tool import PitchDeckAnalyzeTool
 from openharness.tools.impact.portfolio_tool import PortfolioTool
 from openharness.tools.impact.sdg_mapper_tool import SdgMapperTool
+from openharness.tools.impact.trend_analysis_tool import TrendAnalysisTool
 
 __all__ = [
     "CrossReferenceTool",
@@ -34,4 +35,5 @@ __all__ = [
     "PitchDeckAnalyzeTool",
     "PortfolioTool",
     "SdgMapperTool",
+    "TrendAnalysisTool",
 ]
