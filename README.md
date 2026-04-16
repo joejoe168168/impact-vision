@@ -72,6 +72,12 @@ pip install -e ".[dev]"
 
 After this, you'll have two commands available: `impact-vision` and `iv` (shorthand).
 
+> **Windows troubleshooting:** If you see `'impact-vision' is not recognized`, Python's Scripts folder isn't on your PATH. You can either:
+>
+> 1. **Add to PATH** (recommended): The install output tells you the path (e.g., `C:\Users\YOU\AppData\Local\Python\...\Scripts`). Add it to your system PATH via Settings > System > Environment Variables.
+> 2. **Use `python -m` instead**: Run `python -m openharness` in place of `impact-vision`. For subcommands: `python -m openharness catalog stats`.
+> 3. **Use a virtual environment** (Step 2 above): When a venv is active, scripts are always on PATH.
+
 ### 3. Try the CLI tools (no API key needed)
 
 ```bash

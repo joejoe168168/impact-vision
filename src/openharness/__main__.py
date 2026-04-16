@@ -1,4 +1,4 @@
-"""Entry point for `python -m openharness`."""
+"""Module entry point for ``python -m openharness``."""
 
 from openharness.cli import app
 
