@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 mcp = FastMCP(
     "Impact Vision",
-    version="0.5.0",
+    version="0.6.0",
     description=(
         "AI-powered impact measurement and SDG alignment tools for "
         "VC and impact investment funds. Provides 25+ tools for "

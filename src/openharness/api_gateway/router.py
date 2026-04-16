@@ -243,7 +243,7 @@ async def _fire_webhooks(event: str, payload: dict) -> None:
 
 @app.get("/api/v1/health")
 async def health():
-    return {"status": "ok", "version": "0.5.0", "engine": "impact-vision", "tools": 25}
+    return {"status": "ok", "version": "0.6.0", "engine": "impact-vision", "tools": 25}
 
 
 @app.post("/api/v1/score", dependencies=[Depends(verify_api_key)])
