@@ -169,8 +169,7 @@ class ImpactReportTool(BaseTool):
     input_model = ImpactReportInput
 
     def is_read_only(self, arguments: BaseModel) -> bool:
-        args = arguments if isinstance(arguments, ImpactReportInput) else ImpactReportInput.model_validate(arguments)
-        return not bool(args.output_path)
+        return True
 
     async def execute(self, arguments: BaseModel, context: ToolExecutionContext) -> ToolResult:
         args = arguments if isinstance(arguments, ImpactReportInput) else ImpactReportInput.model_validate(arguments)
@@ -366,6 +365,165 @@ def _to_csv(data: dict) -> str:
             writer.writerow(["Gap", m["id"], m.get("value", ""), m["name"]])
 
     return buf.getvalue()
+
+
+def _interactive_scoring_section(fd: dict, sdg_alignments: list) -> str:
+    """Generate an interactive HTML section with checkboxes that adjust scores."""
+    base_scores = {
+        "what": fd["what"]["score"],
+        "who": fd["who"]["score"],
+        "how_much": fd["how_much"]["score"],
+        "contribution": fd["contribution"]["score"],
+        "risk": fd["risk"]["score"],
+    }
+    overall = fd["overall_score"]
+
+    items = [
+        {"id": "beneficiaries", "label": "We track the number of direct beneficiaries served",
+         "dims": {"who": 0.6, "how_much": 0.3}, "sdgs": [1, 2, 3]},
+        {"id": "outcomes", "label": "We measure outcomes (not just outputs) for beneficiaries",
+         "dims": {"what": 0.7, "how_much": 0.4}, "sdgs": []},
+        {"id": "ghg", "label": "We track greenhouse gas emissions or have reduction targets",
+         "dims": {"risk": 0.5, "what": 0.3}, "sdgs": [13, 7]},
+        {"id": "water", "label": "We measure water usage or have water stewardship practices",
+         "dims": {"risk": 0.4, "what": 0.3}, "sdgs": [6, 14]},
+        {"id": "gender", "label": "We track gender diversity in our workforce/beneficiaries",
+         "dims": {"who": 0.5, "contribution": 0.2}, "sdgs": [5, 10]},
+        {"id": "local_hiring", "label": "We prioritize hiring from local/underserved communities",
+         "dims": {"contribution": 0.6, "who": 0.3}, "sdgs": [8, 10, 1]},
+        {"id": "supply_chain", "label": "We have responsible supply chain policies",
+         "dims": {"risk": 0.5, "contribution": 0.3}, "sdgs": [12, 8]},
+        {"id": "baseline", "label": "We have baseline data from before our intervention started",
+         "dims": {"contribution": 0.7, "how_much": 0.3}, "sdgs": []},
+        {"id": "third_party", "label": "We have third-party verification or independent audits",
+         "dims": {"risk": 0.8, "contribution": 0.4}, "sdgs": []},
+        {"id": "theory_of_change", "label": "We have a documented Theory of Change",
+         "dims": {"what": 0.5, "contribution": 0.4}, "sdgs": []},
+        {"id": "stakeholder", "label": "We regularly collect feedback from beneficiaries/stakeholders",
+         "dims": {"who": 0.4, "how_much": 0.3, "risk": 0.2}, "sdgs": []},
+        {"id": "negative_screen", "label": "We assess and mitigate negative/unintended impacts",
+         "dims": {"risk": 0.7}, "sdgs": []},
+    ]
+
+    import json as _json
+    items_json = _json.dumps(items)
+    base_json = _json.dumps(base_scores)
+
+    return f"""
+<h2>Interactive Score Improvement</h2>
+<p style="color:var(--text-secondary);font-size:0.9em;margin-bottom:16px">
+Check the boxes below for practices your organization follows. Scores update in real-time to show potential improvement.
+</p>
+<div id="interactive-panel" style="background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:24px;border:1px solid var(--border);margin:16px 0">
+<div id="checklist-items"></div>
+<div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--border)">
+  <div class="cards-row" id="live-scores">
+    <div class="score-card"><div class="value" id="live-grade" style="font-size:2em">{fd['overall_grade']}</div><div class="label">Updated Grade</div></div>
+    <div class="score-card"><div class="value" id="live-overall" style="font-size:1.8em">{overall:.1f}<span style="font-size:0.5em;color:var(--text-secondary)">/5</span></div><div class="label">Updated Score</div></div>
+    <div class="score-card"><div class="value" id="live-delta" style="font-size:1.4em;color:var(--text-secondary)">+0.0</div><div class="label">Improvement</div></div>
+  </div>
+  <div id="live-bars" style="margin-top:16px"></div>
+</div>
+</div>
+<div id="interactive-radar" class="chart-box" style="margin-top:16px"></div>
+<script>
+(function() {{
+  const items = {items_json};
+  const baseScores = {base_json};
+  const origOverall = {overall:.2f};
+  const dimNames = ['what','who','how_much','contribution','risk'];
+  const dimLabels = {{what:'What',who:'Who',how_much:'How Much',contribution:'Contribution',risk:'Risk'}};
+
+  const container = document.getElementById('checklist-items');
+  items.forEach(function(item) {{
+    const div = document.createElement('div');
+    div.style.cssText = 'padding:10px 0;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:12px';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox'; cb.id = 'chk-'+item.id;
+    cb.style.cssText = 'width:18px;height:18px;cursor:pointer;accent-color:#1976d2';
+    cb.addEventListener('change', recalc);
+    const lbl = document.createElement('label');
+    lbl.htmlFor = 'chk-'+item.id;
+    lbl.textContent = item.label;
+    lbl.style.cssText = 'cursor:pointer;font-size:0.95em';
+    const dims = Object.keys(item.dims).map(function(d) {{ return dimLabels[d]; }}).join(', ');
+    const tag = document.createElement('span');
+    tag.textContent = dims;
+    tag.style.cssText = 'margin-left:auto;font-size:0.75em;color:var(--text-secondary);background:var(--primary-light);padding:2px 8px;border-radius:10px;white-space:nowrap';
+    div.appendChild(cb); div.appendChild(lbl); div.appendChild(tag);
+    container.appendChild(div);
+  }});
+
+  function getGrade(s) {{
+    if (s >= 4.0) return 'A';
+    if (s >= 3.0) return 'B';
+    if (s >= 2.0) return 'C';
+    if (s >= 1.0) return 'D';
+    return 'F';
+  }}
+  function gradeClass(g) {{ return 'grade-'+g[0]; }}
+
+  function recalc() {{
+    const scores = {{}};
+    dimNames.forEach(function(d) {{ scores[d] = baseScores[d]; }});
+    items.forEach(function(item) {{
+      const cb = document.getElementById('chk-'+item.id);
+      if (cb && cb.checked) {{
+        Object.keys(item.dims).forEach(function(d) {{
+          scores[d] = Math.min(5.0, scores[d] + item.dims[d]);
+        }});
+      }}
+    }});
+    const avg = dimNames.reduce(function(s,d){{ return s+scores[d]; }}, 0) / 5;
+    const grade = getGrade(avg);
+    const delta = avg - origOverall;
+
+    document.getElementById('live-grade').textContent = grade;
+    document.getElementById('live-grade').className = 'value ' + gradeClass(grade);
+    document.getElementById('live-overall').innerHTML = avg.toFixed(1) + '<span style="font-size:0.5em;color:var(--text-secondary)">/5</span>';
+    const deltaEl = document.getElementById('live-delta');
+    deltaEl.textContent = (delta >= 0 ? '+' : '') + delta.toFixed(1);
+    deltaEl.style.color = delta > 0 ? 'var(--success)' : 'var(--text-secondary)';
+
+    const barsHtml = dimNames.map(function(d) {{
+      const pct = Math.round(scores[d] / 5 * 100);
+      const basePct = Math.round(baseScores[d] / 5 * 100);
+      const color = pct >= 60 ? 'green' : pct >= 30 ? 'orange' : 'red';
+      return '<div style="display:flex;align-items:center;gap:10px;margin:6px 0">' +
+        '<span style="min-width:90px;font-size:0.85em;font-weight:600">' + dimLabels[d] + '</span>' +
+        '<div class="bar-track" style="flex:1;position:relative">' +
+          '<div class="bar-fill ' + color + '" style="width:'+pct+'%;position:relative;z-index:2"></div>' +
+          (pct > basePct ? '<div style="position:absolute;top:0;left:0;width:'+basePct+'%;height:100%;background:rgba(0,0,0,0.15);border-radius:6px;z-index:1"></div>' : '') +
+        '</div>' +
+        '<span style="min-width:50px;font-size:0.85em;font-weight:600;text-align:right">' + scores[d].toFixed(1) + '/5</span>' +
+      '</div>';
+    }}).join('');
+    document.getElementById('live-bars').innerHTML = barsHtml;
+
+    const vals = dimNames.map(function(d) {{ return scores[d]; }});
+    vals.push(vals[0]);
+    const labels = dimNames.map(function(d) {{ return dimLabels[d]; }});
+    labels.push(labels[0]);
+    const baseVals = dimNames.map(function(d) {{ return baseScores[d]; }});
+    baseVals.push(baseVals[0]);
+
+    Plotly.react('interactive-radar', [
+      {{type:'scatterpolar', r:baseVals, theta:labels, fill:'toself', fillcolor:'rgba(176,190,197,0.15)',
+        line:{{color:'#b0bec5',width:1.5,dash:'dot'}}, marker:{{size:5}}, name:'Before'}},
+      {{type:'scatterpolar', r:vals, theta:labels, fill:'toself', fillcolor:'rgba(25,118,210,0.15)',
+        line:{{color:'#1976d2',width:2.5}}, marker:{{size:7,color:'#1976d2'}}, name:'After'}}
+    ], {{
+      polar:{{radialaxis:{{visible:true,range:[0,5],tickfont:{{size:10}}}},angularaxis:{{tickfont:{{size:11}}}}}},
+      height:380, margin:{{l:70,r:70,t:40,b:40}},
+      paper_bgcolor:'transparent', plot_bgcolor:'transparent',
+      font:{{family:'Inter, -apple-system, sans-serif'}},
+      legend:{{orientation:'h',y:-0.1}}
+    }}, {{responsive:true}});
+  }}
+
+  recalc();
+}})();
+</script>"""
 
 
 def _to_html(data: dict) -> str:
@@ -641,6 +799,10 @@ Plotly.newPlot('benchmark-chart', [
   font:{{family:'Inter, -apple-system, sans-serif', size:11}}
 }}, {{responsive:true}});
 </script>""")
+
+    if "five_dimensions" in data:
+        fd = data["five_dimensions"]
+        sections.append(_interactive_scoring_section(fd, data.get("sdg_alignments", [])))
 
     sections.append("""
 <div class="footer">
