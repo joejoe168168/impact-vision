@@ -1062,6 +1062,51 @@ def _login_provider(provider: str) -> None:
     raise typer.Exit(1)
 
 
+def _test_api_connection(manager, profile_name: str, model: str) -> None:
+    """Send a minimal API request to verify the key and endpoint work."""
+    import httpx
+
+    profile = manager.list_profiles()[profile_name]
+    cred = manager.get_profile_credential(profile_name, "api_key")
+    if not cred:
+        print("  No API key stored -- skipping test.", flush=True)
+        return
+
+    base_url = profile.base_url or ""
+    if profile.provider == "anthropic" or profile.api_format == "anthropic":
+        url = (base_url.rstrip("/") if base_url else "https://api.anthropic.com") + "/v1/messages"
+        headers = {"x-api-key": cred, "anthropic-version": "2023-06-01", "content-type": "application/json"}
+        body = {"model": model, "max_tokens": 10, "messages": [{"role": "user", "content": "Hi"}]}
+    else:
+        if base_url:
+            normalized = base_url.rstrip("/")
+            if not normalized.endswith("/v1"):
+                normalized += "/v1"
+        else:
+            normalized = "https://api.openai.com/v1"
+        url = normalized + "/chat/completions"
+        headers = {"Authorization": f"Bearer {cred}", "Content-Type": "application/json"}
+        body = {"model": model, "messages": [{"role": "user", "content": "Hi"}], "max_tokens": 10}
+
+    try:
+        r = httpx.post(url, headers=headers, json=body, timeout=30)
+        if r.status_code == 200:
+            print("  API key is valid. Connection successful!", flush=True)
+        elif r.status_code == 401:
+            print("  API key rejected (401 Unauthorized). Please check your key.", flush=True)
+            print("  Run 'impact-vision setup' again to enter a new key.", flush=True)
+        elif r.status_code == 403:
+            print("  Access denied (403 Forbidden). Your key may lack permissions.", flush=True)
+        else:
+            print(f"  API returned status {r.status_code}. Response: {r.text[:200]}", flush=True)
+    except httpx.ConnectError:
+        print(f"  Could not connect to {url}. Check the base URL.", flush=True)
+    except httpx.TimeoutException:
+        print("  Connection timed out. The server may be down or slow.", flush=True)
+    except Exception as e:
+        print(f"  Test failed: {e}", flush=True)
+
+
 @app.command("setup")
 def setup_cmd(
     profile: str | None = typer.Argument(None, help="Provider profile name to configure"),
@@ -1124,6 +1169,9 @@ def setup_cmd(
         f"- model: {display_model_setting(updated)}",
         flush=True,
     )
+
+    print("\nTesting API connection...", flush=True)
+    _test_api_connection(manager, target, display_model_setting(updated))
 
 
 @auth_app.command("login")
