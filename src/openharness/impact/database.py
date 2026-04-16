@@ -204,7 +204,7 @@ def get_metric_store(force_reload: bool = False) -> MetricStore:
         return _global_store
 
     if CORE_METRICS_PATH.exists():
-        logger.info("Loading bundled GIIN Core Metric Set as fallback: %s", CORE_METRICS_PATH)
+        logger.info("Loading bundled IRIS+ catalog: %s", CORE_METRICS_PATH)
         metrics = load_catalog_json(CORE_METRICS_PATH)
         _global_store = MetricStore(metrics)
         return _global_store

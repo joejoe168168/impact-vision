@@ -219,7 +219,7 @@ These commands work without any LLM setup:
 # See all available commands
 impact-vision --help
 
-# Browse IRIS+ metrics (16 GIIN Core Metrics available out of the box)
+# Browse IRIS+ metrics (all 787 metrics included out of the box)
 impact-vision catalog stats
 impact-vision catalog search "climate"
 impact-vision catalog search "gender"
@@ -241,17 +241,17 @@ impact-vision dd categories
 impact-vision dd analyze "We serve 45,000 clients across 3 countries. Our NPS score is 72."
 ```
 
-### 6. Load the full IRIS+ Catalog (optional, 787 metrics)
+### 6. Update the IRIS+ Catalog (optional)
 
-The bundled 16 GIIN Core Metrics cover gap analysis, scoring, and SDG mapping out of the box. For the full 787-metric catalog:
+All 787 IRIS+ 5.3c metrics are already bundled and work out of the box. If GIIN releases a newer version of the catalog:
 
-1. Download `IRIS 5.3c Catalog of Metrics.xlsx` from [GIIN IRIS+](https://iris.thegiin.org/) (free registration required)
+1. Download the new Excel file from [GIIN IRIS+](https://iris.thegiin.org/) (free registration)
 2. Place it in `data/raw/`
 3. Run:
 
 ```bash
-impact-vision catalog load    # Parse Excel into JSON cache (one-time)
-impact-vision catalog stats   # Verify: should show 787 metrics
+impact-vision catalog load    # Parse Excel into JSON cache
+impact-vision catalog stats   # Verify metric count
 ```
 
 ### 7. Launch the dashboard (optional)

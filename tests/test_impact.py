@@ -40,10 +40,6 @@ def sample_company() -> Company:
     )
 
 
-@pytest.mark.skipif(
-    get_metric_store().count < 700,
-    reason="Full IRIS+ catalog not available (requires Excel file in data/raw/)",
-)
 class TestMetricStore:
     def test_load_catalog(self, store: MetricStore) -> None:
         assert store.count > 700
