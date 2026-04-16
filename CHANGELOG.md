@@ -4,6 +4,26 @@ All notable changes to Impact Vision are recorded here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.5.0] - 2026-04-16
+
+### Added — Phase 9: LLM Intelligence & Automation
+
+**LLM-Guided Impact Improvement** (9.1)
+- New `improvement_advisor_tool.py`: actionable recommendations per weak dimension (metrics to track, programs to implement, partnerships to pursue)
+- Peer comparison insights: sector-specific benchmarking showing typical metric tracking patterns for higher-scoring peers
+- SDG opportunity finder: identifies untapped SDG alignments based on company operations, geography, and sector affinity
+- New `narrative_tool.py`: LLM-ready structured prompts for executive summaries, key findings, impact narratives, and case studies with audience-adaptive tone
+
+**Smart Document Analysis** (9.2)
+- New `document_analysis_tool.py`: multi-document consistency analysis comparing claims and metrics across pitch decks, annual reports, and impact reports
+- Document change detection: identifies new/changed/removed metrics, SDG alignments, and quantitative data between document versions
+- Claim verification agent: validates impact claims against document text with evidence extraction and gap identification
+
+**Conversational Impact Assessment** (9.3)
+- New `guided_assessment_tool.py`: structured step-by-step assessment workflow with predefined templates for screening, due diligence, and monitoring stages
+- Progressive data collection: tracks completed/pending data steps across sessions via `AssessmentStore`, incrementally collects missing information
+- Assessment templates by deal stage: screening (6 steps), due diligence (8 steps), and monitoring (6 steps) with different depth levels
+
 ## [0.4.1] - 2026-04-16
 
 ### Added — Phase 8: Pipeline & Portfolio Management

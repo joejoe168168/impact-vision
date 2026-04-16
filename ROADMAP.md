@@ -844,45 +844,45 @@
 
 ---
 
-## Phase 9: LLM Intelligence & Automation 🧠
+## Phase 9: LLM Intelligence & Automation 🧠 ✅
 
 > Leverage LLM capabilities for deeper analysis and proactive recommendations.
 
 ### 9.1 LLM-Guided Impact Improvement
 
-- [ ] **9.1.1** Improvement recommendation engine — for each weak dimension, generate specific actionable recommendations: metrics to track, programs to implement, partnerships to pursue
+- [x] **9.1.1** Improvement recommendation engine — for each weak dimension, generate specific actionable recommendations: metrics to track, programs to implement, partnerships to pursue
   - Files: `src/openharness/tools/impact/improvement_advisor_tool.py` (new)
 
-- [ ] **9.1.2** Peer comparison insights — "Companies in your sector with higher scores typically track X, Y, Z metrics and report on A, B programs"
+- [x] **9.1.2** Peer comparison insights — "Companies in your sector with higher scores typically track X, Y, Z metrics and report on A, B programs"
   - Files: `src/openharness/tools/impact/improvement_advisor_tool.py`
 
-- [ ] **9.1.3** SDG opportunity finder — identify untapped SDG alignment opportunities based on company operations, geography, and sector
+- [x] **9.1.3** SDG opportunity finder — identify untapped SDG alignment opportunities based on company operations, geography, and sector
   - Files: `src/openharness/tools/impact/improvement_advisor_tool.py`
 
-- [ ] **9.1.4** Narrative drafting — LLM-generated executive summaries, impact narratives, and case studies from structured assessment data
+- [x] **9.1.4** Narrative drafting — LLM-generated executive summaries, impact narratives, and case studies from structured assessment data
   - Files: `src/openharness/tools/impact/narrative_tool.py` (new)
 
 ### 9.2 Smart Document Analysis
 
-- [ ] **9.2.1** Multi-document analysis — compare multiple documents for the same company (e.g., pitch deck + annual report + impact report)
-  - Files: `src/openharness/tools/impact/pitch_deck_analyze_tool.py`
+- [x] **9.2.1** Multi-document analysis — compare multiple documents for the same company (e.g., pitch deck + annual report + impact report)
+  - Files: `src/openharness/tools/impact/document_analysis_tool.py` (new)
 
-- [ ] **9.2.2** Document change detection — highlight what's new/changed between document versions
-  - Files: `src/openharness/tools/impact/pitch_deck_analyze_tool.py`
+- [x] **9.2.2** Document change detection — highlight what's new/changed between document versions
+  - Files: `src/openharness/tools/impact/document_analysis_tool.py`
 
-- [ ] **9.2.3** Claim verification agent — for each impact claim, search for supporting evidence in other documents or public sources
-  - Files: `src/openharness/tools/impact/verification_tool.py` (new)
+- [x] **9.2.3** Claim verification agent — for each impact claim, search for supporting evidence in other documents or public sources
+  - Files: `src/openharness/tools/impact/document_analysis_tool.py`
 
 ### 9.3 Conversational Impact Assessment
 
-- [ ] **9.3.1** Guided assessment workflow — structured conversation flow that walks the user through a complete impact assessment step by step
-  - Files: `src/openharness/prompts/system_prompt.py`, skills
+- [x] **9.3.1** Guided assessment workflow — structured conversation flow that walks the user through a complete impact assessment step by step
+  - Files: `src/openharness/tools/impact/guided_assessment_tool.py` (new)
 
-- [ ] **9.3.2** Progressive data collection — remember what data has been collected across sessions, ask for missing information incrementally
-  - Files: `src/openharness/impact/storage.py`, `prompts/`
+- [x] **9.3.2** Progressive data collection — remember what data has been collected across sessions, ask for missing information incrementally
+  - Files: `src/openharness/tools/impact/guided_assessment_tool.py`, `storage.py`
 
-- [ ] **9.3.3** Assessment templates by deal stage — different assessment depth for screening vs. DD vs. monitoring
-  - Files: `src/openharness/tools/impact/`, skills
+- [x] **9.3.3** Assessment templates by deal stage — different assessment depth for screening vs. DD vs. monitoring
+  - Files: `src/openharness/tools/impact/guided_assessment_tool.py`
 
 ---
 
@@ -948,10 +948,10 @@
 |-------|-------|-------|
 | Phase 7: Analysis & Reporting UX 📊 ✅ | 9 | Interactive reports, evidence mapping, impact pathways |
 | Phase 8: Pipeline & Portfolio 📁 ✅ | 15 | Pipeline stages, monitoring, per-project & aggregate reporting |
-| Phase 9: LLM Intelligence 🧠 | 10 | Improvement advisor, smart docs, conversational assessment |
+| Phase 9: LLM Intelligence 🧠 ✅ | 10 | Improvement advisor, smart docs, conversational assessment |
 | Phase 10: Platform Integration 🔌 | 11 | MCP server, Claude Code, full API, localization |
 | **Total Next Version** | **45** | |
 
 ---
 
-*Last updated: 2026-04-16 (v0.4.1). Phases 1-8 complete (173/173 items). Next version roadmap (21 remaining items) defined.*
+*Last updated: 2026-04-16 (v0.5.0). Phases 1-9 complete (183/183 items). Next version roadmap (11 remaining items) defined.*
