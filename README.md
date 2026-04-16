@@ -33,51 +33,100 @@ Key concepts Impact Vision helps with:
 8. Suggest the most important **follow-up questions** for the investment team
 9. Generate reports in **HTML** (with Plotly charts), **XLSX**, CSV, JSON, or text
 
-## Prerequisites
+## Quick Start (from scratch)
 
-- **Python 3.11+**
-- **IRIS+ 5.3c Catalog**: Download `IRIS 5.3c Catalog of Metrics.xlsx` from [GIIN IRIS+](https://iris.thegiin.org/) (free registration required)
-- **LLM API key**: Anthropic (Claude), OpenAI, GitHub Copilot, or any OpenAI-compatible API (e.g., Ollama for local models)
+### 1. Prerequisites
 
-## Installation
+You need **Python 3.11+** and **Git**. Check if they're installed:
 
 ```bash
-# Clone the repository
-git clone <repo-url> impact-vision
+python --version    # should show 3.11 or higher
+git --version       # any recent version
+```
+
+If not installed: [Python](https://www.python.org/downloads/) | [Git](https://git-scm.com/downloads)
+
+### 2. Clone and install
+
+```bash
+git clone https://github.com/joejoe168168/impact-vision.git
 cd impact-vision
+```
 
-# Install in development mode
-pip install -e .
+Create a virtual environment (recommended):
 
-# (Optional) Install dev dependencies for testing
+```bash
+python -m venv .venv
+
+# Activate it:
+# Windows PowerShell:  .venv\Scripts\Activate.ps1
+# Windows CMD:         .venv\Scripts\activate.bat
+# Mac/Linux:           source .venv/bin/activate
+```
+
+Install the package:
+
+```bash
 pip install -e ".[dev]"
 ```
 
-## Setup
+After this, you'll have two commands available: `impact-vision` and `iv` (shorthand).
 
-### Step 1: Load the IRIS+ Catalog
-
-Place the `IRIS 5.3c Catalog of Metrics.xlsx` file in `data/raw/`, then:
+### 3. Try the CLI tools (no API key needed)
 
 ```bash
-impact-vision catalog load
-```
+# See all available commands
+impact-vision --help
 
-This parses all 263 columns and 787 metrics from the Excel file into a JSON cache at `data/processed/iris_catalog_5.3c.json`. You only need to do this once.
-
-Verify with:
-
-```bash
+# Browse IRIS+ metrics (16 GIIN Core Metrics available out of the box)
 impact-vision catalog stats
+impact-vision catalog search "climate"
+impact-vision catalog search "gender"
+
+# List ESG/sustainability frameworks
+impact-vision framework list
+
+# Quick multi-framework scan of a company description
+impact-vision framework scan "Solar energy company providing clean power to 50,000 rural households"
+
+# Cross-reference a metric across all frameworks
+impact-vision framework xref OI4112
+
+# Browse the Due Diligence checklist (96 questions)
+impact-vision dd list
+impact-vision dd categories
+
+# Analyze text against the DD checklist
+impact-vision dd analyze "We serve 45,000 clients across 3 countries. Our NPS score is 72."
 ```
 
-### Step 2: Configure an LLM Provider
+### 4. Load the full IRIS+ Catalog (optional, 787 metrics)
+
+Download `IRIS 5.3c Catalog of Metrics.xlsx` from [GIIN IRIS+](https://iris.thegiin.org/) (free registration required), place it in `data/raw/`, then:
 
 ```bash
-impact-vision setup
+impact-vision catalog load    # Parse Excel into JSON cache (one-time)
+impact-vision catalog stats   # Verify: should show 787 metrics
 ```
 
-This interactive wizard lets you choose your provider and enter your API key. Supported providers:
+Without the full catalog, Impact Vision still works using the bundled 16 GIIN Core Metrics for gap analysis, scoring, and SDG mapping.
+
+### 5. Start the AI agent (interactive mode)
+
+Set an API key for the LLM:
+
+```bash
+# Option A: Anthropic (Claude) -- recommended
+export ANTHROPIC_API_KEY=your-key-here      # Mac/Linux
+set ANTHROPIC_API_KEY=your-key-here          # Windows CMD
+$env:ANTHROPIC_API_KEY="your-key-here"       # Windows PowerShell
+
+# Option B: OpenAI
+export OPENAI_API_KEY=your-key-here
+
+# Option C: Local Ollama (free, no API key needed)
+impact-vision ollama-setup
+```
 
 | Provider | Notes |
 |----------|-------|
@@ -87,11 +136,42 @@ This interactive wizard lets you choose your provider and enter your API key. Su
 | Ollama (local) | Quick setup: `impact-vision ollama-setup --model llama3.2` |
 | Any OpenAI-compatible API | OpenRouter, Azure, etc. |
 
-### Step 3: Start the Agent
+Then start the agent:
 
 ```bash
 impact-vision
 ```
+
+Try asking:
+- "Analyze this pitch deck" (provide a path to a PDF)
+- "What SDGs does a solar energy company align with?"
+- "Run a 5-dimension assessment for a fintech serving 50,000 clients"
+
+### 6. Launch the dashboard (optional)
+
+```bash
+streamlit run src/openharness/dashboard/app.py
+```
+
+Opens a web dashboard at http://localhost:8501 with 5 tabs: Assessment, IRIS+ Catalog, DD Checklist, Framework Scan, and Portfolio.
+
+### Quick reference
+
+| Command | What it does |
+|---------|-------------|
+| `iv --help` | Show all commands |
+| `iv catalog stats` | Show catalog statistics |
+| `iv catalog search "query"` | Search IRIS+ metrics |
+| `iv framework list` | List all 7 ESG frameworks |
+| `iv framework scan "text"` | Quick multi-framework scan |
+| `iv framework xref OI4112` | Cross-reference a metric |
+| `iv dd list` | Show all 96 DD questions |
+| `iv dd categories` | List DD categories |
+| `iv dd analyze "text"` | Check text against DD checklist |
+| `iv ollama-setup` | Configure local LLM |
+| `iv` | Start interactive AI agent |
+
+(`iv` is a shorthand for `impact-vision`)
 
 ## Usage
 
