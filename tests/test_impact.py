@@ -227,6 +227,44 @@ class TestFrameworks:
         assert result["total_steps"] == 8
         assert result["addressed"] > 0
 
+    def test_issb_s1_standards(self) -> None:
+        from openharness.impact.frameworks.issb_ifrs_s1 import get_ifrs_s1_framework
+        framework = get_ifrs_s1_framework()
+        assert len(framework.pillars) > 0
+        assert any("governance" in p.name.lower() for p in framework.pillars)
+
+    def test_issb_s2_assess(self) -> None:
+        from openharness.impact.frameworks.issb_ifrs_s2 import assess_ifrs_s2_readiness
+        result = assess_ifrs_s2_readiness(
+            description="We track Scope 1 emissions and have climate targets",
+            reported_metrics={"OI4112": "100"},
+        )
+        assert "overall_readiness" in result
+        assert "pillar_scores" in result
+
+    def test_esrs_standards(self) -> None:
+        from openharness.impact.frameworks.esrs import get_esrs_standards
+        standards = get_esrs_standards()
+        assert len(standards) >= 10
+        names = [s.name for s in standards]
+        assert any("Climate" in n for n in names)
+        assert any("Workforce" in n for n in names)
+
+    def test_esrs_double_materiality(self) -> None:
+        from openharness.impact.frameworks.esrs import assess_double_materiality
+        result = assess_double_materiality(
+            "Solar energy company reducing carbon emissions",
+            sector="Energy",
+        )
+        assert result["total_topics"] > 0
+        assert result["material_topics"] >= 0
+        assert "topics" in result
+
+    def test_esrs_data_points(self) -> None:
+        from openharness.impact.frameworks.esrs import get_total_data_points
+        dp = get_total_data_points()
+        assert dp >= 80
+
 
 class TestCrossReference:
     def test_lookup_by_iris(self) -> None:

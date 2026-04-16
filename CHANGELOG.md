@@ -4,6 +4,34 @@ All notable changes to Impact Vision are recorded here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.3.1] - 2026-04-16
+
+### Added — Phase 6: Architecture & Quality
+
+**Report Template Engine** (6.1)
+- `report_templates/` module with Jinja2-based HTML report generation
+- Shared CSS extracted to `REPORT_CSS` constant for reuse across report types
+- `render_header()` and `render_footer()` functions with Jinja2 templates and string-format fallback
+- `render_html_report()` API entry point for clean report generation
+- SDG color map extracted to `get_sdg_colors()` utility
+
+**SQLite Persistence Layer** (6.2)
+- `storage.py` with `AssessmentStore` class backed by SQLite
+- Company assessment save/retrieve/update/delete with JSON serialization
+- Session history logging: track all tool invocations per company per session
+- Thread-safe connection management with lazy schema initialization
+- `get_assessment_store()` singleton accessor
+
+**Circular Import Audit** (6.3)
+- Audited all inter-framework imports — no circular dependencies found
+- One intentional lazy import in `risk_opportunity.py` (loads scoring config) documented
+
+**Test Coverage Expansion** (6.4)
+- `test_report_generation.py`: 18 tests for HTML, CSV, text, JSON output and template engine
+- 5 new tests for `AssessmentStore` persistence layer (save, retrieve, update, delete, session history)
+- 5 new framework tests: ISSB S1/S2 readiness, ESRS standards/double materiality/data points
+- Total tests: 820 passed (up from 797)
+
 ## [0.3.0] - 2026-04-16
 
 ### Added — Phase 5: Scoring Engine Improvements

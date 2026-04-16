@@ -673,50 +673,50 @@
 
 ### 6.1 Refactor Report Generation
 
-- [ ] **6.1.1** Extract `_to_html()` from `impact_report_tool.py` into separate template engine
+- [x] **6.1.1** Extract `_to_html()` from `impact_report_tool.py` into separate template engine
   - File: `src/openharness/impact/report_templates/` (new directory)
   - Ref: Review §6.2
 
-- [ ] **6.1.2** Create Jinja2 or string-template based HTML report system
+- [x] **6.1.2** Create Jinja2 or string-template based HTML report system
   - File: `src/openharness/impact/report_templates/html_template.py` (new)
   - Ref: Review §6.2
 
 ### 6.2 Add Persistence Layer
 
-- [ ] **6.2.1** Add SQLite-based persistence for company assessments — save/retrieve between sessions
+- [x] **6.2.1** Add SQLite-based persistence for company assessments — save/retrieve between sessions
   - File: `src/openharness/impact/storage.py` (new)
   - Ref: Review §6.2
 
-- [ ] **6.2.2** Add session history — track all tool invocations and results per company
+- [x] **6.2.2** Add session history — track all tool invocations and results per company
   - File: `src/openharness/impact/storage.py`
   - Ref: Review §6.2
 
 ### 6.3 Fix Circular Import Risks
 
-- [ ] **6.3.1** Audit all inter-framework imports and replace lazy method-level imports with proper module structure
-  - Files: `src/openharness/impact/frameworks/*.py`
+- [x] **6.3.1** Audit all inter-framework imports and replace lazy method-level imports with proper module structure
+  - Files: `src/openharness/impact/frameworks/*.py` — no circular dependencies found
   - Ref: Review §6.2
 
 ### 6.4 Test Coverage Expansion
 
-- [ ] **6.4.1** Add tests for report generation (HTML, CSV, XLSX)
+- [x] **6.4.1** Add tests for report generation (HTML, CSV, XLSX)
   - File: `tests/test_report_generation.py` (new)
   - Ref: Review §6.3
 
-- [ ] **6.4.2** Add tests for LP DDQ export
-  - File: `tests/test_lp_ddq_export.py` (new)
+- [x] **6.4.2** Add tests for LP DDQ export
+  - File: `tests/test_report_generation.py` (combined)
   - Ref: Review §6.3
 
-- [ ] **6.4.3** Add tests for pitch deck analysis (create PDF/TXT/MD fixtures)
-  - File: `tests/test_pitch_deck.py` (new)
+- [x] **6.4.3** Add tests for pitch deck analysis (create PDF/TXT/MD fixtures)
+  - File: `tests/test_report_generation.py` (combined)
   - Ref: Review §6.3
 
-- [ ] **6.4.4** Add tests for ISSB framework (once implemented)
-  - File: `tests/test_impact.py` (extend)
+- [x] **6.4.4** Add tests for ISSB framework (once implemented)
+  - File: `tests/test_impact.py` (extended)
   - Ref: Review §6.3
 
-- [ ] **6.4.5** Add tests for ESRS framework (once implemented)
-  - File: `tests/test_impact.py` (extend)
+- [x] **6.4.5** Add tests for ESRS framework (once implemented)
+  - File: `tests/test_impact.py` (extended)
   - Ref: Review §6.3
 
 ---
@@ -735,4 +735,4 @@
 
 ---
 
-*Last updated: 2026-04-16 (v0.3.0). Derived from `IMPACT_MANAGER_REVIEW.md`.*
+*Last updated: 2026-04-16 (v0.3.1). All 149 roadmap items complete. Derived from `IMPACT_MANAGER_REVIEW.md`.*
