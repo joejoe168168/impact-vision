@@ -1,5 +1,5 @@
 import React from 'react';
-import {Box, Text} from 'ink';
+import {Box, Static, Text} from 'ink';
 
 import {useTheme} from '../theme/ThemeContext.js';
 import type {TranscriptItem} from '../types.js';
@@ -47,27 +47,29 @@ function ConversationViewInner({
 		<Box flexDirection="column" flexGrow={1}>
 			{showWelcome && items.length === 0 ? <WelcomeBanner /> : null}
 
-			{grouped.map((group, index) => {
-				if (Array.isArray(group)) {
-					const [toolItem, resultItem] = group as [TranscriptItem, TranscriptItem];
+			<Static items={grouped}>
+				{(group, index) => {
+					if (Array.isArray(group)) {
+						const [toolItem, resultItem] = group as [TranscriptItem, TranscriptItem];
+						return (
+							<ToolCallDisplay
+								key={index}
+								item={toolItem}
+								resultItem={resultItem}
+								outputStyle={outputStyle}
+							/>
+						);
+					}
 					return (
-						<ToolCallDisplay
+						<MessageRow
 							key={index}
-							item={toolItem}
-							resultItem={resultItem}
+							item={group as TranscriptItem}
+							theme={theme}
 							outputStyle={outputStyle}
 						/>
 					);
-				}
-				return (
-					<MessageRow
-						key={index}
-						item={group as TranscriptItem}
-						theme={theme}
-						outputStyle={outputStyle}
-					/>
-				);
-			})}
+				}}
+			</Static>
 
 			{assistantBuffer ? (
 				isCodexStyle ? (

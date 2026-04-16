@@ -15,8 +15,8 @@ import type {
 } from '../types.js';
 
 const PROTOCOL_PREFIX = 'OHJSON:';
-const ASSISTANT_DELTA_FLUSH_MS = 50;
-const ASSISTANT_DELTA_FLUSH_CHARS = 384;
+const ASSISTANT_DELTA_FLUSH_MS = 100;
+const ASSISTANT_DELTA_FLUSH_CHARS = 768;
 const TRANSCRIPT_EVENT_FLUSH_MS = 50;
 
 const stableStringify = (value: unknown): string => JSON.stringify(value);
