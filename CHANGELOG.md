@@ -4,6 +4,32 @@ All notable changes to Impact Vision are recorded here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.1.3] - 2026-04-16
+
+### Added
+
+**Input normalization layer (`common.py`)**
+- Shared helper module with `normalize_metric_map`, `normalize_metric_ids`, `normalize_sdg_goals`, `normalize_str_list`, and `infer_themes`
+- Metric IDs auto-uppercased/validated against IRIS+ pattern; invalid IDs produce warnings
+- Theme inference from free text (15 keyword-to-theme mappings: climate, energy, health, agriculture, fintech, gender, etc.)
+- Wired into all major impact tools for consistent input handling
+
+**3 new impact tools (14 total)**
+- `impact_data_quality`: Assess quality of reported IRIS+ data -- flags unknown IDs, placeholder values (N/A/TBD), non-numeric entries, missing required metrics; produces a quality score and recommended fixes
+- `impact_metric_recommender`: Recommend high-relevance IRIS+ metrics based on themes, SDG goals, sector, and description; prioritized shortlist with rationale tags (theme/sdg/keyword/core-set)
+- `impact_risk_opportunity`: Structured risk/opportunity assessment using keyword heuristics -- categorized risks with severity levels and mitigation suggestions, opportunities with time horizons
+
+**Broader format and input support**
+- `pitch_deck_analyze` now accepts `.txt` and `.md` files (not just PDF)
+- `dd_checklist` text extraction supports YAML, JSON, and RST files
+- `lp_ddq_export` supports CSV output format
+- `iris_catalog` `get` action normalizes metric IDs (case-insensitive); `search` accepts comma-separated metric IDs
+- `cross_reference` handles PAI-prefixed SFDR identifiers (e.g., "PAI1")
+- `portfolio_tool` uses `Literal` types for action/output_format validation
+
+**13 new tests**
+- Enhancement tests covering normalizers, new tool imports, risk/opportunity engine, and data quality assessment (54 total impact tests)
+
 ## [0.1.2] - 2026-04-16
 
 ### Added

@@ -487,8 +487,8 @@ impact-vision/
 │   │       ├── unpri.py              # UNPRI 6 Principles (27 actions)
 │   │       ├── theory_of_change.py   # RS Group + GIIN ToC framework
 │   │       └── cross_reference.py    # 40+ cross-framework metric mappings
-│   ├── tools/impact/                  # Agent tools (LLM-callable)
-│   │   ├── pitch_deck_analyze_tool.py # PDF intake + full pipeline
+│   ├── tools/impact/                  # Agent tools (14 LLM-callable tools)
+│   │   ├── pitch_deck_analyze_tool.py # PDF/TXT/MD intake + full pipeline
 │   │   ├── dd_checklist_tool.py       # DD question list/analyze/suggest
 │   │   ├── iris_catalog_tool.py       # IRIS+ catalog search/browse
 │   │   ├── sdg_mapper_tool.py         # SDG alignment scoring
@@ -497,7 +497,11 @@ impact-vision/
 │   │   ├── impact_report_tool.py      # Report generation (HTML/CSV/JSON/text/XLSX)
 │   │   ├── framework_tool.py          # Multi-framework ESG assessment
 │   │   ├── cross_reference_tool.py    # Cross-framework metric lookup
-│   │   ├── lp_ddq_export_tool.py      # LP DDQ exporter (ILPA/GIIN/EDCI/custom, XLSX)
+│   │   ├── data_quality_tool.py       # Metric data quality assessment
+│   │   ├── metric_recommender_tool.py # IRIS+ metric recommendation engine
+│   │   ├── impact_risk_opportunity_tool.py # Risk/opportunity assessment
+│   │   ├── lp_ddq_export_tool.py      # LP DDQ exporter (ILPA/GIIN/EDCI/custom, XLSX/CSV)
+│   │   ├── common.py                  # Shared input normalization helpers
 │   │   └── portfolio_tool.py          # Portfolio batch analysis
 │   ├── dashboard/                     # Streamlit visual dashboard
 │   │   └── app.py                     # 5-tab dashboard (Assessment/Catalog/DD/Framework/Portfolio)
@@ -521,7 +525,7 @@ impact-vision/
 ├── .github/workflows/
 │   └── ci.yml                        # GitHub Actions: import checks, tests, lint
 └── tests/
-    ├── test_impact.py                # 41 tests covering all impact modules + frameworks
+    ├── test_impact.py                # 54 tests covering all impact modules, tools + frameworks
     └── ...                           # 700+ tests across all subsystems
 ```
 
@@ -596,12 +600,23 @@ All accessible via the `framework_assess` tool:
 | **UNPRI** | 6 Principles, 27 actions | ESG integration assessment |
 | **Theory of Change** | RS Group 8 Blended Value Principles + GIIN 8-step ToC Checklist | IMP, SDGs |
 
-### Tools
+### Tools (14 Impact Tools)
 | Tool | Description |
 |------|-------------|
-| `lp_ddq_export` | Generate LP DDQ responses in ILPA, GIIN/IRIS+, EDCI, or custom formats |
+| `pitch_deck_analyze` | PDF/TXT/MD intake with impact claim extraction and Company model |
+| `dd_checklist` | DD question list, document analysis, and targeted suggestions |
+| `iris_catalog` | IRIS+ catalog search, browse, filter by SDG/theme |
+| `sdg_mapper` | SDG alignment scoring with theme inference |
+| `five_dimension_assess` | 5-Dimension impact assessment with sector baselines |
+| `gap_analysis` | Metric gap analysis vs Core Metric Set |
+| `impact_report` | Interactive HTML reports with Plotly charts (+ CSV/JSON/XLSX) |
+| `framework_assess` | Multi-framework ESG assessment (SASB, GRI, TCFD, SFDR, EDCI, UNPRI, ToC) |
+| `cross_reference` | Cross-framework metric lookup (PAI-prefix support) |
+| `impact_data_quality` | Assess quality of reported metrics -- flags placeholders, unknown IDs |
+| `impact_metric_recommender` | Recommend IRIS+ metrics based on themes, SDGs, and sector |
+| `impact_risk_opportunity` | Structured risk/opportunity assessment with mitigation suggestions |
+| `lp_ddq_export` | Generate LP DDQ responses in ILPA, GIIN/IRIS+, EDCI, or custom formats (XLSX/CSV) |
 | `portfolio_analyze` | Batch analyze portfolio companies with aggregated metrics and SDG coverage |
-| Streamlit Dashboard | Visual workflows for assessment, catalog browsing, and portfolio analysis |
 
 ## Streamlit Dashboard
 
@@ -627,8 +642,8 @@ pip install -e ".[dev]"
 # Run all tests
 python -m pytest tests/ -v
 
-# Run just the impact module tests (41 tests, no external dependencies)
-python -m pytest tests/test_impact.py -v
+# Run impact module tests (54 tests, no external dependencies)
+python -m pytest tests/test_impact.py tests/test_tools/test_impact_tools_enhancements.py -v
 
 # Run import smoke checks (verifies all package exports work)
 python scripts/check_imports.py --all
@@ -659,8 +674,24 @@ GitHub Actions runs on every push/PR to `main`:
 
 MIT License. See [LICENSE](LICENSE) for details.
 
+## Roadmap
+
+Impact Vision is actively evolving. Here's where we're headed:
+
+- **Deeper SDG/impact mapping with evidence** -- Through detailed mapping of potential SDG alignment and impact opportunities, with adequate evidence for why each claim is fulfilled (or on track). Expanding the interactive HTML report with overlay details and drill-down views for each dimension and metric.
+- **Project/pipeline management** -- Support for managing investment pipelines with stages: under review, invested, passed, exited. Track each company's impact journey over time.
+- **Continuous monitoring** -- Ongoing impact monitoring for portfolio companies with automated data collection, trend analysis, and alert triggers when metrics deviate from targets.
+- **Per-project impact reporting** -- Individual impact reports for each portfolio company with period-over-period comparisons, progress toward targets, and LP-ready formatting.
+- **Aggregate portfolio impact** -- Roll-up impact analytics across the entire portfolio: total beneficiaries reached, aggregate SDG coverage, fund-level 5D scores, and cross-company benchmarking.
+- **LLM-guided impact improvement** -- Intelligent recommendations (powered by LLM) to guide target companies toward achieving greater impact: suggest specific metrics to track, programs to implement, and partnerships to pursue.
+- **Multi-language support** -- Localization of reports, DD questionnaires, and agent interactions for global impact investors.
+- **MCP server mode** -- Expose Impact Vision tools as an MCP server so other AI agents and platforms can access them programmatically.
+
+Have ideas? Open an [issue](https://github.com/joejoe168168/impact-vision/issues) or submit a PR!
+
 ## Acknowledgments
 
+- [AvantFaire Investment Management](https://www.avantfaireim.com/) -- the first impact investment company in Hong Kong that nurtured the creator's passion for impact measurement
 - [GIIN](https://thegiin.org/) for IRIS+ and the Impact Due Diligence Guide
 - [Pacific Community Ventures](https://www.pacificcommunityventures.org/) for DD emerging best practices
 - [Seraf](https://seraf-investor.com/) for the impact investing DD checklist

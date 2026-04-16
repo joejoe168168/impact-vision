@@ -34,8 +34,8 @@ src/openharness/
 │       ├── unpri.py               # UNPRI 6 Principles (27 actions)
 │       ├── theory_of_change.py    # RS Group + GIIN ToC framework
 │       └── cross_reference.py     # 40+ cross-framework metric mappings
-├── tools/impact/                  # Agent tools for LLM orchestration (12 tools)
-│   ├── pitch_deck_analyze_tool.py # PDF intake + full pipeline + Company extraction
+├── tools/impact/                  # Agent tools for LLM orchestration (14 tools)
+│   ├── pitch_deck_analyze_tool.py # PDF/TXT/MD intake + full pipeline + Company extraction
 │   ├── dd_checklist_tool.py       # DD question list/analyze/suggest
 │   ├── iris_catalog_tool.py       # Search/filter IRIS+ catalog
 │   ├── sdg_mapper_tool.py         # SDG alignment mapping
@@ -44,7 +44,11 @@ src/openharness/
 │   ├── impact_report_tool.py      # Report generation (HTML/CSV/JSON/text/XLSX)
 │   ├── framework_tool.py          # Multi-framework ESG assessment (7 frameworks)
 │   ├── cross_reference_tool.py    # Cross-framework metric lookup
-│   ├── lp_ddq_export_tool.py      # LP DDQ exporter (ILPA/GIIN/EDCI/custom, XLSX)
+│   ├── data_quality_tool.py       # Metric data quality assessment
+│   ├── metric_recommender_tool.py # IRIS+ metric recommendation engine
+│   ├── impact_risk_opportunity_tool.py # Risk/opportunity assessment
+│   ├── lp_ddq_export_tool.py      # LP DDQ exporter (ILPA/GIIN/EDCI/custom, XLSX/CSV)
+│   ├── common.py                  # Shared input normalization helpers
 │   └── portfolio_tool.py          # Portfolio batch analysis
 ├── dashboard/                     # Streamlit dashboard (5 tabs, optional auth)
 │   └── app.py
