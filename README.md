@@ -136,72 +136,91 @@ Without the full catalog, Impact Vision still works using the bundled 16 GIIN Co
 
 ### 5. Set up an LLM provider (required for the AI agent)
 
-The CLI tools in Step 3 work without an API key, but the interactive AI agent needs a language model.
+The CLI tools in Step 3 work without an API key, but the interactive AI agent needs a language model. We recommend **OpenRouter** for beginners -- it's free to start and gives you access to many models.
 
-**Quickest way -- use the interactive setup wizard:**
+#### Option A: OpenRouter (recommended for beginners -- free models available)
+
+**Step 1.** Create an OpenRouter account:
+
+1. Go to [openrouter.ai](https://openrouter.ai/) and click **Sign Up** (Google or GitHub login works)
+2. Go to [openrouter.ai/keys](https://openrouter.ai/keys) and click **Create Key**
+3. Copy the key (starts with `sk-or-...`)
+
+**Step 2.** Run the interactive setup wizard:
 
 ```bash
 impact-vision setup
 ```
 
-This walks you through choosing a provider and entering your API key interactively. You can also use `impact-vision auth login` to authenticate with a specific provider.
+The wizard will guide you through these prompts:
 
-If you prefer manual setup, pick **one** option below.
-
-#### Option A: OpenRouter (easiest to get started)
-
-[OpenRouter](https://openrouter.ai/) gives you access to many models (Claude, GPT-4o, Llama, Gemini, etc.) through a single API key, with free-tier credits to try.
-
-1. Go to [openrouter.ai](https://openrouter.ai/) and click **Sign Up** (Google/GitHub login works)
-2. Go to [openrouter.ai/keys](https://openrouter.ai/keys) and click **Create Key**
-3. Copy the key (starts with `sk-or-...`)
-4. Set it in your terminal:
-
-```bash
-# Mac/Linux
-export OPENAI_API_KEY=sk-or-your-key-here
-export OPENAI_BASE_URL=https://openrouter.ai/api/v1
-
-# Windows CMD
-set OPENAI_API_KEY=sk-or-your-key-here
-set OPENAI_BASE_URL=https://openrouter.ai/api/v1
-
-# Windows PowerShell
-$env:OPENAI_API_KEY="sk-or-your-key-here"
-$env:OPENAI_BASE_URL="https://openrouter.ai/api/v1"
+```
+? Choose a provider workflow:
+  Anthropic-Compatible API  Claude / Kimi / GLM / MiniMax
+> OpenAI-Compatible API  OpenAI / OpenRouter          <-- select this
+  ...
 ```
 
-5. Start the agent with a model:
-
-```bash
-impact-vision --model anthropic/claude-sonnet-4
+```
+? Choose an OpenAI-compatible provider:
+  OpenAI official
+> OpenRouter                                          <-- select this
 ```
 
-> **Tip:** OpenRouter offers free models too. Try `--model google/gemini-2.5-flash` for a free option.
+```
+? Base URL: https://openrouter.ai/api/v1              <-- press Enter (default)
+? Default model: nvidia/nemotron-3-super-120b-a12b:free  <-- type a model name
+```
 
-#### Option B: Anthropic (Claude) -- best quality
+```
+? Enter API key for OpenRouter: sk-or-your-key-here    <-- paste your key
+```
+
+```
+? Model: nvidia/nemotron-3-super-120b-a12b:free        <-- press Enter to confirm
+Setup complete:
+- profile: openrouter
+- provider: openai
+- auth_source: openai_api_key
+- model: nvidia/nemotron-3-super-120b-a12b:free
+```
+
+Done! You can now start the agent (Step 6).
+
+> **Free models:** Browse all free models at [openrouter.ai/models?q=free](https://openrouter.ai/models?q=free). Some examples:
+>
+> | Model | Notes |
+> |-------|-------|
+> | `nvidia/nemotron-3-super-120b-a12b:free` | Strong reasoning, good for impact analysis |
+> | `google/gemini-2.5-flash:free` | Fast, good for quick tasks |
+> | `meta-llama/llama-4-maverick:free` | Open-source, balanced performance |
+>
+> You can change your model later by running `impact-vision setup` again.
+
+#### Option B: Anthropic (Claude) -- best quality for impact analysis
 
 1. Go to [console.anthropic.com](https://console.anthropic.com/), create an account
 2. Go to **API Keys** and create a key
-3. Set it:
+3. Run the wizard and choose **Anthropic-Compatible API** > **Claude official**:
 
 ```bash
-# Mac/Linux
-export ANTHROPIC_API_KEY=sk-ant-your-key-here
-
-# Windows CMD
-set ANTHROPIC_API_KEY=sk-ant-your-key-here
-
-# Windows PowerShell
-$env:ANTHROPIC_API_KEY="sk-ant-your-key-here"
+impact-vision setup
 ```
+
+4. Paste your API key when prompted
 
 #### Option C: OpenAI
 
 1. Go to [platform.openai.com/api-keys](https://platform.openai.com/api-keys), create a key
-2. Set it the same way: `export OPENAI_API_KEY=sk-your-key-here`
+2. Run the wizard and choose **OpenAI-Compatible API** > **OpenAI official**:
 
-#### Option D: Local Ollama (free, runs on your machine)
+```bash
+impact-vision setup
+```
+
+3. Paste your API key when prompted
+
+#### Option D: Local Ollama (free, runs on your machine, no internet needed)
 
 1. Install Ollama from [ollama.com](https://ollama.com/)
 2. Pull a model: `ollama pull llama3.2`
@@ -211,14 +230,14 @@ $env:ANTHROPIC_API_KEY="sk-ant-your-key-here"
 impact-vision ollama-setup --model llama3.2
 ```
 
-No API key needed -- everything runs locally.
+No API key needed -- everything runs locally on your GPU/CPU.
 
 | Provider | Best for | Cost |
 |----------|----------|------|
-| OpenRouter | Trying multiple models easily | Free tier + pay-per-use |
+| [OpenRouter](https://openrouter.ai/models?q=free) | Trying multiple models, free tier | Free + pay-per-use |
 | Anthropic (Claude) | Best impact analysis quality | Pay-per-use |
 | OpenAI (GPT-4o) | General purpose | Pay-per-use |
-| Ollama (local) | Privacy, offline use | Free (uses your GPU/CPU) |
+| Ollama (local) | Privacy, offline use | Free (your hardware) |
 
 ### 6. Start the AI agent
 
