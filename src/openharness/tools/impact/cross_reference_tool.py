@@ -84,7 +84,7 @@ class CrossReferenceTool(BaseTool):
                 return ToolResult(output="Provide a 'metric_id' for lookup action", is_error=True)
 
             results = []
-            mid = args.metric_id.strip()
+            mid = args.metric_id.strip().upper()
 
             if args.standard in ("iris", "any"):
                 results.extend(lookup_by_iris(mid))
@@ -94,7 +94,8 @@ class CrossReferenceTool(BaseTool):
                 results.extend(lookup_by_edci(mid))
             if args.standard in ("sfdr", "any"):
                 try:
-                    results.extend(lookup_by_sfdr(int(mid)))
+                    sfdr_id = int(mid.replace("PAI", "").strip())
+                    results.extend(lookup_by_sfdr(sfdr_id))
                 except ValueError:
                     pass
 

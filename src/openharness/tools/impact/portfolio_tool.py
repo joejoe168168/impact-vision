@@ -13,17 +13,19 @@ from pathlib import Path
 
 import yaml
 from pydantic import BaseModel, Field
+from typing import Literal
 
 from openharness.impact.database import get_metric_store
 from openharness.impact.five_dimensions import assess_five_dimensions
 from openharness.impact.gap_analysis import analyze_gaps
 from openharness.impact.models import Company
 from openharness.impact.sdg_mapper import map_sdg_alignment
+from openharness.tools.impact.common import infer_themes, normalize_metric_map, normalize_sdg_goals
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 
 class PortfolioInput(BaseModel):
-    action: str = Field(
+    action: Literal["analyze_file", "analyze_companies", "aggregate"] = Field(
         description=(
             "'analyze_file': Analyze a portfolio CSV/YAML file. "
             "'analyze_companies': Analyze a list of companies provided inline. "
@@ -32,7 +34,7 @@ class PortfolioInput(BaseModel):
     )
     file_path: str = Field(
         default="",
-        description="Path to portfolio file (CSV or YAML) for 'analyze_file'",
+        description="Path to portfolio file (CSV/YAML/JSON) for 'analyze_file'",
     )
     companies: list[dict] = Field(
         default_factory=list,
@@ -41,7 +43,7 @@ class PortfolioInput(BaseModel):
             "name, sector, description, impact_themes, reported_metrics, sdg_claims"
         ),
     )
-    output_format: str = Field(
+    output_format: Literal["text", "json", "csv"] = Field(
         default="text", description="Output format: 'text', 'json', 'csv'"
     )
 
@@ -142,13 +144,15 @@ def _load_portfolio_file(file_path: str, context: ToolExecutionContext) -> list[
 
 
 def _dict_to_company(d: dict) -> Company:
+    metrics, _ = normalize_metric_map(d.get("reported_metrics", {}))
+    sdg_claims, _ = normalize_sdg_goals(d.get("sdg_claims", []))
     return Company(
         name=d.get("name", ""),
         sector=d.get("sector", ""),
         description=d.get("description", ""),
-        impact_themes=d.get("impact_themes", []),
-        reported_metrics=d.get("reported_metrics", {}),
-        sdg_claims=d.get("sdg_claims", []),
+        impact_themes=infer_themes(f"{d.get('description', '')} {d.get('sector', '')}", d.get("impact_themes", [])),
+        reported_metrics=metrics,
+        sdg_claims=sdg_claims,
     )
 
 

@@ -56,12 +56,20 @@ class IrisCatalogTool(BaseTool):
             return ToolResult(output=json.dumps(stats, indent=2))
 
         if args.action == "get":
-            metric = store.get(args.query)
+            metric = store.get(args.query.strip().upper())
             if metric is None:
                 return ToolResult(output=f"Metric '{args.query}' not found", is_error=True)
             return ToolResult(output=json.dumps(metric.model_dump(), indent=2))
 
         if args.action == "search":
+            if "," in args.query:
+                from openharness.tools.impact.common import normalize_metric_ids
+                metric_ids, _ = normalize_metric_ids([q for q in args.query.split(",") if q.strip()])
+                if metric_ids:
+                    metrics = [store.get(mid) for mid in metric_ids]
+                    resolved = [m for m in metrics if m is not None]
+                    if resolved:
+                        return ToolResult(output=_format_metric_list(resolved, args.limit))
             results = store.search(args.query, limit=args.limit)
             return ToolResult(output=_format_metric_list(results, args.limit))
 

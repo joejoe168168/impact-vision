@@ -74,10 +74,13 @@ def create_default_tool_registry(mcp_manager: McpClientManager | None = None) ->
         ("impact.gap_analysis_tool", "GapAnalysisTool"),
         ("impact.dd_checklist_tool", "DdChecklistTool"),
         ("impact.pitch_deck_analyze_tool", "PitchDeckAnalyzeTool"),
+        ("impact.impact_risk_opportunity_tool", "ImpactRiskOpportunityTool"),
         ("impact.impact_report_tool", "ImpactReportTool"),
         ("impact.framework_tool", "FrameworkTool"),
         ("impact.cross_reference_tool", "CrossReferenceTool"),
+        ("impact.data_quality_tool", "DataQualityTool"),
         ("impact.lp_ddq_export_tool", "LpDdqExportTool"),
+        ("impact.metric_recommender_tool", "MetricRecommenderTool"),
         ("impact.portfolio_tool", "PortfolioTool"),
     )
     for module_name, class_name in impact_tools:
