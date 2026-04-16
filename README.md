@@ -349,6 +349,23 @@ The agent will use the `pitch_deck_analyze` tool which:
 > Generate a report with sector benchmark comparison
 ```
 
+HTML reports include an **Interactive Score Improvement** section -- check boxes for practices your organization follows (e.g., "We track beneficiaries", "We have a Theory of Change") and watch scores update in real-time with a before/after radar chart.
+
+### Improving Scores Through Q&A
+
+Ask the agent to help you improve your impact scores interactively:
+
+```
+> Help me improve my impact scores for this pig farm
+> Ask me questions to strengthen the assessment
+```
+
+The agent will:
+1. Identify your weakest scoring dimensions
+2. Ask targeted questions (e.g., "How many direct beneficiaries?", "Do you track emissions?")
+3. Map your answers to IRIS+ metrics
+4. Re-run the assessment and show exactly how your answers improved each dimension
+
 ### ESG Framework Assessment
 
 ```

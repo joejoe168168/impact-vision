@@ -4,6 +4,56 @@ All notable changes to Impact Vision are recorded here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.1.2] - 2026-04-16
+
+### Added
+
+**Interactive impact score improvement**
+- HTML reports now include an "Interactive Score Improvement" section with 12 checkboxes for common impact practices (beneficiary tracking, GHG emissions, gender diversity, supply chain policies, Theory of Change, third-party audits, etc.)
+- Each checkbox maps to specific 5-Dimension scoring categories with weighted boosts
+- Live-updating score cards show grade, overall score, and improvement delta as boxes are checked
+- Before/after radar chart overlay using Plotly shows the impact of checked items
+- Agent-guided Q&A workflow: the AI agent can now ask targeted questions to improve weak dimensions, map answers to IRIS+ metrics, and re-run assessments to show score changes
+
+**Impact tools auto-approved**
+- All 11 impact analysis tools (`impact_report`, `lp_ddq_export`, etc.) are now auto-approved in default permission mode -- no more "Allow impact_report?" confirmation prompts
+- These tools only generate analysis output and write harmless report files, not destructive operations
+
+**Custom OpenAI-compatible endpoint support**
+- `impact-vision setup` wizard now includes a "Custom endpoint" option for any OpenAI-compatible API
+- Users can configure arbitrary base URLs, model names, and provider labels
+
+**API connection validation**
+- `impact-vision setup` now tests the API key and endpoint after configuration
+- Validates connectivity, handles 401/403/timeout errors, and confirms the key works before finishing
+
+### Fixed
+
+**Tool result overflow causing "API error:" with empty message**
+- When saving reports to file, the tool was returning full HTML content (10KB+) back to the LLM, causing it to fail
+- Now returns a clean text summary when saving to file, and summarizes HTML reports over 2KB
+
+**Full IRIS+ catalog bundled (787 metrics)**
+- Replaced the 16 GIIN Core Metrics fallback with the complete 787-metric IRIS+ 5.3c catalog
+- Search now includes synonym expansion (e.g., "climate" -> "greenhouse gas", "carbon", "emissions") and JII tag matching
+- Common searches like "water", "climate", "healthcare" now return relevant results immediately
+
+**Sector-aware scoring**
+- 5-Dimension and SDG scoring now uses sector baselines and keyword inference from company descriptions
+- Companies get meaningful scores even without explicit reported metrics (e.g., a pig farm in agriculture gets baseline scores for food security, local employment, environmental risks)
+- Impact reports include sector-specific opportunities and risks
+
+**UI flickering during long responses**
+- Wrapped completed messages with Ink's `Static` component to prevent re-renders
+- Increased streaming buffer flush intervals to reduce update frequency
+
+**"Your request was blocked" API error**
+- Overrode the `openai` Python library's default `User-Agent` header which was being blocked by some proxy endpoints
+
+**Setup wizard improvements**
+- Re-entering API key now available even if provider is already configured
+- ASCII banner changed from "OH MY HARNESS" to "IMPACT VISION" in green with proper letter spacing
+
 ## [0.1.1] - 2026-04-16
 
 ### Fixed
@@ -93,6 +143,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 **Visual Output**
 - HTML reports with Plotly.js radar charts (5D) and bar charts (SDG), sector benchmark comparison, responsive design with official UN SDG colors
+- Interactive Score Improvement section in HTML reports with live score updates and before/after radar chart
+- Agent-guided Q&A workflow for improving scores through targeted questions mapped to IRIS+ metrics
 - XLSX export for impact reports and LP DDQs (multi-sheet, formatted headers)
 - Streamlit dashboard (5 tabs: Assessment, IRIS+ Catalog, DD Checklist, Framework Scan, Portfolio)
 - Dashboard includes benchmark comparison charts, evidence level display, and framework overview bar chart
