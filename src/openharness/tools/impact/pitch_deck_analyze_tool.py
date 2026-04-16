@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import logging
 from pathlib import Path
 
@@ -116,7 +115,6 @@ class PitchDeckAnalyzeTool(BaseTool):
 
         extracted_company = None
         if args.extract_company:
-            from openharness.impact.models import Company
             extracted_company = _extract_company_model(
                 text, path.stem, detected_themes, detected_sdgs,
                 [m.id for m in suggested_metrics[:10]], store,

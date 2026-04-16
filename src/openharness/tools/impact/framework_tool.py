@@ -5,7 +5,6 @@ Unified tool for SASB, GRI, TCFD/IFRS S2, SFDR PAI, EDCI, and UNPRI frameworks.
 
 from __future__ import annotations
 
-import json
 from typing import Literal
 
 from pydantic import BaseModel, Field
@@ -297,7 +296,7 @@ class FrameworkTool(BaseTool):
                 if p["addressed_actions"]:
                     lines.append(f"    Addressed: {', '.join(p['addressed_actions'])}")
                 if p["gap_actions"]:
-                    lines.append(f"    Gaps:")
+                    lines.append("    Gaps:")
                     for g in p["gap_actions"][:3]:
                         lines.append(f"      {g['id']}: {g['question']}")
                 lines.append("")

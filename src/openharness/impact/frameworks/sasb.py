@@ -376,8 +376,6 @@ def match_sasb_industry(
 
     for std in SASB_STANDARDS:
         score = 0.0
-        std_text = f"{std.industry} {std.sector}".lower()
-
         for word in std.industry.lower().split():
             if len(word) > 3 and word in text:
                 score += 3.0

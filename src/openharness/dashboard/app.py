@@ -5,8 +5,6 @@ Launch with: streamlit run src/openharness/dashboard/app.py
 
 from __future__ import annotations
 
-import json
-from pathlib import Path
 
 import streamlit as st
 import plotly.graph_objects as go
@@ -165,7 +163,6 @@ def _company_assessment_tab():
             )
             st.plotly_chart(fig, use_container_width=True)
 
-            grade_color = {"A": "green", "B+": "green", "B": "blue", "B-": "blue"}.get(fd.overall_grade, "orange")
             st.metric("Overall Score", f"{fd.overall_score:.1f}/5", fd.overall_grade)
 
         with col_b:
@@ -288,7 +285,7 @@ def _dd_checklist_tab():
     doc_text = st.text_area("Paste document text to check coverage (optional)", height=100)
 
     if doc_text:
-        from openharness.impact.dd_checklist import analyze_document_coverage, EVIDENCE_LEVELS
+        from openharness.impact.dd_checklist import analyze_document_coverage
         cats_filter = selected_cats if selected_cats else None
         result = analyze_document_coverage(doc_text, categories=cats_filter)
         st.progress(result.coverage_pct / 100, text=f"Coverage: {result.coverage_pct}%")
@@ -298,7 +295,6 @@ def _dd_checklist_tab():
         with col_met2:
             st.metric("High-Priority Gaps", len(result.high_priority_gaps))
         with col_met3:
-            ev_label = EVIDENCE_LEVELS.get(round(result.avg_evidence_level), "N/A")
             st.metric("Avg Evidence Level", f"{result.avg_evidence_level:.1f}/5")
 
         if result.addressed:

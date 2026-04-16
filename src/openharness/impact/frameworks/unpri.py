@@ -254,8 +254,6 @@ def assess_unpri_alignment(
 
         for action in principle.actions:
             addressed = False
-            action_text = f"{action.description} {action.assessment_question}".lower()
-
             general_hits = sum(1 for kw in kws if kw in text)
             if general_hits >= 2:
                 addressed = True

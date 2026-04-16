@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-from pathlib import Path
 
 from openharness.impact.catalog import (
     get_default_excel_path,

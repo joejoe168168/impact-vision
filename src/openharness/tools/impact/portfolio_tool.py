@@ -237,13 +237,13 @@ def _to_text(results: list[dict], aggregate: dict) -> str:
 
     dim_avgs = aggregate.get("dimension_averages", {})
     if dim_avgs:
-        lines.append(f"  Dimension Averages:")
+        lines.append("  Dimension Averages:")
         for dim, avg in dim_avgs.items():
             lines.append(f"    {dim}: {avg}/5")
 
     sdg_dist = aggregate.get("sdg_distribution", [])
     if sdg_dist:
-        lines.append(f"  SDG Distribution:")
+        lines.append("  SDG Distribution:")
         for item in sdg_dist[:5]:
             lines.append(f"    SDG {item['goal']}: {item['companies']} companies")
 

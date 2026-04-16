@@ -315,7 +315,7 @@ def catalog_stats() -> None:
         raise typer.Exit(1)
 
     stats = store.stats()
-    print(f"IRIS+ 5.3c Catalog Statistics")
+    print("IRIS+ 5.3c Catalog Statistics")
     print(f"{'=' * 50}")
     print(f"Total metrics:             {stats['total_metrics']}")
     print(f"With SDG mapping:          {stats['metrics_with_sdg_mapping']}")
@@ -556,10 +556,10 @@ def ollama_setup_cmd(
     manager.store_profile_credential("ollama", "api_key", "ollama")
     manager.use_profile("ollama")
 
-    print(f"Ollama configured:")
+    print("Ollama configured:")
     print(f"  Base URL: {base_url}")
     print(f"  Model:    {model}")
-    print(f"  Profile:  ollama (now active)")
+    print("  Profile:  ollama (now active)")
     print()
     print("Make sure Ollama is running: ollama serve")
     print("To switch back: impact-vision provider use <other-profile>")
