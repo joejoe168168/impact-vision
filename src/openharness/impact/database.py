@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 
 from openharness.impact.catalog import (
     get_default_excel_path,
@@ -12,6 +13,8 @@ from openharness.impact.catalog import (
     save_catalog_json,
 )
 from openharness.impact.models import Metric
+
+CORE_METRICS_PATH = Path(__file__).parent / "core_metrics.json"
 
 logger = logging.getLogger(__name__)
 
@@ -171,6 +174,12 @@ def get_metric_store(force_reload: bool = False) -> MetricStore:
         logger.info("Loading catalog from Excel: %s", excel_path)
         metrics = load_catalog_from_excel(excel_path)
         save_catalog_json(metrics, json_path)
+        _global_store = MetricStore(metrics)
+        return _global_store
+
+    if CORE_METRICS_PATH.exists():
+        logger.info("Loading bundled GIIN Core Metric Set as fallback: %s", CORE_METRICS_PATH)
+        metrics = load_catalog_json(CORE_METRICS_PATH)
         _global_store = MetricStore(metrics)
         return _global_store
 

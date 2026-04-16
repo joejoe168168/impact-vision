@@ -49,3 +49,18 @@ jobs:
         run: pip install ruff
       - name: Ruff check
         run: ruff check src/
+
+  frontend:
+    name: Frontend typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Install dependencies
+        working-directory: frontend/terminal
+        run: npm ci
+      - name: TypeScript check
+        working-directory: frontend/terminal
+        run: npx tsc --noEmit

@@ -2,8 +2,12 @@
   "name": "@openharness/terminal",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
-    "start": "tsx src/index.tsx"
+    "start": "tsx src/index.tsx",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "ink": "^5.1.0",
