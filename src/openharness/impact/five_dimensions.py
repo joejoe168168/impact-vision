@@ -83,7 +83,11 @@ def _get_keyword_boosts() -> dict[str, dict[str, float]]:
 
 
 _NEGATION_PHRASES = ("not ", "no ", "don't ", "doesn't ", "do not ", "does not ", "without ", "lack ", "unable to ")
-MIN_METRICS_FOR_ABOVE_BASELINE = 3
+def _get_min_metrics_threshold() -> int:
+    config = _load_scoring_config()
+    return int(config.get("min_metrics_for_above_baseline", 3))
+
+MIN_METRICS_FOR_ABOVE_BASELINE = _get_min_metrics_threshold()
 
 
 def _keyword_not_negated(text: str, keyword: str) -> bool:

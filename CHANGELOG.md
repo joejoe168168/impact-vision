@@ -4,6 +4,68 @@ All notable changes to Impact Vision are recorded here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.1.7] - 2026-04-16
+
+### Added
+
+**Provenance badges in HTML reports**
+- 5D report now shows Confidence card (Evidence-Based/Partial/Estimated) with color coding
+- Per-dimension provenance column in the assessment table
+- Disclaimer banner when scores are estimated or partially evidenced
+
+**Configurable scoring threshold**
+- `min_metrics_for_above_baseline` now configurable via `data/scoring_config.yaml`
+- Funds can set threshold from 1 (seed-stage) to 5+ (growth-stage)
+
+**SDG keywords externalized to YAML**
+- Created `data/sdg_keywords.yaml` with sector-SDG relevance and keyword mappings
+- SDG mapper now loads keywords from YAML with fallback to hardcoded defaults
+- Enables fund-specific SDG keyword customization without code changes
+
+**Geography-aware SDG scoring**
+- SDG mapper applies geographic relevance boosts (15 regions/countries)
+- Portfolio tool now tracks geography distribution across companies
+- Pitch deck analyzer auto-detects geography from document text (19 regions + headquartered pattern)
+- Company YAML export includes geography field
+
+**Negation detection in SDG and claim extraction**
+- SDG keyword matching now skips negated keywords (30-char window check)
+- Pitch deck claim extractor reduces confidence for negated impact claims
+
+**Greenwashing integration expanded**
+- DataQuality tool now flags impact-washing risk when >25% of metrics are placeholders
+- Pitch deck analyzer detects specific greenwashing signals (aspirational bias, buzzword density, unsubstantiated claims)
+- Impact Risk & Opportunity tool includes greenwashing risk score and flags
+
+**Exclusion screening in DD workflow**
+- 5D assessment tool now runs quick exclusion check before scoring
+- Warning displayed when exclusion flags are triggered
+
+**Target tracking in HTML reports**
+- Impact targets displayed as progress bars with on-track/behind/exceeded/at-risk status icons
+- Target summary showing overall progress across all metrics
+
+**ISSB IFRS S2 framework** (new)
+- Climate-related Disclosures framework with 4 pillars and 13 disclosures
+- Maps to TCFD equivalents for backward compatibility
+- Readiness assessment covering governance, strategy, risk management, metrics
+- Integrated into framework_tool (list + assess) and multi-framework scan
+- TCFD module notes subsumption by ISSB S2
+
+**ISSB cross-references**
+- Added `issb` field to CrossReference model
+- GHG-related cross-references now include ISSB S2-MT-1 mappings
+- Cross-reference display includes ISSB column
+
+**LP DDQ improvements**
+- ILPA sections 10.1-10.8 now generate policy/governance structure references
+- Case study placeholders with structured format (company, outcome, method, attribution)
+- Measurement systems, team training, and outcomes sections with scaffolding
+
+**Comprehensive test coverage**
+- Added 24 new tests: DataQuality, Risk/Opportunity, MetricRecommender, Portfolio, geography detection, SDG geo boost, SDG YAML loader, configurable threshold, edge cases
+- Total test count: 71 tests all passing
+
 ## [0.1.6] - 2026-04-16
 
 ### Added

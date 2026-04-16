@@ -43,6 +43,9 @@ class PortfolioInput(BaseModel):
             "name, sector, description, impact_themes, reported_metrics, sdg_claims"
         ),
     )
+    geography: str = Field(
+        default="", description="Default geography for companies without one specified"
+    )
     output_format: Literal["text", "json", "csv"] = Field(
         default="text", description="Output format: 'text', 'json', 'csv'"
     )
@@ -134,6 +137,7 @@ def _load_portfolio_file(file_path: str, context: ToolExecutionContext) -> list[
                     name=row.get("name", row.get("company", "")),
                     sector=row.get("sector", ""),
                     description=row.get("description", ""),
+                    geography=row.get("geography", ""),
                     impact_themes=[t.strip() for t in row.get("impact_themes", "").split(",") if t.strip()],
                     reported_metrics=metrics,
                     sdg_claims=[int(x.strip()) for x in row.get("sdg_claims", "").split(",") if x.strip().isdigit()],
@@ -150,6 +154,7 @@ def _dict_to_company(d: dict) -> Company:
         name=d.get("name", ""),
         sector=d.get("sector", ""),
         description=d.get("description", ""),
+        geography=d.get("geography", ""),
         impact_themes=infer_themes(f"{d.get('description', '')} {d.get('sector', '')}", d.get("impact_themes", [])),
         reported_metrics=metrics,
         sdg_claims=sdg_claims,
@@ -167,6 +172,7 @@ def _analyze_company(company: Company, store) -> dict:
     return {
         "name": company.name,
         "sector": company.sector,
+        "geography": company.geography or "",
         "metrics_reported": len(company.reported_metrics),
         "five_dim_score": round(five_dim.overall_score, 2),
         "five_dim_grade": five_dim.overall_grade,
@@ -218,6 +224,11 @@ def _aggregate_results(results: list[dict]) -> dict:
         s = r.get("sector") or "Unknown"
         sector_dist[s] = sector_dist.get(s, 0) + 1
 
+    geo_dist: dict[str, int] = {}
+    for r in results:
+        g = r.get("geography") or "Not specified"
+        geo_dist[g] = geo_dist.get(g, 0) + 1
+
     weakest_dim = min(dim_avgs, key=dim_avgs.get) if dim_avgs else ""
     strongest_dim = max(dim_avgs, key=dim_avgs.get) if dim_avgs else ""
 
@@ -237,6 +248,7 @@ def _aggregate_results(results: list[dict]) -> dict:
         "weakest_dimension": weakest_dim,
         "grade_distribution": grade_dist,
         "sector_distribution": sector_dist,
+        "geography_distribution": geo_dist,
         "sdg_distribution": [{"goal": g, "companies": c} for g, c in sdg_distribution[:17]],
         "sdg_coverage": sdg_coverage,
         "total_metrics_reported": sum(r["metrics_reported"] for r in results),
@@ -283,6 +295,12 @@ def _to_text(results: list[dict], aggregate: dict) -> str:
         lines.append("  Sector Distribution:")
         for sect, count in sorted(sector_dist.items(), key=lambda x: x[1], reverse=True):
             lines.append(f"    {sect}: {count} companies")
+
+    geo_dist = aggregate.get("geography_distribution", {})
+    if geo_dist and not (len(geo_dist) == 1 and "Not specified" in geo_dist):
+        lines.append("  Geography Distribution:")
+        for geo, count in sorted(geo_dist.items(), key=lambda x: x[1], reverse=True):
+            lines.append(f"    {geo}: {count} companies")
 
     sdg_dist = aggregate.get("sdg_distribution", [])
     if sdg_dist:

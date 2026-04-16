@@ -24,11 +24,11 @@
   - Files: `src/openharness/tools/impact/five_dimension_assess_tool.py`, `sdg_mapper_tool.py`
   - Ref: Review §2.1
 
-- [ ] **1.1.4** Add provenance section to HTML impact reports — visual indicator (badge/icon) for estimated vs. evidence-based scores
+- [x] **1.1.4** Add provenance section to HTML impact reports — visual indicator (badge/icon) for estimated vs. evidence-based scores
   - File: `src/openharness/tools/impact/impact_report_tool.py`
   - Ref: Review §2.1
 
-- [ ] **1.1.5** Add explicit disclaimers to reports when scores are primarily keyword-estimated
+- [x] **1.1.5** Add explicit disclaimers to reports when scores are primarily keyword-estimated
   - File: `src/openharness/tools/impact/impact_report_tool.py`
   - Ref: Review §2.1
 
@@ -38,11 +38,11 @@
   - File: `src/openharness/impact/five_dimensions.py`
   - Ref: Review §2.1
 
-- [ ] **1.2.2** Add configurable threshold constant (default=3) that can be overridden per fund
+- [x] **1.2.2** Add configurable threshold constant (default=3) that can be overridden per fund
   - File: `src/openharness/impact/five_dimensions.py`
   - Ref: Review §2.1
 
-- [ ] **1.2.3** Emit warning in tool output when scores are capped at baseline due to insufficient metrics
+- [x] **1.2.3** Emit warning in tool output when scores are capped at baseline due to insufficient metrics
   - Files: `src/openharness/tools/impact/five_dimension_assess_tool.py`, `portfolio_tool.py`, `lp_ddq_export_tool.py`, `sdg_mapper_tool.py`
   - Ref: Review §2.1
 
@@ -52,7 +52,7 @@
   - Files: `data/sector_baselines.yaml` (new), `src/openharness/impact/five_dimensions.py`
   - Ref: Review §2.1, §6.2
 
-- [ ] **1.3.2** Create `data/sdg_keyword_map.yaml` — extract `_KEYWORD_SDG_MAP` from `sdg_mapper.py` (consolidated into scoring_config.yaml)
+- [x] **1.3.2** Create `data/sdg_keyword_map.yaml` — extract `_KEYWORD_SDG_MAP` from `sdg_mapper.py` (consolidated into scoring_config.yaml)
   - Files: `data/sdg_keyword_map.yaml` (new), `src/openharness/impact/sdg_mapper.py`
   - Ref: Review §2.1, §6.2
 
@@ -68,7 +68,7 @@
   - File: `src/openharness/tools/impact/common.py`
   - Ref: Review §6.2
 
-- [ ] **1.3.6** Update all consuming modules to use YAML-loaded dictionaries instead of hardcoded ones
+- [x] **1.3.6** Update all consuming modules to use YAML-loaded dictionaries instead of hardcoded ones
   - Files: `five_dimensions.py`, `sdg_mapper.py`, `risk_opportunity.py`, `common.py`
   - Ref: Review §6.2
 
@@ -86,19 +86,20 @@
   - File: `src/openharness/tools/impact/five_dimension_assess_tool.py`
   - Ref: Review §5.1
 
-- [ ] **1.4.4** Update `PortfolioInput` / `_dict_to_company()` to pass geography fields
+- [x] **1.4.4** Update `PortfolioInput` / `_dict_to_company()` to pass geography fields
   - File: `src/openharness/tools/impact/portfolio_tool.py`
   - Ref: Review §5.1
 
 - [x] **1.4.5** Update `LpDdqExportInput` to accept geography fields
   - File: `src/openharness/tools/impact/lp_ddq_export_tool.py`
   - Ref: Review §5.1
+  - ⚠️ Audit note: Input model has NO `geography` field; `_generate_section_data()` uses `company.geography` but it's always empty
 
-- [ ] **1.4.6** Use geography in SDG relevance scoring — adjust SDG relevance by country/region context
+- [x] **1.4.6** Use geography in SDG relevance scoring — adjust SDG relevance by country/region context
   - File: `src/openharness/impact/sdg_mapper.py`
   - Ref: Review §5.1
 
-- [ ] **1.4.7** Update `pitch_deck_analyze_tool` auto-extracted Company model to include geography
+- [x] **1.4.7** Update `pitch_deck_analyze_tool` auto-extracted Company model to include geography
   - File: `src/openharness/tools/impact/pitch_deck_analyze_tool.py`
   - Ref: Review §5.1
 
@@ -108,19 +109,19 @@
 
 ### 1.5 Write Tests for New Tools
 
-- [ ] **1.5.1** Add tests for `DataQualityTool` — unknown IDs, placeholders, non-numeric, quality score, missing required
+- [x] **1.5.1** Add tests for `DataQualityTool` — unknown IDs, placeholders, non-numeric, quality score, missing required
   - File: `tests/test_impact.py` (extend) or `tests/test_data_quality_tool.py` (new)
   - Ref: Review §6.3
 
-- [ ] **1.5.2** Add tests for `ImpactRiskOpportunityTool` — risk scoring, opportunity scoring, keyword triggers, metric checks
+- [x] **1.5.2** Add tests for `ImpactRiskOpportunityTool` — risk scoring, opportunity scoring, keyword triggers, metric checks
   - File: `tests/test_impact.py` (extend) or `tests/test_risk_opportunity_tool.py` (new)
   - Ref: Review §6.3
 
-- [ ] **1.5.3** Add tests for `MetricRecommenderTool` — multi-signal scoring, core-set priority, theme/SDG match
+- [x] **1.5.3** Add tests for `MetricRecommenderTool` — multi-signal scoring, core-set priority, theme/SDG match
   - File: `tests/test_impact.py` (extend) or `tests/test_metric_recommender_tool.py` (new)
   - Ref: Review §6.3
 
-- [ ] **1.5.4** Add tests for `PortfolioTool` — file loading (CSV/YAML/JSON), company conversion, aggregation
+- [x] **1.5.4** Add tests for `PortfolioTool` — file loading (CSV/YAML/JSON), company conversion, aggregation
   - File: `tests/test_impact.py` (extend) or `tests/test_portfolio_tool.py` (new)
   - Ref: Review §6.3
 
@@ -128,7 +129,7 @@
   - File: `tests/test_impact.py` (extend) or `tests/test_common.py` (new)
   - Ref: Review §6.3
 
-- [ ] **1.5.6** Add edge case tests — empty company, invalid metrics, no catalog loaded, zero metrics
+- [x] **1.5.6** Add edge case tests — empty company, invalid metrics, no catalog loaded, zero metrics
   - File: `tests/test_impact.py` (extend)
   - Ref: Review §6.3
 
@@ -174,23 +175,23 @@
   - Files: `src/openharness/tools/impact/__init__.py`, tool registry
   - Ref: Review §3.4
 
-- [ ] **1.6.11** Add greenwashing risk score to `DataQualityTool` payload
+- [x] **1.6.11** Add greenwashing risk score to `DataQualityTool` payload
   - File: `src/openharness/tools/impact/data_quality_tool.py`
   - Ref: Review §3.4
 
-- [ ] **1.6.12** Add greenwashing signal flags to `PitchDeckAnalyzeTool` claim extraction (vague claims, buzzword density)
+- [x] **1.6.12** Add greenwashing signal flags to `PitchDeckAnalyzeTool` claim extraction (vague claims, buzzword density)
   - File: `src/openharness/tools/impact/pitch_deck_analyze_tool.py`
   - Ref: Review §3.4
 
-- [ ] **1.6.13** Add "impact-washing risk" category to `risk_opportunity.py`
+- [x] **1.6.13** Add "impact-washing risk" category to `risk_opportunity.py`
   - File: `src/openharness/impact/risk_opportunity.py`
   - Ref: Review §3.4
 
-- [ ] **1.6.14** Add greenwashing risk section to HTML impact reports with visual classification indicator
+- [x] **1.6.14** Add greenwashing risk section to HTML impact reports with visual classification indicator
   - File: `src/openharness/tools/impact/impact_report_tool.py`
   - Ref: Review §3.4
 
-- [ ] **1.6.15** Add greenwashing detection tests
+- [x] **1.6.15** Add greenwashing detection tests
   - File: `tests/test_greenwashing.py` (new)
   - Ref: Review §6.3
 
@@ -220,7 +221,7 @@
   - File: `src/openharness/tools/impact/portfolio_tool.py`
   - Ref: Review §2.7
 
-- [ ] **2.1.6** Add progress tracking to HTML reports — sparklines or trend arrows for key metrics
+- [x] **2.1.6** Add progress tracking to HTML reports — sparklines or trend arrows for key metrics
   - File: `src/openharness/tools/impact/impact_report_tool.py`
   - Ref: Review §2.7
 
@@ -242,19 +243,21 @@
   - File: `src/openharness/impact/models.py`
   - Ref: Review §5.1
 
-- [ ] **2.2.5** Add exclusion screening as first step in DD workflow — warn if company fails screening before scoring
+- [x] **2.2.5** Add exclusion screening as first step in DD workflow — warn if company fails screening before scoring
   - Files: `five_dimension_assess_tool.py`, `portfolio_tool.py`
   - Ref: Review §4.4
 
 ### 2.3 Impact Target Tracking
 
-- [x] **2.3.1** Create `ImpactTarget` model — `metric_id`, `target_value`, `target_date`, `actual_value`, `period`
+- [ ] **2.3.1** Create `ImpactTarget` model — `metric_id`, `target_value`, `target_date`, `actual_value`, `period`
   - File: `src/openharness/impact/models.py`
   - Ref: Review §4.3
+  - ⚠️ Audit note: `ImpactTarget` class does NOT exist (ImportError). `Company.impact_targets` is `dict[str, str]` instead
 
-- [ ] **2.3.2** Add `targets` field to `Company` model
+- [x] **2.3.2** Add `targets` field to `Company` model
   - File: `src/openharness/impact/models.py`
   - Ref: Review §5.1
+  - ⚠️ Note: `impact_targets: dict[str, str]` exists but is NOT the structured `ImpactTarget` model type originally intended
 
 - [ ] **2.3.3** Parse `OD4091` (Social and Environmental Targets) metric value into structured `ImpactTarget` objects
   - File: `src/openharness/tools/impact/common.py`
@@ -264,7 +267,7 @@
   - File: `src/openharness/impact/trend_analysis.py`
   - Ref: Review §4.3
 
-- [ ] **2.3.5** Add target tracking section to HTML reports — on-track/at-risk/off-track visual indicators
+- [x] **2.3.5** Add target tracking section to HTML reports — on-track/at-risk/off-track visual indicators
   - File: `src/openharness/tools/impact/impact_report_tool.py`
   - Ref: Review §4.3
 
@@ -274,15 +277,15 @@
   - File: `src/openharness/tools/impact/lp_ddq_export_tool.py`
   - Ref: Review §2.6
 
-- [ ] **2.4.2** Add ILPA DDQ template sections 10.1-10.8 with paragraph-length response scaffolding
+- [x] **2.4.2** Add ILPA DDQ template sections 10.1-10.8 with paragraph-length response scaffolding
   - File: `src/openharness/tools/impact/lp_ddq_export_tool.py`
   - Ref: Review §2.6
 
-- [ ] **2.4.3** Add policy/governance structure references in DDQ responses
+- [x] **2.4.3** Add policy/governance structure references in DDQ responses
   - File: `src/openharness/tools/impact/lp_ddq_export_tool.py`
   - Ref: Review §2.6
 
-- [ ] **2.4.4** Add specific example/case study placeholders in DDQ output
+- [x] **2.4.4** Add specific example/case study placeholders in DDQ output
   - File: `src/openharness/tools/impact/lp_ddq_export_tool.py`
   - Ref: Review §2.6
 
@@ -296,7 +299,7 @@
   - Files: `data/sasb_industries.yaml` (new), `src/openharness/impact/frameworks/sasb.py`
   - Ref: Review §2.3
 
-- [ ] **2.5.3** Add SASB industry auto-detection from company sector/description
+- [x] **2.5.3** Add SASB industry auto-detection from company sector/description
   - File: `src/openharness/impact/frameworks/sasb.py`
   - Ref: Review §2.3
 
@@ -328,11 +331,11 @@
   - File: `src/openharness/impact/five_dimensions.py`
   - Ref: Review §2.1
 
-- [ ] **2.7.3** Add negation detection to SDG keyword matching
+- [x] **2.7.3** Add negation detection to SDG keyword matching
   - File: `src/openharness/impact/sdg_mapper.py`
   - Ref: Review §2.1
 
-- [ ] **2.7.4** Add negation detection to claim extraction in pitch deck analysis
+- [x] **2.7.4** Add negation detection to claim extraction in pitch deck analysis
   - File: `src/openharness/tools/impact/pitch_deck_analyze_tool.py`
   - Ref: Review §5.2
 
@@ -342,11 +345,11 @@
   - File: `src/openharness/impact/frameworks/issb.py` (new)
   - Ref: Review §10.4
 
-- [ ] **2.8.2** Create ISSB S2 (Climate-related Disclosures) framework module — subsumes and extends TCFD
+- [x] **2.8.2** Create ISSB S2 (Climate-related Disclosures) framework module — subsumes and extends TCFD
   - File: `src/openharness/impact/frameworks/issb.py`
   - Ref: Review §10.4
 
-- [ ] **2.8.3** Add ISSB cross-references to the cross-reference mapping
+- [x] **2.8.3** Add ISSB cross-references to the cross-reference mapping
   - File: `src/openharness/impact/frameworks/cross_reference.py`
   - Ref: Review §10.4
 
@@ -354,11 +357,11 @@
   - File: `src/openharness/tools/impact/framework_tool.py`
   - Ref: Review §10.4
 
-- [ ] **2.8.5** Add ISSB to `__init__.py` framework list
+- [x] **2.8.5** Add ISSB to `__init__.py` framework list
   - File: `src/openharness/impact/frameworks/__init__.py`
   - Ref: Review §10.4
 
-- [ ] **2.8.6** Update TCFD references to indicate subsumption by ISSB S2 (keep TCFD for backward compatibility)
+- [x] **2.8.6** Update TCFD references to indicate subsumption by ISSB S2 (keep TCFD for backward compatibility)
   - File: `src/openharness/impact/frameworks/tcfd.py`
   - Ref: Review §10.4
 
@@ -732,4 +735,4 @@
 
 ---
 
-*Last updated: 2025-01. Derived from `IMPACT_MANAGER_REVIEW.md`.*
+*Last updated: 2026-04-16 (v0.1.7). Derived from `IMPACT_MANAGER_REVIEW.md`.*

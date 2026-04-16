@@ -7,6 +7,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from openharness.impact.greenwashing import assess_greenwashing
 from openharness.impact.models import Company
 from openharness.impact.risk_opportunity import assess_impact_risk_opportunity
 from openharness.tools.impact.common import infer_themes, normalize_metric_map, normalize_sdg_goals
@@ -52,6 +53,11 @@ class ImpactRiskOpportunityTool(BaseTool):
         )
 
         result = assess_impact_risk_opportunity(company)
+        gw_result = assess_greenwashing(company)
+        result["greenwashing_risk"] = {
+            "score": gw_result["overall_score"],
+            "classification": gw_result["classification"],
+        }
 
         if args.output_format == "json":
             return ToolResult(output=json.dumps(result, indent=2), metadata=result)
@@ -61,6 +67,7 @@ class ImpactRiskOpportunityTool(BaseTool):
             "=" * 50,
             f"Risk Score: {result['risk_score']}/100",
             f"Opportunity Score: {result['opportunity_score']}/100",
+            f"Greenwashing Risk: {gw_result['overall_score']}/100 ({gw_result['classification']})",
             "",
         ]
 
@@ -69,6 +76,12 @@ class ImpactRiskOpportunityTool(BaseTool):
             for r in result["priority_risks"]:
                 lines.append(f"  [{r.get('severity', 'medium').upper()}] {r['risk']}")
                 lines.append(f"    Mitigation: {r.get('mitigation', 'N/A')}")
+            lines.append("")
+
+        if gw_result["overall_score"] >= 50:
+            lines.append("Greenwashing Flags:")
+            for flag in gw_result.get("flags", []):
+                lines.append(f"  ⚠ {flag}")
             lines.append("")
 
         if result["priority_opportunities"]:

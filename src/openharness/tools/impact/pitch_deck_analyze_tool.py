@@ -209,6 +209,15 @@ class PitchDeckAnalyzeTool(BaseTool):
                     if q.follow_up:
                         lines.append(f"       Follow-up: {q.follow_up}")
 
+        gw_signals = _detect_greenwashing_signals(claims, text)
+        if gw_signals:
+            lines.append("")
+            lines.append("GREENWASHING SIGNAL ANALYSIS")
+            lines.append("-" * 50)
+            for signal in gw_signals:
+                lines.append(f"  ⚠ {signal}")
+            lines.append("")
+
         # Section 5: Greenwashing Risk
         gw_result = None
         if args.include_greenwashing_check and extracted_company:
@@ -237,6 +246,7 @@ class PitchDeckAnalyzeTool(BaseTool):
             lines.append("-" * 50)
             lines.append(f"  Name: {extracted_company.name}")
             lines.append(f"  Sector: {extracted_company.sector or 'Unknown'}")
+            lines.append(f"  Geography: {extracted_company.geography or 'Not detected'}")
             lines.append(f"  Themes: {', '.join(extracted_company.impact_themes) or 'None'}")
             lines.append(f"  SDG Claims: {', '.join(f'SDG {g}' for g in extracted_company.sdg_claims) or 'None'}")
             lines.append(f"  Suggested Metrics: {len(extracted_company.reported_metrics)}")
@@ -298,7 +308,17 @@ def _extract_impact_claims(page_texts: list[dict], store) -> list[ImpactClaim]:
             if keyword_hits < 1:
                 continue
 
-            confidence = min(1.0, keyword_hits * 0.15)
+            negated_hits = sum(
+                1 for kw in IMPACT_KEYWORDS
+                if kw in lower and _is_negated_in_sentence(lower, kw)
+            )
+            effective_hits = keyword_hits - negated_hits
+            if effective_hits < 1:
+                continue
+
+            confidence = min(1.0, effective_hits * 0.15)
+            if negated_hits > 0:
+                confidence *= 0.5
             category = _classify_claim(lower)
             mapped_metrics = _match_metrics(sentence, store)
             mapped_targets = _match_sdg_targets(sentence)
@@ -469,12 +489,14 @@ def _extract_company_model(
                 break
 
     sector = _detect_sector(text)
+    geography = _detect_geography(text)
     reported = {mid: "pending" for mid in suggested_metric_ids}
 
     return Company(
         name=company_name,
         description=text[:500].strip(),
         sector=sector,
+        geography=geography,
         impact_themes=themes,
         reported_metrics=reported,
         sdg_claims=sorted(sdgs),
@@ -506,6 +528,106 @@ def _detect_sector(text: str) -> str:
     return best_sector
 
 
+_NEGATION_PHRASES = ("not ", "no ", "don't ", "doesn't ", "do not ", "does not ", "without ", "lack ", "unable to ")
+
+
+def _is_negated_in_sentence(text: str, keyword: str) -> bool:
+    """Check if keyword appears near a negation phrase within 30 chars."""
+    idx = text.find(keyword)
+    while idx >= 0:
+        window = text[max(0, idx - 30):idx]
+        if any(neg in window for neg in _NEGATION_PHRASES):
+            return True
+        idx = text.find(keyword, idx + len(keyword))
+    return False
+
+
+def _detect_greenwashing_signals(claims: list, text: str) -> list[str]:
+    """Detect specific greenwashing signal phrases from extracted claims."""
+    signals: list[str] = []
+    vague_claims = [c for c in claims if c.category in ("intent", "activity")]
+    outcome_claims = [c for c in claims if c.category in ("outcome", "output")]
+
+    if len(vague_claims) > len(outcome_claims) * 2 and len(vague_claims) > 3:
+        signals.append(
+            f"Aspirational bias: {len(vague_claims)} intent/activity claims vs {len(outcome_claims)} outcome/output claims"
+        )
+
+    unsubstantiated = [c for c in claims if not c.mapped_metrics and c.confidence < 0.5]
+    if len(unsubstantiated) > len(claims) * 0.5 and len(unsubstantiated) > 2:
+        signals.append(
+            f"Low substantiation: {len(unsubstantiated)}/{len(claims)} claims lack metric mappings"
+        )
+
+    import re
+    text_lower = text[:5000].lower()
+    vague_phrases = [
+        "committed to", "dedicated to", "striving for", "aim to", "aspire to",
+        "plan to", "working toward", "believe in", "hope to",
+    ]
+    buzzwords = [
+        "sustainable", "green", "eco-friendly", "purpose-driven", "impact-driven",
+        "carbon-neutral", "net-zero", "climate-positive",
+    ]
+    vague_found = [p for p in vague_phrases if p in text_lower]
+    if len(vague_found) >= 3:
+        signals.append(
+            f"Vague language: found {len(vague_found)} aspiration phrases ({', '.join(vague_found[:4])})"
+        )
+    buzz_found = [b for b in buzzwords if b in text_lower]
+    if len(buzz_found) >= 4:
+        signals.append(
+            f"Buzzword density: {len(buzz_found)} buzzwords without substantiation ({', '.join(buzz_found[:4])})"
+        )
+
+    has_numeric = bool(re.search(r"\b\d+[%,.\d]*\s*(?:beneficiar|people|household|farmer|patient|student)", text_lower))
+    if not has_numeric and claims:
+        signals.append("No quantified beneficiary numbers found in the document")
+
+    return signals
+
+
+def _detect_geography(text: str) -> str:
+    """Detect primary geography from document text using region and country mentions."""
+    import re
+    text_lower = text[:5000].lower()
+    geo_patterns: dict[str, list[str]] = {
+        "Sub-Saharan Africa": ["sub-saharan", "east africa", "west africa", "central africa", "southern africa"],
+        "Kenya": ["kenya", "nairobi"],
+        "Nigeria": ["nigeria", "lagos", "abuja"],
+        "South Africa": ["south africa", "johannesburg", "cape town"],
+        "India": ["india", "mumbai", "delhi", "bangalore", "hyderabad"],
+        "China": ["china", "beijing", "shanghai", "shenzhen"],
+        "Indonesia": ["indonesia", "jakarta"],
+        "Malaysia": ["malaysia", "kuala lumpur"],
+        "Vietnam": ["vietnam", "ho chi minh"],
+        "Brazil": ["brazil", "são paulo", "sao paulo"],
+        "Colombia": ["colombia", "bogotá", "bogota"],
+        "Mexico": ["mexico", "mexico city"],
+        "Southeast Asia": ["southeast asia", "asean", "mekong"],
+        "South Asia": ["south asia", "subcontinent"],
+        "Latin America": ["latin america", "latam", "central america"],
+        "Middle East": ["middle east", "mena", "gulf states"],
+        "Europe": ["europe", "european union"],
+        "North America": ["united states", "usa", "canada"],
+        "Pacific": ["pacific island", "oceania"],
+    }
+    best_geo = ""
+    best_count = 0
+    for region, keywords in geo_patterns.items():
+        count = sum(1 for kw in keywords if kw in text_lower)
+        if count > best_count:
+            best_count = count
+            best_geo = region
+    country_pattern = re.search(
+        r'(?:headquartered|based|located|operating|operations)\s+in\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)',
+        text[:3000],
+    )
+    if country_pattern and not best_geo:
+        best_geo = country_pattern.group(1).strip()
+    return best_geo
+
+
 def _save_company_yaml(company, yaml_path: str, cwd) -> None:
     """Save a Company model as YAML for reuse."""
     import yaml
@@ -520,6 +642,7 @@ def _save_company_yaml(company, yaml_path: str, cwd) -> None:
         "name": company.name,
         "description": company.description[:300],
         "sector": company.sector,
+        "geography": company.geography,
         "impact_themes": company.impact_themes,
         "sdg_claims": company.sdg_claims,
         "reported_metrics": {k: v for k, v in company.reported_metrics.items()},

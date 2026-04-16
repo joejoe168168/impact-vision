@@ -18,6 +18,7 @@ class CrossReference(BaseModel):
     sfdr_pai: list[int] = Field(default_factory=list)
     sasb_dimension: str = ""
     tcfd: list[str] = Field(default_factory=list)
+    issb: list[str] = Field(default_factory=list)
     sdg_goals: list[int] = Field(default_factory=list)
 
 
@@ -31,6 +32,7 @@ CROSS_REFERENCE_MAP: list[CrossReference] = [
         sfdr_pai=[1],
         sasb_dimension="Environment",
         tcfd=["MET-B"],
+        issb=["S2-MT-1"],
         sdg_goals=[13],
     ),
     CrossReference(
@@ -39,6 +41,7 @@ CROSS_REFERENCE_MAP: list[CrossReference] = [
         edci=["EDCI-E2"],
         sfdr_pai=[1],
         tcfd=["MET-B"],
+        issb=["S2-MT-1"],
         sdg_goals=[13],
     ),
     CrossReference(
@@ -47,6 +50,7 @@ CROSS_REFERENCE_MAP: list[CrossReference] = [
         edci=["EDCI-E3"],
         sfdr_pai=[1],
         tcfd=["MET-B"],
+        issb=["S2-MT-1"],
         sdg_goals=[13],
     ),
     CrossReference(
@@ -56,12 +60,14 @@ CROSS_REFERENCE_MAP: list[CrossReference] = [
         sfdr_pai=[1, 2, 3],
         sasb_dimension="Environment",
         tcfd=["MET-B"],
+        issb=["S2-MT-1"],
         sdg_goals=[13],
     ),
     CrossReference(
         concept="Carbon Footprint (Portfolio-Level)",
         sfdr_pai=[2],
         tcfd=["MET-B"],
+        issb=["S2-MT-1"],
         sdg_goals=[13],
     ),
     CrossReference(
@@ -69,6 +75,7 @@ CROSS_REFERENCE_MAP: list[CrossReference] = [
         sfdr_pai=[3],
         gri=["305-4"],
         tcfd=["MET-B"],
+        issb=["S2-MT-1"],
         sdg_goals=[13],
     ),
     # Energy
@@ -349,6 +356,8 @@ def format_cross_reference(xref: CrossReference) -> str:
         parts.append(f"  SFDR PAI: {', '.join(f'#{n}' for n in xref.sfdr_pai)}")
     if xref.tcfd:
         parts.append(f"  TCFD: {', '.join(xref.tcfd)}")
+    if xref.issb:
+        parts.append(f"  ISSB: {', '.join(xref.issb)}")
     if xref.sasb_dimension:
         parts.append(f"  SASB: {xref.sasb_dimension}")
     if xref.sdg_goals:

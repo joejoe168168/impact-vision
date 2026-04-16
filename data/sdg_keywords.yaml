@@ -1,0 +1,68 @@
+# SDG Keyword Mapping Configuration
+# Customize keyword-to-SDG mappings for your fund's thesis.
+# Format: keyword: [[goal_number, relevance_score], ...]
+# Relevance scores are 0.0-1.0.
+
+# Sector-level SDG relevance (sector keyword -> {SDG_number: relevance})
+sector_sdg_relevance:
+  agriculture: {1: 0.6, 2: 0.9, 3: 0.3, 6: 0.5, 8: 0.5, 12: 0.7, 13: 0.6, 15: 0.7}
+  livestock: {1: 0.5, 2: 0.8, 3: 0.3, 6: 0.4, 8: 0.4, 12: 0.6, 13: 0.7, 15: 0.5}
+  healthcare: {1: 0.4, 3: 0.9, 5: 0.3, 8: 0.4, 10: 0.5, 17: 0.3}
+  health: {1: 0.4, 3: 0.9, 5: 0.3, 8: 0.4, 10: 0.5, 17: 0.3}
+  energy: {7: 0.9, 8: 0.5, 9: 0.5, 11: 0.4, 13: 0.8}
+  solar: {7: 0.9, 9: 0.4, 11: 0.4, 13: 0.8}
+  education: {4: 0.9, 5: 0.5, 8: 0.6, 10: 0.5}
+  fintech: {1: 0.6, 5: 0.4, 8: 0.7, 9: 0.5, 10: 0.6}
+  financial: {1: 0.6, 5: 0.4, 8: 0.7, 9: 0.5, 10: 0.6}
+  water: {3: 0.4, 6: 0.9, 11: 0.4, 14: 0.5}
+  technology: {4: 0.3, 8: 0.5, 9: 0.7, 10: 0.4, 11: 0.4}
+  real estate: {7: 0.3, 9: 0.3, 11: 0.8, 13: 0.4}
+  housing: {1: 0.4, 7: 0.3, 11: 0.8}
+
+# Keyword-to-SDG mappings (keyword -> [[goal, relevance], ...])
+keyword_sdg_map:
+  poverty: [[1, 0.8]]
+  hunger: [[2, 0.8]]
+  food: [[2, 0.7], [12, 0.3]]
+  farm: [[2, 0.6], [15, 0.3]]
+  health: [[3, 0.7]]
+  medical: [[3, 0.7]]
+  education: [[4, 0.8]]
+  school: [[4, 0.7]]
+  training: [[4, 0.5]]
+  gender: [[5, 0.7]]
+  women: [[5, 0.7]]
+  water: [[6, 0.8]]
+  sanitation: [[6, 0.7]]
+  energy: [[7, 0.7]]
+  solar: [[7, 0.8], [13, 0.4]]
+  renewable: [[7, 0.8], [13, 0.5]]
+  employment: [[8, 0.6]]
+  jobs: [[8, 0.6]]
+  livelihood: [[1, 0.5], [8, 0.6]]
+  infrastructure: [[9, 0.6]]
+  innovation: [[9, 0.5]]
+  inequality: [[10, 0.7]]
+  inclusion: [[10, 0.5], [5, 0.3]]
+  urban: [[11, 0.6]]
+  city: [[11, 0.5]]
+  waste: [[12, 0.6]]
+  recycling: [[12, 0.7]]
+  sustainable: [[12, 0.4]]
+  climate: [[13, 0.8]]
+  carbon: [[13, 0.7]]
+  emission: [[13, 0.7]]
+  ocean: [[14, 0.7]]
+  marine: [[14, 0.7]]
+  forest: [[15, 0.7]]
+  biodiversity: [[15, 0.7]]
+  land: [[15, 0.4]]
+  justice: [[16, 0.6]]
+  governance: [[16, 0.5]]
+  partnership: [[17, 0.5]]
+  rural: [[1, 0.4], [2, 0.3], [11, 0.3]]
+  smallholder: [[1, 0.5], [2, 0.6]]
+  pollution: [[6, 0.3], [13, 0.4], [14, 0.3], [15, 0.3]]
+  pig: [[2, 0.5], [12, 0.4]]
+  livestock: [[2, 0.6], [12, 0.5], [13, 0.4]]
+  poultry: [[2, 0.5]]

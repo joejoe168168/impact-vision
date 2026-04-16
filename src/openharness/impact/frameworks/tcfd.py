@@ -210,5 +210,9 @@ def assess_tcfd_alignment(
     result["total_disclosures"] = total
     result["addressed_disclosures"] = addressed
     result["overall_coverage"] = round(addressed / total * 100, 1) if total > 0 else 0
+    result["issb_note"] = (
+        "TCFD has been subsumed by ISSB IFRS S2 (effective 2024). "
+        "Consider using framework='issb_s2' for the latest climate disclosure requirements."
+    )
 
     return result

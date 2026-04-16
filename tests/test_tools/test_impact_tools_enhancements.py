@@ -492,3 +492,203 @@ class TestSASBExpanded:
         from openharness.impact.frameworks.sasb import get_sasb_industries
         industries = get_sasb_industries()
         assert len(industries) >= 25
+
+
+class TestDataQualityTool:
+    def test_data_quality_input_model(self):
+        from openharness.tools.impact.data_quality_tool import DataQualityInput
+        inp = DataQualityInput(
+            reported_metrics={"OI4112": "500", "PI4060": "n/a"},
+            required_metrics=["OI4112", "OI9090"],
+        )
+        assert inp.action == "assess"
+        assert "OI4112" in inp.reported_metrics
+        assert "OI9090" in inp.required_metrics
+
+    def test_data_quality_placeholder_detection(self):
+        from openharness.tools.impact.data_quality_tool import _PLACEHOLDER_VALUES
+        assert "n/a" in _PLACEHOLDER_VALUES
+        assert "tbd" in _PLACEHOLDER_VALUES
+        assert "none" in _PLACEHOLDER_VALUES
+
+    def test_extract_number(self):
+        from openharness.tools.impact.data_quality_tool import _extract_number
+        assert _extract_number("500") == 500.0
+        assert _extract_number("1,200.50 tons") == 1200.50
+        assert _extract_number("not a number") is None
+        assert _extract_number("") is None
+
+    def test_looks_numeric_metric(self):
+        from openharness.tools.impact.data_quality_tool import _looks_numeric_metric
+        assert _looks_numeric_metric("number of employees") is True
+        assert _looks_numeric_metric("USD amount") is True
+        assert _looks_numeric_metric(None) is True
+
+
+class TestImpactRiskOpportunityTool:
+    def test_risk_input_has_geography(self):
+        from openharness.tools.impact.impact_risk_opportunity_tool import ImpactRiskOpportunityInput
+        inp = ImpactRiskOpportunityInput(
+            company_name="Test",
+            description="A test company",
+            geography="Kenya",
+        )
+        assert inp.geography == "Kenya"
+
+    def test_risk_tool_import(self):
+        from openharness.tools.impact.impact_risk_opportunity_tool import ImpactRiskOpportunityTool
+        tool = ImpactRiskOpportunityTool()
+        assert tool.name == "impact_risk_opportunity"
+
+
+class TestMetricRecommenderTool:
+    def test_recommender_input_has_geography(self):
+        from openharness.tools.impact.metric_recommender_tool import MetricRecommenderInput
+        inp = MetricRecommenderInput(
+            company_name="Test",
+            description="A test company",
+            sector="Healthcare",
+            geography="India",
+        )
+        assert inp.geography == "India"
+        assert inp.sector == "Healthcare"
+
+    def test_recommender_tool_import(self):
+        from openharness.tools.impact.metric_recommender_tool import MetricRecommenderTool
+        tool = MetricRecommenderTool()
+        assert tool.name == "impact_metric_recommender"
+
+
+class TestPortfolioTool:
+    def test_portfolio_input_has_geography(self):
+        from openharness.tools.impact.portfolio_tool import PortfolioInput
+        inp = PortfolioInput(
+            action="analyze_companies",
+            geography="Southeast Asia",
+            companies=[{"name": "A", "sector": "Energy"}],
+        )
+        assert inp.geography == "Southeast Asia"
+
+    def test_aggregate_empty(self):
+        from openharness.tools.impact.portfolio_tool import _aggregate_results
+        result = _aggregate_results([])
+        assert result == {}
+
+    def test_company_from_dict_with_geography(self):
+        from openharness.tools.impact.portfolio_tool import _dict_to_company
+        company = _dict_to_company({"name": "Test Co", "sector": "Energy", "geography": "Kenya"})
+        assert company.geography == "Kenya"
+        assert company.name == "Test Co"
+
+
+class TestPitchDeckGeoDetection:
+    def test_detect_geography_kenya(self):
+        from openharness.tools.impact.pitch_deck_analyze_tool import _detect_geography
+        text = "Our company is based in Nairobi, Kenya and serves rural communities in East Africa."
+        result = _detect_geography(text)
+        assert result == "Kenya"
+
+    def test_detect_geography_southeast_asia(self):
+        from openharness.tools.impact.pitch_deck_analyze_tool import _detect_geography
+        text = "We operate across Southeast Asia with offices in Jakarta and Ho Chi Minh City."
+        assert "Southeast Asia" in _detect_geography(text) or "Indonesia" in _detect_geography(text) or "Vietnam" in _detect_geography(text)
+
+    def test_detect_geography_empty(self):
+        from openharness.tools.impact.pitch_deck_analyze_tool import _detect_geography
+        text = "A generic company with no location mentions."
+        result = _detect_geography(text)
+        assert result == ""
+
+    def test_detect_geography_headquartered_pattern(self):
+        from openharness.tools.impact.pitch_deck_analyze_tool import _detect_geography
+        text = "The company is headquartered in Singapore and has been growing rapidly."
+        result = _detect_geography(text)
+        assert result != ""
+
+
+class TestSDGGeoBoost:
+    def test_geo_boost_applied(self):
+        from openharness.impact.models import Company
+        from openharness.impact.sdg_mapper import _infer_sdg_from_description
+        company_no_geo = Company(
+            name="Test",
+            description="A farming company",
+            sector="agriculture",
+        )
+        company_with_geo = Company(
+            name="Test",
+            description="A farming company",
+            sector="agriculture",
+            geography="Kenya",
+        )
+        scores_no_geo = _infer_sdg_from_description(company_no_geo)
+        scores_with_geo = _infer_sdg_from_description(company_with_geo)
+        assert scores_with_geo.get(1, 0) >= scores_no_geo.get(1, 0)
+
+
+class TestSDGKeywordsYAML:
+    def test_yaml_loader_returns_dict(self):
+        from openharness.impact.sdg_mapper import _load_sdg_keywords_config
+        config = _load_sdg_keywords_config()
+        assert isinstance(config, dict)
+
+    def test_get_keyword_sdg_map_has_entries(self):
+        from openharness.impact.sdg_mapper import _get_keyword_sdg_map
+        kw_map = _get_keyword_sdg_map()
+        assert len(kw_map) > 20
+        assert "poverty" in kw_map
+
+    def test_get_sector_sdg_relevance(self):
+        from openharness.impact.sdg_mapper import _get_sector_sdg_relevance
+        sector_map = _get_sector_sdg_relevance()
+        assert "agriculture" in sector_map
+        assert 2 in sector_map["agriculture"]
+
+
+class TestConfigurableThreshold:
+    def test_min_metrics_threshold_loaded(self):
+        from openharness.impact.five_dimensions import MIN_METRICS_FOR_ABOVE_BASELINE
+        assert isinstance(MIN_METRICS_FOR_ABOVE_BASELINE, int)
+        assert MIN_METRICS_FOR_ABOVE_BASELINE >= 1
+
+    def test_scoring_config_has_threshold(self):
+        from openharness.impact.five_dimensions import _load_scoring_config
+        config = _load_scoring_config()
+        assert "min_metrics_for_above_baseline" in config
+
+
+class TestEdgeCases:
+    def test_empty_company_five_dimensions(self):
+        from openharness.impact.five_dimensions import assess_five_dimensions
+        from openharness.impact.database import get_metric_store
+        from openharness.impact.models import Company
+        try:
+            store = get_metric_store()
+        except FileNotFoundError:
+            return
+        company = Company(name="", description="")
+        result = assess_five_dimensions(company, store)
+        assert result.overall_score >= 0
+        assert result.overall_grade in ("A", "B+", "B", "B-", "C+", "C", "C-", "D+", "D", "F")
+
+    def test_empty_company_sdg_mapper(self):
+        from openharness.impact.sdg_mapper import map_sdg_alignment
+        from openharness.impact.database import get_metric_store
+        from openharness.impact.models import Company
+        try:
+            store = get_metric_store()
+        except FileNotFoundError:
+            return
+        company = Company(name="", description="")
+        result = map_sdg_alignment(company, store)
+        assert isinstance(result, list)
+
+    def test_sdg_alignment_provenance_default(self):
+        from openharness.impact.models import SDGAlignment
+        alignment = SDGAlignment(goal=1, goal_name="No Poverty", score=25.0, confidence="low")
+        assert alignment.provenance == "estimated"
+
+    def test_company_geography_default(self):
+        from openharness.impact.models import Company
+        company = Company(name="Test")
+        assert company.geography == ""

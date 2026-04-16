@@ -8,6 +8,7 @@ from openharness.impact.database import get_metric_store
 from openharness.impact.five_dimensions import assess_five_dimensions
 from openharness.impact.models import Company
 from openharness.tools.impact.common import infer_themes, normalize_metric_map
+from openharness.tools.impact.exclusion_screening_tool import quick_exclusion_check
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 
@@ -57,6 +58,8 @@ class FiveDimensionAssessTool(BaseTool):
             reported_metrics=reported_metrics,
         )
 
+        exclusion = quick_exclusion_check(company.name, company.description, company.sector)
+
         result = assess_five_dimensions(
             company, store, theme=args.focus_theme or None
         )
@@ -65,11 +68,19 @@ class FiveDimensionAssessTool(BaseTool):
         lines = [
             f"5-Dimension Impact Assessment: {company.name}",
             "=" * 60,
+        ]
+        if not exclusion["passed"]:
+            lines.append("⛔ EXCLUSION SCREENING WARNING")
+            lines.append(f"  Flagged: {'; '.join(exclusion['flags'][:3])}")
+            lines.append("  Run `exclusion_screening` tool for full details before proceeding.")
+            lines.append("")
+
+        lines.extend([
             f"Impact Theme: {result.impact_theme or 'General'}",
             f"Overall Grade: {result.overall_grade} ({result.overall_score}/5.0)",
             f"Confidence: {prov_label.get(result.overall_provenance, result.overall_provenance)}",
             "",
-        ]
+        ])
         if result.overall_provenance != "evidence-based":
             lines.append("⚠ Scores below are estimated from sector baselines and description keywords.")
             lines.append("  Report IRIS+ metrics to upgrade to evidence-based scoring.")

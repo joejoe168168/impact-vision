@@ -2,6 +2,11 @@
 # Customize sector baselines, keyword boosts, and theme hints for your fund's thesis.
 # Changes here take effect on next assessment run (no code changes needed).
 
+# Minimum number of reported metrics required before allowing above-baseline scores.
+# Scores are capped at 2.5/5.0 when fewer metrics are reported.
+# Seed-stage funds may want 1-2; growth funds may require 5+.
+min_metrics_for_above_baseline: 3
+
 # Sector baseline scores (0-5 scale per dimension)
 # Companies matching a sector keyword get at least these baseline scores.
 sector_baselines:

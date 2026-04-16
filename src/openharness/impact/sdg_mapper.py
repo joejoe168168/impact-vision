@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
+import yaml
+
 from openharness.impact.database import MetricStore
 from openharness.impact.models import Company, SDGAlignment
 from openharness.impact.sdg_taxonomy import get_sdg_goal
 
-_SECTOR_SDG_RELEVANCE: dict[str, dict[int, float]] = {
+_DEFAULTS_SECTOR_SDG: dict[str, dict[int, float]] = {
     "agriculture": {1: 0.6, 2: 0.9, 3: 0.3, 6: 0.5, 8: 0.5, 12: 0.7, 13: 0.6, 15: 0.7},
     "livestock": {1: 0.5, 2: 0.8, 3: 0.3, 6: 0.4, 8: 0.4, 12: 0.6, 13: 0.7, 15: 0.5},
     "healthcare": {1: 0.4, 3: 0.9, 5: 0.3, 8: 0.4, 10: 0.5, 17: 0.3},
@@ -22,7 +26,7 @@ _SECTOR_SDG_RELEVANCE: dict[str, dict[int, float]] = {
     "housing": {1: 0.4, 7: 0.3, 11: 0.8},
 }
 
-_KEYWORD_SDG_MAP: dict[str, list[tuple[int, float]]] = {
+_DEFAULTS_KEYWORD_SDG: dict[str, list[tuple[int, float]]] = {
     "poverty": [(1, 0.8)],
     "hunger": [(2, 0.8)],
     "food": [(2, 0.7), (12, 0.3)],
@@ -70,21 +74,110 @@ _KEYWORD_SDG_MAP: dict[str, list[tuple[int, float]]] = {
     "poultry": [(2, 0.5)],
 }
 
+_sdg_config_cache: dict | None = None
+
+
+def _load_sdg_keywords_config() -> dict:
+    """Load SDG keyword config from data/sdg_keywords.yaml with fallback to defaults."""
+    global _sdg_config_cache
+    if _sdg_config_cache is not None:
+        return _sdg_config_cache
+
+    config_paths = [
+        Path(__file__).parent.parent.parent.parent / "data" / "sdg_keywords.yaml",
+        Path("data/sdg_keywords.yaml"),
+    ]
+    for path in config_paths:
+        if path.exists():
+            try:
+                raw = yaml.safe_load(path.read_text(encoding="utf-8"))
+                if isinstance(raw, dict):
+                    _sdg_config_cache = raw
+                    return _sdg_config_cache
+            except Exception:
+                pass
+    _sdg_config_cache = {}
+    return _sdg_config_cache
+
+
+def _get_sector_sdg_relevance() -> dict[str, dict[int, float]]:
+    config = _load_sdg_keywords_config()
+    raw = config.get("sector_sdg_relevance")
+    if not raw or not isinstance(raw, dict):
+        return _DEFAULTS_SECTOR_SDG
+    result: dict[str, dict[int, float]] = {}
+    for sector, mapping in raw.items():
+        result[str(sector)] = {int(k): float(v) for k, v in mapping.items()}
+    return result
+
+
+def _get_keyword_sdg_map() -> dict[str, list[tuple[int, float]]]:
+    config = _load_sdg_keywords_config()
+    raw = config.get("keyword_sdg_map")
+    if not raw or not isinstance(raw, dict):
+        return _DEFAULTS_KEYWORD_SDG
+    result: dict[str, list[tuple[int, float]]] = {}
+    for keyword, pairs in raw.items():
+        result[str(keyword)] = [(int(p[0]), float(p[1])) for p in pairs]
+    return result
+
+
+_NEGATION_PHRASES = ("not ", "no ", "don't ", "doesn't ", "do not ", "does not ", "without ", "lack ", "unable to ")
+
+
+def _keyword_not_negated(text: str, keyword: str) -> bool:
+    """Check that keyword appears in text without nearby negation within a 30-char window."""
+    idx = text.find(keyword)
+    while idx >= 0:
+        window = text[max(0, idx - 30):idx].lower()
+        if not any(neg in window for neg in _NEGATION_PHRASES):
+            return True
+        idx = text.find(keyword, idx + len(keyword))
+    return False
+
+
+_GEO_SDG_BOOST: dict[str, dict[int, float]] = {
+    "africa": {1: 0.3, 2: 0.3, 3: 0.2, 6: 0.2, 7: 0.2},
+    "sub-saharan": {1: 0.3, 2: 0.3, 3: 0.2, 6: 0.2, 7: 0.2},
+    "south asia": {1: 0.2, 2: 0.2, 4: 0.2, 5: 0.2, 6: 0.2},
+    "southeast asia": {1: 0.2, 2: 0.2, 8: 0.2, 13: 0.2, 14: 0.2},
+    "latin america": {1: 0.2, 10: 0.2, 15: 0.2, 16: 0.2},
+    "pacific": {13: 0.3, 14: 0.3, 15: 0.2},
+    "middle east": {6: 0.3, 7: 0.2, 8: 0.2},
+    "europe": {7: 0.1, 12: 0.2, 13: 0.2},
+    "china": {7: 0.1, 9: 0.2, 11: 0.2, 13: 0.2},
+    "india": {1: 0.2, 3: 0.2, 4: 0.2, 6: 0.2, 8: 0.2},
+    "kenya": {1: 0.3, 2: 0.3, 3: 0.2, 8: 0.2},
+    "nigeria": {1: 0.3, 3: 0.2, 4: 0.2, 7: 0.2},
+    "malaysia": {2: 0.2, 8: 0.2, 12: 0.2, 13: 0.2, 15: 0.2},
+    "indonesia": {1: 0.2, 2: 0.2, 13: 0.2, 14: 0.2, 15: 0.2},
+    "brazil": {1: 0.2, 2: 0.2, 10: 0.2, 15: 0.2},
+}
+
 
 def _infer_sdg_from_description(company: Company) -> dict[int, float]:
     """Infer SDG relevance from company description and sector."""
     text = f"{company.description} {company.sector} {' '.join(company.impact_themes)}".lower()
     inferred: dict[int, float] = {}
 
-    for sector_key, sdg_map in _SECTOR_SDG_RELEVANCE.items():
+    sector_relevance = _get_sector_sdg_relevance()
+    for sector_key, sdg_map in sector_relevance.items():
         if sector_key in text:
             for goal, relevance in sdg_map.items():
                 inferred[goal] = max(inferred.get(goal, 0), relevance)
 
-    for keyword, sdg_list in _KEYWORD_SDG_MAP.items():
-        if keyword in text:
+    keyword_map = _get_keyword_sdg_map()
+    for keyword, sdg_list in keyword_map.items():
+        if keyword in text and _keyword_not_negated(text, keyword):
             for goal, relevance in sdg_list:
                 inferred[goal] = max(inferred.get(goal, 0), relevance)
+
+    if company.geography:
+        geo_lower = company.geography.lower()
+        for geo_key, sdg_boosts in _GEO_SDG_BOOST.items():
+            if geo_key in geo_lower:
+                for goal, boost in sdg_boosts.items():
+                    inferred[goal] = min(1.0, inferred.get(goal, 0) + boost)
 
     for goal_num in company.sdg_claims:
         inferred[goal_num] = max(inferred.get(goal_num, 0), 0.7)

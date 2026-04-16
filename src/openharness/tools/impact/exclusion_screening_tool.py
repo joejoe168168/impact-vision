@@ -146,3 +146,15 @@ class ExclusionScreeningTool(BaseTool):
                 lines.append("")
 
         return ToolResult(output="\n".join(lines), metadata=payload)
+
+
+def quick_exclusion_check(company_name: str, description: str, sector: str) -> dict:
+    """Lightweight exclusion check for embedding in other tools. Returns {passed, flags}."""
+    criteria = _load_exclusion_criteria()
+    text = f"{company_name} {description} {sector}".lower()
+    flags: list[str] = []
+    for category_id, cat in criteria.items():
+        matched = [kw for kw in cat.get("keywords", []) if kw.lower() in text]
+        if matched:
+            flags.append(f"{cat.get('label', category_id)} ({', '.join(matched)})")
+    return {"passed": len(flags) == 0, "flags": flags}

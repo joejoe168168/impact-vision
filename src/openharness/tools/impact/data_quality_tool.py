@@ -81,6 +81,23 @@ class DataQualityTool(BaseTool):
         )
         quality_score = max(0, 100 - penalties)
 
+        greenwashing_flags: list[str] = []
+        bad_count = len(placeholder_values) + len(non_numeric_values)
+        if bad_count > 0 and len(metrics) > 0:
+            bad_ratio = bad_count / len(metrics)
+            if bad_ratio >= 0.5:
+                greenwashing_flags.append(
+                    f"High impact-washing risk: {int(bad_ratio * 100)}% of reported metrics have placeholder or invalid values"
+                )
+            elif bad_ratio >= 0.25:
+                greenwashing_flags.append(
+                    f"Moderate impact-washing risk: {int(bad_ratio * 100)}% of reported metrics have quality issues"
+                )
+        if missing_required and len(missing_required) > len(required) * 0.5:
+            greenwashing_flags.append(
+                f"Missing {len(missing_required)}/{len(required)} required metrics may indicate selective reporting"
+            )
+
         payload = {
             "metrics_provided": len(metrics),
             "quality_score": quality_score,
@@ -88,6 +105,7 @@ class DataQualityTool(BaseTool):
             "placeholder_values": placeholder_values,
             "non_numeric_values": non_numeric_values,
             "missing_required": missing_required,
+            "greenwashing_flags": greenwashing_flags,
             "recommendations": _recommendations(unknown_ids, placeholder_values, non_numeric_values, missing_required),
         }
 
@@ -115,6 +133,13 @@ class DataQualityTool(BaseTool):
             lines.append(f"Missing required metrics ({len(missing_required)}): {', '.join(missing_required[:15])}")
         if not any((unknown_ids, placeholder_values, non_numeric_values, missing_required)):
             lines.append("No major quality issues detected.")
+
+        if greenwashing_flags:
+            lines.append("")
+            lines.append("IMPACT-WASHING RISK FLAGS")
+            lines.append("-" * 30)
+            for flag in greenwashing_flags:
+                lines.append(f"  ⚠ {flag}")
 
         recommendations = payload["recommendations"]
         if recommendations:

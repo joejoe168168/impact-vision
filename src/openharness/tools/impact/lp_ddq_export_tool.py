@@ -360,6 +360,44 @@ class LpDdqExportTool(BaseTool):
                     for q in dd_result.high_priority_gaps[:3]:
                         parts.append(f"    - {q.question}")
 
+        if "governance" in sources:
+            parts.append("\nResponsible Investment Policy:")
+            parts.append("  [Insert link or attachment to the firm's RI/ESG policy document]")
+            parts.append("  Key elements to address:")
+            parts.append("  - ESG integration approach across the investment lifecycle")
+            parts.append("  - Exclusion criteria and norms-based screening policies")
+            parts.append("  - Voting and engagement policy")
+            parts.append("  - Escalation procedures for ESG incidents")
+
+        if "unpri" in sources:
+            parts.append("\nFramework Commitments:")
+            parts.append("  - UN PRI: [Signatory status / Date of commitment]")
+            parts.append("  - GIIN: [Membership status]")
+            parts.append("  - Operating Principles for Impact Management: [Alignment status]")
+            parts.append("  [Provide PRI Transparency Report reference if applicable]")
+
+        if "measurement_systems" in sources:
+            parts.append("\nImpact Measurement Systems:")
+            parts.append("  - Measurement framework: IRIS+ / 5 Dimensions of Impact")
+            parts.append("  - Data collection: [Describe frequency and methodology]")
+            parts.append("  - Third-party verification: [Status of external audit/verification]")
+            parts.append("  - Reporting cadence: [Quarterly / Semi-annual / Annual]")
+
+        if "team" in sources:
+            parts.append("\nESG Training & Capacity:")
+            parts.append("  - [Describe ESG training programs for investment professionals]")
+            parts.append("  - [Number of team members with ESG/impact credentials]")
+            parts.append("  - [External advisors or committees with ESG expertise]")
+
+        if "outcomes" in sources:
+            parts.append("\nImpact Performance & Outcomes:")
+            parts.append("  [Insert specific case studies demonstrating impact outcomes]")
+            parts.append("  Example format:")
+            parts.append("    Portfolio Company: [Name]")
+            parts.append("    Impact achieved: [Quantified outcome, e.g., '500 smallholder farmers reached']")
+            parts.append("    Measurement method: [How outcome was verified]")
+            parts.append("    Attribution: [Fund's contribution to the outcome]")
+
         if "risk" in sources:
             risk_note = "Impact risk management includes ongoing monitoring of:"
             parts.append(f"\n{risk_note}")
@@ -369,6 +407,8 @@ class LpDdqExportTool(BaseTool):
                 parts.append(f"  - Exclusion flags: {', '.join(company.exclusion_flags)}")
             else:
                 parts.append("  - No exclusion flags identified")
+            parts.append("  - [Describe material ESG incidents and responses, if any]")
+            parts.append("  - [Describe ESG risk monitoring process during holding period]")
 
         if any(src in sources for src in ("edci_environment", "edci_social", "edci_governance")):
             parts.append("\nEDCI Reporting:")

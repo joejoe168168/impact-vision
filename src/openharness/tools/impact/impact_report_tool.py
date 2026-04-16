@@ -212,6 +212,10 @@ class ImpactReportTool(BaseTool):
         report_data["impact_analysis"] = _infer_opportunities_and_risks(company)
         report_data["greenwashing"] = assess_greenwashing(company)
 
+        if company.impact_targets:
+            from openharness.impact.trend_analysis import assess_target_progress
+            report_data["target_tracking"] = assess_target_progress(company)
+
         from openharness.impact.benchmarks import compare_to_benchmark
         if "five_dimensions" in report_data and company.sector:
             fd = report_data["five_dimensions"]
@@ -643,13 +647,14 @@ tr:hover td {{ background: var(--primary-light); }}
 <div class="cards-row">
 <div class="score-card"><div class="value {grade_class}" id="main-grade">{fd['overall_grade']}</div><div class="label">Overall Grade</div></div>
 <div class="score-card"><div class="value" id="main-overall">{fd['overall_score']:.1f}<span style="font-size:0.5em;color:var(--text-secondary)">/5</span></div><div class="label">Overall Score</div></div>
+<div class="score-card"><div class="value" style="font-size:0.9em;color:{'var(--success)' if fd.get('overall_provenance') == 'evidence-based' else 'var(--warning)' if fd.get('overall_provenance') == 'partial' else 'var(--danger)'}">{'Evidence-Based' if fd.get('overall_provenance') == 'evidence-based' else 'Partial' if fd.get('overall_provenance') == 'partial' else 'Estimated'}</div><div class="label">Confidence</div></div>
 <div class="score-card" id="delta-card" style="display:none"><div class="value" id="main-delta" style="font-size:1.4em;color:var(--text-secondary)">+0.0</div><div class="label">Improvement</div></div>
 </div>
 <div class="chart-row">
 <div class="chart-box" id="radar-chart"></div>
 <div class="chart-box">
 <table>
-<tr><th>Dimension</th><th>Score</th><th style="min-width:160px">Progress</th><th>Metrics</th><th>Details</th></tr>
+<tr><th>Dimension</th><th>Score</th><th style="min-width:160px">Progress</th><th>Confidence</th><th>Metrics</th><th>Details</th></tr>
 """)
         dims_js = []
         scores_js = []
@@ -665,16 +670,36 @@ tr:hover td {{ background: var(--primary-light); }}
             metric_color = "var(--success)" if metric_pct >= 50 else "var(--warning)" if metric_pct > 0 else "var(--danger)"
             gaps_preview = ", ".join(g.split(" (")[0] for g in dim.get("gaps", [])[:3])
             gaps_tooltip = f' title="{gaps_preview}"' if gaps_preview else ""
+            prov = dim.get("provenance", "estimated")
+            prov_color = "var(--success)" if prov == "evidence-based" else "var(--warning)" if prov == "partial" else "var(--text-secondary)"
+            prov_label = prov.replace("-", " ").title() if prov else "Estimated"
             sections.append(f"""<tr>
 <td><strong>{dim['dimension']}</strong></td>
 <td style="font-weight:600" id="dim-score-{dim_name}">{dim['score']}/5</td>
 <td><div class="bar-track"><div class="bar-fill {bar_color}" id="dim-bar-{dim_name}" style="width:{pct}%"></div></div></td>
+<td style="font-size:0.8em;color:{prov_color};font-weight:500">{prov_label}</td>
 <td style="font-size:0.85em;white-space:nowrap"><span style="color:{metric_color};font-weight:600">{reported}/{available}</span>
 <span style="color:var(--text-secondary)"{gaps_tooltip}>{' tracked' if reported > 0 else ' not tracked'}</span></td>
 <td style="font-size:0.85em;color:var(--text-secondary)">{dim['notes']}</td>
 </tr>""")
 
         sections.append("</table>")
+
+        overall_prov = fd.get("overall_provenance", "estimated")
+        if overall_prov in ("estimated", "partial"):
+            disclaimer_color = "var(--warning-light)" if overall_prov == "partial" else "var(--danger-light)"
+            disclaimer_border = "var(--warning)" if overall_prov == "partial" else "var(--danger)"
+            disclaimer_text = (
+                "Scores are primarily <strong>estimated</strong> from keywords and sector heuristics. "
+                "Report at least 3 IRIS+ metrics per dimension for evidence-based scores."
+            ) if overall_prov == "estimated" else (
+                "Some scores are based on <strong>partial evidence</strong>. "
+                "Additional reported metrics will strengthen the assessment."
+            )
+            sections.append(f"""
+<div style="margin:12px 0;padding:12px 16px;background:{disclaimer_color};border-left:4px solid {disclaimer_border};border-radius:var(--radius-sm);font-size:0.85em">
+{disclaimer_text}
+</div>""")
 
         total_reported = sum(fd[d].get("metrics_reported", 0) for d in ["what", "who", "how_much", "contribution", "risk"])
         total_available = sum(fd[d].get("metrics_available", 0) for d in ["what", "who", "how_much", "contribution", "risk"])
@@ -709,6 +734,39 @@ Plotly.newPlot('radar-chart', [{{
             sections.append("<h3>Recommendations</h3>")
             for r in fd["recommendations"]:
                 sections.append(f'<div class="rec">{r}</div>')
+
+    if "target_tracking" in data:
+        tt = data["target_tracking"]
+        targets = tt.get("targets", [])
+        if targets:
+            sections.append("<h2>Impact Target Tracking</h2>")
+            sections.append("<table><tr><th>Metric</th><th>Target</th><th>Current</th><th>Progress</th><th>Status</th></tr>")
+            status_colors = {
+                "exceeded": "var(--success)", "on_track": "var(--success)",
+                "behind": "var(--warning)", "at_risk": "var(--danger)", "no_data": "var(--text-secondary)",
+            }
+            status_icons = {
+                "exceeded": "🟢", "on_track": "🟢",
+                "behind": "🟡", "at_risk": "🔴", "no_data": "⚪",
+            }
+            for t in targets:
+                color = status_colors.get(t["status"], "var(--text-secondary)")
+                icon = status_icons.get(t["status"], "")
+                pct = t.get("progress_pct", 0)
+                pct_display = f"{pct:.0f}%" if pct else "N/A"
+                sections.append(f"""<tr>
+<td>{t['metric_id']}</td>
+<td>{t.get('target_description', 'N/A')}</td>
+<td>{t.get('current_value', 'N/A')}</td>
+<td><div class="bar-track"><div class="bar-fill" style="width:{min(pct, 100):.0f}%;background:{color}"></div></div> {pct_display}</td>
+<td style="color:{color};font-weight:600">{icon} {t['status'].replace('_', ' ').title()}</td>
+</tr>""")
+            sections.append("</table>")
+            summary = tt.get("summary", {})
+            if summary:
+                sections.append(f"""<div style="margin-top:12px;padding:12px 16px;background:var(--primary-light);border-radius:var(--radius-sm);font-size:0.85em">
+<strong>Target Summary:</strong> {summary.get('on_track', 0)} on track, {summary.get('behind', 0)} behind, {summary.get('exceeded', 0)} exceeded, {summary.get('at_risk', 0)} at risk
+</div>""")
 
     if "sdg_alignments" in data:
         aligned = [a for a in data["sdg_alignments"] if a["score"] > 0]
