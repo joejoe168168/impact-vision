@@ -1066,8 +1066,14 @@ def _test_api_connection(manager, profile_name: str, model: str) -> None:
     """Send a minimal API request to verify the key and endpoint work."""
     import httpx
 
+    from openharness.auth.storage import load_credential
+    from openharness.config.settings import credential_storage_provider_name
+
     profile = manager.list_profiles()[profile_name]
-    cred = manager.get_profile_credential(profile_name, "api_key")
+    storage_ns = credential_storage_provider_name(profile_name, profile)
+    cred = load_credential(storage_ns, "api_key")
+    if not cred:
+        cred = getattr(manager.settings, "api_key", "")
     if not cred:
         print("  No API key stored -- skipping test.", flush=True)
         return
