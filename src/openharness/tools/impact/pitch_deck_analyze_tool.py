@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 from openharness.impact.database import get_metric_store
 from openharness.impact.dd_checklist import analyze_document_coverage, select_questions_for_document
 from openharness.impact.greenwashing import assess_greenwashing
-from openharness.impact.models import Company, ImpactClaim
+from openharness.impact.models import ImpactClaim
 from openharness.impact.sdg_taxonomy import get_sdg_goal
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
@@ -226,7 +226,7 @@ class PitchDeckAnalyzeTool(BaseTool):
             lines.append("GREENWASHING / IMPACT-WASHING RISK")
             lines.append("-" * 50)
             lines.append(f"  Overall Risk Score: {gw_result.overall_score}/100 — {gw_result.classification}")
-            lines.append(f"  Sub-scores:")
+            lines.append("  Sub-scores:")
             for sub_name, sub_val in [
                 ("Claim-Metric Gap", gw_result.claim_metric_gap),
                 ("Adverse Omission", gw_result.adverse_omission),
@@ -240,7 +240,7 @@ class PitchDeckAnalyzeTool(BaseTool):
                 for flag in gw_result.flags[:5]:
                     lines.append(f"    - {flag}")
             if gw_result.recommendations:
-                lines.append(f"  Recommendations:")
+                lines.append("  Recommendations:")
                 for rec in gw_result.recommendations[:3]:
                     lines.append(f"    - {rec}")
             lines.append("")

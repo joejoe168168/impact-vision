@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 
 from openharness.impact.models import Company, MetricValue
 from openharness.impact.trend_analysis import analyze_company_trends, assess_target_progress
+from openharness.tools.impact.common import normalize_impact_targets
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 
@@ -25,9 +26,13 @@ class TrendAnalysisInput(BaseModel):
             "optional: unit, source, verified (bool), notes"
         ),
     )
-    impact_targets: dict[str, str] = Field(
+    impact_targets: dict[str, str] | list[dict] = Field(
         default_factory=dict,
-        description="Metric ID -> target description (e.g. {'OI4112': '500 tCO2e by 2027'})",
+        description=(
+            "Impact targets. Accepts dict format {metric_id: description} "
+            "or structured list [{metric_id, target_value, target_unit, ...}]. "
+            "Dict entries are auto-parsed into structured targets."
+        ),
     )
     reported_metrics: dict[str, str] = Field(
         default_factory=dict,
@@ -59,13 +64,15 @@ class TrendAnalysisTool(BaseTool):
             except Exception:
                 continue
 
+        impact_targets, _ = normalize_impact_targets(args.impact_targets)
+
         company = Company(
             name=args.company_name,
             description=args.company_description,
             sector=args.sector,
             geography=args.geography,
             metric_history=history,
-            impact_targets=args.impact_targets,
+            impact_targets=impact_targets,
             reported_metrics=args.reported_metrics,
         )
 

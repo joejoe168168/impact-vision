@@ -602,13 +602,13 @@ class FrameworkTool(BaseTool):
         lines.append(f"ToC (RS Group): {toc['coverage_pct']}% alignment ({toc['addressed']}/{toc['total_principles']} principles)")
 
         issb = assess_ifrs_s1_readiness(
-            description=text, reported_metrics=args.reported_metrics,
+            description=args.description, reported_metrics=args.reported_metrics,
             targets_set=bool(args.reported_metrics),
         )
         lines.append(f"ISSB IFRS S1: {issb['overall_readiness']}% readiness ({issb['total_disclosures']} disclosures)")
 
         issb_s2 = assess_ifrs_s2_readiness(
-            description=text, reported_metrics=args.reported_metrics,
+            description=args.description, reported_metrics=args.reported_metrics,
             targets_set=bool(args.reported_metrics),
         )
         lines.append(f"ISSB IFRS S2 (Climate): {issb_s2['overall_readiness']}% readiness (subsumes TCFD)")

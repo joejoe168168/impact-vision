@@ -267,8 +267,11 @@ async def run_scheduler_loop(*, once: bool = False) -> None:
         shutdown.set()
 
     loop = asyncio.get_running_loop()
-    for sig in (signal.SIGTERM, signal.SIGINT):
-        loop.add_signal_handler(sig, _on_signal)
+    # add_signal_handler is not supported on Windows (ProactorEventLoop).
+    # Guard so the scheduler still works in once-mode on Windows.
+    if sys.platform != "win32":
+        for sig in (signal.SIGTERM, signal.SIGINT):
+            loop.add_signal_handler(sig, _on_signal)
 
     write_pid()
     logger.info("Cron scheduler started (pid=%d, tick=%ds)", os.getpid(), TICK_INTERVAL_SECONDS)

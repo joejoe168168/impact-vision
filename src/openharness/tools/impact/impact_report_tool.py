@@ -222,7 +222,17 @@ class ImpactReportTool(BaseTool):
             report_data["gap_analysis"] = gap_result
 
         report_data["impact_analysis"] = _infer_opportunities_and_risks(company)
-        report_data["greenwashing"] = assess_greenwashing(company)
+        gw = assess_greenwashing(company)
+        gw_dump = gw.model_dump()
+        # Build sub_scores dict for report rendering compatibility
+        gw_dump["sub_scores"] = {
+            "claim_metric_gap": gw.claim_metric_gap,
+            "adverse_omission": gw.adverse_omission,
+            "specificity": gw.specificity,
+            "selectivity": gw.selectivity,
+            "verification": gw.verification,
+        }
+        report_data["greenwashing"] = gw_dump
 
         if company.impact_targets:
             from openharness.impact.trend_analysis import assess_target_progress

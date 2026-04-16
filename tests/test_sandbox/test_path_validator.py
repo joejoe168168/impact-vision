@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
+
+import pytest
 
 from openharness.sandbox.path_validator import validate_sandbox_path
 
@@ -44,6 +47,7 @@ def test_dotdot_traversal_blocked(tmp_path):
     assert "outside the sandbox boundary" in reason
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="Symlinks require SeCreateSymbolicLinkPrivilege on Windows")
 def test_symlink_escape_blocked(tmp_path):
     cwd = tmp_path / "project"
     cwd.mkdir()

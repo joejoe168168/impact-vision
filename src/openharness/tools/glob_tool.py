@@ -105,7 +105,7 @@ async def _glob(root: Path, pattern: str, *, limit: int) -> list[str]:
                     break
                 line = raw.decode("utf-8", errors="replace").strip()
                 if line:
-                    lines.append(line)
+                    lines.append(Path(line).as_posix())
         finally:
             if len(lines) >= limit and process.returncode is None:
                 process.terminate()
@@ -117,6 +117,6 @@ async def _glob(root: Path, pattern: str, *, limit: int) -> list[str]:
 
     # Fallback: non-recursive patterns are usually cheap; keep Python semantics.
     return sorted(
-        str(path.relative_to(root))
+        path.relative_to(root).as_posix()
         for path in root.glob(pattern)
     )[:limit]

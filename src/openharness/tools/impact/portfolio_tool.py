@@ -25,7 +25,7 @@ from openharness.impact.fund_analytics import (
 from openharness.impact.gap_analysis import analyze_gaps
 from openharness.impact.models import Company
 from openharness.impact.sdg_mapper import map_sdg_alignment
-from openharness.tools.impact.common import infer_themes, normalize_metric_map, normalize_sdg_goals
+from openharness.tools.impact.common import infer_themes, normalize_impact_targets, normalize_metric_map, normalize_sdg_goals
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 
@@ -221,6 +221,7 @@ def _load_portfolio_file(file_path: str, context: ToolExecutionContext) -> list[
 def _dict_to_company(d: dict) -> Company:
     metrics, _ = normalize_metric_map(d.get("reported_metrics", {}))
     sdg_claims, _ = normalize_sdg_goals(d.get("sdg_claims", []))
+    impact_targets, _ = normalize_impact_targets(d.get("impact_targets", []))
     return Company(
         name=d.get("name", ""),
         sector=d.get("sector", ""),
@@ -229,6 +230,7 @@ def _dict_to_company(d: dict) -> Company:
         impact_themes=infer_themes(f"{d.get('description', '')} {d.get('sector', '')}", d.get("impact_themes", [])),
         reported_metrics=metrics,
         sdg_claims=sdg_claims,
+        impact_targets=impact_targets,
     )
 
 

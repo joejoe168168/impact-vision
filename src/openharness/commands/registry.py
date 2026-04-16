@@ -537,7 +537,7 @@ def create_default_command_registry(
                 for path in sorted(root.rglob("*"))
                 if path.is_dir() and ".git" not in path.parts and ".venv" not in path.parts
             ]
-            lines = [str(path.relative_to(root)) for path in dirs[:max_items]]
+            lines = [path.relative_to(root).as_posix() for path in dirs[:max_items]]
             if len(dirs) > max_items:
                 lines.append(f"... {len(dirs) - max_items} more")
             return CommandResult(message="\n".join(lines) if lines else "(no directories)")
@@ -551,8 +551,8 @@ def create_default_command_registry(
             if path.is_file() and ".git" not in path.parts and ".venv" not in path.parts
         ]
         if needle:
-            files = [path for path in files if needle in str(path.relative_to(root)).lower()]
-        lines = [str(path.relative_to(root)) for path in files[:max_items]]
+            files = [path for path in files if needle in path.relative_to(root).as_posix().lower()]
+        lines = [path.relative_to(root).as_posix() for path in files[:max_items]]
         if len(files) > max_items:
             lines.append(f"... {len(files) - max_items} more")
         return CommandResult(

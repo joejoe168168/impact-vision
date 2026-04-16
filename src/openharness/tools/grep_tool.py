@@ -355,6 +355,6 @@ async def _terminate_process(process: asyncio.subprocess.Process) -> None:
 
 def _format_path(path: Path, display_base: Path) -> str:
     try:
-        return str(path.relative_to(display_base))
+        return path.relative_to(display_base).as_posix()
     except ValueError:
-        return str(path)
+        return path.as_posix()

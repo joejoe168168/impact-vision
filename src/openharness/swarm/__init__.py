@@ -7,7 +7,6 @@ __all__ = ["lockfile"]
 
 def __getattr__(name: str):
     if name == "lockfile":
-        from . import lockfile
-
-        return lockfile
+        import importlib
+        return importlib.import_module("openharness.swarm.lockfile")
     raise AttributeError(name)

@@ -108,16 +108,16 @@ class TestJobsDue:
 
 class TestExecuteJob:
     @pytest.mark.asyncio
-    async def test_successful_job(self) -> None:
-        job = {"name": "echo-test", "command": "echo hello", "cwd": "/tmp"}
+    async def test_successful_job(self, tmp_path: Path) -> None:
+        job = {"name": "echo-test", "command": "echo hello", "cwd": str(tmp_path)}
         entry = await execute_job(job)
         assert entry["status"] == "success"
         assert entry["returncode"] == 0
         assert "hello" in entry["stdout"]
 
     @pytest.mark.asyncio
-    async def test_failing_job(self) -> None:
-        job = {"name": "fail-test", "command": "exit 1", "cwd": "/tmp"}
+    async def test_failing_job(self, tmp_path: Path) -> None:
+        job = {"name": "fail-test", "command": "exit 1", "cwd": str(tmp_path)}
         entry = await execute_job(job)
         assert entry["status"] == "failed"
         assert entry["returncode"] == 1

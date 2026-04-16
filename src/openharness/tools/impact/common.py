@@ -133,6 +133,8 @@ def parse_od4091_targets(value: str) -> list[dict]:
     - "3 social targets, 2 environmental targets"
     - "Reduce CO2 by 50% by 2027; Reach 100,000 farmers by 2026"
     - "500 tCO2e by 2027"
+
+    Returns list of dicts suitable for ImpactTarget construction.
     """
     if not value or not value.strip():
         return []
@@ -146,6 +148,11 @@ def parse_od4091_targets(value: str) -> list[dict]:
             continue
 
         target: dict = {"description": part}
+
+        # Try to extract a metric ID (e.g. OI4112) from the beginning
+        mid = re.match(r"^((?:PI|OI|OD|FP|PD)\d{4})[\s:,-]*", part, re.IGNORECASE)
+        if mid:
+            target["metric_id"] = mid.group(1).upper()
 
         year_match = re.search(r"\b(20\d{2})\b", part)
         if year_match:
@@ -167,3 +174,62 @@ def parse_od4091_targets(value: str) -> list[dict]:
         targets.append(target)
 
     return targets
+
+
+def normalize_impact_targets(
+    targets: dict[str, str] | list[dict] | list | None,
+) -> tuple[list, list[str]]:
+    """Normalize impact targets from various input formats into ImpactTarget objects.
+
+    Accepts:
+    - dict[str, str]: Legacy format {"OI4112": "500 tCO2e by 2027"}
+    - list[dict]: Structured format [{"metric_id": "OI4112", "target_value": 500, ...}]
+    - None: Returns empty list
+
+    Returns: (list[ImpactTarget], warnings)
+    """
+    from openharness.impact.models import ImpactTarget
+
+    if not targets:
+        return [], []
+
+    result: list[ImpactTarget] = []
+    warnings: list[str] = []
+
+    if isinstance(targets, dict):
+        # Legacy dict[str, str] format — parse each value
+        for metric_id, target_str in targets.items():
+            mid = metric_id.strip().upper()
+            if not METRIC_ID_PATTERN.match(mid):
+                warnings.append(f"Ignored invalid metric ID in target: {metric_id}")
+                continue
+            # Try to extract structured data from the target string
+            parsed = parse_od4091_targets(target_str)
+            if parsed and parsed[0].get("target_value") is not None:
+                p = parsed[0]
+                it = ImpactTarget(
+                    metric_id=mid,
+                    target_value=p.get("target_value"),
+                    target_unit=p.get("target_unit", ""),
+                    target_date=p.get("target_date", ""),
+                    description=target_str,
+                )
+            else:
+                it = ImpactTarget(metric_id=mid, description=target_str)
+            result.append(it)
+        return result, warnings
+
+    if isinstance(targets, list):
+        for item in targets:
+            if isinstance(item, ImpactTarget):
+                result.append(item)
+            elif isinstance(item, dict):
+                try:
+                    result.append(ImpactTarget(**item))
+                except Exception as e:
+                    warnings.append(f"Invalid impact target: {e}")
+            else:
+                warnings.append(f"Invalid impact target type: {type(item).__name__}")
+        return result, warnings
+
+    return result, warnings

@@ -218,15 +218,21 @@ def assess_target_progress(company: Company) -> dict:
     on_track_count = 0
     assessed_count = 0
 
-    for metric_id, target_str in company.impact_targets.items():
-        target_num = _extract_target_numeric(target_str)
+    for target in company.impact_targets:
+        metric_id = target.metric_id
+        target_num = target.target_value
+        # Fallback: try to parse from description if target_value is None
+        if target_num is None and target.description:
+            target_num = _extract_target_numeric(target.description)
+        target_display = target.description or f"{target_num} {target.target_unit}".strip()
+
         current_mv = latest_values.get(metric_id)
         current_num = _parse_numeric(current_mv.value) if current_mv else None
 
         if target_num is None or current_num is None:
             targets_result.append({
                 "metric_id": metric_id,
-                "target": target_str,
+                "target": target_display,
                 "current_value": str(current_mv.value) if current_mv else "N/A",
                 "progress_pct": None,
                 "status": "no_data",
@@ -250,7 +256,7 @@ def assess_target_progress(company: Company) -> dict:
 
         targets_result.append({
             "metric_id": metric_id,
-            "target": target_str,
+            "target": target_display,
             "target_value": target_num,
             "current_value": current_num,
             "progress_pct": progress_pct,

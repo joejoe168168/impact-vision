@@ -358,7 +358,7 @@ class LpDdqExportTool(BaseTool):
 
         if "five_dimensions" in sources and "five_dim" in data_cache:
             fd = data_cache["five_dim"]
-            parts.append(f"\n5 Dimensions of Impact Assessment:")
+            parts.append("\n5 Dimensions of Impact Assessment:")
             parts.append(f"  Overall Score: {fd.overall_score:.1f}/5.0 (Grade: {fd.overall_grade})")
             parts.append(f"  Confidence: {fd.overall_provenance}")
             dims = [

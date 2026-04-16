@@ -265,7 +265,10 @@ class TeamFile:
         path.parent.mkdir(parents=True, exist_ok=True)
         tmp = path.with_suffix(".json.tmp")
         tmp.write_text(json.dumps(self.to_dict(), indent=2), encoding="utf-8")
-        tmp.rename(path)
+        # Use os.replace() instead of Path.rename() for cross-platform
+        # atomic replacement. On Windows, Path.rename() raises
+        # FileExistsError if the destination already exists.
+        os.replace(str(tmp), str(path))
 
     @classmethod
     def load(cls, path: Path) -> "TeamFile":
