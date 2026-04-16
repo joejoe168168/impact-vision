@@ -295,7 +295,7 @@
   - File: `src/openharness/impact/frameworks/sasb.py`
   - Ref: Review §2.3
 
-- [ ] **2.5.2** Externalize SASB industry data to YAML for easier maintenance
+- [x] **2.5.2** Externalize SASB industry data to YAML for easier maintenance
   - Files: `data/sasb_industries.yaml` (new), `src/openharness/impact/frameworks/sasb.py`
   - Ref: Review §2.3
 
@@ -309,15 +309,15 @@
   - File: `src/openharness/tools/impact/portfolio_tool.py`
   - Ref: Review §4.1
 
-- [ ] **2.6.2** Add fund-level SDG contribution metric — weighted by portfolio company materiality
+- [x] **2.6.2** Add fund-level SDG contribution metric — weighted by portfolio company materiality
   - File: `src/openharness/tools/impact/portfolio_tool.py`
   - Ref: Review §4.1
 
-- [ ] **2.6.3** Add impact-weighted returns calculation stub
+- [x] **2.6.3** Add impact-weighted returns calculation stub
   - File: `src/openharness/impact/fund_analytics.py` (new)
   - Ref: Review §4.1
 
-- [ ] **2.6.4** Add portfolio-level additionality assessment heuristic
+- [x] **2.6.4** Add portfolio-level additionality assessment heuristic
   - File: `src/openharness/impact/fund_analytics.py`
   - Ref: Review §4.1
 
@@ -327,7 +327,7 @@
   - File: `src/openharness/impact/five_dimensions.py`
   - Ref: Review §2.1, §5.2
 
-- [ ] **2.7.2** Add context window check — require keyword to appear in impact-relevant context (within N words of other impact terms)
+- [x] **2.7.2** Add context window check — require keyword to appear in impact-relevant context (within N words of other impact terms)
   - File: `src/openharness/impact/five_dimensions.py`
   - Ref: Review §2.1
 
@@ -735,4 +735,4 @@
 
 ---
 
-*Last updated: 2026-04-16 (v0.1.7). Derived from `IMPACT_MANAGER_REVIEW.md`.*
+*Last updated: 2026-04-16 (v0.1.8). Derived from `IMPACT_MANAGER_REVIEW.md`.*

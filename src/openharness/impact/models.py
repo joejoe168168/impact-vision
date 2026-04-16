@@ -78,6 +78,18 @@ class SDGGoal(BaseModel):
     targets: list[SDGTarget] = Field(default_factory=list)
 
 
+class ImpactTarget(BaseModel):
+    """A structured impact target for tracking progress."""
+
+    metric_id: str = Field(description="IRIS+ metric ID (e.g. OI4112)")
+    target_value: float = Field(description="Numeric target value")
+    target_unit: str = Field(default="", description="Unit (e.g. 'tCO2e', 'count')")
+    target_date: str = Field(default="", description="Target achievement date (e.g. '2027')")
+    baseline_value: float | None = Field(default=None, description="Baseline value at start")
+    baseline_date: str = Field(default="", description="Baseline date (e.g. '2024')")
+    description: str = Field(default="", description="Free-text target description")
+
+
 class MetricValue(BaseModel):
     """A single reported metric value with context for time-series tracking."""
 

@@ -124,3 +124,46 @@ def infer_themes(text: str, existing: list[str] | None = None) -> list[str]:
                 if hint.lower() not in {t.lower() for t in themes}:
                     themes.append(hint)
     return themes
+
+
+def parse_od4091_targets(value: str) -> list[dict]:
+    """Parse OD4091 (Social and Environmental Targets) into structured target dicts.
+
+    Handles formats like:
+    - "3 social targets, 2 environmental targets"
+    - "Reduce CO2 by 50% by 2027; Reach 100,000 farmers by 2026"
+    - "500 tCO2e by 2027"
+    """
+    if not value or not value.strip():
+        return []
+
+    targets: list[dict] = []
+
+    parts = re.split(r"[;|\n]", value)
+    for part in parts:
+        part = part.strip()
+        if not part:
+            continue
+
+        target: dict = {"description": part}
+
+        year_match = re.search(r"\b(20\d{2})\b", part)
+        if year_match:
+            target["target_date"] = year_match.group(1)
+
+        num_match = re.search(r"([\d,]+(?:\.\d+)?)\s*(%|tCO2e|tons?|kg|MWh|kWh|USD|EUR|people|farmers?|clients?|beneficiar)", part, re.IGNORECASE)
+        if num_match:
+            try:
+                target["target_value"] = float(num_match.group(1).replace(",", ""))
+                target["target_unit"] = num_match.group(2).strip()
+            except ValueError:
+                pass
+
+        pct_match = re.search(r"(\d+(?:\.\d+)?)\s*%", part)
+        if pct_match and "target_value" not in target:
+            target["target_value"] = float(pct_match.group(1))
+            target["target_unit"] = "%"
+
+        targets.append(target)
+
+    return targets

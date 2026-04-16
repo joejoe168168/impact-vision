@@ -4,6 +4,31 @@ All notable changes to Impact Vision are recorded here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.1.8] - 2026-04-16
+
+### Added
+
+**Fund-level analytics** (new module `fund_analytics.py`)
+- Weighted SDG contribution: materiality-adjusted SDG scoring across portfolio companies
+- Impact-weighted returns stub: placeholder for Harvard BSG/GSG methodology integration
+- Portfolio additionality assessment: heuristic scoring with classification (strong/moderate/weak)
+- All three analytics integrated into portfolio tool aggregate output and text display
+
+**SASB YAML override support**
+- SASB module now loads additional industries and keyword overrides from `data/sasb_overrides.yaml`
+- Enables fund-specific SASB customization without code changes
+
+**Context window validation for SDG keywords**
+- Keywords must appear in substantive context (>=5 words within 80-char window)
+- Prevents false SDG matches from isolated keyword mentions in headers or table labels
+
+### Changed
+
+- Portfolio tool text output now includes weighted SDG contribution, additionality assessment, and impact-weighted returns sections
+- Portfolio aggregate payload includes `weighted_sdg_contribution`, `additionality`, and `impact_weighted_returns` fields
+
+---
+
 ## [0.1.7] - 2026-04-16
 
 ### Added

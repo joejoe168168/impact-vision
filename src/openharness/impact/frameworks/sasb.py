@@ -9,6 +9,9 @@ Reference: https://sasb.org/standards/
 
 from __future__ import annotations
 
+from pathlib import Path
+
+import yaml
 from pydantic import BaseModel, Field
 
 
@@ -495,8 +498,51 @@ _SECTOR_KEYWORDS: dict[str, list[str]] = {
 }
 
 
+_sasb_cache: list[SASBStandard] | None = None
+
+
+def _load_sasb_overrides() -> dict:
+    """Load additional industries or keyword overrides from data/sasb_overrides.yaml."""
+    config_paths = [
+        Path(__file__).parent.parent.parent.parent / "data" / "sasb_overrides.yaml",
+        Path("data/sasb_overrides.yaml"),
+    ]
+    for path in config_paths:
+        if path.exists():
+            try:
+                raw = yaml.safe_load(path.read_text(encoding="utf-8"))
+                if isinstance(raw, dict):
+                    return raw
+            except Exception:
+                pass
+    return {}
+
+
 def get_sasb_industries() -> list[SASBStandard]:
-    return SASB_STANDARDS
+    global _sasb_cache
+    if _sasb_cache is not None:
+        return _sasb_cache
+
+    industries = list(SASB_STANDARDS)
+    overrides = _load_sasb_overrides()
+    for entry in overrides.get("additional_industries", []):
+        if isinstance(entry, dict) and "industry" in entry:
+            topics = [
+                SASBTopic(
+                    name=t.get("name", ""),
+                    dimension=t.get("dimension", ""),
+                    description=t.get("description", ""),
+                )
+                for t in entry.get("topics", [])
+            ]
+            industries.append(SASBStandard(
+                industry=entry["industry"],
+                sector=entry.get("sector", ""),
+                sics_code=entry.get("sics_code", ""),
+                topics=topics,
+            ))
+    _sasb_cache = industries
+    return _sasb_cache
 
 
 def match_sasb_industry(

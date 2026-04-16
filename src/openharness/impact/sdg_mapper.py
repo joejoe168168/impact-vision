@@ -136,6 +136,27 @@ def _keyword_not_negated(text: str, keyword: str) -> bool:
     return False
 
 
+_CONTEXT_WINDOW_SIZE = 80
+
+
+def _keyword_in_context(text: str, keyword: str) -> bool:
+    """Verify that a keyword appears in a substantive context window.
+
+    Returns False if the keyword only appears in very short fragments
+    (e.g. table headers, bullet labels) that don't indicate actual alignment.
+    """
+    idx = text.find(keyword)
+    while idx >= 0:
+        start = max(0, idx - _CONTEXT_WINDOW_SIZE)
+        end = min(len(text), idx + len(keyword) + _CONTEXT_WINDOW_SIZE)
+        window = text[start:end]
+        words = window.split()
+        if len(words) >= 5:
+            return True
+        idx = text.find(keyword, idx + len(keyword))
+    return False
+
+
 _GEO_SDG_BOOST: dict[str, dict[int, float]] = {
     "africa": {1: 0.3, 2: 0.3, 3: 0.2, 6: 0.2, 7: 0.2},
     "sub-saharan": {1: 0.3, 2: 0.3, 3: 0.2, 6: 0.2, 7: 0.2},
@@ -168,7 +189,7 @@ def _infer_sdg_from_description(company: Company) -> dict[int, float]:
 
     keyword_map = _get_keyword_sdg_map()
     for keyword, sdg_list in keyword_map.items():
-        if keyword in text and _keyword_not_negated(text, keyword):
+        if keyword in text and _keyword_not_negated(text, keyword) and _keyword_in_context(text, keyword):
             for goal, relevance in sdg_list:
                 inferred[goal] = max(inferred.get(goal, 0), relevance)
 

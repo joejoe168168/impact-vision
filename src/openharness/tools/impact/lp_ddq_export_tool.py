@@ -86,6 +86,10 @@ class LpDdqExportInput(BaseModel):
     company_name: str = Field(default="", description="Company name")
     company_description: str = Field(default="", description="Company description")
     sector: str = Field(default="", description="Industry sector")
+    geography: str = Field(default="", description="Country or region (e.g. 'Kenya', 'Southeast Asia')")
+    stage: Literal["", "pre-seed", "seed", "series-a", "series-b", "growth", "mature"] = Field(
+        default="", description="Investment stage",
+    )
     impact_themes: list[str] = Field(default_factory=list, description="Impact themes")
     sdg_claims: list[int] = Field(default_factory=list, description="Claimed SDGs (1-17)")
     reported_metrics: dict[str, str] = Field(default_factory=dict, description="IRIS+ metric ID -> value")
@@ -154,6 +158,8 @@ class LpDdqExportTool(BaseTool):
             name=args.company_name,
             description=args.company_description,
             sector=args.sector,
+            geography=args.geography,
+            stage=args.stage,
             impact_themes=infer_themes(f"{args.company_description} {args.sector}", args.impact_themes),
             reported_metrics=reported_metrics,
             sdg_claims=sdg_claims,

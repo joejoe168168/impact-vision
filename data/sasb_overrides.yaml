@@ -1,0 +1,18 @@
+# SASB Industry Overrides
+# Use this file to add custom industries or override material topics.
+# The Python SASB_STANDARDS list serves as the base; entries here are merged.
+# Format:
+#   additional_industries:
+#     - industry: "Custom Industry"
+#       sector: "Custom Sector"
+#       sics_code: "XX-YY"
+#       topics:
+#         - name: "Topic Name"
+#           dimension: "Environment|Social Capital|Human Capital|Business Model & Innovation|Leadership & Governance"
+#           description: "Optional description"
+#   sector_keyword_overrides:
+#     my_sector: ["keyword1", "keyword2"]
+
+additional_industries: []
+
+sector_keyword_overrides: {}

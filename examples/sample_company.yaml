@@ -5,6 +5,8 @@ company:
   name: "BrightPath Finance"
   description: "A digital microfinance platform providing affordable credit and savings products to smallholder farmers and women-led micro-enterprises in Sub-Saharan Africa."
   sector: "Financial Services"
+  geography: "Sub-Saharan Africa"
+  stage: "growth"
   impact_themes:
     - "Financial Inclusion"
     - "Smallholder Agriculture"

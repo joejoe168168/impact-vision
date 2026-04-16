@@ -225,17 +225,23 @@ class PitchDeckAnalyzeTool(BaseTool):
             lines.append("")
             lines.append("GREENWASHING / IMPACT-WASHING RISK")
             lines.append("-" * 50)
-            lines.append(f"  Overall Risk Score: {gw_result['overall_score']}/100 — {gw_result['classification']}")
+            lines.append(f"  Overall Risk Score: {gw_result.overall_score}/100 — {gw_result.classification}")
             lines.append(f"  Sub-scores:")
-            for sub_name, sub_val in gw_result.get("sub_scores", {}).items():
+            for sub_name, sub_val in [
+                ("Claim-Metric Gap", gw_result.claim_metric_gap),
+                ("Adverse Omission", gw_result.adverse_omission),
+                ("Specificity", gw_result.specificity),
+                ("Selectivity", gw_result.selectivity),
+                ("Verification", gw_result.verification),
+            ]:
                 lines.append(f"    {sub_name}: {sub_val}/100")
-            if gw_result.get("flags"):
-                lines.append(f"  Flags ({len(gw_result['flags'])}):")
-                for flag in gw_result["flags"][:5]:
+            if gw_result.flags:
+                lines.append(f"  Flags ({len(gw_result.flags)}):")
+                for flag in gw_result.flags[:5]:
                     lines.append(f"    - {flag}")
-            if gw_result.get("recommendations"):
+            if gw_result.recommendations:
                 lines.append(f"  Recommendations:")
-                for rec in gw_result["recommendations"][:3]:
+                for rec in gw_result.recommendations[:3]:
                     lines.append(f"    - {rec}")
             lines.append("")
 
@@ -267,7 +273,7 @@ class PitchDeckAnalyzeTool(BaseTool):
         if extracted_company:
             metadata["extracted_company"] = extracted_company.model_dump()
         if gw_result:
-            metadata["greenwashing"] = gw_result
+            metadata["greenwashing"] = gw_result.model_dump()
 
         return ToolResult(output="\n".join(lines), metadata=metadata)
 

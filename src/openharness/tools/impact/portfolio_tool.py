@@ -17,6 +17,11 @@ from typing import Literal
 
 from openharness.impact.database import get_metric_store
 from openharness.impact.five_dimensions import assess_five_dimensions
+from openharness.impact.fund_analytics import (
+    assess_portfolio_additionality,
+    compute_weighted_sdg_contribution,
+    impact_weighted_returns_stub,
+)
 from openharness.impact.gap_analysis import analyze_gaps
 from openharness.impact.models import Company
 from openharness.impact.sdg_mapper import map_sdg_alignment
@@ -236,6 +241,10 @@ def _aggregate_results(results: list[dict]) -> dict:
 
     reporting_quality = "high" if avg_gap >= 60 else "medium" if avg_gap >= 30 else "low"
 
+    weighted_sdg = compute_weighted_sdg_contribution(results)
+    additionality = assess_portfolio_additionality(results)
+    iwr = impact_weighted_returns_stub(results)
+
     return {
         "portfolio_size": n,
         "avg_five_dim_score": avg_5d,
@@ -253,7 +262,37 @@ def _aggregate_results(results: list[dict]) -> dict:
         "sdg_coverage": sdg_coverage,
         "total_metrics_reported": sum(r["metrics_reported"] for r in results),
         "reporting_quality": reporting_quality,
+        "weighted_sdg_contribution": weighted_sdg,
+        "additionality": additionality,
+        "impact_weighted_returns": iwr,
     }
+
+
+def _compare_yoy(current: dict, previous: dict | None) -> dict:
+    """Compare current portfolio aggregate with a previous period's aggregate."""
+    if not previous:
+        return {}
+    changes: dict = {}
+    for key in ("avg_five_dim_score", "avg_gap_coverage", "total_metrics_reported", "sdg_coverage"):
+        curr_val = current.get(key, 0)
+        prev_val = previous.get(key, 0)
+        if prev_val and prev_val != 0:
+            changes[key] = {
+                "current": curr_val,
+                "previous": prev_val,
+                "change": round(curr_val - prev_val, 2),
+                "change_pct": round((curr_val - prev_val) / prev_val * 100, 1),
+            }
+    for dim in ("what", "who", "how_much", "contribution", "risk"):
+        curr_dim = current.get("dimension_averages", {}).get(dim, 0)
+        prev_dim = previous.get("dimension_averages", {}).get(dim, 0)
+        if prev_dim:
+            changes[f"dim_{dim}"] = {
+                "current": curr_dim,
+                "previous": prev_dim,
+                "change": round(curr_dim - prev_dim, 2),
+            }
+    return changes
 
 
 def _to_text(results: list[dict], aggregate: dict) -> str:
@@ -311,6 +350,36 @@ def _to_text(results: list[dict], aggregate: dict) -> str:
     grade_dist = aggregate.get("grade_distribution", {})
     if grade_dist:
         lines.append(f"  Grade Distribution: {', '.join(f'{g}: {c}' for g, c in sorted(grade_dist.items()))}")
+
+    weighted_sdg = aggregate.get("weighted_sdg_contribution", {})
+    if weighted_sdg:
+        lines.append("")
+        lines.append("WEIGHTED SDG CONTRIBUTION (materiality-adjusted)")
+        lines.append("-" * 40)
+        for goal, score in list(weighted_sdg.items())[:10]:
+            lines.append(f"  SDG {goal}: {score}")
+
+    additionality = aggregate.get("additionality", {})
+    if additionality:
+        lines.append("")
+        lines.append("PORTFOLIO ADDITIONALITY ASSESSMENT")
+        lines.append("-" * 40)
+        lines.append(f"  Score: {additionality.get('additionality_score', 0)}/100 "
+                     f"({additionality.get('classification', 'N/A')})")
+        for signal in additionality.get("signals", []):
+            lines.append(f"  + {signal}")
+        if additionality.get("recommendation"):
+            lines.append(f"  Recommendation: {additionality['recommendation']}")
+
+    iwr = aggregate.get("impact_weighted_returns", {})
+    if iwr:
+        lines.append("")
+        lines.append("IMPACT-WEIGHTED RETURNS")
+        lines.append("-" * 40)
+        lines.append(f"  Status: {iwr.get('status', 'N/A')}")
+        lines.append(f"  Portfolio impact score: {iwr.get('portfolio_impact_score', 0)}")
+        if iwr.get("note"):
+            lines.append(f"  Note: {iwr['note']}")
 
     return "\n".join(lines)
 
