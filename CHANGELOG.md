@@ -4,6 +4,28 @@ All notable changes to Impact Vision are recorded here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.1.5] - 2026-04-16
+
+### Added
+
+**Greenwashing / impact-washing detection** (new tool: `greenwashing_detect`)
+- Core engine with 5 weighted sub-scores: claim-metric gap (30%), adverse omission (20%), language specificity (20%), reporting selectivity (15%), verification signals (15%)
+- 5-tier classification: Genuine Impact Leader → Probable Greenwashing
+- Vague verb detection (19 aspirational verbs) vs. concrete verbs (21 evidence verbs)
+- Buzzword density analysis (16 common greenwashing buzzwords)
+- Sector-specific adverse metric checks
+- Verification/audit signal detection (12 verification keywords, 12 measurement keywords)
+- Actionable flags and recommendations per sub-score
+
+**Exclusion screening** (new tool: `exclusion_screening`)
+- Norms-based screening against 8 categories: controversial weapons, fossil fuels, tobacco, gambling, adult entertainment, UNGC violations, deforestation, predatory lending
+- SFDR PAI indicator mapping (PAI4, PAI10, PAI14)
+- Configurable severity levels: mandatory, common, watch
+- YAML-based criteria file (`data/exclusion_criteria.yaml`) for fund-specific customization
+- Pass/fail result with detailed flags and matched keywords
+
+**7 new tests** (68 total): greenwashing classification, high/low risk detection, exclusion pass/fail
+
 ## [0.1.4] - 2026-04-16
 
 ### Added

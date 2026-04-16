@@ -1,0 +1,93 @@
+# Exclusion Screening Criteria
+# Based on UNGC, SFDR PAI, and common institutional investor exclusion lists.
+# Customize for your fund's mandate.
+
+categories:
+  controversial_weapons:
+    label: "Controversial Weapons"
+    description: "Anti-personnel mines, cluster munitions, biological/chemical weapons, nuclear weapons"
+    keywords:
+      - "cluster munition"
+      - "anti-personnel mine"
+      - "biological weapon"
+      - "chemical weapon"
+      - "nuclear weapon"
+      - "depleted uranium"
+    sfdr_pai: "PAI14"
+    severity: "mandatory"
+
+  fossil_fuel:
+    label: "Fossil Fuel Exposure"
+    description: "Companies deriving revenue from fossil fuel exploration, production, or distribution"
+    keywords:
+      - "coal mining"
+      - "oil exploration"
+      - "oil drilling"
+      - "natural gas extraction"
+      - "petroleum"
+      - "fracking"
+      - "tar sands"
+      - "oil sands"
+    sfdr_pai: "PAI4"
+    severity: "mandatory"
+
+  tobacco:
+    label: "Tobacco"
+    description: "Production, distribution, or marketing of tobacco products"
+    keywords:
+      - "tobacco"
+      - "cigarette"
+      - "vaping"
+      - "e-cigarette"
+    severity: "mandatory"
+
+  gambling:
+    label: "Gambling"
+    description: "Operation of gambling facilities or platforms"
+    keywords:
+      - "gambling"
+      - "casino"
+      - "betting"
+      - "lottery"
+    severity: "common"
+
+  adult_entertainment:
+    label: "Adult Entertainment"
+    description: "Production or distribution of adult content"
+    keywords:
+      - "adult entertainment"
+      - "pornography"
+    severity: "common"
+
+  ungc_violations:
+    label: "UN Global Compact Violations"
+    description: "Companies in violation of UNGC Principles on human rights, labor, environment, anti-corruption"
+    keywords:
+      - "child labor"
+      - "forced labor"
+      - "human trafficking"
+      - "modern slavery"
+      - "corruption"
+      - "bribery"
+    sfdr_pai: "PAI10"
+    severity: "mandatory"
+
+  deforestation:
+    label: "Deforestation"
+    description: "Activities contributing to deforestation or biodiversity loss"
+    keywords:
+      - "deforestation"
+      - "illegal logging"
+      - "palm oil plantation"
+    severity: "watch"
+
+  predatory_lending:
+    label: "Predatory Lending"
+    description: "Exploitative financial practices targeting vulnerable populations"
+    keywords:
+      - "predatory lending"
+      - "payday loan"
+      - "loan shark"
+      - "usury"
+      - "over-indebtedness"
+    severity: "watch"

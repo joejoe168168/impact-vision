@@ -208,3 +208,84 @@ class TestMetricValueModel:
         )
         assert mv.verified is True
         assert mv.period == "Q1 2026"
+
+
+class TestGreenwashing:
+    def test_greenwashing_tool_import(self):
+        from openharness.tools.impact.greenwashing_tool import GreenwashingDetectorTool
+        tool = GreenwashingDetectorTool()
+        assert tool.name == "greenwashing_detect"
+
+    def test_greenwashing_low_risk(self):
+        from openharness.impact.greenwashing import assess_greenwashing
+        from openharness.impact.models import Company
+
+        company = Company(
+            name="Verified Solar",
+            description="We deployed 500MW solar capacity, measured and verified by third-party audit. Baseline established 2020.",
+            sector="energy",
+            reported_metrics={"OI4112": "1200 tCO2e", "PI4060": "25000", "OI9803": "500MW"},
+            sdg_claims=[7, 13],
+        )
+        result = assess_greenwashing(company)
+        assert result.overall_score < 50
+        assert result.classification in ("Genuine Impact Leader", "Substantive with Gaps")
+
+    def test_greenwashing_high_risk(self):
+        from openharness.impact.greenwashing import assess_greenwashing
+        from openharness.impact.models import Company
+
+        company = Company(
+            name="Vague Impact Co",
+            description="We aspire to be sustainable and aim to contribute to a greener, more eco-friendly future. We believe in responsible investing.",
+            sector="technology",
+            sdg_claims=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13],
+        )
+        result = assess_greenwashing(company)
+        assert result.overall_score > 40
+        assert len(result.flags) > 0
+
+    def test_greenwashing_classification_range(self):
+        from openharness.impact.greenwashing import _classify
+        assert _classify(10) == "Genuine Impact Leader"
+        assert _classify(30) == "Substantive with Gaps"
+        assert _classify(50) == "Moderate Risk"
+        assert _classify(70) == "High Risk"
+        assert _classify(90) == "Probable Greenwashing"
+
+
+class TestExclusionScreening:
+    def test_exclusion_tool_import(self):
+        from openharness.tools.impact.exclusion_screening_tool import ExclusionScreeningTool
+        tool = ExclusionScreeningTool()
+        assert tool.name == "exclusion_screening"
+
+    def test_exclusion_pass(self):
+        from openharness.tools.impact.exclusion_screening_tool import ExclusionScreeningTool, ExclusionScreeningInput
+        from openharness.tools.base import ToolExecutionContext
+
+        tool = ExclusionScreeningTool()
+        args = ExclusionScreeningInput(
+            company_name="Clean Fintech",
+            company_description="Mobile banking for rural farmers in Kenya",
+            sector="fintech",
+        )
+        ctx = ToolExecutionContext(cwd=Path("."))
+        result = asyncio.run(tool.execute(args, ctx))
+        assert not result.is_error
+        assert "PASS" in result.output
+
+    def test_exclusion_fail(self):
+        from openharness.tools.impact.exclusion_screening_tool import ExclusionScreeningTool, ExclusionScreeningInput
+        from openharness.tools.base import ToolExecutionContext
+
+        tool = ExclusionScreeningTool()
+        args = ExclusionScreeningInput(
+            company_name="Bad Corp",
+            company_description="Coal mining and oil exploration company",
+            sector="energy",
+        )
+        ctx = ToolExecutionContext(cwd=Path("."))
+        result = asyncio.run(tool.execute(args, ctx))
+        assert not result.is_error
+        assert "FAIL" in result.output
