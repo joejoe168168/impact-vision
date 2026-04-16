@@ -135,32 +135,85 @@ impact-vision catalog stats   # Verify: should show 787 metrics
 
 Without the full catalog, Impact Vision still works using the bundled 16 GIIN Core Metrics for gap analysis, scoring, and SDG mapping.
 
-### 5. Start the AI agent (interactive mode)
+### 5. Set up an LLM provider (required for the AI agent)
 
-Set an API key for the LLM:
+The CLI tools in Step 3 work without an API key, but the interactive AI agent needs a language model. Pick **one** option below.
+
+#### Option A: OpenRouter (easiest to get started)
+
+[OpenRouter](https://openrouter.ai/) gives you access to many models (Claude, GPT-4o, Llama, Gemini, etc.) through a single API key, with free-tier credits to try.
+
+1. Go to [openrouter.ai](https://openrouter.ai/) and click **Sign Up** (Google/GitHub login works)
+2. Go to [openrouter.ai/keys](https://openrouter.ai/keys) and click **Create Key**
+3. Copy the key (starts with `sk-or-...`)
+4. Set it in your terminal:
 
 ```bash
-# Option A: Anthropic (Claude) -- recommended
-export ANTHROPIC_API_KEY=your-key-here      # Mac/Linux
-set ANTHROPIC_API_KEY=your-key-here          # Windows CMD
-$env:ANTHROPIC_API_KEY="your-key-here"       # Windows PowerShell
+# Mac/Linux
+export OPENAI_API_KEY=sk-or-your-key-here
+export OPENAI_BASE_URL=https://openrouter.ai/api/v1
 
-# Option B: OpenAI
-export OPENAI_API_KEY=your-key-here
+# Windows CMD
+set OPENAI_API_KEY=sk-or-your-key-here
+set OPENAI_BASE_URL=https://openrouter.ai/api/v1
 
-# Option C: Local Ollama (free, no API key needed)
-impact-vision ollama-setup
+# Windows PowerShell
+$env:OPENAI_API_KEY="sk-or-your-key-here"
+$env:OPENAI_BASE_URL="https://openrouter.ai/api/v1"
 ```
 
-| Provider | Notes |
-|----------|-------|
-| Anthropic (Claude) | Recommended. Claude Sonnet/Opus work best for impact analysis |
-| OpenAI | GPT-4o and above |
-| GitHub Copilot | If you have an active subscription |
-| Ollama (local) | Quick setup: `impact-vision ollama-setup --model llama3.2` |
-| Any OpenAI-compatible API | OpenRouter, Azure, etc. |
+5. Start the agent with a model:
 
-Then start the agent:
+```bash
+impact-vision --model anthropic/claude-sonnet-4
+```
+
+> **Tip:** OpenRouter offers free models too. Try `--model google/gemini-2.5-flash` for a free option.
+
+#### Option B: Anthropic (Claude) -- best quality
+
+1. Go to [console.anthropic.com](https://console.anthropic.com/), create an account
+2. Go to **API Keys** and create a key
+3. Set it:
+
+```bash
+# Mac/Linux
+export ANTHROPIC_API_KEY=sk-ant-your-key-here
+
+# Windows CMD
+set ANTHROPIC_API_KEY=sk-ant-your-key-here
+
+# Windows PowerShell
+$env:ANTHROPIC_API_KEY="sk-ant-your-key-here"
+```
+
+#### Option C: OpenAI
+
+1. Go to [platform.openai.com/api-keys](https://platform.openai.com/api-keys), create a key
+2. Set it the same way: `export OPENAI_API_KEY=sk-your-key-here`
+
+#### Option D: Local Ollama (free, runs on your machine)
+
+1. Install Ollama from [ollama.com](https://ollama.com/)
+2. Pull a model: `ollama pull llama3.2`
+3. Run setup:
+
+```bash
+impact-vision ollama-setup --model llama3.2
+```
+
+No API key needed -- everything runs locally.
+
+| Provider | Best for | Cost |
+|----------|----------|------|
+| OpenRouter | Trying multiple models easily | Free tier + pay-per-use |
+| Anthropic (Claude) | Best impact analysis quality | Pay-per-use |
+| OpenAI (GPT-4o) | General purpose | Pay-per-use |
+| Ollama (local) | Privacy, offline use | Free (uses your GPU/CPU) |
+
+### 6. Start the AI agent
+
+Now start the agent:
 
 ```bash
 impact-vision
@@ -171,7 +224,7 @@ Try asking:
 - "What SDGs does a solar energy company align with?"
 - "Run a 5-dimension assessment for a fintech serving 50,000 clients"
 
-### 6. Launch the dashboard (optional)
+### 7. Launch the dashboard (optional)
 
 ```bash
 streamlit run src/openharness/dashboard/app.py
