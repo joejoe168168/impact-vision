@@ -4,6 +4,21 @@ Open-source AI-powered impact measurement and SDG alignment agent for VC and imp
 
 Built on [OpenHarness](https://github.com/HKUDS/OpenHarness), Impact Vision provides a conversational AI agent with deep expertise in GIIN's IRIS+ framework, UN Sustainable Development Goals, and impact due diligence workflows.
 
+## What is Impact Investing?
+
+Impact investing means investing with the intention to generate **positive, measurable social and environmental impact** alongside a financial return. Unlike traditional investing (financial return only) or philanthropy (social good only), impact investing seeks both.
+
+Key concepts Impact Vision helps with:
+
+| Concept | What it means |
+|---------|---------------|
+| **IRIS+** | The "GAAP for impact" -- ~787 standardized metrics for measuring social/environmental outcomes (maintained by GIIN) |
+| **SDGs** | 17 UN Sustainable Development Goals (e.g., No Poverty, Clean Energy, Climate Action) with 169 targets |
+| **5 Dimensions** | The standard framework for assessing impact quality: What outcome? Who benefits? How much? Would it happen anyway? What could go wrong? |
+| **Impact DD** | Due diligence focused on whether an investment will actually generate the claimed impact |
+| **ESG** | Environmental, Social, Governance -- risk management frameworks (SASB, GRI, TCFD, SFDR, EDCI, UNPRI) |
+| **NESTA Evidence** | 5 levels rating how strong the evidence is: Level 1 (narrative) to Level 5 (rigorous RCT) |
+
 ## Core Use Case
 
 **Upload a pitch deck or investment memo** and Impact Vision will:
