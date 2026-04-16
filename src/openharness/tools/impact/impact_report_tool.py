@@ -410,22 +410,13 @@ def _interactive_scoring_section(fd: dict, sdg_alignments: list) -> str:
     base_json = _json.dumps(base_scores)
 
     return f"""
-<h2>Interactive Score Improvement</h2>
-<p style="color:var(--text-secondary);font-size:0.9em;margin-bottom:16px">
-Check the boxes below for practices your organization follows. Scores update in real-time to show potential improvement.
+<h3 style="margin-top:24px">Improve Your Score</h3>
+<p style="color:var(--text-secondary);font-size:0.85em;margin-bottom:12px">
+Check practices your organization follows. The radar chart and scores above update in real-time.
 </p>
-<div id="interactive-panel" style="background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:24px;border:1px solid var(--border);margin:16px 0">
+<div id="interactive-panel" style="background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:20px;border:1px solid var(--border);margin:0 0 16px">
 <div id="checklist-items"></div>
-<div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--border)">
-  <div class="cards-row" id="live-scores">
-    <div class="score-card"><div class="value" id="live-grade" style="font-size:2em">{fd['overall_grade']}</div><div class="label">Updated Grade</div></div>
-    <div class="score-card"><div class="value" id="live-overall" style="font-size:1.8em">{overall:.1f}<span style="font-size:0.5em;color:var(--text-secondary)">/5</span></div><div class="label">Updated Score</div></div>
-    <div class="score-card"><div class="value" id="live-delta" style="font-size:1.4em;color:var(--text-secondary)">+0.0</div><div class="label">Improvement</div></div>
-  </div>
-  <div id="live-bars" style="margin-top:16px"></div>
 </div>
-</div>
-<div id="interactive-radar" class="chart-box" style="margin-top:16px"></div>
 <script>
 (function() {{
   const items = {items_json};
@@ -433,23 +424,24 @@ Check the boxes below for practices your organization follows. Scores update in 
   const origOverall = {overall:.2f};
   const dimNames = ['what','who','how_much','contribution','risk'];
   const dimLabels = {{what:'What',who:'Who',how_much:'How Much',contribution:'Contribution',risk:'Risk'}};
+  const dimKeys = {{what:'what',who:'who',how_much:'how_much',contribution:'contribution',risk:'risk'}};
 
   const container = document.getElementById('checklist-items');
   items.forEach(function(item) {{
     const div = document.createElement('div');
-    div.style.cssText = 'padding:10px 0;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:12px';
+    div.style.cssText = 'padding:8px 0;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:12px';
     const cb = document.createElement('input');
     cb.type = 'checkbox'; cb.id = 'chk-'+item.id;
-    cb.style.cssText = 'width:18px;height:18px;cursor:pointer;accent-color:#1976d2';
+    cb.style.cssText = 'width:18px;height:18px;cursor:pointer;accent-color:#1976d2;flex-shrink:0';
     cb.addEventListener('change', recalc);
     const lbl = document.createElement('label');
     lbl.htmlFor = 'chk-'+item.id;
     lbl.textContent = item.label;
-    lbl.style.cssText = 'cursor:pointer;font-size:0.95em';
+    lbl.style.cssText = 'cursor:pointer;font-size:0.9em;flex:1';
     const dims = Object.keys(item.dims).map(function(d) {{ return dimLabels[d]; }}).join(', ');
     const tag = document.createElement('span');
     tag.textContent = dims;
-    tag.style.cssText = 'margin-left:auto;font-size:0.75em;color:var(--text-secondary);background:var(--primary-light);padding:2px 8px;border-radius:10px;white-space:nowrap';
+    tag.style.cssText = 'font-size:0.7em;color:var(--text-secondary);background:var(--primary-light);padding:2px 8px;border-radius:10px;white-space:nowrap';
     div.appendChild(cb); div.appendChild(lbl); div.appendChild(tag);
     container.appendChild(div);
   }});
@@ -466,9 +458,11 @@ Check the boxes below for practices your organization follows. Scores update in 
   function recalc() {{
     const scores = {{}};
     dimNames.forEach(function(d) {{ scores[d] = baseScores[d]; }});
+    let anyChecked = false;
     items.forEach(function(item) {{
       const cb = document.getElementById('chk-'+item.id);
       if (cb && cb.checked) {{
+        anyChecked = true;
         Object.keys(item.dims).forEach(function(d) {{
           scores[d] = Math.min(5.0, scores[d] + item.dims[d]);
         }});
@@ -478,27 +472,33 @@ Check the boxes below for practices your organization follows. Scores update in 
     const grade = getGrade(avg);
     const delta = avg - origOverall;
 
-    document.getElementById('live-grade').textContent = grade;
-    document.getElementById('live-grade').className = 'value ' + gradeClass(grade);
-    document.getElementById('live-overall').innerHTML = avg.toFixed(1) + '<span style="font-size:0.5em;color:var(--text-secondary)">/5</span>';
-    const deltaEl = document.getElementById('live-delta');
-    deltaEl.textContent = (delta >= 0 ? '+' : '') + delta.toFixed(1);
-    deltaEl.style.color = delta > 0 ? 'var(--success)' : 'var(--text-secondary)';
+    const gradeEl = document.getElementById('main-grade');
+    if (gradeEl) {{
+      gradeEl.textContent = grade;
+      gradeEl.className = 'value ' + gradeClass(grade);
+    }}
+    const overallEl = document.getElementById('main-overall');
+    if (overallEl) {{
+      overallEl.innerHTML = avg.toFixed(1) + '<span style="font-size:0.5em;color:var(--text-secondary)">/5</span>';
+    }}
+    const deltaCard = document.getElementById('delta-card');
+    const deltaEl = document.getElementById('main-delta');
+    if (deltaCard && deltaEl) {{
+      deltaCard.style.display = anyChecked ? 'block' : 'none';
+      deltaEl.textContent = (delta >= 0 ? '+' : '') + delta.toFixed(1);
+      deltaEl.style.color = delta > 0 ? 'var(--success)' : 'var(--text-secondary)';
+    }}
 
-    const barsHtml = dimNames.map(function(d) {{
-      const pct = Math.round(scores[d] / 5 * 100);
-      const basePct = Math.round(baseScores[d] / 5 * 100);
-      const color = pct >= 60 ? 'green' : pct >= 30 ? 'orange' : 'red';
-      return '<div style="display:flex;align-items:center;gap:10px;margin:6px 0">' +
-        '<span style="min-width:90px;font-size:0.85em;font-weight:600">' + dimLabels[d] + '</span>' +
-        '<div class="bar-track" style="flex:1;position:relative">' +
-          '<div class="bar-fill ' + color + '" style="width:'+pct+'%;position:relative;z-index:2"></div>' +
-          (pct > basePct ? '<div style="position:absolute;top:0;left:0;width:'+basePct+'%;height:100%;background:rgba(0,0,0,0.15);border-radius:6px;z-index:1"></div>' : '') +
-        '</div>' +
-        '<span style="min-width:50px;font-size:0.85em;font-weight:600;text-align:right">' + scores[d].toFixed(1) + '/5</span>' +
-      '</div>';
-    }}).join('');
-    document.getElementById('live-bars').innerHTML = barsHtml;
+    dimNames.forEach(function(d) {{
+      const scoreEl = document.getElementById('dim-score-'+d);
+      if (scoreEl) scoreEl.textContent = scores[d].toFixed(1) + '/5';
+      const barEl = document.getElementById('dim-bar-'+d);
+      if (barEl) {{
+        const pct = Math.round(scores[d] / 5 * 100);
+        barEl.style.width = pct + '%';
+        barEl.className = 'bar-fill ' + (pct >= 60 ? 'green' : pct >= 30 ? 'orange' : 'red');
+      }}
+    }});
 
     const vals = dimNames.map(function(d) {{ return scores[d]; }});
     vals.push(vals[0]);
@@ -507,21 +507,24 @@ Check the boxes below for practices your organization follows. Scores update in 
     const baseVals = dimNames.map(function(d) {{ return baseScores[d]; }});
     baseVals.push(baseVals[0]);
 
-    Plotly.react('interactive-radar', [
+    const traces = anyChecked ? [
       {{type:'scatterpolar', r:baseVals, theta:labels, fill:'toself', fillcolor:'rgba(176,190,197,0.15)',
         line:{{color:'#b0bec5',width:1.5,dash:'dot'}}, marker:{{size:5}}, name:'Before'}},
       {{type:'scatterpolar', r:vals, theta:labels, fill:'toself', fillcolor:'rgba(25,118,210,0.15)',
-        line:{{color:'#1976d2',width:2.5}}, marker:{{size:7,color:'#1976d2'}}, name:'After'}}
-    ], {{
+        line:{{color:'#1976d2',width:2.5}}, marker:{{size:7,color:'#1976d2'}}, name:'With improvements'}}
+    ] : [
+      {{type:'scatterpolar', r:vals, theta:labels, fill:'toself', fillcolor:'rgba(25,118,210,0.12)',
+        line:{{color:'#1976d2',width:2.5}}, marker:{{size:7,color:'#1976d2'}}, name:'Current'}}
+    ];
+
+    Plotly.react('radar-chart', traces, {{
       polar:{{radialaxis:{{visible:true,range:[0,5],tickfont:{{size:10}}}},angularaxis:{{tickfont:{{size:11}}}}}},
+      showlegend:true, legend:{{orientation:'h',y:-0.1}},
       height:380, margin:{{l:70,r:70,t:40,b:40}},
       paper_bgcolor:'transparent', plot_bgcolor:'transparent',
-      font:{{family:'Inter, -apple-system, sans-serif'}},
-      legend:{{orientation:'h',y:-0.1}}
+      font:{{family:'Inter, -apple-system, sans-serif'}}
     }}, {{responsive:true}});
   }}
-
-  recalc();
 }})();
 </script>"""
 
@@ -621,14 +624,15 @@ tr:hover td {{ background: var(--primary-light); }}
         sections.append(f"""
 <h2>5 Dimensions of Impact</h2>
 <div class="cards-row">
-<div class="score-card"><div class="value {grade_class}">{fd['overall_grade']}</div><div class="label">Overall Grade</div></div>
-<div class="score-card"><div class="value">{fd['overall_score']:.1f}<span style="font-size:0.5em;color:var(--text-secondary)">/5</span></div><div class="label">Overall Score</div></div>
+<div class="score-card"><div class="value {grade_class}" id="main-grade">{fd['overall_grade']}</div><div class="label">Overall Grade</div></div>
+<div class="score-card"><div class="value" id="main-overall">{fd['overall_score']:.1f}<span style="font-size:0.5em;color:var(--text-secondary)">/5</span></div><div class="label">Overall Score</div></div>
+<div class="score-card" id="delta-card" style="display:none"><div class="value" id="main-delta" style="font-size:1.4em;color:var(--text-secondary)">+0.0</div><div class="label">Improvement</div></div>
 </div>
 <div class="chart-row">
 <div class="chart-box" id="radar-chart"></div>
 <div class="chart-box">
 <table>
-<tr><th>Dimension</th><th>Score</th><th style="min-width:160px">Progress</th><th>Details</th></tr>
+<tr><th>Dimension</th><th>Score</th><th style="min-width:160px">Progress</th><th>Metrics</th><th>Details</th></tr>
 """)
         dims_js = []
         scores_js = []
@@ -638,27 +642,51 @@ tr:hover td {{ background: var(--primary-light); }}
             bar_color = "green" if pct >= 60 else "orange" if pct >= 30 else "red"
             dims_js.append(f'"{dim["dimension"]}"')
             scores_js.append(str(dim["score"]))
+            reported = dim.get("metrics_reported", 0)
+            available = dim.get("metrics_available", 0)
+            metric_pct = int(reported / available * 100) if available > 0 else 0
+            metric_color = "var(--success)" if metric_pct >= 50 else "var(--warning)" if metric_pct > 0 else "var(--danger)"
+            gaps_preview = ", ".join(g.split(" (")[0] for g in dim.get("gaps", [])[:3])
+            gaps_tooltip = f' title="{gaps_preview}"' if gaps_preview else ""
             sections.append(f"""<tr>
 <td><strong>{dim['dimension']}</strong></td>
-<td style="font-weight:600">{dim['score']}/5</td>
-<td><div class="bar-track"><div class="bar-fill {bar_color}" style="width:{pct}%"></div></div></td>
+<td style="font-weight:600" id="dim-score-{dim_name}">{dim['score']}/5</td>
+<td><div class="bar-track"><div class="bar-fill {bar_color}" id="dim-bar-{dim_name}" style="width:{pct}%"></div></div></td>
+<td style="font-size:0.85em;white-space:nowrap"><span style="color:{metric_color};font-weight:600">{reported}/{available}</span>
+<span style="color:var(--text-secondary)"{gaps_tooltip}>{' tracked' if reported > 0 else ' not tracked'}</span></td>
 <td style="font-size:0.85em;color:var(--text-secondary)">{dim['notes']}</td>
 </tr>""")
-        sections.append("</table></div></div>")
+
+        sections.append("</table>")
+
+        total_reported = sum(fd[d].get("metrics_reported", 0) for d in ["what", "who", "how_much", "contribution", "risk"])
+        total_available = sum(fd[d].get("metrics_available", 0) for d in ["what", "who", "how_much", "contribution", "risk"])
+        if total_available > 0:
+            sections.append(f"""
+<div style="margin-top:12px;padding:12px 16px;background:var(--primary-light);border-radius:var(--radius-sm);font-size:0.85em">
+<strong>Metric Tracking:</strong> {total_reported} of {total_available} available IRIS+ metrics reported
+({int(total_reported / total_available * 100)}% coverage).
+{f'Top gaps: {", ".join(g.split(" (")[0] for g in fd["what"].get("gaps", [])[:3] + fd["who"].get("gaps", [])[:2])}' if total_reported < total_available else 'Full coverage achieved!'}
+</div>""")
+        sections.append("</div></div>")
 
         sections.append(f"""<script>
 Plotly.newPlot('radar-chart', [{{
   type: 'scatterpolar', r: [{','.join(scores_js)},{scores_js[0]}],
   theta: [{','.join(dims_js)},{dims_js[0]}],
   fill: 'toself', fillcolor: 'rgba(25,118,210,0.12)',
-  line: {{color: '#1976d2', width: 2.5}}, marker: {{size: 7, color: '#1976d2'}}
+  line: {{color: '#1976d2', width: 2.5}}, marker: {{size: 7, color: '#1976d2'}},
+  name: 'Current'
 }}], {{
   polar: {{radialaxis: {{visible: true, range: [0, 5], tickfont: {{size: 10}}}}, angularaxis: {{tickfont: {{size: 11}}}}}},
-  showlegend: false, height: 380, margin: {{l: 70, r: 70, t: 40, b: 40}},
+  showlegend: true, legend: {{orientation: 'h', y: -0.1}},
+  height: 380, margin: {{l: 70, r: 70, t: 40, b: 40}},
   paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
   font: {{family: 'Inter, -apple-system, sans-serif'}}
 }}, {{responsive: true}});
 </script>""")
+
+        sections.append(_interactive_scoring_section(fd, data.get("sdg_alignments", [])))
 
         if fd.get("recommendations"):
             sections.append("<h3>Recommendations</h3>")
@@ -799,10 +827,6 @@ Plotly.newPlot('benchmark-chart', [
   font:{{family:'Inter, -apple-system, sans-serif', size:11}}
 }}, {{responsive:true}});
 </script>""")
-
-    if "five_dimensions" in data:
-        fd = data["five_dimensions"]
-        sections.append(_interactive_scoring_section(fd, data.get("sdg_alignments", [])))
 
     sections.append("""
 <div class="footer">
