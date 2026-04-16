@@ -16,7 +16,7 @@ from openharness.impact.five_dimensions import assess_five_dimensions
 from openharness.impact.gap_analysis import analyze_gaps
 from openharness.impact.greenwashing import assess_greenwashing
 from openharness.impact.models import Company
-from openharness.impact.sdg_mapper import map_sdg_alignment
+from openharness.impact.sdg_mapper import generate_sdg_gap_recommendations, map_sdg_alignment
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 _SECTOR_OPPORTUNITIES: dict[str, list[str]] = {
@@ -148,8 +148,9 @@ class ImpactReportInput(BaseModel):
     impact_themes: list[str] = Field(default_factory=list)
     reported_metrics: dict[str, str] = Field(default_factory=dict)
     sdg_claims: list[int] = Field(default_factory=list)
-    output_format: Literal["html", "csv", "json", "text", "xlsx"] = Field(
-        default="text", description="Output format for the report ('xlsx' for Excel workbook)"
+    output_format: Literal["html", "csv", "json", "text", "xlsx", "pdf"] = Field(
+        default="text",
+        description="Output format for the report ('xlsx' for Excel, 'pdf' for print-ready)"
     )
     output_path: str = Field(
         default="",
@@ -169,6 +170,10 @@ class ImpactReportInput(BaseModel):
     draft_review: bool = Field(
         default=False,
         description="If True, output is wrapped with DRAFT markers for human review.",
+    )
+    compare_assessment_id: str = Field(
+        default="",
+        description="Optional previous assessment ID for side-by-side comparison.",
     )
 
 
@@ -215,7 +220,13 @@ class ImpactReportTool(BaseTool):
 
         if args.include_sdg_mapping:
             sdg_results = map_sdg_alignment(company, store)
-            report_data["sdg_alignments"] = [a.model_dump() for a in sdg_results]
+            sdg_recs = generate_sdg_gap_recommendations(sdg_results, company, store)
+            sdg_dicts = []
+            for a in sdg_results:
+                d = a.model_dump()
+                d["recommendations"] = sdg_recs.get(a.goal, [])
+                sdg_dicts.append(d)
+            report_data["sdg_alignments"] = sdg_dicts
 
         if args.include_gap_analysis:
             gap_result = analyze_gaps(company, store)
@@ -256,13 +267,18 @@ class ImpactReportTool(BaseTool):
             if bm.get("benchmark_available"):
                 report_data["benchmark_comparison"] = bm
 
+        if args.compare_assessment_id:
+            report_data["comparison"] = _load_comparison_data(
+                args.compare_assessment_id, report_data
+            )
+
         if args.output_format == "xlsx":
             return _to_xlsx(report_data, args.output_path, context)
         elif args.output_format == "json":
             output = json.dumps(report_data, indent=2, default=str)
         elif args.output_format == "csv":
             output = _to_csv(report_data)
-        elif args.output_format == "html":
+        elif args.output_format in ("html", "pdf"):
             output = _to_html(report_data)
         else:
             output = _to_text(report_data)
@@ -272,6 +288,9 @@ class ImpactReportTool(BaseTool):
 
         if args.draft_review:
             output = _wrap_report_draft(output, company.name)
+
+        if args.output_format == "pdf":
+            return _to_pdf(output, args.output_path, context)
 
         if args.output_path:
             path = Path(args.output_path)
@@ -786,6 +805,208 @@ Use professional impact investment language. Be specific and evidence-based."""
     return prompt
 
 
+def _metric_tracking_dashboard(data: dict) -> str:
+    """Generate a metric tracking status dashboard (card grid)."""
+    fd = data.get("five_dimensions", {})
+    ga = data.get("gap_analysis", {})
+    if not fd and not ga:
+        return ""
+
+    tracked: dict[str, dict] = {}
+    gaps: dict[str, dict] = {}
+
+    for dim_name in ("what", "who", "how_much", "contribution", "risk"):
+        dim = fd.get(dim_name, {})
+        for mt in dim.get("metrics_tracked", []):
+            mid = mt if isinstance(mt, str) else str(mt)
+            tracked[mid] = {"name": mid, "dimension": dim.get("dimension", dim_name), "status": "tracked"}
+        for g in dim.get("gaps", []):
+            gid = g.split(" (")[0] if isinstance(g, str) else str(g)
+            if gid not in tracked:
+                gaps[gid] = {"name": gid, "dimension": dim.get("dimension", dim_name), "status": "gap"}
+
+    for m in ga.get("reported", []):
+        mid = m.get("id", "")
+        if mid and mid not in tracked:
+            tracked[mid] = {"name": m.get("name", mid), "dimension": "", "status": "tracked"}
+    for m in ga.get("missing", []):
+        mid = m.get("id", "")
+        if mid and mid not in tracked and mid not in gaps:
+            gaps[mid] = {"name": m.get("name", mid), "dimension": "", "status": "gap"}
+
+    all_metrics = list(tracked.values()) + list(gaps.values())
+    if not all_metrics:
+        return ""
+
+    parts = [
+        '<h2>Metric Tracking Dashboard</h2>',
+        f'<p style="color:var(--text-secondary);font-size:0.88em;margin-bottom:12px">'
+        f'{len(tracked)} tracked &bull; {len(gaps)} gaps &bull; {len(all_metrics)} total</p>',
+        '<div class="metric-grid">',
+    ]
+    for m in sorted(all_metrics, key=lambda x: (x["status"] != "tracked", x["name"])):
+        status = m["status"]
+        status_label = "Tracked" if status == "tracked" else "Gap"
+        parts.append(
+            f'<div class="metric-card {status}">'
+            f'<div class="mc-id">{m["name"]}</div>'
+            f'<div class="mc-name">{m.get("dimension", "")}</div>'
+            f'<span class="mc-status {status}">{status_label}</span>'
+            f'</div>'
+        )
+    parts.append("</div>")
+    return "\n".join(parts)
+
+
+def _impact_claims_section(data: dict) -> str:
+    """Generate expandable impact claim evidence cards."""
+    claims = data.get("impact_claims", [])
+    if not claims:
+        return ""
+
+    parts = [
+        f'<h2>Impact Claims <span style="font-size:0.65em;color:var(--text-secondary);font-weight:400">'
+        f'({len(claims)} claims)</span></h2>',
+    ]
+
+    visible = min(5, len(claims))
+    for i, claim in enumerate(claims):
+        hidden = ' style="display:none"' if i >= visible else ""
+        cat = claim.get("category", "intent")
+        conf = claim.get("confidence", 0.5)
+        evidence = claim.get("evidence_strength", 1)
+        text = claim.get("text", "No text")
+        negated = claim.get("negated", False)
+        metrics = claim.get("mapped_metrics", [])
+        sdg_targets = claim.get("mapped_sdg_targets", [])
+        conf_pct = int(conf * 100)
+        conf_color = "#2e7d32" if conf >= 0.7 else "#f57c00" if conf >= 0.4 else "#c62828"
+
+        parts.append(f'<div class="claim-card" data-claim-idx="{i}"{hidden}>')
+        parts.append('<div class="claim-header" onclick="this.parentElement.querySelector(\'.claim-body\').classList.toggle(\'active\')">')
+        parts.append(f'<span class="claim-badge {cat}">{cat}</span>')
+        parts.append(f'<span class="claim-text">{text[:120]}{"..." if len(text) > 120 else ""}</span>')
+        parts.append('<span class="claim-toggle">&#9660;</span>')
+        parts.append("</div>")
+        parts.append('<div class="claim-body">')
+
+        if negated:
+            parts.append('<div style="color:var(--danger);font-size:0.85em;margin-bottom:6px">&#9888; Negation detected in this claim</div>')
+
+        parts.append('<div style="margin-bottom:8px"><strong style="font-size:0.82em">Confidence:</strong> ')
+        parts.append(f'<div class="confidence-bar"><div class="confidence-fill" style="width:{conf_pct}%;background:{conf_color}"></div></div>')
+        parts.append(f' <span style="font-size:0.82em;color:{conf_color}">{conf_pct}%</span></div>')
+
+        parts.append('<div style="margin-bottom:8px"><strong style="font-size:0.82em">Evidence Level:</strong> ')
+        stars = "&#9733;" * evidence + "&#9734;" * (5 - evidence)
+        parts.append(f'<span style="color:#f9a825;font-size:0.95em">{stars}</span>')
+        parts.append(f' <span style="font-size:0.78em;color:var(--text-secondary)">NESTA Level {evidence}</span></div>')
+
+        if metrics:
+            parts.append('<div style="margin-bottom:8px"><strong style="font-size:0.82em">Mapped Metrics:</strong> ')
+            parts.append(" ".join(f'<span class="chip">{m}</span>' for m in metrics[:8]))
+            parts.append("</div>")
+        if sdg_targets:
+            parts.append('<div style="margin-bottom:8px"><strong style="font-size:0.82em">SDG Targets:</strong> ')
+            parts.append(" ".join(f'<span class="chip" style="background:#fff3e0;color:#e65100">{t}</span>' for t in sdg_targets[:8]))
+            parts.append("</div>")
+
+        parts.append("</div></div>")
+
+    if len(claims) > visible:
+        remaining = len(claims) - visible
+        parts.append(
+            f'<button id="show-more-claims" '
+            f'style="display:block;margin:12px auto;padding:8px 24px;background:var(--primary-light);color:var(--primary);'
+            f'border:1px solid var(--primary);border-radius:var(--radius-sm);cursor:pointer;font-size:0.88em">'
+            f'Show {remaining} more claims</button>'
+            '<script>'
+            'document.getElementById("show-more-claims").addEventListener("click",function(){'
+            'document.querySelectorAll(".claim-card").forEach(function(c){c.style.display=""});'
+            'this.style.display="none"'
+            '});'
+            '</script>'
+        )
+
+    return "\n".join(parts)
+
+
+def _impact_pathway_section(data: dict) -> str:
+    """Generate an auto-inferred Theory of Change pathway diagram."""
+    company = data.get("company", {})
+    fd = data.get("five_dimensions", {})
+    sdg = data.get("sdg_alignments", [])
+    ga = data.get("gap_analysis", {})
+
+    inputs_items = []
+    if company.get("sector"):
+        inputs_items.append(f"Sector: {company['sector']}")
+    if company.get("geography"):
+        inputs_items.append(f"Geography: {company['geography']}")
+    reported_count = ga.get("metrics_reported", 0) if ga else 0
+    if reported_count:
+        inputs_items.append(f"{reported_count} metrics reported")
+    if not inputs_items:
+        inputs_items.append("Investment capital")
+
+    activities = []
+    if company.get("description"):
+        desc = company["description"]
+        if len(desc) > 60:
+            desc = desc[:57] + "..."
+        activities.append(desc)
+    if company.get("impact_themes"):
+        activities.extend(company["impact_themes"][:2])
+    if not activities:
+        activities.append("Core operations")
+
+    outputs = []
+    for dim_name in ("what", "who", "how_much"):
+        dim = fd.get(dim_name, {})
+        tracked = dim.get("metrics_tracked", [])
+        if tracked:
+            outputs.extend(str(t) for t in tracked[:2])
+    if not outputs:
+        outputs.append("Metrics to be reported")
+
+    outcomes = []
+    top_sdgs = sorted(sdg, key=lambda s: s.get("score", 0), reverse=True)[:3]
+    for s in top_sdgs:
+        if s.get("score", 0) > 0:
+            outcomes.append(f"SDG {s['goal']}: {s.get('goal_name', '')[:25]}")
+    if not outcomes:
+        outcomes.append("SDG alignment pending")
+
+    impact_items = []
+    if fd:
+        impact_items.append(f"5D Score: {fd.get('overall_score', 0):.1f}/5")
+        impact_items.append(f"Grade: {fd.get('overall_grade', 'N/A')}")
+    if not impact_items:
+        impact_items.append("Impact TBD")
+
+    stages = [
+        ("Inputs", inputs_items),
+        ("Activities", activities),
+        ("Outputs", outputs),
+        ("Outcomes", outcomes),
+        ("Impact", impact_items),
+    ]
+
+    parts = ["<h2>Impact Pathway (Theory of Change)</h2>", '<div class="pathway">']
+    for idx, (label, items) in enumerate(stages):
+        items_html = "<br>".join(f"&bull; {it}" for it in items[:3])
+        parts.append(
+            f'<div class="pathway-stage">'
+            f'<div class="pathway-box"><h4>{label}</h4>'
+            f'<div class="items">{items_html}</div></div>'
+        )
+        if idx < len(stages) - 1:
+            parts.append('<span class="pathway-arrow">&#8594;</span>')
+        parts.append("</div>")
+    parts.append("</div>")
+    return "\n".join(parts)
+
+
 def _to_html(data: dict) -> str:
     company = data["company"]
     sections: list[str] = []
@@ -854,6 +1075,93 @@ tr:hover td {{ background: var(--primary-light); }}
 .footer {{ margin-top: 48px; padding: 20px 0; border-top: 2px solid var(--border); color: var(--text-secondary); font-size: 0.8em; text-align: center; }}
 .footer a {{ color: var(--accent); text-decoration: none; }}
 @media(max-width: 700px) {{ .chart-row {{ flex-direction: column; }} .chart-box {{ flex-basis: 100%; }} }}
+
+/* 7.1.1 -- 5D Overlay Panel */
+.dim-clickable {{ cursor: pointer; }}
+.dim-clickable:hover td {{ background: var(--primary-light) !important; }}
+.dim-overlay {{ display: none; }}
+.dim-overlay.active {{ display: table-row; }}
+.dim-overlay td {{ background: #f8fafe; padding: 16px 14px; }}
+.dim-overlay-content {{ display: flex; gap: 16px; flex-wrap: wrap; }}
+.dim-overlay-col {{ flex: 1 1 200px; min-width: 180px; }}
+.dim-overlay-col h4 {{ font-size: 0.85em; color: var(--primary); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.03em; }}
+.metric-pill {{ display: inline-block; padding: 3px 10px; border-radius: 14px; font-size: 0.78em; margin: 2px 3px; font-weight: 500; }}
+.metric-pill.tracked {{ background: var(--success-light); color: var(--success); }}
+.metric-pill.gap {{ background: var(--danger-light); color: var(--danger); }}
+.metric-pill.partial {{ background: var(--warning-light); color: var(--warning); }}
+.dim-suggestion {{ font-size: 0.82em; color: var(--text-secondary); margin: 4px 0; padding-left: 12px; border-left: 2px solid var(--warning); }}
+
+/* 7.1.2 -- SDG Drill-down */
+.sdg-clickable {{ cursor: pointer; }}
+.sdg-clickable:hover td {{ background: #fff9e6 !important; }}
+.sdg-detail {{ display: none; }}
+.sdg-detail.active {{ display: table-row; }}
+.sdg-detail td {{ background: #fffef5; padding: 16px 14px; }}
+.evidence-chain {{ display: flex; align-items: center; gap: 4px; flex-wrap: wrap; margin: 6px 0; }}
+.chain-node {{ background: var(--primary-light); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 6px 10px; font-size: 0.78em; text-align: center; max-width: 160px; }}
+.chain-arrow {{ color: var(--text-secondary); font-size: 1.1em; }}
+.chain-confidence {{ font-size: 0.7em; color: var(--text-secondary); }}
+.sdg-rec {{ font-size: 0.82em; padding: 6px 10px; background: var(--warning-light); border-radius: var(--radius-sm); margin: 3px 0; }}
+
+/* 7.1.3 -- Metric Tracking Dashboard */
+.metric-grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin: 16px 0; }}
+.metric-card {{ background: var(--surface); border-radius: var(--radius-sm); box-shadow: var(--shadow-sm); padding: 14px 16px; border: 1px solid var(--border); border-top: 3px solid var(--border); }}
+.metric-card.tracked {{ border-top-color: var(--success); }}
+.metric-card.gap {{ border-top-color: var(--danger); }}
+.metric-card.partial {{ border-top-color: var(--warning); }}
+.metric-card .mc-id {{ font-size: 0.75em; color: var(--text-secondary); font-weight: 600; }}
+.metric-card .mc-name {{ font-size: 0.88em; font-weight: 600; margin: 4px 0; }}
+.metric-card .mc-status {{ display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.72em; font-weight: 600; text-transform: uppercase; }}
+.mc-status.tracked {{ background: var(--success-light); color: var(--success); }}
+.mc-status.gap {{ background: var(--danger-light); color: var(--danger); }}
+.mc-status.partial {{ background: var(--warning-light); color: var(--warning); }}
+
+/* 7.1.4 -- Claim Evidence Cards */
+.claim-card {{ background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow-sm); padding: 16px 20px; margin: 10px 0; border: 1px solid var(--border); transition: box-shadow 0.2s; }}
+.claim-card:hover {{ box-shadow: var(--shadow-md); }}
+.claim-header {{ display: flex; align-items: center; gap: 10px; cursor: pointer; }}
+.claim-text {{ flex: 1; font-size: 0.9em; }}
+.claim-badge {{ display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 0.72em; font-weight: 600; text-transform: uppercase; }}
+.claim-badge.outcome {{ background: #e8f5e9; color: #2e7d32; }}
+.claim-badge.output {{ background: #e3f2fd; color: #1565c0; }}
+.claim-badge.activity {{ background: #fff3e0; color: #e65100; }}
+.claim-badge.intent {{ background: #f3e5f5; color: #7b1fa2; }}
+.claim-badge.risk {{ background: #ffebee; color: #c62828; }}
+.claim-body {{ display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }}
+.claim-body.active {{ display: block; }}
+.confidence-bar {{ background: #e8eaed; border-radius: 6px; height: 8px; width: 100px; display: inline-block; overflow: hidden; vertical-align: middle; }}
+.confidence-fill {{ height: 100%; border-radius: 6px; }}
+.chip {{ display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.75em; margin: 2px; background: var(--primary-light); color: var(--primary); }}
+.claim-toggle {{ color: var(--text-secondary); font-size: 0.85em; }}
+
+/* 7.2.3 -- Impact Pathway Diagram */
+.pathway {{ display: flex; align-items: stretch; gap: 0; margin: 20px 0; overflow-x: auto; padding: 10px 0; }}
+.pathway-stage {{ flex: 1 1 150px; min-width: 130px; text-align: center; position: relative; }}
+.pathway-box {{ background: var(--surface); border: 2px solid var(--primary-light); border-radius: var(--radius-sm); padding: 12px 10px; margin: 0 6px; min-height: 80px; display: flex; flex-direction: column; justify-content: center; }}
+.pathway-box h4 {{ font-size: 0.78em; color: var(--primary); text-transform: uppercase; margin-bottom: 6px; }}
+.pathway-box .items {{ font-size: 0.78em; color: var(--text); }}
+.pathway-box .confidence-label {{ font-size: 0.68em; color: var(--text-secondary); margin-top: 4px; }}
+.pathway-arrow {{ position: absolute; right: -10px; top: 50%; transform: translateY(-50%); color: var(--primary); font-size: 1.4em; z-index: 1; }}
+
+/* 7.1.5 -- Print/PDF */
+@media print {{
+  body {{ background: white; max-width: 100%; padding: 16px; font-size: 10pt; }}
+  .report-header {{ background: #0d47a1 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }}
+  .score-card, .chart-box, .claim-card, .metric-card {{ break-inside: avoid; }}
+  #interactive-panel, .dim-clickable .claim-toggle {{ display: none !important; }}
+  .dim-overlay, .sdg-detail, .claim-body {{ display: table-row !important; }}
+  .claim-body {{ display: block !important; }}
+  h2 {{ break-before: page; }}
+  .footer {{ break-before: avoid; }}
+}}
+
+/* 7.1.6 -- Report Comparison */
+.comparison-table {{ width: 100%; border-collapse: collapse; }}
+.comparison-table th {{ background: var(--primary); color: white; padding: 10px; font-size: 0.8em; }}
+.comparison-table td {{ padding: 8px 10px; border-bottom: 1px solid var(--border); font-size: 0.88em; }}
+.delta-up {{ color: var(--success); font-weight: 700; }}
+.delta-down {{ color: var(--danger); font-weight: 700; }}
+.delta-same {{ color: var(--text-secondary); }}
 </style>
 </head>
 <body>
@@ -876,6 +1184,10 @@ tr:hover td {{ background: var(--primary-light); }}
 
     sections.append(_generate_executive_summary(data, company))
 
+    comp_html = _comparison_section(data)
+    if comp_html:
+        sections.append(comp_html)
+
     if "five_dimensions" in data:
         fd = data["five_dimensions"]
         grade_class = f"grade-{fd['overall_grade'][0]}"
@@ -891,7 +1203,7 @@ tr:hover td {{ background: var(--primary-light); }}
 <div class="chart-row">
 <div class="chart-box" id="radar-chart"></div>
 <div class="chart-box">
-<table>
+<table id="dim-table">
 <tr><th>Dimension</th><th>Score</th><th style="min-width:160px">Progress</th><th>Confidence</th><th>Metrics</th><th>Details</th></tr>
 """)
         dims_js = []
@@ -911,8 +1223,8 @@ tr:hover td {{ background: var(--primary-light); }}
             prov = dim.get("provenance", "estimated")
             prov_color = "var(--success)" if prov == "evidence-based" else "var(--warning)" if prov == "partial" else "var(--text-secondary)"
             prov_label = prov.replace("-", " ").title() if prov else "Estimated"
-            sections.append(f"""<tr>
-<td><strong>{dim['dimension']}</strong></td>
+            sections.append(f"""<tr class="dim-clickable" data-dim="{dim_name}">
+<td><strong>{dim['dimension']}</strong> <span style="font-size:0.7em;color:var(--text-secondary)">&#9660;</span></td>
 <td style="font-weight:600" id="dim-score-{dim_name}">{dim['score']}/5</td>
 <td><div class="bar-track"><div class="bar-fill {bar_color}" id="dim-bar-{dim_name}" style="width:{pct}%"></div></div></td>
 <td style="font-size:0.8em;color:{prov_color};font-weight:500">{prov_label}</td>
@@ -921,7 +1233,42 @@ tr:hover td {{ background: var(--primary-light); }}
 <td style="font-size:0.85em;color:var(--text-secondary)">{dim['notes']}</td>
 </tr>""")
 
+            tracked_metrics = dim.get("metrics_tracked", [])
+            gap_metrics = dim.get("gaps", [])
+            recs = dim.get("recommendations", fd.get("recommendations", []))[:3]
+            sections.append(f'<tr class="dim-overlay" id="overlay-{dim_name}"><td colspan="6"><div class="dim-overlay-content">')
+            sections.append('<div class="dim-overlay-col"><h4>Tracked Metrics</h4>')
+            if tracked_metrics:
+                for tm in tracked_metrics[:6]:
+                    label = tm if isinstance(tm, str) else str(tm)
+                    sections.append(f'<span class="metric-pill tracked">{label}</span>')
+            else:
+                sections.append(f'<span style="font-size:0.82em;color:var(--text-secondary)">No metrics tracked ({available} available)</span>')
+            sections.append('</div><div class="dim-overlay-col"><h4>Gaps</h4>')
+            if gap_metrics:
+                for gm in gap_metrics[:6]:
+                    label = gm.split(" (")[0] if isinstance(gm, str) else str(gm)
+                    sections.append(f'<span class="metric-pill gap">{label}</span>')
+            else:
+                sections.append('<span style="font-size:0.82em;color:var(--success)">No gaps identified</span>')
+            sections.append('</div><div class="dim-overlay-col"><h4>Suggestions</h4>')
+            if recs:
+                for rc in recs[:3]:
+                    sections.append(f'<div class="dim-suggestion">{rc}</div>')
+            else:
+                sections.append('<span style="font-size:0.82em;color:var(--text-secondary)">Report more metrics to receive suggestions</span>')
+            sections.append('</div></div></td></tr>')
+
         sections.append("</table>")
+        sections.append("""<script>
+document.querySelectorAll('.dim-clickable').forEach(function(row) {
+  row.addEventListener('click', function() {
+    var dim = this.dataset.dim;
+    var overlay = document.getElementById('overlay-' + dim);
+    if (overlay) overlay.classList.toggle('active');
+  });
+});
+</script>""")
 
         overall_prov = fd.get("overall_provenance", "estimated")
         if overall_prov in ("estimated", "partial"):
@@ -1057,7 +1404,7 @@ Plotly.newPlot('radar-chart', [{{
 <div class="chart-row">
 <div class="chart-box" id="sdg-chart"></div>
 <div class="chart-box">
-<table>
+<table id="sdg-table">
 <tr><th>SDG</th><th>Name</th><th>Score</th><th>Confidence</th><th>Matched Metrics</th></tr>
 """)
         for a in aligned:
@@ -1068,12 +1415,56 @@ Plotly.newPlot('radar-chart', [{{
                 "medium": "color:#f57c00;font-weight:600",
                 "low": "color:var(--danger);font-weight:600",
             }.get(a["confidence"], "")
-            sections.append(f"""<tr>
-<td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:{sdg_color};margin-right:6px;vertical-align:middle"></span>SDG {a['goal']}</td>
+            sections.append(f"""<tr class="sdg-clickable" data-sdg="{a['goal']}">
+<td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:{sdg_color};margin-right:6px;vertical-align:middle"></span>SDG {a['goal']} <span style="font-size:0.7em;color:var(--text-secondary)">&#9660;</span></td>
 <td>{a.get('goal_name', '')}</td>
 <td style="font-weight:600">{a['score']}</td><td style="{conf_style}">{a['confidence']}</td><td style="font-size:0.85em">{metrics_str}</td>
 </tr>""")
+
+            sections.append(f'<tr class="sdg-detail" id="sdg-detail-{a["goal"]}"><td colspan="5">')
+            targets = a.get("matched_targets", [])
+            if targets:
+                sections.append('<div style="margin-bottom:8px"><strong style="font-size:0.82em">Targets:</strong> ')
+                sections.append(" ".join(f'<span class="chip">{t}</span>' for t in targets))
+                sections.append("</div>")
+            chains = a.get("evidence_chain", [])
+            if chains:
+                sections.append('<div style="margin-bottom:8px"><strong style="font-size:0.82em">Evidence Chains:</strong>')
+                for ch in chains[:5]:
+                    claim_text = str(ch.get("claim_text", ""))[:60]
+                    metric = ch.get("metric_id", "")
+                    ev_type = str(ch.get("evidence_type", "")).replace("_", " ").title()
+                    sdg_tgt = ch.get("sdg_target", "")
+                    conf = ch.get("confidence", 0)
+                    sections.append('<div class="evidence-chain">')
+                    if claim_text:
+                        sections.append(f'<span class="chain-node">{claim_text}</span><span class="chain-arrow">&#8594;</span>')
+                    if metric:
+                        sections.append(f'<span class="chain-node">{metric}</span><span class="chain-arrow">&#8594;</span>')
+                    sections.append(f'<span class="chain-node">{ev_type}</span><span class="chain-arrow">&#8594;</span>')
+                    sections.append(f'<span class="chain-node">{sdg_tgt}<br><span class="chain-confidence">{conf:.0%} conf.</span></span>')
+                    sections.append('</div>')
+                sections.append("</div>")
+            sdg_recs = a.get("recommendations", [])
+            if sdg_recs:
+                sections.append('<div><strong style="font-size:0.82em">Recommendations:</strong>')
+                for sr in sdg_recs[:3]:
+                    sections.append(f'<div class="sdg-rec">{sr}</div>')
+                sections.append("</div>")
+            if not targets and not chains and not sdg_recs:
+                sections.append(f'<span style="font-size:0.85em;color:var(--text-secondary)">Provenance: {a.get("provenance", "estimated")}. Report more metrics to build evidence chain.</span>')
+            sections.append("</td></tr>")
+
         sections.append("</table></div></div>")
+        sections.append("""<script>
+document.querySelectorAll('.sdg-clickable').forEach(function(row) {
+  row.addEventListener('click', function() {
+    var sdg = this.dataset.sdg;
+    var detail = document.getElementById('sdg-detail-' + sdg);
+    if (detail) detail.classList.toggle('active');
+  });
+});
+</script>""")
 
         if sdg_labels:
             sections.append(f"""<script>
@@ -1089,6 +1480,10 @@ Plotly.newPlot('sdg-chart', [{{
   font: {{family: 'Inter, -apple-system, sans-serif'}}
 }}, {{responsive: true}});
 </script>""")
+
+    claims_html = _impact_claims_section(data)
+    if claims_html:
+        sections.append(claims_html)
 
     if "impact_analysis" in data:
         ia = data["impact_analysis"]
@@ -1132,6 +1527,10 @@ Plotly.newPlot('sdg-chart', [{{
             sections.append("<h3>Recommendations</h3>")
             for r in ga["recommendations"]:
                 sections.append(f'<div class="rec">{r}</div>')
+
+    dashboard_html = _metric_tracking_dashboard(data)
+    if dashboard_html:
+        sections.append(dashboard_html)
 
     if "greenwashing" in data:
         gw = data["greenwashing"]
@@ -1209,12 +1608,147 @@ Plotly.newPlot('benchmark-chart', [
 }}, {{responsive:true}});
 </script>""")
 
+    pathway_html = _impact_pathway_section(data)
+    if pathway_html:
+        sections.append(pathway_html)
+
     sections.append("""
 <div class="footer">
 Generated by <a href="#">Impact Vision</a> &mdash; Open-source impact measurement engine &mdash; IRIS+ 5.3c
 </div>
 </body></html>""")
     return "\n".join(sections)
+
+
+def _to_pdf(html: str, output_path: str, context) -> ToolResult:
+    """Convert HTML to PDF using WeasyPrint if available, otherwise provide instructions."""
+    if output_path:
+        path = Path(output_path)
+        if not path.is_absolute():
+            path = context.cwd / path
+        if not path.suffix:
+            path = path.with_suffix(".pdf")
+    else:
+        path = context.cwd / "impact_report.pdf"
+
+    try:
+        import weasyprint  # type: ignore[import-untyped]
+        weasyprint.HTML(string=html).write_pdf(str(path))
+        return ToolResult(
+            output=f"PDF report saved to: {path}",
+            metadata={"output_path": str(path), "format": "pdf"},
+        )
+    except ImportError:
+        html_path = path.with_suffix(".html")
+        html_path.parent.mkdir(parents=True, exist_ok=True)
+        html_path.write_text(html, encoding="utf-8")
+        return ToolResult(
+            output=(
+                f"WeasyPrint not installed. HTML saved to: {html_path}\n"
+                "To generate PDF:\n"
+                "  Option 1: pip install weasyprint  (then re-run)\n"
+                "  Option 2: Open the HTML file in a browser and use Ctrl+P / Cmd+P to print to PDF\n"
+                "The report includes print-friendly CSS for clean PDF output."
+            ),
+            metadata={"output_path": str(html_path), "format": "html_for_pdf"},
+        )
+
+
+def _load_comparison_data(assessment_id: str, current: dict) -> dict:
+    """Load a previous assessment and compute deltas against the current report."""
+    try:
+        from openharness.impact.storage import AssessmentStore
+        store = AssessmentStore()
+        prev = store.get_assessment(assessment_id)
+    except Exception:
+        return {"error": f"Could not load assessment {assessment_id}"}
+
+    if prev is None:
+        return {"error": f"Assessment {assessment_id} not found"}
+
+    prev_data = prev if isinstance(prev, dict) else prev.model_dump()
+    comparison: dict = {"previous_id": assessment_id, "dimensions": {}, "sdg": {}}
+
+    cur_fd = current.get("five_dimensions", {})
+    prev_fd = prev_data.get("five_dimensions", {})
+    if cur_fd and prev_fd:
+        for dim_name in ("what", "who", "how_much", "contribution", "risk"):
+            cur_score = cur_fd.get(dim_name, {}).get("score", 0)
+            prev_score = prev_fd.get(dim_name, {}).get("score", 0)
+            comparison["dimensions"][dim_name] = {
+                "current": cur_score, "previous": prev_score,
+                "delta": round(cur_score - prev_score, 2),
+            }
+        comparison["overall"] = {
+            "current": cur_fd.get("overall_score", 0),
+            "previous": prev_fd.get("overall_score", 0),
+            "delta": round(cur_fd.get("overall_score", 0) - prev_fd.get("overall_score", 0), 2),
+        }
+
+    cur_sdg = {a["goal"]: a for a in current.get("sdg_alignments", [])}
+    prev_sdg = {a["goal"]: a for a in prev_data.get("sdg_alignments", [])}
+    for goal in sorted(set(cur_sdg) | set(prev_sdg)):
+        c = cur_sdg.get(goal, {}).get("score", 0)
+        p = prev_sdg.get(goal, {}).get("score", 0)
+        if c or p:
+            comparison["sdg"][goal] = {"current": c, "previous": p, "delta": round(c - p, 2)}
+
+    return comparison
+
+
+def _comparison_section(data: dict) -> str:
+    """Render comparison table if comparison data is present."""
+    comp = data.get("comparison", {})
+    if not comp or comp.get("error"):
+        return ""
+
+    parts = [
+        f'<h2>Assessment Comparison <span style="font-size:0.65em;color:var(--text-secondary);font-weight:400">'
+        f'vs. {comp.get("previous_id", "previous")}</span></h2>',
+    ]
+
+    if comp.get("overall"):
+        ov = comp["overall"]
+        delta_cls = "delta-up" if ov["delta"] > 0 else "delta-down" if ov["delta"] < 0 else "delta-same"
+        parts.append(
+            f'<div class="cards-row">'
+            f'<div class="score-card"><div class="value">{ov["current"]:.1f}</div><div class="label">Current</div></div>'
+            f'<div class="score-card"><div class="value" style="color:var(--text-secondary)">{ov["previous"]:.1f}</div><div class="label">Previous</div></div>'
+            f'<div class="score-card"><div class="value {delta_cls}">{"+" if ov["delta"]>0 else ""}{ov["delta"]:.1f}</div><div class="label">Change</div></div>'
+            f'</div>'
+        )
+
+    dims = comp.get("dimensions", {})
+    if dims:
+        parts.append('<table class="comparison-table"><tr><th>Dimension</th><th>Previous</th><th>Current</th><th>Change</th></tr>')
+        for dim, vals in dims.items():
+            display = dim.replace("_", " ").title()
+            delta = vals["delta"]
+            cls = "delta-up" if delta > 0 else "delta-down" if delta < 0 else "delta-same"
+            arrow = "&#9650;" if delta > 0 else "&#9660;" if delta < 0 else "&#8212;"
+            parts.append(
+                f'<tr><td><strong>{display}</strong></td>'
+                f'<td>{vals["previous"]:.1f}</td><td>{vals["current"]:.1f}</td>'
+                f'<td class="{cls}">{arrow} {"+" if delta>0 else ""}{delta:.1f}</td></tr>'
+            )
+        parts.append("</table>")
+
+    sdg_comp = comp.get("sdg", {})
+    if sdg_comp:
+        parts.append('<h3>SDG Score Changes</h3>')
+        parts.append('<table class="comparison-table"><tr><th>SDG</th><th>Previous</th><th>Current</th><th>Change</th></tr>')
+        for goal, vals in sorted(sdg_comp.items()):
+            delta = vals["delta"]
+            cls = "delta-up" if delta > 0 else "delta-down" if delta < 0 else "delta-same"
+            arrow = "&#9650;" if delta > 0 else "&#9660;" if delta < 0 else "&#8212;"
+            parts.append(
+                f'<tr><td>SDG {goal}</td>'
+                f'<td>{vals["previous"]:.0f}</td><td>{vals["current"]:.0f}</td>'
+                f'<td class="{cls}">{arrow} {"+" if delta>0 else ""}{delta:.0f}</td></tr>'
+            )
+        parts.append("</table>")
+
+    return "\n".join(parts)
 
 
 def _to_xlsx(data: dict, output_path: str, context) -> ToolResult:

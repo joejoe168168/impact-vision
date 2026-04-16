@@ -157,4 +157,4 @@ def quick_exclusion_check(company_name: str, description: str, sector: str) -> d
         matched = [kw for kw in cat.get("keywords", []) if kw.lower() in text]
         if matched:
             flags.append(f"{cat.get('label', category_id)} ({', '.join(matched)})")
-    return {"passed": len(flags) == 0, "flags": flags}
+    return {"passed": len(flags) == 0, "failed": len(flags) > 0, "flags": flags}

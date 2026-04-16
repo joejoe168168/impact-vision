@@ -13,7 +13,7 @@ from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 
 class FrameworkInput(BaseModel):
-    framework: Literal["sasb", "gri", "tcfd", "sfdr_pai", "edci", "unpri", "toc", "issb_s1", "issb_s2", "esrs", "all"] = Field(
+    framework: Literal["sasb", "gri", "tcfd", "sfdr_pai", "edci", "unpri", "toc", "issb_s1", "issb_s2", "esrs", "opim", "all"] = Field(
         description=(
             "Which framework to query. 'all' runs a quick scan across all frameworks."
         )

@@ -245,14 +245,31 @@ def map_sdg_alignment(
         goal_metric_ids = {m.id for m in goal_metrics}
         matched_metric_ids = goal_metric_ids & reported_ids
         matched_targets: set[str] = set()
+        evidence_chain: list[dict[str, object]] = []
         for m in goal_metrics:
             if m.id in matched_metric_ids:
                 matched_targets.update(m.sdg_targets)
+                for tgt in m.sdg_targets:
+                    evidence_chain.append({
+                        "claim_text": company.reported_metrics.get(m.id, ""),
+                        "metric_id": m.id,
+                        "evidence_type": "reported_metric",
+                        "sdg_target": tgt,
+                        "confidence": 0.8 if len(matched_metric_ids) >= 3 else 0.5,
+                    })
 
         coverage = len(matched_metric_ids) / len(goal_metric_ids) if goal_metric_ids else 0
         metric_score = min(60.0, coverage * 60.0)
 
         inferred_score = inferred_sdg.get(goal_num, 0) * 25.0
+        if inferred_score > 0 and company.description:
+            evidence_chain.append({
+                "claim_text": company.description[:120],
+                "metric_id": "",
+                "evidence_type": "description_inference",
+                "sdg_target": f"SDG {goal_num}",
+                "confidence": round(inferred_sdg.get(goal_num, 0), 2),
+            })
 
         theme_score = 0.0
         if company.impact_themes:
@@ -263,6 +280,14 @@ def map_sdg_alignment(
             theme_overlap = themes_lower & goal_themes
             if theme_overlap:
                 theme_score = min(15.0, (len(theme_overlap) / max(len(themes_lower), 1)) * 15.0)
+                for t in sorted(theme_overlap):
+                    evidence_chain.append({
+                        "claim_text": f"Theme: {t}",
+                        "metric_id": "",
+                        "evidence_type": "theme_alignment",
+                        "sdg_target": f"SDG {goal_num}",
+                        "confidence": round(theme_score / 15.0, 2),
+                    })
 
         total_score = round(metric_score + inferred_score + theme_score, 1)
         confidence = "high" if total_score >= 50 else "medium" if total_score >= 20 else "low"
@@ -282,7 +307,75 @@ def map_sdg_alignment(
             matched_metrics=sorted(matched_metric_ids),
             confidence=confidence,
             provenance=provenance,
+            evidence_chain=evidence_chain,
         ))
 
     alignments.sort(key=lambda a: a.score, reverse=True)
     return alignments
+
+
+def generate_sdg_gap_recommendations(
+    alignments: list[SDGAlignment],
+    company: Company,
+    store: MetricStore,
+) -> dict[int, list[str]]:
+    """Generate specific recommendations for strengthening partial SDG alignments.
+
+    For each SDG with score between 5-60 (partial alignment), identify which
+    scoring component is weakest and suggest concrete improvement steps.
+
+    Returns: {goal_number: [recommendation_strings]}
+    """
+    recommendations: dict[int, list[str]] = {}
+    reported_ids = set(company.reported_metrics.keys())
+    themes_lower = {t.lower() for t in (company.impact_themes or [])}
+
+    for alignment in alignments:
+        if alignment.score <= 5 or alignment.score > 60:
+            continue
+
+        recs: list[str] = []
+        goal_num = alignment.goal
+
+        goal_metrics = store.filter_by_sdg(goal_num)
+        goal_metric_ids = {m.id for m in goal_metrics} if goal_metrics else set()
+        matched = goal_metric_ids & reported_ids
+        unmatched = goal_metric_ids - reported_ids
+
+        if unmatched and len(matched) < 3:
+            top_missing = sorted(unmatched)[:3]
+            recs.append(
+                f"Report metrics {', '.join(top_missing)} to strengthen SDG {goal_num} evidence "
+                f"({len(matched)}/{len(goal_metric_ids)} currently tracked)"
+            )
+
+        if alignment.provenance == "estimated":
+            goal = get_sdg_goal(goal_num)
+            goal_name = goal.name if goal else f"Goal {goal_num}"
+            recs.append(
+                f"Add specific outcome descriptions related to \"{goal_name}\" targets in company documentation"
+            )
+
+        if goal_metrics:
+            goal_themes: set[str] = set()
+            for m in goal_metrics:
+                goal_themes.update(t.lower() for t in m.impact_themes)
+            missing_themes = goal_themes - themes_lower
+            if missing_themes:
+                suggest = sorted(missing_themes)[:2]
+                recs.append(
+                    f"Add impact themes: {', '.join(t.title() for t in suggest)}"
+                )
+
+        if alignment.confidence in ("low", "medium") and not alignment.matched_targets:
+            goal = get_sdg_goal(goal_num)
+            if goal and goal.targets:
+                target_ids = [t.id for t in goal.targets[:3]]
+                recs.append(
+                    f"Map activities to specific SDG targets: {', '.join(target_ids)}"
+                )
+
+        if recs:
+            recommendations[goal_num] = recs
+
+    return recommendations

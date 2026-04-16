@@ -742,40 +742,40 @@
 
 ---
 
-## Phase 7: Enhanced Analysis & Reporting UX 📊
+## Phase 7: Enhanced Analysis & Reporting UX 📊 ✅
 
 > Make the HTML report and assessment experience richer and more actionable.
 
 ### 7.1 Interactive HTML Report Enhancements
 
-- [ ] **7.1.1** 5-Dimension overlay panel — click any dimension on the radar chart to expand an overlay showing tracked vs. untracked metrics, evidence quality, and improvement suggestions
-  - Files: `src/openharness/tools/impact/impact_report_tool.py`, `report_templates/`
-
-- [ ] **7.1.2** SDG drill-down — click any SDG bar to expand details: mapped claims, evidence strength, relevant IRIS+ metrics, and keyword matches
+- [x] **7.1.1** 5-Dimension overlay panel — click any dimension on the radar chart to expand an overlay showing tracked vs. untracked metrics, evidence quality, and improvement suggestions
   - Files: `src/openharness/tools/impact/impact_report_tool.py`
 
-- [ ] **7.1.3** Metric tracking status dashboard — for each recommended metric, show tracked/not-tracked/partial with data quality indicator
+- [x] **7.1.2** SDG drill-down — click any SDG bar to expand details: mapped claims, evidence strength, relevant IRIS+ metrics, and keyword matches
   - Files: `src/openharness/tools/impact/impact_report_tool.py`
 
-- [ ] **7.1.4** Claim evidence cards — expandable cards for each impact claim showing source page, mapped metrics, confidence score, evidence strength, and verification status
+- [x] **7.1.3** Metric tracking status dashboard — for each recommended metric, show tracked/not-tracked/partial with data quality indicator
   - Files: `src/openharness/tools/impact/impact_report_tool.py`
 
-- [ ] **7.1.5** Export-ready PDF generation — add PDF export option (via WeasyPrint or Playwright) for LP-ready reports
+- [x] **7.1.4** Claim evidence cards — expandable cards for each impact claim showing source page, mapped metrics, confidence score, evidence strength, and verification status
   - Files: `src/openharness/tools/impact/impact_report_tool.py`
 
-- [ ] **7.1.6** Report comparison mode — side-by-side or diff view comparing two assessments of the same company (e.g., before/after additional data)
+- [x] **7.1.5** Export-ready PDF generation — add PDF export option (via WeasyPrint optional) with print-friendly CSS media queries
+  - Files: `src/openharness/tools/impact/impact_report_tool.py`
+
+- [x] **7.1.6** Report comparison mode — side-by-side view comparing two assessments of the same company with delta scoring
   - Files: `src/openharness/tools/impact/impact_report_tool.py`, `storage.py`
 
 ### 7.2 Deeper SDG/Impact Evidence Mapping
 
-- [ ] **7.2.1** Evidence chain visualization — for each SDG mapping, show the chain: claim → metric → evidence → SDG target, with confidence at each step
-  - Files: `src/openharness/impact/sdg_mapper.py`, report templates
+- [x] **7.2.1** Evidence chain visualization — for each SDG mapping, show the chain: claim → metric → evidence → SDG target, with confidence at each step
+  - Files: `src/openharness/impact/models.py`, `src/openharness/impact/sdg_mapper.py`, `impact_report_tool.py`
 
-- [ ] **7.2.2** SDG gap recommendations — for SDGs with partial alignment, generate specific recommendations for what evidence/data would strengthen the mapping
-  - Files: `src/openharness/impact/sdg_mapper.py`, `five_dimension_assess_tool.py`
+- [x] **7.2.2** SDG gap recommendations — for SDGs with partial alignment, generate specific recommendations for what evidence/data would strengthen the mapping
+  - Files: `src/openharness/impact/sdg_mapper.py`, `impact_report_tool.py`
 
-- [ ] **7.2.3** Impact pathway diagrams — auto-generate Theory of Change flow diagrams (input → activity → output → outcome → impact) from assessed data
-  - Files: `src/openharness/impact/frameworks/theory_of_change.py`, report templates
+- [x] **7.2.3** Impact pathway diagrams — auto-generate Theory of Change flow diagrams (input → activity → output → outcome → impact) from assessed data
+  - Files: `src/openharness/tools/impact/impact_report_tool.py`
 
 ---
 
@@ -946,7 +946,7 @@
 
 | Phase | Items | Focus |
 |-------|-------|-------|
-| Phase 7: Analysis & Reporting UX 📊 | 9 | Interactive reports, evidence mapping, impact pathways |
+| Phase 7: Analysis & Reporting UX 📊 ✅ | 9 | Interactive reports, evidence mapping, impact pathways |
 | Phase 8: Pipeline & Portfolio 📁 | 15 | Pipeline stages, monitoring, per-project & aggregate reporting |
 | Phase 9: LLM Intelligence 🧠 | 10 | Improvement advisor, smart docs, conversational assessment |
 | Phase 10: Platform Integration 🔌 | 11 | MCP server, Claude Code, full API, localization |
@@ -954,4 +954,4 @@
 
 ---
 
-*Last updated: 2026-04-16 (v0.3.2). Phases 1-6 complete (149/149 items). Next version roadmap (45 items) defined.*
+*Last updated: 2026-04-16 (v0.4.0). Phases 1-7 complete (158/158 items). Next version roadmap (36 remaining items) defined.*

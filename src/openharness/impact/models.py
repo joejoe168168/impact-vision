@@ -224,6 +224,10 @@ class SDGAlignment(BaseModel):
     matched_metrics: list[str] = Field(default_factory=list)
     confidence: Literal["high", "medium", "low"] = "low"
     provenance: Literal["evidence-based", "estimated", "partial"] = "estimated"
+    evidence_chain: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description="Chain: [{claim_text, metric_id, evidence_type, sdg_target, confidence}]",
+    )
 
 
 class Assessment(BaseModel):
@@ -263,6 +267,20 @@ class ImpactClaim(BaseModel):
         default_factory=dict,
         description="Extracted entities: {'stakeholders': [...], 'geographies': [...], 'outcomes': [...]}",
     )
+
+    def model_post_init(self, __context: Any) -> None:
+        """Auto-populate confidence from calibrated formula after model initialization."""
+        has_metric = len(self.mapped_metrics) > 0
+        has_quant = any(c.isdigit() for c in self.text)
+        calibrated = self.calibrated_confidence(
+            keyword_hits=len(self.mapped_metrics) + len(self.mapped_sdg_targets),
+            has_metric=has_metric,
+            has_quantitative_data=has_quant,
+            evidence_level=self.evidence_strength,
+        )
+        # Only override default confidence if we have any signal
+        if has_metric or has_quant or self.evidence_strength > 1:
+            self.confidence = calibrated
 
     def recalibrate_confidence(self) -> None:
         """Update confidence using the calibrated formula based on current fields.

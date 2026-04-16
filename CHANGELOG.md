@@ -4,6 +4,29 @@ All notable changes to Impact Vision are recorded here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.4.0] - 2026-04-16
+
+### Added — Phase 7: Enhanced Analysis & Reporting UX
+
+**Interactive HTML Report** (7.1)
+- 5-Dimension overlay panel: click any dimension row to expand tracked/untracked metrics, gaps, and improvement suggestions
+- SDG drill-down: click SDG rows to expand evidence chains, matched targets, and gap recommendations
+- Metric tracking dashboard: card grid with tracked/gap status for all recommended metrics
+- Claim evidence cards: expandable cards for each impact claim with confidence bars, NESTA evidence levels, mapped metrics/SDG targets, and negation warnings
+- PDF export: optional WeasyPrint integration with print-friendly CSS `@media print` rules; falls back to HTML with browser-print instructions
+- Report comparison mode: side-by-side delta scoring from stored assessments (5D dimensions + SDG scores)
+
+**Evidence & SDG Mapping** (7.2)
+- Evidence chain visualization: `SDGAlignment.evidence_chain` field populated in `map_sdg_alignment()` showing claim→metric→evidence→SDG target with confidence
+- SDG gap recommendations: `generate_sdg_gap_recommendations()` in `sdg_mapper.py` for partial alignments (missing metrics, weak descriptions, missing themes, unmapped targets)
+- Impact pathway diagrams: auto-generated Theory of Change flow (Inputs→Activities→Outputs→Outcomes→Impact) rendered as pure CSS flexbox in HTML reports
+
+### Changed
+- `SDGAlignment` model: added `evidence_chain: list[dict]` field
+- `ImpactReportInput`: added `output_format="pdf"` option and `compare_assessment_id` field
+- SDG alignment data now includes per-goal recommendations in report output
+- HTML report CSS: 7 new component styles (overlay, drill-down, metric grid, claim cards, pathway, print, comparison)
+
 ## [0.3.2] - 2026-04-16
 
 ### Changed — Documentation
