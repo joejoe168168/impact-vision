@@ -241,9 +241,17 @@ class ImpactReportTool(BaseTool):
                 path = context.cwd / path
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(output, encoding="utf-8")
+            summary = _to_text(report_data) if args.output_format != "text" else output[:1500]
             return ToolResult(
-                output=f"Report saved to: {path}\n\n{output[:500]}...",
+                output=f"Report saved to: {path}\nFormat: {args.output_format}\n\n{summary}",
                 metadata={"output_path": str(path), "format": args.output_format},
+            )
+
+        if args.output_format == "html" and len(output) > 2000:
+            summary = _to_text(report_data)
+            return ToolResult(
+                output=f"HTML report generated ({len(output)} chars). Text summary:\n\n{summary}",
+                metadata={"format": args.output_format, "html_length": len(output)},
             )
 
         return ToolResult(
