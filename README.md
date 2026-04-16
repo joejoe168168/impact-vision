@@ -95,50 +95,11 @@ After this, you'll have two commands available: `impact-vision` and `iv` (shorth
 > python -m openharness dd list
 > ```
 
-### 3. Try the CLI tools (no API key needed)
+### 3. Set up an LLM provider
 
-```bash
-# See all available commands
-impact-vision --help
+The AI agent needs a language model. We recommend **OpenRouter** for beginners -- it's free to start and gives you access to many models.
 
-# Browse IRIS+ metrics (16 GIIN Core Metrics available out of the box)
-impact-vision catalog stats
-impact-vision catalog search "climate"
-impact-vision catalog search "gender"
-
-# List ESG/sustainability frameworks
-impact-vision framework list
-
-# Quick multi-framework scan of a company description
-impact-vision framework scan "Solar energy company providing clean power to 50,000 rural households"
-
-# Cross-reference a metric across all frameworks
-impact-vision framework xref OI4112
-
-# Browse the Due Diligence checklist (96 questions)
-impact-vision dd list
-impact-vision dd categories
-
-# Analyze text against the DD checklist
-impact-vision dd analyze "We serve 45,000 clients across 3 countries. Our NPS score is 72."
-```
-
-### 4. Load the full IRIS+ Catalog (optional, 787 metrics)
-
-Download `IRIS 5.3c Catalog of Metrics.xlsx` from [GIIN IRIS+](https://iris.thegiin.org/) (free registration required), place it in `data/raw/`, then:
-
-```bash
-impact-vision catalog load    # Parse Excel into JSON cache (one-time)
-impact-vision catalog stats   # Verify: should show 787 metrics
-```
-
-Without the full catalog, Impact Vision still works using the bundled 16 GIIN Core Metrics for gap analysis, scoring, and SDG mapping.
-
-### 5. Set up an LLM provider (required for the AI agent)
-
-The CLI tools in Step 3 work without an API key, but the interactive AI agent needs a language model. We recommend **OpenRouter** for beginners -- it's free to start and gives you access to many models.
-
-#### Option A: OpenRouter (recommended for beginners -- free models available)
+#### Option A: OpenRouter (recommended -- free models available)
 
 **Step 1.** Create an OpenRouter account:
 
@@ -185,7 +146,7 @@ Setup complete:
 - model: nvidia/nemotron-3-super-120b-a12b:free
 ```
 
-Done! You can now start the agent (Step 6).
+Done! You can now start the agent (Step 4).
 
 > **Free models:** Browse all free models at [openrouter.ai/models?q=free](https://openrouter.ai/models?q=free). Some examples:
 >
@@ -197,7 +158,7 @@ Done! You can now start the agent (Step 6).
 >
 > You can change your model later by running `impact-vision setup` again.
 
-#### Option B: Anthropic (Claude) -- best quality for impact analysis
+#### Option B: Anthropic (Claude Sonnet) -- best quality for impact analysis
 
 1. Go to [console.anthropic.com](https://console.anthropic.com/), create an account
 2. Go to **API Keys** and create a key
@@ -207,9 +168,9 @@ Done! You can now start the agent (Step 6).
 impact-vision setup
 ```
 
-4. Paste your API key when prompted
+4. Paste your API key when prompted (Claude Sonnet is the default model)
 
-#### Option C: OpenAI
+#### Option C: OpenAI (GPT-5)
 
 1. Go to [platform.openai.com/api-keys](https://platform.openai.com/api-keys), create a key
 2. Run the wizard and choose **OpenAI-Compatible API** > **OpenAI official**:
@@ -235,13 +196,11 @@ No API key needed -- everything runs locally on your GPU/CPU.
 | Provider | Best for | Cost |
 |----------|----------|------|
 | [OpenRouter](https://openrouter.ai/models?q=free) | Trying multiple models, free tier | Free + pay-per-use |
-| Anthropic (Claude) | Best impact analysis quality | Pay-per-use |
-| OpenAI (GPT-4o) | General purpose | Pay-per-use |
+| Anthropic (Claude Sonnet) | Best impact analysis quality | Pay-per-use |
+| OpenAI (GPT-5) | General purpose | Pay-per-use |
 | Ollama (local) | Privacy, offline use | Free (your hardware) |
 
-### 6. Start the AI agent
-
-Now start the agent:
+### 4. Start the AI agent
 
 ```bash
 impact-vision
@@ -251,6 +210,49 @@ Try asking:
 - "Analyze this pitch deck" (provide a path to a PDF)
 - "What SDGs does a solar energy company align with?"
 - "Run a 5-dimension assessment for a fintech serving 50,000 clients"
+
+### 5. Try the CLI tools (no API key needed)
+
+These commands work without any LLM setup:
+
+```bash
+# See all available commands
+impact-vision --help
+
+# Browse IRIS+ metrics (16 GIIN Core Metrics available out of the box)
+impact-vision catalog stats
+impact-vision catalog search "climate"
+impact-vision catalog search "gender"
+
+# List ESG/sustainability frameworks
+impact-vision framework list
+
+# Quick multi-framework scan of a company description
+impact-vision framework scan "Solar energy company providing clean power to 50,000 rural households"
+
+# Cross-reference a metric across all frameworks
+impact-vision framework xref OI4112
+
+# Browse the Due Diligence checklist (96 questions)
+impact-vision dd list
+impact-vision dd categories
+
+# Analyze text against the DD checklist
+impact-vision dd analyze "We serve 45,000 clients across 3 countries. Our NPS score is 72."
+```
+
+### 6. Load the full IRIS+ Catalog (optional, 787 metrics)
+
+The bundled 16 GIIN Core Metrics cover gap analysis, scoring, and SDG mapping out of the box. For the full 787-metric catalog:
+
+1. Download `IRIS 5.3c Catalog of Metrics.xlsx` from [GIIN IRIS+](https://iris.thegiin.org/) (free registration required)
+2. Place it in `data/raw/`
+3. Run:
+
+```bash
+impact-vision catalog load    # Parse Excel into JSON cache (one-time)
+impact-vision catalog stats   # Verify: should show 787 metrics
+```
 
 ### 7. Launch the dashboard (optional)
 
