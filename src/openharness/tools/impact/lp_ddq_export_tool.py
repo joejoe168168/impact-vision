@@ -60,6 +60,19 @@ LP_DDQ_TEMPLATES = {
             {"id": "edci-g", "question": "Governance metrics (board independence, data privacy, ESG oversight)", "data_sources": ["edci_governance"]},
         ],
     },
+    "sfdr": {
+        "name": "SFDR Annex III/IV Disclosure",
+        "description": "EU SFDR pre-contractual and periodic disclosure template (Article 8/9 products)",
+        "sections": [
+            {"id": "sfdr-class", "question": "Fund classification under SFDR (Article 6/8/9) and rationale", "data_sources": ["sfdr_classification"]},
+            {"id": "sfdr-esg", "question": "Environmental or social characteristics promoted (Art.8) / sustainable investment objective (Art.9)", "data_sources": ["impact_thesis", "sdg_alignment"]},
+            {"id": "sfdr-pai", "question": "Principal Adverse Impact indicators — 14 mandatory + relevant optional", "data_sources": ["sfdr_pai"]},
+            {"id": "sfdr-dnsh", "question": "Do No Significant Harm assessment for sustainable investments", "data_sources": ["risk", "exclusion_screening"]},
+            {"id": "sfdr-taxonomy", "question": "Proportion of EU Taxonomy-aligned investments", "data_sources": ["taxonomy_alignment"]},
+            {"id": "sfdr-data", "question": "Data sources and limitations", "data_sources": ["measurement_systems"]},
+            {"id": "sfdr-entity", "question": "Entity-level sustainability risk integration (Art. 3-5)", "data_sources": ["governance"]},
+        ],
+    },
     "custom": {
         "name": "Custom LP DDQ",
         "description": "Flexible template combining data from all available frameworks",
@@ -76,8 +89,8 @@ LP_DDQ_TEMPLATES = {
 
 
 class LpDdqExportInput(BaseModel):
-    template: Literal["ilpa", "giin_iris", "edci", "custom"] = Field(
-        description="LP DDQ template to use: 'ilpa' (ILPA ESG section), 'giin_iris' (GIIN/IRIS+ report), 'edci' (EDCI survey), 'custom' (all frameworks)",
+    template: Literal["ilpa", "giin_iris", "edci", "sfdr", "custom"] = Field(
+        description="LP DDQ template to use: 'ilpa' (ILPA ESG section), 'giin_iris' (GIIN/IRIS+ report), 'edci' (EDCI survey), 'sfdr' (SFDR Annex III/IV), 'custom' (all frameworks)",
     )
     action: Literal["list_templates", "generate", "preview"] = Field(
         default="generate",
@@ -327,6 +340,9 @@ class LpDdqExportTool(BaseTool):
                 parts.append(f"Investment stage: {company.stage}.")
             if company.impact_targets:
                 parts.append(f"\nImpact targets set for {len(company.impact_targets)} metrics.")
+                for t in company.impact_targets:
+                    val_str = f"{t.target_value} {t.target_unit}".strip() if t.target_value is not None else t.description
+                    parts.append(f"  - {t.metric_id}: {val_str}")
 
         if "sdg_alignment" in sources and "sdg" in data_cache:
             alignments = data_cache["sdg"]

@@ -159,10 +159,63 @@ PAI_INDICATORS: list[SFDRIndicator] = [
 ]
 
 
+OPTIONAL_PAI_INDICATORS: list[SFDRIndicator] = [
+    # Environment - optional (Table 2 of Annex I)
+    SFDRIndicator(
+        number=15, name="GHG intensity of investee countries", category="climate",
+        metric="GHG intensity of investee countries", unit="tCO2e/EUR M GDP", mandatory=False,
+        data_points=["Country GDP", "Country GHG emissions"],
+    ),
+    SFDRIndicator(
+        number=16, name="Investee countries subject to social violations", category="social",
+        metric="Number of countries subject to social violations", mandatory=False,
+        data_points=["EU sanctions list", "UNGC violations by country"],
+    ),
+    SFDRIndicator(
+        number=17, name="Exposure to fossil fuel through real estate", category="climate",
+        metric="Share of real estate assets in fossil fuel exposure", unit="%", mandatory=False,
+        data_points=["Real estate energy source"],
+    ),
+    SFDRIndicator(
+        number=18, name="Exposure to energy-inefficient real estate", category="climate",
+        metric="Share of real estate with EPC below C", unit="%", mandatory=False,
+        data_points=["EPC rating", "Energy efficiency certificates"],
+    ),
+    # Biodiversity optional
+    SFDRIndicator(
+        number=19, name="Deforestation", category="environmental",
+        metric="Share of investments linked to deforestation", unit="%", mandatory=False,
+        data_points=["Supply chain deforestation risk", "Commodity sourcing data"],
+    ),
+    # Water optional
+    SFDRIndicator(
+        number=20, name="Untreated discharged waste water", category="environmental",
+        metric="Share of investees discharging untreated waste water", unit="%", mandatory=False,
+        data_points=["Waste water treatment", "Discharge volumes"],
+    ),
+    # Social optional
+    SFDRIndicator(
+        number=21, name="Lack of human rights policy", category="social",
+        metric="Share of investments without a human rights policy", unit="%", mandatory=False,
+        data_points=["Human rights policy", "Due diligence process"],
+    ),
+    SFDRIndicator(
+        number=22, name="Lack of anti-corruption and anti-bribery policy", category="anti-corruption",
+        metric="Share of investments without anti-corruption policies", unit="%", mandatory=False,
+        data_points=["Anti-corruption policy", "Whistleblower mechanism"],
+    ),
+    SFDRIndicator(
+        number=23, name="Excessive CEO pay ratio", category="social",
+        metric="Average ratio of CEO compensation to median employee compensation", mandatory=False,
+        data_points=["CEO total compensation", "Median employee compensation"],
+    ),
+]
+
+
 def get_pai_indicators(mandatory_only: bool = True) -> list[SFDRIndicator]:
     if mandatory_only:
         return [i for i in PAI_INDICATORS if i.mandatory]
-    return PAI_INDICATORS
+    return PAI_INDICATORS + OPTIONAL_PAI_INDICATORS
 
 
 def assess_sfdr_compliance(
@@ -235,3 +288,119 @@ def assess_sfdr_compliance(
 
     result["coverage_pct"] = round(result["addressed"] / result["total"] * 100, 1)
     return result
+
+
+# ---------------------------------------------------------------------------
+# Article 6 / 8 / 9 Fund Classification
+# ---------------------------------------------------------------------------
+
+_ARTICLE_DESCRIPTIONS = {
+    6: "No ESG integration commitments (basic risk disclosure only)",
+    8: "Promotes E/S characteristics alongside financial return (light green)",
+    9: "Sustainable investment as its objective (dark green)",
+}
+
+
+def classify_sfdr_article(
+    description: str = "",
+    document_text: str = "",
+    fund_name: str = "",
+    has_sustainability_objective: bool = False,
+    pct_sustainable_investments: float | None = None,
+) -> dict:
+    """Classify a fund under SFDR Article 6, 8, or 9.
+
+    Article 9 requires the fund to have sustainable investment as its *objective*
+    with measurable targets. Article 8 promotes E/S characteristics without making
+    sustainable investment the primary objective. Article 6 is the default.
+    """
+    text = f"{description} {document_text} {fund_name}".lower()
+
+    art9_signals = [
+        "sustainable investment objective", "article 9", "art 9", "dark green",
+        "sustainable investment as its objective", "taxonomy-aligned",
+    ]
+    art8_signals = [
+        "promotes environmental", "promotes social", "esg integration",
+        "article 8", "art 8", "light green", "e/s characteristics",
+        "environmental and social characteristics",
+    ]
+
+    art9_hits = [s for s in art9_signals if s in text]
+    art8_hits = [s for s in art8_signals if s in text]
+
+    if has_sustainability_objective or art9_hits:
+        article = 9
+        confidence = "high" if has_sustainability_objective else "medium"
+    elif art8_hits or (pct_sustainable_investments is not None and pct_sustainable_investments > 0):
+        article = 8
+        confidence = "high" if len(art8_hits) >= 2 else "medium"
+    else:
+        article = 6
+        confidence = "high" if not art8_hits and not art9_hits else "low"
+
+    requirements: list[str] = []
+    if article == 9:
+        requirements = [
+            "Disclose how the sustainable investment objective is achieved",
+            "Show that investments do no significant harm (DNSH) to other E/S objectives",
+            "Report on all 14 mandatory PAI indicators",
+            "Disclose proportion of investments aligned with EU Taxonomy",
+            "Pre-contractual and periodic disclosures per Annex III/V",
+        ]
+    elif article == 8:
+        requirements = [
+            "Disclose how E/S characteristics are promoted",
+            "Report on relevant PAI indicators (at minimum those related to promoted characteristics)",
+            "If making sustainable investments, apply DNSH criteria",
+            "Pre-contractual and periodic disclosures per Annex II/IV",
+        ]
+    else:
+        requirements = [
+            "Disclose how sustainability risks are integrated into investment decisions",
+            "State whether PAI is considered (comply or explain)",
+        ]
+
+    return {
+        "article": article,
+        "description": _ARTICLE_DESCRIPTIONS[article],
+        "confidence": confidence,
+        "evidence": art9_hits or art8_hits or [],
+        "requirements": requirements,
+        "pct_sustainable_investments": pct_sustainable_investments,
+    }
+
+
+def assess_sfdr_entity_vs_fund(
+    entity_description: str = "",
+    fund_descriptions: list[dict[str, str]] | None = None,
+) -> dict:
+    """Distinguish entity-level vs product-level SFDR obligations.
+
+    Entity-level: applies to the financial market participant as a whole.
+    Product-level: applies per fund/product under management.
+    """
+    entity_obligations = [
+        "Publish principal adverse impact statement (Art. 4) or explain why not",
+        "Disclose sustainability risk integration policy (Art. 3)",
+        "Disclose remuneration policy consistency with sustainability risk integration (Art. 5)",
+    ]
+
+    fund_results: list[dict] = []
+    for fund in (fund_descriptions or []):
+        cls = classify_sfdr_article(
+            description=fund.get("description", ""),
+            fund_name=fund.get("name", ""),
+        )
+        fund_results.append({"name": fund.get("name", ""), **cls})
+
+    return {
+        "entity_level": {
+            "obligations": entity_obligations,
+            "applies_to": "Financial Market Participant (firm-wide)",
+        },
+        "product_level": {
+            "funds_classified": len(fund_results),
+            "funds": fund_results,
+        },
+    }

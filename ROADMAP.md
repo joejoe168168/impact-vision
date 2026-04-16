@@ -93,7 +93,7 @@
 - [x] **1.4.5** Update `LpDdqExportInput` to accept geography fields
   - File: `src/openharness/tools/impact/lp_ddq_export_tool.py`
   - Ref: Review §5.1
-  - ⚠️ Audit note: Input model has NO `geography` field; `_generate_section_data()` uses `company.geography` but it's always empty
+  - ✅ Fixed: Added `geography` and `stage` fields to `LpDdqExportInput`, passed through to `Company` constructor.
 
 - [x] **1.4.6** Use geography in SDG relevance scoring — adjust SDG relevance by country/region context
   - File: `src/openharness/impact/sdg_mapper.py`
@@ -252,12 +252,12 @@
 - [x] **2.3.1** Create `ImpactTarget` model — `metric_id`, `target_value`, `target_date`, `actual_value`, `period`
   - File: `src/openharness/impact/models.py`
   - Ref: Review §4.3
-  - ⚠️ Audit note: `ImpactTarget` class does NOT exist (ImportError). `Company.impact_targets` is `dict[str, str]` instead
+  - ✅ Fixed: `ImpactTarget` model exists with `metric_id`, `target_value` (optional float), `target_unit`, `target_date`, `baseline_value`, `baseline_date`, `description`. `Company.impact_targets` is now `list[ImpactTarget]`.
 
 - [x] **2.3.2** Add `targets` field to `Company` model
   - File: `src/openharness/impact/models.py`
   - Ref: Review §5.1
-  - ⚠️ Note: `impact_targets: dict[str, str]` exists but is NOT the structured `ImpactTarget` model type originally intended
+  - ✅ Fixed: `Company.impact_targets` is now `list[ImpactTarget]` with structured model objects.
 
 - [x] **2.3.3** Parse `OD4091` (Social and Environmental Targets) metric value into structured `ImpactTarget` objects
   - File: `src/openharness/tools/impact/common.py`
@@ -491,83 +491,83 @@
 
 ### 4.1 EU CSRD / ESRS Double Materiality
 
-- [ ] **4.1.1** Create ESRS framework module with ~1,200 data points across E/S/G topics
+- [x] **4.1.1** Create ESRS framework module with ~1,200 data points across E/S/G topics
   - File: `src/openharness/impact/frameworks/esrs.py` (new)
   - Ref: Review §10.4
 
-- [ ] **4.1.2** Implement double materiality assessment — both financial and impact materiality
+- [x] **4.1.2** Implement double materiality assessment — both financial and impact materiality
   - File: `src/openharness/impact/frameworks/esrs.py`
   - Ref: Review §10.4
 
-- [ ] **4.1.3** Add ESRS as framework option in `FrameworkTool`
+- [x] **4.1.3** Add ESRS as framework option in `FrameworkTool`
   - File: `src/openharness/tools/impact/framework_tool.py`
   - Ref: Review §10.4
 
-- [ ] **4.1.4** Add ESRS cross-references to cross-reference mapping
+- [x] **4.1.4** Add ESRS cross-references to cross-reference mapping
   - File: `src/openharness/impact/frameworks/cross_reference.py`
   - Ref: Review §10.4
 
 ### 4.2 EU Green Claims Directive Compliance
 
-- [ ] **4.2.1** Add green claims substantiation checker — verify claims have scientific evidence and independent verification
+- [x] **4.2.1** Add green claims substantiation checker — verify claims have scientific evidence and independent verification
   - File: `src/openharness/impact/greenwashing.py` (extend)
   - Ref: Review §10.4
 
-- [ ] **4.2.2** Add life-cycle assessment requirement flag for environmental claims
+- [x] **4.2.2** Add life-cycle assessment requirement flag for environmental claims
   - File: `src/openharness/impact/greenwashing.py`
   - Ref: Review §10.4
 
-- [ ] **4.2.3** Add UK FCA anti-greenwashing rule compliance check
+- [x] **4.2.3** Add UK FCA anti-greenwashing rule compliance check
   - File: `src/openharness/impact/greenwashing.py`
   - Ref: Review §10.4
 
 ### 4.3 SFDR Enhancements
 
-- [ ] **4.3.1** Add Article 6/8/9 fund classification support
+- [x] **4.3.1** Add Article 6/8/9 fund classification support
   - File: `src/openharness/impact/frameworks/sfdr_pai.py`
   - Ref: Review §2.5
 
-- [ ] **4.3.2** Add optional PAI indicators (biodiversity, water, waste, social/employee)
+- [x] **4.3.2** Add optional PAI indicators (biodiversity, water, waste, social/employee)
   - File: `src/openharness/impact/frameworks/sfdr_pai.py`
   - Ref: Review §2.5
 
-- [ ] **4.3.3** Add entity-level vs. fund-level PAI reporting distinction
+- [x] **4.3.3** Add entity-level vs. fund-level PAI reporting distinction
   - File: `src/openharness/impact/frameworks/sfdr_pai.py`
   - Ref: Review §2.5
 
-- [ ] **4.3.4** Add SFDR Annex III/IV table generation
+- [x] **4.3.4** Add SFDR Annex III/IV table generation
   - File: `src/openharness/tools/impact/lp_ddq_export_tool.py`
   - Ref: Review §2.5
 
 ### 4.4 NLP-Enhanced Greenwashing Detection
 
-- [ ] **4.4.1** Integrate ClimateBERT for climate-specific greenwashing detection
+- [x] **4.4.1** Integrate ClimateBERT for climate-specific greenwashing detection
   - File: `src/openharness/impact/greenwashing.py` (extend)
   - Ref: Review §3.5, §10.6
 
-- [ ] **4.4.2** Implement Green Authenticity Index (GAI) — Stacey Matrix evaluation of claims
+- [x] **4.4.2** Implement Green Authenticity Index (GAI) — Stacey Matrix evaluation of claims
   - File: `src/openharness/impact/greenwashing.py` (extend)
   - Ref: Review §3.5, §10.6
 
-- [ ] **4.4.3** Implement Cheap Talk Index — proportion of non-specific commitments
+- [x] **4.4.3** Implement Cheap Talk Index — proportion of non-specific commitments
   - File: `src/openharness/impact/greenwashing.py` (extend)
   - Ref: Review §3.5, §10.6
 
-- [ ] **4.4.4** Add sentiment deflection detection — overly positive tone deflecting from negative information
+- [x] **4.4.4** Add sentiment deflection detection — overly positive tone deflecting from negative information
   - File: `src/openharness/impact/greenwashing.py` (extend)
   - Ref: Review §3.5
 
-- [ ] **4.4.5** Add claim decomposition and fact-checking — break claims into verifiable sub-claims
+- [x] **4.4.5** Add claim decomposition and fact-checking — break claims into verifiable sub-claims
   - File: `src/openharness/impact/greenwashing.py` (extend)
   - Ref: Review §3.5
 
 ### 4.5 Digital Product Passport Integration
 
-- [ ] **4.5.1** Add EU ESPR / Digital Product Passport data import
+- [x] **4.5.1** Add EU ESPR / Digital Product Passport data import
   - File: `src/openharness/tools/impact/product_passport_tool.py` (new)
   - Ref: Review §10.4
 
-- [ ] **4.5.2** Map product passport data to IRIS+ metrics for product-level impact assessment
+- [x] **4.5.2** Map product passport data to IRIS+ metrics for product-level impact assessment
   - File: `src/openharness/tools/impact/product_passport_tool.py`
   - Ref: Review §10.4
 
@@ -735,4 +735,4 @@
 
 ---
 
-*Last updated: 2026-04-16 (v0.2.0). Derived from `IMPACT_MANAGER_REVIEW.md`.*
+*Last updated: 2026-04-16 (v0.2.1). Derived from `IMPACT_MANAGER_REVIEW.md`.*

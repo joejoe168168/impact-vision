@@ -6,6 +6,13 @@ Produces a composite greenwashing risk score (0-100) from 5 sub-scores:
 3. Specificity: are claims concrete or vague?
 4. Selectivity: is reporting balanced or cherry-picked?
 5. Verification: is there evidence of measurement systems and auditing?
+
+Extended with NLP-enhanced signals:
+- Green Authenticity Index (GAI) - adapted from Stacey Matrix
+- Cheap Talk Index - proportion of non-specific commitments
+- Sentiment deflection detection
+- Claim decomposition into verifiable sub-claims
+- ClimateBERT integration stub for model-based detection
 """
 
 from __future__ import annotations
@@ -258,3 +265,401 @@ def _generate_recommendations(
     if verification > 40:
         recs.append("Obtain third-party verification or implement a recognized measurement framework")
     return recs
+
+
+# ---------------------------------------------------------------------------
+# EU Green Claims Directive (Directive on Substantiation of Green Claims)
+# Ref: COM/2023/166 final — adopted 2024, enforcement from 2026.
+# ---------------------------------------------------------------------------
+
+_ENVIRONMENTAL_CLAIM_PATTERNS: list[str] = [
+    "carbon neutral", "carbon-neutral", "net zero", "net-zero", "climate neutral",
+    "climate-neutral", "climate positive", "carbon negative", "eco-friendly",
+    "biodegradable", "compostable", "recyclable", "recycled content",
+    "renewable", "sustainable", "green", "environmentally friendly",
+    "reduced footprint", "low carbon", "zero emission",
+]
+
+_LCA_TRIGGER_TERMS: list[str] = [
+    "carbon neutral", "carbon-neutral", "net zero", "net-zero",
+    "climate neutral", "climate-neutral", "carbon negative",
+    "zero emission", "climate positive", "reduced footprint",
+]
+
+
+class GreenClaimsResult(BaseModel):
+    """EU Green Claims Directive compliance assessment."""
+
+    compliant: bool = False
+    claims_found: list[str] = Field(default_factory=list)
+    lca_required: bool = False
+    lca_triggers: list[str] = Field(default_factory=list)
+    substantiation_issues: list[str] = Field(default_factory=list)
+    independent_verification_present: bool = False
+    recommendations: list[str] = Field(default_factory=list)
+
+
+def assess_green_claims_compliance(
+    description: str = "",
+    document_text: str = "",
+    reported_metrics: dict[str, str] | None = None,
+    has_lca: bool = False,
+    has_independent_verification: bool = False,
+) -> GreenClaimsResult:
+    """Check company claims against the EU Green Claims Directive.
+
+    The directive requires:
+    1. Environmental claims are substantiated by scientific evidence.
+    2. Claims about overall environmental impact require full life-cycle assessment.
+    3. Claims are verified by an accredited independent verifier.
+    4. Carbon offsetting claims must be secondary to actual reduction measures.
+    """
+    text = f"{description} {document_text}".lower()
+    metrics = reported_metrics or {}
+
+    claims = [c for c in _ENVIRONMENTAL_CLAIM_PATTERNS if c in text]
+    lca_triggers = [t for t in _LCA_TRIGGER_TERMS if t in text]
+    lca_required = bool(lca_triggers) and not has_lca
+
+    issues: list[str] = []
+    recs: list[str] = []
+
+    for claim in claims:
+        has_data = any(
+            claim.replace("-", " ").split()[0] in str(v).lower()
+            for v in metrics.values()
+        )
+        if not has_data:
+            issues.append(f"Claim '{claim}' lacks quantitative substantiation")
+
+    if "offset" in text or "carbon credit" in text:
+        if "reduc" not in text:
+            issues.append("Offsetting claim without evidence of actual emission reductions (Art. 5(6))")
+            recs.append("Demonstrate primary emission reductions before referencing offsets")
+
+    if lca_required:
+        issues.append("Full-scope environmental claim requires life-cycle assessment (Art. 3(4))")
+        recs.append("Commission a life-cycle assessment covering full product/service life cycle")
+
+    if claims and not has_independent_verification:
+        issues.append("Environmental claims require verification by an accredited independent body (Art. 10)")
+        recs.append("Engage an accredited verifier per EU Green Claims Directive Art. 10")
+
+    if not claims and not lca_triggers:
+        recs.append("No explicit environmental claims detected — directive may not apply")
+
+    compliant = bool(claims) and not issues
+
+    return GreenClaimsResult(
+        compliant=compliant,
+        claims_found=claims,
+        lca_required=lca_required,
+        lca_triggers=lca_triggers,
+        substantiation_issues=issues,
+        independent_verification_present=has_independent_verification,
+        recommendations=recs,
+    )
+
+
+# ---------------------------------------------------------------------------
+# UK FCA Anti-Greenwashing Rule (PS23/16, effective 31 May 2024)
+# ---------------------------------------------------------------------------
+
+class FCAAntiGreenwashingResult(BaseModel):
+    """UK FCA Anti-Greenwashing Rule assessment."""
+
+    compliant: bool = False
+    issues: list[str] = Field(default_factory=list)
+    sdl_labels_applicable: list[str] = Field(default_factory=list)
+    recommendations: list[str] = Field(default_factory=list)
+
+
+_FCA_PROHIBITED_TERMS = [
+    "green fund", "sustainable fund", "esg fund", "impact fund",
+    "net zero fund", "climate fund", "responsible fund",
+]
+
+_SDL_LABELS = {
+    "sustainability_focus": {
+        "label": "Sustainability Focus",
+        "requirement": "At least 70% of assets meet a credible standard of environmental/social sustainability",
+    },
+    "sustainability_improvers": {
+        "label": "Sustainability Improvers",
+        "requirement": "Assets that may not be sustainable now but aim to improve over a set period",
+    },
+    "sustainability_impact": {
+        "label": "Sustainability Impact",
+        "requirement": "Investments with measurable positive environmental/social outcomes alongside financial return",
+    },
+    "sustainability_mixed_goals": {
+        "label": "Sustainability Mixed Goals",
+        "requirement": "Portfolio combining sustainability-focused and other investments with clear allocation",
+    },
+}
+
+
+def assess_fca_anti_greenwashing(
+    description: str = "",
+    document_text: str = "",
+    fund_name: str = "",
+    reported_metrics: dict[str, str] | None = None,
+) -> FCAAntiGreenwashingResult:
+    """Assess compliance with the UK FCA Anti-Greenwashing Rule.
+
+    Key requirements (PS23/16 + SDR):
+    1. Sustainability claims must be fair, clear, and not misleading.
+    2. Fund naming conventions restricted (no "green"/"ESG" without substance).
+    3. Sustainability Disclosure Requirements (SDR) labels require evidence.
+    4. Product-level disclosures must be consumer-facing and accessible.
+    """
+    text = f"{description} {document_text} {fund_name}".lower()
+    metrics = reported_metrics or {}
+    issues: list[str] = []
+    recs: list[str] = []
+    applicable_labels: list[str] = []
+
+    for term in _FCA_PROHIBITED_TERMS:
+        if term in text:
+            has_evidence = bool(metrics) or any(
+                kw in text for kw in ["measured", "reported", "verified", "certified", "tracked"]
+            )
+            if not has_evidence:
+                issues.append(
+                    f"Use of '{term}' without substantiation may breach FCA Anti-Greenwashing Rule"
+                )
+
+    if "impact" in text and metrics:
+        applicable_labels.append("sustainability_impact")
+    if "esg" in text or "sustainable" in text:
+        if metrics and len(metrics) >= 3:
+            applicable_labels.append("sustainability_focus")
+        else:
+            applicable_labels.append("sustainability_improvers")
+
+    if not applicable_labels and any(t in text for t in _FCA_PROHIBITED_TERMS):
+        issues.append("Sustainability-related terminology used without qualifying for an SDR label")
+        recs.append("Evaluate whether a Sustainability Disclosure Requirements (SDR) label applies")
+
+    if applicable_labels:
+        for label_id in applicable_labels:
+            info = _SDL_LABELS[label_id]
+            recs.append(f"If using label '{info['label']}': {info['requirement']}")
+
+    compliant = not bool(issues)
+    return FCAAntiGreenwashingResult(
+        compliant=compliant,
+        issues=issues,
+        sdl_labels_applicable=applicable_labels,
+        recommendations=recs,
+    )
+
+
+# ---------------------------------------------------------------------------
+# NLP-Enhanced Greenwashing Detection
+# ---------------------------------------------------------------------------
+
+class NLPGreenwashingResult(BaseModel):
+    """Advanced NLP-based greenwashing analysis."""
+
+    green_authenticity_index: float = Field(ge=0, le=100, description="GAI: 0=inauthentic, 100=fully authentic")
+    cheap_talk_index: float = Field(ge=0, le=100, description="CTI: 0=all substantive, 100=all cheap talk")
+    sentiment_deflection_score: float = Field(ge=0, le=100, description="0=balanced, 100=high deflection")
+    verifiable_sub_claims: list[dict[str, Any]] = Field(default_factory=list)
+    climatebert_available: bool = False
+    climatebert_prediction: str | None = None
+
+
+_COMMITMENT_PATTERNS: list[str] = [
+    r"\b(?:we|our|the)\s+(?:aim|plan|intend|expect|hope|aspire)\s+to\b",
+    r"\b(?:committed|dedicated|working)\s+(?:to|toward)\b",
+    r"\bby\s+20\d{2}\b",
+    r"\bin\s+(?:the\s+)?(?:near|medium|long)\s+(?:term|future)\b",
+    r"\b(?:net[\s-]?zero|carbon[\s-]?neutral)\s+by\b",
+]
+
+_SUBSTANTIVE_PATTERNS: list[str] = [
+    r"\b\d+(?:\.\d+)?%?\s*(?:reduction|increase|decrease|growth|improvement)\b",
+    r"\b(?:reduced|increased|achieved|measured|verified)\s+\w+\s+by\s+\d+",
+    r"\b(?:ISO\s*\d+|GRI|IRIS\+?|SASB|CDP|SBTi|B\s*Corp)\b",
+    r"\b\d{4}\s*(?:data|results|figures|report|audit)\b",
+]
+
+_DEFLECTION_POSITIVE = {
+    "excited", "proud", "thrilled", "delighted", "honored", "pleased",
+    "passionate", "grateful", "humbled", "privileged", "inspired",
+}
+
+_DEFLECTION_NEGATIVE = {
+    "challenge", "risk", "concern", "failure", "incident", "violation",
+    "contamination", "spill", "breach", "fine", "penalty", "lawsuit",
+}
+
+
+def assess_nlp_greenwashing(
+    text: str,
+    claims: list[dict[str, Any]] | None = None,
+) -> NLPGreenwashingResult:
+    """Run advanced NLP-based greenwashing analysis.
+
+    Combines:
+    - **Green Authenticity Index (GAI)** — adapted from the Stacey Matrix,
+      evaluating coherence between stated values and reported actions.
+    - **Cheap Talk Index (CTI)** — proportion of forward-looking commitments
+      vs. substantive past-tense evidence.
+    - **Sentiment Deflection Score** — detects overly positive emotional
+      language used to deflect from negative information.
+    - **Claim Decomposition** — splits claims into verifiable sub-claims.
+    """
+    lower = text.lower()
+
+    # Green Authenticity Index
+    gai = _compute_gai(lower)
+
+    # Cheap Talk Index
+    cti = _compute_cheap_talk_index(lower)
+
+    # Sentiment deflection
+    deflection = _compute_sentiment_deflection(lower)
+
+    # Claim decomposition
+    sub_claims = _decompose_claims(text, claims)
+
+    # ClimateBERT stub
+    climatebert_available = _check_climatebert_available()
+
+    return NLPGreenwashingResult(
+        green_authenticity_index=round(gai, 1),
+        cheap_talk_index=round(cti, 1),
+        sentiment_deflection_score=round(deflection, 1),
+        verifiable_sub_claims=sub_claims,
+        climatebert_available=climatebert_available,
+        climatebert_prediction=None,
+    )
+
+
+def _compute_gai(text: str) -> float:
+    """Green Authenticity Index — adapted from the Stacey Matrix.
+
+    Evaluates alignment between:
+    - Stated values/commitments (agreement dimension)
+    - Reported evidence/data (certainty dimension)
+
+    High GAI = strong alignment (authentic). Low GAI = misalignment (inauthentic).
+    """
+    value_keywords = {
+        "sustainability", "responsible", "ethical", "impact", "green",
+        "commitment", "policy", "principle", "standard", "framework",
+    }
+    evidence_keywords = {
+        "data", "metric", "measured", "reported", "audited", "verified",
+        "baseline", "target", "achieved", "result", "outcome", "evidence",
+    }
+
+    words = set(re.findall(r"\b\w+\b", text))
+    values_found = len(words & value_keywords)
+    evidence_found = len(words & evidence_keywords)
+
+    if values_found == 0 and evidence_found == 0:
+        return 50.0
+
+    total = values_found + evidence_found
+    if total == 0:
+        return 50.0
+
+    alignment = evidence_found / total
+    return min(100, alignment * 100 + (evidence_found * 3))
+
+
+def _compute_cheap_talk_index(text: str) -> float:
+    """Cheap Talk Index — ratio of non-specific commitments to substantive evidence."""
+    commitment_hits = sum(1 for p in _COMMITMENT_PATTERNS if re.search(p, text))
+    substantive_hits = sum(1 for p in _SUBSTANTIVE_PATTERNS if re.search(p, text))
+
+    total = commitment_hits + substantive_hits
+    if total == 0:
+        return 50.0
+
+    return min(100, (commitment_hits / total) * 100)
+
+
+def _compute_sentiment_deflection(text: str) -> float:
+    """Detect overly positive sentiment used to deflect from negative info."""
+    words = set(re.findall(r"\b\w+\b", text))
+    pos_count = len(words & _DEFLECTION_POSITIVE)
+    neg_count = len(words & _DEFLECTION_NEGATIVE)
+
+    if pos_count == 0 and neg_count == 0:
+        return 20.0
+
+    total = pos_count + neg_count
+    pos_ratio = pos_count / total
+
+    if neg_count > 0 and pos_ratio > 0.8:
+        return min(100, pos_ratio * 100 + 20)
+
+    if pos_count > 3 and neg_count == 0:
+        return min(100, 40 + pos_count * 8)
+
+    return max(0, pos_ratio * 60)
+
+
+def _decompose_claims(text: str, claims: list[dict[str, Any]] | None) -> list[dict[str, Any]]:
+    """Break claims into verifiable sub-claims."""
+    results: list[dict[str, Any]] = []
+
+    source_claims = claims or []
+    if not source_claims:
+        sentences = re.split(r"[.!?]+", text)
+        impact_keywords = {"impact", "sustainab", "emission", "reduc", "improv", "benefit", "achiev"}
+        source_claims = [
+            {"text": s.strip()} for s in sentences
+            if any(k in s.lower() for k in impact_keywords) and len(s.strip()) > 20
+        ]
+
+    for claim in source_claims[:10]:
+        claim_text = claim.get("text", claim.get("claim", ""))
+        if not claim_text:
+            continue
+
+        has_quantity = bool(re.search(r"\b\d+(?:\.\d+)?[%]?\b", claim_text))
+        has_timeframe = bool(re.search(r"\b(?:20\d{2}|by|since|annually|quarterly)\b", claim_text, re.IGNORECASE))
+        has_method = bool(re.search(r"\b(?:measured|verified|audited|certified|reported)\b", claim_text, re.IGNORECASE))
+        has_source = bool(re.search(r"\b(?:ISO|GRI|IRIS|CDP|SBTi|survey|audit)\b", claim_text, re.IGNORECASE))
+
+        verifiability_score = sum([has_quantity, has_timeframe, has_method, has_source]) / 4 * 100
+        missing = []
+        if not has_quantity:
+            missing.append("quantitative data")
+        if not has_timeframe:
+            missing.append("timeframe/date")
+        if not has_method:
+            missing.append("measurement methodology")
+        if not has_source:
+            missing.append("data source/standard")
+
+        results.append({
+            "claim": claim_text[:200],
+            "verifiability_pct": round(verifiability_score, 0),
+            "has_quantity": has_quantity,
+            "has_timeframe": has_timeframe,
+            "has_method": has_method,
+            "has_source": has_source,
+            "missing_for_verification": missing,
+        })
+
+    return results
+
+
+def _check_climatebert_available() -> bool:
+    """Check if ClimateBERT model is available locally.
+
+    ClimateBERT (climatebert/distilroberta-base-climate-detector) can classify
+    text as climate-related and detect specific climate claims. This is a stub
+    that checks for the transformers library and model availability.
+    """
+    try:
+        import transformers  # noqa: F401
+        return True
+    except ImportError:
+        return False

@@ -4,6 +4,44 @@ All notable changes to Impact Vision are recorded here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.2.1] - 2026-04-16
+
+### Added — Phase 4: Regulatory & Advanced Detection
+
+**EU CSRD / ESRS Double Materiality** (4.1)
+- `esrs.py` framework module: 11 ESRS standards (cross-cutting, E1–E5, S1–S4, G1) with 84+ data points
+- `assess_double_materiality()` evaluates impact and financial materiality per topic using keyword matching and reported metrics
+- ESRS integrated as framework option in `FrameworkTool` with full scan/list support
+- ESRS cross-references added to `CrossReference` model and mapping table (E1-6, E4-5, S1-6, S1-9, G1-3, etc.)
+
+**EU Green Claims Directive Compliance** (4.2)
+- `assess_green_claims_compliance()` checks environmental claim substantiation, LCA requirements, and independent verification needs
+- Environmental claim pattern detection ("carbon neutral", "eco-friendly", "net zero", etc.)
+- LCA trigger term identification for claims requiring life-cycle assessment evidence
+
+**UK FCA Anti-Greenwashing Rule** (4.2)
+- `assess_fca_anti_greenwashing()` checks fund names and descriptions against FCA prohibited terms
+- Sustainability Disclosure Labels (SDR) classification: "Sustainability Focus", "Improvers", "Impact"
+- Fund naming convention validation per FCA PS23/16 guidance
+
+**SFDR Enhancements** (4.3)
+- `classify_sfdr_article()` for Article 6/8/9 fund classification based on description and sustainability objectives
+- `OPTIONAL_PAI_INDICATORS` — 9 additional Table 2 indicators (biodiversity, water, waste, social/employee)
+- `assess_sfdr_entity_vs_fund()` distinguishes entity-level vs. product-level PAI reporting
+- SFDR Annex III/IV disclosure template added to LP DDQ exporter
+
+**NLP-Enhanced Greenwashing Detection** (4.4)
+- Green Authenticity Index (GAI) — scores specificity of environmental claims (0–100)
+- Cheap Talk Index (CTI) — measures proportion of vague commitments vs. substantive evidence
+- Sentiment deflection detection — flags overly positive tone masking negative information
+- Claim decomposition — breaks compound claims into verifiable sub-claims with classifications
+- ClimateBERT integration stub for future transformer-based climate text analysis
+
+**Digital Product Passport** (4.5)
+- `ProductPassportTool` — import EU ESPR / DPP JSON data, map categories to IRIS+ metrics
+- 9 DPP categories (durability, recyclability, carbon footprint, etc.) with IRIS+/ESRS/SDG mappings
+- Completeness assessment with product-specific priority scoring
+
 ## [0.2.0] - 2026-04-16
 
 ### Added — Phase 3: Missing Features

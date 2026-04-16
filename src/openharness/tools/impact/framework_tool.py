@@ -13,7 +13,7 @@ from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 
 class FrameworkInput(BaseModel):
-    framework: Literal["sasb", "gri", "tcfd", "sfdr_pai", "edci", "unpri", "toc", "issb_s1", "issb_s2", "all"] = Field(
+    framework: Literal["sasb", "gri", "tcfd", "sfdr_pai", "edci", "unpri", "toc", "issb_s1", "issb_s2", "esrs", "all"] = Field(
         description=(
             "Which framework to query. 'all' runs a quick scan across all frameworks."
         )
@@ -55,6 +55,7 @@ class FrameworkTool(BaseTool):
         "- **ToC**: Theory of Change assessment using RS Group's Blended Value principles "
         "and GIIN IRIS+ ToC Checklist\n"
         "- **ISSB S1**: IFRS S1 General Sustainability Disclosure readiness (4 pillars, 12 disclosures)\n"
+        "- **ESRS**: EU CSRD/ESRS double materiality assessment (12 topical standards, ~100 disclosures)\n"
         "- **all**: Quick scan across all frameworks\n\n"
         "Actions: 'list' (browse), 'match' (find relevant topics), 'assess' (coverage analysis)"
     )
@@ -79,6 +80,7 @@ class FrameworkTool(BaseTool):
             "toc": self._handle_toc,
             "issb_s1": self._handle_issb_s1,
             "issb_s2": self._handle_issb_s2,
+            "esrs": self._handle_esrs,
             "all": self._handle_all_list,
         }
 
@@ -472,6 +474,66 @@ class FrameworkTool(BaseTool):
 
         return ToolResult(output=f"ISSB S2 does not support action: {args.action}", is_error=True)
 
+    def _handle_esrs(self, args: FrameworkInput) -> ToolResult:
+        from openharness.impact.frameworks.esrs import assess_double_materiality, get_esrs_standards, get_total_data_points
+
+        if args.action == "list":
+            standards = get_esrs_standards()
+            total = get_total_data_points()
+            lines = [f"EU CSRD / ESRS Standards ({len(standards)} topics, {total} disclosures)\n"]
+            current_pillar = ""
+            for s in standards:
+                if s.pillar != current_pillar:
+                    current_pillar = s.pillar
+                    lines.append(f"\n--- {current_pillar.upper()} ---")
+                lines.append(f"  {s.code}: {s.name} ({len(s.disclosures)} disclosures)")
+                lines.append(f"    {s.description[:120]}")
+                for d in s.disclosures[:3]:
+                    xref = ""
+                    if d.iris_cross_refs:
+                        xref += f" (IRIS+: {', '.join(d.iris_cross_refs)})"
+                    if d.gri_cross_refs:
+                        xref += f" (GRI: {', '.join(d.gri_cross_refs)})"
+                    lines.append(f"    [{d.code}] {d.name}{xref}")
+                if len(s.disclosures) > 3:
+                    lines.append(f"    ... and {len(s.disclosures) - 3} more")
+            return ToolResult(output="\n".join(lines))
+
+        if args.action in ("match", "assess"):
+            result = assess_double_materiality(
+                description=args.description,
+                document_text=args.document_text,
+                sector=args.sector,
+                reported_metrics=args.reported_metrics,
+            )
+            lines = [
+                "EU CSRD / ESRS DOUBLE MATERIALITY ASSESSMENT",
+                "=" * 50,
+                f"Material topics: {result['material_topics']}/{result['total_topics']}",
+                f"Double-material topics: {result['double_material_topics']}",
+                f"Disclosure coverage: {result['overall_coverage_pct']}% ({result['disclosures_addressed']}/{result['total_disclosures']})",
+                "",
+            ]
+            for t in result["topics"]:
+                flags = []
+                if t["impact_material"]:
+                    flags.append("IMPACT")
+                if t["financial_material"]:
+                    flags.append("FINANCIAL")
+                mat_tag = f" [{' + '.join(flags)}]" if flags else ""
+                icon = "[OK]" if flags else "[--]"
+                lines.append(f"  {icon} {t['topic_code']}: {t['topic_name']}{mat_tag}")
+                lines.append(f"    Disclosures: {t['disclosures_addressed']}/{t['disclosures_total']} ({t['coverage_pct']}%)")
+                if t["impact_evidence"]:
+                    lines.append(f"    Impact evidence: {', '.join(t['impact_evidence'][:4])}")
+                if t["financial_evidence"]:
+                    lines.append(f"    Financial evidence: {', '.join(t['financial_evidence'][:3])}")
+                if t["gaps"]:
+                    lines.append(f"    Top gaps: {'; '.join(t['gaps'][:2])}")
+            return ToolResult(output="\n".join(lines), metadata=result)
+
+        return ToolResult(output=f"ESRS does not support action: {args.action}", is_error=True)
+
     def _handle_all_list(self, args: FrameworkInput) -> ToolResult:
         lines = [
             "Available Sustainability & ESG Frameworks:",
@@ -486,6 +548,7 @@ class FrameworkTool(BaseTool):
             "  toc       - Theory of Change (RS Group Blended Value + GIIN ToC Checklist)",
             "  issb_s1   - IFRS S1 General Sustainability Disclosure (4 pillars, 12 disclosures)",
             "  issb_s2   - IFRS S2 Climate-related Disclosures (4 pillars, 13 disclosures, subsumes TCFD)",
+            "  esrs      - EU CSRD/ESRS Double Materiality (12 topics, ~100 disclosures)",
             "",
             "Use framework='<name>' with action='list' to browse, 'match' to find relevant topics,",
             "or 'assess' to check coverage. Use framework='all' with action='assess' to scan all.",
@@ -495,6 +558,7 @@ class FrameworkTool(BaseTool):
     def _assess_all(self, args: FrameworkInput) -> ToolResult:
         """Run a quick scan across all frameworks."""
         from openharness.impact.frameworks.edci import assess_edci_coverage
+        from openharness.impact.frameworks.esrs import assess_double_materiality
         from openharness.impact.frameworks.issb_ifrs_s1 import assess_ifrs_s1_readiness
         from openharness.impact.frameworks.issb_ifrs_s2 import assess_ifrs_s2_readiness
         from openharness.impact.frameworks.sasb import match_sasb_industry
@@ -548,6 +612,12 @@ class FrameworkTool(BaseTool):
             targets_set=bool(args.reported_metrics),
         )
         lines.append(f"ISSB IFRS S2 (Climate): {issb_s2['overall_readiness']}% readiness (subsumes TCFD)")
+
+        esrs = assess_double_materiality(args.description, args.document_text, args.sector, args.reported_metrics)
+        lines.append(
+            f"ESRS (CSRD): {esrs['material_topics']}/{esrs['total_topics']} material topics, "
+            f"{esrs['overall_coverage_pct']}% disclosure coverage"
+        )
 
         lines.append("")
         lines.append("Use framework='<name>' with action='assess' for detailed analysis.")

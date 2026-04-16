@@ -19,6 +19,7 @@ class CrossReference(BaseModel):
     sasb_dimension: str = ""
     tcfd: list[str] = Field(default_factory=list)
     issb: list[str] = Field(default_factory=list)
+    esrs: list[str] = Field(default_factory=list)
     sdg_goals: list[int] = Field(default_factory=list)
 
 
@@ -33,6 +34,7 @@ CROSS_REFERENCE_MAP: list[CrossReference] = [
         sasb_dimension="Environment",
         tcfd=["MET-B"],
         issb=["S2-MT-1"],
+        esrs=["E1-6"],
         sdg_goals=[13],
     ),
     CrossReference(
@@ -85,6 +87,7 @@ CROSS_REFERENCE_MAP: list[CrossReference] = [
         edci=["EDCI-E5"],
         sfdr_pai=[6],
         sasb_dimension="Environment",
+        esrs=["E1-5"],
         sdg_goals=[7],
     ),
     CrossReference(
@@ -124,6 +127,7 @@ CROSS_REFERENCE_MAP: list[CrossReference] = [
         concept="Biodiversity Impact",
         gri=["304-1", "304-2"],
         sfdr_pai=[7],
+        esrs=["E4-5"],
         sdg_goals=[14, 15],
     ),
     # Social - Workforce
@@ -133,6 +137,7 @@ CROSS_REFERENCE_MAP: list[CrossReference] = [
         gri=["2-7", "401-1"],
         edci=["EDCI-S7"],
         sasb_dimension="Human Capital",
+        esrs=["S1-6"],
         sdg_goals=[8],
     ),
     CrossReference(
@@ -141,6 +146,7 @@ CROSS_REFERENCE_MAP: list[CrossReference] = [
         gri=["405-1"],
         edci=["EDCI-S4"],
         sfdr_pai=[13],
+        esrs=["S1-9"],
         sdg_goals=[5, 10],
     ),
     CrossReference(
@@ -164,6 +170,7 @@ CROSS_REFERENCE_MAP: list[CrossReference] = [
         gri=["405-2"],
         edci=["EDCI-S8"],
         sfdr_pai=[12],
+        esrs=["S1-16"],
         sdg_goals=[5, 8, 10],
     ),
     CrossReference(
@@ -218,6 +225,7 @@ CROSS_REFERENCE_MAP: list[CrossReference] = [
         concept="Anti-Corruption",
         gri=["205-1", "205-2", "205-3"],
         sasb_dimension="Leadership & Governance",
+        esrs=["G1-3", "G1-4"],
     ),
     # Compliance & Norms
     CrossReference(
@@ -358,6 +366,8 @@ def format_cross_reference(xref: CrossReference) -> str:
         parts.append(f"  TCFD: {', '.join(xref.tcfd)}")
     if xref.issb:
         parts.append(f"  ISSB: {', '.join(xref.issb)}")
+    if xref.esrs:
+        parts.append(f"  ESRS: {', '.join(xref.esrs)}")
     if xref.sasb_dimension:
         parts.append(f"  SASB: {xref.sasb_dimension}")
     if xref.sdg_goals:
