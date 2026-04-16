@@ -67,6 +67,22 @@ def create_default_tool_registry(mcp_manager: McpClientManager | None = None) ->
     for module_name, class_name in core_tools:
         _register_if_available(registry, module_name, class_name)
 
+    impact_tools: tuple[tuple[str, str], ...] = (
+        ("impact.iris_catalog_tool", "IrisCatalogTool"),
+        ("impact.sdg_mapper_tool", "SdgMapperTool"),
+        ("impact.five_dimension_assess_tool", "FiveDimensionAssessTool"),
+        ("impact.gap_analysis_tool", "GapAnalysisTool"),
+        ("impact.dd_checklist_tool", "DdChecklistTool"),
+        ("impact.pitch_deck_analyze_tool", "PitchDeckAnalyzeTool"),
+        ("impact.impact_report_tool", "ImpactReportTool"),
+        ("impact.framework_tool", "FrameworkTool"),
+        ("impact.cross_reference_tool", "CrossReferenceTool"),
+        ("impact.lp_ddq_export_tool", "LpDdqExportTool"),
+        ("impact.portfolio_tool", "PortfolioTool"),
+    )
+    for module_name, class_name in impact_tools:
+        _register_if_available(registry, module_name, class_name)
+
     if mcp_manager is not None:
         from .list_mcp_resources_tool import ListMcpResourcesTool
         from .mcp_tool import McpToolAdapter
