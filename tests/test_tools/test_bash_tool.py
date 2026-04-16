@@ -116,9 +116,8 @@ async def test_bash_tool_timeout_returns_partial_output_for_real_command(tmp_pat
     result = await BashTool().execute(
         BashToolInput(
             command=(
-                "python -u -c \"print('Creating a new Next.js app in /tmp/coolblog.'); "
-                "print('Would you like to use Turbopack?'); "
-                "import time; time.sleep(5)\""
+                "printf 'Creating a new Next.js app in /tmp/coolblog.\\n"
+                "Would you like to use Turbopack?\\n' && sleep 5"
             ),
             timeout_seconds=1,
         ),

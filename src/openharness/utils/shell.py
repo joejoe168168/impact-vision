@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import os
 import shutil
+import tempfile
 from collections.abc import Mapping
 from pathlib import Path
 
@@ -83,6 +84,30 @@ async def create_shell_subprocess(
 
     # Existing srt path
     argv = resolve_shell_command(command, prefer_pty=prefer_pty)
+
+    # On Windows with bash, write the command to a temp script file so that
+    # bash reads it directly. This avoids Windows command-line quoting
+    # (list2cmdline) which mangles POSIX single quotes from shlex.quote and
+    # can break $variable expansion inside -lc arguments.
+    win_script_path: Path | None = None
+    if get_platform() == "windows" and len(argv) >= 3 and argv[1] in ("-lc", "-c"):
+        fd, script_file = tempfile.mkstemp(suffix=".sh", prefix="oh_cmd_")
+        win_script_path = Path(script_file)
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as fh:
+                fh.write(command + "\n")
+        except Exception:
+            try:
+                os.close(fd)
+            except OSError:
+                pass
+            win_script_path.unlink(missing_ok=True)
+            win_script_path = None
+            raise
+        bash_path = _windows_to_bash_path(str(win_script_path))
+        login = "-l" if "l" in argv[1] else ""
+        argv = [argv[0]] + ([login] if login else []) + [bash_path]
+
     argv, cleanup_path = wrap_command_for_sandbox(argv, settings=resolved_settings)
 
     try:
@@ -97,11 +122,30 @@ async def create_shell_subprocess(
     except Exception:
         if cleanup_path is not None:
             cleanup_path.unlink(missing_ok=True)
+        if win_script_path is not None:
+            win_script_path.unlink(missing_ok=True)
         raise
 
     if cleanup_path is not None:
         asyncio.create_task(_cleanup_after_exit(process, cleanup_path))
+    if win_script_path is not None:
+        asyncio.create_task(_cleanup_after_exit(process, win_script_path))
     return process
+
+
+def _windows_to_bash_path(windows_path: str) -> str:
+    """Convert a Windows path to a form bash can access.
+
+    WSL bash needs ``/mnt/c/...`` while Git Bash accepts ``/c/...`` or
+    forward-slash Windows paths. We try ``/mnt/c/`` first (works for WSL)
+    and fall back to ``/c/`` (Git Bash / MSYS2).
+    """
+    p = windows_path.replace("\\", "/")
+    if len(p) >= 2 and p[1] == ":":
+        drive = p[0].lower()
+        rest = p[2:]
+        return f"/mnt/{drive}{rest}"
+    return p
 
 
 def _wrap_command_with_script(argv: list[str]) -> list[str] | None:

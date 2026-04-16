@@ -7,6 +7,7 @@ from pathlib import Path
 
 from openharness.tools.impact.common import (
     infer_themes,
+    normalize_impact_targets,
     normalize_metric_ids,
     normalize_metric_map,
     normalize_sdg_goals,
@@ -59,6 +60,43 @@ class TestNormalizers:
         themes = infer_themes("healthcare company", ["Existing Theme"])
         assert "Existing Theme" in themes
         assert "Health" in themes
+
+    def test_normalize_impact_targets_from_dict(self):
+        from openharness.impact.models import ImpactTarget
+        targets, warnings = normalize_impact_targets({"OI4112": "500 tCO2e by 2027", "PI4060": "1000 clients"})
+        assert len(targets) == 2
+        assert all(isinstance(t, ImpactTarget) for t in targets)
+        assert targets[0].metric_id == "OI4112"
+        assert targets[0].target_value == 500.0
+        assert targets[0].target_unit == "tCO2e"
+        assert targets[1].metric_id == "PI4060"
+        assert targets[1].target_value == 1000.0
+
+    def test_normalize_impact_targets_from_list(self):
+        from openharness.impact.models import ImpactTarget
+        targets, warnings = normalize_impact_targets([
+            {"metric_id": "OI4112", "target_value": 500, "target_unit": "tCO2e"},
+        ])
+        assert len(targets) == 1
+        assert isinstance(targets[0], ImpactTarget)
+        assert targets[0].target_value == 500.0
+
+    def test_normalize_impact_targets_empty(self):
+        targets, warnings = normalize_impact_targets(None)
+        assert targets == []
+        assert warnings == []
+
+    def test_normalize_impact_targets_invalid_id(self):
+        targets, warnings = normalize_impact_targets({"BADID": "some target"})
+        assert len(targets) == 0
+        assert len(warnings) == 1
+
+    def test_normalize_impact_targets_qualitative(self):
+        from openharness.impact.models import ImpactTarget
+        targets, _ = normalize_impact_targets({"OI4112": "Implement recycling policy"})
+        assert len(targets) == 1
+        assert targets[0].target_value is None
+        assert targets[0].description == "Implement recycling policy"
 
 
 class TestNewTools:
@@ -154,13 +192,13 @@ class TestCompanyModel:
         assert company.stage == ""
         assert company.founded_year is None
         assert company.employees is None
-        assert company.impact_targets == {}
+        assert company.impact_targets == []
         assert company.reporting_period == ""
         assert company.exclusion_flags == []
         assert company.metric_history == []
 
     def test_new_fields_set(self):
-        from openharness.impact.models import Company, MetricValue
+        from openharness.impact.models import Company, ImpactTarget, MetricValue
 
         company = Company(
             name="Test",
@@ -168,7 +206,15 @@ class TestCompanyModel:
             stage="seed",
             founded_year=2020,
             employees=50,
-            impact_targets={"OI4112": "500 tCO2e by 2027"},
+            impact_targets=[
+                ImpactTarget(
+                    metric_id="OI4112",
+                    target_value=500,
+                    target_unit="tCO2e",
+                    target_date="2027",
+                    description="500 tCO2e by 2027",
+                ),
+            ],
             reporting_period="FY2025",
             exclusion_flags=["fossil_fuel"],
             metric_history=[
@@ -433,12 +479,20 @@ class TestTrendAnalysis:
 
 class TestTargetTracking:
     def test_target_progress(self):
-        from openharness.impact.models import Company, MetricValue
+        from openharness.impact.models import Company, ImpactTarget, MetricValue
         from openharness.impact.trend_analysis import assess_target_progress
 
         company = Company(
             name="Target Co",
-            impact_targets={"OI4112": "500 tCO2e by 2027"},
+            impact_targets=[
+                ImpactTarget(
+                    metric_id="OI4112",
+                    target_value=500,
+                    target_unit="tCO2e",
+                    target_date="2027",
+                    description="500 tCO2e by 2027",
+                ),
+            ],
             reported_metrics={"OI4112": "350"},
         )
         result = assess_target_progress(company)
@@ -447,12 +501,19 @@ class TestTargetTracking:
         assert result["targets"][0]["progress_pct"] == 70.0
 
     def test_target_exceeded(self):
-        from openharness.impact.models import Company
+        from openharness.impact.models import Company, ImpactTarget
         from openharness.impact.trend_analysis import assess_target_progress
 
         company = Company(
             name="Over Achiever",
-            impact_targets={"PI4060": "1000 clients"},
+            impact_targets=[
+                ImpactTarget(
+                    metric_id="PI4060",
+                    target_value=1000,
+                    target_unit="clients",
+                    description="1000 clients",
+                ),
+            ],
             reported_metrics={"PI4060": "1500"},
         )
         result = assess_target_progress(company)
