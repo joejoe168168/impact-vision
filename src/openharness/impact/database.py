@@ -38,22 +38,48 @@ class MetricStore:
     def all_metrics(self) -> list[Metric]:
         return list(self._metrics.values())
 
+    _SEARCH_SYNONYMS: dict[str, list[str]] = {
+        "climate": ["greenhouse gas", "ghg", "carbon", "emissions"],
+        "carbon": ["greenhouse gas", "ghg", "climate", "emissions"],
+        "ghg": ["greenhouse gas", "climate", "carbon", "emissions"],
+        "diversity": ["gender", "female", "inclusion", "equity"],
+        "gender": ["female", "diversity", "women", "inclusion"],
+        "employment": ["employees", "jobs", "workforce", "staff"],
+        "jobs": ["employees", "employment", "workforce"],
+        "energy": ["clean energy", "renewable", "power"],
+        "poverty": ["income", "financial inclusion", "low-income"],
+        "water": ["sanitation", "wash", "clean water"],
+        "health": ["healthcare", "medical", "wellbeing"],
+        "education": ["learning", "school", "training"],
+    }
+
     def search(self, query: str, limit: int = 20) -> list[Metric]:
-        """Full-text search across metric names and definitions."""
+        """Full-text search across metric names, definitions, and JII tags."""
         q = query.lower()
+        expanded = [q] + self._SEARCH_SYNONYMS.get(q, [])
         results: list[tuple[int, Metric]] = []
         for m in self._metrics.values():
             score = 0
-            if q in m.name.lower():
-                score += 10
-            if q in m.id.lower():
-                score += 20
-            if q in m.definition.lower():
-                score += 5
-            if q in m.primary_impact_category.lower():
-                score += 3
-            if any(q in t.lower() for t in m.impact_themes):
-                score += 3
+            for term in expanded:
+                if term in m.name.lower():
+                    score += 10
+                if term in m.id.lower():
+                    score += 20
+                if term in m.definition.lower():
+                    score += 5
+                if term in m.primary_impact_category.lower():
+                    score += 3
+                if any(term in t.lower() for t in m.impact_themes):
+                    score += 3
+            jii_tags = []
+            if m.jii.climate:
+                jii_tags.append("climate")
+            if m.jii.gender:
+                jii_tags.append("gender")
+            if m.jii.jobs:
+                jii_tags.append("jobs")
+            if q in jii_tags:
+                score += 8
             if score > 0:
                 results.append((score, m))
         results.sort(key=lambda x: x[0], reverse=True)
