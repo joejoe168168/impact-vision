@@ -19,10 +19,8 @@ if ($currentPath -like "*$scriptsDir*") {
 }
 
 Write-Host ""
-Write-Host "Verifying..." -ForegroundColor Cyan
-$ivPath = Get-Command impact-vision -ErrorAction SilentlyContinue
-if ($ivPath) {
-    Write-Host "impact-vision is ready! Try: impact-vision --help" -ForegroundColor Green
-} else {
-    Write-Host "Please restart your terminal, then run: impact-vision --help" -ForegroundColor Yellow
-}
+Write-Host "============================================================" -ForegroundColor Yellow
+Write-Host "IMPORTANT: You must RESTART your terminal (close and reopen" -ForegroundColor Yellow
+Write-Host "PowerShell) for the PATH change to take effect." -ForegroundColor Yellow
+Write-Host "After restarting, run: impact-vision --help" -ForegroundColor Yellow
+Write-Host "============================================================" -ForegroundColor Yellow

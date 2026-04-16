@@ -36,8 +36,8 @@ else
 fi
 
 echo ""
-if command -v impact-vision &>/dev/null; then
-    echo "impact-vision is ready! Try: impact-vision --help"
-else
-    echo "Please restart your terminal, then run: impact-vision --help"
-fi
+echo "============================================================"
+echo "IMPORTANT: You must RESTART your terminal (close and reopen)"
+echo "for the PATH change to take effect."
+echo "After restarting, run: impact-vision --help"
+echo "============================================================"

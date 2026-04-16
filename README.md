@@ -85,7 +85,7 @@ After this, you'll have two commands available: `impact-vision` and `iv` (shorth
 > bash scripts/add-to-path.sh
 > ```
 >
-> Then restart your terminal and try `impact-vision --help`.
+> **Important:** After running the script, you must **close and reopen your terminal** (CMD/PowerShell/Terminal) for the PATH change to take effect. Then try `impact-vision --help`.
 >
 > **Alternative:** Use `python -m openharness` instead (works without PATH changes):
 >

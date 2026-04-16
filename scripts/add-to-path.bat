@@ -24,10 +24,9 @@ if !errorlevel!==0 (
 )
 
 echo.
-where impact-vision >nul 2>&1
-if !errorlevel!==0 (
-    echo impact-vision is ready! Try: impact-vision --help
-) else (
-    echo Please restart your terminal, then run: impact-vision --help
-)
+echo ============================================================
+echo IMPORTANT: You must RESTART your terminal (close and reopen
+echo CMD/PowerShell) for the PATH change to take effect.
+echo After restarting, run: impact-vision --help
+echo ============================================================
 endlocal
