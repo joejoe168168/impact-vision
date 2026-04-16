@@ -33,6 +33,8 @@ class ISSBS1Pillar(BaseModel):
 
 class ISSBS1Framework(BaseModel):
     """The full IFRS S1 framework structure."""
+    name: str = "ISSB IFRS S1 — General Requirements for Sustainability-related Financial Information"
+    version: str = "Effective 2024-01-01"
     pillars: list[ISSBS1Pillar] = Field(default_factory=list)
 
 

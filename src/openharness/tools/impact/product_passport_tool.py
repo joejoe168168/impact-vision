@@ -22,7 +22,7 @@ from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 DPP_CATEGORIES = {
     "durability": {
         "description": "Product lifetime, repairability, reliability",
-        "iris_mappings": [],
+        "iris_mappings": ["PI2740"],
         "esrs_mappings": ["E5-4", "E5-5"],
         "sdg_goals": [12],
     },
@@ -34,37 +34,37 @@ DPP_CATEGORIES = {
     },
     "recycled_content": {
         "description": "Percentage of recycled materials",
-        "iris_mappings": [],
+        "iris_mappings": ["PI1266"],
         "esrs_mappings": ["E5-4"],
         "sdg_goals": [12],
     },
     "energy_efficiency": {
         "description": "Energy consumption during use phase",
-        "iris_mappings": ["OI4112"],
+        "iris_mappings": ["OI4112", "PI2764"],
         "esrs_mappings": ["E1-5"],
         "sdg_goals": [7, 12],
     },
     "substances_of_concern": {
         "description": "Hazardous substances per REACH/CLP regulation",
-        "iris_mappings": [],
+        "iris_mappings": ["OI3468"],
         "esrs_mappings": ["E2-5"],
         "sdg_goals": [3, 12],
     },
     "end_of_life": {
         "description": "Recyclability, disposal instructions, take-back schemes",
-        "iris_mappings": [],
+        "iris_mappings": ["OI5765"],
         "esrs_mappings": ["E5-5"],
         "sdg_goals": [12],
     },
     "supply_chain": {
         "description": "Supply chain due diligence, origin of materials",
-        "iris_mappings": [],
+        "iris_mappings": ["OI1120", "OI3987"],
         "esrs_mappings": ["S2-1", "G1-2"],
         "sdg_goals": [8, 12],
     },
     "water_use": {
         "description": "Water consumption in production",
-        "iris_mappings": [],
+        "iris_mappings": ["PI6420", "OI8135"],
         "esrs_mappings": ["E3-4"],
         "sdg_goals": [6],
     },

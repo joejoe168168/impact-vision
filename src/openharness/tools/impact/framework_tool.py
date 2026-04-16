@@ -81,6 +81,7 @@ class FrameworkTool(BaseTool):
             "issb_s1": self._handle_issb_s1,
             "issb_s2": self._handle_issb_s2,
             "esrs": self._handle_esrs,
+            "opim": self._handle_opim,
             "all": self._handle_all_list,
         }
 
@@ -534,6 +535,43 @@ class FrameworkTool(BaseTool):
 
         return ToolResult(output=f"ESRS does not support action: {args.action}", is_error=True)
 
+    def _handle_opim(self, args: FrameworkInput) -> ToolResult:
+        from openharness.impact.frameworks.ifc_opim import assess_opim_alignment, get_opim_principles
+
+        if args.action == "list":
+            principles = get_opim_principles()
+            lines = ["IFC Operating Principles for Impact Management (9 Principles)\n"]
+            for p in principles:
+                lines.append(f"  P{p.number}: {p.name}")
+                lines.append(f"    {p.description[:120]}")
+                if p.verification_requirements:
+                    lines.append(f"    Verification: {'; '.join(p.verification_requirements[:2])}")
+            return ToolResult(output="\n".join(lines))
+
+        if args.action in ("match", "assess"):
+            result = assess_opim_alignment(
+                description=args.description,
+                document_text=args.document_text,
+                reported_metrics=args.reported_metrics,
+            )
+            lines = [
+                "IFC OPIM ALIGNMENT ASSESSMENT",
+                "=" * 50,
+                f"Overall readiness: {result['overall_readiness']}%",
+                f"Principles addressed: {result['principles_addressed']}/{result['total_principles']}",
+                "",
+            ]
+            for p in result.get("principles", []):
+                icon = "[OK]" if p.get("addressed") else "[GAP]"
+                lines.append(f"  {icon} P{p['number']}: {p['name']}")
+                if p.get("evidence"):
+                    lines.append(f"    Evidence: {', '.join(p['evidence'][:3])}")
+                if p.get("gaps"):
+                    lines.append(f"    Gaps: {'; '.join(p['gaps'][:2])}")
+            return ToolResult(output="\n".join(lines), metadata=result)
+
+        return ToolResult(output=f"OPIM does not support action: {args.action}", is_error=True)
+
     def _handle_all_list(self, args: FrameworkInput) -> ToolResult:
         lines = [
             "Available Sustainability & ESG Frameworks:",
@@ -549,6 +587,7 @@ class FrameworkTool(BaseTool):
             "  issb_s1   - IFRS S1 General Sustainability Disclosure (4 pillars, 12 disclosures)",
             "  issb_s2   - IFRS S2 Climate-related Disclosures (4 pillars, 13 disclosures, subsumes TCFD)",
             "  esrs      - EU CSRD/ESRS Double Materiality (12 topics, ~100 disclosures)",
+            "  opim      - IFC Operating Principles for Impact Management (9 principles)",
             "",
             "Use framework='<name>' with action='list' to browse, 'match' to find relevant topics,",
             "or 'assess' to check coverage. Use framework='all' with action='assess' to scan all.",

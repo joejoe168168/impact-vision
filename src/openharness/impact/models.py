@@ -264,6 +264,22 @@ class ImpactClaim(BaseModel):
         description="Extracted entities: {'stakeholders': [...], 'geographies': [...], 'outcomes': [...]}",
     )
 
+    def recalibrate_confidence(self) -> None:
+        """Update confidence using the calibrated formula based on current fields.
+
+        Automatically derives confidence from mapped_metrics, evidence_strength,
+        and whether the claim text contains quantitative data.
+        """
+        import re
+        has_metric = len(self.mapped_metrics) > 0
+        has_quant = bool(re.search(r"\d+[%,.\d]*\s*(?:people|beneficiar|tCO2|MWh|USD|EUR|households|farmers|clients)?", self.text))
+        self.confidence = self.calibrated_confidence(
+            keyword_hits=len(self.mapped_metrics) + len(self.mapped_sdg_targets),
+            has_metric=has_metric,
+            has_quantitative_data=has_quant,
+            evidence_level=self.evidence_strength,
+        )
+
     @staticmethod
     def calibrated_confidence(
         keyword_hits: int,

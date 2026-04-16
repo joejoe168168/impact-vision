@@ -24,6 +24,16 @@ class SFDRIndicator(BaseModel):
     data_points: list[str] = Field(default_factory=list)
 
 
+class SFDRArticleClassification(BaseModel):
+    """SFDR Article 6/8/9 fund classification result."""
+    article: int = Field(description="SFDR article number (6, 8, or 9)")
+    description: str = ""
+    confidence: str = "medium"
+    evidence: list[str] = Field(default_factory=list)
+    requirements: list[str] = Field(default_factory=list)
+    pct_sustainable_investments: float | None = None
+
+
 PAI_INDICATORS: list[SFDRIndicator] = [
     # Climate and environment-related
     SFDRIndicator(
@@ -307,7 +317,7 @@ def classify_sfdr_article(
     fund_name: str = "",
     has_sustainability_objective: bool = False,
     pct_sustainable_investments: float | None = None,
-) -> dict:
+) -> SFDRArticleClassification:
     """Classify a fund under SFDR Article 6, 8, or 9.
 
     Article 9 requires the fund to have sustainable investment as its *objective*
@@ -361,14 +371,14 @@ def classify_sfdr_article(
             "State whether PAI is considered (comply or explain)",
         ]
 
-    return {
-        "article": article,
-        "description": _ARTICLE_DESCRIPTIONS[article],
-        "confidence": confidence,
-        "evidence": art9_hits or art8_hits or [],
-        "requirements": requirements,
-        "pct_sustainable_investments": pct_sustainable_investments,
-    }
+    return SFDRArticleClassification(
+        article=article,
+        description=_ARTICLE_DESCRIPTIONS[article],
+        confidence=confidence,
+        evidence=art9_hits or art8_hits or [],
+        requirements=requirements,
+        pct_sustainable_investments=pct_sustainable_investments,
+    )
 
 
 def assess_sfdr_entity_vs_fund(
@@ -392,7 +402,7 @@ def assess_sfdr_entity_vs_fund(
             description=fund.get("description", ""),
             fund_name=fund.get("name", ""),
         )
-        fund_results.append({"name": fund.get("name", ""), **cls})
+        fund_results.append({"name": fund.get("name", ""), **cls.model_dump()})
 
     return {
         "entity_level": {

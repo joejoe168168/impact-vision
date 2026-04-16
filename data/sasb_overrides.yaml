@@ -1,18 +1,264 @@
 # SASB Industry Overrides
 # Use this file to add custom industries or override material topics.
 # The Python SASB_STANDARDS list serves as the base; entries here are merged.
-# Format:
-#   additional_industries:
-#     - industry: "Custom Industry"
-#       sector: "Custom Sector"
-#       sics_code: "XX-YY"
-#       topics:
-#         - name: "Topic Name"
-#           dimension: "Environment|Social Capital|Human Capital|Business Model & Innovation|Leadership & Governance"
-#           description: "Optional description"
-#   sector_keyword_overrides:
-#     my_sector: ["keyword1", "keyword2"]
 
-additional_industries: []
+additional_industries:
+  - industry: "Food & Beverage"
+    sector: "Consumer Goods"
+    sics_code: "FB-NB"
+    topics:
+      - name: "Energy Management"
+        dimension: "Environment"
+      - name: "Water & Wastewater Management"
+        dimension: "Environment"
+      - name: "Food Safety"
+        dimension: "Social Capital"
+      - name: "Health & Nutrition"
+        dimension: "Social Capital"
+      - name: "Product Labeling & Marketing"
+        dimension: "Social Capital"
+      - name: "Packaging Lifecycle Management"
+        dimension: "Business Model & Innovation"
+      - name: "Supply Chain Management"
+        dimension: "Business Model & Innovation"
 
-sector_keyword_overrides: {}
+  - industry: "Apparel, Accessories & Footwear"
+    sector: "Consumer Goods"
+    sics_code: "CG-AA"
+    topics:
+      - name: "Management of Chemicals in Products"
+        dimension: "Environment"
+      - name: "Environmental Impacts in the Supply Chain"
+        dimension: "Environment"
+      - name: "Labor Conditions in the Supply Chain"
+        dimension: "Social Capital"
+      - name: "Raw Materials Sourcing"
+        dimension: "Business Model & Innovation"
+      - name: "Product Quality & Safety"
+        dimension: "Social Capital"
+
+  - industry: "Household & Personal Products"
+    sector: "Consumer Goods"
+    sics_code: "CG-HP"
+    topics:
+      - name: "Water Management"
+        dimension: "Environment"
+      - name: "Product Environmental Performance"
+        dimension: "Business Model & Innovation"
+      - name: "Packaging Lifecycle Management"
+        dimension: "Business Model & Innovation"
+      - name: "Product Quality & Safety"
+        dimension: "Social Capital"
+
+  - industry: "Building Products & Furnishings"
+    sector: "Resource Transformation"
+    sics_code: "RT-BP"
+    topics:
+      - name: "Energy Management in Manufacturing"
+        dimension: "Environment"
+      - name: "Management of Chemicals in Products"
+        dimension: "Environment"
+      - name: "Product Lifecycle Environmental Impacts"
+        dimension: "Business Model & Innovation"
+      - name: "Wood Supply Chain Management"
+        dimension: "Business Model & Innovation"
+
+  - industry: "Containers & Packaging"
+    sector: "Resource Transformation"
+    sics_code: "RT-CP"
+    topics:
+      - name: "Greenhouse Gas Emissions"
+        dimension: "Environment"
+      - name: "Air Quality"
+        dimension: "Environment"
+      - name: "Energy Management"
+        dimension: "Environment"
+      - name: "Water Management"
+        dimension: "Environment"
+      - name: "Product Lifecycle Management"
+        dimension: "Business Model & Innovation"
+
+  - industry: "Industrial Machinery & Goods"
+    sector: "Resource Transformation"
+    sics_code: "RT-IG"
+    topics:
+      - name: "Energy Management"
+        dimension: "Environment"
+      - name: "Employee Health & Safety"
+        dimension: "Human Capital"
+      - name: "Fuel Economy & Emissions in Use-Phase"
+        dimension: "Business Model & Innovation"
+      - name: "Remanufacturing Design & Services"
+        dimension: "Business Model & Innovation"
+
+  - industry: "Metals & Mining"
+    sector: "Extractives & Minerals Processing"
+    sics_code: "EM-MM"
+    topics:
+      - name: "Greenhouse Gas Emissions"
+        dimension: "Environment"
+      - name: "Water Management"
+        dimension: "Environment"
+      - name: "Waste & Hazardous Materials"
+        dimension: "Environment"
+      - name: "Biodiversity Impacts"
+        dimension: "Environment"
+      - name: "Community Relations"
+        dimension: "Social Capital"
+      - name: "Security, Human Rights & Rights of Indigenous Peoples"
+        dimension: "Social Capital"
+      - name: "Labor Relations"
+        dimension: "Human Capital"
+      - name: "Workforce Health & Safety"
+        dimension: "Human Capital"
+      - name: "Tailings Storage Facilities"
+        dimension: "Leadership & Governance"
+
+  - industry: "Oil & Gas — Exploration & Production"
+    sector: "Extractives & Minerals Processing"
+    sics_code: "EM-EP"
+    topics:
+      - name: "Greenhouse Gas Emissions"
+        dimension: "Environment"
+      - name: "Water Management"
+        dimension: "Environment"
+      - name: "Biodiversity Impacts"
+        dimension: "Environment"
+      - name: "Community Relations"
+        dimension: "Social Capital"
+      - name: "Workforce Health & Safety"
+        dimension: "Human Capital"
+      - name: "Reserves Valuation & Capital Expenditures"
+        dimension: "Business Model & Innovation"
+
+  - industry: "Automobiles"
+    sector: "Transportation"
+    sics_code: "TR-AU"
+    topics:
+      - name: "Product Safety"
+        dimension: "Social Capital"
+      - name: "Labor Practices"
+        dimension: "Human Capital"
+      - name: "Fuel Economy & Use-Phase Emissions"
+        dimension: "Business Model & Innovation"
+      - name: "Materials Sourcing"
+        dimension: "Business Model & Innovation"
+      - name: "Materials Efficiency & Recycling"
+        dimension: "Business Model & Innovation"
+
+  - industry: "Airlines"
+    sector: "Transportation"
+    sics_code: "TR-AL"
+    topics:
+      - name: "Greenhouse Gas Emissions"
+        dimension: "Environment"
+      - name: "Labor Practices"
+        dimension: "Human Capital"
+      - name: "Competitive Behavior"
+        dimension: "Leadership & Governance"
+      - name: "Accident & Safety Management"
+        dimension: "Social Capital"
+
+  - industry: "Agricultural Products"
+    sector: "Food & Beverage"
+    sics_code: "FB-AG"
+    topics:
+      - name: "Greenhouse Gas Emissions"
+        dimension: "Environment"
+      - name: "Water Management"
+        dimension: "Environment"
+      - name: "Food Safety"
+        dimension: "Social Capital"
+      - name: "Workforce Health & Safety"
+        dimension: "Human Capital"
+      - name: "Climate Change Adaptation"
+        dimension: "Business Model & Innovation"
+      - name: "GMO Management"
+        dimension: "Business Model & Innovation"
+
+  - industry: "Biotechnology & Pharmaceuticals"
+    sector: "Health Care"
+    sics_code: "HC-BP"
+    topics:
+      - name: "Drug Safety"
+        dimension: "Social Capital"
+      - name: "Access to Medicines"
+        dimension: "Social Capital"
+      - name: "Counterfeit Drugs"
+        dimension: "Social Capital"
+      - name: "Ethical Marketing"
+        dimension: "Social Capital"
+      - name: "Employee Recruitment & Retention"
+        dimension: "Human Capital"
+      - name: "Supply Chain Management"
+        dimension: "Business Model & Innovation"
+      - name: "Business Ethics"
+        dimension: "Leadership & Governance"
+
+  - industry: "Internet Media & Services"
+    sector: "Technology & Communications"
+    sics_code: "TC-IM"
+    topics:
+      - name: "Environmental Footprint of Hardware"
+        dimension: "Environment"
+      - name: "Data Privacy & Freedom of Expression"
+        dimension: "Social Capital"
+      - name: "Data Security"
+        dimension: "Social Capital"
+      - name: "Recruiting & Managing a Diverse Workforce"
+        dimension: "Human Capital"
+      - name: "Content Governance"
+        dimension: "Leadership & Governance"
+
+  - industry: "Cruise Lines"
+    sector: "Services"
+    sics_code: "SV-CL"
+    topics:
+      - name: "Greenhouse Gas Emissions"
+        dimension: "Environment"
+      - name: "Ecological Impacts"
+        dimension: "Environment"
+      - name: "Ship Recycling & Disposal"
+        dimension: "Environment"
+      - name: "Customer Health & Safety"
+        dimension: "Social Capital"
+      - name: "Labor Practices"
+        dimension: "Human Capital"
+
+  - industry: "Education"
+    sector: "Services"
+    sics_code: "SV-ED"
+    topics:
+      - name: "Data Security"
+        dimension: "Social Capital"
+      - name: "Quality of Education & Gainful Employment"
+        dimension: "Social Capital"
+      - name: "Marketing & Recruiting Practices"
+        dimension: "Social Capital"
+
+  - industry: "Waste Management"
+    sector: "Infrastructure"
+    sics_code: "IF-WM"
+    topics:
+      - name: "Greenhouse Gas Emissions"
+        dimension: "Environment"
+      - name: "Air Quality"
+        dimension: "Environment"
+      - name: "Fleet Fuel Management"
+        dimension: "Environment"
+      - name: "Recycling & Resource Recovery"
+        dimension: "Business Model & Innovation"
+      - name: "Workforce Health & Safety"
+        dimension: "Human Capital"
+
+sector_keyword_overrides:
+  food_beverage: ["food", "beverage", "restaurant", "grocery", "nutrition", "dairy"]
+  apparel: ["apparel", "fashion", "clothing", "textile", "footwear", "garment"]
+  mining: ["mining", "mineral", "extraction", "ore", "metals"]
+  automotive: ["automobile", "vehicle", "EV", "electric vehicle", "car manufacturer"]
+  airline: ["airline", "aviation", "flight", "air transport"]
+  agriculture: ["agriculture", "farming", "crop", "livestock", "agribusiness"]
+  pharma: ["pharmaceutical", "drug", "biotech", "medicine", "clinical"]
+  internet: ["internet", "social media", "platform", "digital advertising", "search engine"]
+  waste: ["waste management", "recycling", "landfill", "disposal", "circular economy"]
+  education: ["education", "university", "school", "e-learning", "EdTech"]

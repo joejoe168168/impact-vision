@@ -318,6 +318,26 @@ def get_peer_store() -> PeerDataStore:
     return _peer_store
 
 
+def calculate_percentile(
+    sector: str,
+    metric: str,
+    value: float,
+) -> float | None:
+    """Standalone percentile rank calculation.
+
+    Delegates to PeerDataStore if peer data is loaded, otherwise falls back
+    to benchmark-based estimation for the 5D overall score.
+    """
+    store = get_peer_store()
+    result = store.calculate_percentile(sector, metric, value)
+    if result is not None:
+        return result
+    if metric in ("five_d_overall", "overall_score"):
+        bm_result = calculate_percentile_from_benchmarks(sector, value)
+        return bm_result.get("percentile")
+    return None
+
+
 def _safe_float(val: str) -> float:
     try:
         return float(val)
