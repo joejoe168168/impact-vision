@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from openharness.impact.models import Company
 
-_RISK_RULES: dict[str, dict[str, str]] = {
+_DEFAULTS_RISK_RULES: dict[str, dict[str, str]] = {
     "over-indebted": {"category": "social_harm", "risk": "Potential over-indebtedness of vulnerable clients", "severity": "high", "mitigation": "Set affordability limits and monitor repayment stress signals."},
     "privacy": {"category": "data_governance", "risk": "Data privacy and consent risk", "severity": "high", "mitigation": "Adopt privacy-by-design and third-party security audits."},
     "climate": {"category": "environmental", "risk": "Climate transition and physical risk exposure", "severity": "medium", "mitigation": "Define adaptation plans and emissions reduction targets."},
@@ -13,7 +13,7 @@ _RISK_RULES: dict[str, dict[str, str]] = {
     "grant": {"category": "business_model", "risk": "Grant dependence threatens long-term impact sustainability", "severity": "medium", "mitigation": "Diversify revenue and test unit economics of impact model."},
 }
 
-_OPPORTUNITY_RULES: dict[str, dict[str, str]] = {
+_DEFAULTS_OPPORTUNITY_RULES: dict[str, dict[str, str]] = {
     "financial inclusion": {"category": "inclusion", "opportunity": "Expand access to formal financial services for underserved groups", "time_horizon": "near_term"},
     "women": {"category": "equity", "opportunity": "Increase women-centered outcomes and gender equity positioning", "time_horizon": "near_term"},
     "smallholder": {"category": "livelihoods", "opportunity": "Raise smallholder productivity and rural income resilience", "time_horizon": "mid_term"},
@@ -22,21 +22,34 @@ _OPPORTUNITY_RULES: dict[str, dict[str, str]] = {
     "health": {"category": "wellbeing", "opportunity": "Improve affordability and reach of essential health services", "time_horizon": "mid_term"},
 }
 
+
+def _load_rules() -> tuple[dict, dict]:
+    """Load risk/opportunity rules from scoring config, fall back to defaults."""
+    try:
+        from openharness.impact.five_dimensions import _load_scoring_config
+        config = _load_scoring_config()
+        risk_rules = config.get("risk_rules", _DEFAULTS_RISK_RULES)
+        opp_rules = config.get("opportunity_rules", _DEFAULTS_OPPORTUNITY_RULES)
+        return risk_rules, opp_rules
+    except Exception:
+        return _DEFAULTS_RISK_RULES, _DEFAULTS_OPPORTUNITY_RULES
+
 _SEVERITY_WEIGHT = {"low": 1.0, "medium": 2.0, "high": 3.0}
 
 
 def assess_impact_risk_opportunity(company: Company) -> dict:
     """Return structured risk/opportunity assessment for a company."""
+    risk_rules, opp_rules = _load_rules()
     text = f"{company.sector} {company.description} {' '.join(company.impact_themes)}".lower()
 
     risks: list[dict] = []
     opportunities: list[dict] = []
 
-    for token, rule in _RISK_RULES.items():
+    for token, rule in risk_rules.items():
         if token in text:
             risks.append({"trigger": token, **rule})
 
-    for token, rule in _OPPORTUNITY_RULES.items():
+    for token, rule in opp_rules.items():
         if token in text:
             opportunities.append({"trigger": token, **rule})
 

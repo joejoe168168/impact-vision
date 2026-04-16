@@ -2,10 +2,17 @@
 
 from __future__ import annotations
 
+import logging
+from pathlib import Path
+
+import yaml
+
 from openharness.impact.database import MetricStore
 from openharness.impact.models import Company, DimensionScore, FiveDimensionScore
 
-_SECTOR_BASELINE: dict[str, dict[str, float]] = {
+logger = logging.getLogger(__name__)
+
+_DEFAULTS_SECTOR_BASELINE: dict[str, dict[str, float]] = {
     "agriculture": {"what": 1.5, "who": 1.5, "how_much": 1.2, "contribution": 1.0, "risk": 1.0},
     "livestock": {"what": 1.3, "who": 1.2, "how_much": 1.0, "contribution": 0.8, "risk": 1.2},
     "healthcare": {"what": 2.0, "who": 2.0, "how_much": 1.5, "contribution": 1.5, "risk": 1.0},
@@ -19,7 +26,7 @@ _SECTOR_BASELINE: dict[str, dict[str, float]] = {
     "real estate": {"what": 1.0, "who": 1.0, "how_much": 1.0, "contribution": 0.8, "risk": 0.8},
 }
 
-_KEYWORD_DIMENSION_BOOST: dict[str, dict[str, float]] = {
+_DEFAULTS_KEYWORD_BOOST: dict[str, dict[str, float]] = {
     "poverty": {"what": 0.5, "who": 0.5},
     "food": {"what": 0.5, "who": 0.3},
     "hunger": {"what": 0.5, "who": 0.5},
@@ -37,19 +44,71 @@ _KEYWORD_DIMENSION_BOOST: dict[str, dict[str, float]] = {
     "evidence": {"risk": -0.3},
 }
 
+_config_cache: dict | None = None
+
+
+def _load_scoring_config() -> dict:
+    """Load scoring config from data/scoring_config.yaml, falling back to hardcoded defaults."""
+    global _config_cache
+    if _config_cache is not None:
+        return _config_cache
+
+    config_paths = [
+        Path(__file__).parent.parent.parent.parent / "data" / "scoring_config.yaml",
+        Path("data/scoring_config.yaml"),
+    ]
+    for path in config_paths:
+        if path.exists():
+            try:
+                raw = yaml.safe_load(path.read_text(encoding="utf-8"))
+                if isinstance(raw, dict):
+                    _config_cache = raw
+                    logger.debug("Loaded scoring config from %s", path)
+                    return _config_cache
+            except Exception:
+                logger.warning("Failed to parse %s, using defaults", path)
+
+    _config_cache = {}
+    return _config_cache
+
+
+def _get_sector_baselines() -> dict[str, dict[str, float]]:
+    config = _load_scoring_config()
+    return config.get("sector_baselines", _DEFAULTS_SECTOR_BASELINE)
+
+
+def _get_keyword_boosts() -> dict[str, dict[str, float]]:
+    config = _load_scoring_config()
+    return config.get("keyword_dimension_boosts", _DEFAULTS_KEYWORD_BOOST)
+
+
+_NEGATION_PHRASES = ("not ", "no ", "don't ", "doesn't ", "do not ", "does not ", "without ", "lack ", "unable to ")
+MIN_METRICS_FOR_ABOVE_BASELINE = 3
+
+
+def _keyword_not_negated(text: str, keyword: str) -> bool:
+    """Check that keyword appears in text without nearby negation within a 30-char window."""
+    idx = text.find(keyword)
+    while idx >= 0:
+        window = text[max(0, idx - 30):idx].lower()
+        if not any(neg in window for neg in _NEGATION_PHRASES):
+            return True
+        idx = text.find(keyword, idx + len(keyword))
+    return False
+
 
 def _infer_baseline(company: Company) -> dict[str, float]:
     """Infer baseline 5D scores from sector and description keywords."""
     text = f"{company.description} {company.sector} {' '.join(company.impact_themes)}".lower()
     baseline: dict[str, float] = {"what": 0.5, "who": 0.5, "how_much": 0.5, "contribution": 0.5, "risk": 0.5}
 
-    for sector_key, scores in _SECTOR_BASELINE.items():
+    for sector_key, scores in _get_sector_baselines().items():
         if sector_key in text:
             for dim, val in scores.items():
                 baseline[dim] = max(baseline[dim], val)
 
-    for keyword, boosts in _KEYWORD_DIMENSION_BOOST.items():
-        if keyword in text:
+    for keyword, boosts in _get_keyword_boosts().items():
+        if keyword in text and _keyword_not_negated(text, keyword):
             for dim, val in boosts.items():
                 baseline[dim] = baseline[dim] + val
 
@@ -110,6 +169,7 @@ def _score_dimension(
             metrics_available=0,
             gaps=[],
             notes="Estimated from sector/description analysis",
+            provenance="estimated",
         )
 
     ref_ratio = len(matched_in_reference) / available if available > 0 else 0
@@ -122,8 +182,10 @@ def _score_dimension(
 
     if total_reported_dim > 0:
         notes = f"Reporting {total_reported_dim} metrics ({len(matched_in_reference)} theme-specific, {available} available)"
+        provenance = "evidence-based" if total_reported_dim >= 3 else "partial"
     else:
         notes = f"Estimated from sector/description ({available} metrics available to track)"
+        provenance = "estimated"
 
     return DimensionScore(
         dimension=dimension_name,
@@ -132,6 +194,7 @@ def _score_dimension(
         metrics_available=available,
         gaps=gaps,
         notes=notes,
+        provenance=provenance,
     )
 
 
@@ -177,6 +240,17 @@ def assess_five_dimensions(
         notes=f"Scale={scores['how_much_scale'].score}, Depth={how_much_depth.score}, Duration={how_much_duration.score}",
     )
 
+    total_metrics = len(reported_ids)
+    if 0 < total_metrics < MIN_METRICS_FOR_ABOVE_BASELINE:
+        cap = 2.5
+        for dim_score in [scores["what"], scores["who"], scores["contribution_depth"], scores["risk"]]:
+            if dim_score.score > cap:
+                dim_score.score = cap
+                dim_score.notes += f" (capped: report ≥{MIN_METRICS_FOR_ABOVE_BASELINE} metrics to unlock higher scores)"
+        if how_much_combined.score > cap:
+            how_much_combined.score = cap
+            how_much_combined.notes += f" (capped: report ≥{MIN_METRICS_FOR_ABOVE_BASELINE} metrics to unlock higher scores)"
+
     overall = round(
         (scores["what"].score + scores["who"].score + how_much_combined.score + scores["contribution_depth"].score + scores["risk"].score) / 5.0,
         1,
@@ -186,6 +260,8 @@ def assess_five_dimensions(
     has_metrics = bool(reported_ids)
     if not has_metrics:
         recommendations.append("Start tracking IRIS+ metrics to strengthen evidence and move beyond estimated scores")
+    elif total_metrics < MIN_METRICS_FOR_ABOVE_BASELINE:
+        recommendations.append(f"Report at least {MIN_METRICS_FOR_ABOVE_BASELINE} IRIS+ metrics to unlock scores above 2.5 (currently reporting {total_metrics})")
     if scores["what"].score < 2:
         recommendations.append("Strengthen outcome measurement: define WHAT outcomes you contribute to with specific metrics")
     if scores["who"].score < 2:
@@ -197,6 +273,15 @@ def assess_five_dimensions(
     if scores["risk"].score < 2:
         recommendations.append("Evaluate RISK: assess evidence risk, execution risk, and external risk factors")
 
+    all_dims = [scores["what"], scores["who"], how_much_combined, scores["contribution_depth"], scores["risk"]]
+    prov_set = {d.provenance for d in all_dims}
+    if prov_set == {"evidence-based"}:
+        overall_provenance = "evidence-based"
+    elif "evidence-based" in prov_set or "partial" in prov_set:
+        overall_provenance = "partial"
+    else:
+        overall_provenance = "estimated"
+
     return FiveDimensionScore(
         what=scores["what"],
         who=scores["who"],
@@ -205,6 +290,7 @@ def assess_five_dimensions(
         risk=scores["risk"],
         overall_score=overall,
         overall_grade=_grade_from_score(overall),
+        overall_provenance=overall_provenance,
         impact_theme=theme or "",
         recommendations=recommendations,
     )

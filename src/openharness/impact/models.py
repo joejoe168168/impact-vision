@@ -78,12 +78,31 @@ class SDGGoal(BaseModel):
     targets: list[SDGTarget] = Field(default_factory=list)
 
 
+class MetricValue(BaseModel):
+    """A single reported metric value with context for time-series tracking."""
+
+    metric_id: str = Field(description="IRIS+ metric ID (e.g. OI4112)")
+    value: Any = Field(description="Reported value (numeric, string, or structured)")
+    unit: str = Field(default="", description="Unit of measurement (e.g. 'tCO2e', 'count', 'USD')")
+    period: str = Field(default="", description="Reporting period (e.g. 'FY2025', 'Q1 2026', '2025-H1')")
+    timestamp: str = Field(default="", description="ISO date when value was reported (e.g. '2026-04-16')")
+    source: str = Field(default="", description="Source of data (e.g. 'pitch_deck', 'self_reported', 'audited')")
+    verified: bool = Field(default=False, description="Whether value has been third-party verified")
+    notes: str = ""
+
+
 class Company(BaseModel):
     """A company or startup being assessed for impact."""
 
     name: str
     description: str = ""
     sector: str = ""
+    geography: str = Field(default="", description="Country or region (e.g. 'Kenya', 'Southeast Asia')")
+    stage: Literal["", "pre-seed", "seed", "series-a", "series-b", "growth", "mature"] = Field(
+        default="", description="Investment stage"
+    )
+    founded_year: int | None = Field(default=None, description="Year founded")
+    employees: int | None = Field(default=None, description="Number of employees")
     impact_themes: list[str] = Field(default_factory=list)
     reported_metrics: dict[str, Any] = Field(
         default_factory=dict,
@@ -92,6 +111,19 @@ class Company(BaseModel):
     sdg_claims: list[int] = Field(
         default_factory=list,
         description="SDG goals the company claims alignment with",
+    )
+    impact_targets: dict[str, str] = Field(
+        default_factory=dict,
+        description="Forward-looking impact targets (e.g. {'OI4112': '500 tCO2e by 2027'})",
+    )
+    reporting_period: str = Field(default="", description="Reporting period (e.g. 'FY2025', 'Q1 2026')")
+    exclusion_flags: list[str] = Field(
+        default_factory=list,
+        description="Norms-based exclusion flags (e.g. 'fossil_fuel', 'controversial_weapons')",
+    )
+    metric_history: list[MetricValue] = Field(
+        default_factory=list,
+        description="Time-series metric values for progress tracking across periods",
     )
 
 
@@ -104,6 +136,7 @@ class DimensionScore(BaseModel):
     metrics_available: int = 0
     gaps: list[str] = Field(default_factory=list)
     notes: str = ""
+    provenance: Literal["evidence-based", "estimated", "partial"] = "estimated"
 
 
 class FiveDimensionScore(BaseModel):
@@ -116,6 +149,7 @@ class FiveDimensionScore(BaseModel):
     risk: DimensionScore
     overall_score: float = Field(ge=0, le=5)
     overall_grade: str = Field(description="A-F letter grade")
+    overall_provenance: Literal["evidence-based", "estimated", "partial"] = "estimated"
     impact_theme: str = ""
     recommendations: list[str] = Field(default_factory=list)
 

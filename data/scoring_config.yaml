@@ -1,0 +1,229 @@
+# Impact Vision Scoring Configuration
+# Customize sector baselines, keyword boosts, and theme hints for your fund's thesis.
+# Changes here take effect on next assessment run (no code changes needed).
+
+# Sector baseline scores (0-5 scale per dimension)
+# Companies matching a sector keyword get at least these baseline scores.
+sector_baselines:
+  agriculture:
+    what: 1.5
+    who: 1.5
+    how_much: 1.2
+    contribution: 1.0
+    risk: 1.0
+  livestock:
+    what: 1.3
+    who: 1.2
+    how_much: 1.0
+    contribution: 0.8
+    risk: 1.2
+  healthcare:
+    what: 2.0
+    who: 2.0
+    how_much: 1.5
+    contribution: 1.5
+    risk: 1.0
+  health:
+    what: 2.0
+    who: 2.0
+    how_much: 1.5
+    contribution: 1.5
+    risk: 1.0
+  energy:
+    what: 1.8
+    who: 1.5
+    how_much: 1.5
+    contribution: 1.5
+    risk: 1.0
+  education:
+    what: 2.0
+    who: 2.0
+    how_much: 1.5
+    contribution: 1.2
+    risk: 0.8
+  fintech:
+    what: 1.5
+    who: 1.8
+    how_much: 1.5
+    contribution: 1.5
+    risk: 1.2
+  financial:
+    what: 1.5
+    who: 1.8
+    how_much: 1.5
+    contribution: 1.5
+    risk: 1.2
+  water:
+    what: 2.0
+    who: 1.8
+    how_much: 1.5
+    contribution: 1.5
+    risk: 1.0
+  technology:
+    what: 1.2
+    who: 1.2
+    how_much: 1.0
+    contribution: 1.0
+    risk: 0.8
+  real estate:
+    what: 1.0
+    who: 1.0
+    how_much: 1.0
+    contribution: 0.8
+    risk: 0.8
+  # Add your own sectors below:
+  # manufacturing:
+  #   what: 1.0
+  #   who: 1.0
+  #   how_much: 1.0
+  #   contribution: 0.8
+  #   risk: 1.0
+
+# Keyword-to-dimension boosts
+# When these keywords appear in company description/sector, add these scores.
+# Negative values reduce a dimension (e.g. "evidence" reduces risk score = better).
+keyword_dimension_boosts:
+  poverty:
+    what: 0.5
+    who: 0.5
+  food:
+    what: 0.5
+    who: 0.3
+  hunger:
+    what: 0.5
+    who: 0.5
+  smallholder:
+    who: 0.5
+    how_much: 0.3
+  rural:
+    who: 0.3
+    how_much: 0.2
+  climate:
+    what: 0.3
+    risk: 0.3
+  carbon:
+    what: 0.3
+    risk: 0.2
+  emission:
+    what: 0.3
+    risk: 0.3
+  pollution:
+    risk: 0.5
+    what: 0.2
+  women:
+    who: 0.5
+  gender:
+    who: 0.5
+  community:
+    who: 0.4
+    how_much: 0.2
+  sustainable:
+    contribution: 0.3
+  innovation:
+    contribution: 0.3
+    what: 0.2
+  evidence:
+    risk: -0.3
+
+# Theme inference keywords
+# Maps keywords found in text to impact themes for automatic theme tagging.
+theme_hints:
+  climate:
+    - Climate Mitigation
+    - Climate Adaptation
+  carbon:
+    - Climate Mitigation
+  emission:
+    - Climate Mitigation
+  energy:
+    - Clean Energy
+    - Energy Access
+  solar:
+    - Clean Energy
+    - Energy Access
+  education:
+    - Education
+    - Quality Education
+  health:
+    - Health
+  water:
+    - Water
+    - Sustainable Water Management
+  sanitation:
+    - Water
+    - Sustainable Water Management
+  finance:
+    - Financial Inclusion
+  fintech:
+    - Financial Inclusion
+  agri:
+    - Smallholder Agriculture
+    - Food Security
+  agriculture:
+    - Smallholder Agriculture
+    - Food Security
+  gender:
+    - Gender Equality
+  women:
+    - Gender Equality
+
+# Risk assessment rules
+# Keywords that trigger specific risk categories in impact_risk_opportunity tool.
+risk_rules:
+  over-indebted:
+    category: social_harm
+    risk: Potential over-indebtedness of vulnerable clients
+    severity: high
+    mitigation: Set affordability limits and monitor repayment stress signals.
+  privacy:
+    category: data_governance
+    risk: Data privacy and consent risk
+    severity: high
+    mitigation: Adopt privacy-by-design and third-party security audits.
+  climate:
+    category: environmental
+    risk: Climate transition and physical risk exposure
+    severity: medium
+    mitigation: Define adaptation plans and emissions reduction targets.
+  waste:
+    category: environmental
+    risk: Waste and pollution externalities
+    severity: medium
+    mitigation: Track waste streams and implement circular mitigation plans.
+  labor:
+    category: social
+    risk: Labor standards and worker welfare risk
+    severity: medium
+    mitigation: Implement supplier and workforce labor compliance controls.
+  grant:
+    category: business_model
+    risk: Grant dependence threatens long-term impact sustainability
+    severity: medium
+    mitigation: Diversify revenue and test unit economics of impact model.
+
+# Opportunity rules
+opportunity_rules:
+  financial inclusion:
+    category: inclusion
+    opportunity: Expand access to formal financial services for underserved groups
+    time_horizon: near_term
+  women:
+    category: equity
+    opportunity: Increase women-centered outcomes and gender equity positioning
+    time_horizon: near_term
+  smallholder:
+    category: livelihoods
+    opportunity: Raise smallholder productivity and rural income resilience
+    time_horizon: mid_term
+  renewable:
+    category: climate
+    opportunity: Scale decarbonization impact through renewable adoption
+    time_horizon: mid_term
+  education:
+    category: human_capital
+    opportunity: Improve education access and long-term employability outcomes
+    time_horizon: long_term
+  health:
+    category: wellbeing
+    opportunity: Improve affordability and reach of essential health services
+    time_horizon: mid_term

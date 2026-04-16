@@ -8,7 +8,7 @@ from collections.abc import Iterable
 
 METRIC_ID_PATTERN = re.compile(r"^(PI|OI|OD|FP|PD)\d{4}$", re.IGNORECASE)
 
-_THEME_HINTS: dict[str, list[str]] = {
+_DEFAULTS_THEME_HINTS: dict[str, list[str]] = {
     "climate": ["Climate Mitigation", "Climate Adaptation"],
     "carbon": ["Climate Mitigation"],
     "emission": ["Climate Mitigation"],
@@ -25,6 +25,16 @@ _THEME_HINTS: dict[str, list[str]] = {
     "gender": ["Gender Equality"],
     "women": ["Gender Equality"],
 }
+
+
+def _get_theme_hints() -> dict[str, list[str]]:
+    """Load theme hints from scoring config, fall back to defaults."""
+    try:
+        from openharness.impact.five_dimensions import _load_scoring_config
+        config = _load_scoring_config()
+        return config.get("theme_hints", _DEFAULTS_THEME_HINTS)
+    except Exception:
+        return _DEFAULTS_THEME_HINTS
 
 
 def normalize_str_list(values: Iterable[str] | None) -> list[str]:
@@ -108,7 +118,7 @@ def infer_themes(text: str, existing: list[str] | None = None) -> list[str]:
     """Infer impact themes from free text and merge with existing themes."""
     themes = normalize_str_list(existing or [])
     lower = (text or "").lower()
-    for keyword, hints in _THEME_HINTS.items():
+    for keyword, hints in _get_theme_hints().items():
         if keyword in lower:
             for hint in hints:
                 if hint.lower() not in {t.lower() for t in themes}:

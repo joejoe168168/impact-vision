@@ -104,3 +104,107 @@ class TestNewTools:
         result = asyncio.run(tool.execute(args, ctx))
         assert not result.is_error
         assert "quality_score" in result.output.lower() or "quality" in result.output.lower()
+
+
+class TestScoreProvenance:
+    def test_provenance_estimated_when_no_metrics(self):
+        from openharness.impact.database import get_metric_store
+        from openharness.impact.five_dimensions import assess_five_dimensions
+        from openharness.impact.models import Company
+
+        store = get_metric_store()
+        company = Company(name="Test Co", description="A fintech company", sector="fintech")
+        result = assess_five_dimensions(company, store)
+        assert result.overall_provenance == "estimated"
+        for dim in [result.what, result.who, result.how_much, result.contribution, result.risk]:
+            assert dim.provenance == "estimated"
+
+    def test_provenance_partial_with_few_metrics(self):
+        from openharness.impact.database import get_metric_store
+        from openharness.impact.five_dimensions import assess_five_dimensions
+        from openharness.impact.models import Company
+
+        store = get_metric_store()
+        company = Company(
+            name="Test Co",
+            description="A fintech company",
+            sector="fintech",
+            reported_metrics={"OI4112": "100"},
+        )
+        result = assess_five_dimensions(company, store)
+        assert result.overall_provenance in ("partial", "estimated")
+
+
+class TestNegationDetection:
+    def test_negation_blocks_boost(self):
+        from openharness.impact.five_dimensions import _keyword_not_negated
+
+        assert _keyword_not_negated("we support women empowerment", "women") is True
+        assert _keyword_not_negated("we do not target women", "women") is False
+        assert _keyword_not_negated("without climate considerations", "climate") is False
+        assert _keyword_not_negated("climate adaptation program", "climate") is True
+
+
+class TestCompanyModel:
+    def test_new_fields_default(self):
+        from openharness.impact.models import Company
+
+        company = Company(name="Test")
+        assert company.geography == ""
+        assert company.stage == ""
+        assert company.founded_year is None
+        assert company.employees is None
+        assert company.impact_targets == {}
+        assert company.reporting_period == ""
+        assert company.exclusion_flags == []
+        assert company.metric_history == []
+
+    def test_new_fields_set(self):
+        from openharness.impact.models import Company, MetricValue
+
+        company = Company(
+            name="Test",
+            geography="Kenya",
+            stage="seed",
+            founded_year=2020,
+            employees=50,
+            impact_targets={"OI4112": "500 tCO2e by 2027"},
+            reporting_period="FY2025",
+            exclusion_flags=["fossil_fuel"],
+            metric_history=[
+                MetricValue(metric_id="OI4112", value="100", period="FY2024"),
+                MetricValue(metric_id="OI4112", value="200", period="FY2025"),
+            ],
+        )
+        assert company.geography == "Kenya"
+        assert company.stage == "seed"
+        assert len(company.metric_history) == 2
+        assert company.metric_history[1].value == "200"
+
+
+class TestMetricValueModel:
+    def test_metric_value_defaults(self):
+        from openharness.impact.models import MetricValue
+
+        mv = MetricValue(metric_id="OI4112", value="100 tCO2e")
+        assert mv.metric_id == "OI4112"
+        assert mv.unit == ""
+        assert mv.period == ""
+        assert mv.source == ""
+        assert mv.verified is False
+
+    def test_metric_value_full(self):
+        from openharness.impact.models import MetricValue
+
+        mv = MetricValue(
+            metric_id="PI4060",
+            value=25000,
+            unit="count",
+            period="Q1 2026",
+            timestamp="2026-04-01",
+            source="audited",
+            verified=True,
+            notes="Annual count",
+        )
+        assert mv.verified is True
+        assert mv.period == "Q1 2026"

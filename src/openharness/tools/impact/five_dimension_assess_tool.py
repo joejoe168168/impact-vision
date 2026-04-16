@@ -59,17 +59,24 @@ class FiveDimensionAssessTool(BaseTool):
             company, store, theme=args.focus_theme or None
         )
 
+        prov_label = {"evidence-based": "Evidence-based", "partial": "Partially evidenced", "estimated": "Estimated (no metrics reported)"}
         lines = [
             f"5-Dimension Impact Assessment: {company.name}",
             "=" * 60,
             f"Impact Theme: {result.impact_theme or 'General'}",
             f"Overall Grade: {result.overall_grade} ({result.overall_score}/5.0)",
+            f"Confidence: {prov_label.get(result.overall_provenance, result.overall_provenance)}",
             "",
         ]
+        if result.overall_provenance != "evidence-based":
+            lines.append("⚠ Scores below are estimated from sector baselines and description keywords.")
+            lines.append("  Report IRIS+ metrics to upgrade to evidence-based scoring.")
+            lines.append("")
 
         for dim in [result.what, result.who, result.how_much, result.contribution, result.risk]:
             bar = _dim_bar(dim.score)
-            lines.append(f"{dim.dimension}: {dim.score}/5.0 {bar}")
+            prov_tag = f" [{dim.provenance}]" if dim.provenance != "evidence-based" else ""
+            lines.append(f"{dim.dimension}: {dim.score}/5.0 {bar}{prov_tag}")
             lines.append(f"  {dim.notes}")
             if dim.gaps:
                 lines.append(f"  Gaps: {', '.join(dim.gaps[:3])}")

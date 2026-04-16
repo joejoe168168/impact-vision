@@ -4,6 +4,48 @@ All notable changes to Impact Vision are recorded here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.1.4] - 2026-04-16
+
+### Added
+
+**Score provenance and transparency**
+- Every dimension score now carries a `provenance` field: `evidence-based` (≥3 reported metrics), `partial` (1-2 metrics), or `estimated` (keyword/sector-inferred only)
+- Overall assessment includes `overall_provenance` aggregated from all dimensions
+- CLI and report outputs clearly label estimated scores with warnings
+- Prevents misinterpretation of heuristic-based scores as rigorous assessments
+
+**Enriched Company model**
+- New fields: `geography` (country/region), `stage` (pre-seed through mature), `founded_year`, `employees`
+- `impact_targets`: forward-looking targets (e.g. "OI4112: 500 tCO2e by 2027")
+- `reporting_period`: which period metrics cover (e.g. "FY2025", "Q1 2026")
+- `exclusion_flags`: norms-based screening flags (e.g. "fossil_fuel", "controversial_weapons")
+- `metric_history`: time-series MetricValue list for progress tracking across periods
+- All new fields are optional with backward-compatible defaults
+
+**MetricValue model for time-series tracking**
+- New `MetricValue` model with: `metric_id`, `value`, `unit`, `period`, `timestamp`, `source`, `verified`, `notes`
+- Foundation for progress tracking, trend analysis, and period-over-period comparison
+- Supports verified/unverified distinction for audit trail
+
+**Externalized scoring configuration (`data/scoring_config.yaml`)**
+- Sector baselines, keyword dimension boosts, theme hints, risk/opportunity rules all externalized to YAML
+- Funds can customize scoring parameters without code changes
+- Graceful fallback to hardcoded defaults if YAML not found or invalid
+
+**Negation-aware keyword matching**
+- Keyword boosts now check for negation phrases within a 30-character window before the keyword
+- Prevents "we do not target women" from boosting gender scores
+- Supports 9 negation patterns: "not", "no", "don't", "doesn't", "do not", "does not", "without", "lack", "unable to"
+
+**Minimum metric threshold for above-baseline scores**
+- Companies with fewer than 3 reported metrics are capped at 2.5/5.0 per dimension
+- Prevents keyword-stuffed descriptions from producing inflated scores
+- Clear recommendation to report more metrics when threshold not met
+
+### Changed
+
+- 7 additional tests (61 total): score provenance, negation detection, enriched Company model, MetricValue model
+
 ## [0.1.3] - 2026-04-16
 
 ### Added
