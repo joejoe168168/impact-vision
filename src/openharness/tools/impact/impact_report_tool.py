@@ -18,6 +18,126 @@ from openharness.impact.models import Company
 from openharness.impact.sdg_mapper import map_sdg_alignment
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
+_SECTOR_OPPORTUNITIES: dict[str, list[str]] = {
+    "agriculture": [
+        "Food security: improving access to nutritious food for underserved populations",
+        "Poverty reduction: increasing income for smallholder farmers",
+        "Sustainable supply chains: promoting responsible sourcing and production",
+        "Climate adaptation: developing climate-resilient farming practices",
+        "Rural employment: creating jobs in farming communities",
+    ],
+    "livestock": [
+        "Food security: providing protein and nutrition to local markets",
+        "Poverty reduction: supporting livelihoods of small-scale farmers",
+        "Economic development: strengthening local agricultural value chains",
+        "Sustainable practices: implementing responsible animal husbandry",
+        "Rural employment: creating jobs in farming and processing",
+    ],
+    "healthcare": [
+        "Health outcomes: improving access to quality healthcare services",
+        "Health equity: reducing disparities in healthcare access",
+        "Disease prevention: supporting public health initiatives",
+        "Workforce development: training healthcare professionals",
+    ],
+    "energy": [
+        "Clean energy access: providing affordable clean energy to underserved areas",
+        "Climate mitigation: reducing greenhouse gas emissions",
+        "Energy independence: reducing reliance on fossil fuels",
+        "Job creation: creating green energy employment opportunities",
+    ],
+    "education": [
+        "Educational access: reaching underserved or marginalized populations",
+        "Skills development: building employable skills for the workforce",
+        "Digital inclusion: bridging the digital divide",
+        "Gender equity: improving educational access for girls and women",
+    ],
+    "fintech": [
+        "Financial inclusion: providing access to financial services for the unbanked",
+        "Economic empowerment: enabling savings, credit, and insurance",
+        "Gender equity: improving financial access for women",
+        "Efficiency: reducing transaction costs for low-income users",
+    ],
+    "water": [
+        "Clean water access: providing safe drinking water to underserved communities",
+        "Sanitation: improving hygiene and reducing waterborne disease",
+        "Water efficiency: promoting sustainable water management practices",
+    ],
+    "technology": [
+        "Digital inclusion: bridging the digital divide for underserved populations",
+        "Efficiency gains: improving productivity and reducing waste",
+        "Innovation: enabling new solutions to social and environmental challenges",
+    ],
+}
+
+_SECTOR_RISKS: dict[str, list[str]] = {
+    "agriculture": [
+        "Environmental degradation: soil depletion, water pollution from fertilizers/pesticides",
+        "Climate vulnerability: sensitivity to extreme weather events and climate change",
+        "Labor conditions: risk of exploitative labor practices",
+        "Land use change: deforestation or biodiversity loss from land conversion",
+        "Market volatility: commodity price fluctuations affecting farmer incomes",
+    ],
+    "livestock": [
+        "Environmental pollution: waste management, methane emissions, water contamination",
+        "Animal welfare: risk of poor animal husbandry practices",
+        "Disease risk: zoonotic disease transmission and antibiotic resistance",
+        "Carbon footprint: significant greenhouse gas emissions from livestock",
+        "Resource intensity: high water and feed consumption per unit of protein",
+        "Community impact: odor, waste runoff affecting neighboring communities",
+    ],
+    "healthcare": [
+        "Access inequality: risk of services remaining unaffordable for the poorest",
+        "Quality variance: inconsistent quality of care across locations",
+        "Data privacy: risks around patient health data security",
+    ],
+    "energy": [
+        "Environmental impact: land use, waste from equipment, resource extraction",
+        "Community displacement: risk of displacing communities for energy projects",
+        "Technology risk: rapidly changing technology making investments obsolete",
+    ],
+    "education": [
+        "Quality risk: providing access without ensuring quality outcomes",
+        "Digital divide: technology-dependent models excluding the most vulnerable",
+        "Sustainability: dependence on grants or subsidies for viability",
+    ],
+    "fintech": [
+        "Over-indebtedness: risk of predatory lending to vulnerable populations",
+        "Data privacy: risks around financial data security and misuse",
+        "Digital exclusion: services inaccessible to those without smartphones/internet",
+    ],
+    "water": [
+        "Sustainability: risk of depleting water sources without replenishment",
+        "Infrastructure maintenance: long-term maintenance of water systems",
+        "Affordability: pricing that excludes the poorest communities",
+    ],
+    "technology": [
+        "Digital divide: reinforcing existing inequalities through technology access",
+        "Privacy and surveillance: risks around data collection and misuse",
+        "Job displacement: automation reducing employment opportunities",
+    ],
+}
+
+
+def _infer_opportunities_and_risks(company: Company) -> dict[str, list[str]]:
+    """Infer impact opportunities and risks from sector and description."""
+    text = f"{company.description} {company.sector}".lower()
+    opportunities: list[str] = []
+    risks: list[str] = []
+
+    for sector_key in _SECTOR_OPPORTUNITIES:
+        if sector_key in text:
+            opportunities.extend(_SECTOR_OPPORTUNITIES[sector_key])
+    for sector_key in _SECTOR_RISKS:
+        if sector_key in text:
+            risks.extend(_SECTOR_RISKS[sector_key])
+
+    if not opportunities:
+        opportunities = ["Further analysis needed to identify specific impact opportunities"]
+    if not risks:
+        risks = ["Further analysis needed to identify specific impact risks"]
+
+    return {"opportunities": list(dict.fromkeys(opportunities)), "risks": list(dict.fromkeys(risks))}
+
 
 class ImpactReportInput(BaseModel):
     company_name: str = Field(description="Name of the company")
@@ -86,6 +206,8 @@ class ImpactReportTool(BaseTool):
         if args.include_gap_analysis:
             gap_result = analyze_gaps(company, store)
             report_data["gap_analysis"] = gap_result
+
+        report_data["impact_analysis"] = _infer_opportunities_and_risks(company)
 
         from openharness.impact.benchmarks import compare_to_benchmark
         if "five_dimensions" in report_data and company.sector:
@@ -171,6 +293,19 @@ def _to_text(data: dict) -> str:
             lines.append("  Missing:")
             for m in ga["missing"][:10]:
                 lines.append(f"    - {m['id']}: {m['name']}")
+        lines.append("")
+
+    if "impact_analysis" in data:
+        ia = data["impact_analysis"]
+        lines.append("IMPACT OPPORTUNITIES")
+        lines.append("-" * 40)
+        for o in ia.get("opportunities", []):
+            lines.append(f"  + {o}")
+        lines.append("")
+        lines.append("IMPACT RISKS")
+        lines.append("-" * 40)
+        for r in ia.get("risks", []):
+            lines.append(f"  ! {r}")
         lines.append("")
 
     if "benchmark_comparison" in data:
@@ -409,6 +544,22 @@ Plotly.newPlot('sdg-chart', [{{
   font: {{family: 'Inter, -apple-system, sans-serif'}}
 }}, {{responsive: true}});
 </script>""")
+
+    if "impact_analysis" in data:
+        ia = data["impact_analysis"]
+        sections.append("""
+<h2>Impact Opportunities & Risks</h2>
+<div class="chart-row">
+<div class="chart-box">
+<h3 style="color:var(--success)">Opportunities</h3>""")
+        for o in ia.get("opportunities", []):
+            sections.append(f'<div class="rec" style="border-left-color:var(--success);background:var(--success-light)">+ {o}</div>')
+        sections.append("""</div>
+<div class="chart-box">
+<h3 style="color:var(--danger)">Risks</h3>""")
+        for r in ia.get("risks", []):
+            sections.append(f'<div class="rec" style="border-left-color:var(--danger);background:var(--danger-light)">! {r}</div>')
+        sections.append("</div></div>")
 
     if "gap_analysis" in data:
         ga = data["gap_analysis"]
