@@ -22,7 +22,7 @@ def test_ohmo_prompt_includes_persona_and_memory(tmp_path: Path):
 
     prompt = build_ohmo_system_prompt(tmp_path, workspace=workspace)
 
-    assert "You are OpenHarness" in prompt
+    assert "You are Impact Vision" in prompt
     assert "Speak like a calm operator." in prompt
     assert "Name: ohmo" in prompt
     assert "Prefers terse answers." in prompt
