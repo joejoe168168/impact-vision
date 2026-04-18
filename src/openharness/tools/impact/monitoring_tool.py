@@ -114,16 +114,17 @@ class MonitoringTool(BaseTool):
         if args.metric_value is None:
             return ToolResult(output="metric_value is required", is_error=True)
 
+        prev = store.get_assessment(args.company_name)
         sched = store.get_monitoring_schedule(args.company_name)
         alerts_created = []
 
         if sched and sched.get("alert_thresholds"):
             threshold = sched["alert_thresholds"].get(args.metric_id)
-            if threshold is not None:
-                prev = store.get_assessment(args.company_name)
-                if prev and prev.get("company", {}).get("reported_metrics", {}).get(args.metric_id):
+            if threshold is not None and prev:
+                prev_metric = prev.get("company", {}).get("reported_metrics", {}).get(args.metric_id)
+                if prev_metric:
                     try:
-                        prev_val = float(prev["company"]["reported_metrics"][args.metric_id])
+                        prev_val = float(prev_metric)
                         if prev_val > 0:
                             deviation = abs(args.metric_value - prev_val) / prev_val
                             if deviation > threshold:
@@ -140,7 +141,23 @@ class MonitoringTool(BaseTool):
                     except (ValueError, TypeError):
                         pass
 
+        if prev:
+            company_data = prev.get("company", {})
+            metrics = company_data.get("reported_metrics", {})
+            metrics[args.metric_id] = str(args.metric_value)
+            company_data["reported_metrics"] = metrics
+            store.save_assessment(
+                company_name=args.company_name,
+                company_data=company_data,
+                five_dimensions=prev.get("five_dimensions"),
+                sdg_alignments=prev.get("sdg_alignments"),
+                gap_analysis=prev.get("gap_analysis"),
+                greenwashing=prev.get("greenwashing"),
+            )
+
         output = f"Recorded {args.metric_id} = {args.metric_value} for {args.company_name}"
+        if not prev:
+            output += " (no existing assessment found — value not persisted)"
         if alerts_created:
             output += f"\n⚠ Alert(s) triggered: {alerts_created}"
         return ToolResult(output=output)

@@ -230,6 +230,17 @@ class GuidedAssessmentTool(BaseTool):
     def _submit_data(self, args: GuidedAssessmentInput) -> ToolResult:
         if not args.step_data:
             return ToolResult(output="No data provided in step_data", is_error=True)
+        if not args.company_name:
+            return ToolResult(output="company_name is required to persist step data", is_error=True)
+
+        store = get_assessment_store()
+        prev = store.get_assessment(args.company_name)
+        company_data: dict = prev.get("company", {}) if prev else {}
+
+        for field, value in args.step_data.items():
+            company_data[field] = value
+
+        store.save_assessment(args.company_name, company_data)
 
         lines = ["DATA RECEIVED:", ""]
         for field, value in args.step_data.items():

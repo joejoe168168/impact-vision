@@ -16,6 +16,7 @@ from openharness.impact.gap_analysis import analyze_gaps
 from openharness.impact.greenwashing import assess_greenwashing
 from openharness.impact.models import Company
 from openharness.impact.sdg_mapper import map_sdg_alignment
+from openharness.tools.impact.common import infer_themes, normalize_metric_map, normalize_sdg_goals
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 
@@ -57,14 +58,16 @@ class NarrativeTool(BaseTool):
         except FileNotFoundError as e:
             return ToolResult(output=str(e), is_error=True)
 
+        reported_metrics, _ = normalize_metric_map(args.reported_metrics)
+        themes = infer_themes(args.impact_themes, reported_metrics, store)
         company = Company(
             name=args.company_name or "Company",
             description=args.company_description,
             sector=args.sector,
             geography=args.geography,
-            impact_themes=args.impact_themes,
-            reported_metrics=args.reported_metrics,
-            sdg_claims=args.sdg_claims,
+            impact_themes=themes,
+            reported_metrics=reported_metrics,
+            sdg_claims=normalize_sdg_goals(args.sdg_claims),
         )
 
         fd = assess_five_dimensions(company, store)

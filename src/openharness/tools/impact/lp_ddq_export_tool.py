@@ -133,7 +133,10 @@ class LpDdqExportTool(BaseTool):
     input_model = LpDdqExportInput
 
     def is_read_only(self, arguments: BaseModel) -> bool:
-        return True
+        args = arguments if isinstance(arguments, LpDdqExportInput) else LpDdqExportInput.model_validate(arguments)
+        if args.output_format == "xlsx":
+            return False
+        return not bool(args.output_path)
 
     async def execute(self, arguments: BaseModel, context: ToolExecutionContext) -> ToolResult:
         args = arguments if isinstance(arguments, LpDdqExportInput) else LpDdqExportInput.model_validate(arguments)

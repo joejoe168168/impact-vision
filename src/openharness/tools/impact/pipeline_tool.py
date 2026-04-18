@@ -58,7 +58,12 @@ class PipelineTool(BaseTool):
 
     def is_read_only(self, arguments: BaseModel) -> bool:
         args = arguments if isinstance(arguments, PipelineInput) else PipelineInput.model_validate(arguments)
-        return args.action in ("list", "get", "history", "summary", "dashboard", "export_csv", "export_xlsx")
+        read_only_actions = ("list", "get", "history", "summary")
+        if args.action in read_only_actions:
+            return True
+        if args.action in ("dashboard", "export_csv") and not args.output_path:
+            return True
+        return False
 
     async def execute(self, arguments: BaseModel, context: ToolExecutionContext) -> ToolResult:
         args = arguments if isinstance(arguments, PipelineInput) else PipelineInput.model_validate(arguments)

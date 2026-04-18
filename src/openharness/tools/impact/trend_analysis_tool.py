@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 
 from openharness.impact.models import Company, MetricValue
 from openharness.impact.trend_analysis import analyze_company_trends, assess_target_progress
-from openharness.tools.impact.common import normalize_impact_targets
+from openharness.tools.impact.common import normalize_impact_targets, normalize_metric_map
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 
@@ -65,6 +65,7 @@ class TrendAnalysisTool(BaseTool):
                 continue
 
         impact_targets, _ = normalize_impact_targets(args.impact_targets)
+        reported_metrics, _ = normalize_metric_map(args.reported_metrics)
 
         company = Company(
             name=args.company_name,
@@ -73,7 +74,7 @@ class TrendAnalysisTool(BaseTool):
             geography=args.geography,
             metric_history=history,
             impact_targets=impact_targets,
-            reported_metrics=args.reported_metrics,
+            reported_metrics=reported_metrics,
         )
 
         trend_result = analyze_company_trends(company)

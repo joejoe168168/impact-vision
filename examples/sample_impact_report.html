@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Impact Report: GreenPork Malaysia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 <style>
 :root {
@@ -55,15 +58,129 @@ tr:hover td { background: var(--primary-light); }
 .coverage-hero .bar-track { height: 14px; margin-top: 8px; }
 .footer { margin-top: 48px; padding: 20px 0; border-top: 2px solid var(--border); color: var(--text-secondary); font-size: 0.8em; text-align: center; }
 .footer a { color: var(--accent); text-decoration: none; }
-@media(max-width: 700px) { .chart-row { flex-direction: column; } .chart-box { flex-basis: 100%; } }
+@media(max-width: 700px) { .chart-row { flex-direction: column; } .chart-box { flex-basis: 100%; } .dim-overlay-content { gap: 8px; } .dim-overlay-col { flex: 1 1 100%; min-width: 0; } }
+
+/* 7.1.1 -- 5D Overlay Panel */
+.dim-clickable { cursor: pointer; }
+.dim-clickable:hover td { background: var(--primary-light) !important; }
+.dim-overlay { display: none; }
+.dim-overlay.active { display: table-row; }
+.dim-overlay td { background: #f8fafe; padding: 16px 14px; }
+.dim-overlay-content { display: flex; gap: 12px; flex-wrap: wrap; }
+.dim-overlay-col { flex: 1 1 130px; min-width: 110px; }
+.dim-overlay-col h4 { font-size: 0.85em; color: var(--primary); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.03em; }
+.metric-pill { display: inline-block; padding: 3px 10px; border-radius: 14px; font-size: 0.78em; margin: 2px 3px; font-weight: 500; }
+.metric-pill.tracked { background: var(--success-light); color: var(--success); }
+.metric-pill.gap { background: var(--danger-light); color: var(--danger); }
+.metric-pill.partial { background: var(--warning-light); color: var(--warning); }
+.dim-suggestion { font-size: 0.82em; color: var(--text-secondary); margin: 4px 0; padding-left: 12px; border-left: 2px solid var(--warning); word-break: break-word; overflow-wrap: break-word; }
+.dim-overlay td { overflow: visible !important; }
+.chart-box table { overflow: visible; }
+
+/* 7.1.2 -- SDG Drill-down */
+.sdg-clickable { cursor: pointer; }
+.sdg-clickable:hover td { background: #fff9e6 !important; }
+.sdg-detail { display: none; }
+.sdg-detail.active { display: table-row; }
+.sdg-detail td { background: #fffef5; padding: 16px 14px; }
+.evidence-chain { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; margin: 6px 0; }
+.chain-node { background: var(--primary-light); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 6px 10px; font-size: 0.78em; text-align: center; max-width: 160px; }
+.chain-arrow { color: var(--text-secondary); font-size: 1.1em; }
+.chain-confidence { font-size: 0.7em; color: var(--text-secondary); }
+.sdg-rec { font-size: 0.82em; padding: 6px 10px; background: var(--warning-light); border-radius: var(--radius-sm); margin: 3px 0; }
+
+/* 7.1.3 -- Metric Tracking Dashboard */
+.metric-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin: 16px 0; }
+.metric-card { background: var(--surface); border-radius: var(--radius-sm); box-shadow: var(--shadow-sm); padding: 14px 16px; border: 1px solid var(--border); border-top: 3px solid var(--border); }
+.metric-card.tracked { border-top-color: var(--success); }
+.metric-card.gap { border-top-color: var(--danger); }
+.metric-card.partial { border-top-color: var(--warning); }
+.metric-card .mc-id { font-size: 0.75em; color: var(--text-secondary); font-weight: 600; }
+.metric-card .mc-name { font-size: 0.88em; font-weight: 600; margin: 4px 0; }
+.metric-card .mc-status { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.72em; font-weight: 600; text-transform: uppercase; }
+.mc-status.tracked { background: var(--success-light); color: var(--success); }
+.mc-status.gap { background: var(--danger-light); color: var(--danger); }
+.mc-status.partial { background: var(--warning-light); color: var(--warning); }
+
+/* 7.1.4 -- Claim Evidence Cards */
+.claim-card { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow-sm); padding: 16px 20px; margin: 10px 0; border: 1px solid var(--border); transition: box-shadow 0.2s; }
+.claim-card:hover { box-shadow: var(--shadow-md); }
+.claim-header { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.claim-text { flex: 1; font-size: 0.9em; }
+.claim-badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 0.72em; font-weight: 600; text-transform: uppercase; }
+.claim-badge.outcome { background: #e8f5e9; color: #2e7d32; }
+.claim-badge.output { background: #e3f2fd; color: #1565c0; }
+.claim-badge.activity { background: #fff3e0; color: #e65100; }
+.claim-badge.intent { background: #f3e5f5; color: #7b1fa2; }
+.claim-badge.risk { background: #ffebee; color: #c62828; }
+.claim-body { display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+.claim-body.active { display: block; }
+.confidence-bar { background: #e8eaed; border-radius: 6px; height: 8px; width: 100px; display: inline-block; overflow: hidden; vertical-align: middle; }
+.confidence-fill { height: 100%; border-radius: 6px; }
+.chip { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.75em; margin: 2px; background: var(--primary-light); color: var(--primary); }
+.claim-toggle { color: var(--text-secondary); font-size: 0.85em; }
+
+/* 7.2.3 -- Impact Pathway Diagram */
+.pathway { display: flex; align-items: stretch; gap: 0; margin: 20px 0; overflow-x: auto; padding: 10px 0; }
+.pathway-stage { flex: 1 1 150px; min-width: 130px; text-align: center; position: relative; }
+.pathway-box { background: var(--surface); border: 2px solid var(--primary-light); border-radius: var(--radius-sm); padding: 12px 10px; margin: 0 6px; min-height: 80px; display: flex; flex-direction: column; justify-content: center; }
+.pathway-box h4 { font-size: 0.78em; color: var(--primary); text-transform: uppercase; margin-bottom: 6px; }
+.pathway-box .items { font-size: 0.78em; color: var(--text); }
+.pathway-box .confidence-label { font-size: 0.68em; color: var(--text-secondary); margin-top: 4px; }
+.pathway-arrow { position: absolute; right: -10px; top: 50%; transform: translateY(-50%); color: var(--primary); font-size: 1.4em; z-index: 1; }
+
+/* 7.1.5 -- Print/PDF */
+@media print {
+  body { background: white; max-width: 100%; padding: 16px; font-size: 10pt; }
+  .report-header { background: #0d47a1 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .score-card, .chart-box, .claim-card, .metric-card { break-inside: avoid; }
+  #interactive-panel, .dim-clickable .claim-toggle { display: none !important; }
+  .dim-overlay, .sdg-detail, .claim-body { display: table-row !important; }
+  .claim-body { display: block !important; }
+  h2 { break-before: page; }
+  .footer { break-before: avoid; }
+}
+
+/* 7.1.6 -- Report Comparison */
+.comparison-table { width: 100%; border-collapse: collapse; }
+.comparison-table th { background: var(--primary); color: white; padding: 10px; font-size: 0.8em; }
+.comparison-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); font-size: 0.88em; }
+.delta-up { color: var(--success); font-weight: 700; }
+.delta-down { color: var(--danger); font-weight: 700; }
+.delta-same { color: var(--text-secondary); }
+
+/* Rating Explanation System */
+.info-trigger { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; background: var(--primary-light); color: var(--primary); font-size: 0.65em; font-weight: 700; cursor: pointer; border: 1px solid transparent; transition: all 0.25s ease; vertical-align: middle; margin-left: 6px; user-select: none; font-style: normal; }
+.info-trigger:hover { background: var(--primary); color: white; transform: scale(1.15); box-shadow: 0 2px 8px rgba(13,71,161,0.25); }
+.info-trigger.active { background: var(--primary); color: white; }
+.rating-panel { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.4s cubic-bezier(0.4,0,0.2,1), opacity 0.3s ease; opacity: 0; }
+.rating-panel.open { grid-template-rows: 1fr; opacity: 1; }
+.rating-panel-inner { overflow: hidden; }
+.rating-panel-content { background: linear-gradient(135deg, #f8fafe 0%, #eef2ff 100%); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 24px; margin: 12px 0 4px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.04), var(--shadow-sm); }
+.rating-panel-content .rp-title { font-size: 0.78em; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+.rating-panel-content .rp-title::before { content: ''; display: inline-block; width: 3px; height: 14px; background: var(--primary); border-radius: 2px; }
+.scale-row { display: flex; align-items: stretch; gap: 3px; margin: 0 0 14px; border-radius: 10px; overflow: visible; }
+.scale-seg { flex: 1; padding: 12px 6px 10px; text-align: center; position: relative; transition: all 0.3s cubic-bezier(0.4,0,0.2,1); opacity: 0.6; border-radius: 4px; }
+.scale-seg.active { opacity: 1; transform: scaleY(1.08); box-shadow: 0 0 0 2.5px var(--primary), 0 4px 12px rgba(13,71,161,0.18); z-index: 2; border-radius: 8px; }
+.scale-seg .seg-label { font-size: 0.72em; font-weight: 700; letter-spacing: 0.03em; }
+.scale-seg .seg-range { font-size: 0.62em; opacity: 0.85; margin-top: 3px; }
+.scale-seg.active::before { content: ''; position: absolute; top: -7px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 7px solid transparent; border-right: 7px solid transparent; border-bottom: 7px solid var(--primary); }
+.explain-box { display: flex; align-items: center; gap: 16px; padding: 14px 18px; background: white; border-radius: var(--radius-sm); border: 1px solid var(--border); box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+.explain-box .eb-score { font-size: 1.6em; font-weight: 800; line-height: 1; min-width: 52px; text-align: center; }
+.explain-box .eb-body { flex: 1; }
+.explain-box .eb-label { font-size: 0.88em; font-weight: 700; }
+.explain-box .eb-desc { font-size: 0.8em; color: var(--text-secondary); margin-top: 3px; line-height: 1.45; }
+.dim-level-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.65em; font-weight: 600; letter-spacing: 0.02em; margin-top: 3px; }
+.sub-score-explain { font-size: 0.76em; color: var(--text-secondary); font-style: italic; }
 </style>
 </head>
 <body>
+<script>function toggleExplain(id,btn){var p=document.getElementById(id);if(!p)return;p.classList.toggle('open');if(btn)btn.classList.toggle('active')}</script>
 <div class="report-header">
 <h1>Impact Assessment Report</h1>
 <p class="subtitle">GreenPork Malaysia | agriculture</p>
 <div class="meta-row">
-  <span>Generated: 2026-04-16</span>
+  <span>Generated: 2026-04-18</span>
   <span>Standard: IRIS+ 5.3c</span>
 </div>
 <div class="tag-row">
@@ -77,60 +194,147 @@ tr:hover td { background: var(--primary-light); }
 <span class="tag">SDG 13</span>
 </div>
 </div>
+<div class="section"><h2>Executive Summary</h2><div class="content">
+<p><strong>GreenPork Malaysia</strong> (agriculture) received an overall impact score of <strong>2.0/5.0 (Grade C+)</strong>. Score confidence is rated as <em>estimated</em>.</p>
+<p>Strongest SDG alignments: SDG 7 (Affordable and Clean Energy), SDG 2 (Zero Hunger), SDG 13 (Climate Action).</p>
+<p>Greenwashing risk assessment: <strong>Moderate Risk</strong> (score: 45/100).</p>
+<p>Core Metric Set coverage: 12.5%.</p>
+<p><em>This report was generated by Impact Vision using IRIS+ metrics, 5 Dimensions of Impact scoring, and multi-framework ESG analysis. Scores based on limited data should be validated with additional evidence.</em></p>
+</div></div>
 
-<h2>5 Dimensions of Impact</h2>
+<h2>5 Dimensions of Impact <span class="info-trigger" onclick="toggleExplain('explain-5d',this)" title="What does this rating mean?">i</span></h2>
+<div class="rating-panel" id="explain-5d"><div class="rating-panel-inner"><div class="rating-panel-content"><div class="rp-title">Understanding the 5D Impact Score</div><p style="font-size:0.82em;color:var(--text-secondary);margin-bottom:10px">The 5 Dimensions of Impact (IMP) framework assesses impact across What, Who, How Much, Contribution, and Risk. Each dimension is scored 1&ndash;5 based on reported IRIS+ metrics and sector analysis. The overall grade aggregates all five dimensions.</p><div class="scale-row"><div class="scale-seg" style="background:#ffebee;color:#c62828"><div class="seg-label">F</div><div class="seg-range">< 1.0</div></div><div class="scale-seg" style="background:#fff3e0;color:#e65100"><div class="seg-label">D</div><div class="seg-range">1.0–1.9</div></div><div class="scale-seg active" style="background:#fffde7;color:#f9a825"><div class="seg-label">C</div><div class="seg-range">2.0–2.9</div></div><div class="scale-seg" style="background:#f1f8e9;color:#558b2f"><div class="seg-label">B</div><div class="seg-range">3.0–3.9</div></div><div class="scale-seg" style="background:#e8f5e9;color:#2e7d32"><div class="seg-label">A</div><div class="seg-range">4.0–5.0</div></div></div><div class="explain-box"><div class="eb-score" style="color:#f9a825">C+</div><div class="eb-body"><div class="eb-label">C</div><div class="eb-desc">Developing measurement with significant gaps. Score range: 2.0–2.9.</div></div></div></div></div></div>
 <div class="cards-row">
 <div class="score-card"><div class="value grade-C" id="main-grade">C+</div><div class="label">Overall Grade</div></div>
 <div class="score-card"><div class="value" id="main-overall">2.0<span style="font-size:0.5em;color:var(--text-secondary)">/5</span></div><div class="label">Overall Score</div></div>
+<div class="score-card"><div class="value" style="font-size:0.9em;color:var(--danger)">Estimated</div><div class="label">Confidence</div><div style="font-size:0.7em;color:var(--text-secondary);margin-top:4px;max-width:160px">Inferred from description/sector. Report metrics to upgrade.</div></div>
 <div class="score-card" id="delta-card" style="display:none"><div class="value" id="main-delta" style="font-size:1.4em;color:var(--text-secondary)">+0.0</div><div class="label">Improvement</div></div>
 </div>
 <div class="chart-row">
 <div class="chart-box" id="radar-chart"></div>
 <div class="chart-box">
-<table>
-<tr><th>Dimension</th><th>Score</th><th style="min-width:160px">Progress</th><th>Metrics</th><th>Details</th></tr>
+<table id="dim-table">
+<tr><th>Dimension</th><th>Score</th><th style="min-width:160px">Progress</th><th>Confidence</th><th>Metrics</th><th>Details</th></tr>
 
-<tr>
-<td><strong>What</strong></td>
-<td style="font-weight:600" id="dim-score-what">2.3/5</td>
+<tr class="dim-clickable" data-dim="what">
+<td><strong>What</strong> <span style="font-size:0.7em;color:var(--text-secondary)">&#9660;</span><br><span style="font-size:0.68em;color:var(--text-secondary)">What outcome is the company targeting? Is it posit...</span></td>
+<td style="font-weight:600" id="dim-score-what">2.3/5<br><span class="dim-level-badge" style="background:#fff3e0;color:#e65100">Emerging</span></td>
 <td><div class="bar-track"><div class="bar-fill orange" id="dim-bar-what" style="width:46%"></div></div></td>
+<td style="font-size:0.8em;color:var(--warning);font-weight:500">Partial</td>
 <td style="font-size:0.85em;white-space:nowrap"><span style="color:var(--warning);font-weight:600">1/22</span>
 <span style="color:var(--text-secondary)" title="OI0263, OI0386, OI2340"> tracked</span></td>
 <td style="font-size:0.85em;color:var(--text-secondary)">Reporting 1 metrics (0 theme-specific, 22 available)</td>
 </tr>
-<tr>
-<td><strong>Who</strong></td>
-<td style="font-weight:600" id="dim-score-who">2.5/5</td>
+<tr class="dim-overlay" id="overlay-what"><td colspan="6"><div class="dim-overlay-content">
+<div class="dim-overlay-col" style="flex:0 0 100%;margin-bottom:8px"><p style="font-size:0.82em;color:var(--text-secondary);margin:0 0 4px;line-height:1.5"><strong style="color:var(--primary)">What:</strong> What outcome is the company targeting? Is it positive or negative? Considers relevance and significance.</p><p style="font-size:0.78em;margin:0"><span class="dim-level-badge" style="background:#fff3e0;color:#e65100">Emerging</span> <span style="color:var(--text-secondary)">Basic reporting; gaps in key dimension metrics. Score range: 1.5–2.5.</span></p></div>
+<div class="dim-overlay-col"><h4>Tracked Metrics</h4>
+<span class="metric-pill tracked">PI4060</span>
+</div><div class="dim-overlay-col"><h4>Gaps</h4>
+<span class="metric-pill gap">OI0263</span>
+<span class="metric-pill gap">OI0386</span>
+<span class="metric-pill gap">OI2340</span>
+</div><div class="dim-overlay-col"><h4>Suggestions</h4>
+<div class="dim-suggestion">Assess CONTRIBUTION: establish counterfactual or benchmark comparison</div>
+<div class="dim-suggestion">Evaluate RISK: assess evidence risk, execution risk, and external risk factors</div>
+</div></div></td></tr>
+<tr class="dim-clickable" data-dim="who">
+<td><strong>Who</strong> <span style="font-size:0.7em;color:var(--text-secondary)">&#9660;</span><br><span style="font-size:0.68em;color:var(--text-secondary)">Who experiences the outcome? Are stakeholders unde...</span></td>
+<td style="font-weight:600" id="dim-score-who">2.5/5<br><span class="dim-level-badge" style="background:#fff3e0;color:#e65100">Emerging</span></td>
 <td><div class="bar-track"><div class="bar-fill orange" id="dim-bar-who" style="width:50%"></div></div></td>
+<td style="font-size:0.8em;color:var(--warning);font-weight:500">Partial</td>
 <td style="font-size:0.85em;white-space:nowrap"><span style="color:var(--warning);font-weight:600">1/9</span>
 <span style="color:var(--text-secondary)" title="OI2799, PI1002, PI1405"> tracked</span></td>
 <td style="font-size:0.85em;color:var(--text-secondary)">Reporting 1 metrics (0 theme-specific, 9 available)</td>
 </tr>
-<tr>
-<td><strong>How Much</strong></td>
-<td style="font-weight:600" id="dim-score-how_much">2.0/5</td>
+<tr class="dim-overlay" id="overlay-who"><td colspan="6"><div class="dim-overlay-content">
+<div class="dim-overlay-col" style="flex:0 0 100%;margin-bottom:8px"><p style="font-size:0.82em;color:var(--text-secondary);margin:0 0 4px;line-height:1.5"><strong style="color:var(--primary)">Who:</strong> Who experiences the outcome? Are stakeholders underserved or vulnerable? Considers geographic/demographic reach.</p><p style="font-size:0.78em;margin:0"><span class="dim-level-badge" style="background:#fff3e0;color:#e65100">Emerging</span> <span style="color:var(--text-secondary)">Basic reporting; gaps in key dimension metrics. Score range: 1.5–2.5.</span></p></div>
+<div class="dim-overlay-col"><h4>Tracked Metrics</h4>
+<span class="metric-pill tracked">PI4060</span>
+</div><div class="dim-overlay-col"><h4>Gaps</h4>
+<span class="metric-pill gap">OI2799</span>
+<span class="metric-pill gap">PI1002</span>
+<span class="metric-pill gap">PI1405</span>
+</div><div class="dim-overlay-col"><h4>Suggestions</h4>
+<div class="dim-suggestion">Assess CONTRIBUTION: establish counterfactual or benchmark comparison</div>
+<div class="dim-suggestion">Evaluate RISK: assess evidence risk, execution risk, and external risk factors</div>
+</div></div></td></tr>
+<tr class="dim-clickable" data-dim="how_much">
+<td><strong>How Much</strong> <span style="font-size:0.7em;color:var(--text-secondary)">&#9660;</span><br><span style="font-size:0.68em;color:var(--text-secondary)">How many people are affected (scale), how signific...</span></td>
+<td style="font-weight:600" id="dim-score-how_much">2.0/5<br><span class="dim-level-badge" style="background:#fff3e0;color:#e65100">Emerging</span></td>
 <td><div class="bar-track"><div class="bar-fill orange" id="dim-bar-how_much" style="width:40%"></div></div></td>
+<td style="font-size:0.8em;color:var(--text-secondary);font-weight:500">Estimated</td>
 <td style="font-size:0.85em;white-space:nowrap"><span style="color:var(--warning);font-weight:600">1/10</span>
 <span style="color:var(--text-secondary)" title="PI2894, PI3419, PI5566"> tracked</span></td>
 <td style="font-size:0.85em;color:var(--text-secondary)">Scale=2.0, Depth=2.0, Duration=2.0</td>
 </tr>
-<tr>
-<td><strong>Contribution</strong></td>
-<td style="font-weight:600" id="dim-score-contribution">1.8/5</td>
+<tr class="dim-overlay" id="overlay-how_much"><td colspan="6"><div class="dim-overlay-content">
+<div class="dim-overlay-col" style="flex:0 0 100%;margin-bottom:8px"><p style="font-size:0.82em;color:var(--text-secondary);margin:0 0 4px;line-height:1.5"><strong style="color:var(--primary)">How Much:</strong> How many people are affected (scale), how significant the change (depth), and how long it lasts (duration).</p><p style="font-size:0.78em;margin:0"><span class="dim-level-badge" style="background:#fff3e0;color:#e65100">Emerging</span> <span style="color:var(--text-secondary)">Basic reporting; gaps in key dimension metrics. Score range: 1.5–2.5.</span></p></div>
+<div class="dim-overlay-col"><h4>Tracked Metrics</h4>
+<span style="font-size:0.82em;color:var(--text-secondary)">No metrics tracked (10 available)</span>
+</div><div class="dim-overlay-col"><h4>Gaps</h4>
+<span class="metric-pill gap">PI2894</span>
+<span class="metric-pill gap">PI3419</span>
+<span class="metric-pill gap">PI5566</span>
+</div><div class="dim-overlay-col"><h4>Suggestions</h4>
+<div class="dim-suggestion">Assess CONTRIBUTION: establish counterfactual or benchmark comparison</div>
+<div class="dim-suggestion">Evaluate RISK: assess evidence risk, execution risk, and external risk factors</div>
+</div></div></td></tr>
+<tr class="dim-clickable" data-dim="contribution">
+<td><strong>Contribution</strong> <span style="font-size:0.7em;color:var(--text-secondary)">&#9660;</span><br><span style="font-size:0.68em;color:var(--text-secondary)">Would this outcome happen anyway? Assesses counter...</span></td>
+<td style="font-weight:600" id="dim-score-contribution">1.8/5<br><span class="dim-level-badge" style="background:#fff3e0;color:#e65100">Emerging</span></td>
 <td><div class="bar-track"><div class="bar-fill orange" id="dim-bar-contribution" style="width:36%"></div></div></td>
+<td style="font-size:0.8em;color:var(--text-secondary);font-weight:500">Estimated</td>
 <td style="font-size:0.85em;white-space:nowrap"><span style="color:var(--danger);font-weight:600">0/6</span>
 <span style="color:var(--text-secondary)" title="OI9101, PI1568, PI2476"> not tracked</span></td>
 <td style="font-size:0.85em;color:var(--text-secondary)">Estimated from sector/description (6 metrics available to track)</td>
 </tr>
-<tr>
-<td><strong>Risk</strong></td>
-<td style="font-weight:600" id="dim-score-risk">1.2/5</td>
+<tr class="dim-overlay" id="overlay-contribution"><td colspan="6"><div class="dim-overlay-content">
+<div class="dim-overlay-col" style="flex:0 0 100%;margin-bottom:8px"><p style="font-size:0.82em;color:var(--text-secondary);margin:0 0 4px;line-height:1.5"><strong style="color:var(--primary)">Contribution:</strong> Would this outcome happen anyway? Assesses counterfactual, additionality, and baseline evidence.</p><p style="font-size:0.78em;margin:0"><span class="dim-level-badge" style="background:#fff3e0;color:#e65100">Emerging</span> <span style="color:var(--text-secondary)">Basic reporting; gaps in key dimension metrics. Score range: 1.5–2.5.</span></p></div>
+<div class="dim-overlay-col"><h4>Tracked Metrics</h4>
+<span style="font-size:0.82em;color:var(--text-secondary)">No metrics tracked (6 available)</span>
+</div><div class="dim-overlay-col"><h4>Gaps</h4>
+<span class="metric-pill gap">OI9101</span>
+<span class="metric-pill gap">PI1568</span>
+<span class="metric-pill gap">PI2476</span>
+</div><div class="dim-overlay-col"><h4>Suggestions</h4>
+<div class="dim-suggestion">Assess CONTRIBUTION: establish counterfactual or benchmark comparison</div>
+<div class="dim-suggestion">Evaluate RISK: assess evidence risk, execution risk, and external risk factors</div>
+</div></div></td></tr>
+<tr class="dim-clickable" data-dim="risk">
+<td><strong>Risk</strong> <span style="font-size:0.7em;color:var(--text-secondary)">&#9660;</span><br><span style="font-size:0.68em;color:var(--text-secondary)">Likelihood that actual impact differs from expecte...</span></td>
+<td style="font-weight:600" id="dim-score-risk">1.2/5<br><span class="dim-level-badge" style="background:#ffebee;color:#c62828">Nascent</span></td>
 <td><div class="bar-track"><div class="bar-fill red" id="dim-bar-risk" style="width:24%"></div></div></td>
+<td style="font-size:0.8em;color:var(--text-secondary);font-weight:500">Estimated</td>
 <td style="font-size:0.85em;white-space:nowrap"><span style="color:var(--danger);font-weight:600">0/4</span>
 <span style="color:var(--text-secondary)" title="PD8501, PI0510, PI1899"> not tracked</span></td>
 <td style="font-size:0.85em;color:var(--text-secondary)">Estimated from sector/description (4 metrics available to track)</td>
 </tr>
+<tr class="dim-overlay" id="overlay-risk"><td colspan="6"><div class="dim-overlay-content">
+<div class="dim-overlay-col" style="flex:0 0 100%;margin-bottom:8px"><p style="font-size:0.82em;color:var(--text-secondary);margin:0 0 4px;line-height:1.5"><strong style="color:var(--primary)">Risk:</strong> Likelihood that actual impact differs from expected. Considers evidence, execution, stakeholder, and external risk.</p><p style="font-size:0.78em;margin:0"><span class="dim-level-badge" style="background:#ffebee;color:#c62828">Nascent</span> <span style="color:var(--text-secondary)">Limited evidence; primarily estimated from sector. Score range: 1.0–1.5.</span></p></div>
+<div class="dim-overlay-col"><h4>Tracked Metrics</h4>
+<span style="font-size:0.82em;color:var(--text-secondary)">No metrics tracked (4 available)</span>
+</div><div class="dim-overlay-col"><h4>Gaps</h4>
+<span class="metric-pill gap">PD8501</span>
+<span class="metric-pill gap">PI0510</span>
+<span class="metric-pill gap">PI1899</span>
+</div><div class="dim-overlay-col"><h4>Suggestions</h4>
+<div class="dim-suggestion">Assess CONTRIBUTION: establish counterfactual or benchmark comparison</div>
+<div class="dim-suggestion">Evaluate RISK: assess evidence risk, execution risk, and external risk factors</div>
+</div></div></td></tr>
 </table>
+<script>
+document.querySelectorAll('.dim-clickable').forEach(function(row) {
+  row.addEventListener('click', function() {
+    var dim = this.dataset.dim;
+    var overlay = document.getElementById('overlay-' + dim);
+    if (overlay) overlay.classList.toggle('active');
+  });
+});
+</script>
+
+<div style="margin:12px 0;padding:12px 16px;background:var(--danger-light);border-left:4px solid var(--danger);border-radius:var(--radius-sm);font-size:0.85em">
+Scores are primarily <strong>estimated</strong> from keywords and sector heuristics. Report at least 3 IRIS+ metrics per dimension for evidence-based scores.
+</div>
 
 <div style="margin-top:12px;padding:12px 16px;background:var(--primary-light);border-radius:var(--radius-sm);font-size:0.85em">
 <strong>Metric Tracking:</strong> 3 of 51 available IRIS+ metrics reported
@@ -199,6 +403,30 @@ Check practices your organization follows. The radar chart and scores above upda
   }
   function gradeClass(g) { return 'grade-'+g[0]; }
 
+  const STORAGE_KEY = 'impact-vision-scenario-' + 'greenpork-malaysia';
+
+  function saveState() {
+    const state = {};
+    items.forEach(function(item) {
+      const cb = document.getElementById('chk-'+item.id);
+      if (cb) state[item.id] = cb.checked;
+    });
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+  }
+
+  function loadState() {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (!saved) return;
+      const state = JSON.parse(saved);
+      items.forEach(function(item) {
+        const cb = document.getElementById('chk-'+item.id);
+        if (cb && state[item.id]) cb.checked = true;
+      });
+      recalc();
+    } catch(e) {}
+  }
+
   function recalc() {
     const scores = {};
     dimNames.forEach(function(d) { scores[d] = baseScores[d]; });
@@ -212,6 +440,7 @@ Check practices your organization follows. The radar chart and scores above upda
         });
       }
     });
+    saveState();
     const avg = dimNames.reduce(function(s,d){ return s+scores[d]; }, 0) / 5;
     const grade = getGrade(avg);
     const delta = avg - origOverall;
@@ -269,105 +498,100 @@ Check practices your organization follows. The radar chart and scores above upda
       font:{family:'Inter, -apple-system, sans-serif'}
     }, {responsive:true});
   }
+  loadState();
 })();
 </script>
 <h3>Recommendations</h3>
 <div class="rec">Assess CONTRIBUTION: establish counterfactual or benchmark comparison</div>
 <div class="rec">Evaluate RISK: assess evidence risk, execution risk, and external risk factors</div>
 
-<h2>SDG Alignment <span style="font-size:0.65em;color:var(--text-secondary);font-weight:400">(16 goals)</span></h2>
+<h2>SDG Alignment <span style="font-size:0.65em;color:var(--text-secondary);font-weight:400">(6 goals)</span> <span class="info-trigger" onclick="toggleExplain('explain-sdg',this)" title="What does this rating mean?">i</span></h2>
+<div class="rating-panel" id="explain-sdg"><div class="rating-panel-inner"><div class="rating-panel-content"><div class="rp-title">SDG Alignment Scoring</div><p style="font-size:0.82em;color:var(--text-secondary);margin-bottom:10px">Each SDG is scored 0&ndash;100 based on keyword matching, reported IRIS+ metrics, and sector relevance. Confidence reflects data quality: <strong>High</strong> = multiple verified metrics; <strong>Medium</strong> = some metric evidence; <strong>Low</strong> = primarily inferred from description/sector keywords.</p><div class="scale-row"><div class="scale-seg" style="background:#ffebee;color:#c62828"><div class="seg-label">Weak</div><div class="seg-range">0–20</div></div><div class="scale-seg active" style="background:#fff3e0;color:#e65100"><div class="seg-label">Low</div><div class="seg-range">20–40</div></div><div class="scale-seg" style="background:#fffde7;color:#f9a825"><div class="seg-label">Moderate</div><div class="seg-range">40–60</div></div><div class="scale-seg" style="background:#f1f8e9;color:#558b2f"><div class="seg-label">Strong</div><div class="seg-range">60–80</div></div><div class="scale-seg" style="background:#e8f5e9;color:#2e7d32"><div class="seg-label">Very Strong</div><div class="seg-range">80–100</div></div></div><div class="explain-box"><div class="eb-score" style="color:#e65100">33/100</div><div class="eb-body"><div class="eb-label">Low</div><div class="eb-desc">Some relevance but limited metric evidence. Score range: 20–40.</div></div></div></div></div></div>
 <div class="chart-row">
 <div class="chart-box" id="sdg-chart"></div>
 <div class="chart-box">
-<table>
+<table id="sdg-table">
 <tr><th>SDG</th><th>Name</th><th>Score</th><th>Confidence</th><th>Matched Metrics</th></tr>
 
-<tr>
-<td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#FCC30B;margin-right:6px;vertical-align:middle"></span>SDG 7</td>
+<tr class="sdg-clickable" data-sdg="7">
+<td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#FCC30B;margin-right:6px;vertical-align:middle"></span>SDG 7 <span style="font-size:0.7em;color:var(--text-secondary)">&#9660;</span></td>
 <td>Affordable and Clean Energy</td>
-<td style="font-weight:600">33.0</td><td style="color:#f57c00;font-weight:600">medium</td><td style="font-size:0.85em">PI4060</td>
+<td style="font-weight:600">33.0<br><span class="dim-level-badge" style="background:#fff3e0;color:#e65100;font-size:0.6em">Low</span></td>
+<td style="color:#f57c00;font-weight:600">medium<br><span style="font-size:0.7em;font-weight:400;color:var(--text-secondary)">Some metric evidence; partially inferred</span></td>
+<td style="font-size:0.85em">PI4060</td>
 </tr>
-<tr>
-<td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#DDA63A;margin-right:6px;vertical-align:middle"></span>SDG 2</td>
+<tr class="sdg-detail" id="sdg-detail-7"><td colspan="5">
+<span style="font-size:0.85em;color:var(--text-secondary)">Provenance: estimated. Report more metrics to build evidence chain.</span>
+</td></tr>
+<tr class="sdg-clickable" data-sdg="2">
+<td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#DDA63A;margin-right:6px;vertical-align:middle"></span>SDG 2 <span style="font-size:0.7em;color:var(--text-secondary)">&#9660;</span></td>
 <td>Zero Hunger</td>
-<td style="font-weight:600">32.7</td><td style="color:#f57c00;font-weight:600">medium</td><td style="font-size:0.85em">PI4060</td>
+<td style="font-weight:600">32.7<br><span class="dim-level-badge" style="background:#fff3e0;color:#e65100;font-size:0.6em">Low</span></td>
+<td style="color:#f57c00;font-weight:600">medium<br><span style="font-size:0.7em;font-weight:400;color:var(--text-secondary)">Some metric evidence; partially inferred</span></td>
+<td style="font-size:0.85em">PI4060</td>
 </tr>
-<tr>
-<td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#3F7E44;margin-right:6px;vertical-align:middle"></span>SDG 13</td>
+<tr class="sdg-detail" id="sdg-detail-2"><td colspan="5">
+<div><strong style="font-size:0.82em">Recommendations:</strong>
+<div class="sdg-rec">Report crop yield metrics for stronger evidence</div>
+</div>
+</td></tr>
+<tr class="sdg-clickable" data-sdg="13">
+<td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#3F7E44;margin-right:6px;vertical-align:middle"></span>SDG 13 <span style="font-size:0.7em;color:var(--text-secondary)">&#9660;</span></td>
 <td>Climate Action</td>
-<td style="font-weight:600">30.6</td><td style="color:#f57c00;font-weight:600">medium</td><td style="font-size:0.85em">OI4112, PI4060</td>
+<td style="font-weight:600">30.6<br><span class="dim-level-badge" style="background:#fff3e0;color:#e65100;font-size:0.6em">Low</span></td>
+<td style="color:#f57c00;font-weight:600">medium<br><span style="font-size:0.7em;font-weight:400;color:var(--text-secondary)">Some metric evidence; partially inferred</span></td>
+<td style="font-size:0.85em">OI4112, PI4060</td>
 </tr>
-<tr>
-<td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#E5243B;margin-right:6px;vertical-align:middle"></span>SDG 1</td>
+<tr class="sdg-detail" id="sdg-detail-13"><td colspan="5">
+<div style="margin-bottom:8px"><strong style="font-size:0.82em">Targets:</strong> 
+<span class="chip">13.1</span> <span class="chip">13.2</span>
+</div>
+</td></tr>
+<tr class="sdg-clickable" data-sdg="1">
+<td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#E5243B;margin-right:6px;vertical-align:middle"></span>SDG 1 <span style="font-size:0.7em;color:var(--text-secondary)">&#9660;</span></td>
 <td>No Poverty</td>
-<td style="font-weight:600">27.7</td><td style="color:#f57c00;font-weight:600">medium</td><td style="font-size:0.85em">PI4060</td>
+<td style="font-weight:600">27.7<br><span class="dim-level-badge" style="background:#fff3e0;color:#e65100;font-size:0.6em">Low</span></td>
+<td style="color:#f57c00;font-weight:600">medium<br><span style="font-size:0.7em;font-weight:400;color:var(--text-secondary)">Some metric evidence; partially inferred</span></td>
+<td style="font-size:0.85em">PI4060</td>
 </tr>
-<tr>
-<td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#BF8B2E;margin-right:6px;vertical-align:middle"></span>SDG 12</td>
+<tr class="sdg-detail" id="sdg-detail-1"><td colspan="5">
+<span style="font-size:0.85em;color:var(--text-secondary)">Provenance: estimated. Report more metrics to build evidence chain.</span>
+</td></tr>
+<tr class="sdg-clickable" data-sdg="12">
+<td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#BF8B2E;margin-right:6px;vertical-align:middle"></span>SDG 12 <span style="font-size:0.7em;color:var(--text-secondary)">&#9660;</span></td>
 <td>Responsible Consumption and Production</td>
-<td style="font-weight:600">27.7</td><td style="color:#f57c00;font-weight:600">medium</td><td style="font-size:0.85em">PI4060</td>
+<td style="font-weight:600">27.7<br><span class="dim-level-badge" style="background:#fff3e0;color:#e65100;font-size:0.6em">Low</span></td>
+<td style="color:#f57c00;font-weight:600">medium<br><span style="font-size:0.7em;font-weight:400;color:var(--text-secondary)">Some metric evidence; partially inferred</span></td>
+<td style="font-size:0.85em">PI4060</td>
 </tr>
-<tr>
-<td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#A21942;margin-right:6px;vertical-align:middle"></span>SDG 8</td>
+<tr class="sdg-detail" id="sdg-detail-12"><td colspan="5">
+<span style="font-size:0.85em;color:var(--text-secondary)">Provenance: estimated. Report more metrics to build evidence chain.</span>
+</td></tr>
+<tr class="sdg-clickable" data-sdg="8">
+<td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#A21942;margin-right:6px;vertical-align:middle"></span>SDG 8 <span style="font-size:0.7em;color:var(--text-secondary)">&#9660;</span></td>
 <td>Decent Work and Economic Growth</td>
-<td style="font-weight:600">27.6</td><td style="color:#f57c00;font-weight:600">medium</td><td style="font-size:0.85em">PI4060</td>
+<td style="font-weight:600">27.6<br><span class="dim-level-badge" style="background:#fff3e0;color:#e65100;font-size:0.6em">Low</span></td>
+<td style="color:#f57c00;font-weight:600">medium<br><span style="font-size:0.7em;font-weight:400;color:var(--text-secondary)">Some metric evidence; partially inferred</span></td>
+<td style="font-size:0.85em">PI4060</td>
 </tr>
-<tr>
-<td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#56C02B;margin-right:6px;vertical-align:middle"></span>SDG 15</td>
-<td>Life on Land</td>
-<td style="font-weight:600">27.5</td><td style="color:#f57c00;font-weight:600">medium</td><td style="font-size:0.85em"></td>
-</tr>
-<tr>
-<td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#26BDE2;margin-right:6px;vertical-align:middle"></span>SDG 6</td>
-<td>Clean Water and Sanitation</td>
-<td style="font-weight:600">22.8</td><td style="color:#f57c00;font-weight:600">medium</td><td style="font-size:0.85em">PI4060</td>
-</tr>
-<tr>
-<td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#FD6925;margin-right:6px;vertical-align:middle"></span>SDG 9</td>
-<td>Industry, Innovation and Infrastructure</td>
-<td style="font-weight:600">22.7</td><td style="color:#f57c00;font-weight:600">medium</td><td style="font-size:0.85em">PI4060</td>
-</tr>
-<tr>
-<td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#FD9D24;margin-right:6px;vertical-align:middle"></span>SDG 11</td>
-<td>Sustainable Cities and Communities</td>
-<td style="font-weight:600">20.2</td><td style="color:#f57c00;font-weight:600">medium</td><td style="font-size:0.85em">PI4060</td>
-</tr>
-<tr>
-<td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#4C9F38;margin-right:6px;vertical-align:middle"></span>SDG 3</td>
-<td>Good Health and Well-being</td>
-<td style="font-weight:600">17.9</td><td style="color:var(--danger);font-weight:600">low</td><td style="font-size:0.85em">PI4060</td>
-</tr>
-<tr>
-<td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#DD1367;margin-right:6px;vertical-align:middle"></span>SDG 10</td>
-<td>Reduced Inequalities</td>
-<td style="font-weight:600">10.2</td><td style="color:var(--danger);font-weight:600">low</td><td style="font-size:0.85em">PI4060</td>
-</tr>
-<tr>
-<td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#FF3A21;margin-right:6px;vertical-align:middle"></span>SDG 5</td>
-<td>Gender Equality</td>
-<td style="font-weight:600">10.0</td><td style="color:var(--danger);font-weight:600">low</td><td style="font-size:0.85em"></td>
-</tr>
-<tr>
-<td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#0A97D9;margin-right:6px;vertical-align:middle"></span>SDG 14</td>
-<td>Life Below Water</td>
-<td style="font-weight:600">10.0</td><td style="color:var(--danger);font-weight:600">low</td><td style="font-size:0.85em"></td>
-</tr>
-<tr>
-<td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#00689D;margin-right:6px;vertical-align:middle"></span>SDG 16</td>
-<td>Peace, Justice and Strong Institutions</td>
-<td style="font-weight:600">10.0</td><td style="color:var(--danger);font-weight:600">low</td><td style="font-size:0.85em"></td>
-</tr>
-<tr>
-<td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#C5192D;margin-right:6px;vertical-align:middle"></span>SDG 4</td>
-<td>Quality Education</td>
-<td style="font-weight:600">5.5</td><td style="color:var(--danger);font-weight:600">low</td><td style="font-size:0.85em">PI4060</td>
-</tr>
+<tr class="sdg-detail" id="sdg-detail-8"><td colspan="5">
+<span style="font-size:0.85em;color:var(--text-secondary)">Provenance: estimated. Report more metrics to build evidence chain.</span>
+</td></tr>
 </table></div></div>
 <script>
+document.querySelectorAll('.sdg-clickable').forEach(function(row) {
+  row.addEventListener('click', function() {
+    var sdg = this.dataset.sdg;
+    var detail = document.getElementById('sdg-detail-' + sdg);
+    if (detail) detail.classList.toggle('active');
+  });
+});
+</script>
+<script>
 Plotly.newPlot('sdg-chart', [{
-  type: 'bar', x: ["SDG 7","SDG 2","SDG 13","SDG 1","SDG 12","SDG 8","SDG 15","SDG 6","SDG 9","SDG 11","SDG 3","SDG 10","SDG 5","SDG 14","SDG 16","SDG 4"], y: [33.0,32.7,30.6,27.7,27.7,27.6,27.5,22.8,22.7,20.2,17.9,10.2,10.0,10.0,10.0,5.5],
-  marker: {color: ["#FCC30B","#DDA63A","#3F7E44","#E5243B","#BF8B2E","#A21942","#56C02B","#26BDE2","#FD6925","#FD9D24","#4C9F38","#DD1367","#FF3A21","#0A97D9","#00689D","#C5192D"], line: {width: 0}, cornerradius: 4},
-  text: [33.0,32.7,30.6,27.7,27.7,27.6,27.5,22.8,22.7,20.2,17.9,10.2,10.0,10.0,10.0,5.5], textposition: 'outside', textfont: {size: 11, family: 'Inter, sans-serif'}
+  type: 'bar', x: ["SDG 7","SDG 2","SDG 13","SDG 1","SDG 12","SDG 8"], y: [33.0,32.7,30.6,27.7,27.7,27.6],
+  marker: {color: ["#FCC30B","#DDA63A","#3F7E44","#E5243B","#BF8B2E","#A21942"], line: {width: 0}, cornerradius: 4},
+  text: [33.0,32.7,30.6,27.7,27.7,27.6], textposition: 'outside', textfont: {size: 11, family: 'Inter, sans-serif'}
 }], {
   yaxis: {range: [0, 110], title: 'Alignment Score', gridcolor: '#f0f0f0', titlefont: {size: 12}},
   xaxis: {tickangle: -30, tickfont: {size: 10}},
@@ -381,40 +605,33 @@ Plotly.newPlot('sdg-chart', [{
 <div class="chart-row">
 <div class="chart-box">
 <h3 style="color:var(--success)">Opportunities</h3>
-<div class="rec" style="border-left-color:var(--success);background:var(--success-light)">+ Food security: improving access to nutritious food for underserved populations</div>
-<div class="rec" style="border-left-color:var(--success);background:var(--success-light)">+ Poverty reduction: increasing income for smallholder farmers</div>
-<div class="rec" style="border-left-color:var(--success);background:var(--success-light)">+ Sustainable supply chains: promoting responsible sourcing and production</div>
-<div class="rec" style="border-left-color:var(--success);background:var(--success-light)">+ Climate adaptation: developing climate-resilient farming practices</div>
-<div class="rec" style="border-left-color:var(--success);background:var(--success-light)">+ Rural employment: creating jobs in farming communities</div>
-<div class="rec" style="border-left-color:var(--success);background:var(--success-light)">+ Food security: providing protein and nutrition to local markets</div>
-<div class="rec" style="border-left-color:var(--success);background:var(--success-light)">+ Poverty reduction: supporting livelihoods of small-scale farmers</div>
-<div class="rec" style="border-left-color:var(--success);background:var(--success-light)">+ Economic development: strengthening local agricultural value chains</div>
-<div class="rec" style="border-left-color:var(--success);background:var(--success-light)">+ Sustainable practices: implementing responsible animal husbandry</div>
-<div class="rec" style="border-left-color:var(--success);background:var(--success-light)">+ Rural employment: creating jobs in farming and processing</div>
-<div class="rec" style="border-left-color:var(--success);background:var(--success-light)">+ Clean energy access: providing affordable clean energy to underserved areas</div>
-<div class="rec" style="border-left-color:var(--success);background:var(--success-light)">+ Climate mitigation: reducing greenhouse gas emissions</div>
-<div class="rec" style="border-left-color:var(--success);background:var(--success-light)">+ Energy independence: reducing reliance on fossil fuels</div>
-<div class="rec" style="border-left-color:var(--success);background:var(--success-light)">+ Job creation: creating green energy employment opportunities</div>
+<div class="rec opp-item" style="border-left-color:var(--success);background:var(--success-light)">+ Food security: improving access to nutritious food for underserved populations</div>
+<div class="rec opp-item" style="border-left-color:var(--success);background:var(--success-light)">+ Poverty reduction: increasing income for smallholder farmers</div>
+<div class="rec opp-item" style="border-left-color:var(--success);background:var(--success-light)">+ Sustainable supply chains: promoting responsible sourcing and production</div>
+<div class="rec opp-item" style="border-left-color:var(--success);background:var(--success-light)">+ Climate adaptation: developing climate-resilient farming practices</div>
+<div class="rec opp-item" style="border-left-color:var(--success);background:var(--success-light)">+ Rural employment: creating jobs in farming communities</div>
+<div class="rec opp-item" style="border-left-color:var(--success);background:var(--success-light);display:none">+ Food security: providing protein and nutrition to local markets</div>
+<div class="rec opp-item" style="border-left-color:var(--success);background:var(--success-light);display:none">+ Poverty reduction: supporting livelihoods of small-scale farmers</div>
+<div class="rec opp-item" style="border-left-color:var(--success);background:var(--success-light);display:none">+ Economic development: strengthening local agricultural value chains</div>
+<div class="rec opp-item" style="border-left-color:var(--success);background:var(--success-light);display:none">+ Sustainable practices: implementing responsible animal husbandry</div>
+<div class="rec opp-item" style="border-left-color:var(--success);background:var(--success-light);display:none">+ Rural employment: creating jobs in farming and processing</div>
+<button class="show-more-btn" onclick="this.previousElementSibling&&document.querySelectorAll('.opp-item').forEach(function(e){e.style.display=''});this.style.display='none'" style="display:block;margin:8px auto;padding:6px 18px;background:var(--success-light);color:var(--success);border:1px solid var(--success);border-radius:var(--radius-sm);cursor:pointer;font-size:0.82em">Show 5 more opportunities</button>
 </div>
 <div class="chart-box">
 <h3 style="color:var(--danger)">Risks</h3>
-<div class="rec" style="border-left-color:var(--danger);background:var(--danger-light)">! Environmental degradation: soil depletion, water pollution from fertilizers/pesticides</div>
-<div class="rec" style="border-left-color:var(--danger);background:var(--danger-light)">! Climate vulnerability: sensitivity to extreme weather events and climate change</div>
-<div class="rec" style="border-left-color:var(--danger);background:var(--danger-light)">! Labor conditions: risk of exploitative labor practices</div>
-<div class="rec" style="border-left-color:var(--danger);background:var(--danger-light)">! Land use change: deforestation or biodiversity loss from land conversion</div>
-<div class="rec" style="border-left-color:var(--danger);background:var(--danger-light)">! Market volatility: commodity price fluctuations affecting farmer incomes</div>
-<div class="rec" style="border-left-color:var(--danger);background:var(--danger-light)">! Environmental pollution: waste management, methane emissions, water contamination</div>
-<div class="rec" style="border-left-color:var(--danger);background:var(--danger-light)">! Animal welfare: risk of poor animal husbandry practices</div>
-<div class="rec" style="border-left-color:var(--danger);background:var(--danger-light)">! Disease risk: zoonotic disease transmission and antibiotic resistance</div>
-<div class="rec" style="border-left-color:var(--danger);background:var(--danger-light)">! Carbon footprint: significant greenhouse gas emissions from livestock</div>
-<div class="rec" style="border-left-color:var(--danger);background:var(--danger-light)">! Resource intensity: high water and feed consumption per unit of protein</div>
-<div class="rec" style="border-left-color:var(--danger);background:var(--danger-light)">! Community impact: odor, waste runoff affecting neighboring communities</div>
-<div class="rec" style="border-left-color:var(--danger);background:var(--danger-light)">! Environmental impact: land use, waste from equipment, resource extraction</div>
-<div class="rec" style="border-left-color:var(--danger);background:var(--danger-light)">! Community displacement: risk of displacing communities for energy projects</div>
-<div class="rec" style="border-left-color:var(--danger);background:var(--danger-light)">! Technology risk: rapidly changing technology making investments obsolete</div>
+<div class="rec risk-item" style="border-left-color:var(--danger);background:var(--danger-light)">! Environmental degradation: soil depletion, water pollution from fertilizers/pesticides</div>
+<div class="rec risk-item" style="border-left-color:var(--danger);background:var(--danger-light)">! Climate vulnerability: sensitivity to extreme weather events and climate change</div>
+<div class="rec risk-item" style="border-left-color:var(--danger);background:var(--danger-light)">! Labor conditions: risk of exploitative labor practices</div>
+<div class="rec risk-item" style="border-left-color:var(--danger);background:var(--danger-light)">! Land use change: deforestation or biodiversity loss from land conversion</div>
+<div class="rec risk-item" style="border-left-color:var(--danger);background:var(--danger-light)">! Market volatility: commodity price fluctuations affecting farmer incomes</div>
+<div class="rec risk-item" style="border-left-color:var(--danger);background:var(--danger-light);display:none">! Environmental pollution: waste management, methane emissions, water contamination</div>
+<div class="rec risk-item" style="border-left-color:var(--danger);background:var(--danger-light);display:none">! Animal welfare: risk of poor animal husbandry practices</div>
+<div class="rec risk-item" style="border-left-color:var(--danger);background:var(--danger-light);display:none">! Disease risk: zoonotic disease transmission and antibiotic resistance</div>
+<button class="show-more-btn" onclick="document.querySelectorAll('.risk-item').forEach(function(e){e.style.display=''});this.style.display='none'" style="display:block;margin:8px auto;padding:6px 18px;background:var(--danger-light);color:var(--danger);border:1px solid var(--danger);border-radius:var(--radius-sm);cursor:pointer;font-size:0.82em">Show 3 more risks</button>
 </div></div>
 
-<h2>Gap Analysis</h2>
+<h2>Gap Analysis <span class="info-trigger" onclick="toggleExplain('explain-coverage',this)" title="What does this rating mean?">i</span></h2>
+<div class="rating-panel" id="explain-coverage"><div class="rating-panel-inner"><div class="rating-panel-content"><div class="rp-title">Core Metric Set Coverage</div><p style="font-size:0.82em;color:var(--text-secondary);margin-bottom:10px">Coverage measures what percentage of the IRIS+ Core Metric Set your organization reports. Higher coverage enables more accurate 5D scoring and stronger evidence for SDG alignment claims.</p><div class="scale-row"><div class="scale-seg active" style="background:#ffebee;color:#c62828"><div class="seg-label">Critical</div><div class="seg-range">0–15%</div></div><div class="scale-seg" style="background:#fff3e0;color:#e65100"><div class="seg-label">Low</div><div class="seg-range">15–30%</div></div><div class="scale-seg" style="background:#fffde7;color:#f9a825"><div class="seg-label">Moderate</div><div class="seg-range">30–60%</div></div><div class="scale-seg" style="background:#f1f8e9;color:#558b2f"><div class="seg-label">Good</div><div class="seg-range">60–80%</div></div><div class="scale-seg" style="background:#e8f5e9;color:#2e7d32"><div class="seg-label">Excellent</div><div class="seg-range">80–100%</div></div></div><div class="explain-box"><div class="eb-score" style="color:#c62828">12%</div><div class="eb-body"><div class="eb-label">Critical</div><div class="eb-desc">Minimal reporting; urgent gaps. Score range: 0–15%.</div></div></div></div></div></div>
 <div class="coverage-hero">
   <div class="pct" style="color:var(--danger)">12.5%</div>
   <div class="detail">
@@ -426,28 +643,71 @@ Plotly.newPlot('sdg-chart', [{
 
 <h3>Missing Metrics</h3><table><tr><th>ID</th><th>Name</th><th>Definition</th></tr>
 <tr><td style='font-weight:600'>FP3021</td><td>Revenue from Grants and Donations</td><td style='font-size:0.85em;color:var(--text-secondary)'>Value of revenue contributed as grants and donations during the reporting period.</td></tr>
-<tr><td style='font-weight:600'>FP4761</td><td>Revenue Growth</td><td style='font-size:0.85em;color:var(--text-secondary)'>Percentage growth in value of the organization's revenue from one reporting period to another.</td></tr>
-<tr><td style='font-weight:600'>OD4091</td><td>Social and Environmental Targets</td><td style='font-size:0.85em;color:var(--text-secondary)'>Describes the quantifiable social and environmental targets set by the organization.</td></tr>
-<tr><td style='font-weight:600'>OD8350</td><td>Client Model</td><td style='font-size:0.85em;color:var(--text-secondary)'>Describes the client model of the organization. Select all that apply:
-
-- Business-to-Business (B2B)
-- Business-to-Consu</td></tr>
-<tr><td style='font-weight:600'>OI1075</td><td>Board of Directors: Total</td><td style='font-size:0.85em;color:var(--text-secondary)'>Number of members of the organization's board of directors or other governing body as of the end of the reporting period</td></tr>
-<tr><td style='font-weight:600'>OI1479</td><td>Greenhouse Gas Emissions: Total</td><td style='font-size:0.85em;color:var(--text-secondary)'>Amount of greenhouse gases (GHG) emitted as a result of the organization's operations during the reporting period.</td></tr>
-<tr><td style='font-weight:600'>OI1571</td><td>Full-time Employees: Female Managers</td><td style='font-size:0.85em;color:var(--text-secondary)'>Number of paid, full-time, female management employees (managers) at the organization as of the end of the reporting per</td></tr>
-<tr><td style='font-weight:600'>OI1582</td><td>Wage Equity</td><td style='font-size:0.85em;color:var(--text-secondary)'>Ratio of the wages paid during the reporting period to the highest-compensated full-time employee (including bonus and e</td></tr>
-<tr><td style='font-weight:600'>OI4324</td><td>Community Service Policy</td><td style='font-size:0.85em;color:var(--text-secondary)'>Indicates whether the organization implements a community service policy.</td></tr>
-<tr><td style='font-weight:600'>OI4732</td><td>Social and Environmental Performance Reporting</td><td style='font-size:0.85em;color:var(--text-secondary)'>Indicates whether the organization reports its social and environmental performance to relevant stakeholders.</td></tr>
-<tr><td style='font-weight:600'>OI4753</td><td>Client Protection Policy</td><td style='font-size:0.85em;color:var(--text-secondary)'>Indicates whether the organization has a written policy for client protection and a system to monitor compliance with th</td></tr>
-<tr><td style='font-weight:600'>OI5049</td><td>Client Feedback System</td><td style='font-size:0.85em;color:var(--text-secondary)'>Indicates whether the organization implements a feedback system to solicit client feedback and has an established proced</td></tr>
-<tr><td style='font-weight:600'>OI6213</td><td>Full-time Employees: Female</td><td style='font-size:0.85em;color:var(--text-secondary)'>Number of paid, full-time, female employees at the organization as of the end of the reporting period.</td></tr>
-<tr><td style='font-weight:600'>OI8869</td><td>Permanent Employees: Total</td><td style='font-size:0.85em;color:var(--text-secondary)'>Number of people in paid employment with the organization as of the end of the reporting period, whether they are full-t</td></tr>
+<tr><td style='font-weight:600'>FP4761</td><td>Revenue Growth</td><td style='font-size:0.85em;color:var(--text-secondary)'>Percentage growth in value.</td></tr>
+<tr><td style='font-weight:600'>OD4091</td><td>Social and Environmental Targets</td><td style='font-size:0.85em;color:var(--text-secondary)'>Describes the quantifiable social and environmental targets.</td></tr>
+<tr><td style='font-weight:600'>OI1075</td><td>Board of Directors: Total</td><td style='font-size:0.85em;color:var(--text-secondary)'>Number of members of the board.</td></tr>
+<tr><td style='font-weight:600'>OI1479</td><td>Greenhouse Gas Emissions: Total</td><td style='font-size:0.85em;color:var(--text-secondary)'>Amount of GHG emitted.</td></tr>
 </table>
 <h3>Recommendations</h3>
-<div class="rec">Critical: Coverage is below 30%. Start by reporting the most fundamental metrics: Revenue, Total Clients, Total Employees.</div>
-<div class="rec">Priority missing metrics: FP3021 (Revenue from Grants and Donations), FP4761 (Revenue Growth), OD4091 (Social and Environmental Targets), OD8350 (Client Model), OI1075 (Board of Directors: Total)</div>
+<div class="rec">Critical: Coverage is below 30%. Start by reporting the most fundamental metrics.</div>
+<div class="rec">Priority missing metrics: FP3021, FP4761, OD4091, OI1075, OI1479</div>
+<h2>Metric Tracking Dashboard</h2>
+<p style="color:var(--text-secondary);font-size:0.88em;margin-bottom:12px">2 tracked &bull; 20 gaps &bull; 22 total</p>
+<div class="metric-grid">
+<div class="metric-card tracked"><div class="mc-id">GHG Emissions</div><div class="mc-name"></div><span class="mc-status tracked">Tracked</span></div>
+<div class="metric-card tracked"><div class="mc-id">PI4060</div><div class="mc-name">Who</div><span class="mc-status tracked">Tracked</span></div>
+<div class="metric-card gap"><div class="mc-id">Board of Directors: Total</div><div class="mc-name"></div><span class="mc-status gap">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">Greenhouse Gas Emissions: Total</div><div class="mc-name"></div><span class="mc-status gap">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">OI0263</div><div class="mc-name">What</div><span class="mc-status gap">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">OI0386</div><div class="mc-name">What</div><span class="mc-status gap">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">OI2340</div><div class="mc-name">What</div><span class="mc-status gap">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">OI2799</div><div class="mc-name">Who</div><span class="mc-status gap">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">OI9101</div><div class="mc-name">Contribution</div><span class="mc-status gap">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">PD8501</div><div class="mc-name">Risk</div><span class="mc-status gap">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">PI0510</div><div class="mc-name">Risk</div><span class="mc-status gap">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">PI1002</div><div class="mc-name">Who</div><span class="mc-status gap">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">PI1405</div><div class="mc-name">Who</div><span class="mc-status gap">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">PI1568</div><div class="mc-name">Contribution</div><span class="mc-status gap">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">PI1899</div><div class="mc-name">Risk</div><span class="mc-status gap">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">PI2476</div><div class="mc-name">Contribution</div><span class="mc-status gap">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">PI2894</div><div class="mc-name">How Much</div><span class="mc-status gap">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">PI3419</div><div class="mc-name">How Much</div><span class="mc-status gap">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">PI5566</div><div class="mc-name">How Much</div><span class="mc-status gap">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">Revenue Growth</div><div class="mc-name"></div><span class="mc-status gap">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">Revenue from Grants and Donations</div><div class="mc-name"></div><span class="mc-status gap">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">Social and Environmental Targets</div><div class="mc-name"></div><span class="mc-status gap">Gap</span></div>
+</div>
 
-<h2>Sector Benchmark Comparison</h2>
+<h2>Greenwashing / Impact-Washing Risk <span class="info-trigger" onclick="toggleExplain('explain-gw',this)" title="What does this rating mean?">i</span></h2>
+<div class="rating-panel" id="explain-gw"><div class="rating-panel-inner"><div class="rating-panel-content"><div class="rp-title">Greenwashing Risk Assessment</div><p style="font-size:0.82em;color:var(--text-secondary);margin-bottom:10px">Evaluates the gap between impact claims and supporting evidence. Sub-scores assess claim-metric gaps, adverse impact omission, claim specificity, selective reporting, and independent verification.</p><div class="scale-row"><div class="scale-seg" style="background:#e8f5e9;color:#2e7d32"><div class="seg-label">Low Risk</div><div class="seg-range">0–25</div></div><div class="scale-seg active" style="background:#fffde7;color:#f9a825"><div class="seg-label">Moderate</div><div class="seg-range">25–50</div></div><div class="scale-seg" style="background:#fff3e0;color:#e65100"><div class="seg-label">Elevated</div><div class="seg-range">50–75</div></div><div class="scale-seg" style="background:#ffebee;color:#c62828"><div class="seg-label">High Risk</div><div class="seg-range">75–100</div></div></div><div class="explain-box"><div class="eb-score" style="color:#f9a825">45/100</div><div class="eb-body"><div class="eb-label">Moderate</div><div class="eb-desc">Some claims lack supporting data. Score range: 25–50.</div></div></div></div></div></div>
+<div class="cards-row">
+<div class="score-card" style="border-left:4px solid #f57c00">
+  <div class="value" style="color:#f57c00">45</div>
+  <div class="label">Risk Score (0-100)</div>
+</div>
+<div class="score-card"><div class="value" style="font-size:1.2em;color:#f57c00">Moderate Risk</div><div class="label">Classification</div></div>
+</div>
+<table><tr><th>Sub-Score</th><th>Value</th><th>Meaning</th></tr>
+<tr><td><strong>Claim Metric Gap</strong></td><td><span style="font-weight:600;color:#e65100">60/100</span><br><span class="dim-level-badge" style="background:#fff3e0;color:#e65100;font-size:0.6em">Elevated</span></td><td><span class="sub-score-explain">Gap between impact claims and metrics tracked to support them</span></td></tr>
+<tr><td><strong>Adverse Omission</strong></td><td><span style="font-weight:600;color:#f9a825">40/100</span><br><span class="dim-level-badge" style="background:#fffde7;color:#f9a825;font-size:0.6em">Moderate</span></td><td><span class="sub-score-explain">Risk of omitting negative impacts in reporting</span></td></tr>
+<tr><td><strong>Specificity</strong></td><td><span style="font-weight:600;color:#f9a825">35/100</span><br><span class="dim-level-badge" style="background:#fffde7;color:#f9a825;font-size:0.6em">Moderate</span></td><td><span class="sub-score-explain">How specific and measurable the impact claims are</span></td></tr>
+<tr><td><strong>Selectivity</strong></td><td><span style="font-weight:600;color:#e65100">50/100</span><br><span class="dim-level-badge" style="background:#fff3e0;color:#e65100;font-size:0.6em">Elevated</span></td><td><span class="sub-score-explain">Risk of cherry-picking favorable metrics</span></td></tr>
+<tr><td><strong>Verification</strong></td><td><span style="font-weight:600;color:#f9a825">45/100</span><br><span class="dim-level-badge" style="background:#fffde7;color:#f9a825;font-size:0.6em">Moderate</span></td><td><span class="sub-score-explain">Whether claims have independent verification</span></td></tr>
+</table>
+<h3>Flags</h3>
+<div class="rec" style="border-left-color:#f57c00">Limited metric evidence for SDG claims</div>
+<div class="rec" style="border-left-color:#f57c00">High number of claimed SDGs relative to metrics reported</div>
+<h3>Recommendations</h3>
+<div class="rec">Report additional IRIS+ metrics to support SDG alignment claims</div>
+<div class="rec">Obtain third-party verification for key impact metrics</div>
+
+<h2>Sector Benchmark Comparison <span class="info-trigger" onclick="toggleExplain('explain-bm',this)" title="What does this comparison mean?">i</span></h2>
+<div class="rating-panel" id="explain-bm"><div class="rating-panel-inner"><div class="rating-panel-content">
+<div class="rp-title">Benchmark Comparison</div>
+<p style="font-size:0.82em;color:var(--text-secondary);margin-bottom:8px">Compares your 5D scores against the sector average from GIIN impact fund survey data. Positive deltas (green) indicate above-benchmark performance; negative deltas (red) indicate areas below average.</p>
+<div class="explain-box"><div class="eb-score" style="color:var(--danger)">-0.7</div>
+<div class="eb-body"><div class="eb-label">Overall Delta</div><div class="eb-desc">Your scores are below the sector average. See recommendations for targeted improvements.</div></div></div>
+</div></div></div>
 <p style="color:var(--text-secondary);font-size:0.9em;margin-bottom:12px">Agriculture | Based on GIIN food/agriculture impact fund data</p>
 <div class="chart-row">
 <div class="chart-box" id="benchmark-chart"></div>
@@ -485,8 +745,30 @@ Plotly.newPlot('benchmark-chart', [
   font:{family:'Inter, -apple-system, sans-serif', size:11}
 }, {responsive:true});
 </script>
+<h2>Impact Pathway (Theory of Change)</h2>
+<div class="pathway">
+<div class="pathway-stage"><div class="pathway-box"><h4>Inputs</h4><div class="items">&bull; Sector: agriculture<br>&bull; Geography: Malaysia<br>&bull; 2 metrics reported</div></div>
+<span class="pathway-arrow">&#8594;</span>
+</div>
+<div class="pathway-stage"><div class="pathway-box"><h4>Activities</h4><div class="items">&bull; Sustainable pork farming with biogas energy recovery and ...<br>&bull; Food Security<br>&bull; Rural Livelihoods</div></div>
+<span class="pathway-arrow">&#8594;</span>
+</div>
+<div class="pathway-stage"><div class="pathway-box"><h4>Outputs</h4><div class="items">&bull; PI4060<br>&bull; PI4060</div></div>
+<span class="pathway-arrow">&#8594;</span>
+</div>
+<div class="pathway-stage"><div class="pathway-box"><h4>Outcomes</h4><div class="items">&bull; SDG 7: Affordable and Clean Ener<br>&bull; SDG 2: Zero Hunger<br>&bull; SDG 13: Climate Action</div></div>
+<span class="pathway-arrow">&#8594;</span>
+</div>
+<div class="pathway-stage"><div class="pathway-box"><h4>Impact</h4><div class="items">&bull; 5D Score: 2.0/5<br>&bull; Grade: C+</div></div>
+</div>
+</div>
 
 <div class="footer">
-Generated by <a href="#">Impact Vision</a> &mdash; Open-source impact measurement engine &mdash; IRIS+ 5.3c
+<div style="margin-bottom:8px">
+<a href="https://github.com/joejoe168168/impact-vision" target="_blank" style="color:var(--primary);font-weight:600;text-decoration:none;font-size:0.95em">Impact Vision</a>
 </div>
+<div>Open-source AI-powered impact measurement &amp; SDG alignment engine &mdash; IRIS+ 5.3c</div>
+<div style="margin-top:4px"><a href="https://github.com/joejoe168168/impact-vision" target="_blank" style="font-size:0.85em">github.com/joejoe168168/impact-vision</a></div>
+</div>
+<button onclick="window.scrollTo({top:0,behavior:'smooth'})" style="position:fixed;bottom:24px;right:24px;width:40px;height:40px;border-radius:50%;background:var(--primary);color:white;border:none;cursor:pointer;box-shadow:var(--shadow-md);font-size:1.2em;display:flex;align-items:center;justify-content:center;z-index:100;opacity:0.8;transition:opacity 0.2s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.8'" title="Back to top">&#9650;</button>
 </body></html>

@@ -203,7 +203,7 @@ class DocumentAnalysisTool(BaseTool):
             match_ratio = matches / max(len(keywords), 1)
 
             metrics = claim_dict.get("mapped_metrics", [])
-            metric_found = any(m in all_text for m in metrics) if metrics else False
+            metric_found = any(m.lower() in all_text for m in metrics) if metrics else False
 
             has_quant = bool(re.search(r'\d+', claim_text))
             quant_found = False

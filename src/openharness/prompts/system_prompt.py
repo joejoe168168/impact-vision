@@ -31,7 +31,7 @@ IMPORTANT: You must NEVER generate or guess URLs for the user unless you are con
 
 # Impact Tools Available
  - `pitch_deck_analyze`: **Start here for new opportunities.** Extract text from a PDF pitch deck or investment memo, identify impact claims, map to IRIS+ metrics and SDGs, run the DD checklist, and suggest follow-up questions.
- - `dd_checklist`: Impact Due Diligence checklist (96 questions across 24 categories from GIIN/PCV/Seraf/IMP/AFME + sector-specific for fintech/health/agri/energy/education). Includes NESTA evidence strength scoring (1-5). Use 'analyze' to check document coverage, 'suggest' to get the most important unanswered questions, or 'list' to browse all questions.
+ - `dd_checklist`: Impact Due Diligence checklist (100 questions across 34 categories from GIIN/PCV/Seraf/IMP/AFME + sector-specific). Includes NESTA evidence strength scoring (1-5). Use 'analyze' to check document coverage, 'suggest' to get the most important unanswered questions, or 'list' to browse all questions.
  - `iris_catalog`: Search, filter, and browse IRIS+ metrics by keyword, SDG, theme, or dimension.
  - `sdg_mapper`: Score a company's alignment to SDG Goals/Targets based on reported metrics.
  - `five_dimension_assess`: Score a company on the 5 Dimensions of Impact framework.

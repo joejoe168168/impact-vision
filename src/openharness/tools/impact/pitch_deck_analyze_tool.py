@@ -89,7 +89,8 @@ class PitchDeckAnalyzeTool(BaseTool):
     input_model = PitchDeckAnalyzeInput
 
     def is_read_only(self, arguments: BaseModel) -> bool:
-        return True
+        args = arguments if isinstance(arguments, PitchDeckAnalyzeInput) else PitchDeckAnalyzeInput.model_validate(arguments)
+        return not args.save_company_yaml
 
     async def execute(self, arguments: BaseModel, context: ToolExecutionContext) -> ToolResult:
         args = arguments if isinstance(arguments, PitchDeckAnalyzeInput) else PitchDeckAnalyzeInput.model_validate(arguments)
@@ -209,7 +210,7 @@ class PitchDeckAnalyzeTool(BaseTool):
                     if q.follow_up:
                         lines.append(f"       Follow-up: {q.follow_up}")
 
-        gw_signals = _detect_greenwashing_signals(claims, text)
+        gw_signals = _detect_greenwashing_signals(claims, text) if args.include_greenwashing_check else []
         if gw_signals:
             lines.append("")
             lines.append("GREENWASHING SIGNAL ANALYSIS")

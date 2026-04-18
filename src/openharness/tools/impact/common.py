@@ -117,11 +117,14 @@ def normalize_sdg_goals(values: Iterable[int] | None) -> tuple[list[int], list[s
 def infer_themes(text: str, existing: list[str] | None = None) -> list[str]:
     """Infer impact themes from free text and merge with existing themes."""
     themes = normalize_str_list(existing or [])
+    seen_lower: set[str] = {t.lower() for t in themes}
     lower = (text or "").lower()
     for keyword, hints in _get_theme_hints().items():
         if keyword in lower:
             for hint in hints:
-                if hint.lower() not in {t.lower() for t in themes}:
+                hint_key = hint.lower()
+                if hint_key not in seen_lower:
+                    seen_lower.add(hint_key)
                     themes.append(hint)
     return themes
 

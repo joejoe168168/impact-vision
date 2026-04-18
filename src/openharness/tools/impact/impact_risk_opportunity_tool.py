@@ -55,8 +55,8 @@ class ImpactRiskOpportunityTool(BaseTool):
         result = assess_impact_risk_opportunity(company)
         gw_result = assess_greenwashing(company)
         result["greenwashing_risk"] = {
-            "score": gw_result["overall_score"],
-            "classification": gw_result["classification"],
+            "score": gw_result.overall_score,
+            "classification": gw_result.classification,
         }
 
         if args.output_format == "json":
@@ -67,7 +67,7 @@ class ImpactRiskOpportunityTool(BaseTool):
             "=" * 50,
             f"Risk Score: {result['risk_score']}/100",
             f"Opportunity Score: {result['opportunity_score']}/100",
-            f"Greenwashing Risk: {gw_result['overall_score']}/100 ({gw_result['classification']})",
+            f"Greenwashing Risk: {gw_result.overall_score}/100 ({gw_result.classification})",
             "",
         ]
 
@@ -78,9 +78,9 @@ class ImpactRiskOpportunityTool(BaseTool):
                 lines.append(f"    Mitigation: {r.get('mitigation', 'N/A')}")
             lines.append("")
 
-        if gw_result["overall_score"] >= 50:
+        if gw_result.overall_score >= 50:
             lines.append("Greenwashing Flags:")
-            for flag in gw_result.get("flags", []):
+            for flag in gw_result.flags:
                 lines.append(f"  ⚠ {flag}")
             lines.append("")
 

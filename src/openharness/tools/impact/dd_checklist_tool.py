@@ -62,8 +62,8 @@ class DdChecklistInput(BaseModel):
 class DdChecklistTool(BaseTool):
     name = "dd_checklist"
     description = (
-        "Impact Due Diligence checklist with 96 questions across 24 categories based on GIIN, "
-        "PCV, Seraf, IMP, AFME frameworks + sector-specific (fintech, health, agri, energy, education). "
+        "Impact Due Diligence checklist with 100 questions across 34 categories based on GIIN, "
+        "PCV, Seraf, IMP, AFME frameworks + sector-specific. "
         "Includes NESTA evidence strength scoring (1-5). Actions:\n"
         "- 'list': Browse all DD questions, optionally filtered by category or priority.\n"
         "- 'analyze': Check a pitch deck/memo text to see which questions are already addressed "
