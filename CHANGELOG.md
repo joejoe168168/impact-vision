@@ -4,6 +4,60 @@ All notable changes to Impact Vision are recorded here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.11.0] - 2026-04-21
+
+### Added — Phase 15: Platform & Collaboration
+
+- `openharness.impact.tenancy`: multi-tenant model with `Tenant`, `User`, `Role`, `Permission`, `RBACPolicy`, `InMemoryRBACStore` and built-in roles (viewer, analyst, ic_member, lp_relations, tenant_admin).
+- `openharness.impact.plugins`: per-GP plug-in entry-point discovery for extractors, verifiers, benchmarks, fund-thesis loaders and report renderers.
+- `openharness.impact.signed_feed`: HMAC-signed, hash-chained `ReportFeed` for tamper-evident LP report archives. Pluggable `Signer` Protocol for KMS / Ed25519 backends.
+- `openharness.impact.sdk.ImpactVision`: single high-level façade for the full impact workflow (assessment → IC gate → IC memo → portfolio rollup → LP calendar → DD coverage → greenwashing screen).
+
+## [0.10.0] - 2026-04-21
+
+### Added — Phase 14: Real Evidence & LLM Intelligence
+
+- `openharness.impact.extractors`: pluggable `ClaimExtractor` and `SourceVerifier` Protocols with a registry; ships with `noop`, `regex` and `heuristic` adapters so the engine has zero hard dependency on any LLM vendor.
+- `openharness.impact.toc_graph`: Theory-of-Change → Mermaid `flowchart` renderer (Inputs → Activities → Outputs → Outcomes → Impact) with IRIS+ / SDG node annotations.
+- `openharness.impact.counterfactual`: GIIN COMPASS additionality templates (investor / enterprise / beneficiary) with point and range estimates.
+- `scripts/refresh_iris_catalog.py`: refreshes the IRIS+ JSON catalog from the latest GIIN Excel and emits a structured diff log.
+
+## [0.9.0] - 2026-04-21
+
+### Added — Phase 13: Regulatory Completeness
+
+- `openharness.impact.frameworks.pcaf`: PCAF Global GHG Accounting & Reporting Standard — per-asset-class attribution + portfolio rollup with weighted data quality score.
+- `openharness.impact.frameworks.sbti`: SBTi Net-Zero Standard v1.2 alignment checker (1.5 °C pathway, scope-3 materiality, 2050 cap).
+- `openharness.impact.frameworks.eu_taxonomy`: EU Taxonomy alignment % across the 6 environmental objectives, DNSH and Minimum Safeguards.
+- `openharness.impact.frameworks.tnfd`: TNFD v1 — all 14 disclosures + LEAP (Locate / Evaluate / Assess / Prepare) progress.
+- `openharness.impact.frameworks.cdp`: CDP questionnaire intake (climate / water / forests) with critical-question gap detection.
+
+## [0.8.0] - 2026-04-21
+
+### Added — Phase 12: Fund Workflow
+
+- `data/fund_thesis.example.yaml` + `openharness.impact.fund_thesis`: fund-specific YAML for SDG / 5D weights, IC gate criteria, adverse thresholds, reporting cadence.
+- `openharness.impact.deal_gate`: pass / warn / fail IC gate engine with per-check diagnostics.
+- `openharness.impact.portfolio_rollup`: capital-weighted aggregation of 5D and SDG scores (replaces meaningless arithmetic mean).
+- `openharness.impact.lp_calendar`: 12-month LP report deliverables generator (ILPA-ESG, GIIN-IRIS, EDCI, SFDR PAI, fund letter).
+- `openharness.impact.ic_memo`: IC memo generator. Markdown by default; Word (`python-docx`) and PowerPoint (`python-pptx`) renderers behind optional deps.
+
+## [0.7.0] - 2026-04-21
+
+### Fixed — Phase 11: Correctness & Credibility
+
+All 12 issues identified in the v0.6 codebase review have been resolved with regression tests in `tests/test_phase11_fixes.py`:
+
+- MCP resource runtime bugs (`mcp_server.py`) fixed and tested.
+- DD evidence-level scoping limited to matched snippets; word-boundary keyword matching enforced.
+- `data/core_metric_set_per_sdg.yaml` curated set of IRIS+ metrics per SDG; SDG coverage now uses the core set with `SDGAlignment.scoring_basis` provenance.
+- 5-Dimension `_score_dimension` floor inconsistency removed; per-dimension cap applied when too few metrics are reported.
+- `_ADVERSE_METRICS_BY_SECTOR` rewritten with genuinely adverse metrics (NPL ratio, GHG intensity, worker fatalities, etc.).
+- All 14 mandatory + 9 optional SFDR PAI indicators now have populated `iris_cross_refs`.
+- Cross-reference map extended with SASB metric codes plus TNFD / PCAF / EU Taxonomy / CDP / SBTi codes and reverse-lookup helpers.
+- Every `SectorBenchmark` now carries `source`, `source_year`, `confidence`.
+- Deferred package-rename plan documented in `CLAUDE.md`.
+
 ## [0.6.0] - 2026-04-16
 
 ### Added — Phase 10: Platform Integration & Developer Experience
