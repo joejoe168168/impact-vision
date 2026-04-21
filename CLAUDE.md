@@ -145,3 +145,26 @@ Used for comparing 5D scores and metric coverage.
 Core: pydantic, openpyxl, pandas, pymupdf, jinja2, plotly, pyyaml
 Agent: anthropic/openai, typer, rich, httpx, mcp
 Dashboard: streamlit
+
+## Runtime versions
+
+**Python**: 3.11 (CI-pinned). 3.12 and 3.13 work locally; CI sticks to 3.11 to match
+the lowest-support bound declared in `pyproject.toml`.
+
+**Node.js**: **24 (Active LTS)** everywhere — the `frontend/terminal` TypeScript
+build, the GitHub Actions JavaScript runtime, and any developer machine.
+GitHub announced on 2025-09-19 that Node.js 20 actions are deprecated; from
+2026-06-02 actions will be forced to Node 24, and from 2026-09-16 Node 20
+will be removed from the runner. **Do not pin to Node 20 for new work.**
+Our CI therefore uses:
+
+```yaml
+- uses: actions/checkout@v5       # Node 24 runtime
+- uses: actions/setup-python@v6   # Node 24 runtime
+- uses: actions/setup-node@v5     # Node 24 runtime
+  with:
+    node-version: "24"            # Node 24 for the frontend build
+```
+
+If you add a new workflow, use the same `v5 / v6 / v5` majors; older `v4 / v5 / v4`
+work today but will emit the Node 20 deprecation warning.

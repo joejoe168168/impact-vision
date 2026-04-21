@@ -28,15 +28,16 @@ impact-vision catalog load
 
 ### Prerequisites
 
-- Python 3.11+
+- **Python 3.11+** (CI pins to 3.11; 3.12 / 3.13 work locally)
+- **Node.js 24 (Active LTS)** — required if you touch `frontend/terminal` or add a new GitHub Actions workflow. Do *not* pin to Node 20: GitHub is phasing it out of Actions (default flip 2026-06-02, removal 2026-09-16). See [CLAUDE.md](CLAUDE.md#runtime-versions) for the full rationale and the canonical `actions/checkout@v5 · setup-python@v6 · setup-node@v5` action versions.
 - IRIS+ 5.3c Catalog Excel (from [GIIN IRIS+](https://iris.thegiin.org/))
 - An LLM API key (Anthropic, OpenAI, or Ollama for local models)
 
 ## Running Tests
 
 ```bash
-# Run the full impact-vision subset (fast, ~2-3s, no external deps)
-python -m pytest tests/test_impact.py tests/test_phase11_fixes.py tests/test_phases12_15.py -v
+# Run the full impact-vision subset (fast, ~6-7s, no external deps)
+python -m pytest tests/test_impact.py tests/test_phase11_fixes.py tests/test_phases12_15.py tests/test_phases15_20.py -v
 
 # Run the entire test matrix (Impact Vision + OpenHarness core)
 python -m pytest tests/ -v

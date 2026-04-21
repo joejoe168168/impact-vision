@@ -411,7 +411,8 @@ class TestI18NDashboard:
 class TestRegionalThesisPacks:
     def test_four_regional_yamls_exist(self):
         from pathlib import Path
-        data = Path("data")
+        repo_root = Path(__file__).resolve().parent.parent
+        data = repo_root / "data"
         for name in [
             "fund_thesis.climate_eu.yaml",
             "fund_thesis.inclusive_finance_africa.yaml",
