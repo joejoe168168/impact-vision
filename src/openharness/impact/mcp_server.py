@@ -17,16 +17,37 @@ from mcp.server.fastmcp import FastMCP
 
 logger = logging.getLogger(__name__)
 
-mcp = FastMCP(
-    "Impact Vision",
-    version="0.6.0",
-    description=(
-        "AI-powered impact measurement and SDG alignment tools for "
-        "VC and impact investment funds. Provides 25+ tools for "
-        "5-Dimension scoring, SDG mapping, greenwashing detection, "
-        "pipeline management, and comprehensive impact reporting."
-    ),
+# Newer FastMCP releases dropped the `version` / `description` kwargs from the
+# constructor in favour of deriving them from the server name + installed
+# package metadata. We keep the fields handy as module attributes so the CLI
+# (`impact-vision serve-mcp`) and docs can still surface them.
+IMPACT_VISION_MCP_NAME = "Impact Vision"
+IMPACT_VISION_MCP_VERSION = "0.7.0"
+IMPACT_VISION_MCP_DESCRIPTION = (
+    "AI-powered impact measurement and SDG alignment tools for "
+    "VC and impact investment funds. Provides 26+ tools for "
+    "5-Dimension scoring, SDG mapping, greenwashing detection, "
+    "pipeline management, and comprehensive impact reporting."
 )
+
+
+def _init_fastmcp() -> FastMCP:
+    """Instantiate FastMCP with graceful fallback for older/newer signatures."""
+    for kwargs in (
+        # New signature (no version/description kwargs)
+        {},
+        # Older signature (pre-0.3) accepted version+description
+        {"version": IMPACT_VISION_MCP_VERSION, "description": IMPACT_VISION_MCP_DESCRIPTION},
+    ):
+        try:
+            return FastMCP(IMPACT_VISION_MCP_NAME, **kwargs)
+        except TypeError:
+            continue
+    # Last resort — positional only
+    return FastMCP(IMPACT_VISION_MCP_NAME)
+
+
+mcp = _init_fastmcp()
 
 
 def _get_tool_context():

@@ -1,8 +1,10 @@
 # Impact Vision
 
+> **v0.13.0 · 2026-04-21** — DD Questionnaire Helper (HTML + Word), Web Console, report polish, green CI. See [CHANGELOG.md](CHANGELOG.md).
+
 Open-source AI-powered impact measurement and SDG alignment agent for VC and impact investment funds.
 
-Built on [OpenHarness](https://github.com/HKUDS/OpenHarness), Impact Vision provides a conversational AI agent with deep expertise in GIIN's IRIS+ framework, UN Sustainable Development Goals, and impact due diligence workflows.
+Built on [OpenHarness](https://github.com/HKUDS/OpenHarness), Impact Vision ships a conversational AI agent, a **CLI**, a **REST API** (26+ endpoints), an **MCP server** (26 tools), a **Streamlit dashboard** and a **single-file Web Console** — all backed by the same engine with deep expertise in GIIN's IRIS+ framework, UN SDGs, the 5 Dimensions of Impact, and 10 ESG / regulatory frameworks (ISSB, ESRS, SFDR, TCFD, SASB, GRI, PCAF, SBTi, EU Taxonomy, TNFD, CDP).
 
 ![Impact Vision Banner](docs/images/banner.png)
 
@@ -54,7 +56,7 @@ Key concepts Impact Vision helps with:
 8. Suggest the most important **follow-up questions** for the investment team
 9. Generate reports in **HTML** (with Plotly charts), **XLSX**, CSV, JSON, or text
 
-## For Fund Managers — 60-second workflow (v0.11.0)
+## For Fund Managers — 60-second workflow (v0.13.0)
 
 ```python
 from openharness.impact.sdk import ImpactVision
@@ -79,15 +81,37 @@ sc = iv.evaluate_deal_against_thesis(
 )
 print(sc.overall_status)                     # "pass" / "warn" / "fail"
 
-# 3) Generate the IC memo (Markdown / Word / PowerPoint)
+# 3) IC memo — Markdown, HTML (print-ready), Word, PowerPoint
+iv.render_ic_memo(asst, scorecard=sc, output_format="html", path="ic/acme.html")
 iv.render_ic_memo(asst, scorecard=sc, output_format="docx", path="ic/acme.docx")
 
-# 4) Portfolio-level roll-up weighted by capital deployed
+# 4) DD Questionnaire Helper — risk-first HTML the analyst actually works from
+iv.render_dd_questionnaire_html(
+    pitch_deck_text, company_name="Acme Solar",
+    document_label="Pitch deck v3", path="dd/acme.html",
+)
+
+# 5) Same questionnaire as an editable Word doc with founder-response slots
+iv.render_dd_questionnaire_docx(
+    pitch_deck_text, company_name="Acme Solar",
+    document_label="Pitch deck v3", path="dd/acme.docx",
+)
+
+# 6) Portfolio-level roll-up weighted by capital deployed
 roll = iv.rollup([(asst_a, 5.0, 12.0), (asst_b, 8.0, 20.0)])   # (assessment, EUR_m, ownership_%)
 
-# 5) Generate the next 12 months of LP report deliverables
+# 7) Next 12 months of LP report deliverables
 cal = iv.build_lp_calendar(horizon_months=12)
 ```
+
+Prefer a browser? `impact-vision serve-web` launches the [Web Console](#web-console-power-user-ui) + REST API in one process at `http://127.0.0.1:8787` and puts all 26 tools one click away.
+
+**What's new in v0.13.0 — analyst-day polish.**
+- **DD Questionnaire Helper** — the DD HTML is rebuilt around the work a GP still has to do: key risks, priority-sorted questionnaire (by severity × natural DD sequence), and a consolidated evidence / document-gap checklist. Legacy coverage table moved to an appendix.
+- **Word (.docx) export** — `ImpactVision.render_dd_questionnaire_docx()` hands you an editable `.docx` with empty "Founder response" slots, ready to email.
+- **Impact-report rationale fix** — the *"How this grade was calculated"* panel now uses fixed widths, word-wrap and a responsive scroll fallback so every driver fits at 1080 px and on tablets.
+- **Web Console (v1)** — `openharness.web` is a single-file SPA on top of the FastAPI gateway; lists all 26 tools, renders forms, `POST`s to `/api/v1/*`.
+- **CI green** — ruff clean on `src/`, the MCP test no longer depends on removed `FastMCP(version=…)` kwargs, and GitHub Actions is green end-to-end.
 
 **Regulatory coverage shipped in v0.9.0** — financed emissions (PCAF), net-zero alignment (SBTi), EU Taxonomy alignment %, nature-related disclosures (TNFD v1), CDP intake. **Multi-tenant + RBAC, plug-in entry points, and hash-chained LP report feeds** shipped in v0.11.0. See the [Roadmap section](#roadmap-for-impact-investors--fund-managers) for what is planned next.
 
@@ -616,8 +640,8 @@ impact-vision/
 │   │   ├── exclusion_screening_tool.py # Exclusion criteria screening
 │   │   ├── common.py                  # Shared input normalization helpers
 │   │   └── portfolio_tool.py          # Portfolio batch analysis + scenario modeling
-│   ├── impact/mcp_server.py          # MCP server (FastMCP, 25 tools + 5 resources)
-│   ├── api_gateway/router.py         # FastAPI REST API (25+ endpoints)
+│   ├── impact/mcp_server.py          # MCP server (FastMCP, 26 tools + 5 resources)
+│   ├── api_gateway/router.py         # FastAPI REST API (26+ endpoints)
 │   ├── dashboard/                     # Streamlit visual dashboard
 │   │   └── app.py                     # 5-tab dashboard (Assessment/Catalog/DD/Framework/Portfolio)
 │   ├── skills/bundled/content/        # Agent knowledge (markdown)
@@ -769,7 +793,7 @@ All accessible via the `framework_assess` tool:
 | Claim Decomposition | Breaks claims into verifiable components |
 | ClimateBERT integration | Stub for deep NLP classification (ready for model integration) |
 
-### Tools (25 Impact Tools)
+### Tools (26 Impact Tools)
 | Tool | Description |
 |------|-------------|
 | `pitch_deck_analyze` | PDF/TXT/MD intake with impact claim extraction and Company model |
@@ -778,6 +802,7 @@ All accessible via the `framework_assess` tool:
 | `sdg_mapper` | SDG alignment scoring with theme inference and evidence chains |
 | `five_dimension_assess` | 5-Dimension assessment with additionality & counterfactual prompts |
 | `gap_analysis` | Metric gap analysis vs Core Metric Set |
+| `greenwashing_detect` | Composite greenwashing screen (claim-metric gap, adverse omission, specificity, selectivity, verification) + Green Claims / FCA / GAI / Cheap-Talk Index |
 | `impact_report` | Interactive HTML reports with Plotly charts, PDF export, comparison mode |
 | `framework_assess` | Multi-framework ESG assessment (10 frameworks including ISSB, ESRS) |
 | `cross_reference` | Cross-framework metric lookup (59 mappings, PAI-prefix support) |
@@ -813,6 +838,36 @@ The dashboard has 5 tabs:
 4. **Framework Scan**: Run TCFD, SFDR PAI, EDCI, and SASB assessments
 5. **Portfolio**: Upload CSV for batch analysis with aggregated charts
 
+## Web Console (power-user UI)
+
+For a browser-native IDE-like surface to every tool — useful when you want
+the full 26-tool set at your fingertips rather than Streamlit's 5 curated
+tabs — run the **web console**:
+
+```bash
+# Start the console + REST API (defaults to http://127.0.0.1:8787)
+impact-vision serve-web
+
+# Or directly via uvicorn
+uvicorn openharness.web.app:app --host 127.0.0.1 --port 8787
+```
+
+The console is a **single self-contained HTML file** (no build step, no
+JS framework) that sits on top of the existing FastAPI gateway:
+
+- Lists all **26 impact tools** in a searchable sidebar (`Ctrl/⌘+K` to focus).
+- Renders a dynamic form per tool and `POST`s to `/api/v1/*`.
+- Shows JSON results in a syntax-highlighted pane, with copy / save buttons.
+- Optional bearer-token box for `IMPACT_VISION_API_KEY`-protected deployments.
+- Links to the live `/docs` (Swagger) and the GitHub repo.
+
+This mirrors the UX of open-source web front-ends for CLI agents such as
+[`sst/opencode`](https://github.com/sst/opencode),
+[`siteboon/claudecodeui`](https://github.com/siteboon/claudecodeui)
+and [`getAsterisk/claudia`](https://github.com/getAsterisk/claudia) —
+but bound to the Impact Vision tool surface rather than a generic shell,
+and without pulling in React / Electron.
+
 ## Development
 
 ```bash
@@ -822,8 +877,8 @@ pip install -e ".[dev]"
 # Run all tests
 python -m pytest tests/ -v
 
-# Run impact module tests (77+ tests, no external dependencies)
-python -m pytest tests/test_impact.py tests/test_report_generation.py tests/test_tools/test_impact_tools_enhancements.py -v
+# Run the Impact Vision test subset (~180 tests, no external deps, ~2-3s)
+python -m pytest tests/test_impact.py tests/test_phase11_fixes.py tests/test_phases12_15.py -v
 
 # Run import smoke checks (verifies all package exports work)
 python scripts/check_imports.py --all
@@ -834,15 +889,17 @@ ruff check src/
 
 ### Testing Coverage
 
-820+ tests across all subsystems:
+900+ tests across all subsystems; the impact subset (`test_impact.py` + `test_phase11_fixes.py` + `test_phases12_15.py`) is **180 passed / 4 skipped / 0 failed** at v0.13.0.
 
 | Test area | Tests | What it covers |
 |-----------|------:|----------------|
-| Impact engine | 54+ | IRIS+ catalog, SDG mapping, 5D scoring, gap analysis, DD checklist, benchmarks, 10 frameworks, cross-references, ISSB, ESRS, greenwashing |
-| Report generation | 23+ | HTML/CSV/JSON/text report output, Jinja2 template engine, SQLite persistence layer |
-| Tools | ~40 | Tool registry bootstrap, file/grep/glob tools, bash tool, MCP tools, integration flows |
-| Services | 14 | Compaction system, session storage, token estimation |
-| Config/bridge/hooks | ~30 | Settings load/save, work secrets, hook execution, hot reload |
+| Impact engine | 46 | IRIS+ catalog, SDG mapping, 5D scoring, gap analysis, DD checklist, benchmarks, 10 frameworks, cross-references, ISSB, ESRS, greenwashing |
+| Phase 11 regressions | 19 (4 MCP-skip) | All 12 correctness findings from the original code review |
+| Phase 12-15 + v0.13 polish | 50 | Fund thesis, IC memo (MD/HTML/DOCX/PPTX), deal gate, portfolio roll-up, LP calendar, PCAF, SBTi, EU Taxonomy, TNFD, CDP, extractors, ToC, counterfactual, RBAC, plug-ins, signed feed, **DD Questionnaire Helper (HTML + DOCX)**, **Web Console routes** |
+| Report generation | 23+ | HTML/CSV/JSON/text report output, Jinja2, SQLite persistence |
+| Tools | ~40 | Tool registry, file/grep/glob/bash, MCP tools, integration flows |
+| Services | 14 | Compaction, session storage, token estimation |
+| Config/bridge/hooks | ~30 | Settings, work secrets, hook execution, hot reload |
 | Commands | ~20 | CLI commands, command registry |
 | Other | ~650+ | Permissions, memory, plugins, skills, swarm, coordinator, auth, prompts, sandbox, UI |
 
@@ -859,7 +916,7 @@ MIT License. See [LICENSE](LICENSE) for details.
 
 ## MCP Server (Use with Claude, Cursor, VS Code)
 
-Impact Vision can run as an **MCP server**, exposing all 25 tools to any MCP-compatible AI client.
+Impact Vision can run as an **MCP server**, exposing all 26 tools to any MCP-compatible AI client.
 
 ```bash
 # Start the MCP server (stdio transport, default)
@@ -892,7 +949,7 @@ See [docs/cursor-integration.md](docs/cursor-integration.md) for full setup guid
 
 ## REST API
 
-Full FastAPI REST API with 25+ endpoints:
+Full FastAPI REST API with 26+ endpoints (version `0.13.0`):
 
 ```bash
 # Start the API server
@@ -904,11 +961,9 @@ IMPACT_VISION_API_KEY=your-secret-key uvicorn openharness.api_gateway.router:app
 
 Key endpoints: `/api/v1/score`, `/api/v1/sdg-map`, `/api/v1/greenwashing`, `/api/v1/report`, `/api/v1/pipeline`, `/api/v1/batch`, and more. See the auto-generated docs at `/docs`.
 
-## System Review (v0.6.x → v0.11.0)
+## System Review (v0.13.0)
 
-A full code-base walk-through (models, scoring engines, frameworks, tools, MCP server, REST API, dashboard) produced the following assessment. It is meant to be read alongside the roadmap below.
-
-> **Status (v0.11.0, 2026-04-21)**: all 12 issues listed below have been fixed in Phases 11-15, with regression coverage in `tests/test_phase11_fixes.py` and `tests/test_phases12_15.py`. The issue descriptions are retained for context on what was wrong and why it was fixed.
+A full code-base walk-through (models, scoring engines, frameworks, tools, MCP server, REST API, dashboard, Web Console) produced the following assessment. It is meant to be read alongside the roadmap below.
 
 ### What works well
 
@@ -919,59 +974,10 @@ A full code-base walk-through (models, scoring engines, frameworks, tools, MCP s
 | **Score transparency** | Every 5D score and SDG alignment carries a `provenance` label (`estimated` / `partial` / `evidence-based`) and a minimum-metric gate (`MIN_METRICS_FOR_ABOVE_BASELINE = 3`) that caps scores at 2.5 until real metrics are reported. This is a clear anti-inflation control. |
 | **Externalized config** | `data/scoring_config.yaml` and `data/sdg_keywords.yaml` let fund managers tune baselines/boosts without touching code. |
 | **Evidence rating** | NESTA Standards of Evidence (1–5) is wired into the DD engine and surfaced in reports. |
-| **Multi-surface** | Same engine is reachable via CLI, Streamlit, REST API (25+ endpoints), and MCP (25 tools + 5 resources) — good for both analysts and autonomous agents. |
+| **Multi-surface** | Same engine is reachable via CLI, Streamlit, **Web Console** (`impact-vision serve-web`), REST API (26+ endpoints), and MCP (26 tools + 5 resources) — good for both analysts and autonomous agents. |
 | **Anti-greenwashing** | Composite score with 5 sub-dimensions (claim-metric gap, adverse omission, specificity, selectivity, verification) plus Green Claims / FCA / GAI / Cheap-Talk Index layers. |
 
-### Correctness & linkage issues found
-
-These are concrete bugs or weak linkages discovered while tracing the impact-measurement logic end-to-end. They are ordered by priority.
-
-1. **MCP server resources are broken** (`src/openharness/impact/mcp_server.py`)
-   - `catalog_stats()` calls `store.list_all()` (the actual method is `store.all_metrics()`) and reads `m.category` / `m.theme` (the fields are `primary_impact_category` / `impact_themes`).
-   - `dd_checklist_categories()` imports `load_dd_checklist` (the symbol is `load_checklist`) and then treats `DDQuestion` pydantic objects as dicts via `.get(...)`.
-   - `cross_reference_lookup()` calls `lookup_cross_references()` (the exported helpers are `lookup_by_iris`, `lookup_by_gri`, `lookup_by_edci`, `lookup_by_sfdr`).
-   - Impact: all 5 MCP resources return `{"error": "..."}` at runtime, so agents connecting over MCP can read tools but not resources.
-
-2. **DD evidence-level false positives** (`src/openharness/impact/dd_checklist.py::_assess_evidence_level`)
-   - The function falls back to scanning the **entire document** for level-4/5 signal words (`"rct"`, `"causal"`, `"control group"`, …). A single unrelated occurrence anywhere in a 30-page memo lifts every addressed question to evidence level 5. The check should be scoped to the matched snippets only.
-
-3. **SDG alignment is size-biased** (`src/openharness/impact/sdg_mapper.py::map_sdg_alignment`)
-   - `coverage = matched / |filter_by_sdg(goal)|`. Because SDG 8 has 468 IRIS+ metrics and SDG 14 only 26, a company reporting 5 relevant SDG 8 metrics gets coverage ≈ 1.1 % → ~0.7 / 60 pts; the same effort on SDG 14 yields ~12 / 60 pts. Hard-data score is therefore dominated by goal breadth, not by the company's reporting quality. Recommend a curated `core_metric_set_per_sdg` (10–20 metrics/goal) against which coverage is measured.
-
-4. **SDG 17 has no IRIS+ metrics mapped** in the bundled catalog (confirmed: `sdg_coverage` keys 1–16 only). Any company targeting "Partnerships for the Goals" can only be scored via description inference today.
-
-5. **5D `_score_dimension` floor-and-bonus interaction**
-   - When `available == 0` the function returns `max(1.0, baseline_score)` — a 1.0 floor even without evidence, which contradicts the "estimated means low" framing.
-   - `extra_bonus = min(0.5, (reported_dim − matched_in_reference) × 0.1) + 0.5` can push very narrow themes above 3.0 from only 2–3 reported metrics because the theme-filtered reference set is small.
-   - The global `MIN_METRICS_FOR_ABOVE_BASELINE` cap mitigates this but should also apply per-dimension for Very-Narrow-Theme cases.
-
-6. **SFDR PAI ↔ IRIS+ linkage is sparse**
-   - `sfdr_pai.py::iris_cross_refs` is populated only for PAI 1, 2, 12, 13. 10 of the 14 mandatory PAIs have no IRIS+ anchor, so a portfolio-level SFDR roll-up cannot be composed from IRIS+ metrics alone. This is the biggest regulatory-compliance gap.
-
-7. **Cross-reference table has weak SASB entries**
-   - SASB cells store a `sasb_dimension` string (e.g., `"Human Capital"`) rather than the actual SASB metric code. That makes reverse-lookup from a specific SASB disclosure (e.g. `FN-CB-230a.1`) impossible.
-   - Missing frameworks: TNFD (nature), PCAF (financed emissions), EU Taxonomy (alignment %), CDP, SBTi.
-
-8. **Greenwashing adverse-metric list is a placeholder**
-   - `_ADVERSE_METRICS_BY_SECTOR` maps e.g. `fintech → [PI4060, OI1571]` (Total Clients, Female Managers). These are not adverse indicators. True adverse coverage for fintech should be over-indebtedness, APR cap, NPL ratio, client complaints.
-
-9. **DD keyword match is word-boundary-unsafe**
-   - `analyze_document_coverage` uses `kw_lower in text_lower`. `"food"` matches `"seafood"`; `"jobs"` matches `"adjobs"`. Use `re.search(r"\b" + re.escape(kw) + r"\b", text_lower)`.
-
-10. **Package / branding drift**
-    - The project is `impact-vision` (pyproject) but the importable package is still `openharness` with many unrelated sub-packages (`swarm`, `vim`, `coordinator`, `engine`, `themes`, `ui`, `bridge`, `frontend/terminal`) carried forward from the HKUDS/OpenHarness base. Wheel size and attack surface are both inflated. Consider namespacing under `impact_vision.*` or trimming the force-include list in `[tool.hatch.build.targets.wheel.force-include]`.
-
-11. **Portfolio roll-up uses arithmetic mean of 5D scores**
-    - 5D is an ordinal/qualitative scale. Averaging across very different companies (e.g. microfinance + solar + education) produces a number with no accepted meaning. Consider weighting by capital deployed and presenting per-sector tables instead of a single fund-level 5D number.
-
-12. **Benchmark values lack provenance**
-    - `benchmarks.py` says "based on GIIN survey data" but individual numbers have no citation. For an LP-facing tool this is a credibility risk — either cite the report/year per row or mark values as `indicative`.
-
-### What passes: tests & runtime checks
-
-- `pytest tests/test_impact.py`: **46/46 green** (engine, catalog, SDG taxonomy, 5D, SDG mapper, gap analysis).
-- Catalog loads 787 metrics; SDG 1/8/10 are most-tagged (386 / 468 / 395). SDG 17 has zero tagged metrics (expected — partnership SDG).
-- Cross-reference reverse indexes build without collisions.
+> **Note**: An earlier version of this README listed 12 correctness & linkage findings from a code review. All 12 have been fixed in Phase 11 (v0.7.0) with regression coverage in `tests/test_phase11_fixes.py`; see the roadmap below for the summary. Subsequent phases (12 → 15.5) layered fund workflow, regulatory completeness, pluggable intelligence, multi-tenancy + signed reporting, the DD Questionnaire Helper, Word export, and the Web Console on top of that stable core.
 
 ## Roadmap for Impact Investors & Fund Managers
 
@@ -1027,6 +1033,29 @@ All 12 review findings have been fixed and covered by regression tests in
 - [ ] Carbon / biodiversity credit registry integration (still pending).
 - [ ] Impact-adjusted returns (MOI / impact-adjusted IRR) (still pending).
 
+### Phase 15.5 — Report & UI polish (P1) — **shipped (v0.13.0)**
+
+Ship-ready analyst surfaces for the artefacts GPs actually email around.
+
+- [x] **DD Questionnaire Helper** — the DD HTML renderer has been re-framed around *the work the GP still needs to do*: key risks first, then a priority-sorted information request (by severity and by the natural DD sequence Thesis → ToC → What → Who → How-much → Contribution → Risk → Measurement → Governance → Sector → Exit), then a consolidated evidence / document gaps checklist. Legacy coverage table moved to an appendix.
+- [x] **Word (.docx) export for the questionnaire** — `ImpactVision.render_dd_questionnaire_docx()` produces an editable `.docx` (via `python-docx`) the analyst can hand directly to the founder; mirrors the HTML sections with empty "Founder response" slots and a document-evidence checklist.
+- [x] **Impact-report rationale table fix** — the *"How this grade was calculated"* panel now uses fixed column widths, word-wrap and a responsive scroll fallback so every driver fits on a single page at 1080 px and on tablets.
+- [x] **Web Console (v1)** — `openharness.web` ships a single-file SPA mounted on top of the FastAPI gateway (`impact-vision serve-web`, default http://127.0.0.1:8787). Lists all 26 tools, renders a parameter form per tool, and calls `/api/v1/*` directly — no build step, no JS framework, no extra auth layer (reuses `IMPACT_VISION_API_KEY`). Mentally equivalent to `sst/opencode`, `siteboon/claudecodeui` or `getAsterisk/claudia` but bound to the Impact Vision tool surface.
+- [x] **GitHub Actions green** — ruff now passes clean on `src/` (5 F401 imports tidied) and the MCP FastMCP test no longer depends on removed `version`/`description` kwargs.
+
+### Phase 15.6 — Web Console v2 & LLM-in-the-loop (P1) — **in flight (targets v0.14.0)**
+
+After v0.13.0 shipped the single-file console, these are the next-up polish items before Phase 16 ecosystem work begins. Each row has a concrete acceptance signal so GPs can judge "is this done".
+
+- [ ] **OpenAPI-driven forms** — replace the hand-curated `_TOOL_CATALOGUE` in `openharness.web.console` with an OpenAPI schema walker so every new `/api/v1/*` endpoint auto-appears with typed inputs (string / int / enum / file-upload / nested object). Acceptance: add a new FastAPI route with no console edits, refresh, the form appears.
+- [ ] **Streaming tool output** — server-sent events for long-running tools (`portfolio_analyze`, `impact_report`, `pitch_deck_analyze`) so the console shows progress instead of hanging. Acceptance: uploading a 50-page PDF shows per-claim extraction progress.
+- [ ] **Session + artefact inbox** — every tool invocation persists to a local SQLite table with user, timestamp, inputs, outputs; console grows a "Recent runs" sidebar with copy-JSON / re-run / export-to-DOCX actions. Acceptance: closing the browser and re-opening restores the last 20 runs.
+- [ ] **LLM claim extractor (OpenAI-compatible)** — ship `LLMClaimExtractor` that calls any OpenAI-compatible endpoint (OpenAI, Anthropic-via-proxy, Ollama, Minimax, Moonshot) through `openharness.api.openai_client`. Register it via `register_extractor("llm", …)`. Acceptance: `ImpactVision(extractor="llm")` on the pig-farm sample returns ≥ 2× the claims vs. the regex extractor, with verified source spans.
+- [ ] **LLM verifier (web-grounded)** — `LLMSourceVerifier` that checks claims against GIIN / CDP / SEC / SFDR public filings via a pluggable fetcher. Acceptance: each verified claim carries a URL + retrieval timestamp.
+- [ ] **DD Questionnaire v2 (branching)** — Word export adds conditional follow-ups (if answer = "no evidence", attach evidence checklist; if answer = "in progress", attach milestone tracker). Acceptance: the `.docx` includes 3+ conditional sections driven by the DD engine.
+- [ ] **Report branding** — configurable logo / primary colour / fund name pulled from `fund_thesis.yaml`, injected into every HTML/DOCX/PPTX renderer. Acceptance: two funds using the same pitch deck produce visually distinct reports.
+- [ ] **Web-console auth** — optional OAuth / magic-link on top of the existing `IMPACT_VISION_API_KEY` for multi-analyst GPs. Acceptance: two analysts can log in simultaneously, their "Recent runs" inboxes are separate.
+
 ### Phase 16 — Ecosystem (P3, ~6-9 months)
 
 Turn Impact Vision from a GP back-office tool into a two-sided market.
@@ -1074,25 +1103,20 @@ Reduce reliance on self-reported data.
 - [ ] **Regulatory pack per jurisdiction** — SFDR (EU), ISSB (global), CSRD (EU), FCA SDR (UK), SEC climate rule (US), HKEX ESG (HK/SG), AMCF (China).
 - [ ] **Currency-agnostic financials** — auto-normalise to EUR/USD/CNY/INR at report date; surface FX effects on $-weighted impact.
 
-### Engineering housekeeping (any time)
-
-- Rename importable package from `openharness` to `impact_vision` (keep the outer CLI name). Plan documented in `CLAUDE.md`.
-- Trim the wheel: drop `frontend/terminal/*`, `swarm`, `vim`, `coordinator`, `themes`, `ui`, `bridge` from the force-include list unless actually used.
-- Add MCP resource tests, full-pipeline golden-file tests for `pitch_deck_analyze`, and HTML report snapshot tests.
-- Fix the 18 pre-existing collection errors in `tests/test_auth`, `tests/test_cli`, `tests/test_mcp`, `tests/test_ohmo`, `tests/test_plugins`, `tests/test_services`, `tests/test_tools`, `tests/test_ui` — all legacy HKUDS code that should be deleted alongside the package rename.
-
 ---
 
-### Verification status (v0.11.0, 2026-04-21)
+### Verification status (v0.13.0, 2026-04-21)
+
+Actual numbers from a clean run of the impact subset (`pytest tests/test_impact.py tests/test_phase11_fixes.py tests/test_phases12_15.py -q`):
 
 | Surface | Coverage |
 |---|---|
-| `tests/test_impact.py` | 46 / 46 passing (engine + catalog + 5D + SDG + DD + benchmarks + all frameworks) |
-| `tests/test_phase11_fixes.py` | 15 passing, 4 MCP-integration tests skipped when `mcp` package unavailable |
-| `tests/test_phases12_15.py` | 31 / 31 passing (fund workflow, PCAF, SBTi, EU Taxonomy, TNFD, CDP, extractors, ToC, counterfactual, RBAC, plug-ins, signed feed + edge cases) |
-| **Total** | **80 passed / 4 skipped / 0 failed** in the impact subset |
-
-The 18 collection errors elsewhere in `/tests` are all from legacy HKUDS modules (`auth/`, `cli/`, `mcp/`, `ohmo/`, `services/`, `ui/`, `plugins/lifecycle`) already queued for deletion in the *Engineering housekeeping* plan above.
+| `tests/test_impact.py` | **46 / 46** passing (engine + catalog + 5D + SDG + DD + benchmarks + all 10 frameworks) |
+| `tests/test_phase11_fixes.py` | **15 passing, 4 skipped** (the 4 MCP-integration tests skip when the optional `mcp` package is absent) |
+| `tests/test_phases12_15.py` | **43 / 43** passing (fund workflow, IC memo MD/HTML/DOCX/PPTX, deal gate, portfolio roll-up, LP calendar, PCAF, SBTi, EU Taxonomy, TNFD, CDP, extractors, ToC, counterfactual, RBAC, plug-ins, signed feed, DD Questionnaire Helper HTML + .docx, Web Console routes) |
+| **Impact subset total** | **104 passed / 4 skipped / 0 failed** (~4.7s on a laptop) |
+| **Ruff** | `ruff check src/` — clean (0 errors) |
+| **CI** | GitHub Actions: Import smoke ✅ · Tests ✅ · Lint ✅ · Frontend typecheck ✅ |
 
 ---
 

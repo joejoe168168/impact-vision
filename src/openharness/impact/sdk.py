@@ -212,6 +212,93 @@ class ImpactVision:
         checklist = load_checklist(checklist_path) if checklist_path else load_checklist()
         return analyze_document_coverage(text, checklist)
 
+    def render_dd_report_html(
+        self,
+        text: str,
+        *,
+        company_name: str = "Company",
+        document_label: str = "Source document",
+        reviewer: str | None = None,
+        path: str | Path | None = None,
+        checklist_path: str | Path | None = None,
+    ) -> str | Path:
+        """Render a self-contained HTML DD coverage report.
+
+        Runs :meth:`run_dd_coverage` then renders the resulting
+        :class:`DDChecklistResult` using
+        :mod:`openharness.impact.report_templates.dd_report_html`.
+        If ``path`` is provided, writes the HTML to disk and returns the
+        :class:`Path`; otherwise returns the HTML string.
+        """
+        from openharness.impact.report_templates import (
+            render_dd_report_html,
+            save_dd_report_html,
+        )
+        result = self.run_dd_coverage(text, checklist_path=checklist_path)
+        if path:
+            return save_dd_report_html(
+                result,
+                path,
+                company_name=company_name,
+                document_label=document_label,
+                reviewer=reviewer,
+            )
+        return render_dd_report_html(
+            result,
+            company_name=company_name,
+            document_label=document_label,
+            reviewer=reviewer,
+        )
+
+    def render_dd_questionnaire_html(
+        self,
+        text: str,
+        *,
+        company_name: str = "Company",
+        document_label: str = "Source document",
+        reviewer: str | None = None,
+        path: str | Path | None = None,
+        checklist_path: str | Path | None = None,
+    ) -> str | Path:
+        """Alias for :meth:`render_dd_report_html` — emphasises that the output
+        is a DD Questionnaire Helper (risk-first, sequence-ordered)."""
+        return self.render_dd_report_html(
+            text,
+            company_name=company_name,
+            document_label=document_label,
+            reviewer=reviewer,
+            path=path,
+            checklist_path=checklist_path,
+        )
+
+    def render_dd_questionnaire_docx(
+        self,
+        text: str,
+        path: str | Path,
+        *,
+        company_name: str = "Company",
+        document_label: str = "Source document",
+        reviewer: str | None = None,
+        checklist_path: str | Path | None = None,
+    ) -> Path:
+        """Render an editable Word (.docx) version of the DD Questionnaire
+        Helper. Requires the optional ``python-docx`` dependency.
+
+        Runs :meth:`run_dd_coverage` on ``text`` and passes the resulting
+        :class:`DDChecklistResult` to
+        :func:`openharness.impact.report_templates.render_dd_questionnaire_docx`.
+        Always writes the file and returns the :class:`Path`.
+        """
+        from openharness.impact.report_templates import render_dd_questionnaire_docx
+        result = self.run_dd_coverage(text, checklist_path=checklist_path)
+        return render_dd_questionnaire_docx(
+            result,
+            path,
+            company_name=company_name,
+            document_label=document_label,
+            reviewer=reviewer,
+        )
+
     def screen_greenwashing(
         self,
         company: Company,

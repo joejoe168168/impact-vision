@@ -33,7 +33,7 @@ log = logging.getLogger(__name__)
 # Header constants
 # ---------------------------------------------------------------------------
 
-_VERSION = "0.1.0"  # OpenHarness version for User-Agent
+_VERSION = "0.13.0"  # OpenHarness / Impact Vision version for User-Agent
 
 # Default model for Copilot requests when the configured model is not
 # available in the Copilot model catalog.

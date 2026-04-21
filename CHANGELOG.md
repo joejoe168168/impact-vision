@@ -4,6 +4,51 @@ All notable changes to Impact Vision are recorded here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.13.0] - 2026-04-21
+
+### Added — DD Questionnaire Helper, Word export & Web Console
+
+- **DD Questionnaire Helper** (`openharness.impact.report_templates.dd_report_html.render_dd_questionnaire_html`): the DD HTML output has been re-framed from a *coverage report* to an *actionable questionnaire helper*. Sections are now ordered as **1. Key risk areas → 2. Information request (questionnaire to send) → 3. Evidence & document gaps → 4. Coverage snapshot → 5. By category → 6. Addressed (appendix) → 7. Evidence levels**. The *information request* sorts unanswered questions first by severity (high / medium / low priority callouts), then by the natural DD sequence (Thesis → ToC → What → Who → How-much → Contribution → Risk → Measurement → Governance → Sector → Exit). Each question card carries probe-further prompts, supporting-document asks and an empty "Founder response" slot so the analyst can use it as a live working document.
+- **`ImpactVision.render_dd_questionnaire_html(...)`** — SDK shortcut (same kwargs as `render_dd_report_html`, which remains as a backwards-compatible alias).
+- **`ImpactVision.render_dd_questionnaire_docx(...)`** + `openharness.impact.report_templates.render_dd_questionnaire_docx`: editable Word `.docx` export of the questionnaire helper (requires optional `python-docx`). Mirrors the HTML information request with heading-level category grouping, evidence checklists, response boxes and a sign-off block.
+- **Web Console** (`openharness.web`, `impact-vision serve-web`, default port `8787`): single-file SPA mounted on top of the FastAPI gateway. Lists all 26 tools in a searchable sidebar, renders a dynamic parameter form per tool, and `POST`s to `/api/v1/*`. No build step, no JS framework. Positioned as the Impact-Vision equivalent of `sst/opencode` / `siteboon/claudecodeui` / `getAsterisk/claudia`.
+- `openharness.web.console.render_console_html()` and `openharness.web.console.console_router()` for embedding the console into any existing FastAPI app.
+
+### Fixed
+
+- **Impact-report scoring rationale table** no longer overflows on 1080 px / tablet layouts. New `.rationale-table-wrap` scroll container, `<colgroup>` fixed column widths, word-wrapped driver cell and a compact mobile breakpoint (see `impact_report_tool.py`).
+- **MCP server bootstrap** (`openharness.impact.mcp_server`) now tolerates both old and new FastMCP constructor signatures (the `version` / `description` kwargs were dropped in recent FastMCP releases). Unblocks `tests/test_phase11_fixes.py::TestMCPResources` on CI.
+- **Ruff lint** — trimmed 5 unused imports flagged by CI: `SourceVerifier` / `ClaimExtractor` re-exports now carry explicit `noqa: F401` because they are documented public re-exports, plus unused `typing.Iterable` / `typing.Literal` imports in `signed_feed.py` and `tenancy.py` removed. `ruff check src/` is now clean.
+
+### Tests
+
+- `tests/test_phases12_15.py`: new test classes `TestDDQuestionnaireHelper` (alias parity, risk-first section ordering, docx round-trip) and `TestWebConsole` (SPA markers, `/` + `/console` routes via `FastAPI.TestClient`). Existing `test_dd_report_html_contains_key_sections` updated to match the new `<title>` and section anchors.
+- Impact subset total at v0.13.0 (clean run of `test_impact.py` + `test_phase11_fixes.py` + `test_phases12_15.py`): **104 passed / 4 skipped / 0 failed** (108 collected; the 4 skipped cases require the optional `mcp` package).
+
+### CLI
+
+- New `impact-vision serve-web` command wrapping `uvicorn` around `openharness.web.app:app`.
+
+## [0.12.0] - 2026-04-21
+
+### Added — Report visuals overhaul
+
+- `openharness.impact.report_templates.report_v2`: shared HTML chrome (modern hero banner, at-a-glance KPI strip, sticky section TOC, strengths/watch-outs callouts, print-first CSS, SDG colour swatches) used by every HTML surface.
+- `openharness.impact.ic_memo.render_ic_memo_html` + `render_ic_memo(output_format="html")`: self-contained, print-ready HTML IC memo with thesis fit, 5-dimension rollup, SDG alignment, DD & greenwashing KPIs, IC gate detail and recommendation blocks.
+- `openharness.impact.report_templates.dd_report_html.render_dd_report_html` (+ `save_dd_report_html`): one-page DD coverage briefing with category roll-up, NESTA evidence levels, priority gaps and ready-to-send follow-up prompts.
+- `ImpactVision.render_dd_report_html(...)`: SDK shortcut that runs the DD engine and writes the HTML in one call.
+- Main Impact Report (`tools/impact/impact_report_tool._to_html`): KPI strip + strengths / watch-outs / next-steps callouts in the Executive Summary, sticky table-of-contents sidebar, anchor IDs on every section (`#sec-5d`, `#sec-sdg`, `#sec-gap`, `#sec-greenwashing`, …).
+
+### Fixed / Changed
+
+- README: removed the superseded **"Correctness & linkage issues found"** checklist and the **"Engineering housekeeping"** block; they were implementation notes that are now tracked privately. Updated every MCP tool count reference from 25 → **26**.
+- `ImpactVision.render_ic_memo(...)` now accepts `output_format="html"` (in addition to `markdown` / `docx` / `pptx`). Path-writing semantics match the other formats.
+
+### Tests
+
+- `tests/test_phases12_15.py::TestHtmlRenderers` — 7 new tests covering IC memo HTML (sections, KPI tiles, TOC, file-write), DD HTML (sections, empty-text graceful path, file-write), main Impact Report anchor IDs, and the v2 chrome helpers (`render_hero`, `render_kpi_strip`, `render_toc`, `sdg_swatch`, `wrap_document`).
+- Total impact subset: **99 passed / 4 skipped / 0 failed**.
+
 ## [0.11.0] - 2026-04-21
 
 ### Added — Phase 15: Platform & Collaboration

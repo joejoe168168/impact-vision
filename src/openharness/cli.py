@@ -10,7 +10,7 @@ from typing import Optional
 
 import typer
 
-__version__ = "0.6.0"
+__version__ = "0.13.0"
 
 
 def _version_callback(value: bool) -> None:
@@ -63,13 +63,50 @@ def serve_mcp(
     host: str = typer.Option("0.0.0.0", help="Host for SSE transport"),
     port: int = typer.Option(8765, help="Port for SSE transport"),
 ) -> None:
-    """Start the Impact Vision MCP server exposing all 25 impact tools."""
+    """Start the Impact Vision MCP server exposing all 26 impact tools."""
     from openharness.impact.mcp_server import mcp as mcp_server  # noqa: F811
 
     if transport == "sse":
         mcp_server.settings.host = host
         mcp_server.settings.port = port
     mcp_server.run(transport=transport)
+
+
+# ---- serve-web command (Web console + REST gateway) ----
+
+@app.command("serve-web")
+def serve_web(
+    host: str = typer.Option("127.0.0.1", help="Host to bind"),
+    port: int = typer.Option(8787, help="Port to bind"),
+    reload: bool = typer.Option(False, "--reload", help="Auto-reload on code changes (dev)"),
+) -> None:
+    """Start the Impact Vision web console — UI + REST gateway in one process.
+
+    The console is mounted at ``/`` and proxies every /api/v1/* endpoint of
+    the FastAPI gateway. Think of it as the Impact Vision equivalent of
+    ``sst/opencode`` or ``siteboon/claudecodeui``: a browser UI for the
+    same tool surface the CLI / MCP server exposes.
+    """
+    try:
+        import uvicorn  # type: ignore
+    except ImportError as exc:  # pragma: no cover
+        print(
+            "uvicorn is required to run the web console. "
+            "Install with: pip install 'impact-vision[web]' or "
+            "'pip install uvicorn fastapi'.",
+            file=sys.stderr,
+        )
+        raise typer.Exit(1) from exc
+
+    print(f"Impact Vision web console → http://{host}:{port}")
+    print(f"  · REST API: http://{host}:{port}/api/v1/*")
+    print(f"  · OpenAPI:  http://{host}:{port}/docs")
+    uvicorn.run(
+        "openharness.web.app:app",
+        host=host,
+        port=port,
+        reload=reload,
+    )
 
 
 # ---- mcp subcommands ----

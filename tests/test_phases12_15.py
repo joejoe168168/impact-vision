@@ -393,3 +393,280 @@ class TestEdgeCases:
         md = render_ic_memo_markdown(a, sc, None)
         assert "Ghost" in md
         assert "No 5D assessment available" in md
+
+
+# ---------------------------------------------------------------------------
+# v0.12 — HTML report renderers (IC memo + DD coverage)
+# ---------------------------------------------------------------------------
+
+class TestHtmlRenderers:
+    def test_ic_memo_html_contains_key_sections(self):
+        from openharness.impact.ic_memo import render_ic_memo, render_ic_memo_html
+
+        iv = ImpactVision()
+        a = iv.assess_company(Company(
+            name="Acme Solar", sector="energy", geography="Kenya",
+            impact_themes=["climate", "jobs"], sdg_claims=[7, 13],
+        ))
+        thesis = iv.load_thesis()
+        sc = iv.evaluate_deal_against_thesis(
+            a, thesis=thesis,
+            dd_coverage_pct=62.0, greenwashing_score=28.0,
+        )
+        html = render_ic_memo_html(
+            a, sc, thesis,
+            dd_coverage_pct=62.0,
+            greenwashing_score=28.0,
+            greenwashing_classification="low",
+            deal_size_eur_m=5.0,
+        )
+
+        assert html.startswith("<!DOCTYPE html>")
+        assert "<title>IC Memo — Acme Solar</title>" in html
+        assert "<h1>Acme Solar</h1>" in html
+        # shared v2 chrome
+        assert "kpi-strip" in html
+        assert "class=\"toc\"" in html
+        # KPI content
+        assert "IC Gate" in html
+        assert "DD Coverage" in html
+        assert "Greenwashing risk" in html
+        # Sections
+        for anchor in ("thesis-fit", "five-d", "sdg", "dd-gw", "gate", "rec"):
+            assert f'id="{anchor}"' in html
+        # Deterministic: same call through render_ic_memo("html") matches
+        html2 = render_ic_memo(
+            a, sc, thesis, output_format="html",
+            dd_coverage_pct=62.0,
+            greenwashing_score=28.0,
+            greenwashing_classification="low",
+            deal_size_eur_m=5.0,
+        )
+        assert html2 == html
+
+    def test_ic_memo_html_path_writes_file(self, tmp_path):
+        from openharness.impact.ic_memo import render_ic_memo
+
+        iv = ImpactVision()
+        a = iv.assess_company(Company(name="FileCo", sector=""))
+        sc = iv.evaluate_deal_against_thesis(a)
+        out = tmp_path / "memo.html"
+        result = render_ic_memo(a, sc, None, output_format="html", path=str(out))
+        assert result == out
+        content = out.read_text(encoding="utf-8")
+        assert "<!DOCTYPE html>" in content
+        assert "FileCo" in content
+
+    def test_dd_report_html_contains_key_sections(self):
+        iv = ImpactVision()
+        pitch = (
+            "We train 1000 rural women in Kenya to install solar panels. "
+            "An independent RCT measured a 45% income increase vs. control. "
+            "We audit supplier labor conditions annually via BSR."
+        )
+        html = iv.render_dd_report_html(
+            pitch,
+            company_name="Acme Solar",
+            document_label="Pitch deck v3",
+        )
+        assert html.startswith("<!DOCTYPE html>")
+        # New "DD Questionnaire Helper" branding (renamed from DD Coverage).
+        assert "<title>DD Questionnaire Helper — Acme Solar</title>" in html
+        # shared v2 chrome
+        assert "kpi-strip" in html
+        assert "class=\"toc\"" in html
+        # KPI labels
+        assert "Checklist coverage" in html
+        assert "Avg evidence level" in html
+        assert "High-priority gaps" in html
+        # Sections — the questionnaire helper reorganised the page around
+        # risks first, then the actionable information request, then the
+        # coverage appendix. See dd_report_html.render_dd_questionnaire_html.
+        for anchor in (
+            "risks", "questionnaire", "evidence-gaps",
+            "overview", "categories", "addressed", "legend",
+        ):
+            assert f'id="{anchor}"' in html
+
+    def test_dd_report_html_empty_text_is_graceful(self):
+        iv = ImpactVision()
+        html = iv.render_dd_report_html("", company_name="No-Doc Co")
+        assert "<!DOCTYPE html>" in html
+        # Nothing addressed, so the addressed section shows the empty-state
+        # message and every question lands in the unanswered section.
+        assert "No checklist questions appear to be addressed" in html
+        assert "No-Doc Co" in html
+
+    def test_dd_report_html_writes_file(self, tmp_path):
+        iv = ImpactVision()
+        out = tmp_path / "dd.html"
+        path = iv.render_dd_report_html(
+            "We measure outcomes via a baseline survey.",
+            company_name="FileCo",
+            path=str(out),
+        )
+        assert path == out
+        assert out.exists()
+        assert "<!DOCTYPE html>" in out.read_text(encoding="utf-8")
+
+    def test_main_impact_report_html_has_toc_and_anchors(self):
+        """The main impact report keeps its TOC sidebar, KPI strip and
+        section anchors so the executive summary can navigate to sub-sections.
+        """
+        from openharness.tools.impact import impact_report_tool as ir
+
+        iv = ImpactVision()
+        comp = Company(
+            name="Acme Solar", sector="energy", geography="Kenya",
+            impact_themes=["climate"], sdg_claims=[7, 13],
+        )
+        assess = iv.assess_company(comp)
+        data = assess.model_dump(mode="json")
+        data["generated_at"] = "2026-04-21T00:00:00Z"
+        data["catalog_version"] = "IRIS+ 5.3c"
+        data["company"] = comp.model_dump(mode="json")
+        # Drop sections that require runtime enrichment
+        for k in ("gap_analysis", "greenwashing"):
+            data.pop(k, None)
+
+        html = ir._to_html(data)
+        assert "report-toc" in html
+        assert "kpi-strip" in html
+        assert 'id="executive-summary"' in html
+        assert 'id="sec-5d"' in html
+
+    def test_report_v2_helpers(self):
+        from openharness.impact.report_templates import (
+            render_footer,
+            render_hero,
+            render_kpi_strip,
+            render_toc,
+            sdg_swatch,
+            wrap_document,
+        )
+
+        hero = render_hero(
+            eyebrow="Test", title="Hello",
+            subtitle="world", meta=[("Date", "2026-04-21")], tags=["A", "B"],
+        )
+        assert "report-hero" in hero and "Hello" in hero
+        assert "tag" in hero and 'SDG' not in hero
+
+        kpi = render_kpi_strip([
+            {"label": "x", "value": "1", "kind": "pass", "badge": "OK", "badge_kind": "pass"},
+            {"label": "y", "value": "2", "sub": "detail"},
+        ])
+        assert "kpi-tile pass" in kpi and "kpi-badge pass" in kpi
+        assert "detail" in kpi
+
+        toc = render_toc([("a", "A"), ("b", "B")])
+        assert "#a" in toc and "#b" in toc
+
+        foot = render_footer("note here")
+        assert "note here" in foot
+
+        swatch = sdg_swatch(7, 88.0)
+        assert "SDG 7" in swatch and "88" in swatch
+
+        doc = wrap_document(title="Hello", body_html="<p>ok</p>")
+        assert doc.startswith("<!DOCTYPE html>")
+        assert "<title>Hello</title>" in doc and "<p>ok</p>" in doc
+
+
+class TestDDQuestionnaireHelper:
+    """Regression coverage for the re-branded DD Questionnaire Helper.
+
+    The helper:
+      1. Puts the *information request* (unanswered questions) front-and-centre,
+         sorted by priority and DD sequence.
+      2. Surfaces a consolidated evidence / document gap list.
+      3. Keeps the old coverage table as an appendix.
+    """
+
+    PITCH = (
+        "We train 2,000 small-holder farmers in Malaysia on regenerative "
+        "pig-farming practices. Revenue was US$ 4.5m last year. We track a "
+        "few KPIs internally but have no independent verification yet."
+    )
+
+    def test_questionnaire_alias_matches_report_html(self):
+        iv = ImpactVision()
+        a = iv.render_dd_report_html(self.PITCH, company_name="HogCo")
+        b = iv.render_dd_questionnaire_html(self.PITCH, company_name="HogCo")
+        assert a == b
+
+    def test_questionnaire_sections_are_risk_first(self):
+        iv = ImpactVision()
+        html = iv.render_dd_questionnaire_html(self.PITCH, company_name="HogCo")
+        # Key risk areas MUST appear before the information request,
+        # and both must appear before the coverage appendix.
+        idx_risks = html.find('id="risks"')
+        idx_quest = html.find('id="questionnaire"')
+        idx_cover = html.find('id="overview"')
+        idx_legnd = html.find('id="legend"')
+        assert 0 <= idx_risks < idx_quest < idx_cover < idx_legnd
+        # Priority callouts exist in the information request
+        assert "Priority 1 — Ask first" in html
+        # Evidence-gap consolidated list is present
+        assert "Evidence &amp; document gaps" in html
+        # Each question card shows a response placeholder ready for editing
+        assert "Founder response" in html
+        # "Attach / ask for" appears at least once for the sample pitch
+        assert "Attach / ask for" in html
+
+    def test_questionnaire_docx_export_roundtrips(self, tmp_path):
+        pytest.importorskip("docx")
+        iv = ImpactVision()
+        out = tmp_path / "dd_questionnaire.docx"
+        path = iv.render_dd_questionnaire_docx(
+            self.PITCH, out, company_name="HogCo",
+            document_label="Founder narrative", reviewer="QA bot",
+        )
+        assert path == out
+        assert out.exists()
+        # Word XML content contains our heading + company name
+        import zipfile
+        with zipfile.ZipFile(out) as zf:
+            body = zf.read("word/document.xml").decode("utf-8", errors="ignore")
+        assert "DD — Questionnaire Helper" in body or "Questionnaire Helper" in body
+        assert "HogCo" in body
+        # Priority heading appears only if there are unanswered questions
+        # (the sample pitch leaves many blanks, so "Priority 1" must exist)
+        assert "Priority 1" in body or "Priority 2" in body
+        # Founder response slot and evidence checklist markers present
+        assert "Founder response" in body
+
+
+class TestWebConsole:
+    """Smoke-tests for the new web console SPA and router."""
+
+    def test_console_html_contains_tool_list(self):
+        from openharness.web.console import render_console_html
+
+        html = render_console_html()
+        assert "<!DOCTYPE html>" in html
+        assert "Impact Vision" in html
+        assert "Web Console" in html
+        # A handful of tools that MUST be wired up
+        for needle in ("5-Dimension scoring", "SDG alignment map", "Greenwashing screen", "Impact report"):
+            assert needle in html
+        # Endpoints are inlined so the SPA can fetch without extra config
+        for endpoint in ("/api/v1/score", "/api/v1/sdg-map", "/api/v1/report"):
+            assert endpoint in html
+
+    def test_console_router_serves_root(self):
+        pytest.importorskip("fastapi")
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+
+        from openharness.web.console import console_router
+
+        app = FastAPI()
+        app.include_router(console_router())
+        client = TestClient(app)
+
+        for path in ("/", "/console"):
+            r = client.get(path)
+            assert r.status_code == 200
+            assert "Impact Vision" in r.text
+            assert "Web Console" in r.text

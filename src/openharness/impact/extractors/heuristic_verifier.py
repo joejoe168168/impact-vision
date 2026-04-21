@@ -17,7 +17,11 @@ from __future__ import annotations
 
 import re
 
-from openharness.impact.extractors.base import ExtractedClaim, SourceVerifier, VerificationResult
+from openharness.impact.extractors.base import (
+    ExtractedClaim,
+    SourceVerifier,  # noqa: F401 — re-exported protocol for documentation / subclassing
+    VerificationResult,
+)
 
 
 _AUTHORITATIVE_SOURCES = (

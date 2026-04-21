@@ -1,5 +1,7 @@
 # Contributing to Impact Vision
 
+> Version: **v0.13.0** (2026-04-21). See [`CHANGELOG.md`](CHANGELOG.md) for release notes.
+
 Impact Vision is an open-source AI-powered impact measurement engine for VC and impact investment funds. Built on [OpenHarness](https://github.com/HKUDS/OpenHarness).
 
 ## Ways to Contribute
@@ -21,7 +23,7 @@ pip install -e ".[dev]"
 
 # Place the IRIS+ catalog Excel in data/raw/
 # Then load it:
-python -m openharness catalog load
+impact-vision catalog load
 ```
 
 ### Prerequisites
@@ -33,15 +35,18 @@ python -m openharness catalog load
 ## Running Tests
 
 ```bash
-# Run all Impact Vision tests
-python -m pytest tests/test_impact.py -v
+# Run the full impact-vision subset (fast, ~2-3s, no external deps)
+python -m pytest tests/test_impact.py tests/test_phase11_fixes.py tests/test_phases12_15.py -v
 
-# Run all tests (including OpenHarness core)
+# Run the entire test matrix (Impact Vision + OpenHarness core)
 python -m pytest tests/ -v
 
 # Lint
 ruff check src/
 ```
+
+The CI workflow runs all three (import smoke + pytest + ruff) on every push / PR to `main`.
+At the v0.13.0 cut that is **180 passed / 4 skipped / 0 failed** across the impact subset, with `ruff` clean.
 
 ## Project Structure
 
@@ -91,7 +96,8 @@ Edit `data/dd_checklist.yaml` following the existing format:
 - Include tests for new functionality
 - Update documentation when behavior changes
 - Add a changelog entry under `[Unreleased]` in `CHANGELOG.md`
-- Ensure all 41+ tests pass before submitting
+- Ensure the impact test subset (180+ tests — see *Running Tests* above) passes before submitting
+- If you touch the public CLI, API gateway, MCP tool surface or web console, bump the version in **all** of: `pyproject.toml`, `src/openharness/cli.py` (`__version__`), `src/openharness/api_gateway/router.py` (FastAPI `version=` and the `/health` payload), `src/openharness/api/openai_client.py` (User-Agent), `src/openharness/api/copilot_client.py` (`_VERSION`), and `CHANGELOG.md`.
 
 ## Code Style
 
