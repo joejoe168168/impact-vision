@@ -4,6 +4,19 @@ All notable changes to Impact Vision are recorded here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [Unreleased]
+
+### Added — Phase 15.6 progress (Web Console v1.1)
+
+- **OpenAPI-driven forms** (`openharness.web.console`): the SPA now fetches `/openapi.json` on page load, walks every `/api/v1/*` POST/PUT endpoint, resolves `$ref` / `allOf` request-body schemas and derives the form fields (string / integer / number / boolean / array / enum / object) automatically. The hand-written `_FIELD_RECIPES` remain as a graceful fallback when the gateway is unreachable or the schema cannot be read; the per-tool header now shows a small `OpenAPI` / `fallback recipe` badge so analysts know which mode they are in.
+- **Run history (browser-side v1)**: every console invocation is persisted to `localStorage` under key `impact_vision_runs_v1` (capped at 50 entries). A "Recent runs" block appears at the top of the sidebar with status pill, tool name, timestamp and elapsed-ms; clicking an entry re-hydrates the form with the previous body and replays the cached response. Ships with a "clear" button. No server-side state, no external cookies, no account required.
+- **"Fill example" button** on every form — pre-populates a realistic off-grid-solar deal (Acme Solar, Kenya, PI5380 + OI6541 metrics, SDGs 7 / 13) so new users can try every tool in 2 clicks.
+- Additional form-control types in the console (number, boolean select, enum dropdown) driven from the OpenAPI schema.
+
+### Tests
+
+- `tests/test_phases12_15.py::TestWebConsolePhase156` (3 new tests): OpenAPI walker + history JS are wired into the rendered HTML, `_TOOL_CATALOGUE` / `_FIELD_RECIPES` are exported for plug-ins, and a dummy `/api/v1/demo-echo` FastAPI route is automatically picked up via the gateway's OpenAPI spec. Impact subset is now **107 passed / 4 skipped / 0 failed** (108 collected).
+
 ## [0.13.0] - 2026-04-21
 
 ### Added — DD Questionnaire Helper, Word export & Web Console

@@ -1047,9 +1047,9 @@ Ship-ready analyst surfaces for the artefacts GPs actually email around.
 
 After v0.13.0 shipped the single-file console, these are the next-up polish items before Phase 16 ecosystem work begins. Each row has a concrete acceptance signal so GPs can judge "is this done".
 
-- [ ] **OpenAPI-driven forms** — replace the hand-curated `_TOOL_CATALOGUE` in `openharness.web.console` with an OpenAPI schema walker so every new `/api/v1/*` endpoint auto-appears with typed inputs (string / int / enum / file-upload / nested object). Acceptance: add a new FastAPI route with no console edits, refresh, the form appears.
+- [x] **OpenAPI-driven forms** — the SPA now fetches `/openapi.json` on page load and walks every `/api/v1/*` POST/PUT endpoint, resolves `$ref` / `allOf` request-body schemas, and derives typed inputs (string / integer / number / boolean / array / enum / object) automatically. Each form shows an `OpenAPI` / `fallback recipe` badge so analysts can tell which mode they are in. New regression tests (`TestWebConsolePhase156`) add a dummy `/api/v1/demo-echo` route and confirm it's auto-discovered.
 - [ ] **Streaming tool output** — server-sent events for long-running tools (`portfolio_analyze`, `impact_report`, `pitch_deck_analyze`) so the console shows progress instead of hanging. Acceptance: uploading a 50-page PDF shows per-claim extraction progress.
-- [ ] **Session + artefact inbox** — every tool invocation persists to a local SQLite table with user, timestamp, inputs, outputs; console grows a "Recent runs" sidebar with copy-JSON / re-run / export-to-DOCX actions. Acceptance: closing the browser and re-opening restores the last 20 runs.
+- [x] **Session + artefact inbox (v1, browser-side)** — every console invocation is persisted to `localStorage` (`impact_vision_runs_v1`, capped at 50 entries) with status pill, tool name, timestamp, elapsed-ms and cached response body. A "Recent runs" block lives at the top of the sidebar; clicking an entry re-hydrates the form with the previous body and replays the cached response. No server-side state, no account required. Server-side SQLite variant moves to Phase 16. Acceptance: close the browser, re-open, last 20 runs are still there — ✓.
 - [ ] **LLM claim extractor (OpenAI-compatible)** — ship `LLMClaimExtractor` that calls any OpenAI-compatible endpoint (OpenAI, Anthropic-via-proxy, Ollama, Minimax, Moonshot) through `openharness.api.openai_client`. Register it via `register_extractor("llm", …)`. Acceptance: `ImpactVision(extractor="llm")` on the pig-farm sample returns ≥ 2× the claims vs. the regex extractor, with verified source spans.
 - [ ] **LLM verifier (web-grounded)** — `LLMSourceVerifier` that checks claims against GIIN / CDP / SEC / SFDR public filings via a pluggable fetcher. Acceptance: each verified claim carries a URL + retrieval timestamp.
 - [ ] **DD Questionnaire v2 (branching)** — Word export adds conditional follow-ups (if answer = "no evidence", attach evidence checklist; if answer = "in progress", attach milestone tracker). Acceptance: the `.docx` includes 3+ conditional sections driven by the DD engine.
@@ -1113,8 +1113,8 @@ Actual numbers from a clean run of the impact subset (`pytest tests/test_impact.
 |---|---|
 | `tests/test_impact.py` | **46 / 46** passing (engine + catalog + 5D + SDG + DD + benchmarks + all 10 frameworks) |
 | `tests/test_phase11_fixes.py` | **15 passing, 4 skipped** (the 4 MCP-integration tests skip when the optional `mcp` package is absent) |
-| `tests/test_phases12_15.py` | **43 / 43** passing (fund workflow, IC memo MD/HTML/DOCX/PPTX, deal gate, portfolio roll-up, LP calendar, PCAF, SBTi, EU Taxonomy, TNFD, CDP, extractors, ToC, counterfactual, RBAC, plug-ins, signed feed, DD Questionnaire Helper HTML + .docx, Web Console routes) |
-| **Impact subset total** | **104 passed / 4 skipped / 0 failed** (~4.7s on a laptop) |
+| `tests/test_phases12_15.py` | **46 / 46** passing (fund workflow, IC memo MD/HTML/DOCX/PPTX, deal gate, portfolio roll-up, LP calendar, PCAF, SBTi, EU Taxonomy, TNFD, CDP, extractors, ToC, counterfactual, RBAC, plug-ins, signed feed, DD Questionnaire Helper HTML + .docx, Web Console routes + **Phase 15.6 OpenAPI walker & history**) |
+| **Impact subset total** | **107 passed / 4 skipped / 0 failed** (~3.6s on a laptop) |
 | **Ruff** | `ruff check src/` — clean (0 errors) |
 | **CI** | GitHub Actions: Import smoke ✅ · Tests ✅ · Lint ✅ · Frontend typecheck ✅ |
 

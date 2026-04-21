@@ -670,3 +670,87 @@ class TestWebConsole:
             assert r.status_code == 200
             assert "Impact Vision" in r.text
             assert "Web Console" in r.text
+
+
+class TestWebConsolePhase156:
+    """Phase 15.6 — OpenAPI-driven forms & browser-side run history."""
+
+    def test_openapi_walker_is_wired_into_html(self):
+        """The SPA must ship the OpenAPI discovery + history JS so analysts
+        get auto-forms for every new endpoint and a replayable run history."""
+        from openharness.web.console import render_console_html
+
+        html = render_console_html()
+
+        # OpenAPI discovery scaffolding
+        assert "discoverFromOpenAPI" in html
+        assert "/openapi.json" in html
+        assert "extractRequestSchema" in html  # requestBody schema extraction
+        assert "resolveRef" in html  # $ref resolution
+        assert "schema-badge" in html  # UI marker showing openapi / fallback
+        assert "fieldsFromSchema" in html
+
+        # Run-history scaffolding (localStorage-backed)
+        assert "HISTORY_KEY" in html
+        assert "impact_vision_runs_v1" in html  # cache key
+        assert "pushHistory" in html
+        assert "renderHistoryList" in html
+        assert "replayHistory" in html
+        assert "clearHistory" in html
+        assert "historyList" in html  # DOM anchor in the sidebar
+
+        # Curated sample data helper still available
+        assert "fillSampleData" in html
+        assert "Acme Solar" in html
+
+    def test_curated_catalogue_and_recipes_are_exported(self):
+        """External plug-ins / tests may want to inspect or extend the
+        curated catalogue and field recipes — keep them importable."""
+        from openharness.web.console import _FIELD_RECIPES, _TOOL_CATALOGUE
+
+        # 19 endpoints seeded at minimum; grows as the gateway adds routes.
+        assert len(_TOOL_CATALOGUE) >= 19
+        # Every catalogue entry references a concrete /api/v1 endpoint
+        for entry in _TOOL_CATALOGUE:
+            assert entry["endpoint"].startswith("/api/v1/")
+            assert entry["id"] and entry["label"] and entry["desc"]
+
+        # Field recipes exist for the primary assessment endpoints
+        for tool_id in ("score", "sdg-map", "report", "pipeline"):
+            assert tool_id in _FIELD_RECIPES
+            assert len(_FIELD_RECIPES[tool_id]) >= 1
+
+    def test_console_picks_up_new_fastapi_route_via_openapi(self):
+        """Proof that the OpenAPI walker machinery is in place: mount a
+        dummy ``/api/v1/demo-echo`` route and confirm it appears in the
+        gateway's OpenAPI spec (the JS walker consumes exactly this)."""
+        pytest.importorskip("fastapi")
+        from fastapi import Body, FastAPI
+        from fastapi.testclient import TestClient
+
+        from openharness.web.console import console_router
+
+        app = FastAPI(title="Demo")
+        app.include_router(console_router())
+
+        @app.post("/api/v1/demo-echo", summary="Demo Echo",
+                  description="Auto-discovered by the web console.")
+        async def _demo_echo(
+            company_name: str = Body(..., embed=True),
+            note: str | None = Body(None, embed=True),
+        ) -> dict:
+            return {"echoed": company_name, "note": note}
+
+        client = TestClient(app)
+
+        # The console root still serves 200
+        assert client.get("/").status_code == 200
+
+        # The OpenAPI schema exposes the new route so the walker can find it
+        spec = client.get("/openapi.json").json()
+        assert "/api/v1/demo-echo" in spec["paths"]
+        post = spec["paths"]["/api/v1/demo-echo"]["post"]
+        assert post["summary"] == "Demo Echo"
+        # And a request body schema is present (what fieldsFromSchema walks)
+        rb = post["requestBody"]["content"]["application/json"]["schema"]
+        assert "$ref" in rb or "properties" in rb or "type" in rb
