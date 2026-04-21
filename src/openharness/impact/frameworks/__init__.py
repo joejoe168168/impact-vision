@@ -18,6 +18,22 @@ from openharness.impact.frameworks.cross_reference import (
     CrossReference, lookup_by_iris, lookup_by_gri, lookup_by_edci, lookup_by_sfdr,
     search_cross_references, get_all_cross_references, format_cross_reference,
 )
+from openharness.impact.frameworks.pcaf import (
+    FinancedEmissionsInput, FinancedEmissionsResult, PCAFRollup,
+    calculate_financed_emissions, rollup_pcaf,
+)
+from openharness.impact.frameworks.sbti import (
+    SBTiClaim, SBTiAlignmentCheck, check_sbti_alignment,
+)
+from openharness.impact.frameworks.eu_taxonomy import (
+    EconomicActivity, TaxonomyAlignmentResult, assess_taxonomy_alignment,
+)
+from openharness.impact.frameworks.tnfd import (
+    TNFDDisclosure, TNFDInput, TNFDAssessmentResult, TNFD_DISCLOSURES, assess_tnfd,
+)
+from openharness.impact.frameworks.cdp import (
+    CDPResponse, CDPIntakeResult, parse_cdp_responses,
+)
 
 __all__ = [
     "SASBStandard", "get_sasb_industries", "match_sasb_industry",
@@ -31,4 +47,11 @@ __all__ = [
     "CrossReference", "lookup_by_iris", "lookup_by_gri", "lookup_by_edci",
     "lookup_by_sfdr", "search_cross_references", "get_all_cross_references",
     "format_cross_reference",
+    # Phase 13 frameworks
+    "FinancedEmissionsInput", "FinancedEmissionsResult", "PCAFRollup",
+    "calculate_financed_emissions", "rollup_pcaf",
+    "SBTiClaim", "SBTiAlignmentCheck", "check_sbti_alignment",
+    "EconomicActivity", "TaxonomyAlignmentResult", "assess_taxonomy_alignment",
+    "TNFDDisclosure", "TNFDInput", "TNFDAssessmentResult", "TNFD_DISCLOSURES", "assess_tnfd",
+    "CDPResponse", "CDPIntakeResult", "parse_cdp_responses",
 ]
