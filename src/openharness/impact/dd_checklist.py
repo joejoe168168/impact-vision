@@ -131,6 +131,7 @@ def analyze_document_coverage(
         cat_set = set(categories)
         questions = [q for q in questions if q.category in cat_set]
 
+    import re
     text_lower = document_text.lower()
     sentences = _rough_sentences(text_lower)
 
@@ -142,14 +143,26 @@ def analyze_document_coverage(
         snippets: list[str] = []
 
         for kw in q.keywords:
-            kw_lower = kw.lower()
-            if kw_lower in text_lower:
-                matched_kw.append(kw)
-                for sent in sentences:
-                    if kw_lower in sent and len(sent) > 30:
-                        snippet = sent.strip()[:200]
-                        if snippet not in snippets:
-                            snippets.append(snippet)
+            kw_lower = kw.lower().strip()
+            if not kw_lower:
+                continue
+            pattern = re.compile(r"\b" + re.escape(kw_lower) + r"\b")
+            match = pattern.search(text_lower)
+            if not match:
+                continue
+            matched_kw.append(kw)
+            for sent in sentences:
+                if pattern.search(sent) and len(sent) > 30:
+                    snippet = sent.strip()[:200]
+                    if snippet not in snippets:
+                        snippets.append(snippet)
+            # Fallback: if no full sentence matched (e.g. very short sentences),
+            # take a +/-200 char window around the first hit so evidence-level
+            # detection still has context to look at.
+            if not snippets:
+                start = max(0, match.start() - 200)
+                end = min(len(text_lower), match.end() + 200)
+                snippets.append(text_lower[start:end].strip()[:400])
 
         if not matched_kw:
             unanswered.append(q)
@@ -157,7 +170,7 @@ def analyze_document_coverage(
 
         confidence = min(1.0, len(matched_kw) / max(len(q.keywords), 1) * 1.5)
         if confidence >= min_confidence:
-            ev_level = _assess_evidence_level(snippets, text_lower)
+            ev_level = _assess_evidence_level(snippets)
             addressed.append(DDQuestionMatch(
                 question=q,
                 matched_keywords=matched_kw,
@@ -260,26 +273,57 @@ def _detect_relevant_categories(text: str) -> set[str]:
     return relevant
 
 
-def _assess_evidence_level(snippets: list[str], full_text: str) -> int:
-    """Assess NESTA Standards of Evidence level (1-5) based on text signals."""
+_LEVEL5_SIGNALS = (
+    "rct", "randomized controlled", "randomised controlled", "causal attribution",
+    "independent evaluation", "counterfactual analysis", "experimental design",
+)
+_LEVEL4_SIGNALS = (
+    "quasi-experimental", "comparison group", "control group", "matched sample",
+    "cohort study", "benchmark study", "diff-in-diff", "difference-in-differences",
+)
+_LEVEL3_SIGNALS = (
+    "pre-post", "baseline", "survey data", "measured outcome",
+    "tracked quarterly", "monitored quarterly", "year-over-year",
+    "longitudinal", "panel data", "kpi", "tracked",
+)
+_LEVEL2_SIGNALS = (
+    "served", "trained", "delivered", "produced", "distributed",
+    "reached", "enrolled", "number of",
+)
+
+
+def _signal_in_text(text: str, signal: str) -> bool:
+    """Word-boundary aware substring check.
+
+    Avoids false positives like 'served' matching 'observed'.
+    """
+    import re
+    return bool(re.search(r"\b" + re.escape(signal) + r"\b", text))
+
+
+def _assess_evidence_level(snippets: list[str], full_text: str | None = None) -> int:
+    """Assess NESTA Standards of Evidence level (1-5) based on snippet signals.
+
+    IMPORTANT: this only inspects the matched snippets (not the full document) so
+    that an unrelated mention of e.g. 'RCT' does not promote every addressed
+    question to level 5. The `full_text` parameter is kept for API compatibility
+    but is intentionally not consulted.
+    """
     combined = " ".join(snippets).lower()
+    if not combined.strip():
+        return 1
 
-    level5_signals = ["rct", "randomized", "randomised", "causal", "independent evaluation", "counterfactual", "experimental"]
-    level4_signals = ["quasi-experimental", "comparison group", "control group", "benchmark", "cohort study", "matched sample"]
-    level3_signals = ["pre-post", "baseline", "survey data", "measured outcome", "kpi", "tracked", "monitored quarterly", "year-over-year"]
-    level2_signals = ["served", "trained", "delivered", "produced", "distributed", "reached", "enrolled", "number of"]
-
-    for signal in level5_signals:
-        if signal in combined or signal in full_text:
+    for signal in _LEVEL5_SIGNALS:
+        if _signal_in_text(combined, signal):
             return 5
-    for signal in level4_signals:
-        if signal in combined or signal in full_text:
+    for signal in _LEVEL4_SIGNALS:
+        if _signal_in_text(combined, signal):
             return 4
-    for signal in level3_signals:
-        if signal in combined or signal in full_text:
+    for signal in _LEVEL3_SIGNALS:
+        if _signal_in_text(combined, signal):
             return 3
-    for signal in level2_signals:
-        if signal in combined or signal in full_text:
+    for signal in _LEVEL2_SIGNALS:
+        if _signal_in_text(combined, signal):
             return 2
     return 1
 

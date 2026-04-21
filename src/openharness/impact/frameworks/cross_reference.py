@@ -10,13 +10,24 @@ from pydantic import BaseModel, Field
 
 
 class CrossReference(BaseModel):
-    """A mapping between equivalent metrics across standards."""
+    """A mapping between equivalent metrics across standards.
+
+    For SASB, both `sasb_dimension` (the broad pillar) and `sasb_codes` (the
+    actual SASB metric codes, e.g. `FN-CB-230a.1`) are stored so reverse-lookup
+    by SASB metric code works.
+    """
     concept: str
     iris_plus: list[str] = Field(default_factory=list)
     gri: list[str] = Field(default_factory=list)
     edci: list[str] = Field(default_factory=list)
     sfdr_pai: list[int] = Field(default_factory=list)
     sasb_dimension: str = ""
+    sasb_codes: list[str] = Field(default_factory=list)
+    tnfd: list[str] = Field(default_factory=list)
+    pcaf: list[str] = Field(default_factory=list)
+    eu_taxonomy: list[str] = Field(default_factory=list)
+    cdp: list[str] = Field(default_factory=list)
+    sbti: list[str] = Field(default_factory=list)
     tcfd: list[str] = Field(default_factory=list)
     issb: list[str] = Field(default_factory=list)
     esrs: list[str] = Field(default_factory=list)
@@ -32,7 +43,12 @@ CROSS_REFERENCE_MAP: list[CrossReference] = [
         edci=["EDCI-E1"],
         sfdr_pai=[1],
         sasb_dimension="Environment",
+        sasb_codes=["EM-EP-110a.1", "FN-CB-410a.2", "RT-CH-110a.1", "EM-MM-110a.1"],
         tcfd=["MET-B"],
+        tnfd=["TNFD-MET-CR-1"],
+        pcaf=["PCAF-Asset-Class-Listed-Equity-Scope1"],
+        cdp=["CDP-Climate-C6.1"],
+        sbti=["SBTi-Scope1-Target"],
         issb=["S2-MT-1"],
         esrs=["E1-6"],
         sdg_goals=[13],
@@ -42,7 +58,11 @@ CROSS_REFERENCE_MAP: list[CrossReference] = [
         gri=["305-2"],
         edci=["EDCI-E2"],
         sfdr_pai=[1],
+        sasb_codes=["EM-EP-110a.1", "RT-CH-110a.1"],
         tcfd=["MET-B"],
+        pcaf=["PCAF-Asset-Class-Listed-Equity-Scope2"],
+        cdp=["CDP-Climate-C6.3"],
+        sbti=["SBTi-Scope2-Target"],
         issb=["S2-MT-1"],
         sdg_goals=[13],
     ),
@@ -51,7 +71,11 @@ CROSS_REFERENCE_MAP: list[CrossReference] = [
         gri=["305-3"],
         edci=["EDCI-E3"],
         sfdr_pai=[1],
+        sasb_codes=["EM-EP-110a.1"],
         tcfd=["MET-B"],
+        pcaf=["PCAF-Cat15-Financed-Emissions"],
+        cdp=["CDP-Climate-C6.5"],
+        sbti=["SBTi-Scope3-Target"],
         issb=["S2-MT-1"],
         sdg_goals=[13],
     ),
@@ -61,8 +85,13 @@ CROSS_REFERENCE_MAP: list[CrossReference] = [
         gri=["305-5"],
         sfdr_pai=[1, 2, 3],
         sasb_dimension="Environment",
+        sasb_codes=["EM-EP-110a.1"],
         tcfd=["MET-B"],
+        pcaf=["PCAF-Total-Financed-Emissions"],
+        cdp=["CDP-Climate-C6"],
+        sbti=["SBTi-Net-Zero"],
         issb=["S2-MT-1"],
+        esrs=["E1-6"],
         sdg_goals=[13],
     ),
     CrossReference(
@@ -87,6 +116,9 @@ CROSS_REFERENCE_MAP: list[CrossReference] = [
         edci=["EDCI-E5"],
         sfdr_pai=[6],
         sasb_dimension="Environment",
+        sasb_codes=["EM-EP-130a.1", "RT-CH-130a.1", "RT-EE-130a.1"],
+        eu_taxonomy=["Annex-I-7.1-Energy-Use"],
+        cdp=["CDP-Climate-C8"],
         esrs=["E1-5"],
         sdg_goals=[7],
     ),
@@ -95,12 +127,17 @@ CROSS_REFERENCE_MAP: list[CrossReference] = [
         edci=["EDCI-E4"],
         sfdr_pai=[5],
         gri=["302-1"],
+        sasb_codes=["IF-EU-000.D"],
+        eu_taxonomy=["Annex-I-4.1-Renewable-Generation"],
+        cdp=["CDP-Climate-C8.2"],
         sdg_goals=[7],
     ),
     CrossReference(
         concept="Net Zero Commitment",
         edci=["EDCI-E6"],
         tcfd=["MET-C"],
+        sbti=["SBTi-Net-Zero", "SBTi-1.5C-Aligned"],
+        cdp=["CDP-Climate-C4.1"],
         sdg_goals=[13],
     ),
     # Water & Waste
@@ -108,18 +145,25 @@ CROSS_REFERENCE_MAP: list[CrossReference] = [
         concept="Water Consumption",
         gri=["303-5"],
         tcfd=["MET-A"],
+        sasb_codes=["EM-EP-140a.1", "FB-AG-140a.1", "RT-CH-140a.1"],
+        cdp=["CDP-Water-W1.2"],
+        tnfd=["TNFD-MET-WT-1"],
         sdg_goals=[6],
     ),
     CrossReference(
         concept="Emissions to Water",
         gri=["303-4"],
         sfdr_pai=[8],
+        sasb_codes=["EM-EP-140a.2", "RT-CH-150a.1"],
+        cdp=["CDP-Water-W1.4"],
+        tnfd=["TNFD-MET-WT-2"],
         sdg_goals=[6, 14],
     ),
     CrossReference(
         concept="Hazardous Waste",
         gri=["306-3", "306-5"],
         sfdr_pai=[9],
+        sasb_codes=["EM-EP-150a.1", "RT-CH-150a.1"],
         sdg_goals=[12],
     ),
     # Biodiversity
@@ -127,8 +171,26 @@ CROSS_REFERENCE_MAP: list[CrossReference] = [
         concept="Biodiversity Impact",
         gri=["304-1", "304-2"],
         sfdr_pai=[7],
+        sasb_codes=["EM-MM-160a.1", "FB-AG-440a.1"],
+        tnfd=["TNFD-MET-BIO-1", "TNFD-LEAP-Locate"],
         esrs=["E4-5"],
         sdg_goals=[14, 15],
+    ),
+    # Deforestation
+    CrossReference(
+        concept="Deforestation / Land Conversion",
+        gri=["304-3"],
+        sfdr_pai=[19],
+        tnfd=["TNFD-LEAP-Evaluate"],
+        cdp=["CDP-Forests-F4"],
+        sdg_goals=[13, 15],
+    ),
+    # EU Taxonomy alignment
+    CrossReference(
+        concept="EU Taxonomy Alignment Percentage",
+        eu_taxonomy=["Annex-V-Disclosure-CapEx", "Annex-V-Disclosure-OpEx", "Annex-V-Disclosure-Turnover"],
+        esrs=["E1-1"],
+        sdg_goals=[13],
     ),
     # Social - Workforce
     CrossReference(
@@ -137,6 +199,7 @@ CROSS_REFERENCE_MAP: list[CrossReference] = [
         gri=["2-7", "401-1"],
         edci=["EDCI-S7"],
         sasb_dimension="Human Capital",
+        sasb_codes=["FN-CB-000.B", "RT-CH-000.B"],
         esrs=["S1-6"],
         sdg_goals=[8],
     ),
@@ -146,6 +209,7 @@ CROSS_REFERENCE_MAP: list[CrossReference] = [
         gri=["405-1"],
         edci=["EDCI-S4"],
         sfdr_pai=[13],
+        sasb_codes=["FN-CB-330a.1"],
         esrs=["S1-9"],
         sdg_goals=[5, 10],
     ),
@@ -169,7 +233,8 @@ CROSS_REFERENCE_MAP: list[CrossReference] = [
         iris_plus=["OI1582"],
         gri=["405-2"],
         edci=["EDCI-S8"],
-        sfdr_pai=[12],
+        sfdr_pai=[12, 23],
+        sasb_codes=["FN-CB-330a.1"],
         esrs=["S1-16"],
         sdg_goals=[5, 8, 10],
     ),
@@ -178,6 +243,8 @@ CROSS_REFERENCE_MAP: list[CrossReference] = [
         gri=["403-9"],
         edci=["EDCI-S1", "EDCI-S2"],
         sasb_dimension="Human Capital",
+        sasb_codes=["EM-EP-320a.1", "RT-CH-320a.1", "EM-MM-320a.1"],
+        esrs=["S1-14"],
         sdg_goals=[3, 8],
     ),
     CrossReference(
@@ -442,6 +509,12 @@ _iris_index: dict[str, list[CrossReference]] = {}
 _gri_index: dict[str, list[CrossReference]] = {}
 _edci_index: dict[str, list[CrossReference]] = {}
 _sfdr_index: dict[int, list[CrossReference]] = {}
+_sasb_index: dict[str, list[CrossReference]] = {}
+_tnfd_index: dict[str, list[CrossReference]] = {}
+_pcaf_index: dict[str, list[CrossReference]] = {}
+_eutax_index: dict[str, list[CrossReference]] = {}
+_cdp_index: dict[str, list[CrossReference]] = {}
+_sbti_index: dict[str, list[CrossReference]] = {}
 _concept_index: dict[str, CrossReference] = {}
 
 for _xref in CROSS_REFERENCE_MAP:
@@ -454,6 +527,18 @@ for _xref in CROSS_REFERENCE_MAP:
         _edci_index.setdefault(_id, []).append(_xref)
     for _num in _xref.sfdr_pai:
         _sfdr_index.setdefault(_num, []).append(_xref)
+    for _id in _xref.sasb_codes:
+        _sasb_index.setdefault(_id.upper(), []).append(_xref)
+    for _id in _xref.tnfd:
+        _tnfd_index.setdefault(_id, []).append(_xref)
+    for _id in _xref.pcaf:
+        _pcaf_index.setdefault(_id, []).append(_xref)
+    for _id in _xref.eu_taxonomy:
+        _eutax_index.setdefault(_id, []).append(_xref)
+    for _id in _xref.cdp:
+        _cdp_index.setdefault(_id, []).append(_xref)
+    for _id in _xref.sbti:
+        _sbti_index.setdefault(_id, []).append(_xref)
 
 
 def lookup_by_iris(metric_id: str) -> list[CrossReference]:
@@ -470,6 +555,31 @@ def lookup_by_edci(metric_id: str) -> list[CrossReference]:
 
 def lookup_by_sfdr(indicator_number: int) -> list[CrossReference]:
     return _sfdr_index.get(indicator_number, [])
+
+
+def lookup_by_sasb(code: str) -> list[CrossReference]:
+    """Lookup by a specific SASB metric code (e.g. 'FN-CB-230a.1')."""
+    return _sasb_index.get(code.upper(), [])
+
+
+def lookup_by_tnfd(code: str) -> list[CrossReference]:
+    return _tnfd_index.get(code, [])
+
+
+def lookup_by_pcaf(code: str) -> list[CrossReference]:
+    return _pcaf_index.get(code, [])
+
+
+def lookup_by_eu_taxonomy(code: str) -> list[CrossReference]:
+    return _eutax_index.get(code, [])
+
+
+def lookup_by_cdp(code: str) -> list[CrossReference]:
+    return _cdp_index.get(code, [])
+
+
+def lookup_by_sbti(code: str) -> list[CrossReference]:
+    return _sbti_index.get(code, [])
 
 
 def search_cross_references(query: str) -> list[CrossReference]:
@@ -499,8 +609,23 @@ def format_cross_reference(xref: CrossReference) -> str:
         parts.append(f"  ISSB: {', '.join(xref.issb)}")
     if xref.esrs:
         parts.append(f"  ESRS: {', '.join(xref.esrs)}")
-    if xref.sasb_dimension:
-        parts.append(f"  SASB: {xref.sasb_dimension}")
+    if xref.sasb_dimension or xref.sasb_codes:
+        sasb_parts = []
+        if xref.sasb_dimension:
+            sasb_parts.append(xref.sasb_dimension)
+        if xref.sasb_codes:
+            sasb_parts.append(", ".join(xref.sasb_codes))
+        parts.append(f"  SASB: {' / '.join(sasb_parts)}")
+    if xref.tnfd:
+        parts.append(f"  TNFD: {', '.join(xref.tnfd)}")
+    if xref.pcaf:
+        parts.append(f"  PCAF: {', '.join(xref.pcaf)}")
+    if xref.eu_taxonomy:
+        parts.append(f"  EU Taxonomy: {', '.join(xref.eu_taxonomy)}")
+    if xref.cdp:
+        parts.append(f"  CDP: {', '.join(xref.cdp)}")
+    if xref.sbti:
+        parts.append(f"  SBTi: {', '.join(xref.sbti)}")
     if xref.sdg_goals:
         parts.append(f"  SDGs: {', '.join(f'{g}' for g in xref.sdg_goals)}")
     return "\n".join(parts)

@@ -75,6 +75,44 @@ _DEFAULTS_KEYWORD_SDG: dict[str, list[tuple[int, float]]] = {
 }
 
 _sdg_config_cache: dict | None = None
+_core_metrics_per_sdg_cache: dict[int, list[str]] | None = None
+
+
+def _load_core_metrics_per_sdg() -> dict[int, list[str]]:
+    """Load the curated 'core metric set per SDG' from YAML.
+
+    Falls back to an empty dict, in which case sdg_mapper uses the broad
+    `store.filter_by_sdg(goal)` set (legacy behaviour, size-biased).
+    """
+    global _core_metrics_per_sdg_cache
+    if _core_metrics_per_sdg_cache is not None:
+        return _core_metrics_per_sdg_cache
+
+    candidates = [
+        Path(__file__).parent.parent.parent.parent / "data" / "core_metric_set_per_sdg.yaml",
+        Path("data/core_metric_set_per_sdg.yaml"),
+    ]
+    for path in candidates:
+        if not path.exists():
+            continue
+        try:
+            raw = yaml.safe_load(path.read_text(encoding="utf-8"))
+            mapping = (raw or {}).get("core_metrics_by_sdg") or {}
+            result: dict[int, list[str]] = {}
+            for goal, ids in mapping.items():
+                try:
+                    g = int(goal)
+                except (TypeError, ValueError):
+                    continue
+                if isinstance(ids, list):
+                    result[g] = [str(x).strip().upper() for x in ids if x]
+            _core_metrics_per_sdg_cache = result
+            return _core_metrics_per_sdg_cache
+        except Exception:
+            continue
+
+    _core_metrics_per_sdg_cache = {}
+    return _core_metrics_per_sdg_cache
 
 
 def _load_sdg_keywords_config() -> dict:
@@ -242,12 +280,25 @@ def map_sdg_alignment(
                 ))
             continue
 
-        goal_metric_ids = {m.id for m in goal_metrics}
-        matched_metric_ids = goal_metric_ids & reported_ids
+        # Use the curated 'core metric set per SDG' when available so that
+        # coverage scoring is comparable across goals of different breadth.
+        # Fall back to the full filter_by_sdg() set if the YAML is absent.
+        core_per_sdg = _load_core_metrics_per_sdg()
+        broad_goal_metric_ids = {m.id for m in goal_metrics}
+        curated_ids = set(core_per_sdg.get(goal_num, []))
+        # Intersect with what the catalog actually knows about, so a stale
+        # YAML entry doesn't penalise the company.
+        all_known_ids = {m.id for m in store.all_metrics()}
+        coverage_set = (curated_ids & all_known_ids) or broad_goal_metric_ids
+        scoring_basis = "core_set" if (curated_ids & all_known_ids) else "broad_catalog"
+
+        matched_metric_ids = coverage_set & reported_ids
+        # Targets / evidence chain still use the broad set so we surface every
+        # SDG target the company has touched.
         matched_targets: set[str] = set()
         evidence_chain: list[dict[str, object]] = []
         for m in goal_metrics:
-            if m.id in matched_metric_ids:
+            if m.id in (broad_goal_metric_ids & reported_ids):
                 matched_targets.update(m.sdg_targets)
                 for tgt in m.sdg_targets:
                     evidence_chain.append({
@@ -258,7 +309,7 @@ def map_sdg_alignment(
                         "confidence": 0.8 if len(matched_metric_ids) >= 3 else 0.5,
                     })
 
-        coverage = len(matched_metric_ids) / len(goal_metric_ids) if goal_metric_ids else 0
+        coverage = len(matched_metric_ids) / len(coverage_set) if coverage_set else 0
         metric_score = min(60.0, coverage * 60.0)
 
         inferred_score = inferred_sdg.get(goal_num, 0) * 25.0
@@ -308,6 +359,7 @@ def map_sdg_alignment(
             confidence=confidence,
             provenance=provenance,
             evidence_chain=evidence_chain,
+            scoring_basis=scoring_basis,
         ))
 
     alignments.sort(key=lambda a: a.score, reverse=True)

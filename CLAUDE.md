@@ -12,6 +12,24 @@ Impact Vision is an open-source AI-powered impact measurement and SDG alignment 
 6. Greenwashing detection (standard + EU Green Claims + UK FCA + NLP) and regulatory compliance checks
 7. `impact_report` generates the final assessment (HTML with Plotly charts, XLSX, CSV, JSON)
 
+## Engineering housekeeping (deferred refactor)
+
+**Package rename**: the project is `impact-vision` (pyproject) but the
+importable package is still `openharness` and carries many unused HKUDS-era
+sub-packages (`swarm`, `vim`, `coordinator`, `engine`, `themes`, `ui`,
+`bridge`, `frontend/terminal`). They inflate the wheel and the import-time
+attack surface. Plan:
+
+1. Add a top-level `impact_vision` namespace that re-exports everything in
+   `openharness.impact.*` (keep `openharness` as a deprecated alias).
+2. Trim `[tool.hatch.build.targets.wheel.force-include]` to ship only
+   `impact/`, `tools/impact/`, `api_gateway/`, `prompts/`, `cli.py`.
+3. Delete the unused submodules in a separate PR once downstream callers
+   (Streamlit dashboard, examples) have been updated.
+
+This is intentionally **not** done in the same PR as the Phase-11
+correctness fixes to keep the diff readable.
+
 ## Project Structure
 
 ```

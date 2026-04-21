@@ -304,6 +304,7 @@ class SDGAlignment(BaseModel):
         default_factory=list,
         description="Chain: [{claim_text, metric_id, evidence_type, sdg_target, confidence}]",
     )
+    scoring_basis: Literal["core_set", "broad_catalog", "estimated"] = "estimated"
 
 
 class Assessment(BaseModel):

@@ -231,20 +231,35 @@ def _score_dimension(
     available = len(reference_set) if reference_set else len(all_dim_ids)
 
     if available == 0:
+        # No reference set: this dimension is not measurable for the company's
+        # theme. Surface the inferred baseline only — do NOT auto-floor at 1.0.
         return DimensionScore(
             dimension=dimension_name,
-            score=round(max(1.0, baseline_score), 1),
+            score=round(max(0.5, baseline_score), 1),
             metrics_reported=0,
             metrics_available=0,
             gaps=[],
-            notes="Estimated from sector/description analysis",
+            notes="Estimated from sector/description analysis (no reference metrics available)",
             provenance="estimated",
         )
 
     ref_ratio = len(matched_in_reference) / available if available > 0 else 0
-    extra_bonus = min(0.5, (total_reported_dim - len(matched_in_reference)) * 0.1) if total_reported_dim > len(matched_in_reference) else 0
+    # When the theme's reference set is very small (<10 metrics) the per-extra
+    # bonus inflates scores quickly; soften it for narrow themes.
+    extra_per_metric = 0.05 if available < 10 else 0.1
+    extra_bonus = (
+        min(0.5, (total_reported_dim - len(matched_in_reference)) * extra_per_metric)
+        if total_reported_dim > len(matched_in_reference)
+        else 0
+    )
     metric_score = ref_ratio * 4.5 + extra_bonus + (0.5 if total_reported_dim > 0 else 0)
     score = min(5.0, max(metric_score, baseline_score))
+
+    # Per-dimension floor: until you've reported at least MIN_METRICS_FOR_ABOVE_BASELINE
+    # metrics that hit THIS dimension's reference set, cap its score at 2.5 even if
+    # the baseline + extra-bonus interaction tries to push it higher.
+    if len(matched_in_reference) < MIN_METRICS_FOR_ABOVE_BASELINE and score > 2.5:
+        score = 2.5
 
     gap_ids = sorted(reference_set - reported_ids)[:10]
     gaps = [f"{mid} ({store.get(mid).name if store.get(mid) else mid})" for mid in gap_ids]

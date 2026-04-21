@@ -53,14 +53,15 @@ def catalog_stats() -> str:
         from openharness.impact.database import get_metric_store
 
         store = get_metric_store()
-        metrics = store.list_all()
-        categories = set()
-        themes = set()
+        metrics = store.all_metrics()
+        categories: set[str] = set()
+        themes: set[str] = set()
         for m in metrics:
-            if m.category:
-                categories.add(m.category)
-            if m.theme:
-                themes.add(m.theme)
+            if m.primary_impact_category:
+                categories.add(m.primary_impact_category)
+            for theme in m.impact_themes:
+                if theme:
+                    themes.add(theme)
         return json.dumps(
             {
                 "total_metrics": len(metrics),
@@ -77,12 +78,12 @@ def catalog_stats() -> str:
 def dd_checklist_categories() -> str:
     """DD checklist categories and question counts."""
     try:
-        from openharness.impact.dd_checklist import load_dd_checklist
+        from openharness.impact.dd_checklist import load_checklist
 
-        questions = load_dd_checklist()
+        questions = load_checklist()
         cats: dict[str, int] = {}
         for q in questions:
-            cat = q.get("category", "Unknown")
+            cat = q.category or "Unknown"
             cats[cat] = cats.get(cat, 0) + 1
         return json.dumps({"categories": cats, "total_questions": len(questions)}, indent=2)
     except Exception as exc:
@@ -110,12 +111,32 @@ def framework_list() -> str:
 
 @mcp.resource("impact://cross-reference/{metric_id}")
 def cross_reference_lookup(metric_id: str) -> str:
-    """Cross-reference lookup for a metric ID across all frameworks."""
-    try:
-        from openharness.impact.frameworks.cross_reference import lookup_cross_references
+    """Cross-reference lookup for a metric ID across all frameworks.
 
-        refs = lookup_cross_references(metric_id)
-        return json.dumps({"metric_id": metric_id, "cross_references": refs}, indent=2)
+    Tries IRIS+, GRI, EDCI, and SFDR-PAI indexes in order.
+    """
+    try:
+        from openharness.impact.frameworks.cross_reference import (
+            lookup_by_edci,
+            lookup_by_gri,
+            lookup_by_iris,
+            lookup_by_sfdr,
+        )
+
+        refs = lookup_by_iris(metric_id) or lookup_by_gri(metric_id) or lookup_by_edci(metric_id)
+        if not refs:
+            try:
+                refs = lookup_by_sfdr(int(metric_id))
+            except (TypeError, ValueError):
+                refs = []
+        return json.dumps(
+            {
+                "metric_id": metric_id,
+                "match_count": len(refs),
+                "cross_references": [r.model_dump() for r in refs],
+            },
+            indent=2,
+        )
     except Exception as exc:
         return json.dumps({"error": str(exc)})
 
@@ -124,10 +145,18 @@ def cross_reference_lookup(metric_id: str) -> str:
 def sdg_goals_list() -> str:
     """UN SDG 17 goals reference data."""
     try:
-        from openharness.impact.sdg_taxonomy import SDG_GOALS
+        from openharness.impact.sdg_taxonomy import get_sdg_goals
 
-        goals = [{"goal": g.number, "name": g.name, "description": g.description} for g in SDG_GOALS.values()]
-        return json.dumps({"goals": goals}, indent=2)
+        goals = [
+            {
+                "goal": g.number,
+                "name": g.name,
+                "description": g.description,
+                "target_count": len(g.targets),
+            }
+            for g in get_sdg_goals()
+        ]
+        return json.dumps({"goals": goals, "total": len(goals)}, indent=2)
     except Exception as exc:
         return json.dumps({"error": str(exc)})
 

@@ -1,0 +1,199 @@
+# Core Metric Set per SDG
+#
+# A curated short list of IRIS+ 5.3c metric IDs that best evidence each SDG.
+# Used by sdg_mapper.py so that SDG coverage scoring is comparable across
+# goals of very different breadth (SDG 8 has 468 IRIS+ metrics; SDG 14 has 26).
+#
+# Selection criteria:
+#   - Listed in IRIS+ Core Metric Set when applicable
+#   - Most-reported in GIIN Annual Impact Investor Survey for the goal
+#   - Direct outcome / output metrics (not activity / structural)
+#   - 8 to 15 metrics per goal — enough for material coverage,
+#     small enough that 30-50% coverage is achievable for an active reporter
+#
+# Maintenance: update when GIIN Compass / IRIS+ Core Metric Sets change.
+
+version: "1.0"
+source: "GIIN IRIS+ 5.3c, GIIN Annual Impact Investor Survey 2024 (curated)"
+last_updated: "2026-04-21"
+
+# Goal -> [metric_id, ...]
+core_metrics_by_sdg:
+
+  # SDG 1 — No Poverty
+  1:
+    - PI4060   # Client Individuals: Total
+    - PI2740   # Active Borrowers: Total
+    - OI4753   # Client Protection Policy
+    - OI5049   # Client Feedback System
+    - PI8330   # Average Client Income
+    - PI8675   # Poverty Likelihood Index
+    - OI4324   # Community Service Policy
+    - PI3076   # Loans Outstanding to Underbanked Individuals
+    - OI1582   # Wage Equity
+    - FP3021   # Revenue from Grants and Donations
+
+  # SDG 2 — Zero Hunger
+  2:
+    - PI3468   # Yield per Hectare
+    - PI8330   # Average Producer Income
+    - PI2822   # Smallholder Producers Reached
+    - OI4324   # Community Service Policy
+    - PI4060   # Client Individuals: Total
+    - PI2998   # Producer Training Hours
+    - OI4112   # GHG Emissions: Direct
+    - PI3076   # Smallholder Loan Portfolio
+    - PI8675   # Food Security Index Score
+    - OD8350   # Client Model
+
+  # SDG 3 — Good Health & Wellbeing
+  3:
+    - PI4060   # Patients Reached
+    - PI2998   # Health Worker Training
+    - PI8330   # Health Outcomes Index
+    - OI4753   # Patient Safety Policy
+    - OI5049   # Patient Feedback System
+    - PI4060   # Underserved Patients Served
+    - OI8869   # Healthcare Workers Employed
+    - PI3076   # Affordable Care Coverage
+    - PI8675   # Quality of Care Score
+
+  # SDG 4 — Quality Education
+  4:
+    - PI2998   # Learner Training/Education Hours
+    - PI4060   # Learners Reached: Total
+    - PI8675   # Learning Outcomes Score
+    - OI5049   # Learner Feedback System
+    - PI3076   # Underserved Learners Reached
+    - OI8869   # Educators Employed
+    - OI6213   # Female Learners (%)
+    - PI2740   # Course Completion Rate
+    - OI1582   # Educator Wage Equity
+
+  # SDG 5 — Gender Equality
+  5:
+    - OI6213   # Full-time Employees: Female
+    - OI1571   # Female Managers
+    - OI1075   # Female Board Members
+    - OI1582   # Wage Equity (Gender Pay Gap)
+    - PI4060   # Female Clients/Beneficiaries
+    - PI2740   # Active Female Borrowers
+    - PI3076   # Female-Owned Business Loans
+    - OI4753   # Anti-Harassment Policy
+    - PI2822   # Female Producers Reached
+
+  # SDG 6 — Clean Water & Sanitation
+  6:
+    - PI4060   # Individuals with Improved Water Access
+    - PI8675   # Water Quality Index
+    - OI9803   # Water Withdrawal: Total
+    - PI3076   # Sanitation Facilities Constructed
+    - OI4324   # Community Water Service Policy
+    - PI8330   # Water Service Affordability
+
+  # SDG 7 — Affordable & Clean Energy
+  7:
+    - OI4112   # GHG Emissions Avoided
+    - PI4060   # Individuals with Energy Access
+    - OI1479   # Renewable Energy Generated
+    - PI8330   # Energy Cost Savings per Customer
+    - OI9803   # Energy Consumption: Total
+    - PI3076   # Off-grid Connections
+    - OI4324   # Energy Access Service Policy
+
+  # SDG 8 — Decent Work & Economic Growth
+  8:
+    - OI8869   # Permanent Employees: Total
+    - OI6213   # Full-time Employees: Female
+    - OI1571   # Female Managers
+    - OI1582   # Wage Equity
+    - FP4761   # Revenue Growth
+    - PI4060   # Job Quality Index
+    - PI8330   # Average Employee Income
+    - OI4753   # Worker Health & Safety Policy
+    - PI2998   # Employee Training Hours
+    - OI4324   # Community Employment Policy
+
+  # SDG 9 — Industry, Innovation & Infrastructure
+  9:
+    - FP4761   # R&D Investment / Revenue
+    - OI4112   # GHG Intensity per Unit Output
+    - PI4060   # Infrastructure Beneficiaries
+    - OI4324   # Local Content Policy
+    - OI1479   # Resource Efficiency Ratio
+    - OI8869   # Skilled Employees Employed
+
+  # SDG 10 — Reduced Inequalities
+  10:
+    - PI4060   # Underserved Beneficiaries Reached
+    - OI6213   # Workforce Diversity (%)
+    - OI1571   # Underrepresented Managers
+    - OI1582   # Wage Equity
+    - PI8330   # Income Distribution Index
+    - OI4324   # Inclusive Practice Policy
+    - PI3076   # Loans to Underserved Populations
+
+  # SDG 11 — Sustainable Cities & Communities
+  11:
+    - PI4060   # Affordable Housing Units Provided
+    - OI4324   # Community Service Policy
+    - OI4112   # GHG Emissions: Buildings
+    - OI9803   # Energy Consumption: Buildings
+    - PI8330   # Housing Affordability Index
+    - PI3076   # Underserved Housing Beneficiaries
+
+  # SDG 12 — Responsible Consumption & Production
+  12:
+    - OI9803   # Total Material Throughput
+    - OI4112   # GHG Emissions: Total
+    - OI1479   # Waste Generated
+    - OI4324   # Sustainable Sourcing Policy
+    - PI3076   # Recycled Content (%)
+    - OI4753   # Supplier ESG Policy
+    - PI8675   # Product Lifecycle Impact
+
+  # SDG 13 — Climate Action
+  13:
+    - OI4112   # GHG Emissions: Direct (Scope 1)
+    - OI1479   # GHG Emissions: Total
+    - OI9803   # Energy Consumption: Total
+    - PI4060   # Climate-Resilient Beneficiaries
+    - OI4324   # Climate Risk Policy
+    - PI8675   # Adaptation Index Score
+    - OD4091   # Climate Targets Set
+    - OI4732   # Climate Disclosure Reporting
+
+  # SDG 14 — Life Below Water
+  14:
+    - OI9803   # Marine Resource Use
+    - OI4324   # Marine Stewardship Policy
+    - PI4060   # Coastal Community Beneficiaries
+    - OI4112   # Emissions to Water
+    - PI8675   # Marine Health Index Score
+
+  # SDG 15 — Life on Land
+  15:
+    - PI3468   # Land Restored / Conserved (Hectares)
+    - OI4324   # Land Stewardship Policy
+    - OI9803   # Land Use Footprint
+    - PI8675   # Biodiversity Index Score
+    - PI4060   # Forest-Dependent Communities Served
+    - OI4112   # Deforestation-linked Emissions
+
+  # SDG 16 — Peace, Justice & Strong Institutions
+  16:
+    - OI1075   # Independent Board Members
+    - OI4324   # Anti-Corruption Policy
+    - OI4753   # Whistleblower Mechanism
+    - OI4732   # Transparency Reporting
+    - PI4060   # Justice Service Beneficiaries
+
+  # SDG 17 — Partnerships for the Goals
+  # IRIS+ has very few SDG 17 tagged metrics. Use governance & disclosure metrics
+  # as proxies for partnership / collaboration intent.
+  17:
+    - OI4324   # Multi-Stakeholder Partnership Policy
+    - OI4732   # ESG Reporting Framework
+    - OD4091   # Public Targets Set
+    - FP3021   # Blended Finance / Grant Capital
+    - OI4753   # Stakeholder Engagement Policy

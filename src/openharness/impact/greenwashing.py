@@ -44,14 +44,109 @@ _BUZZWORDS = {
     "carbon-neutral", "climate-positive", "circular", "regenerative",
 }
 
+# Genuinely *adverse* metrics — i.e. things that, when reported, demonstrate
+# the company is monitoring its negative impact. Picked from IRIS+ + sector
+# best-practice. Sources: GIIN IRIS+ 5.3c, SASB sector standards, PCAF.
+# An IRIS+ ID is used when one exists; otherwise an indicator label is given so
+# the GP can mark a custom metric ID against the same concept.
 _ADVERSE_METRICS_BY_SECTOR: dict[str, list[str]] = {
-    "fintech": ["PI4060", "OI1571"],
-    "financial": ["PI4060", "OI1571"],
-    "energy": ["OI4112", "OI9803"],
-    "agriculture": ["OI4112", "PI3468"],
-    "healthcare": ["PI4060"],
-    "technology": ["PI4060"],
-    "default": ["OI4112", "PI4060"],
+    # Microfinance / consumer lending: client over-indebtedness, pricing,
+    # complaints, loan-loss provisioning, harassment.
+    "fintech": [
+        "PD8330",   # Average APR / cost of credit (proxy: pricing)
+        "PI8675",   # Client over-indebtedness rate
+        "OI4753",   # Client protection / over-indebtedness policy
+        "PD3076",   # Portfolio at Risk > 30 days (PAR30)
+        "OI5049",   # Client complaints rate (Lean Data)
+    ],
+    "financial": [
+        "PD8330", "PI8675", "OI4753", "PD3076", "OI5049",
+    ],
+    # Energy: scope 1+2+3, water, methane, project-related displacement.
+    "energy": [
+        "OI4112",   # GHG Emissions: Direct (Scope 1)
+        "OI1479",   # GHG Emissions: Indirect (Scope 2)
+        "OI9803",   # Water Withdrawal: Total
+        "OI8869",   # Worker fatalities / TRIR
+        "PI8330",   # Communities displaced / resettled
+    ],
+    # Agriculture / food: pesticides, soil/water, smallholder pricing.
+    "agriculture": [
+        "OI4112",   # GHG (incl. land use change)
+        "PI3468",   # Pesticide / fertiliser application intensity
+        "OI9803",   # Water withdrawal in water-stressed areas
+        "PI8330",   # Producer income vs. living-income benchmark
+        "OI4753",   # Child / forced labour policy
+    ],
+    "livestock": [
+        "OI4112", "OI9803", "PI3468", "OI4753",
+    ],
+    # Healthcare: avoidable adverse events, antibiotic stewardship, affordability.
+    "healthcare": [
+        "OI4753",   # Patient safety / adverse event rate
+        "PI8675",   # Avoidable readmission rate
+        "PD8330",   # Average out-of-pocket cost per visit (affordability)
+        "OI5049",   # Patient complaints
+    ],
+    "health": ["OI4753", "PI8675", "PD8330", "OI5049"],
+    # Technology / SaaS: data breaches, content moderation, model bias, e-waste.
+    "technology": [
+        "OI4732",   # Data privacy breach incidents
+        "OI4753",   # Content moderation / harm mitigation policy
+        "OI9803",   # Energy consumption (data centre)
+        "OI4112",   # Scope 2 emissions
+    ],
+    "ict": ["OI4732", "OI4753", "OI9803", "OI4112"],
+    # Manufacturing: scope 1/2/3, hazardous waste, occupational injury.
+    "manufacturing": [
+        "OI4112", "OI1479", "OI9803",
+        "OI8869",   # Lost-time injury rate (LTIR)
+        "PI3468",   # Hazardous waste generated
+    ],
+    # Mining / extractives: tailings, biodiversity, community grievances.
+    "mining": [
+        "OI4112", "OI9803", "PI3468",
+        "OI4324",   # Community grievances / FPIC
+        "OI8869",   # Worker fatalities
+        "OI4753",   # Tailings management policy
+    ],
+    "extractives": [
+        "OI4112", "OI9803", "PI3468", "OI4324", "OI8869", "OI4753",
+    ],
+    # Real estate / construction: embodied carbon, displacement.
+    "real estate": [
+        "OI4112", "OI9803", "OI8869",
+        "PI8330",   # Tenant displacement / affordability
+    ],
+    "construction": [
+        "OI4112", "OI9803", "OI8869", "PI3468",
+    ],
+    # Transport / logistics: scope 1, NOx/PM, road safety.
+    "transport": [
+        "OI4112", "OI9803", "OI8869",
+    ],
+    "logistics": ["OI4112", "OI9803", "OI8869"],
+    # Education: drop-out, debt burden.
+    "education": [
+        "OI5049",   # Learner complaints
+        "PI8675",   # Drop-out rate
+        "PD8330",   # Tuition vs. household income (affordability)
+    ],
+    # Water / sanitation: leakage, affordability, source depletion.
+    "water": [
+        "OI9803", "PI3468", "PD8330",
+    ],
+    # Waste: landfill diversion, hazardous handling.
+    "waste management": [
+        "OI4112", "PI3468", "OI8869",
+    ],
+    # Default: GHG + worker safety as universal adverse signals.
+    "default": [
+        "OI4112",   # Scope 1
+        "OI1479",   # Scope 2
+        "OI8869",   # Worker fatalities / LTIR
+        "OI4753",   # Adverse incident policy
+    ],
 }
 
 _VERIFICATION_KEYWORDS = {
@@ -207,11 +302,16 @@ def _score_selectivity(company: Company, metrics: set[str]) -> float:
     return max(0, min(100, score))
 
 
+def _has_word(text: str, term: str) -> bool:
+    """Word-boundary aware substring check."""
+    return bool(re.search(r"\b" + re.escape(term) + r"\b", text))
+
+
 def _score_verification(text: str, metrics: set[str]) -> float:
     """Score: does the company show verification/audit signals?"""
     text_lower = text.lower()
-    verification_hits = sum(1 for kw in _VERIFICATION_KEYWORDS if kw in text_lower)
-    measurement_hits = sum(1 for kw in _MEASUREMENT_KEYWORDS if kw in text_lower)
+    verification_hits = sum(1 for kw in _VERIFICATION_KEYWORDS if _has_word(text_lower, kw))
+    measurement_hits = sum(1 for kw in _MEASUREMENT_KEYWORDS if _has_word(text_lower, kw))
 
     score = 70.0
     score -= verification_hits * 12
@@ -317,8 +417,15 @@ def assess_green_claims_compliance(
     text = f"{description} {document_text}".lower()
     metrics = reported_metrics or {}
 
-    claims = [c for c in _ENVIRONMENTAL_CLAIM_PATTERNS if c in text]
-    lca_triggers = [t for t in _LCA_TRIGGER_TERMS if t in text]
+    # Multi-token / hyphenated patterns are checked as substrings (word boundary
+    # would over-restrict because the patterns themselves include word breaks);
+    # single-word patterns get a word-boundary match to avoid e.g. "green" in
+    # "evergreen".
+    def _claim_in(t: str, c: str) -> bool:
+        return _has_word(t, c) if (" " not in c and "-" not in c) else c in t
+
+    claims = [c for c in _ENVIRONMENTAL_CLAIM_PATTERNS if _claim_in(text, c)]
+    lca_triggers = [t for t in _LCA_TRIGGER_TERMS if _claim_in(text, t)]
     lca_required = bool(lca_triggers) and not has_lca
 
     issues: list[str] = []
@@ -332,7 +439,7 @@ def assess_green_claims_compliance(
         if not has_data:
             issues.append(f"Claim '{claim}' lacks quantitative substantiation")
 
-    if "offset" in text or "carbon credit" in text:
+    if _has_word(text, "offset") or "carbon credit" in text:
         if "reduc" not in text:
             issues.append("Offsetting claim without evidence of actual emission reductions (Art. 5(6))")
             recs.append("Demonstrate primary emission reductions before referencing offsets")
@@ -419,25 +526,29 @@ def assess_fca_anti_greenwashing(
     recs: list[str] = []
     applicable_labels: list[str] = []
 
+    def _term_in(t: str, term: str) -> bool:
+        return _has_word(t, term) if (" " not in term and "-" not in term) else term in t
+
     for term in _FCA_PROHIBITED_TERMS:
-        if term in text:
+        if _term_in(text, term):
             has_evidence = bool(metrics) or any(
-                kw in text for kw in ["measured", "reported", "verified", "certified", "tracked"]
+                _has_word(text, kw)
+                for kw in ["measured", "reported", "verified", "certified", "tracked"]
             )
             if not has_evidence:
                 issues.append(
                     f"Use of '{term}' without substantiation may breach FCA Anti-Greenwashing Rule"
                 )
 
-    if "impact" in text and metrics:
+    if _has_word(text, "impact") and metrics:
         applicable_labels.append("sustainability_impact")
-    if "esg" in text or "sustainable" in text:
+    if _has_word(text, "esg") or _has_word(text, "sustainable"):
         if metrics and len(metrics) >= 3:
             applicable_labels.append("sustainability_focus")
         else:
             applicable_labels.append("sustainability_improvers")
 
-    if not applicable_labels and any(t in text for t in _FCA_PROHIBITED_TERMS):
+    if not applicable_labels and any(_term_in(text, t) for t in _FCA_PROHIBITED_TERMS):
         issues.append("Sustainability-related terminology used without qualifying for an SDR label")
         recs.append("Evaluate whether a Sustainability Disclosure Requirements (SDR) label applies")
 
