@@ -499,6 +499,7 @@ class TestSSEStreaming:
         assert out.endswith("\n\n") or out.endswith("\n")
 
     def test_build_router_exposes_echo(self):
+        pytest.importorskip("fastapi")
         from fastapi import FastAPI
         from fastapi.testclient import TestClient
 
