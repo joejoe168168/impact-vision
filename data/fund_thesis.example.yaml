@@ -1,0 +1,59 @@
+# Example fund impact thesis — copy this file to data/fund_thesis.yaml and
+# adjust to your strategy. All weights must sum to 1.0 within each block.
+#
+# Loaded by openharness.impact.fund_thesis.load_fund_thesis().
+
+fund:
+  name: "Example Climate Fund I"
+  manager: "Example Capital LP"
+  vintage_year: 2024
+  fund_size_eur_m: 150
+  strategy: "impact_first"   # impact_first | finance_first | responsible
+  asset_class: "growth_equity"
+  geography_focus: ["Europe", "Sub-Saharan Africa"]
+
+# SDG weights — what does *this* fund care about most?
+# Goals not listed default to weight 0.
+sdg_weights:
+  7: 0.30   # Affordable & Clean Energy
+  13: 0.30  # Climate Action
+  9: 0.15   # Industry, Innovation & Infrastructure
+  11: 0.10  # Sustainable Cities
+  12: 0.10  # Responsible Consumption
+  17: 0.05  # Partnerships
+
+# 5-Dimension weights — used when computing weighted overall scores
+five_d_weights:
+  what: 0.25
+  who: 0.15
+  how_much: 0.25
+  contribution: 0.20
+  risk: 0.15
+
+# Pass-fail criteria for IC submission (see deal_gate.py).
+ic_gate:
+  min_5d_overall: 2.5
+  min_dd_coverage_pct: 70.0
+  min_top_sdg_score: 60.0
+  max_greenwashing_score: 40.0
+  exclusion_must_pass: true
+  required_sectors: []      # empty => any
+  forbidden_sectors:
+    - mining
+    - extractives
+    - tobacco
+    - controversial weapons
+
+# Adverse-impact thresholds applied to portfolio companies
+adverse_thresholds:
+  scope1_intensity_max_tco2e_per_eur_m: 200
+  worker_fatality_max_per_year: 0
+  npl_ratio_max_pct: 8.0   # for fintech/financial services
+
+# LP reporting cadence — drives the LP reporting calendar generator
+reporting_cadence:
+  ilpa_esg: quarterly
+  giin_iris: annually
+  edci: annually
+  sfdr_pai: annually
+  fund_impact_letter: semi_annually
