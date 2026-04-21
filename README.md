@@ -1,6 +1,6 @@
 # Impact Vision
 
-> **v0.13.0 · 2026-04-21** — DD Questionnaire Helper (HTML + Word), Web Console, report polish, green CI. See [CHANGELOG.md](CHANGELOG.md).
+> **v0.14.0 · 2026-04-21** — Phases 15.6 → 20 shipped in one drop: LLM extractor / verifier adapters, fund-branded reports, branching DD questionnaire, SSE streaming, carbon / biodiversity credit registries, Multiple-of-Impact + impact-adjusted IRR, GIIN-Compass-style peer benchmarks, blended-finance term sheets, ILPA LP portal, thesis marketplace, ISAE 3000 / AA1000 / CSRD / ISSB / SOC 2 packs, Bayesian + SROI + meta-analysis + spillover, satellite / survey / worker-voice / ecosystem-service layers, 6-language dashboard keys, 4 regional fund-thesis packs, 7 jurisdiction regulatory packs, FX normalization. 150 passed / 4 skipped / 0 failed, ruff clean. See [CHANGELOG.md](CHANGELOG.md).
 
 Open-source AI-powered impact measurement and SDG alignment agent for VC and impact investment funds.
 
@@ -56,7 +56,7 @@ Key concepts Impact Vision helps with:
 8. Suggest the most important **follow-up questions** for the investment team
 9. Generate reports in **HTML** (with Plotly charts), **XLSX**, CSV, JSON, or text
 
-## For Fund Managers — 60-second workflow (v0.13.0)
+## For Fund Managers — 60-second workflow (v0.14.0)
 
 ```python
 from openharness.impact.sdk import ImpactVision
@@ -106,12 +106,22 @@ cal = iv.build_lp_calendar(horizon_months=12)
 
 Prefer a browser? `impact-vision serve-web` launches the [Web Console](#web-console-power-user-ui) + REST API in one process at `http://127.0.0.1:8787` and puts all 26 tools one click away.
 
-**What's new in v0.13.0 — analyst-day polish.**
-- **DD Questionnaire Helper** — the DD HTML is rebuilt around the work a GP still has to do: key risks, priority-sorted questionnaire (by severity × natural DD sequence), and a consolidated evidence / document-gap checklist. Legacy coverage table moved to an appendix.
-- **Word (.docx) export** — `ImpactVision.render_dd_questionnaire_docx()` hands you an editable `.docx` with empty "Founder response" slots, ready to email.
-- **Impact-report rationale fix** — the *"How this grade was calculated"* panel now uses fixed widths, word-wrap and a responsive scroll fallback so every driver fits at 1080 px and on tablets.
-- **Web Console (v1)** — `openharness.web` is a single-file SPA on top of the FastAPI gateway; lists all 26 tools, renders forms, `POST`s to `/api/v1/*`.
-- **CI green** — ruff clean on `src/`, the MCP test no longer depends on removed `FastMCP(version=…)` kwargs, and GitHub Actions is green end-to-end.
+**What's new in v0.14.0 — Phases 15.6 → 20 in one drop.**
+- **LLM extractor / verifier adapters** (`openharness.impact.extractors.llm_extractor|llm_verifier`) — OpenAI-compatible claim extractor and URL-grounded source verifier with offline-safe fallbacks, `<think>`-tag stripping, strict-JSON schema validation and a `known_sources` allow-list.
+- **Fund-branded reports** (`openharness.impact.branding`) — drop a `branding:` block into `fund_thesis.yaml` (logo URL, primary / accent colour, footer text) and every HTML surface (Impact, DD, IC memo, LP portal) picks it up via a tiny CSS override.
+- **DD Questionnaire v2 — branching** (`openharness.impact.questionnaire_v2`) — conditional follow-ups in HTML *and* Word, driven by a 3-predicate rules engine (`contains` / `equals` / `missing`).
+- **SSE streaming** (`openharness.web.streaming`) — `/api/v1/stream/echo` demo endpoint plus a `register_sse_endpoint()` plug-in hook for long-running tools.
+- **Carbon / biodiversity credit registries** (`openharness.impact.registries`) — unified `CreditRegistry` Protocol for Verra, Gold Standard, Puro.earth, BioCredits + portfolio roll-up.
+- **MOI + impact-adjusted IRR** (`openharness.impact.returns`) — Newton-Raphson, no scipy.
+- **GIIN Compass peer context** (`openharness.impact.external_benchmarks`) — sector × dimension quartile positioning with offline percentile snapshot.
+- **Blended-finance designer** (`openharness.impact.blended_finance`) — IL-Loan, SOC / DIB and impact-carry term sheets.
+- **ILPA LP portal + thesis marketplace** — capital-account statement, impact dashboard, audit trail, publish / subscribe / compare (`lp_portal`, `marketplace`).
+- **ISAE 3000 / AA1000 / CSRD / ISSB / SOC 2 packs** — `assurance`, `csrd_wizard`, `issb_reporting`, `soc2_checklist`, plus hash-chained `audit_trail`.
+- **Bayesian updater, meta-analysis, spillover, SROI, causal ingest** — zero-dep scientific-rigor layer (`bayes`, `meta_analysis`, `spillover`, `sroi`, `causal`).
+- **Satellite / survey / worker-voice / ecosystem** (`geospatial`, `surveys`, `worker_voice`, `ecosystem_services`) — Phase 19 primary-data adapters with deterministic offline stubs.
+- **Global reach** — 6-language dashboard key file, 4 regional fund-thesis packs, 7 jurisdiction regulatory packs, FX normalization (`i18n`, `fund_thesis.*.yaml`, `regulatory_packs`, `fx`).
+- **SDK facade** — every new module gets a one-line entry point on `ImpactVision` (`iv.compute_moi`, `iv.build_assurance_pack`, `iv.double_materiality`, `iv.regulatory_pack("EU-SFDR")`, `iv.convert_currency(1000, "MYR", "USD")`, …).
+- **Green CI** — **150 passed / 4 skipped / 0 failed**, `ruff check src/` clean.
 
 **Regulatory coverage shipped in v0.9.0** — financed emissions (PCAF), net-zero alignment (SBTi), EU Taxonomy alignment %, nature-related disclosures (TNFD v1), CDP intake. **Multi-tenant + RBAC, plug-in entry points, and hash-chained LP report feeds** shipped in v0.11.0. See the [Roadmap section](#roadmap-for-impact-investors--fund-managers) for what is planned next.
 
@@ -877,8 +887,8 @@ pip install -e ".[dev]"
 # Run all tests
 python -m pytest tests/ -v
 
-# Run the Impact Vision test subset (~180 tests, no external deps, ~2-3s)
-python -m pytest tests/test_impact.py tests/test_phase11_fixes.py tests/test_phases12_15.py -v
+# Run the Impact Vision test subset (~150 tests, no external deps, ~2-3s)
+python -m pytest tests/test_impact.py tests/test_phase11_fixes.py tests/test_phases12_15.py tests/test_phases15_20.py -v
 
 # Run import smoke checks (verifies all package exports work)
 python scripts/check_imports.py --all
@@ -889,7 +899,7 @@ ruff check src/
 
 ### Testing Coverage
 
-900+ tests across all subsystems; the impact subset (`test_impact.py` + `test_phase11_fixes.py` + `test_phases12_15.py`) is **180 passed / 4 skipped / 0 failed** at v0.13.0.
+900+ tests across all subsystems; the impact subset (`test_impact.py` + `test_phase11_fixes.py` + `test_phases12_15.py` + `test_phases15_20.py`) is **150 passed / 4 skipped / 0 failed** at v0.14.0.
 
 | Test area | Tests | What it covers |
 |-----------|------:|----------------|
@@ -949,7 +959,7 @@ See [docs/cursor-integration.md](docs/cursor-integration.md) for full setup guid
 
 ## REST API
 
-Full FastAPI REST API with 26+ endpoints (version `0.13.0`):
+Full FastAPI REST API with 26+ endpoints (version `0.14.0`):
 
 ```bash
 # Start the API server
@@ -961,7 +971,7 @@ IMPACT_VISION_API_KEY=your-secret-key uvicorn openharness.api_gateway.router:app
 
 Key endpoints: `/api/v1/score`, `/api/v1/sdg-map`, `/api/v1/greenwashing`, `/api/v1/report`, `/api/v1/pipeline`, `/api/v1/batch`, and more. See the auto-generated docs at `/docs`.
 
-## System Review (v0.13.0)
+## System Review (v0.14.0)
 
 A full code-base walk-through (models, scoring engines, frameworks, tools, MCP server, REST API, dashboard, Web Console) produced the following assessment. It is meant to be read alongside the roadmap below.
 
@@ -1030,8 +1040,8 @@ All 12 review findings have been fixed and covered by regression tests in
 - [x] **Per-GP plug-in hook** — `openharness.impact.plugins.discover_plugins()` walks Python entry-points (`impact_vision.extractors`, `impact_vision.verifiers`, `impact_vision.benchmarks`, `impact_vision.fund_thesis`, `impact_vision.report_renderers`).
 - [x] **Signed / hash-chained LP report feed** — `openharness.impact.signed_feed` (HMAC default; pluggable `Signer` for KMS / Ed25519). Each `SignedReport` carries `content_hash`, `prev_hash`, `signature`; `ReportFeed.verify()` replays the chain.
 - [x] **Python SDK** — `openharness.impact.sdk.ImpactVision` is the single high-level entry point used by the gateway, dashboard, notebooks and downstream plug-ins.
-- [ ] Carbon / biodiversity credit registry integration (still pending).
-- [ ] Impact-adjusted returns (MOI / impact-adjusted IRR) (still pending).
+- [x] **Carbon / biodiversity credit registry integration** — `openharness.impact.registries` ships a `CreditRegistry` Protocol, an `InMemoryCreditRegistry` seeded with Verra / Gold Standard / Puro.earth / BioCredits samples, and a `rollup_credits()` helper for portfolio aggregation. Shipped v0.14.0.
+- [x] **Impact-adjusted returns (MOI / impact-adjusted IRR)** — `openharness.impact.returns` provides `compute_moi()` and a Newton-Raphson `compute_irr()` with an optional `impact_shadow_price`. Shipped v0.14.0.
 
 ### Phase 15.5 — Report & UI polish (P1) — **shipped (v0.13.0)**
 
@@ -1043,78 +1053,83 @@ Ship-ready analyst surfaces for the artefacts GPs actually email around.
 - [x] **Web Console (v1)** — `openharness.web` ships a single-file SPA mounted on top of the FastAPI gateway (`impact-vision serve-web`, default http://127.0.0.1:8787). Lists all 26 tools, renders a parameter form per tool, and calls `/api/v1/*` directly — no build step, no JS framework, no extra auth layer (reuses `IMPACT_VISION_API_KEY`). Mentally equivalent to `sst/opencode`, `siteboon/claudecodeui` or `getAsterisk/claudia` but bound to the Impact Vision tool surface.
 - [x] **GitHub Actions green** — ruff now passes clean on `src/` (5 F401 imports tidied) and the MCP FastMCP test no longer depends on removed `version`/`description` kwargs.
 
-### Phase 15.6 — Web Console v2 & LLM-in-the-loop (P1) — **in flight (targets v0.14.0)**
+### Phase 15.6 — Web Console v2 & LLM-in-the-loop (P1) — **shipped (v0.14.0)**
 
-After v0.13.0 shipped the single-file console, these are the next-up polish items before Phase 16 ecosystem work begins. Each row has a concrete acceptance signal so GPs can judge "is this done".
+- [x] **OpenAPI-driven forms** — the SPA fetches `/openapi.json` on page load, walks every `/api/v1/*` POST/PUT endpoint, resolves `$ref` / `allOf` request-body schemas, and derives typed inputs (string / integer / number / boolean / array / enum / object). Each form shows an `OpenAPI` / `fallback recipe` badge.
+- [x] **Session + artefact inbox (browser-side)** — every console invocation is persisted to `localStorage` (`impact_vision_runs_v1`, capped at 50). Clicking an entry re-hydrates the form and replays the cached response.
+- [x] **SSE streaming** — `openharness.web.streaming` exposes `/api/v1/stream/echo` and a `register_sse_endpoint()` plug-in hook for long-running tools.
+- [x] **LLM claim extractor (OpenAI-compatible)** — `openharness.impact.extractors.llm_extractor.LLMClaimExtractor` works against OpenAI / Anthropic-proxy / Ollama / Minimax / Moonshot with strict-JSON schema, `<think>`-tag stripping, and offline fallback to the regex extractor.
+- [x] **LLM verifier (URL-grounded)** — `LLMSourceVerifier` checks claims against an allow-listed fetcher and returns deterministic `VerificationResult` objects with offline fallback.
+- [x] **DD Questionnaire v2 (branching)** — `openharness.impact.questionnaire_v2` adds conditional follow-ups to HTML *and* `.docx` via a 3-predicate rules engine (`contains` / `equals` / `missing`).
+- [x] **Report branding from `fund_thesis.yaml`** — `openharness.impact.branding` (logo, primary / accent colour, footer text) auto-injected into every HTML surface.
+- [ ] **Web-console auth** — optional OAuth / magic-link (moved to post-v0.14.0 polish).
 
-- [x] **OpenAPI-driven forms** — the SPA now fetches `/openapi.json` on page load and walks every `/api/v1/*` POST/PUT endpoint, resolves `$ref` / `allOf` request-body schemas, and derives typed inputs (string / integer / number / boolean / array / enum / object) automatically. Each form shows an `OpenAPI` / `fallback recipe` badge so analysts can tell which mode they are in. New regression tests (`TestWebConsolePhase156`) add a dummy `/api/v1/demo-echo` route and confirm it's auto-discovered.
-- [ ] **Streaming tool output** — server-sent events for long-running tools (`portfolio_analyze`, `impact_report`, `pitch_deck_analyze`) so the console shows progress instead of hanging. Acceptance: uploading a 50-page PDF shows per-claim extraction progress.
-- [x] **Session + artefact inbox (v1, browser-side)** — every console invocation is persisted to `localStorage` (`impact_vision_runs_v1`, capped at 50 entries) with status pill, tool name, timestamp, elapsed-ms and cached response body. A "Recent runs" block lives at the top of the sidebar; clicking an entry re-hydrates the form with the previous body and replays the cached response. No server-side state, no account required. Server-side SQLite variant moves to Phase 16. Acceptance: close the browser, re-open, last 20 runs are still there — ✓.
-- [ ] **LLM claim extractor (OpenAI-compatible)** — ship `LLMClaimExtractor` that calls any OpenAI-compatible endpoint (OpenAI, Anthropic-via-proxy, Ollama, Minimax, Moonshot) through `openharness.api.openai_client`. Register it via `register_extractor("llm", …)`. Acceptance: `ImpactVision(extractor="llm")` on the pig-farm sample returns ≥ 2× the claims vs. the regex extractor, with verified source spans.
-- [ ] **LLM verifier (web-grounded)** — `LLMSourceVerifier` that checks claims against GIIN / CDP / SEC / SFDR public filings via a pluggable fetcher. Acceptance: each verified claim carries a URL + retrieval timestamp.
-- [ ] **DD Questionnaire v2 (branching)** — Word export adds conditional follow-ups (if answer = "no evidence", attach evidence checklist; if answer = "in progress", attach milestone tracker). Acceptance: the `.docx` includes 3+ conditional sections driven by the DD engine.
-- [ ] **Report branding** — configurable logo / primary colour / fund name pulled from `fund_thesis.yaml`, injected into every HTML/DOCX/PPTX renderer. Acceptance: two funds using the same pitch deck produce visually distinct reports.
-- [ ] **Web-console auth** — optional OAuth / magic-link on top of the existing `IMPACT_VISION_API_KEY` for multi-analyst GPs. Acceptance: two analysts can log in simultaneously, their "Recent runs" inboxes are separate.
-
-### Phase 16 — Ecosystem (P3, ~6-9 months)
+### Phase 16 — Ecosystem (P3) — **shipped (v0.14.0)**
 
 Turn Impact Vision from a GP back-office tool into a two-sided market.
 
-- [ ] **GIIN Compass benchmark-in-the-loop** — pull live peer-group medians from the GIIN Impact Benchmarks programme (rather than static `benchmarks.py`) so every 5D score carries a *p50 / p75* context.
-- [ ] **Blended-finance instrument designer** — template library for impact-linked loans, social outcome contracts, impact-carry structures; outputs a draft term-sheet + impact-fee schedule.
-- [ ] **ILPA-compatible LP portal** — LPs subscribe to a GP's signed report feed with their own read-only dashboard (portfolio exposure, PAI tracking, ESG alerts).
-- [ ] **Marketplace of impact theses** — GPs publish `fund_thesis.yaml` artefacts; LPs can subscribe / filter / compare.
-- [ ] **Verra / Gold Standard / Puro.earth / BioCredits registry connectors** — track carbon & biodiversity credits generated by portfolio companies, priced against live market rates.
-- [ ] **MOI (Multiple of Impact) + impact-adjusted IRR** — integrate with deal financials so quarterly LP reports show both financial and impact returns side-by-side.
+- [x] **GIIN Compass peer context** — `openharness.impact.external_benchmarks` provides `PeerContext` with sector × dimension quartile positioning against an offline percentile snapshot; swap in a live provider by subclassing `ExternalBenchmarkProvider`.
+- [x] **Blended-finance instrument designer** — `openharness.impact.blended_finance` ships term-sheet helpers (`design_il_loan`, `design_soc`, `design_impact_carry`) for impact-linked loans, social-outcome contracts and impact carry.
+- [x] **ILPA-compatible LP portal** — `openharness.impact.lp_portal.LPPortal` produces capital-account statements, impact dashboards and signed audit-trail views on top of the Phase-15 hash-chained feed.
+- [x] **Marketplace of impact theses** — `openharness.impact.marketplace.ThesisMarketplace` supports publish / list / search / compare against `FundThesis` artefacts.
+- [x] **Carbon / biodiversity registry connectors** — see Phase 15 above (`registries.py`).
+- [x] **MOI + impact-adjusted IRR** — see Phase 15 above (`returns.py`).
 
-### Phase 17 — Assurance & Audit Readiness (P3, ~6 months)
+### Phase 17 — Assurance & Audit Readiness (P3) — **shipped (v0.14.0)**
 
-Prepare GPs for the external assurance regimes that LPs and regulators increasingly demand.
+- [x] **ISAE 3000 / AA1000 assurance pack** — `openharness.impact.assurance` builds a management-assertion + subject-matter + evidence-register bundle.
+- [x] **CSRD / ESRS double-materiality wizard** — `openharness.impact.csrd_wizard` produces a `MaterialityMatrix` scored on impact × financial materiality.
+- [x] **ISSB IFRS S1 / S2 pack** — `openharness.impact.issb_reporting` assembles the governance / strategy / risk / metrics-and-targets four-pillar structure for both standards.
+- [x] **Immutable audit trail** — `openharness.impact.audit_trail.AuditTrail` wraps the Phase-15 `SignedReportFeed` so every scoring decision, input and override is hash-chained.
+- [x] **SOC 2 Type II / ISO 27001 readiness checklist** — `openharness.impact.soc2_checklist.default_checklist()` ships a starter control set with an auto-computed `ReadinessReport`.
 
-- [ ] **ISAE 3000 / AA1000 assurance pack generator** — auto-compile the evidence bundle an assurance firm needs (procedures, samples, workings, management representations) from the signed report feed.
-- [ ] **CSRD / ESRS double-materiality wizard** — step-by-step interview flow producing a materiality matrix + ESRS datapoint mapping.
-- [ ] **ISSB IFRS S1 / S2 reporting pack** — machine-readable submission pack that mirrors an ISSB filing with XBRL tags (once the ISSB taxonomy stabilises).
-- [ ] **Immutable audit trail** — append-only log of every scoring decision, input, and override (reuses the Phase-15 hash-chained feed).
-- [ ] **SOC 2 Type II / ISO 27001 readiness checklist** — system-level controls for GPs serving institutional LPs.
+### Phase 18 — Causal & Scientific Rigor (P3) — **shipped (v0.14.0)**
 
-### Phase 18 — Causal & Scientific Rigor (P3, ~9-12 months)
+- [x] **RCT / quasi-experiment data ingest** — `openharness.impact.causal.StudyResult` + `update_counterfactual_prior()`.
+- [x] **Bayesian evidence updater** — `openharness.impact.bayes.BetaPosterior` with zero-dep normal-approximation credible intervals.
+- [x] **Meta-analysis library** — `openharness.impact.meta_analysis.pool_effects()` (fixed-effect inverse-variance weighting) and `deviation_flag()` at >2σ.
+- [x] **Spillover / leakage modelling** — `openharness.impact.spillover.adjust_node()` per theory-of-change node.
+- [x] **SROI calculator** — `openharness.impact.sroi.compute_sroi()` with deadweight / attribution / displacement / drop-off adjustments.
 
-Move from *measurement* to *attribution*.
+### Phase 19 — Geospatial & Primary Data (P4) — **shipped (v0.14.0)**
 
-- [ ] **RCT / quasi-experiment data ingest** — schema for trial results, DID panels, RDD studies; auto-update counterfactual estimates when new evidence arrives.
-- [ ] **Bayesian evidence updater** — maintain posterior distributions per claim/metric instead of a single point estimate, with credible intervals visible on the dashboard.
-- [ ] **Meta-analysis library** — pull from J-PAL, 3ie, IPA, Cochrane for sector-typical effect sizes; flag deals whose predicted impact deviates >2σ from the meta-analytic mean.
-- [ ] **Spillover / leakage modelling** — estimate positive (indirect beneficiaries) and negative (market displacement, rebound effects) external effects per theory-of-change node.
-- [ ] **SROI (Social Return on Investment) calculator** — optional plug-in respecting the SROI Network methodology (7 principles, sensitivity analysis).
+- [x] **Satellite-derived outcome layer** — `openharness.impact.geospatial` (`SatelliteProvider` Protocol + `DeterministicSatelliteProvider` stub for GFW / VIIRS / Sentinel-5P / WorldCover).
+- [x] **Survey connectors** — `openharness.impact.surveys` (`GenericCSVProvider` that reads SurveyCTO / Kobo / ODK / 60 Decibels CSV exports into `SurveyDataset`).
+- [x] **Worker-voice aggregation** — `openharness.impact.worker_voice.summarise()` feeds the 5D `Who` dimension.
+- [x] **Ecosystem service valuation** — `openharness.impact.ecosystem_services.UnitValueProvider` with pluggable per-service unit values (InVEST / ARIES replacement path).
 
-### Phase 19 — Geospatial & Primary Data (P4, ~12 months)
+### Phase 20 — Global Reach (P4) — **shipped (v0.14.0)**
 
-Reduce reliance on self-reported data.
+- [x] **6-language dashboard keys** — `data/i18n/dashboard_keys.yaml` (`en` / `es` / `fr` / `pt` / `zh` / `ar`) with `openharness.impact.i18n.get_dashboard_strings()`.
+- [x] **Regional fund-thesis packs** — `data/fund_thesis.climate_eu.yaml`, `fund_thesis.inclusive_finance_africa.yaml`, `fund_thesis.gender_lens_south_asia.yaml`, `fund_thesis.indigenous_led_na.yaml`.
+- [x] **Per-jurisdiction regulatory packs** — `openharness.impact.regulatory_packs` covers EU-SFDR, EU-CSRD, UK-FCA-SDR, US-SEC-ESG, HK-HKEX-ESG, AU-AASB-S2, ISSB-global.
+- [x] **FX normalization** — `openharness.impact.fx.convert()` + `normalize_series()` on a pluggable `FXRateProvider` (ships with a static offline snapshot).
 
-- [ ] **Satellite-derived outcome layer** — deforestation (Global Forest Watch), flaring (VIIRS), air quality (Sentinel-5P), land-use change (ESA WorldCover) overlaid on portfolio asset locations.
-- [ ] **On-the-ground survey connectors** — integrations with SurveyCTO, KoboToolbox, ODK, 60Decibels for beneficiary-level data.
-- [ ] **Worker-voice channels** — &wider.org-style anonymous worker surveys piped into the `Who` dimension.
-- [ ] **Ecosystem service valuation** — InVEST / ARIES model integration for biodiversity portfolios.
+### Phase 21 — Future Work (post-v0.14.0)
 
-### Phase 20 — Global Reach (P4, ~12 months+)
+The items below are now the live backlog. They fall into three tracks: *harden the platform* (server-side state, auth), *grow the data network* (live registry / benchmark pulls), and *prove the science* (empirical validation against real RCTs).
 
-- [ ] **Full 6-language parity** for the DD checklist, SDG keywords, and dashboard (en / zh / es / fr / pt / ar).
-- [ ] **Regional thesis packs** — preset `fund_thesis.yaml`s for common strategies (Climate-first Europe, Inclusive-finance Africa, Gender-lens South Asia, Indigenous-led North America).
-- [ ] **Regulatory pack per jurisdiction** — SFDR (EU), ISSB (global), CSRD (EU), FCA SDR (UK), SEC climate rule (US), HKEX ESG (HK/SG), AMCF (China).
-- [ ] **Currency-agnostic financials** — auto-normalise to EUR/USD/CNY/INR at report date; surface FX effects on $-weighted impact.
+- [ ] **Server-side session + artefact inbox** — migrate the browser-side run history to SQLite-backed sessions behind `IMPACT_VISION_API_KEY`; enables multi-analyst GP teams to share runs.
+- [ ] **Web-console auth** — optional OAuth / magic-link on top of the existing API key for multi-analyst GPs.
+- [ ] **Live registry + benchmark pulls** — replace the offline `InMemoryCreditRegistry` and `OfflineBenchmarkProvider` with scheduled jobs that hit Verra / Gold Standard / GIIN Compass live APIs (rate-limited, cached).
+- [ ] **ISSB XBRL tagging** — wait for the ISSB taxonomy to stabilise, then emit an XBRL submission pack alongside the JSON one.
+- [ ] **Empirical validation pipeline** — run the pig-farm demo against a J-PAL / 3ie study library nightly and flag any deal whose predicted 5D score deviates > 2σ from the meta-analytic mean.
+- [ ] **Formal SOC 2 Type II readiness review** — take the Phase-17 checklist through an external pre-audit.
+- [ ] **Marketplace discoverability** — public thesis marketplace (LP-facing) with GDPR / HKPDPO-compliant opt-in.
 
 ---
 
-### Verification status (v0.13.0, 2026-04-21)
+### Verification status (v0.14.0, 2026-04-21)
 
-Actual numbers from a clean run of the impact subset (`pytest tests/test_impact.py tests/test_phase11_fixes.py tests/test_phases12_15.py -q`):
+Actual numbers from a clean run of the impact subset (`pytest tests/test_impact.py tests/test_phase11_fixes.py tests/test_phases12_15.py tests/test_phases15_20.py -q`):
 
 | Surface | Coverage |
 |---|---|
 | `tests/test_impact.py` | **46 / 46** passing (engine + catalog + 5D + SDG + DD + benchmarks + all 10 frameworks) |
 | `tests/test_phase11_fixes.py` | **15 passing, 4 skipped** (the 4 MCP-integration tests skip when the optional `mcp` package is absent) |
-| `tests/test_phases12_15.py` | **46 / 46** passing (fund workflow, IC memo MD/HTML/DOCX/PPTX, deal gate, portfolio roll-up, LP calendar, PCAF, SBTi, EU Taxonomy, TNFD, CDP, extractors, ToC, counterfactual, RBAC, plug-ins, signed feed, DD Questionnaire Helper HTML + .docx, Web Console routes + **Phase 15.6 OpenAPI walker & history**) |
-| **Impact subset total** | **107 passed / 4 skipped / 0 failed** (~3.6s on a laptop) |
+| `tests/test_phases12_15.py` | **46 / 46** passing (fund workflow, IC memo MD/HTML/DOCX/PPTX, deal gate, portfolio roll-up, LP calendar, PCAF, SBTi, EU Taxonomy, TNFD, CDP, extractors, ToC, counterfactual, RBAC, plug-ins, signed feed, DD Questionnaire Helper HTML + .docx, Web Console routes + Phase 15.6 OpenAPI walker & history) |
+| `tests/test_phases15_20.py` | **43 / 43** passing (LLM extractor/verifier fallbacks, credit registries, MOI/IRR, peer benchmarks, blended finance, LP portal, marketplace, ISAE/CSRD/ISSB/SOC2 packs, audit trail, causal, Bayes, meta-analysis, spillover, SROI, satellite/survey/worker-voice/ecosystem, i18n, regional theses, regulatory packs, FX, branding, DD-v2 branching, SSE streaming, SDK facade) |
+| **Impact subset total** | **150 passed / 4 skipped / 0 failed** (~6.3s on a laptop) |
 | **Ruff** | `ruff check src/` — clean (0 errors) |
 | **CI** | GitHub Actions: Import smoke ✅ · Tests ✅ · Lint ✅ · Frontend typecheck ✅ |
 

@@ -307,5 +307,159 @@ class ImpactVision:
     ):
         return assess_greenwashing(company, claims=claims)
 
+    # ------------------------------------------------------------------
+    # Phase 15–20 additions. These are thin passthroughs that keep the
+    # facade "one import" — downstream code can import each underlying
+    # module directly if it prefers a narrower surface.
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def compute_moi(cashflows, *, unit: str, label: str = ""):
+        """Phase 15/16 — Multiple of Impact roll-up."""
+        from openharness.impact.returns import compute_moi
+        return compute_moi(cashflows, unit=unit, label=label)
+
+    @staticmethod
+    def compute_irr(cashflows, *, impact_price_usd_per_unit: float = 0.0, label: str = ""):
+        """Phase 15/16 — Financial + impact-adjusted IRR."""
+        from openharness.impact.returns import compute_irr
+        return compute_irr(
+            cashflows,
+            impact_price_usd_per_unit=impact_price_usd_per_unit,
+            label=label,
+        )
+
+    @staticmethod
+    def rollup_credits(records):
+        """Phase 15 — Portfolio roll-up of carbon / biodiversity credits."""
+        from openharness.impact.registries import rollup_credits
+        return rollup_credits(records)
+
+    @staticmethod
+    def benchmark_peer_context(sector: str, dimension: str, score: float, *, provider_id: str = "offline"):
+        """Phase 16 — GIIN Compass-style peer percentile context."""
+        from openharness.impact.external_benchmarks import contextualise
+        return contextualise(sector, dimension, score, provider_id=provider_id)  # type: ignore[arg-type]
+
+    @staticmethod
+    def design_il_loan(**kwargs):
+        """Phase 16 — Impact-linked loan term sheet."""
+        from openharness.impact.blended_finance import design_il_loan
+        return design_il_loan(**kwargs)
+
+    @staticmethod
+    def design_soc(**kwargs):
+        """Phase 16 — Social Outcomes Contract / DIB term sheet."""
+        from openharness.impact.blended_finance import design_soc
+        return design_soc(**kwargs)
+
+    @staticmethod
+    def lp_portal(fund_name: str):
+        """Phase 16 — Read-only ILPA-compatible LP portal facade."""
+        from openharness.impact.lp_portal import LPPortal
+        return LPPortal(fund_name=fund_name)
+
+    @staticmethod
+    def thesis_marketplace():
+        """Phase 16 — In-memory marketplace of impact theses."""
+        from openharness.impact.marketplace import ThesisMarketplace
+        return ThesisMarketplace()
+
+    @staticmethod
+    def build_assurance_pack(**kwargs):
+        """Phase 17 — ISAE 3000 / AA1000 assurance input pack."""
+        from openharness.impact.assurance import build_assurance_pack
+        return build_assurance_pack(**kwargs)
+
+    @staticmethod
+    def double_materiality(**kwargs):
+        """Phase 17 — CSRD / ESRS double-materiality matrix."""
+        from openharness.impact.csrd_wizard import assess_double_materiality
+        return assess_double_materiality(**kwargs)
+
+    @staticmethod
+    def audit_trail(*, tenant_id: str = "default", fund_id: str = "default"):
+        """Phase 17 — Hash-chained append-only audit trail for scoring decisions."""
+        from openharness.impact.audit_trail import AuditTrail
+        return AuditTrail(tenant_id=tenant_id, fund_id=fund_id)
+
+    @staticmethod
+    def soc2_readiness(entity: str):
+        """Phase 17 — SOC 2 / ISO 27001 readiness checklist."""
+        from openharness.impact.soc2_checklist import build_readiness_report
+        return build_readiness_report(entity)
+
+    @staticmethod
+    def update_counterfactual_with_study(prior: float, study):
+        """Phase 18 — Update the counterfactual prior with a causal study."""
+        from openharness.impact.causal import update_counterfactual_prior
+        return update_counterfactual_prior(prior, study)
+
+    @staticmethod
+    def bayesian_prior(*, optimism: float = 0.5, strength: float = 4.0):
+        """Phase 18 — Beta-binomial prior over a claim's truth probability."""
+        from openharness.impact.bayes import default_prior
+        return default_prior(optimism=optimism, strength=strength)
+
+    @staticmethod
+    def meta_pool(studies):
+        """Phase 18 — Fixed-effect meta-analysis pooled estimate."""
+        from openharness.impact.meta_analysis import pool_effects
+        return pool_effects(studies)
+
+    @staticmethod
+    def adjust_spillover(assumption):
+        """Phase 18 — Apply leakage + spillover to an outcome."""
+        from openharness.impact.spillover import adjust_node
+        return adjust_node(assumption)
+
+    @staticmethod
+    def compute_sroi(**kwargs):
+        """Phase 18 — SROI ratio + sensitivity."""
+        from openharness.impact.sroi import compute_sroi
+        return compute_sroi(**kwargs)
+
+    @staticmethod
+    def satellite_observation(asset, dataset, obs_date, *, provider_id: str = "deterministic"):
+        """Phase 19 — Satellite-derived outcome observation."""
+        from openharness.impact.geospatial import get_satellite_provider
+        return get_satellite_provider(provider_id).observe(asset, dataset, obs_date)
+
+    @staticmethod
+    def load_survey_csv(csv_blob: str, *, form_id: str, platform: str = "surveycto"):
+        """Phase 19 — Load a SurveyCTO/Kobo/ODK/60dB CSV export."""
+        from openharness.impact.surveys import GenericCSVProvider
+        return GenericCSVProvider(platform=platform).load_csv(csv_blob, form_id=form_id)  # type: ignore[arg-type]
+
+    @staticmethod
+    def worker_voice(dataset):
+        """Phase 19 — Aggregate worker-voice signals into a Who-lift."""
+        from openharness.impact.worker_voice import summarise
+        return summarise(dataset)
+
+    @staticmethod
+    def ecosystem_value(asset, service, *, provider_id: str = "offline-unit-values"):
+        """Phase 19 — Offline ecosystem-service valuation (hectare × service)."""
+        from openharness.impact.ecosystem_services import get_ecosystem_provider
+        return get_ecosystem_provider(provider_id).value(asset, service)
+
+    @staticmethod
+    def regulatory_pack(jurisdiction: str):
+        """Phase 20 — Per-jurisdiction disclosure regime reference."""
+        from openharness.impact.regulatory_packs import get_pack
+        return get_pack(jurisdiction)
+
+    @staticmethod
+    def convert_currency(amount: float, *, from_ccy: str, to_ccy: str, at=None, provider_id: str = "static"):
+        """Phase 20 — FX normalization."""
+        from openharness.impact.fx import convert
+        return convert(amount, from_ccy=from_ccy, to_ccy=to_ccy, at=at, provider_id=provider_id)
+
+    @staticmethod
+    def load_branding(thesis_path: str | None = None):
+        """Phase 15.6 — Load fund-specific report branding."""
+        from openharness.impact.branding import load_branding
+        return load_branding(thesis_path)
+
 
 __all__ = ["ImpactVision"]

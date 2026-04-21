@@ -71,7 +71,7 @@ app = FastAPI(
         "5-Dimension scoring, SDG mapping, greenwashing detection, "
         "pipeline management, and comprehensive impact reporting."
     ),
-    version="0.13.0",
+    version="0.14.0",
 )
 
 app.add_middleware(
@@ -243,7 +243,7 @@ async def _fire_webhooks(event: str, payload: dict) -> None:
 
 @app.get("/api/v1/health")
 async def health():
-    return {"status": "ok", "version": "0.13.0", "engine": "impact-vision", "tools": 26}
+    return {"status": "ok", "version": "0.14.0", "engine": "impact-vision", "tools": 26}
 
 
 @app.post("/api/v1/score", dependencies=[Depends(verify_api_key)])

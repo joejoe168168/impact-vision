@@ -240,7 +240,7 @@ class OpenAICompatibleClient:
             kwargs["timeout"] = timeout
         # Some proxy endpoints block the default "OpenAI/Python" user-agent.
         # Use a neutral user-agent to avoid false-positive request blocking.
-        kwargs["default_headers"] = {"User-Agent": "impact-vision/0.13.0"}
+        kwargs["default_headers"] = {"User-Agent": "impact-vision/0.14.0"}
         self._client = AsyncOpenAI(**kwargs)
 
     async def stream_message(self, request: ApiMessageRequest) -> AsyncIterator[ApiStreamEvent]:

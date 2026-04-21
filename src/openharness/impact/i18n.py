@@ -40,6 +40,22 @@ def _load_system_prompts() -> dict[str, str]:
     return _load_yaml(_I18N_DIR / "system_prompts.yaml")
 
 
+@lru_cache(maxsize=8)
+def _load_dashboard_keys() -> dict[str, dict[str, str]]:
+    return _load_yaml(_I18N_DIR / "dashboard_keys.yaml")
+
+
+def get_dashboard_strings(locale: str = "en") -> dict[str, str]:
+    """Return dashboard / web-console label strings for ``locale`` (Phase 20)."""
+    data = _load_dashboard_keys()
+    if locale in data:
+        return data[locale]
+    short = locale.split("-")[0].split("_")[0].lower()
+    if short in data:
+        return data[short]
+    return data.get("en", {})
+
+
 def get_report_strings(locale: str = "en") -> dict[str, str]:
     """Return report label strings for the given locale (falls back to 'en')."""
     data = _load_report_strings()

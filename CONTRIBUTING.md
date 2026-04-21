@@ -1,6 +1,6 @@
 # Contributing to Impact Vision
 
-> Version: **v0.13.0** (2026-04-21). See [`CHANGELOG.md`](CHANGELOG.md) for release notes.
+> Version: **v0.14.0** (2026-04-21). See [`CHANGELOG.md`](CHANGELOG.md) for release notes.
 
 Impact Vision is an open-source AI-powered impact measurement engine for VC and impact investment funds. Built on [OpenHarness](https://github.com/HKUDS/OpenHarness).
 
@@ -46,7 +46,7 @@ ruff check src/
 ```
 
 The CI workflow runs all three (import smoke + pytest + ruff) on every push / PR to `main`.
-At the v0.13.0 cut that is **180 passed / 4 skipped / 0 failed** across the impact subset, with `ruff` clean.
+At the v0.14.0 cut that is **150 passed / 4 skipped / 0 failed** across the impact subset (`tests/test_impact.py` + `tests/test_phase11_fixes.py` + `tests/test_phases12_15.py` + `tests/test_phases15_20.py`), with `ruff check src/` clean.
 
 ## Project Structure
 

@@ -18,6 +18,7 @@ from __future__ import annotations
 try:
     from openharness.api_gateway.router import app as _gateway_app
     from openharness.web.console import console_router
+    from openharness.web.streaming import build_sse_router
 except ImportError as _exc:  # pragma: no cover — optional
     raise ImportError(
         "FastAPI is required for the web console. "
@@ -25,9 +26,10 @@ except ImportError as _exc:  # pragma: no cover — optional
     ) from _exc
 
 
-# Reuse the existing REST gateway and graft the console onto its root.
+# Reuse the existing REST gateway and graft the console + SSE routes onto it.
 app = _gateway_app
 app.include_router(console_router())
+app.include_router(build_sse_router())
 
 
 __all__ = ["app"]

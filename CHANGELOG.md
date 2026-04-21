@@ -6,16 +6,70 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
-### Added — Phase 15.6 progress (Web Console v1.1)
+## [0.14.0] - 2026-04-21
 
-- **OpenAPI-driven forms** (`openharness.web.console`): the SPA now fetches `/openapi.json` on page load, walks every `/api/v1/*` POST/PUT endpoint, resolves `$ref` / `allOf` request-body schemas and derives the form fields (string / integer / number / boolean / array / enum / object) automatically. The hand-written `_FIELD_RECIPES` remain as a graceful fallback when the gateway is unreachable or the schema cannot be read; the per-tool header now shows a small `OpenAPI` / `fallback recipe` badge so analysts know which mode they are in.
-- **Run history (browser-side v1)**: every console invocation is persisted to `localStorage` under key `impact_vision_runs_v1` (capped at 50 entries). A "Recent runs" block appears at the top of the sidebar with status pill, tool name, timestamp and elapsed-ms; clicking an entry re-hydrates the form with the previous body and replays the cached response. Ships with a "clear" button. No server-side state, no external cookies, no account required.
-- **"Fill example" button** on every form — pre-populates a realistic off-grid-solar deal (Acme Solar, Kenya, PI5380 + OI6541 metrics, SDGs 7 / 13) so new users can try every tool in 2 clicks.
-- Additional form-control types in the console (number, boolean select, enum dropdown) driven from the OpenAPI schema.
+### Added — Phases 15.6 → 20 shipped in one drop
+
+This release closes out the remainder of Phase 15.6 and lands the
+scaffolding for **every roadmap item from Phase 15 to Phase 20**.
+Each new subsystem ships a Pydantic schema, a deterministic offline
+default (so demos and tests work with no network / no secrets), and a
+pluggable Protocol so GP integrations can swap in live providers
+without touching the core engine.
+
+**Phase 15.6 (remaining):**
+
+- **`LLMClaimExtractor`** (`openharness.impact.extractors.llm_extractor`) — OpenAI-compatible claim extractor with offline-safe regex fallback, `<think>`-tag stripping and strict-JSON schema validation. Registered as `id="llm"`.
+- **`LLMSourceVerifier`** (`openharness.impact.extractors.llm_verifier`) — URL-grounded verifier with offline-safe heuristic fallback; never cites a URL the caller didn't pre-register.
+- **Report branding from `fund_thesis.yaml`** (`openharness.impact.branding`) — fund-specific colours / logo / footer text injected into every HTML surface via a 4-line CSS override; colour values are validated against `#[0-9a-fA-F]{3,8}` to prevent style injection.
+- **DD Questionnaire v2 — branching** (`openharness.impact.questionnaire_v2`) — `BranchRule` engine with `contains` / `equals` / `missing` predicates, follow-up expansion and a Word export that renders only the fired follow-ups.
+- **SSE streaming** (`openharness.web.streaming`) — `/api/v1/stream/echo` demo endpoint plus `register_sse_endpoint(name, handler)` for plug-ins. Pure-stdlib wire format, works with browser `EventSource`.
+
+**Phase 15 leftover → Phase 16:**
+
+- **`openharness.impact.registries`** — unified `CreditRegistry` protocol covering Verra (VCS), Gold Standard, Puro.earth (CORCs) and BioCredits, plus `rollup_credits` / `PortfolioCredits` roll-up.
+- **`openharness.impact.returns`** — `compute_moi` (Multiple of Impact) and `compute_irr` (Newton-Raphson financial + impact-adjusted IRR, basis-points lift). No scipy / numpy dependency.
+- **`openharness.impact.external_benchmarks`** — GIIN Compass-style `ExternalBenchmarkProvider` Protocol with an offline sector-percentile snapshot (10 sectors × 5 dimensions) and `contextualise()` quartile narrative.
+- **`openharness.impact.blended_finance`** — term-sheet templates for Impact-Linked Loans (3-step rate schedule), Social Outcomes Contracts / DIBs and Impact-Carry structures.
+- **`openharness.impact.lp_portal`** — ILPA-aligned Capital Account Statement, Impact Dashboard and Audit Trail views built on the hash-chained signed-feed.
+- **`openharness.impact.marketplace`** — in-memory publish / subscribe / compare for impact theses with Jaccard-based similarity over SDGs, sectors and geographies.
+
+**Phase 17 — Assurance & Audit:**
+
+- **`openharness.impact.assurance`** — ISAE 3000 / AA1000AS / ISAE 3410 input-pack generator (management assertion, subject matter, criteria, evidence index, chain head hash).
+- **`openharness.impact.csrd_wizard`** — CSRD / ESRS double-materiality wizard (10 ESRS topics, impact + financial scores, threshold-driven shortlist of ESRS sections).
+- **`openharness.impact.issb_reporting`** — IFRS S1 / S2 machine-readable pack (Governance → Strategy → Risk → Metrics & Targets, Scope 1/2/3, physical + transition risks, science-based target).
+- **`openharness.impact.audit_trail`** — immutable, hash-chained append-only log for every scoring / classification / DD decision.
+- **`openharness.impact.soc2_checklist`** — SOC 2 TSC + ISO/IEC 27001:2022 readiness checklist with 26 default controls and a completion-percentage report.
+
+**Phase 18 — Causal & Scientific Rigor:**
+
+- **`openharness.impact.causal`** — RCT / DID / RDD / IV / PSM study schema plus `update_counterfactual_prior` (design-quality × sample-size weighted posterior).
+- **`openharness.impact.bayes`** — beta-binomial conjugate updater with 95% credible interval and `probability_above(threshold)`. Zero external deps — Acklam's inverse-normal approximation built in.
+- **`openharness.impact.meta_analysis`** — J-PAL / 3ie / Cochrane schema + fixed-effect inverse-variance pooling and `deviation_flag()` that fires when a claim's stated effect is >2σ from the pooled estimate.
+- **`openharness.impact.spillover`** — leakage + spillover adjustment per ToC node, applied in the GHG-Protocol-recommended order.
+- **`openharness.impact.sroi`** — SROI ratio with all 4 levers (deadweight, attribution, displacement, drop-off), discounting per HMT Green Book defaults, and a deterministic ±20% per-lever sensitivity matrix.
+
+**Phase 19 — Geospatial & Primary Data:**
+
+- **`openharness.impact.geospatial`** — `SatelliteProvider` Protocol + deterministic hash-based offline stub covering GFW tree-cover-loss, VIIRS nightlights, Sentinel-5P NO2/CH4 and ESA WorldCover.
+- **`openharness.impact.surveys`** — CSV loader (SurveyCTO / KoboToolbox / ODK / 60 Decibels shape) + categorical / numeric / worker-voice aggregators.
+- **`openharness.impact.worker_voice`** — aggregates survey data into a `[-1, +1]` **Who-lift** using NPS, grievance rate and anonymity-guarantee signals.
+- **`openharness.impact.ecosystem_services`** — InVEST / ARIES-shaped ecosystem valuation with offline unit-value defaults for 5 land-cover classes × 4 services.
+
+**Phase 20 — Global Reach:**
+
+- **`data/i18n/dashboard_keys.yaml`** — 6-language parity (en / es / fr / pt / zh / ar) for dashboard + web-console labels, loaded via the new `get_dashboard_strings()` helper.
+- **4 regional `fund_thesis.*.yaml` packs** (Climate-First EU, Inclusive-Finance Africa, Gender-Lens South Asia, Indigenous-Led NA) — copy to `data/fund_thesis.yaml` to activate.
+- **`openharness.impact.regulatory_packs`** — per-jurisdiction disclosure regime reference for SFDR, CSRD, UK FCA-SDR, US SEC-ESG, HKEX-ESG, AASB-S2 and global ISSB.
+- **`openharness.impact.fx`** — `FXRateProvider` Protocol with static USD-pivot snapshot (20+ currencies) and composite-chain provider for live-first / fallback-offline deployments.
+
+**SDK facade:** every new module exposes a one-line entry point on `ImpactVision` (e.g. `iv.compute_moi(...)`, `iv.build_assurance_pack(...)`, `iv.double_materiality(...)`, `iv.regulatory_pack("EU-SFDR")`, `iv.convert_currency(1000, from_ccy="MYR", to_ccy="USD")`).
 
 ### Tests
 
-- `tests/test_phases12_15.py::TestWebConsolePhase156` (3 new tests): OpenAPI walker + history JS are wired into the rendered HTML, `_TOOL_CATALOGUE` / `_FIELD_RECIPES` are exported for plug-ins, and a dummy `/api/v1/demo-echo` FastAPI route is automatically picked up via the gateway's OpenAPI spec. Impact subset is now **107 passed / 4 skipped / 0 failed** (108 collected).
+- New `tests/test_phases15_20.py` with 43 regression tests covering every subsystem above.
+- Impact subset at v0.14.0 (clean run of `test_impact.py` + `test_phase11_fixes.py` + `test_phases12_15.py` + `test_phases15_20.py`): **150 passed / 4 skipped / 0 failed** (154 collected). Ruff clean.
 
 ## [0.13.0] - 2026-04-21
 

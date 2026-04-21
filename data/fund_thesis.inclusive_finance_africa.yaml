@@ -1,0 +1,34 @@
+# Phase 20 regional pack — Inclusive Finance (Africa).
+fund:
+  name: "Inclusive Finance Africa Fund"
+  manager: "Regional Pack (Impact Vision)"
+  vintage_year: 2024
+  fund_size_eur_m: 120
+  strategy: "impact_first"
+  asset_class: "private_credit"
+  geography_focus: ["Sub-Saharan Africa", "KE", "NG", "GH", "RW", "SN"]
+
+sdg_weights:
+  1:  0.25   # No Poverty
+  5:  0.20   # Gender Equality
+  8:  0.25   # Decent Work
+  10: 0.15   # Reduced Inequalities
+  17: 0.15   # Partnerships
+
+five_d_weights:
+  what: 0.20
+  who: 0.30
+  how_much: 0.20
+  contribution: 0.15
+  risk: 0.15
+
+ic_gate:
+  min_5d_overall: 2.8
+  min_dd_coverage_pct: 65.0
+  min_top_sdg_score: 65.0
+  max_greenwashing_score: 35.0
+  exclusion_must_pass: true
+
+adverse_thresholds:
+  scope3_tco2e_per_meur_revenue: 3000.0
+  board_female_pct_min: 40.0

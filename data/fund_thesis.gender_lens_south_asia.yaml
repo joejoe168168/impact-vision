@@ -1,0 +1,34 @@
+# Phase 20 regional pack — Gender-lens (South Asia).
+fund:
+  name: "Gender-Lens South Asia Fund"
+  manager: "Regional Pack (Impact Vision)"
+  vintage_year: 2024
+  fund_size_eur_m: 80
+  strategy: "impact_first"
+  asset_class: "venture"
+  geography_focus: ["IN", "BD", "PK", "LK", "NP"]
+
+sdg_weights:
+  5:  0.35   # Gender Equality
+  8:  0.25   # Decent Work
+  10: 0.15   # Reduced Inequalities
+  1:  0.15   # No Poverty
+  4:  0.10   # Education
+
+five_d_weights:
+  what: 0.20
+  who: 0.30
+  how_much: 0.20
+  contribution: 0.15
+  risk: 0.15
+
+ic_gate:
+  min_5d_overall: 2.8
+  min_dd_coverage_pct: 60.0
+  min_top_sdg_score: 70.0
+  max_greenwashing_score: 35.0
+  exclusion_must_pass: true
+  required_sectors: ["financial-services", "healthcare", "education", "agriculture"]
+
+adverse_thresholds:
+  board_female_pct_min: 50.0

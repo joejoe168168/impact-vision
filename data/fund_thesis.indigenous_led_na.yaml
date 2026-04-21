@@ -1,0 +1,34 @@
+# Phase 20 regional pack — Indigenous-led North America.
+fund:
+  name: "Indigenous-Led North America Fund"
+  manager: "Regional Pack (Impact Vision)"
+  vintage_year: 2024
+  fund_size_eur_m: 60
+  strategy: "impact_first"
+  asset_class: "private_equity"
+  geography_focus: ["US", "CA"]
+
+sdg_weights:
+  10: 0.25   # Reduced Inequalities
+  15: 0.25   # Life on Land
+  8:  0.15   # Decent Work
+  13: 0.15   # Climate Action
+  2:  0.10   # Zero Hunger
+  17: 0.10   # Partnerships
+
+five_d_weights:
+  what: 0.20
+  who: 0.35
+  how_much: 0.15
+  contribution: 0.15
+  risk: 0.15
+
+ic_gate:
+  min_5d_overall: 3.0
+  min_dd_coverage_pct: 75.0
+  min_top_sdg_score: 70.0
+  max_greenwashing_score: 25.0
+  exclusion_must_pass: true
+
+adverse_thresholds:
+  board_female_pct_min: 40.0

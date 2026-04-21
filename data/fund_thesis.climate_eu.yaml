@@ -1,0 +1,36 @@
+# Phase 20 regional pack — Climate-first EU.
+# Copy to data/fund_thesis.yaml to activate.
+fund:
+  name: "Climate-First EU Fund"
+  manager: "Regional Pack (Impact Vision)"
+  vintage_year: 2024
+  fund_size_eur_m: 200
+  strategy: "impact_first"
+  asset_class: "growth_equity"
+  geography_focus: ["EU", "EEA", "UK"]
+
+sdg_weights:
+  7:  0.30   # Affordable & Clean Energy
+  13: 0.35   # Climate Action
+  9:  0.15   # Industry, Innovation
+  11: 0.10   # Sustainable Cities
+  12: 0.10   # Responsible Consumption
+
+five_d_weights:
+  what: 0.25
+  who: 0.15
+  how_much: 0.25
+  contribution: 0.20
+  risk: 0.15
+
+ic_gate:
+  min_5d_overall: 3.0
+  min_dd_coverage_pct: 75.0
+  min_top_sdg_score: 70.0
+  max_greenwashing_score: 30.0
+  exclusion_must_pass: true
+  required_sectors: ["energy", "buildings", "transport", "industry"]
+
+adverse_thresholds:
+  scope3_tco2e_per_meur_revenue: 500.0
+  board_female_pct_min: 30.0
