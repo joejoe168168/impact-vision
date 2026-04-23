@@ -240,8 +240,14 @@ def _score_claim_metric_gap(company: Company, metrics: set[str]) -> float:
         if any(theme_lower in str(v).lower() for v in company.reported_metrics.values()):
             supported += 1
 
-    support_ratio = (supported + len(metrics)) / max(1, claims_count * 3)
-    return max(0, 80 - support_ratio * 100)
+    # Only count metrics that relate to claimed themes/SDGs, not all metrics
+    relevant_metric_count = supported
+    if company.sdg_claims:
+        # Each SDG claim with at least one metric provides some support
+        relevant_metric_count += min(len(metrics), len(company.sdg_claims))
+
+    support_ratio = relevant_metric_count / max(1, claims_count)
+    return max(0, round(80 - support_ratio * 60, 1))
 
 
 def _score_adverse_omission(company: Company, metrics: set[str]) -> float:
@@ -287,14 +293,23 @@ def _score_selectivity(company: Company, metrics: set[str]) -> float:
     if not metrics:
         return 60.0
 
-    has_risk_metrics = any("risk" in str(v).lower() or mid.startswith("OI") for mid, v in company.reported_metrics.items())
-    has_negative_metrics = any("OD" in mid or "negative" in str(v).lower() for mid, v in company.reported_metrics.items())
+    # Check if any reported metrics are from the adverse/risk set for this sector
+    sector = company.sector.lower()
+    adverse_set = set(_ADVERSE_METRICS_BY_SECTOR.get(sector, _ADVERSE_METRICS_BY_SECTOR["default"]))
+    has_adverse_metrics = bool(metrics & adverse_set)
+
+    # Check if any reported values mention risk/negative indicators
+    has_risk_language = any(
+        "risk" in str(v).lower() or "negative" in str(v).lower()
+        for v in company.reported_metrics.values()
+    )
+
     total = len(metrics)
 
     score = 50.0
-    if not has_risk_metrics:
-        score += 20
-    if not has_negative_metrics:
+    if not has_adverse_metrics and not has_risk_language:
+        score += 25
+    elif not has_adverse_metrics:
         score += 15
     if total < 5:
         score += 10

@@ -236,3 +236,61 @@ def normalize_impact_targets(
         return result, warnings
 
     return result, warnings
+
+
+_SECTOR_ALIASES: dict[str, str] = {
+    "financial services": "fintech",
+    "financial inclusion": "fintech",
+    "microfinance": "fintech",
+    "banking": "fintech",
+    "healthcare": "healthcare",
+    "health": "healthcare",
+    "medical": "healthcare",
+    "water & sanitation": "water",
+    "water and sanitation": "water",
+    "wash": "water",
+    "agriculture": "agriculture",
+    "agritech": "agriculture",
+    "farming": "agriculture",
+    "energy": "energy",
+    "clean energy": "energy",
+    "renewable energy": "energy",
+    "education": "education",
+    "edtech": "education",
+    "technology": "technology",
+    "software": "technology",
+    "saas": "technology",
+    "real estate": "real estate",
+    "housing": "real estate",
+    "affordable housing": "real estate",
+    "transportation": "transport",
+    "transport": "transport",
+    "logistics": "logistics",
+    "food & beverage": "agriculture",
+    "food": "agriculture",
+    "manufacturing": "manufacturing",
+    "construction": "construction",
+    "tourism": "tourism",
+    "retail": "retail",
+    "mining": "mining",
+    "mining & extractives": "mining",
+    "extractives": "extractives",
+    "media": "media",
+    "professional services": "professional services",
+    "waste management": "waste management",
+    "waste": "waste management",
+    "ict": "ict",
+    "livestock": "livestock",
+}
+
+
+def normalize_sector(sector: str) -> str:
+    """Normalize a sector string to a canonical lowercase key for engine lookups.
+
+    Maps user-facing names like 'Financial Services' to engine keys like 'fintech'.
+    Returns the original lowercased value if no alias is found.
+    """
+    if not sector:
+        return ""
+    key = sector.strip().lower()
+    return _SECTOR_ALIASES.get(key, key)

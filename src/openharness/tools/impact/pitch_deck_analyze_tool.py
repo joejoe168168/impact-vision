@@ -347,21 +347,19 @@ def _extract_impact_claims(page_texts: list[dict], store) -> list[ImpactClaim]:
             if effective_hits < 1:
                 continue
 
-            confidence = min(1.0, effective_hits * 0.15)
-            if negated_hits > 0:
-                confidence *= 0.5
             category = _classify_claim(lower)
             mapped_metrics = _match_metrics(sentence, store)
             mapped_targets = _match_sdg_targets(sentence)
 
-            claims.append(ImpactClaim(
+            claim = ImpactClaim(
                 text=sentence.strip(),
                 source_page=page_num,
                 mapped_metrics=[m.id for m in mapped_metrics[:5]],
                 mapped_sdg_targets=mapped_targets[:5],
-                confidence=round(confidence, 2),
                 category=category,
-            ))
+            )
+            claim.recalibrate_confidence()
+            claims.append(claim)
 
     claims.sort(key=lambda c: c.confidence, reverse=True)
     return claims[:30]
@@ -521,7 +519,7 @@ def _extract_company_model(
 
     sector = _detect_sector(text)
     geography = _detect_geography(text)
-    reported = {mid: "pending" for mid in suggested_metric_ids}
+    reported: dict[str, str] = {}
 
     return Company(
         name=company_name,

@@ -260,6 +260,7 @@ def map_sdg_alignment(
     reported_ids = set(company.reported_metrics.keys())
     inferred_sdg = _infer_sdg_from_description(company)
     alignments: list[SDGAlignment] = []
+    all_known_ids = {m.id for m in store.all_metrics()}
 
     for goal_num in target_goals:
         sdg = get_sdg_goal(goal_num)
@@ -288,7 +289,6 @@ def map_sdg_alignment(
         curated_ids = set(core_per_sdg.get(goal_num, []))
         # Intersect with what the catalog actually knows about, so a stale
         # YAML entry doesn't penalise the company.
-        all_known_ids = {m.id for m in store.all_metrics()}
         coverage_set = (curated_ids & all_known_ids) or broad_goal_metric_ids
         scoring_basis = "core_set" if (curated_ids & all_known_ids) else "broad_catalog"
 

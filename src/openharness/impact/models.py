@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class DimensionTags(BaseModel):
@@ -89,6 +89,15 @@ class ImpactTarget(BaseModel):
     baseline_date: str = Field(default="", description="Baseline date (e.g. '2024')")
     description: str = Field(default="", description="Free-text target description")
 
+    @field_validator("metric_id")
+    @classmethod
+    def validate_metric_id(cls, v: str) -> str:
+        import re
+        v = v.strip().upper()
+        if v and not re.match(r"^(PI|OI|OD|FP|PD)\d{4}$", v):
+            raise ValueError(f"Invalid IRIS+ metric ID format: {v}")
+        return v
+
 
 class MetricValue(BaseModel):
     """A single reported metric value with context for time-series tracking."""
@@ -141,6 +150,20 @@ class BeneficiaryFeedback(BaseModel):
         default_factory=dict,
         description="Disaggregated data by segment (e.g. {'gender': {'female': 4.2, 'male': 3.8}})",
     )
+
+    @field_validator("satisfaction_score")
+    @classmethod
+    def validate_satisfaction(cls, v: float | None) -> float | None:
+        if v is not None and (v < 1 or v > 5):
+            raise ValueError(f"satisfaction_score must be 1-5, got {v}")
+        return v
+
+    @field_validator("nps")
+    @classmethod
+    def validate_nps(cls, v: float | None) -> float | None:
+        if v is not None and (v < -100 or v > 100):
+            raise ValueError(f"NPS must be -100 to 100, got {v}")
+        return v
 
 
 class Company(BaseModel):

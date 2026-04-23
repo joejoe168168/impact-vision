@@ -356,6 +356,23 @@ def assess_five_dimensions(
         notes=f"Scale={scores['how_much_scale'].score}, Depth={how_much_depth.score}, Duration={how_much_duration.score}",
     )
 
+    contribution_duration = _score_dimension(
+        "Contribution (Duration)", "contribution_duration", reported_ids, store, theme,
+        baseline.get("contribution", 0.5),
+    )
+
+    contribution_combined = DimensionScore(
+        dimension="Contribution",
+        score=round(
+            (scores["contribution_depth"].score + contribution_duration.score) / 2.0,
+            1,
+        ),
+        metrics_reported=scores["contribution_depth"].metrics_reported + contribution_duration.metrics_reported,
+        metrics_available=scores["contribution_depth"].metrics_available + contribution_duration.metrics_available,
+        gaps=scores["contribution_depth"].gaps[:5] + contribution_duration.gaps[:5],
+        notes=f"Depth={scores['contribution_depth'].score}, Duration={contribution_duration.score}",
+    )
+
     neg_penalty = _compute_negative_impact_penalty(company)
     excl_penalty = _compute_exclusion_penalty(company)
     total_penalty = neg_penalty + excl_penalty
@@ -372,7 +389,7 @@ def assess_five_dimensions(
     total_metrics = len(reported_ids)
     if 0 < total_metrics < MIN_METRICS_FOR_ABOVE_BASELINE:
         cap = 2.5
-        for dim_score in [scores["what"], scores["who"], scores["contribution_depth"], scores["risk"]]:
+        for dim_score in [scores["what"], scores["who"], contribution_combined, scores["risk"]]:
             if dim_score.score > cap:
                 dim_score.score = cap
                 dim_score.notes += f" (capped: report ≥{MIN_METRICS_FOR_ABOVE_BASELINE} metrics to unlock higher scores)"
@@ -381,7 +398,7 @@ def assess_five_dimensions(
             how_much_combined.notes += f" (capped: report ≥{MIN_METRICS_FOR_ABOVE_BASELINE} metrics to unlock higher scores)"
 
     overall = round(
-        (scores["what"].score + scores["who"].score + how_much_combined.score + scores["contribution_depth"].score + scores["risk"].score) / 5.0,
+        (scores["what"].score + scores["who"].score + how_much_combined.score + contribution_combined.score + scores["risk"].score) / 5.0,
         1,
     )
 
@@ -397,12 +414,12 @@ def assess_five_dimensions(
         recommendations.append("Define WHO: specify target demographics, geography, and stakeholder characteristics")
     if how_much_combined.score < 2:
         recommendations.append("Measure HOW MUCH: track scale (# stakeholders), depth (degree of change), and duration")
-    if scores["contribution_depth"].score < 2:
+    if contribution_combined.score < 2:
         recommendations.append("Assess CONTRIBUTION: establish counterfactual or benchmark comparison")
     if scores["risk"].score < 2:
         recommendations.append("Evaluate RISK: assess evidence risk, execution risk, and external risk factors")
 
-    all_dims = [scores["what"], scores["who"], how_much_combined, scores["contribution_depth"], scores["risk"]]
+    all_dims = [scores["what"], scores["who"], how_much_combined, contribution_combined, scores["risk"]]
     prov_set = {d.provenance for d in all_dims}
     if prov_set == {"evidence-based"}:
         overall_provenance = "evidence-based"
@@ -415,7 +432,7 @@ def assess_five_dimensions(
         what=scores["what"],
         who=scores["who"],
         how_much=how_much_combined,
-        contribution=scores["contribution_depth"],
+        contribution=contribution_combined,
         risk=scores["risk"],
         overall_score=overall,
         overall_grade=_grade_from_score(overall),

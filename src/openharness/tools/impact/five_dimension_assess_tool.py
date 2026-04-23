@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
-from openharness.impact.database import get_metric_store
+from openharness.impact.database import ensure_catalog_loaded
 from openharness.impact.five_dimensions import assess_five_dimensions, assess_additionality
 from openharness.impact.models import Company
-from openharness.tools.impact.common import infer_themes, normalize_metric_map
+from openharness.tools.impact.common import infer_themes, normalize_metric_map, normalize_sector
 from openharness.tools.impact.exclusion_screening_tool import quick_exclusion_check
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
@@ -44,7 +44,7 @@ class FiveDimensionAssessTool(BaseTool):
         args = arguments if isinstance(arguments, FiveDimensionInput) else FiveDimensionInput.model_validate(arguments)
 
         try:
-            store = get_metric_store()
+            store = ensure_catalog_loaded()
         except FileNotFoundError as e:
             return ToolResult(output=str(e), is_error=True)
 
@@ -52,7 +52,7 @@ class FiveDimensionAssessTool(BaseTool):
         company = Company(
             name=args.company_name,
             description=args.company_description,
-            sector=args.sector,
+            sector=normalize_sector(args.sector),
             geography=args.geography,
             impact_themes=infer_themes(f"{args.company_description} {args.sector}", args.impact_themes),
             reported_metrics=reported_metrics,
@@ -109,6 +109,10 @@ class FiveDimensionAssessTool(BaseTool):
             lines.append("Recommendations:")
             for i, rec in enumerate(result.recommendations, 1):
                 lines.append(f"  {i}. {rec}")
+
+        if warnings:
+            warning_block = "⚠ Input warnings:\n" + "\n".join(f"  - {w}" for w in warnings) + "\n\n"
+            lines.insert(0, warning_block)
 
         return ToolResult(
             output="\n".join(lines),

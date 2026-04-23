@@ -5,10 +5,10 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
-from openharness.impact.database import get_metric_store
+from openharness.impact.database import ensure_catalog_loaded
 from openharness.impact.gap_analysis import analyze_gaps
 from openharness.impact.models import Company
-from openharness.tools.impact.common import normalize_metric_map, normalize_str_list
+from openharness.tools.impact.common import normalize_metric_ids, normalize_metric_map, normalize_str_list
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 
@@ -41,18 +41,22 @@ class GapAnalysisTool(BaseTool):
         args = arguments if isinstance(arguments, GapAnalysisInput) else GapAnalysisInput.model_validate(arguments)
 
         try:
-            store = get_metric_store()
+            store = ensure_catalog_loaded()
         except FileNotFoundError as e:
             return ToolResult(output=str(e), is_error=True)
 
-        reported_metrics, _ = normalize_metric_map(args.reported_metrics)
+        reported_metrics, metric_warnings = normalize_metric_map(args.reported_metrics)
         company = Company(
             name=args.company_name,
             reported_metrics=reported_metrics,
             impact_themes=normalize_str_list(args.impact_themes),
         )
 
-        core_set = set(args.custom_metric_set) if args.custom_metric_set else None
+        if args.custom_metric_set:
+            normalized_custom, _ = normalize_metric_ids(args.custom_metric_set)
+            core_set = set(normalized_custom) if normalized_custom else None
+        else:
+            core_set = None
         result = analyze_gaps(company, store, core_set=core_set)
 
         lines = [
@@ -93,6 +97,10 @@ class GapAnalysisTool(BaseTool):
             lines.append("Recommendations:")
             for rec in result["recommendations"]:
                 lines.append(f"  > {rec}")
+
+        if metric_warnings:
+            warning_block = "⚠ Input warnings:\n" + "\n".join(f"  - {w}" for w in metric_warnings) + "\n"
+            lines.insert(0, warning_block)
 
         return ToolResult(
             output="\n".join(lines),

@@ -9,13 +9,14 @@ from __future__ import annotations
 import csv
 import io
 import json
+import statistics
 from pathlib import Path
 
 import yaml
 from pydantic import BaseModel, Field
 from typing import Literal
 
-from openharness.impact.database import get_metric_store
+from openharness.impact.database import ensure_catalog_loaded
 from openharness.impact.five_dimensions import assess_five_dimensions
 from openharness.impact.fund_analytics import (
     assess_portfolio_additionality,
@@ -25,7 +26,7 @@ from openharness.impact.fund_analytics import (
 from openharness.impact.gap_analysis import analyze_gaps
 from openharness.impact.models import Company
 from openharness.impact.sdg_mapper import map_sdg_alignment
-from openharness.tools.impact.common import infer_themes, normalize_impact_targets, normalize_metric_map, normalize_sdg_goals
+from openharness.tools.impact.common import infer_themes, normalize_impact_targets, normalize_metric_map, normalize_sdg_goals, normalize_sector
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 
@@ -89,7 +90,7 @@ class PortfolioTool(BaseTool):
         args = arguments if isinstance(arguments, PortfolioInput) else PortfolioInput.model_validate(arguments)
 
         try:
-            store = get_metric_store()
+            store = ensure_catalog_loaded()
         except FileNotFoundError as e:
             return ToolResult(output=str(e), is_error=True)
 
@@ -227,8 +228,9 @@ def _load_portfolio_file(file_path: str, context: ToolExecutionContext) -> list[
             for row in reader:
                 metrics = {}
                 for key, val in row.items():
-                    if key.startswith(("PI", "OI", "OD", "FP", "PD")) and val:
-                        metrics[key] = val
+                    normalized_key = key.strip().upper()
+                    if normalized_key.startswith(("PI", "OI", "OD", "FP", "PD")) and val:
+                        metrics[normalized_key] = val.strip()
                 companies.append(Company(
                     name=row.get("name", row.get("company", "")),
                     sector=row.get("sector", ""),
@@ -240,6 +242,15 @@ def _load_portfolio_file(file_path: str, context: ToolExecutionContext) -> list[
                 ))
             return companies
 
+    if path.suffix.lower() == ".json":
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        if isinstance(data, list):
+            return [_dict_to_company(d) for d in data]
+        if isinstance(data, dict) and "companies" in data:
+            return [_dict_to_company(d) for d in data["companies"]]
+        return "JSON must contain a list of companies or a dict with 'companies' key"
+
     return f"Unsupported file format: {path.suffix}"
 
 
@@ -249,7 +260,7 @@ def _dict_to_company(d: dict) -> Company:
     impact_targets, _ = normalize_impact_targets(d.get("impact_targets", []))
     return Company(
         name=d.get("name", ""),
-        sector=d.get("sector", ""),
+        sector=normalize_sector(d.get("sector", "")),
         description=d.get("description", ""),
         geography=d.get("geography", ""),
         impact_themes=infer_themes(f"{d.get('description', '')} {d.get('sector', '')}", d.get("impact_themes", [])),
@@ -315,7 +326,7 @@ def _aggregate_results(results: list[dict]) -> dict:
     five_d_scores = [r["five_dim_score"] for r in results]
     min_5d = round(min(five_d_scores), 2)
     max_5d = round(max(five_d_scores), 2)
-    median_5d = round(sorted(five_d_scores)[n // 2], 2) if n > 0 else 0
+    median_5d = round(statistics.median(five_d_scores), 2) if n > 0 else 0
 
     sector_dist: dict[str, int] = {}
     for r in results:

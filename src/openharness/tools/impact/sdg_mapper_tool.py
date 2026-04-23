@@ -5,10 +5,10 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
-from openharness.impact.database import get_metric_store
+from openharness.impact.database import ensure_catalog_loaded
 from openharness.impact.models import Company
 from openharness.impact.sdg_mapper import map_sdg_alignment
-from openharness.tools.impact.common import infer_themes, normalize_metric_map, normalize_sdg_goals
+from openharness.tools.impact.common import infer_themes, normalize_metric_map, normalize_sdg_goals, normalize_sector
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 
@@ -45,18 +45,18 @@ class SdgMapperTool(BaseTool):
         args = arguments if isinstance(arguments, SdgMapperInput) else SdgMapperInput.model_validate(arguments)
 
         try:
-            store = get_metric_store()
+            store = ensure_catalog_loaded()
         except FileNotFoundError as e:
             return ToolResult(output=str(e), is_error=True)
 
-        reported_metrics, _ = normalize_metric_map(args.reported_metrics)
-        sdg_claims, _ = normalize_sdg_goals(args.sdg_claims)
-        requested_goals, _ = normalize_sdg_goals(args.sdg_goals)
+        reported_metrics, metric_warnings = normalize_metric_map(args.reported_metrics)
+        sdg_claims, claim_warnings = normalize_sdg_goals(args.sdg_claims)
+        requested_goals, goal_warnings = normalize_sdg_goals(args.sdg_goals)
 
         company = Company(
             name=args.company_name,
             description=args.company_description,
-            sector=args.sector,
+            sector=normalize_sector(args.sector),
             geography=args.geography,
             impact_themes=infer_themes(f"{args.company_description} {args.sector}", args.impact_themes),
             reported_metrics=reported_metrics,
@@ -87,9 +87,18 @@ class SdgMapperTool(BaseTool):
         output_lines.append("\n" + "=" * 60)
         output_lines.append(f"Total SDGs with alignment: {len(top)}/17")
 
+        all_warnings = metric_warnings + claim_warnings + goal_warnings
+        if all_warnings:
+            warning_block = "⚠ Input warnings:\n" + "\n".join(f"  - {w}" for w in all_warnings) + "\n\n"
+            output_lines.insert(0, warning_block)
+
+        metadata: dict = {"alignments": [a.model_dump() for a in alignments]}
+        if all_warnings:
+            metadata["warnings"] = all_warnings
+
         return ToolResult(
             output="\n".join(output_lines),
-            metadata={"alignments": [a.model_dump() for a in alignments]},
+            metadata=metadata,
         )
 
 
