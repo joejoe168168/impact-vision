@@ -15,6 +15,13 @@ from pydantic import BaseModel, Field
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 
+_METRIC_ID_RE = re.compile(r"\b(PI\d{4}|OI\d{4}|OD\d{4}|FP\d{4}|PD\d{4})\b", re.IGNORECASE)
+
+
+def _extract_metric_ids(text: str) -> set[str]:
+    return {metric_id.upper() for metric_id in _METRIC_ID_RE.findall(text)}
+
+
 class DocumentAnalysisInput(BaseModel):
     action: Literal[
         "compare_documents", "detect_changes", "verify_claims",
@@ -70,7 +77,7 @@ class DocumentAnalysisTool(BaseTool):
         for doc in args.documents:
             name = doc.get("name", "Unnamed")
             text = doc.get("text", "")
-            metrics = set(re.findall(r'\b(PI\d{4}|OI\d{4}|OD\d{4}|FP\d{4}|PD\d{4})\b', text))
+            metrics = _extract_metric_ids(text)
             sdgs = set(int(m) for m in re.findall(r'\bSDG\s*(\d{1,2})\b', text, re.IGNORECASE) if 1 <= int(m) <= 17)
             quant_claims = re.findall(r'\d+[%,.\d]*\s*(?:people|beneficiar|tCO2|MWh|USD|EUR|households|farmers)', text)
 
@@ -127,8 +134,8 @@ class DocumentAnalysisTool(BaseTool):
             "=" * 60, "",
         ]
 
-        old_metrics = set(re.findall(r'\b(PI\d{4}|OI\d{4}|OD\d{4}|FP\d{4}|PD\d{4})\b', old_text))
-        new_metrics = set(re.findall(r'\b(PI\d{4}|OI\d{4}|OD\d{4}|FP\d{4}|PD\d{4})\b', new_text))
+        old_metrics = _extract_metric_ids(old_text)
+        new_metrics = _extract_metric_ids(new_text)
         added_metrics = new_metrics - old_metrics
         removed_metrics = old_metrics - new_metrics
 

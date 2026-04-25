@@ -16,7 +16,12 @@ from openharness.impact.five_dimensions import assess_five_dimensions
 from openharness.impact.models import Company
 from openharness.impact.sdg_mapper import generate_sdg_gap_recommendations, map_sdg_alignment
 from openharness.impact.sdg_taxonomy import get_sdg_goal
-from openharness.tools.impact.common import infer_themes, normalize_metric_map, normalize_sdg_goals
+from openharness.tools.impact.common import (
+    infer_themes,
+    normalize_metric_map,
+    normalize_sdg_goals,
+    normalize_sector,
+)
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 
@@ -117,15 +122,16 @@ class ImprovementAdvisorTool(BaseTool):
             return ToolResult(output=str(e), is_error=True)
 
         reported_metrics, _ = normalize_metric_map(args.reported_metrics)
-        themes = infer_themes(args.impact_themes, reported_metrics, store)
+        sdg_claims, _ = normalize_sdg_goals(args.sdg_claims)
+        themes = infer_themes(f"{args.company_description} {args.sector}", args.impact_themes)
         company = Company(
             name=args.company_name or "Company",
             description=args.company_description,
-            sector=args.sector,
+            sector=normalize_sector(args.sector),
             geography=args.geography,
             impact_themes=themes,
             reported_metrics=reported_metrics,
-            sdg_claims=normalize_sdg_goals(args.sdg_claims),
+            sdg_claims=sdg_claims,
         )
 
         if args.action == "recommend":

@@ -6,6 +6,7 @@ trigger re-assessments, and manage alerts.
 
 from __future__ import annotations
 
+import re
 from datetime import datetime, timezone
 from typing import Literal
 
@@ -13,6 +14,51 @@ from pydantic import BaseModel, Field
 
 from openharness.impact.storage import get_assessment_store
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
+
+
+_NUMBER_RE = re.compile(r"[-+]?\d[\d,]*(?:\.\d+)?")
+
+
+def _normalize_metric_id(metric_id: str) -> str:
+    return metric_id.strip().upper()
+
+
+def _normalize_metric_ids(metric_ids: list[str]) -> list[str]:
+    normalized: list[str] = []
+    seen: set[str] = set()
+    for metric_id in metric_ids:
+        normalized_id = _normalize_metric_id(metric_id)
+        if normalized_id and normalized_id not in seen:
+            normalized.append(normalized_id)
+            seen.add(normalized_id)
+    return normalized
+
+
+def _normalize_thresholds(thresholds: dict[str, float]) -> dict[str, float]:
+    return {
+        _normalize_metric_id(metric_id): threshold
+        for metric_id, threshold in thresholds.items()
+        if _normalize_metric_id(metric_id)
+    }
+
+
+def _extract_numeric_metric_value(value: object) -> float | None:
+    if isinstance(value, int | float):
+        return float(value)
+    if isinstance(value, str):
+        match = _NUMBER_RE.search(value)
+        if match:
+            return float(match.group(0).replace(",", ""))
+    return None
+
+
+def _get_reported_metric(metrics: dict, metric_id: str) -> object | None:
+    if metric_id in metrics:
+        return metrics[metric_id]
+    for key, value in metrics.items():
+        if str(key).upper() == metric_id:
+            return value
+    return None
 
 
 class MonitoringInput(BaseModel):
@@ -71,12 +117,14 @@ class MonitoringTool(BaseTool):
     async def _handle_set_schedule(self, args: MonitoringInput, store, context) -> ToolResult:
         if not args.company_name:
             return ToolResult(output="company_name is required", is_error=True)
+        alert_thresholds = _normalize_thresholds(args.alert_thresholds)
+        watch_metrics = _normalize_metric_ids(args.watch_metrics)
         row_id = store.upsert_monitoring_schedule(
             company_name=args.company_name,
             frequency=args.frequency,
             next_review_date=args.next_review_date,
-            alert_thresholds=args.alert_thresholds or None,
-            watch_metrics=args.watch_metrics or None,
+            alert_thresholds=alert_thresholds or None,
+            watch_metrics=watch_metrics or None,
         )
         return ToolResult(
             output=f"Monitoring schedule set for {args.company_name}: {args.frequency} (next: {args.next_review_date or 'TBD'}, id: {row_id})",
@@ -114,37 +162,35 @@ class MonitoringTool(BaseTool):
         if args.metric_value is None:
             return ToolResult(output="metric_value is required", is_error=True)
 
+        metric_id = _normalize_metric_id(args.metric_id)
         prev = store.get_assessment(args.company_name)
         sched = store.get_monitoring_schedule(args.company_name)
         alerts_created = []
 
         if sched and sched.get("alert_thresholds"):
-            threshold = sched["alert_thresholds"].get(args.metric_id)
+            threshold = _normalize_thresholds(sched["alert_thresholds"]).get(metric_id)
             if threshold is not None and prev:
-                prev_metric = prev.get("company", {}).get("reported_metrics", {}).get(args.metric_id)
-                if prev_metric:
-                    try:
-                        prev_val = float(prev_metric)
-                        if prev_val > 0:
-                            deviation = abs(args.metric_value - prev_val) / prev_val
-                            if deviation > threshold:
-                                alert_id = store.create_alert(
-                                    company_name=args.company_name,
-                                    alert_type="metric_deviation",
-                                    message=f"{args.metric_id}: {prev_val} -> {args.metric_value} ({deviation:.0%} deviation, threshold: {threshold:.0%})",
-                                    severity="warning" if deviation < threshold * 2 else "critical",
-                                    metric_id=args.metric_id,
-                                    current_value=args.metric_value,
-                                    threshold_value=threshold,
-                                )
-                                alerts_created.append(alert_id)
-                    except (ValueError, TypeError):
-                        pass
+                reported_metrics = prev.get("company", {}).get("reported_metrics", {})
+                prev_metric = _get_reported_metric(reported_metrics, metric_id)
+                prev_val = _extract_numeric_metric_value(prev_metric)
+                if prev_val and prev_val > 0:
+                    deviation = abs(args.metric_value - prev_val) / prev_val
+                    if deviation > threshold:
+                        alert_id = store.create_alert(
+                            company_name=args.company_name,
+                            alert_type="metric_deviation",
+                            message=f"{metric_id}: {prev_val} -> {args.metric_value} ({deviation:.0%} deviation, threshold: {threshold:.0%})",
+                            severity="warning" if deviation < threshold * 2 else "critical",
+                            metric_id=metric_id,
+                            current_value=args.metric_value,
+                            threshold_value=threshold,
+                        )
+                        alerts_created.append(alert_id)
 
         if prev:
             company_data = prev.get("company", {})
             metrics = company_data.get("reported_metrics", {})
-            metrics[args.metric_id] = str(args.metric_value)
+            metrics[metric_id] = str(args.metric_value)
             company_data["reported_metrics"] = metrics
             store.save_assessment(
                 company_name=args.company_name,
@@ -155,7 +201,7 @@ class MonitoringTool(BaseTool):
                 greenwashing=prev.get("greenwashing"),
             )
 
-        output = f"Recorded {args.metric_id} = {args.metric_value} for {args.company_name}"
+        output = f"Recorded {metric_id} = {args.metric_value} for {args.company_name}"
         if not prev:
             output += " (no existing assessment found — value not persisted)"
         if alerts_created:

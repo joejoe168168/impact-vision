@@ -15,10 +15,16 @@ from openharness.impact.database import ensure_catalog_loaded
 from openharness.impact.five_dimensions import assess_five_dimensions
 from openharness.impact.gap_analysis import analyze_gaps
 from openharness.impact.greenwashing import assess_greenwashing
-from openharness.impact.models import Company
+from openharness.impact.models import Company, ImpactClaim, MetricValue
 from openharness.impact.sdg_mapper import generate_sdg_gap_recommendations, map_sdg_alignment
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
-from openharness.tools.impact.common import infer_themes, normalize_metric_map, normalize_sdg_goals, normalize_sector
+from openharness.tools.impact.common import (
+    infer_themes,
+    normalize_impact_targets,
+    normalize_metric_map,
+    normalize_sdg_goals,
+    normalize_sector,
+)
 
 _SECTOR_OPPORTUNITIES: dict[str, list[str]] = {
     "agriculture": [
@@ -149,6 +155,18 @@ class ImpactReportInput(BaseModel):
     impact_themes: list[str] = Field(default_factory=list)
     reported_metrics: dict[str, str] = Field(default_factory=dict)
     sdg_claims: list[int] = Field(default_factory=list)
+    impact_targets: dict[str, str] | list[dict] = Field(
+        default_factory=dict,
+        description="Impact targets for target_progress reports. Accepts {metric_id: description} or structured target dicts.",
+    )
+    metric_history: list[dict[str, object]] = Field(
+        default_factory=list,
+        description="Historical metric values for trend and target-progress context.",
+    )
+    impact_claims: list[dict[str, object]] = Field(
+        default_factory=list,
+        description="Impact claims extracted from pitch decks or memos for report evidence sections.",
+    )
     output_format: Literal["html", "csv", "json", "text", "xlsx", "pdf"] = Field(
         default="text",
         description="Output format for the report ('xlsx' for Excel, 'pdf' for print-ready)"
@@ -210,6 +228,19 @@ class ImpactReportTool(BaseTool):
 
         reported_metrics, _ = normalize_metric_map(args.reported_metrics)
         sdg_claims, _ = normalize_sdg_goals(args.sdg_claims)
+        impact_targets, _ = normalize_impact_targets(args.impact_targets)
+        metric_history = []
+        for entry in args.metric_history:
+            try:
+                metric_history.append(MetricValue.model_validate(entry))
+            except Exception:
+                continue
+        impact_claims = []
+        for claim in args.impact_claims:
+            try:
+                impact_claims.append(ImpactClaim.model_validate(claim))
+            except Exception:
+                continue
 
         company = Company(
             name=args.company_name,
@@ -219,6 +250,8 @@ class ImpactReportTool(BaseTool):
             impact_themes=infer_themes(f"{args.company_description} {args.sector}", args.impact_themes),
             reported_metrics=reported_metrics,
             sdg_claims=sdg_claims,
+            impact_targets=impact_targets,
+            metric_history=metric_history,
         )
 
         report_data: dict = {
@@ -226,6 +259,8 @@ class ImpactReportTool(BaseTool):
             "generated_at": datetime.now(timezone.utc).isoformat(),
             "catalog_version": "IRIS+ 5.3c",
         }
+        if impact_claims:
+            report_data["impact_claims"] = [claim.model_dump() for claim in impact_claims]
 
         if args.include_five_dimensions:
             fd_result = assess_five_dimensions(company, store)
@@ -2378,16 +2413,30 @@ def _to_target_progress_text(data: dict) -> str:
         return "\n".join(lines)
 
     summary = tt.get("summary", {})
+    status_counts = {
+        "on_track": 0,
+        "behind": 0,
+        "exceeded": 0,
+        "at_risk": 0,
+    }
+    for target in targets:
+        status = target.get("status", "no_data")
+        if status in status_counts:
+            status_counts[status] += 1
+    if isinstance(summary, dict):
+        status_counts.update({k: summary.get(k, v) for k, v in status_counts.items()})
     lines.append(f"Total Targets: {len(targets)}")
-    lines.append(f"  On Track: {summary.get('on_track', 0)} | Behind: {summary.get('behind', 0)}")
-    lines.append(f"  Exceeded: {summary.get('exceeded', 0)} | At Risk: {summary.get('at_risk', 0)}")
+    lines.append(f"  On Track: {status_counts['on_track']} | Behind: {status_counts['behind']}")
+    lines.append(f"  Exceeded: {status_counts['exceeded']} | At Risk: {status_counts['at_risk']}")
+    if isinstance(summary, str):
+        lines.append(f"  Summary: {summary}")
     lines.append("")
 
     for t in targets:
         status = t.get("status", "no_data")
-        pct = t.get("progress_pct", 0)
+        pct = t.get("progress_pct") or 0
         lines.append(f"  {t['metric_id']}: {status.replace('_', ' ').upper()}")
-        lines.append(f"    Target: {t.get('target_description', 'N/A')}")
+        lines.append(f"    Target: {t.get('target_description') or t.get('target', 'N/A')}")
         lines.append(f"    Current: {t.get('current_value', 'N/A')} | Progress: {pct:.0f}%")
         if pct > 0 and pct < 100:
             remaining = 100 - pct

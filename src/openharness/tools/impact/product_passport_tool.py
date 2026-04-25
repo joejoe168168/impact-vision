@@ -123,6 +123,8 @@ class ProductPassportTool(BaseTool):
             data = json.loads(args.dpp_data)
         except json.JSONDecodeError as e:
             return ToolResult(output=f"Invalid JSON: {e}", is_error=True)
+        if not isinstance(data, dict):
+            return ToolResult(output="DPP data must be a JSON object.", is_error=True)
 
         product_name = data.get("product_name", data.get("name", "Unknown"))
         categories_found: list[str] = []
@@ -184,6 +186,8 @@ class ProductPassportTool(BaseTool):
             data = json.loads(args.dpp_data)
         except json.JSONDecodeError as e:
             return ToolResult(output=f"Invalid JSON: {e}", is_error=True)
+        if not isinstance(data, dict):
+            return ToolResult(output="DPP data must be a JSON object.", is_error=True)
 
         priority = _get_priority_categories(args.product_category)
         all_cats = list(DPP_CATEGORIES.keys())

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 from pathlib import Path
 
 from openharness.tools.impact.common import (
@@ -92,7 +93,6 @@ class TestNormalizers:
         assert len(warnings) == 1
 
     def test_normalize_impact_targets_qualitative(self):
-        from openharness.impact.models import ImpactTarget
         targets, _ = normalize_impact_targets({"OI4112": "Implement recycling policy"})
         assert len(targets) == 1
         assert targets[0].target_value is None
@@ -142,6 +142,420 @@ class TestNewTools:
         result = asyncio.run(tool.execute(args, ctx))
         assert not result.is_error
         assert "quality_score" in result.output.lower() or "quality" in result.output.lower()
+
+    def test_all_impact_tool_modules_are_registered(self):
+        from openharness.tools import create_default_tool_registry
+
+        registry = create_default_tool_registry()
+        registered = {tool.name for tool in registry.list_tools()}
+
+        expected = {
+            "beneficiary_feedback",
+            "cross_reference",
+            "document_analysis",
+            "dd_checklist",
+            "exclusion_screening",
+            "five_dimension_assess",
+            "framework_assess",
+            "gap_analysis",
+            "greenwashing_detect",
+            "guided_assessment",
+            "impact_data_quality",
+            "impact_metric_recommender",
+            "impact_risk_opportunity",
+            "impact_report",
+            "improvement_advisor",
+            "iris_catalog",
+            "lp_ddq_export",
+            "monitoring",
+            "narrative",
+            "pipeline",
+            "pitch_deck_analyze",
+            "portfolio_analyze",
+            "product_passport",
+            "sdg_mapper",
+            "trend_analysis",
+            "verification_prep",
+        }
+
+        assert expected <= registered
+
+    def test_improvement_advisor_executes_with_sdg_claims(self):
+        from openharness.tools.base import ToolExecutionContext
+        from openharness.tools.impact.improvement_advisor_tool import (
+            ImprovementAdvisorInput,
+            ImprovementAdvisorTool,
+        )
+
+        tool = ImprovementAdvisorTool()
+        args = ImprovementAdvisorInput(
+            action="recommend",
+            company_name="Solar Co",
+            company_description="Solar energy access for rural households",
+            sector="Energy",
+            sdg_claims=[7, 13],
+        )
+        result = asyncio.run(tool.execute(args, ToolExecutionContext(cwd=Path("."))))
+
+        assert not result.is_error
+        assert "IMPROVEMENT RECOMMENDATIONS" in result.output
+
+    def test_narrative_executes_with_sdg_claims(self):
+        from openharness.tools.base import ToolExecutionContext
+        from openharness.tools.impact.narrative_tool import NarrativeInput, NarrativeTool
+
+        tool = NarrativeTool()
+        args = NarrativeInput(
+            action="executive_summary",
+            company_name="Solar Co",
+            company_description="Solar energy access for rural households",
+            sector="Energy",
+            sdg_claims=[7, 13],
+        )
+        result = asyncio.run(tool.execute(args, ToolExecutionContext(cwd=Path("."))))
+
+        assert not result.is_error
+        assert "EXECUTIVE SUMMARY PROMPT" in result.output
+
+    def test_document_analysis_normalizes_metric_id_case(self):
+        from openharness.tools.base import ToolExecutionContext
+        from openharness.tools.impact.document_analysis_tool import DocumentAnalysisInput, DocumentAnalysisTool
+
+        tool = DocumentAnalysisTool()
+        args = DocumentAnalysisInput(
+            action="compare_documents",
+            company_name="Solar Co",
+            documents=[
+                {"name": "memo", "text": "Reports oi4112 and sdg 13."},
+                {"name": "deck", "text": "Reports OI4112 plus pi4060 for SDG 13."},
+            ],
+        )
+        result = asyncio.run(tool.execute(args, ToolExecutionContext(cwd=Path("."))))
+
+        assert not result.is_error
+        assert "Shared metrics across all docs: 1 (OI4112)" in result.output
+        assert "PI4060" in result.output
+
+    def test_beneficiary_feedback_preserves_zero_nps(self):
+        from openharness.tools.base import ToolExecutionContext
+        from openharness.tools.impact.beneficiary_feedback_tool import (
+            BeneficiaryFeedbackInput,
+            BeneficiaryFeedbackTool,
+        )
+
+        tool = BeneficiaryFeedbackTool()
+        args = BeneficiaryFeedbackInput(
+            action="import",
+            company_name="Feedback Co",
+            raw_data=json.dumps({"nps": 0, "satisfaction_score": 1, "sample_size": 12}),
+        )
+        result = asyncio.run(tool.execute(args, ToolExecutionContext(cwd=Path("."))))
+
+        assert not result.is_error
+        assert "NPS: 0" in result.output
+        assert result.metadata["feedback"]["nps"] == 0
+
+    def test_product_passport_rejects_non_object_json(self):
+        from openharness.tools.base import ToolExecutionContext
+        from openharness.tools.impact.product_passport_tool import ProductPassportInput, ProductPassportTool
+
+        tool = ProductPassportTool()
+        ctx = ToolExecutionContext(cwd=Path("."))
+
+        imported = asyncio.run(tool.execute(ProductPassportInput(action="import", dpp_data="[]"), ctx))
+        assessed = asyncio.run(tool.execute(ProductPassportInput(action="assess", dpp_data="[]"), ctx))
+
+        assert imported.is_error
+        assert assessed.is_error
+        assert "JSON object" in imported.output
+        assert "JSON object" in assessed.output
+
+    def test_monitoring_normalizes_metric_ids_and_parses_units(self, tmp_path, monkeypatch):
+        from openharness.impact import storage
+        from openharness.tools.base import ToolExecutionContext
+        from openharness.tools.impact.monitoring_tool import MonitoringInput, MonitoringTool
+
+        monkeypatch.setattr(storage, "_global_store", storage.AssessmentStore(tmp_path / "impact.db"))
+        store = storage.get_assessment_store()
+        store.save_assessment(
+            company_name="Monitor Co",
+            company_data={
+                "name": "Monitor Co",
+                "reported_metrics": {"OI4112": "100 tCO2e"},
+            },
+        )
+
+        tool = MonitoringTool()
+        ctx = ToolExecutionContext(cwd=Path("."))
+        asyncio.run(tool.execute(
+            MonitoringInput(
+                action="set_schedule",
+                company_name="Monitor Co",
+                alert_thresholds={"oi4112": 0.1},
+                watch_metrics=["oi4112"],
+            ),
+            ctx,
+        ))
+        result = asyncio.run(tool.execute(
+            MonitoringInput(
+                action="record_metric",
+                company_name="Monitor Co",
+                metric_id="oi4112",
+                metric_value=150,
+            ),
+            ctx,
+        ))
+
+        assessment = store.get_assessment("Monitor Co")
+        alerts = store.list_alerts(company_name="Monitor Co")
+        schedule = store.get_monitoring_schedule("Monitor Co")
+
+        assert not result.is_error
+        assert "Alert(s) triggered" in result.output
+        assert assessment["company"]["reported_metrics"]["OI4112"] == "150.0"
+        assert schedule["watch_metrics"] == ["OI4112"]
+        assert schedule["alert_thresholds"] == {"OI4112": 0.1}
+        assert alerts[0]["metric_id"] == "OI4112"
+
+    def test_product_passport_mcp_maps_product_data(self):
+        from openharness.impact.mcp_server import product_passport
+
+        output = asyncio.run(product_passport(
+            action="assess",
+            product_data={"product_name": "Battery", "carbon_footprint": "20 kgCO2e"},
+            product_category="batteries",
+        ))
+
+        assert "DPP Completeness Assessment" in output
+        assert "carbon_footprint" in output
+
+    def test_mcp_pipeline_uses_stage_field(self, tmp_path, monkeypatch):
+        from openharness.impact import storage
+        from openharness.impact.mcp_server import pipeline
+
+        monkeypatch.setattr(storage, "_global_store", storage.AssessmentStore(tmp_path / "impact.db"))
+        asyncio.run(pipeline(
+            action="add",
+            company_name="Pipeline Co",
+            stage="screening",
+            sector="energy",
+        ))
+
+        entry = storage.get_assessment_store().get_pipeline_entry("Pipeline Co")
+        assert entry["pipeline_stage"] == "screening"
+
+    def test_mcp_monitoring_uses_metric_value_field(self, tmp_path, monkeypatch):
+        from openharness.impact import storage
+        from openharness.impact.mcp_server import monitoring
+
+        monkeypatch.setattr(storage, "_global_store", storage.AssessmentStore(tmp_path / "impact.db"))
+        store = storage.get_assessment_store()
+        store.save_assessment(
+            company_name="MCP Monitor Co",
+            company_data={"name": "MCP Monitor Co", "reported_metrics": {"OI4112": "100"}},
+        )
+
+        asyncio.run(monitoring(action="set_schedule", company_name="MCP Monitor Co"))
+        output = asyncio.run(monitoring(
+            action="record_metric",
+            company_name="MCP Monitor Co",
+            metric_id="oi4112",
+            value="125",
+        ))
+
+        assert "metric_value is required" not in output
+        assert "Recorded OI4112 = 125.0" in output
+
+    def test_mcp_beneficiary_feedback_maps_feedback_data(self):
+        from openharness.impact.mcp_server import beneficiary_feedback
+
+        output = asyncio.run(beneficiary_feedback(
+            action="import",
+            company_name="Feedback Co",
+            feedback_data={"nps": 0, "satisfaction_score": 1, "sample_size": 5},
+        ))
+
+        assert "NPS: 0" in output
+        assert "Sample size: 5" in output
+
+    def test_mcp_cross_reference_supplies_required_action(self):
+        from openharness.impact.mcp_server import cross_reference
+
+        output = asyncio.run(cross_reference(metric_id="OI4112"))
+
+        assert "Cross-references for 'OI4112'" in output
+
+    def test_mcp_dd_checklist_maps_text_to_document_text(self):
+        from openharness.impact.mcp_server import dd_checklist
+
+        output = asyncio.run(dd_checklist(
+            action="analyze",
+            text="We document a theory of change and measure outcomes for customers.",
+        ))
+
+        assert "Provide document_text" not in output
+        assert "DD Checklist Coverage Analysis" in output
+
+    def test_mcp_narrative_maps_section_and_audience_aliases(self):
+        from openharness.impact.mcp_server import narrative
+
+        output = asyncio.run(narrative(
+            section="executive_summary",
+            audience="investor",
+            company_name="Narrative Co",
+            company_description="Solar energy access for rural households",
+            sector="energy",
+        ))
+
+        assert "EXECUTIVE SUMMARY PROMPT" in output
+
+    def test_mcp_portfolio_analyze_maps_action_alias(self):
+        from openharness.impact.mcp_server import portfolio_analyze
+
+        output = asyncio.run(portfolio_analyze(
+            action="analyze",
+            companies=[
+                {
+                    "name": "Portfolio Co",
+                    "description": "Solar energy access",
+                    "sector": "energy",
+                    "reported_metrics": {"OI4112": "100"},
+                },
+            ],
+        ))
+
+        assert "validation" not in output.lower()
+        assert "PORTFOLIO" in output.upper()
+
+    def test_mcp_trend_analysis_flattens_metric_history(self):
+        from openharness.impact.mcp_server import trend_analysis
+
+        output = asyncio.run(trend_analysis(
+            company_name="Trend Co",
+            metric_history={
+                "OI4112": [
+                    {"value": "100", "period": "FY2024"},
+                    {"value": "125", "period": "FY2025"},
+                ],
+            },
+        ))
+
+        assert "validation" not in output.lower()
+        assert "TREND" in output.upper()
+
+    def test_mcp_framework_assess_supplies_action(self):
+        from openharness.impact.mcp_server import framework_assess
+
+        output = asyncio.run(framework_assess(
+            framework="opim",
+            company_name="Framework Co",
+            company_description="Impact thesis with SDG 7 theory of change and independent verification.",
+            reported_metrics={"OI4112": "100", "PI4060": "200", "OI6697": "50"},
+        ))
+
+        assert "validation" not in output.lower()
+        assert "IFC OPIM ALIGNMENT ASSESSMENT" in output
+
+    def test_mcp_guided_assessment_list_templates_uses_default_template(self):
+        from openharness.impact.mcp_server import guided_assessment
+
+        output = asyncio.run(guided_assessment(action="list_templates"))
+
+        assert "validation" not in output.lower()
+        assert "ASSESSMENT TEMPLATES" in output
+
+    def test_mcp_impact_report_passes_target_and_claim_inputs(self):
+        from openharness.impact.mcp_server import impact_report
+
+        output = asyncio.run(impact_report(
+            company_name="Report Co",
+            company_description="Solar energy access for rural households",
+            sector="energy",
+            reported_metrics={"OI4112": "150"},
+            impact_targets={"OI4112": "200 tCO2e by 2027"},
+            metric_history=[
+                {"metric_id": "OI4112", "value": "100", "period": "FY2024"},
+                {"metric_id": "OI4112", "value": "150", "period": "FY2025"},
+            ],
+            impact_claims=[
+                {
+                    "text": "Report Co reduces emissions for rural households.",
+                    "mapped_metrics": ["OI4112"],
+                    "category": "outcome",
+                },
+            ],
+            report_type="target_progress",
+        ))
+
+        assert "validation" not in output.lower()
+        assert "TARGET PROGRESS REPORT" in output
+        assert "OI4112" in output
+
+    def test_api_pipeline_and_monitoring_map_request_fields(self, tmp_path, monkeypatch):
+        from openharness.api_gateway.router import MonitoringRequest, PipelineRequest, monitoring_endpoint, pipeline_endpoint
+        from openharness.impact import storage
+
+        monkeypatch.setattr(storage, "_global_store", storage.AssessmentStore(tmp_path / "impact.db"))
+        store = storage.get_assessment_store()
+        store.save_assessment(
+            company_name="API Monitor Co",
+            company_data={"name": "API Monitor Co", "reported_metrics": {"OI4112": "100"}},
+        )
+
+        asyncio.run(pipeline_endpoint(PipelineRequest(
+            action="add",
+            company_name="API Pipeline Co",
+            stage="screening",
+            priority="high",
+            sdg_focus=[7],
+        )))
+        asyncio.run(monitoring_endpoint(MonitoringRequest(
+            action="record_metric",
+            company_name="API Monitor Co",
+            metric_id="oi4112",
+            value="125",
+        )))
+
+        pipeline_entry = store.get_pipeline_entry("API Pipeline Co")
+        assessment = store.get_assessment("API Monitor Co")
+
+        assert pipeline_entry["pipeline_stage"] == "screening"
+        assert pipeline_entry["priority"] == "high"
+        assert pipeline_entry["sdg_focus"] == [7]
+        assert assessment["company"]["reported_metrics"]["OI4112"] == "125.0"
+
+    def test_framework_opim_executes_current_framework_api(self):
+        from openharness.tools.base import ToolExecutionContext
+        from openharness.tools.impact.framework_tool import FrameworkInput, FrameworkTool
+
+        tool = FrameworkTool()
+        result = asyncio.run(tool.execute(
+            FrameworkInput(
+                action="assess",
+                framework="opim",
+                company_name="OPIM Co",
+                description="Impact thesis with SDG 7 alignment, theory of change, exclusion screening, and independent verification.",
+                reported_metrics={"OI4112": "100", "PI4060": "200", "OI6697": "50"},
+            ),
+            ToolExecutionContext(cwd=Path(".")),
+        ))
+
+        assert not result.is_error
+        assert "IFC OPIM ALIGNMENT ASSESSMENT" in result.output
+        assert "Principles addressed" in result.output
+
+    def test_pitch_deck_analyze_accepts_raw_text(self):
+        from openharness.tools.base import ToolExecutionContext
+        from openharness.tools.impact.pitch_deck_analyze_tool import PitchDeckAnalyzeInput, PitchDeckAnalyzeTool
+
+        tool = PitchDeckAnalyzeTool()
+        result = asyncio.run(tool.execute(
+            PitchDeckAnalyzeInput(text="Solar Co provides clean energy access to 10,000 rural households and reduces CO2 emissions."),
+            ToolExecutionContext(cwd=Path(".")),
+        ))
+
+        assert not result.is_error
+        assert "PITCH DECK / MEMO ANALYSIS" in result.output
 
 
 class TestScoreProvenance:
@@ -479,7 +893,7 @@ class TestTrendAnalysis:
 
 class TestTargetTracking:
     def test_target_progress(self):
-        from openharness.impact.models import Company, ImpactTarget, MetricValue
+        from openharness.impact.models import Company, ImpactTarget
         from openharness.impact.trend_analysis import assess_target_progress
 
         company = Company(
@@ -620,7 +1034,7 @@ class TestMetricRecommenderTool:
         assert tool.name == "impact_metric_recommender"
 
 
-class TestPortfolioTool:
+class TestPortfolioInput:
     def test_portfolio_input_has_geography(self):
         from openharness.tools.impact.portfolio_tool import PortfolioInput
         inp = PortfolioInput(

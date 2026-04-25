@@ -129,7 +129,9 @@ class FrameworkRequest(BaseModel):
 
 
 class CrossReferenceRequest(BaseModel):
+    action: str = "lookup"
     metric_id: str = ""
+    standard: str = "any"
     framework: str = ""
     concept: str = ""
 
@@ -145,7 +147,7 @@ class PipelineRequest(BaseModel):
     stage: str = ""
     sector: str = ""
     notes: str = ""
-    priority: int = 0
+    priority: str = "medium"
     sdg_focus: list[int] = Field(default_factory=list)
 
 
@@ -153,7 +155,7 @@ class MonitoringRequest(BaseModel):
     action: str = Field(description="Action: set_schedule, get_schedule, list_due, record_metric, check_alerts, reassess, dashboard")
     company_name: str = ""
     metric_id: str = ""
-    value: str = ""
+    value: float | str | None = None
     frequency: str = "quarterly"
 
 
@@ -210,6 +212,15 @@ def _build_company(req: CompanyRequest) -> Company:
 def _get_tool_context():
     from openharness.tools.base import ToolExecutionContext
     return ToolExecutionContext(cwd=Path.cwd())
+
+
+def _coerce_float(value: Any) -> float | None:
+    if value in (None, ""):
+        return None
+    try:
+        return float(str(value).replace(",", "").strip())
+    except (TypeError, ValueError):
+        return None
 
 
 async def _fire_webhooks(event: str, payload: dict) -> None:
@@ -429,7 +440,15 @@ async def cross_reference_endpoint(req: CrossReferenceRequest):
     from openharness.tools.impact.cross_reference_tool import CrossReferenceInput, CrossReferenceTool
 
     tool = CrossReferenceTool()
-    args = CrossReferenceInput(metric_id=req.metric_id, framework=req.framework, concept=req.concept)
+    normalized_action = req.action
+    if req.concept and not req.metric_id and req.action == "lookup":
+        normalized_action = "search"
+    args = CrossReferenceInput(
+        action=normalized_action,
+        metric_id=req.metric_id,
+        standard=req.standard if req.standard != "any" else req.framework or "any",
+        query=req.concept,
+    )
     result = await tool.execute(args, _get_tool_context())
     return {"result": result.output}
 
@@ -546,9 +565,11 @@ async def pipeline_endpoint(req: PipelineRequest):
     args = PipelineInput(
         action=req.action,
         company_name=req.company_name,
-        stage=req.stage,
+        pipeline_stage=req.stage or "sourcing",
         sector=req.sector,
         notes=req.notes,
+        priority=req.priority,
+        sdg_focus=req.sdg_focus,
     )
     result = await tool.execute(args, _get_tool_context())
     return {"result": result.output}
@@ -563,11 +584,11 @@ async def monitoring_endpoint(req: MonitoringRequest):
         action=req.action,
         company_name=req.company_name,
         metric_id=req.metric_id,
-        value=req.value,
+        metric_value=_coerce_float(req.value),
         frequency=req.frequency,
     )
     result = await tool.execute(args, _get_tool_context())
-    if req.action == "record_metric" and "ALERT" in result.output:
+    if req.action == "record_metric" and "alert" in result.output.lower():
         await _fire_webhooks("alert_fired", {"company": req.company_name, "metric_id": req.metric_id})
     return {"result": result.output}
 
@@ -595,13 +616,15 @@ async def narrative_endpoint(req: NarrativeRequest):
     from openharness.tools.impact.narrative_tool import NarrativeInput, NarrativeTool
 
     tool = NarrativeTool()
+    normalized_action = "full_narrative" if req.section == "full" else req.section
+    normalized_audience = "lp" if req.audience == "investor" else req.audience
     args = NarrativeInput(
-        section=req.section,
+        action=normalized_action,
         company_name=req.company_name,
         company_description=req.company_description,
         sector=req.sector,
         reported_metrics=req.reported_metrics,
-        audience=req.audience,
+        audience=normalized_audience,
     )
     result = await tool.execute(args, _get_tool_context())
     return {"result": result.output}

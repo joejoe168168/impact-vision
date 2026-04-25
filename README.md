@@ -6,6 +6,8 @@ Open-source AI-powered impact measurement and SDG alignment agent for VC and imp
 
 Built on [OpenHarness](https://github.com/HKUDS/OpenHarness), Impact Vision ships a conversational AI agent, a **CLI**, a **REST API** (26+ endpoints), an **MCP server** (26 tools), a **Streamlit dashboard** and a **single-file Web Console** — all backed by the same engine with deep expertise in GIIN's IRIS+ framework, UN SDGs, the 5 Dimensions of Impact, and 10 ESG / regulatory frameworks (ISSB, ESRS, SFDR, TCFD, SASB, GRI, PCAF, SBTi, EU Taxonomy, TNFD, CDP).
 
+> **Maintenance note · 2026-04-25** — Impact tool wrapper review completed: all **26 implemented impact tools** are exported and registered in the default tool registry. Regression fixes landed for `improvement_advisor` and `narrative` input normalization with SDG claims; focused verification: `126 passed` across `tests/test_tools/test_impact_tools_enhancements.py` and `tests/test_impact.py`; full-suite verification: `940 passed / 7 skipped / 1 xfailed`.
+
 ![Impact Vision Banner](docs/images/banner.png)
 
 ## Screenshots
@@ -373,7 +375,7 @@ Opens a web dashboard at http://localhost:8501 with 5 tabs: Assessment, IRIS+ Ca
 | `iv dd categories` | List DD categories |
 | `iv dd analyze "text"` | Check text against DD checklist |
 | `iv ollama-setup` | Configure local LLM |
-| `iv serve-mcp` | Start MCP server for AI agents |
+| `iv serve-mcp` | Start MCP server for AI agents (26 tools + 5 resources) |
 | `iv` | Start interactive AI agent |
 
 (`iv` is a shorthand for `impact-vision`)
@@ -585,8 +587,9 @@ impact-vision provider use NAME            # Switch active provider
 impact-vision auth login                   # Authenticate with a provider
 
 # MCP Server & API
-impact-vision serve-mcp                    # Start MCP server (stdio transport)
-impact-vision serve-mcp --transport sse    # Start MCP server (SSE, port 8765)
+impact-vision serve-mcp                         # Start MCP server (stdio transport)
+impact-vision serve-mcp --transport sse         # Start MCP server (SSE, port 8765)
+impact-vision serve-mcp --transport sse --port 8766
 ```
 
 ## Architecture
@@ -622,7 +625,7 @@ impact-vision/
 │   │       ├── esrs.py               # EU CSRD/ESRS Double Materiality (11 standards)
 │   │       ├── ifc_opim.py           # IFC Operating Principles for Impact Management
 │   │       └── cross_reference.py    # 59 cross-framework metric mappings
-│   ├── tools/impact/                  # Agent tools (25 LLM-callable tools)
+│   ├── tools/impact/                  # Agent tools (26 LLM-callable tools)
 │   │   ├── pitch_deck_analyze_tool.py # PDF/TXT/MD intake + full pipeline
 │   │   ├── dd_checklist_tool.py       # DD question list/analyze/suggest
 │   │   ├── iris_catalog_tool.py       # IRIS+ catalog search/browse
@@ -804,6 +807,8 @@ All accessible via the `framework_assess` tool:
 | ClimateBERT integration | Stub for deep NLP classification (ready for model integration) |
 
 ### Tools (26 Impact Tools)
+All tools below are exposed through the default OpenHarness tool registry and `openharness.tools.impact` exports, so the interactive agent, tool search, Web Console, and registry-backed integrations see the same impact-tool surface.
+
 | Tool | Description |
 |------|-------------|
 | `pitch_deck_analyze` | PDF/TXT/MD intake with impact claim extraction and Company model |
@@ -887,7 +892,10 @@ pip install -e ".[dev]"
 # Run all tests
 python -m pytest tests/ -v
 
-# Run the Impact Vision test subset (~150 tests, no external deps, ~2-3s)
+# Run the Impact Vision engine and tool-wrapper subset
+python -m pytest tests/test_impact.py tests/test_tools/test_impact_tools_enhancements.py -v
+
+# Run the broader phase/regression impact subset
 python -m pytest tests/test_impact.py tests/test_phase11_fixes.py tests/test_phases12_15.py tests/test_phases15_20.py -v
 
 # Run import smoke checks (verifies all package exports work)
@@ -899,7 +907,7 @@ ruff check src/
 
 ### Testing Coverage
 
-900+ tests across all subsystems; the impact subset (`test_impact.py` + `test_phase11_fixes.py` + `test_phases12_15.py` + `test_phases15_20.py`) is **150 passed / 4 skipped / 0 failed** at v0.14.0.
+900+ tests across all subsystems. The full suite is **940 passed / 7 skipped / 1 xfailed** as of 2026-04-25. The focused engine + tool-wrapper subset (`tests/test_impact.py` + `tests/test_tools/test_impact_tools_enhancements.py`) is **126 passed / 0 failed**. The broader phase impact subset (`test_impact.py` + `test_phase11_fixes.py` + `test_phases12_15.py` + `test_phases15_20.py`) was **150 passed / 4 skipped / 0 failed** at v0.14.0.
 
 | Test area | Tests | What it covers |
 |-----------|------:|----------------|
@@ -926,7 +934,7 @@ MIT License. See [LICENSE](LICENSE) for details.
 
 ## MCP Server (Use with Claude, Cursor, VS Code)
 
-Impact Vision can run as an **MCP server**, exposing all 26 tools to any MCP-compatible AI client.
+Impact Vision can run as an **MCP server**, exposing **26 impact tools** and **5 read-only resources** to any MCP-compatible AI client. The MCP wrapper layer was smoke-tested on 2026-04-25: all 26 tool wrappers, the monitoring update path, and all 5 resources returned valid outputs.
 
 ```bash
 # Start the MCP server (stdio transport, default)
@@ -935,6 +943,8 @@ impact-vision serve-mcp
 # Or with SSE transport for remote access
 impact-vision serve-mcp --transport sse --port 8765
 ```
+
+Use stdio for local desktop clients such as Claude Desktop, Cursor, and VS Code. Use SSE when the MCP server is started separately and clients connect over HTTP.
 
 ### Cursor / VS Code Setup
 
@@ -955,7 +965,49 @@ Add to `.cursor/mcp.json`:
 
 Copy `examples/claude_desktop_config.json` to your Claude Desktop config directory.
 
-See [docs/cursor-integration.md](docs/cursor-integration.md) for full setup guide, available tools/resources, and examples.
+### MCP Tools
+
+The server exposes these 26 tools:
+
+| Area | Tools |
+|------|-------|
+| Core assessment | `five_dimension_assess`, `sdg_mapper`, `impact_report`, `gap_analysis`, `impact_data_quality` |
+| DD and evidence | `pitch_deck_analyze`, `dd_checklist`, `document_analysis`, `verification_prep`, `guided_assessment` |
+| Frameworks and standards | `framework_assess`, `cross_reference`, `iris_catalog`, `lp_ddq_export` |
+| Risk and credibility | `greenwashing_detect`, `exclusion_screening`, `impact_risk_opportunity` |
+| Portfolio workflow | `portfolio_analyze`, `pipeline`, `monitoring`, `trend_analysis` |
+| Recommendations and narrative | `impact_metric_recommender`, `improvement_advisor`, `narrative` |
+| Stakeholder/product data | `beneficiary_feedback`, `product_passport` |
+
+### MCP Resources
+
+The server also exposes these resources:
+
+| Resource URI | Purpose |
+|--------------|---------|
+| `impact://catalog/stats` | IRIS+ catalog counts, categories, and themes |
+| `impact://dd-checklist/categories` | DD checklist categories and question counts |
+| `impact://frameworks/list` | Supported ESG / impact frameworks |
+| `impact://cross-reference/{metric_id}` | Cross-framework mapping for one metric |
+| `impact://sdg/goals` | UN SDG goal reference data |
+
+### Example MCP Prompts
+
+Once connected from Claude, Cursor, or VS Code, ask the client to call the tools directly:
+
+```text
+Use impact_report to assess Solar Co. Description: solar energy access for rural households. Sector: energy. Metrics: OI4112=100 tCO2e, PI4060=200.
+```
+
+```text
+Use pitch_deck_analyze on this memo text, then use document_analysis to compare the claims against our annual report.
+```
+
+```text
+Use pipeline to add Solar Co at screening, set a monitoring schedule, then record OI4112=150 and check alerts.
+```
+
+See [docs/cursor-integration.md](docs/cursor-integration.md) for the full setup guide and client-specific notes.
 
 ## REST API
 

@@ -15,6 +15,17 @@ from openharness.impact.models import BeneficiaryFeedback
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 
+def _format_optional(value: Any, fallback: str = "N/A") -> Any:
+    return fallback if value is None else value
+
+
+def _get_first_present(data: dict[str, Any], *keys: str) -> Any:
+    for key in keys:
+        if key in data and data[key] is not None:
+            return data[key]
+    return None
+
+
 class BeneficiaryFeedbackInput(BaseModel):
     action: Literal["import", "analyze", "summary"] = Field(
         default="analyze",
@@ -92,13 +103,16 @@ class BeneficiaryFeedbackTool(BaseTool):
 
         if isinstance(data, dict):
             feedback = BeneficiaryFeedback(
-                satisfaction_score=data.get("satisfaction_score") or data.get("satisfaction"),
-                nps=data.get("nps") or data.get("net_promoter_score"),
+                satisfaction_score=_get_first_present(data, "satisfaction_score", "satisfaction"),
+                nps=_get_first_present(data, "nps", "net_promoter_score"),
                 sample_size=data.get("sample_size", 0),
                 survey_date=data.get("survey_date", ""),
                 methodology=data.get("methodology", ""),
-                quality_of_life_improvement=data.get("quality_of_life_improvement")
-                or data.get("qol_improvement"),
+                quality_of_life_improvement=_get_first_present(
+                    data,
+                    "quality_of_life_improvement",
+                    "qol_improvement",
+                ),
                 would_recommend=data.get("would_recommend"),
                 themes=data.get("themes", []),
                 challenges=data.get("challenges", []),
@@ -112,8 +126,8 @@ class BeneficiaryFeedbackTool(BaseTool):
             f"BENEFICIARY FEEDBACK IMPORT: {args.company_name or 'Unknown'}",
             "=" * 50,
             "",
-            f"  Satisfaction: {feedback.satisfaction_score or 'N/A'}/5",
-            f"  NPS: {feedback.nps or 'N/A'}",
+            f"  Satisfaction: {_format_optional(feedback.satisfaction_score)}/5",
+            f"  NPS: {_format_optional(feedback.nps)}",
             f"  Sample size: {feedback.sample_size}",
             f"  Methodology: {feedback.methodology or 'Not specified'}",
             f"  Survey date: {feedback.survey_date or 'Not specified'}",
@@ -184,8 +198,8 @@ class BeneficiaryFeedbackTool(BaseTool):
 
         return ToolResult(
             output=f"Parsed {len(rows)} survey responses for {company_name or 'Unknown'}.\n"
-            f"Avg satisfaction: {feedback.satisfaction_score or 'N/A'}/5, "
-            f"Avg NPS: {feedback.nps or 'N/A'}, "
+            f"Avg satisfaction: {_format_optional(feedback.satisfaction_score)}/5, "
+            f"Avg NPS: {_format_optional(feedback.nps)}, "
             f"Themes: {len(unique_themes)}, Challenges: {len(unique_challenges)}",
             metadata={"feedback": feedback.model_dump()},
         )

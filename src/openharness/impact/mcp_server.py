@@ -62,6 +62,22 @@ def _make_company_dict(**kwargs) -> dict[str, Any]:
     return {k: v for k, v in kwargs.items() if v is not None}
 
 
+def _coerce_float(value: Any) -> float | None:
+    if value in (None, ""):
+        return None
+    try:
+        return float(str(value).replace(",", "").strip())
+    except (TypeError, ValueError):
+        return None
+
+
+def _first_present(data: dict[str, Any], *keys: str) -> Any:
+    for key in keys:
+        if key in data and data[key] is not None:
+            return data[key]
+    return None
+
+
 # ---------------------------------------------------------------------------
 # Resources
 # ---------------------------------------------------------------------------
@@ -308,8 +324,9 @@ async def iris_catalog(
     action: str = "search",
     query: str = "",
     metric_id: str = "",
-    category: str = "",
     theme: str = "",
+    sdg_goal: int | None = None,
+    limit: int = 10,
 ) -> str:
     """Search and browse the IRIS+ metric catalog (~800 metrics).
 
@@ -318,8 +335,20 @@ async def iris_catalog(
     from openharness.tools.impact.iris_catalog_tool import IrisCatalogInput, IrisCatalogTool
 
     tool = IrisCatalogTool()
+    normalized_action = action
+    normalized_query = query
+    if action == "list":
+        normalized_action = "filter_theme" if theme else "stats"
+        normalized_query = theme
+    if normalized_action == "get" and metric_id:
+        normalized_query = metric_id
+    if normalized_action == "filter_theme" and theme:
+        normalized_query = theme
     args = IrisCatalogInput(
-        action=action, query=query, metric_id=metric_id, category=category, theme=theme
+        action=normalized_action,
+        query=normalized_query,
+        sdg_goal=sdg_goal,
+        limit=limit,
     )
     result = await tool.execute(args, _get_tool_context())
     return result.output
@@ -330,7 +359,9 @@ async def dd_checklist(
     action: str = "list",
     category: str = "",
     text: str = "",
-    sector: str = "",
+    file_path: str = "",
+    max_questions: int = 15,
+    priority: str = "",
 ) -> str:
     """Access the 96-question impact due diligence checklist.
 
@@ -339,7 +370,14 @@ async def dd_checklist(
     from openharness.tools.impact.dd_checklist_tool import DdChecklistInput, DdChecklistTool
 
     tool = DdChecklistTool()
-    args = DdChecklistInput(action=action, category=category, text=text, sector=sector)
+    args = DdChecklistInput(
+        action=action,
+        document_text=text,
+        file_path=file_path,
+        categories=[category] if category else [],
+        max_questions=max_questions,
+        priority=priority,
+    )
     result = await tool.execute(args, _get_tool_context())
     return result.output
 
@@ -347,6 +385,7 @@ async def dd_checklist(
 @mcp.tool()
 async def framework_assess(
     framework: str,
+    action: str = "assess",
     company_name: str = "",
     company_description: str = "",
     sector: str = "",
@@ -361,6 +400,7 @@ async def framework_assess(
     tool = FrameworkTool()
     args = FrameworkInput(
         framework=framework,
+        action=action,
         company_name=company_name,
         description=company_description,
         sector=sector,
@@ -372,7 +412,9 @@ async def framework_assess(
 
 @mcp.tool()
 async def cross_reference(
+    action: str = "lookup",
     metric_id: str = "",
+    standard: str = "any",
     framework: str = "",
     concept: str = "",
 ) -> str:
@@ -383,7 +425,15 @@ async def cross_reference(
     from openharness.tools.impact.cross_reference_tool import CrossReferenceInput, CrossReferenceTool
 
     tool = CrossReferenceTool()
-    args = CrossReferenceInput(metric_id=metric_id, framework=framework, concept=concept)
+    normalized_action = action
+    if concept and not metric_id and action == "lookup":
+        normalized_action = "search"
+    args = CrossReferenceInput(
+        action=normalized_action,
+        standard=standard if standard != "any" else framework or "any",
+        metric_id=metric_id,
+        query=concept,
+    )
     result = await tool.execute(args, _get_tool_context())
     return result.output
 
@@ -397,6 +447,9 @@ async def impact_report(
     impact_themes: list[str] | None = None,
     reported_metrics: dict[str, str] | None = None,
     sdg_claims: list[int] | None = None,
+    impact_targets: dict[str, str] | list[dict[str, Any]] | None = None,
+    metric_history: list[dict[str, Any]] | None = None,
+    impact_claims: list[dict[str, Any]] | None = None,
     output_format: str = "text",
     report_type: str = "full",
 ) -> str:
@@ -416,6 +469,9 @@ async def impact_report(
         impact_themes=impact_themes or [],
         reported_metrics=reported_metrics or {},
         sdg_claims=sdg_claims or [],
+        impact_targets=impact_targets or {},
+        metric_history=metric_history or [],
+        impact_claims=impact_claims or [],
         output_format=output_format,
         report_type=report_type,
     )
@@ -534,8 +590,9 @@ async def portfolio_analyze(
     from openharness.tools.impact.portfolio_tool import PortfolioInput, PortfolioTool
 
     tool = PortfolioTool()
+    normalized_action = "analyze_companies" if action == "analyze" else action
     args = PortfolioInput(
-        action=action,
+        action=normalized_action,
         companies=companies or [],
         file_path=file_path,
     )
@@ -610,9 +667,13 @@ async def trend_analysis(
     from openharness.tools.impact.trend_analysis_tool import TrendAnalysisInput, TrendAnalysisTool
 
     tool = TrendAnalysisTool()
+    normalized_history: list[dict[str, Any]] = []
+    for metric_id, points in (metric_history or {}).items():
+        for point in points:
+            normalized_history.append({"metric_id": metric_id, **point})
     args = TrendAnalysisInput(
         company_name=company_name,
-        metric_history=metric_history or {},
+        metric_history=normalized_history,
     )
     result = await tool.execute(args, _get_tool_context())
     return result.output
@@ -631,10 +692,23 @@ async def beneficiary_feedback(
     from openharness.tools.impact.beneficiary_feedback_tool import BeneficiaryFeedbackInput, BeneficiaryFeedbackTool
 
     tool = BeneficiaryFeedbackTool()
+    data = feedback_data or {}
+    normalized_action = "analyze" if action == "integrate" else action
     args = BeneficiaryFeedbackInput(
-        action=action,
+        action=normalized_action,
         company_name=company_name,
-        feedback_data=feedback_data or {},
+        satisfaction_score=_first_present(data, "satisfaction_score", "satisfaction"),
+        nps=_first_present(data, "nps", "net_promoter_score"),
+        sample_size=data.get("sample_size", 0),
+        survey_date=data.get("survey_date", ""),
+        methodology=data.get("methodology", ""),
+        quality_of_life_improvement=_first_present(data, "quality_of_life_improvement", "qol_improvement"),
+        would_recommend=data.get("would_recommend"),
+        themes=data.get("themes", []),
+        challenges=data.get("challenges", []),
+        quotes=data.get("quotes", []),
+        segments=data.get("segments", {}),
+        raw_data=json.dumps(data) if normalized_action == "import" else "",
     )
     result = await tool.execute(args, _get_tool_context())
     return result.output
@@ -670,15 +744,23 @@ async def verification_prep(
 async def product_passport(
     action: str = "assess",
     product_data: dict[str, Any] | None = None,
+    product_category: str = "",
+    company_name: str = "",
 ) -> str:
     """EU Digital Product Passport (ESPR) data import and IRIS+ metric mapping.
 
-    Actions: assess, map_metrics.
+    Actions: import, assess, map.
     """
     from openharness.tools.impact.product_passport_tool import ProductPassportInput, ProductPassportTool
 
     tool = ProductPassportTool()
-    args = ProductPassportInput(action=action, product_data=product_data or {})
+    normalized_action = "map" if action == "map_metrics" else action
+    args = ProductPassportInput(
+        action=normalized_action,
+        dpp_data=json.dumps(product_data or {}),
+        product_category=product_category,
+        company_name=company_name,
+    )
     result = await tool.execute(args, _get_tool_context())
     return result.output
 
@@ -701,7 +783,7 @@ async def pipeline(
     args = PipelineInput(
         action=action,
         company_name=company_name,
-        stage=stage,
+        pipeline_stage=stage or "sourcing",
         sector=sector,
         notes=notes,
     )
@@ -728,7 +810,7 @@ async def monitoring(
         action=action,
         company_name=company_name,
         metric_id=metric_id,
-        value=value,
+        metric_value=_coerce_float(value),
         frequency=frequency,
     )
     result = await tool.execute(args, _get_tool_context())
@@ -781,13 +863,15 @@ async def narrative(
     from openharness.tools.impact.narrative_tool import NarrativeInput, NarrativeTool
 
     tool = NarrativeTool()
+    normalized_action = "full_narrative" if section == "full" else section
+    normalized_audience = "lp" if audience == "investor" else audience
     args = NarrativeInput(
-        section=section,
+        action=normalized_action,
         company_name=company_name,
         company_description=company_description,
         sector=sector,
         reported_metrics=reported_metrics or {},
-        audience=audience,
+        audience=normalized_audience,
     )
     result = await tool.execute(args, _get_tool_context())
     return result.output
@@ -795,7 +879,7 @@ async def narrative(
 
 @mcp.tool()
 async def document_analysis(
-    action: str = "compare",
+    action: str = "compare_documents",
     documents: list[dict[str, Any]] | None = None,
     claims: list[str] | None = None,
 ) -> str:
@@ -806,10 +890,15 @@ async def document_analysis(
     from openharness.tools.impact.document_analysis_tool import DocumentAnalysisInput, DocumentAnalysisTool
 
     tool = DocumentAnalysisTool()
+    normalized_action = "compare_documents" if action == "compare" else action
+    normalized_claims: list[dict[str, Any]] = [
+        {"text": claim} if isinstance(claim, str) else claim
+        for claim in (claims or [])
+    ]
     args = DocumentAnalysisInput(
-        action=action,
+        action=normalized_action,
         documents=documents or [],
-        claims=claims or [],
+        claims=normalized_claims,
     )
     result = await tool.execute(args, _get_tool_context())
     return result.output
@@ -820,7 +909,7 @@ async def guided_assessment(
     action: str = "list_templates",
     template: str = "",
     company_name: str = "",
-    step_id: str = "",
+    session_id: str = "",
     data: dict[str, Any] | None = None,
 ) -> str:
     """Structured step-by-step impact assessment workflow.
@@ -833,10 +922,10 @@ async def guided_assessment(
     tool = GuidedAssessmentTool()
     args = GuidedAssessmentInput(
         action=action,
-        template=template,
+        template=template or "screening",
         company_name=company_name,
-        step_id=step_id,
-        data=data or {},
+        session_id=session_id,
+        step_data=data or {},
     )
     result = await tool.execute(args, _get_tool_context())
     return result.output

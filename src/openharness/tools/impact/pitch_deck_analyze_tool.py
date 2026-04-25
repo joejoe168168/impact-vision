@@ -42,7 +42,9 @@ SECTOR_THEME_MAP = {
 
 
 class PitchDeckAnalyzeInput(BaseModel):
-    file_path: str = Field(description="Path to the PDF pitch deck or investment memo")
+    file_path: str = Field(default="", description="Path to the PDF pitch deck or investment memo")
+    text: str = Field(default="", description="Raw pitch deck or investment memo text")
+    url: str = Field(default="", description="URL to a text-accessible pitch deck or memo")
     include_dd_checklist: bool = Field(
         default=True,
         description="Also run the DD checklist analysis to identify unanswered due diligence questions",
@@ -95,24 +97,46 @@ class PitchDeckAnalyzeTool(BaseTool):
     async def execute(self, arguments: BaseModel, context: ToolExecutionContext) -> ToolResult:
         args = arguments if isinstance(arguments, PitchDeckAnalyzeInput) else PitchDeckAnalyzeInput.model_validate(arguments)
 
-        path = Path(args.file_path)
-        if not path.is_absolute():
-            path = context.cwd / path
+        if args.text.strip():
+            text = args.text
+            page_texts = [{"page": 1, "text": text}]
+            source_name = "raw_text"
+            source_stem = "raw_text"
+        elif args.url.strip():
+            try:
+                from urllib.request import urlopen
 
-        if not path.exists():
-            return ToolResult(output=f"File not found: {path}", is_error=True)
+                with urlopen(args.url, timeout=10) as response:
+                    raw = response.read()
+                text = raw.decode("utf-8", errors="replace")
+                page_texts = [{"page": 1, "text": text}]
+                source_name = args.url
+                source_stem = "url_document"
+            except Exception as e:
+                return ToolResult(output=f"Failed to fetch URL: {e}", is_error=True)
+        elif args.file_path.strip():
+            path = Path(args.file_path)
+            if not path.is_absolute():
+                path = context.cwd / path
 
-        suffix = path.suffix.lower()
-        try:
-            if suffix == ".pdf":
-                text, page_texts = _extract_pdf_text(path)
-            elif suffix in (".txt", ".md"):
-                raw = path.read_text(encoding="utf-8", errors="replace")
-                text, page_texts = raw, [{"page": 1, "text": raw}]
-            else:
-                return ToolResult(output=f"Unsupported file type: {path.suffix}. Use PDF, TXT, or MD.", is_error=True)
-        except Exception as e:
-            return ToolResult(output=f"Failed to extract document text: {e}", is_error=True)
+            if not path.exists():
+                return ToolResult(output=f"File not found: {path}", is_error=True)
+
+            suffix = path.suffix.lower()
+            try:
+                if suffix == ".pdf":
+                    text, page_texts = _extract_pdf_text(path)
+                elif suffix in (".txt", ".md"):
+                    raw = path.read_text(encoding="utf-8", errors="replace")
+                    text, page_texts = raw, [{"page": 1, "text": raw}]
+                else:
+                    return ToolResult(output=f"Unsupported file type: {path.suffix}. Use PDF, TXT, or MD.", is_error=True)
+                source_name = path.name
+                source_stem = path.stem
+            except Exception as e:
+                return ToolResult(output=f"Failed to extract document text: {e}", is_error=True)
+        else:
+            return ToolResult(output="Provide file_path, text, or url.", is_error=True)
 
         if not text.strip():
             return ToolResult(output="No text could be extracted from the document", is_error=True)
@@ -126,14 +150,14 @@ class PitchDeckAnalyzeTool(BaseTool):
         extracted_company = None
         if args.extract_company:
             extracted_company = _extract_company_model(
-                text, path.stem, detected_themes, detected_sdgs,
+                text, source_stem, detected_themes, detected_sdgs,
                 [m.id for m in suggested_metrics[:10]], store,
             )
             if args.save_company_yaml and extracted_company:
                 _save_company_yaml(extracted_company, args.save_company_yaml, context.cwd)
 
         lines = [
-            f"PITCH DECK / MEMO ANALYSIS: {path.name}",
+            f"PITCH DECK / MEMO ANALYSIS: {source_name}",
             "=" * 70,
             f"Pages: {len(page_texts)} | Text: {len(text):,} chars",
             f"Impact claims found: {len(claims)}",

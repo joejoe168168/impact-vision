@@ -6,6 +6,27 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Fixed
+
+- MCP server wrapper correctness for all 26 impact tools:
+  - `framework_assess` now supplies the required action and OPIM assessments execute against the current OPIM framework API.
+  - `guided_assessment` now defaults `list_templates` to a valid template and maps submitted data to `step_data`.
+  - `pipeline`, `monitoring`, `narrative`, `beneficiary_feedback`, `dd_checklist`, `cross_reference`, `document_analysis`, `portfolio_analyze`, `trend_analysis`, and `product_passport` now map MCP-friendly parameter names into the current tool input models.
+  - `pitch_deck_analyze` accepts raw `text` and `url` inputs in addition to `file_path`, matching the MCP and API contracts.
+- Product Passport rejects non-object JSON inputs with a clear error instead of crashing.
+- Monitoring deviation alerts normalize metric IDs and parse previous values with units such as `100 tCO2e`.
+- Document analysis extracts lowercase or mixed-case IRIS+ metric IDs and normalizes them to uppercase.
+- Beneficiary feedback preserves valid zero values such as NPS `0`.
+
+### Documentation
+
+- README MCP section now documents stdio/SSE usage, Cursor/VS Code setup, all 26 MCP tools, all 5 MCP resources, and example MCP prompts.
+
+### Tests
+
+- Added regression coverage for MCP wrapper field mapping and high/medium impact-tool bug fixes.
+- Verified direct MCP smoke coverage for 26 unique tools plus 5 resources.
+
 ## [0.14.0] - 2026-04-21
 
 ### Added — Phases 15.6 → 20 shipped in one drop

@@ -541,38 +541,41 @@ class FrameworkTool(BaseTool):
         return ToolResult(output=f"ESRS does not support action: {args.action}", is_error=True)
 
     def _handle_opim(self, args: FrameworkInput) -> ToolResult:
-        from openharness.impact.frameworks.ifc_opim import assess_opim_alignment, get_opim_principles
+        from openharness.impact.frameworks.ifc_opim import assess_opim_alignment, get_opim_framework
 
         if args.action == "list":
-            principles = get_opim_principles()
+            principles = get_opim_framework().principles
             lines = ["IFC Operating Principles for Impact Management (9 Principles)\n"]
             for p in principles:
-                lines.append(f"  P{p.number}: {p.name}")
+                lines.append(f"  P{p.id}: {p.name}")
                 lines.append(f"    {p.description[:120]}")
                 if p.verification_requirements:
                     lines.append(f"    Verification: {'; '.join(p.verification_requirements[:2])}")
             return ToolResult(output="\n".join(lines))
 
         if args.action in ("match", "assess"):
+            text = f"{args.description} {args.document_text}".lower()
             result = assess_opim_alignment(
-                description=args.description,
-                document_text=args.document_text,
-                reported_metrics=args.reported_metrics,
+                has_impact_thesis=bool(args.description.strip()) or "impact thesis" in text,
+                has_theory_of_change="theory of change" in text or "toc" in text,
+                has_impact_policy="impact policy" in text or "esg policy" in text,
+                has_external_audit="external audit" in text or "independent verification" in text,
+                metrics_count=len(args.reported_metrics),
+                sdg_count=text.count("sdg"),
+                has_exclusion_screening="exclusion" in text or "negative impact" in text,
             )
             lines = [
                 "IFC OPIM ALIGNMENT ASSESSMENT",
                 "=" * 50,
-                f"Overall readiness: {result['overall_readiness']}%",
-                f"Principles addressed: {result['principles_addressed']}/{result['total_principles']}",
+                f"Overall readiness: {result['alignment_pct']}%",
+                f"Principles addressed: {result['aligned_count']}/{result['total_principles']}",
                 "",
             ]
             for p in result.get("principles", []):
-                icon = "[OK]" if p.get("addressed") else "[GAP]"
-                lines.append(f"  {icon} P{p['number']}: {p['name']}")
-                if p.get("evidence"):
-                    lines.append(f"    Evidence: {', '.join(p['evidence'][:3])}")
-                if p.get("gaps"):
-                    lines.append(f"    Gaps: {'; '.join(p['gaps'][:2])}")
+                icon = "[OK]" if p.get("aligned") else "[GAP]"
+                lines.append(f"  {icon} P{p['principle']}: {p['name']}")
+                if p.get("requirements"):
+                    lines.append(f"    Requirements: {'; '.join(p['requirements'][:2])}")
             return ToolResult(output="\n".join(lines), metadata=result)
 
         return ToolResult(output=f"OPIM does not support action: {args.action}", is_error=True)
