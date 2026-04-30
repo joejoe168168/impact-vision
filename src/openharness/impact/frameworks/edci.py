@@ -8,7 +8,11 @@ Reference: https://www.esgdc.org/
 
 from __future__ import annotations
 
+from typing import Literal
+
 from pydantic import BaseModel, Field
+
+from openharness.impact.models import MetricRecord
 
 
 class EDCIMetric(BaseModel):
@@ -21,6 +25,36 @@ class EDCIMetric(BaseModel):
     iris_cross_refs: list[str] = Field(default_factory=list)
     gri_cross_refs: list[str] = Field(default_factory=list)
     sfdr_cross_refs: list[int] = Field(default_factory=list)
+
+
+class EDCICompletenessRow(BaseModel):
+    """Completeness status for one EDCI metric for one company."""
+
+    company_name: str
+    edci_id: str
+    name: str
+    category: str
+    unit: str = ""
+    status: Literal["available", "proxy", "missing", "not_applicable"] = "missing"
+    value: str = ""
+    source_metric_id: str = ""
+    evidence_refs: list[str] = Field(default_factory=list)
+    notes: str = ""
+
+
+class EDCICompletenessReport(BaseModel):
+    """Company-level or portfolio-level EDCI completeness report."""
+
+    scope: Literal["company", "portfolio"] = "company"
+    company_count: int = 1
+    rows: list[EDCICompletenessRow] = Field(default_factory=list)
+    total_fields: int = 0
+    available: int = 0
+    proxy: int = 0
+    missing: int = 0
+    not_applicable: int = 0
+    by_category: dict[str, dict[str, int | float]] = Field(default_factory=dict)
+    completeness_pct: float = 0.0
 
 
 EDCI_METRICS: list[EDCIMetric] = [
@@ -132,6 +166,140 @@ def get_edci_metrics(category: str | None = None) -> list[EDCIMetric]:
     if category:
         return [m for m in EDCI_METRICS if m.category == category]
     return EDCI_METRICS
+
+
+def _summarize_rows(
+    rows: list[EDCICompletenessRow],
+    *,
+    scope: Literal["company", "portfolio"],
+    company_count: int,
+) -> EDCICompletenessReport:
+    counts = {
+        "available": sum(1 for row in rows if row.status == "available"),
+        "proxy": sum(1 for row in rows if row.status == "proxy"),
+        "missing": sum(1 for row in rows if row.status == "missing"),
+        "not_applicable": sum(1 for row in rows if row.status == "not_applicable"),
+    }
+    by_category: dict[str, dict[str, int | float]] = {}
+    for row in rows:
+        cat = by_category.setdefault(
+            row.category,
+            {"total": 0, "available": 0, "proxy": 0, "missing": 0, "not_applicable": 0, "completeness_pct": 0.0},
+        )
+        cat["total"] = int(cat["total"]) + 1
+        cat[row.status] = int(cat[row.status]) + 1
+    for cat in by_category.values():
+        complete = int(cat["available"]) + int(cat["proxy"]) + int(cat["not_applicable"])
+        cat["completeness_pct"] = round(complete / int(cat["total"]) * 100, 1) if cat["total"] else 0.0
+
+    total = len(rows)
+    complete_count = counts["available"] + counts["proxy"] + counts["not_applicable"]
+    return EDCICompletenessReport(
+        scope=scope,
+        company_count=company_count,
+        rows=rows,
+        total_fields=total,
+        available=counts["available"],
+        proxy=counts["proxy"],
+        missing=counts["missing"],
+        not_applicable=counts["not_applicable"],
+        by_category=by_category,
+        completeness_pct=round(complete_count / total * 100, 1) if total else 0.0,
+    )
+
+
+def assess_edci_completeness(
+    *,
+    company_name: str,
+    metric_records: list[MetricRecord | dict] | None = None,
+    reported_data: dict[str, str] | None = None,
+    proxy_values: dict[str, str] | None = None,
+    not_applicable: list[str] | set[str] | None = None,
+) -> EDCICompletenessReport:
+    """Assess EDCI completeness with explicit available/proxy/missing/NA status.
+
+    ``reported_data`` may be keyed by either EDCI IDs (for metrics without IRIS+
+    cross-references) or IRIS+ IDs. Canonical ``MetricRecord`` rows are preferred
+    because they preserve evidence references.
+    """
+    records = [
+        item if isinstance(item, MetricRecord) else MetricRecord.model_validate(item)
+        for item in (metric_records or [])
+    ]
+    record_by_metric_id = {record.metric_id: record for record in records}
+    reported = {str(k).strip().upper(): str(v) for k, v in (reported_data or {}).items()}
+    proxies = {str(k).strip().upper(): str(v) for k, v in (proxy_values or {}).items()}
+    na = {str(v).strip().upper() for v in (not_applicable or [])}
+
+    rows: list[EDCICompletenessRow] = []
+    for metric in EDCI_METRICS:
+        source_record: MetricRecord | None = None
+        source_metric_id = ""
+        value = ""
+        status: Literal["available", "proxy", "missing", "not_applicable"] = "missing"
+        notes = ""
+
+        if metric.id in na:
+            status = "not_applicable"
+            notes = "Marked not applicable by reviewer."
+        elif metric.id in reported:
+            status = "available"
+            source_metric_id = metric.id
+            value = reported[metric.id]
+        else:
+            for ref in metric.iris_cross_refs:
+                ref_key = ref.upper()
+                if ref_key in record_by_metric_id:
+                    source_record = record_by_metric_id[ref_key]
+                    status = "available"
+                    source_metric_id = ref_key
+                    value = str(source_record.value)
+                    break
+                if ref_key in reported:
+                    status = "available"
+                    source_metric_id = ref_key
+                    value = reported[ref_key]
+                    break
+            if status == "missing" and metric.id in proxies:
+                status = "proxy"
+                value = proxies[metric.id]
+                notes = "Proxy estimate supplied."
+
+        rows.append(EDCICompletenessRow(
+            company_name=company_name,
+            edci_id=metric.id,
+            name=metric.name,
+            category=metric.category,
+            unit=metric.unit,
+            status=status,
+            value=value,
+            source_metric_id=source_metric_id,
+            evidence_refs=source_record.evidence_refs if source_record else [],
+            notes=notes,
+        ))
+
+    return _summarize_rows(rows, scope="company", company_count=1)
+
+
+def portfolio_edci_completeness(
+    companies: list[dict],
+) -> EDCICompletenessReport:
+    """Roll up EDCI completeness for multiple company payloads.
+
+    Each payload accepts ``company_name``, ``metric_records``, ``reported_data``,
+    ``proxy_values``, and ``not_applicable`` keys.
+    """
+    all_rows: list[EDCICompletenessRow] = []
+    for company in companies:
+        report = assess_edci_completeness(
+            company_name=str(company.get("company_name") or company.get("name") or "Unknown"),
+            metric_records=company.get("metric_records") or [],
+            reported_data=company.get("reported_data") or company.get("reported_metrics") or {},
+            proxy_values=company.get("proxy_values") or {},
+            not_applicable=company.get("not_applicable") or [],
+        )
+        all_rows.extend(report.rows)
+    return _summarize_rows(all_rows, scope="portfolio", company_count=len(companies))
 
 
 def assess_edci_coverage(

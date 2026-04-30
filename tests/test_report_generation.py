@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import json
-
-import pytest
+import asyncio
+from pathlib import Path
 
 from openharness.impact.models import Company
 
@@ -40,6 +40,28 @@ class TestTextReport:
         assert "IMPACT ASSESSMENT REPORT" in text
         assert "TestCo" in text
 
+    def test_to_text_snapshot_includes_claim_evidence(self) -> None:
+        from openharness.tools.impact.impact_report_tool import _to_text
+        data = _make_report_data()
+        data["impact_claims"] = [
+            {
+                "text": "TestCo avoided 500 tCO2e for rural customers.",
+                "category": "outcome",
+                "confidence": 0.82,
+                "evidence_strength": 3,
+                "mapped_metrics": ["OI4112"],
+            },
+        ]
+        text = _to_text(data)
+        expected = "\n".join([
+            "IMPACT CLAIMS",
+            "----------------------------------------",
+            "  - [OUTCOME] TestCo avoided 500 tCO2e for rural customers.",
+            "    Confidence: 82% | Evidence: NESTA 3",
+            "    Mapped metrics: OI4112",
+        ])
+        assert expected in text
+
 
 class TestCSVReport:
     def test_to_csv_returns_string(self) -> None:
@@ -55,6 +77,15 @@ class TestCSVReport:
         csv_output = _to_csv(data)
         first_line = csv_output.strip().split("\n")[0]
         assert "," in first_line
+
+    def test_to_csv_includes_claim_rows(self) -> None:
+        from openharness.tools.impact.impact_report_tool import _to_csv
+        data = _make_report_data()
+        data["impact_claims"] = [
+            {"text": "Avoided emissions", "category": "outcome", "mapped_metrics": ["OI4112"]},
+        ]
+        csv_output = _to_csv(data)
+        assert "Claim,outcome,Avoided emissions,metrics: OI4112" in csv_output
 
 
 class TestHTMLReport:
@@ -95,6 +126,78 @@ class TestHTMLReport:
         html = _to_html(data)
         assert "5 Dimensions" in html
         assert "C+" in html
+
+    def test_to_html_snapshot_includes_escaped_claims_and_targets(self) -> None:
+        from openharness.tools.impact.impact_report_tool import _to_html
+        data = _make_report_data()
+        data["impact_claims"] = [
+            {
+                "text": "Avoids <script>alert(1)</script> emissions",
+                "category": "outcome",
+                "confidence": 0.75,
+                "evidence_strength": 2,
+                "mapped_metrics": ["OI4112"],
+                "mapped_sdg_targets": ["13.2"],
+            },
+        ]
+        data["target_tracking"] = {
+            "targets": [
+                {
+                    "metric_id": "OI4112",
+                    "target": "500 tCO2e by 2027",
+                    "current_value": 250,
+                    "progress_pct": 50.0,
+                    "status": "behind",
+                },
+            ],
+            "summary": {"on_track": 0, "behind": 1, "exceeded": 0, "at_risk": 0},
+        }
+        html = _to_html(data)
+        assert '<h2 id="sec-claims">Impact Claims' in html
+        assert "Avoids &lt;script&gt;alert(1)&lt;/script&gt; emissions" in html
+        assert "<script>alert(1)</script>" not in html
+        assert "<td>500 tCO2e by 2027</td>" in html
+
+    def test_report_tool_target_progress_uses_input_targets(self) -> None:
+        from openharness.tools.base import ToolExecutionContext
+        from openharness.tools.impact.impact_report_tool import ImpactReportInput, ImpactReportTool
+        args = ImpactReportInput(
+            company_name="TargetCo",
+            company_description="Solar energy access",
+            sector="energy",
+            reported_metrics={"OI4112": "150 tCO2e"},
+            impact_targets={"OI4112": "200 tCO2e by 2027"},
+            metric_history=[{"metric_id": "OI4112", "value": "100", "period": "FY2024"}],
+            report_type="target_progress",
+            output_format="text",
+        )
+        result = asyncio.run(ImpactReportTool().execute(args, ToolExecutionContext(cwd=Path.cwd())))
+        assert "TARGET PROGRESS REPORT: TargetCo" in result.output
+        assert "OI4112: ON TRACK" in result.output
+        assert "Target: 200 tCO2e by 2027" in result.output
+
+    def test_api_report_forwards_target_and_claim_inputs(self) -> None:
+        from openharness.api_gateway.router import ReportRequest, generate_report
+        req = ReportRequest(
+            company_name="API TargetCo",
+            company_description="Solar energy access",
+            sector="energy",
+            reported_metrics={"OI4112": "150 tCO2e"},
+            impact_targets={"OI4112": "200 tCO2e by 2027"},
+            metric_history=[{"metric_id": "OI4112", "value": "100", "period": "FY2024"}],
+            impact_claims=[
+                {
+                    "text": "API TargetCo avoids emissions.",
+                    "mapped_metrics": ["OI4112"],
+                    "category": "outcome",
+                },
+            ],
+            report_type="target_progress",
+            output_format="text",
+        )
+        payload = asyncio.run(generate_report(req))
+        assert "TARGET PROGRESS REPORT: API TargetCo" in payload["result"]
+        assert "Target: 200 tCO2e by 2027" in payload["result"]
 
 
 class TestJSONReport:

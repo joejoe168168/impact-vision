@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import csv
+import html
 import io
 import json
 from datetime import datetime, timezone
@@ -412,6 +413,24 @@ def _to_text(data: dict) -> str:
                 lines.append(f"    - {m['id']}: {m['name']}")
         lines.append("")
 
+    if "impact_claims" in data:
+        claims = data["impact_claims"]
+        lines.append("IMPACT CLAIMS")
+        lines.append("-" * 40)
+        for claim in claims[:10]:
+            claim_text = str(claim.get("text", "")).strip()
+            category = str(claim.get("category", "intent")).upper()
+            confidence = float(claim.get("confidence", 0.0) or 0.0)
+            evidence = claim.get("evidence_strength", 1)
+            metrics = ", ".join(str(m) for m in claim.get("mapped_metrics", [])[:5])
+            lines.append(f"  - [{category}] {claim_text}")
+            lines.append(f"    Confidence: {confidence:.0%} | Evidence: NESTA {evidence}")
+            if metrics:
+                lines.append(f"    Mapped metrics: {metrics}")
+        if len(claims) > 10:
+            lines.append(f"  ... {len(claims) - 10} additional claims omitted")
+        lines.append("")
+
     if "impact_analysis" in data:
         ia = data["impact_analysis"]
         lines.append("IMPACT OPPORTUNITIES")
@@ -578,6 +597,15 @@ def _to_csv(data: dict) -> str:
             writer.writerow(["Gap", m["id"], "MISSING", m["name"]])
         for m in ga.get("reported", []):
             writer.writerow(["Gap", m["id"], m.get("value", ""), m["name"]])
+
+    if "impact_claims" in data:
+        for claim in data["impact_claims"]:
+            writer.writerow([
+                "Claim",
+                claim.get("category", "intent"),
+                claim.get("text", ""),
+                "metrics: " + ",".join(str(m) for m in claim.get("mapped_metrics", [])),
+            ])
 
     return buf.getvalue()
 
@@ -1049,7 +1077,9 @@ def _impact_claims_section(data: dict) -> str:
         cat = claim.get("category", "intent")
         conf = claim.get("confidence", 0.5)
         evidence = claim.get("evidence_strength", 1)
-        text = claim.get("text", "No text")
+        text = str(claim.get("text", "No text"))
+        safe_text = html.escape(text)
+        safe_cat = html.escape(str(cat))
         negated = claim.get("negation_detected", False)
         metrics = claim.get("mapped_metrics", [])
         sdg_targets = claim.get("mapped_sdg_targets", [])
@@ -1058,8 +1088,8 @@ def _impact_claims_section(data: dict) -> str:
 
         parts.append(f'<div class="claim-card" data-claim-idx="{i}"{hidden}>')
         parts.append('<div class="claim-header" onclick="this.parentElement.querySelector(\'.claim-body\').classList.toggle(\'active\')">')
-        parts.append(f'<span class="claim-badge {cat}">{cat}</span>')
-        parts.append(f'<span class="claim-text">{text[:120]}{"..." if len(text) > 120 else ""}</span>')
+        parts.append(f'<span class="claim-badge {safe_cat}">{safe_cat}</span>')
+        parts.append(f'<span class="claim-text">{safe_text[:120]}{"..." if len(text) > 120 else ""}</span>')
         parts.append('<span class="claim-toggle">&#9660;</span>')
         parts.append("</div>")
         parts.append('<div class="claim-body">')
@@ -1078,11 +1108,15 @@ def _impact_claims_section(data: dict) -> str:
 
         if metrics:
             parts.append('<div style="margin-bottom:8px"><strong style="font-size:0.82em">Mapped Metrics:</strong> ')
-            parts.append(" ".join(f'<span class="chip">{m}</span>' for m in metrics[:8]))
+            parts.append(" ".join(f'<span class="chip">{html.escape(str(m))}</span>' for m in metrics[:8]))
             parts.append("</div>")
         if sdg_targets:
             parts.append('<div style="margin-bottom:8px"><strong style="font-size:0.82em">SDG Targets:</strong> ')
-            parts.append(" ".join(f'<span class="chip" style="background:#fff3e0;color:#e65100">{t}</span>' for t in sdg_targets[:8]))
+            parts.append(" ".join(
+                f'<span class="chip" style="background:#fff3e0;color:#e65100">'
+                f'{html.escape(str(t))}</span>'
+                for t in sdg_targets[:8]
+            ))
             parts.append("</div>")
 
         parts.append("</div></div>")
@@ -1951,7 +1985,7 @@ Plotly.newPlot('radar-chart', [{{
                 pct_display = f"{pct:.0f}%" if pct else "N/A"
                 sections.append(f"""<tr>
 <td>{t['metric_id']}</td>
-<td>{t.get('target_description', 'N/A')}</td>
+<td>{t.get('target_description') or t.get('target', 'N/A')}</td>
 <td>{t.get('current_value', 'N/A')}</td>
 <td><div class="bar-track"><div class="bar-fill" style="width:{min(pct, 100):.0f}%;background:{color}"></div></div> {pct_display}</td>
 <td style="color:{color};font-weight:600">{icon} {t['status'].replace('_', ' ').title()}</td>

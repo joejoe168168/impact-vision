@@ -8,7 +8,15 @@ from openharness.impact.frameworks.sasb import SASBStandard, get_sasb_industries
 from openharness.impact.frameworks.gri import GRIStandard, get_gri_standards, match_gri_topics
 from openharness.impact.frameworks.tcfd import TCFDFramework, assess_tcfd_alignment, get_tcfd_framework
 from openharness.impact.frameworks.sfdr_pai import SFDRIndicator, get_pai_indicators, assess_sfdr_compliance
-from openharness.impact.frameworks.edci import EDCIMetric, get_edci_metrics, assess_edci_coverage
+from openharness.impact.frameworks.edci import (
+    EDCICompletenessReport,
+    EDCICompletenessRow,
+    EDCIMetric,
+    assess_edci_completeness,
+    assess_edci_coverage,
+    get_edci_metrics,
+    portfolio_edci_completeness,
+)
 from openharness.impact.frameworks.unpri import UNPRIPrinciple, get_unpri_principles, assess_unpri_alignment
 from openharness.impact.frameworks.theory_of_change import (
     TheoryOfChange, ToCPrinciple, get_rs_group_principles, get_giin_toc_checklist,
@@ -40,7 +48,9 @@ __all__ = [
     "GRIStandard", "get_gri_standards", "match_gri_topics",
     "TCFDFramework", "assess_tcfd_alignment", "get_tcfd_framework",
     "SFDRIndicator", "get_pai_indicators", "assess_sfdr_compliance",
-    "EDCIMetric", "get_edci_metrics", "assess_edci_coverage",
+    "EDCICompletenessReport", "EDCICompletenessRow", "EDCIMetric",
+    "assess_edci_completeness", "get_edci_metrics", "assess_edci_coverage",
+    "portfolio_edci_completeness",
     "UNPRIPrinciple", "get_unpri_principles", "assess_unpri_alignment",
     "TheoryOfChange", "ToCPrinciple", "get_rs_group_principles",
     "get_giin_toc_checklist", "assess_toc_alignment", "assess_toc_completeness",

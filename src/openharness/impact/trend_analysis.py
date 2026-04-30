@@ -13,7 +13,8 @@ def _parse_numeric(value: Any) -> float | None:
     if isinstance(value, (int, float)):
         return float(value)
     if isinstance(value, str):
-        cleaned = re.sub(r"[^\d.\-]", "", value.strip())
+        match = re.search(r"-?\d[\d,]*(?:\.\d+)?", value.strip())
+        cleaned = match.group(0).replace(",", "") if match else ""
         try:
             return float(cleaned)
         except (ValueError, TypeError):
@@ -211,8 +212,7 @@ def assess_target_progress(company: Company) -> dict:
             latest_values[mv.metric_id] = mv
 
     for mid, val_str in company.reported_metrics.items():
-        if mid not in latest_values:
-            latest_values[mid] = MetricValue(metric_id=mid, value=val_str, period="current")
+        latest_values[mid] = MetricValue(metric_id=mid, value=val_str, period="current")
 
     targets_result = []
     on_track_count = 0
