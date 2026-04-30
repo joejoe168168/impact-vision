@@ -99,9 +99,9 @@ All 26 impact tools were reviewed and smoke-tested through their Python tool int
 | 11.10 | ✅ Fix: greenwashing selectivity uses ID prefixes (I12) | Important | Done |
 | 11.11 | ✅ Fix: empty catalog silent failure (I14) | Important | Done |
 | 11.12 | ✅ Fix: SDG loop optimization, claim confidence calibration (M2-M3) | Minor | Done |
-| 11.13 | Add snapshot regression tests for `_to_html()` and `_to_text()` report outputs | Important | M |
-| 11.14 | Add `impact_targets` and `metric_history` to `ImpactReportInput` to enable `target_progress` report type (I4) | Important | M |
-| 11.15 | Wire impact claims data through to report renderer end-to-end | Important | M |
+| 11.13 | ✅ Add snapshot regression tests for `_to_html()` and `_to_text()` report outputs | Important | Done |
+| 11.14 | ✅ Add `impact_targets` and `metric_history` to `ImpactReportInput` to enable `target_progress` report type (I4) | Important | Done |
+| 11.15 | ✅ Wire impact claims data through to report renderer end-to-end | Important | Done |
 | 11.16 | ✅ Register and export all 26 impact tools in default registry and impact package | Critical | Done |
 | 11.17 | ✅ Fix MCP/API wrapper field drift for pipeline, monitoring, narrative, DD checklist, cross-reference, beneficiary feedback, document analysis, and Product Passport | Critical | Done |
 | 11.18 | ✅ Fix Product Passport MCP data mapping and reject non-object JSON inputs safely | Critical | Done |
@@ -305,4 +305,4 @@ SFDR reform, CSRD implementation, and ISSB adoption are creating massive complia
 
 ---
 
-_Last updated: 2026-04-25. Phases 1-10 complete (197 items). Phase 11 in progress; 26 impact tools reviewed and high/medium wrapper bugs addressed._
+_Last updated: 2026-04-28. Phases 1-11 complete; 26 impact tools reviewed, high/medium wrapper bugs addressed, and report renderer regressions covered._

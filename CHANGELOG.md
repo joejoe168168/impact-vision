@@ -6,8 +6,27 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Added
+
+- New research-backed institutional-readiness roadmap in `docs/roadmap-v2.md`, informed by April 2026 market signals around LP data expectations, standards interoperability, carbon accounting revisions, assurance readiness, and governed AI.
+- Canonical `MetricRecord` contract plus validation/conversion helpers for the v2 data backbone. The model enforces metric ID, non-empty value, unit, period, source, owner, quality score, verification status, source type, and evidence references.
+- Investee questionnaire schema generator that turns sector templates or explicit metric IDs into form sections with labels, definitions, guidance, expected units, evidence requirements, validation rules, SDG goals, and 5D tags.
+- Investee collection submission models with validation, review events, flagged/resubmission/approval states, and conversion from approved submissions into canonical `MetricRecord` rows.
+- Evidence graph model and builder linking impact claims, canonical metric records, targets, source evidence references, and report sections, with lineage warnings for unsupported claims and metrics without evidence.
+- Reusable `assess_metric_record_quality()` rubric that scores canonical records across completeness, recency, consistency, source type, and verification level, plus `apply_quality_assessment()` for copy-on-write score updates.
+- Versioned standards registry for IRIS+, EDCI, ISSB, ESRS, SFDR, GHG Protocol, PCAF, and OPIM, including aliases, status, source URLs, scopes, active-rule-pack selection, and duplicate-version protection.
+- Structured hash-chained audit events for metric creation, updates, imports, approvals, and report publication, reusing the existing signed audit trail.
+- EDCI completeness reporting that classifies every company/portfolio EDCI field as available, proxy, missing, or not applicable, including category rollups and support for canonical metric records.
+- Scope 1/2 GHG inventory calculator with activity-data inputs, emission factor provenance, factor versioning, location- and market-based Scope 2 methods, tCO2e rollups, and data-quality scoring.
+- Roadmap v2 institutional-readiness helpers covering secure collection links, multi-period collection tracking, review queues, CSV import previews, Scope 3 proxy estimates, PCAF financed emissions, carbon intensity, climate coverage dashboards, source-linked disclosure packs, jurisdiction profiles, rule-pack tests, LP export bundles, publication workflow states, controls, AI extraction review gates, immutable manifests, exception registers, contribution analysis, counterfactual questions, evidence-strength scoring, difference-in-differences, impact learning loops, metric harmonization, approved-data portfolio queries, regulatory-change monitoring, and AI governance logs.
+- Report regression coverage for `_to_html()` and `_to_text()` output paths, including impact-claims rendering, escaped HTML claim text, target-progress display, and REST report input forwarding.
+
 ### Fixed
 
+- `impact_report` now renders impact claims in text, CSV, and HTML outputs instead of dropping claim evidence outside the HTML path.
+- `/api/v1/report` now forwards `impact_targets`, `metric_history`, and `impact_claims` into `ImpactReportInput`, enabling REST-driven `target_progress` reports and claim evidence rendering.
+- Target-progress parsing now reads strings like `150 tCO2e` as `150` rather than accidentally including digits from units such as `CO2e`, and current reported metrics now override older metric-history values for current progress.
+- HTML target tracking now displays the normalized target text from `target` when `target_description` is absent.
 - MCP server wrapper correctness for all 26 impact tools:
   - `framework_assess` now supplies the required action and OPIM assessments execute against the current OPIM framework API.
   - `guided_assessment` now defaults `list_templates` to a valid template and maps submitted data to `step_data`.
@@ -20,10 +39,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ### Documentation
 
+- README now links to `docs/roadmap-v2.md` and notes completion of the Phase 11 report reliability items plus the first six v2 implementation sprints.
+- `docs/roadmap-v1.md` now marks Phase 11 report snapshot, target-progress, and impact-claims items as done.
 - README MCP section now documents stdio/SSE usage, Cursor/VS Code setup, all 26 MCP tools, all 5 MCP resources, and example MCP prompts.
 
 ### Tests
 
+- Full-suite verification after the report and roadmap updates: `1019 passed / 7 skipped / 1 xfailed`.
 - Added regression coverage for MCP wrapper field mapping and high/medium impact-tool bug fixes.
 - Verified direct MCP smoke coverage for 26 unique tools plus 5 resources.
 

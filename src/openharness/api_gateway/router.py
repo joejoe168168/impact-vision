@@ -137,6 +137,9 @@ class CrossReferenceRequest(BaseModel):
 
 
 class ReportRequest(CompanyRequest):
+    impact_targets: dict[str, str] | list[dict[str, Any]] = Field(default_factory=dict)
+    metric_history: list[dict[str, Any]] = Field(default_factory=list)
+    impact_claims: list[dict[str, Any]] = Field(default_factory=list)
     output_format: str = Field(default="json", description="Output format: text, html, csv, json, xlsx, pdf")
     report_type: str = Field(default="full", description="Report type: full, target_progress, lp_ready")
 
@@ -516,6 +519,9 @@ async def generate_report(req: ReportRequest):
         impact_themes=req.impact_themes,
         reported_metrics=req.reported_metrics,
         sdg_claims=req.sdg_claims,
+        impact_targets=req.impact_targets,
+        metric_history=req.metric_history,
+        impact_claims=req.impact_claims,
         output_format=req.output_format,
         report_type=req.report_type,
     )
