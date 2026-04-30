@@ -116,6 +116,98 @@ class MetricValue(BaseModel):
     notes: str = ""
 
 
+class MetricRecord(BaseModel):
+    """Canonical reviewed metric record for reporting, assurance, and exports.
+
+    ``MetricValue`` remains the lightweight time-series shape used by older
+    trend-analysis flows. ``MetricRecord`` is the stricter data contract used
+    when a reported value is ready to move through review, LP reporting, or
+    assurance workflows.
+    """
+
+    metric_id: str = Field(description="IRIS+ metric ID, normalized uppercase")
+    value: Any = Field(description="Reported value; must not be empty")
+    unit: str = Field(min_length=1, description="Unit or explicit value type, e.g. tCO2e, USD, count, qualitative")
+    period: str = Field(min_length=1, description="Reporting period, e.g. FY2025, Q1 2026, current")
+    source: str = Field(min_length=1, description="Source reference, filename, URL, system name, or evidence ID")
+    owner: str = Field(min_length=1, description="Responsible person, role, investee contact, or system")
+    quality_score: int = Field(ge=0, le=100, description="0-100 data-quality score")
+    verification_status: Literal[
+        "unverified",
+        "self_reported",
+        "management_verified",
+        "third_party_verified",
+        "audited",
+        "proxy_estimate",
+    ] = Field(default="unverified", description="Review or assurance state for this record")
+    source_type: Literal[
+        "manual_entry",
+        "investee_submission",
+        "document_extraction",
+        "system_import",
+        "proxy_estimate",
+        "audited_statement",
+    ] = Field(default="manual_entry", description="How the record entered the system")
+    evidence_refs: list[str] = Field(default_factory=list, description="Evidence IDs, file paths, or URLs")
+    notes: str = ""
+
+    @field_validator("metric_id")
+    @classmethod
+    def validate_metric_id(cls, v: str) -> str:
+        import re
+
+        metric_id = (v or "").strip().upper()
+        if not re.match(r"^(PI|OI|OD|FP|PD)\d{4}$", metric_id):
+            raise ValueError(f"Invalid IRIS+ metric ID format: {v}")
+        return metric_id
+
+    @field_validator("value")
+    @classmethod
+    def validate_value(cls, v: Any) -> Any:
+        if v is None:
+            raise ValueError("Metric value is required")
+        if isinstance(v, str) and not v.strip():
+            raise ValueError("Metric value must not be empty")
+        return v
+
+    @field_validator("unit", "period", "source", "owner")
+    @classmethod
+    def strip_required_text(cls, v: str) -> str:
+        cleaned = " ".join(str(v).split()).strip()
+        if not cleaned:
+            raise ValueError("Field must not be empty")
+        return cleaned
+
+    @field_validator("evidence_refs")
+    @classmethod
+    def normalize_evidence_refs(cls, refs: list[str]) -> list[str]:
+        out: list[str] = []
+        seen: set[str] = set()
+        for ref in refs:
+            cleaned = str(ref).strip()
+            if not cleaned or cleaned in seen:
+                continue
+            seen.add(cleaned)
+            out.append(cleaned)
+        return out
+
+    @property
+    def quality_band(self) -> Literal["low", "moderate", "high"]:
+        if self.quality_score >= 80:
+            return "high"
+        if self.quality_score >= 50:
+            return "moderate"
+        return "low"
+
+    @property
+    def is_verified(self) -> bool:
+        return self.verification_status in {
+            "management_verified",
+            "third_party_verified",
+            "audited",
+        }
+
+
 class AuditTrailEntry(BaseModel):
     """A single audit trail entry tracking who reported what and when."""
 
