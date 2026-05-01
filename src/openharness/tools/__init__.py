@@ -94,6 +94,15 @@ def create_default_tool_registry(mcp_manager: McpClientManager | None = None) ->
         ("impact.product_passport_tool", "ProductPassportTool"),
         ("impact.trend_analysis_tool", "TrendAnalysisTool"),
         ("impact.verification_prep_tool", "VerificationPrepTool"),
+        # v3 tools (0.15.0): trust infrastructure
+        ("impact.emission_factors_tool", "EmissionFactorsTool"),
+        ("impact.evidence_review_tool", "EvidenceReviewTool"),
+        ("impact.exit_impact_tool", "ExitImpactTool"),
+        ("impact.greenwashing_reviewer_tool", "GreenwashingReviewerTool"),
+        ("impact.lp_narrative_tool", "LPNarrativeTool"),
+        ("impact.portfolio_query_tool", "PortfolioQueryTool"),
+        ("impact.stakeholder_voice_tool", "StakeholderVoiceTool"),
+        ("impact.verification_workspace_tool", "VerificationWorkspaceTool"),
     )
     for module_name, class_name in impact_tools:
         _register_if_available(registry, module_name, class_name)

@@ -6,6 +6,120 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-05-01 - "Trust Infrastructure"
+
+This release executes the first wave of the v3 roadmap (`docs/roadmap-v3.md`)
+and is the **trust-infrastructure release**: causal-style claims, stakeholder
+voice as evidence, governed AI, and an LP-grade assurance bundle. The full
+engineering plan is in `docs/roadmap-v3-implementation.md`.
+
+### Added
+
+- **Versioned emission-factor catalogue** (`impact.emission_factors`).
+  Multi-revision factors with low/high uncertainty bands, a default catalogue
+  for grid electricity and natural gas, `factor_sensitivity()` for ±band
+  rollups, `apply_catalog_to_inventory()` for repricing existing GHG
+  inventories, and `summarise_sensitivity()` rollups across activities.
+- **Stakeholder voice as evidence** (`impact.stakeholder_voice`).
+  Lean Data survey templates (`build_lean_data_survey()`),
+  GDPR/PDPA-compliant `ConsentRecord` lifecycle (`revoke_consent()`,
+  `filter_active_responses()`), beneficiary feedback quality scoring
+  (`score_feedback_quality()`), and `link_feedback_to_claims()` for binding
+  feedback to impact claims as first-class evidence.
+- **AI extraction review queue** (`impact.evidence_workflow`).
+  Policy-driven `ReviewQueue` with auto-approval thresholds, single and bulk
+  decisions, audit-trail integration, and `build_review_item_from_extraction()`
+  that converts agent-extracted claims into queue items.
+- **Verification workspace** (`impact.verification_workspace`).
+  Read-only assurance-pack workspace with `VerificationFinding` lifecycle
+  (`open` → `in_review` → `resolved` / `unresolved`), threaded comments,
+  workspace closure with `closed_by`/`closed_at`, and `open_workspace()`
+  factory tied to assurance packs.
+- **LP narrative + Q&A workspace** (`impact.lp_narrative`).
+  `generate_lp_narrative()` builds an audit-friendly narrative grounded in
+  approved-data records; `LPQuestionWorkspace` constrains LP Q&A to verified
+  evidence with citations and exportable transcripts.
+- **Greenwashing reviewer** (`impact.greenwashing_reviewer`).
+  Per-claim explainable review with specificity classification (concrete /
+  mixed / vague / buzzword-only), severity scoring, evidence/governance
+  metadata, and propagation of overall review scores back to the company.
+- **Portfolio natural-language query engine** (`impact.portfolio_nlq`).
+  `ApprovedDataPolicy` enforces verification-status filters; `parse_intent()`
+  extracts `average / total / top_n / compare` intents; `PortfolioNLQEngine`
+  answers with citations to canonical metric records only.
+- **Exit impact assessment** (`impact.exit_impact`).
+  OPIM Principle 8 workflow with `ExitDurabilityRisk` scoring,
+  `score_exit_impact()` for strong vs. weak exit plans, `PostExitFollowUp`
+  scheduling, and `build_exit_plan()` flag detection (e.g. `unmitigated_risks`).
+- **Eight new agent tools** wrapping each module:
+  `EmissionFactorsTool`, `StakeholderVoiceTool`, `EvidenceReviewTool`,
+  `VerificationWorkspaceTool`, `LPNarrativeTool`, `GreenwashingReviewerTool`,
+  `PortfolioQueryTool`, `ExitImpactTool`. All eight are registered in
+  `create_default_tool_registry()` and exported from `openharness.impact`.
+
+### Changed
+
+- `openharness.impact` public API expanded with v3 exports for the eight new
+  modules. Existing imports remain backwards-compatible.
+- `docs/roadmap-v2.md` is unchanged but is now superseded for new tracks by
+  `docs/roadmap-v3.md` and the implementation plan.
+
+### Tests
+
+- Added 59 new tests across `test_v3_emission_factors.py`,
+  `test_v3_stakeholder_voice.py`, `test_v3_evidence_workflow.py`,
+  `test_v3_verification_workspace.py`, `test_v3_lp_narrative.py`,
+  `test_v3_greenwashing_reviewer.py`, `test_v3_portfolio_nlq.py`, and
+  `test_v3_exit_impact.py`, plus `test_v3_tool_wrappers.py`.
+- Impact-suite regression: **290 passed / 4 skipped** across the impact and
+  v3 test files.
+
+### Documentation
+
+- `docs/roadmap-v3-implementation.md` (new): module-by-module engineering
+  plan, API surface changes, testing strategy, and explicit deferred items.
+- `CLAUDE.md` updated with the v3 module map and tool inventory.
+- `README.md` updated with the v3 banner, feature list, and links.
+
+### Fixed
+
+- Greenwashing specificity classifier no longer treats single-letter unit
+  tokens (`"t"`) as substring matches inside common words like
+  "sustainable"; unit detection is now word-aware.
+- Greenwashing reviewer now treats quantified but unmapped claims as evidence
+  gaps instead of letting a number alone suppress missing IRIS+ evidence.
+- Portfolio NLQ `include_unverified=True` can no longer bypass the default
+  `ApprovedDataPolicy`; unverified data requires explicit
+  `allow_unverified_with_warning=True`.
+- LP Q&A now requires at least one verified metric citation for every answer;
+  free text can add context but cannot stand alone as an LP-facing answer.
+- AI extraction review queues now reject approval when an item lacks the
+  minimum source references required by policy.
+- Verification workspaces now validate finding evidence references against
+  visible evidence and prevent terminal findings from receiving management
+  responses.
+- Stakeholder voice quality scoring clamps inconsistent survey/consent counts
+  to valid 0-100 percentages and emits reconciliation flags instead of
+  crashing Pydantic validation.
+- GHG activity data-quality scoring now rewards verified activity data instead
+  of penalizing it.
+- Roadmap v2 collection links now handle both naive and timezone-aware ISO
+  expiry timestamps without datetime comparison errors.
+- Roadmap v2 collection trackers now select the latest submission by
+  `submitted_at` instead of depending on input list order.
+- Roadmap v2 review queues now flag zero-baseline period anomalies instead of
+  silently skipping them.
+- PCAF financed-emissions attribution is capped at 100% when investment value
+  exceeds enterprise value.
+- ISSB disclosure packs now downgrade answers to `missing` when all supplied
+  source nodes are outside the provided evidence graph.
+- Jurisdiction profile lookup is now case-insensitive.
+- The v2 `decide_ai_extraction()` helper now rejects approvals with no source
+  references.
+- Roadmap v2 portfolio-query citations are now de-duplicated.
+
+## [0.14.0] - 2026-04 - Roadmap v2 (institutional readiness)
+
 ### Added
 
 - New research-backed institutional-readiness roadmap in `docs/roadmap-v2.md`, informed by April 2026 market signals around LP data expectations, standards interoperability, carbon accounting revisions, assurance readiness, and governed AI.

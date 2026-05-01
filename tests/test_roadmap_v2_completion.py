@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 import pytest
 
 from openharness.impact.database import MetricStore
+from openharness.impact.evidence_graph import EvidenceGraph, EvidenceNode
 from openharness.impact.investee_collection import (
     create_collection_submission,
     generate_investee_questionnaire_schema,
@@ -100,6 +101,8 @@ def test_public_collection_link_token_and_expiry() -> None:
     expired_at = datetime(2099, 1, 1, tzinfo=timezone.utc)
     expired = issued.link.model_copy(update={"expires_at": "2000-01-01T00:00:00+00:00"})
     assert not expired.is_active("secret", at=expired_at)
+    naive_expiry = issued.link.model_copy(update={"expires_at": "2099-01-01T00:00:00"})
+    assert naive_expiry.is_active("secret", at=datetime(2026, 1, 1))
 
 
 def test_collection_tracker_and_review_queue_flags_missing_and_anomaly() -> None:
@@ -135,6 +138,58 @@ def test_collection_tracker_and_review_queue_flags_missing_and_anomaly() -> None
     )
     assert queue[0].submission_id == "sub-2"
     assert {"missing_required", "evidence_missing", "period_anomaly"} <= set(queue[0].flags)
+
+
+def test_collection_tracker_uses_latest_submission_by_timestamp() -> None:
+    schema = generate_investee_questionnaire_schema(
+        sector="energy",
+        metric_ids=["OI4112"],
+        reporting_period="FY2025",
+        store=_store(),
+    )
+    older = create_collection_submission(
+        submission_id="old",
+        company_name="SolarCo",
+        schema=schema,
+        responses={},
+        submitted_by="cfo",
+    ).model_copy(update={"submitted_at": "2026-01-01T00:00:00+00:00"})
+    newer = create_collection_submission(
+        submission_id="new",
+        company_name="SolarCo",
+        schema=schema,
+        responses={"OI4112": {"value": "200", "unit": "number", "evidence_refs": ["evidence://calc"]}},
+        submitted_by="cfo",
+    ).model_copy(update={"submitted_at": "2026-02-01T00:00:00+00:00"})
+    tracker = build_collection_tracker(
+        schemas_by_company={"SolarCo": schema},
+        submissions=[newer, older],
+        current_period="FY2025",
+    )
+    assert tracker[0].submitted_at == "2026-02-01T00:00:00+00:00"
+    assert tracker[0].missing_metrics == []
+
+
+def test_review_queue_flags_zero_baseline_anomaly() -> None:
+    schema = generate_investee_questionnaire_schema(
+        sector="energy",
+        metric_ids=["OI4112"],
+        reporting_period="FY2025",
+        store=_store(),
+    )
+    submission = create_collection_submission(
+        submission_id="sub-zero",
+        company_name="SolarCo",
+        schema=schema,
+        responses={"OI4112": {"value": "10", "unit": "number", "evidence_refs": ["evidence://calc"]}},
+        submitted_by="cfo",
+    )
+    queue = build_review_queue(
+        [submission],
+        {"sub-zero": schema},
+        previous_values={("SolarCo", "OI4112"): 0},
+    )
+    assert "period_anomaly" in queue[0].flags
 
 
 def test_csv_import_preview_maps_duplicates_and_errors() -> None:
@@ -181,6 +236,15 @@ def test_climate_scope3_pcaf_intensity_and_dashboard() -> None:
     ))
     assert pcaf.attribution_factor == 0.1
     assert pcaf.financed_emissions_tco2e == 50
+    capped = calculate_pcaf_financed_emissions(PCAFPosition(
+        company_name="OverfundedCo",
+        investment_value_usd=12_000_000,
+        enterprise_value_usd=10_000_000,
+        company_emissions_tco2e=500,
+        data_quality_score=3,
+    ))
+    assert capped.attribution_factor == 1.0
+    assert capped.financed_emissions_tco2e == 500
 
     intensity = calculate_carbon_intensity(
         company_name="ClimateCo",
@@ -212,6 +276,23 @@ def test_disclosure_packs_crosswalk_jurisdiction_and_rule_tests() -> None:
         )],
     )
     assert issb.framework == "ISSB S1/S2"
+    graph = EvidenceGraph(nodes=[
+        EvidenceNode(id="evidence:valid", type="evidence", label="Valid", data={}),
+    ])
+    filtered = build_issb_disclosure_pack(
+        entity="Co",
+        reporting_period="FY2025",
+        evidence_graph=graph,
+        answers=[SourceLinkedAnswer(
+            code="S2-MT-1",
+            prompt="Climate metrics",
+            answer="100 tCO2e",
+            source_node_ids=["missing-node"],
+            status="direct",
+        )],
+    )
+    assert filtered.answers[0].source_node_ids == []
+    assert filtered.answers[0].status == "missing"
 
     esrs = build_esrs_disclosure_pack(
         amended_version="2025-exposure-draft",
@@ -228,6 +309,7 @@ def test_disclosure_packs_crosswalk_jurisdiction_and_rule_tests() -> None:
     assert [row.status for row in sfdr] == ["direct", "proxy", "not_applicable"]
 
     assert select_jurisdiction_profile("EU").frameworks[:2] == ["ESRS", "SFDR"]
+    assert select_jurisdiction_profile("eu").jurisdiction == "EU"
     assert explore_framework_crosswalk("scope 1")
     result = run_rule_pack_tests("ISSB", "S1-S2-2023", ["governance", "metrics"], {"governance": "ok"})
     assert not result.passed
@@ -277,6 +359,8 @@ def test_ai_review_manifest_causal_and_query_helpers() -> None:
 
     with pytest.raises(ValueError):
         decide_ai_extraction(review.model_copy(update={"confidence": 0.2}), "approved", "analyst")
+    with pytest.raises(ValueError):
+        decide_ai_extraction(review.model_copy(update={"source_refs": []}), "approved", "analyst")
 
     manifest = build_immutable_report_manifest("r1", {"source.csv": "abc", "report.html": "<h1>x</h1>"})
     assert manifest.manifest_hash
@@ -312,7 +396,7 @@ def test_ai_review_manifest_causal_and_query_helpers() -> None:
 
     query = answer_portfolio_query("average value", [_metric_record(value="100"), _metric_record(value="200")])
     assert query.answer == "150.0"
-    assert query.citations == ["evidence://source", "evidence://source"]
+    assert query.citations == ["evidence://source"]
 
     change = monitor_regulatory_change(
         change_id="issb-update",

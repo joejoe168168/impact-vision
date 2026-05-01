@@ -1,6 +1,8 @@
 # Impact Vision
 
-> **v0.14.0 · 2026-04-21** — Phases 15.6 → 20 shipped in one drop: LLM extractor / verifier adapters, fund-branded reports, branching DD questionnaire, SSE streaming, carbon / biodiversity credit registries, Multiple-of-Impact + impact-adjusted IRR, GIIN-Compass-style peer benchmarks, blended-finance term sheets, ILPA LP portal, thesis marketplace, ISAE 3000 / AA1000 / CSRD / ISSB / SOC 2 packs, Bayesian + SROI + meta-analysis + spillover, satellite / survey / worker-voice / ecosystem-service layers, 6-language dashboard keys, 4 regional fund-thesis packs, 7 jurisdiction regulatory packs, FX normalization. 150 passed / 4 skipped / 0 failed, ruff clean. See [CHANGELOG.md](CHANGELOG.md).
+> **v0.15.0 · 2026-05-01 — "Trust Infrastructure"** — First wave of the v3 roadmap: versioned **emission-factor catalogue** with sensitivity bands, **stakeholder voice as evidence** (Lean Data templates + GDPR/PDPA consent + feedback↔claim linking), **AI extraction review queue** with policy-driven auto-approval and audit trail, **verification workspace** for third-party assurers, **LP narrative + Q&A workspace** constrained to verified data, **explainable greenwashing reviewer**, **portfolio natural-language query** with `ApprovedDataPolicy`, and **OPIM Principle 8 exit-impact assessment**. 8 new modules, 8 new agent tools, 59 new tests. Impact-suite verification: **290 passed / 4 skipped**. Engineering plan in [docs/roadmap-v3-implementation.md](docs/roadmap-v3-implementation.md). See [CHANGELOG.md](CHANGELOG.md).
+>
+> **v0.14.0 · 2026-04-21** — Phases 15.6 → 20 shipped in one drop: LLM extractor / verifier adapters, fund-branded reports, branching DD questionnaire, SSE streaming, carbon / biodiversity credit registries, Multiple-of-Impact + impact-adjusted IRR, GIIN-Compass-style peer benchmarks, blended-finance term sheets, ILPA LP portal, thesis marketplace, ISAE 3000 / AA1000 / CSRD / ISSB / SOC 2 packs, Bayesian + SROI + meta-analysis + spillover, satellite / survey / worker-voice / ecosystem-service layers, 6-language dashboard keys, 4 regional fund-thesis packs, 7 jurisdiction regulatory packs, FX normalization. 150 passed / 4 skipped / 0 failed, ruff clean.
 
 Open-source AI-powered impact measurement and SDG alignment agent for VC and impact investment funds.
 
@@ -111,6 +113,20 @@ cal = iv.build_lp_calendar(horizon_months=12)
 ```
 
 Prefer a browser? `impact-vision serve-web` launches the [Web Console](#web-console-power-user-ui) + REST API in one process at `http://127.0.0.1:8787` and puts all 26 tools one click away.
+
+**What's new in v0.15.0 — Trust Infrastructure (v3 roadmap, wave 1).**
+
+Detailed engineering plan: [docs/roadmap-v3-implementation.md](docs/roadmap-v3-implementation.md). Strategic roadmap: [docs/roadmap-v3.md](docs/roadmap-v3.md).
+
+- **Versioned emission factors** (`openharness.impact.emission_factors`) — multi-revision factor catalogue (`EmissionFactorCatalogV2`) with low/high uncertainty bands, sensitivity rollups via `factor_sensitivity()` and `summarise_sensitivity()`, and `apply_catalog_to_inventory()` to reprice an existing GHG inventory with newer factors.
+- **Stakeholder voice as evidence** (`openharness.impact.stakeholder_voice`) — Lean Data survey templates (`build_lean_data_survey()`), GDPR/PDPA `ConsentRecord` lifecycle (`revoke_consent()`, `filter_active_responses()`), beneficiary feedback quality scoring (`score_feedback_quality()`), and `link_feedback_to_claims()` to bind feedback to impact claims as first-class evidence.
+- **AI extraction review queue** (`openharness.impact.evidence_workflow`) — policy-driven `ReviewQueue` with single + bulk decisions, auto-approval thresholds, and integrated audit-trail events for every review.
+- **Verification workspace** (`openharness.impact.verification_workspace`) — read-only assurance-pack workspace with `VerificationFinding` lifecycle (`open` → `in_review` → `resolved` / `unresolved`), threaded `VerificationComment`s, and explicit workspace closure.
+- **LP narrative + Q&A** (`openharness.impact.lp_narrative`) — `generate_lp_narrative()` produces audit-friendly LP narratives grounded in verified data; `LPQuestionWorkspace` constrains LP Q&A to verified evidence with citations and exportable transcripts.
+- **Greenwashing reviewer** (`openharness.impact.greenwashing_reviewer`) — explainable per-claim review with specificity classification (`concrete` / `mixed` / `vague` / `buzzword_only`), severity scoring, evidence + governance metadata, and propagation of overall scores to the company assessment.
+- **Portfolio NLQ** (`openharness.impact.portfolio_nlq`) — `parse_intent()` + `PortfolioNLQEngine` answer `average / total / top_n / compare` queries against canonical metric records only; `ApprovedDataPolicy` enforces verification-status filters and citations.
+- **Exit impact assessment** (`openharness.impact.exit_impact`) — OPIM Principle 8 workflow: `score_exit_impact()` over `ExitDurabilityRisk` items, `build_exit_plan()` for follow-ups, and explicit flags such as `unmitigated_risks`.
+- **Eight new agent tools** registered in `create_default_tool_registry()` — `EmissionFactorsTool`, `StakeholderVoiceTool`, `EvidenceReviewTool`, `VerificationWorkspaceTool`, `LPNarrativeTool`, `GreenwashingReviewerTool`, `PortfolioQueryTool`, `ExitImpactTool`.
 
 **What's new in v0.14.0 — Phases 15.6 → 20 in one drop.**
 - **LLM extractor / verifier adapters** (`openharness.impact.extractors.llm_extractor|llm_verifier`) — OpenAI-compatible claim extractor and URL-grounded source verifier with offline-safe fallbacks, `<think>`-tag stripping, strict-JSON schema validation and a `known_sources` allow-list.

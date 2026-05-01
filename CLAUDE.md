@@ -2,6 +2,12 @@
 
 Impact Vision is an open-source AI-powered impact measurement and SDG alignment agent for VC and impact investment funds, built on top of OpenHarness.
 
+Current release: **0.15.0 (Trust Infrastructure)**. The v3 roadmap
+(`docs/roadmap-v3.md`) and engineering plan
+(`docs/roadmap-v3-implementation.md`) describe the strategic shift toward
+causal-style claims, stakeholder voice as evidence, governed AI, and an
+LP-grade assurance bundle.
+
 ## Core Workflow
 
 1. User uploads a pitch deck / investment memo PDF
@@ -11,6 +17,33 @@ Impact Vision is an open-source AI-powered impact measurement and SDG alignment 
 5. `cross_reference` tool maps metrics across all 10 frameworks
 6. Greenwashing detection (standard + EU Green Claims + UK FCA + NLP) and regulatory compliance checks
 7. `impact_report` generates the final assessment (HTML with Plotly charts, XLSX, CSV, JSON)
+
+## v3 Trust Infrastructure (since 0.15.0)
+
+Layered on top of the v2 institutional-readiness backbone (canonical
+`MetricRecord`, evidence graph, audit trail, standards registry):
+
+- **Versioned emission factors** (`impact.emission_factors`) – multi-revision
+  factor catalogue with uncertainty bands, sensitivity rollups, and
+  inventory-repricing helpers.
+- **Stakeholder voice as evidence** (`impact.stakeholder_voice`) – Lean Data
+  templates, GDPR/PDPA-compliant `ConsentRecord`, beneficiary feedback
+  quality scoring, and feedback↔claim linkage.
+- **AI extraction review queue** (`impact.evidence_workflow`) – policy-driven
+  review with bulk/auto decisions and audit-trail integration.
+- **Verification workspace** (`impact.verification_workspace`) – read-only
+  assurance-pack workspace with finding lifecycle and threaded comments.
+- **LP narrative + Q&A** (`impact.lp_narrative`) – audit-friendly LP
+  narratives and a Q&A workspace constrained to verified data.
+- **Greenwashing reviewer** (`impact.greenwashing_reviewer`) – per-claim
+  explainable review with specificity classification and severity scoring.
+- **Portfolio NLQ** (`impact.portfolio_nlq`) – natural-language portfolio
+  queries enforced by an `ApprovedDataPolicy`, returning citations only.
+- **Exit impact assessment** (`impact.exit_impact`) – OPIM Principle 8
+  workflow scoring durability of post-exit impact.
+
+Each module ships with a matching agent tool registered in
+`create_default_tool_registry()` (see `tools/impact/__init__.py`).
 
 ## Engineering housekeeping (deferred refactor)
 
@@ -47,6 +80,21 @@ src/openharness/
 │   ├── greenwashing.py            # Greenwashing detection (standard + Green Claims + FCA + NLP)
 │   ├── risk_opportunity.py        # Risk/opportunity with likelihood x severity matrix
 │   ├── storage.py                 # SQLite persistence layer for assessments & session history
+│   ├── evidence_graph.py          # v2 claim/metric/target/evidence graph
+│   ├── audit_trail.py             # v2 hash-chained audit events
+│   ├── standards_registry.py      # v2 versioned standards registry
+│   ├── metric_records.py          # v2 canonical MetricRecord contract + helpers
+│   ├── investee_collection.py     # v2 questionnaire schema + submission lifecycle
+│   ├── climate_accounting.py      # v2 Scope 1/2 GHG inventory calculator
+│   ├── roadmap_v2.py              # v2 institutional-readiness helpers
+│   ├── emission_factors.py        # v3 versioned emission factors + sensitivity
+│   ├── stakeholder_voice.py       # v3 Lean Data templates + consent + claim linking
+│   ├── evidence_workflow.py       # v3 AI extraction review queue + policies
+│   ├── verification_workspace.py  # v3 verifier workspace + findings + comments
+│   ├── lp_narrative.py            # v3 LP narrative generator + Q&A workspace
+│   ├── greenwashing_reviewer.py   # v3 per-claim explainable greenwashing review
+│   ├── portfolio_nlq.py           # v3 NL query engine + ApprovedDataPolicy
+│   ├── exit_impact.py             # v3 OPIM P8 exit-impact scoring + plan
 │   ├── report_templates/          # Jinja2-based HTML report template engine
 │   │   └── html_template.py       # Shared CSS, header/footer, SDG colors
 │   └── frameworks/                # ESG/sustainability frameworks (10 frameworks)
@@ -62,7 +110,7 @@ src/openharness/
 │       ├── esrs.py                # EU CSRD/ESRS Double Materiality (11 standards)
 │       ├── ifc_opim.py            # IFC Operating Principles for Impact Management
 │       └── cross_reference.py     # 59 cross-framework metric mappings
-├── tools/impact/                  # Agent tools for LLM orchestration (17 tools)
+├── tools/impact/                  # Agent tools for LLM orchestration
 │   ├── pitch_deck_analyze_tool.py # PDF/TXT/MD intake + full pipeline + Company extraction
 │   ├── dd_checklist_tool.py       # DD question list/analyze/suggest
 │   ├── iris_catalog_tool.py       # Search/filter IRIS+ catalog
@@ -79,6 +127,14 @@ src/openharness/
 │   ├── beneficiary_feedback_tool.py # Beneficiary feedback import & analysis
 │   ├── verification_prep_tool.py  # Impact verification readiness (IFC OPIM)
 │   ├── product_passport_tool.py   # EU Digital Product Passport import/mapping
+│   ├── emission_factors_tool.py   # v3 emission factor catalog + sensitivity
+│   ├── stakeholder_voice_tool.py  # v3 Lean Data + consent + feedback quality
+│   ├── evidence_review_tool.py    # v3 AI extraction review queue
+│   ├── verification_workspace_tool.py # v3 verifier workspace + findings/comments
+│   ├── lp_narrative_tool.py       # v3 LP narrative + Q&A workspace
+│   ├── greenwashing_reviewer_tool.py  # v3 explainable greenwashing review
+│   ├── portfolio_query_tool.py    # v3 portfolio NL query engine
+│   ├── exit_impact_tool.py        # v3 OPIM P8 exit-impact scoring + plan
 │   ├── common.py                  # Shared input normalization helpers
 │   └── portfolio_tool.py          # Portfolio batch analysis + scenario modeling
 ├── dashboard/                     # Streamlit dashboard (5 tabs, optional auth)

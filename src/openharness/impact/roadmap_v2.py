@@ -55,7 +55,9 @@ class PublicCollectionLink(BaseModel):
     def is_active(self, token: str, *, at: datetime | None = None) -> bool:
         """Return whether ``token`` is valid and not expired."""
         check_time = at or datetime.now(timezone.utc)
-        expiry = datetime.fromisoformat(self.expires_at)
+        if check_time.tzinfo is None:
+            check_time = check_time.replace(tzinfo=timezone.utc)
+        expiry = _parse_datetime(self.expires_at)
         return (
             not self.used_at
             and check_time <= expiry
@@ -115,7 +117,11 @@ def build_collection_tracker(
 ) -> list[CollectionTrackerRow]:
     """Build a multi-company collection tracker for the current period."""
     stale_periods = stale_periods or set()
-    latest_by_company = {sub.company_name: sub for sub in submissions}
+    latest_by_company: dict[str, CollectionSubmission] = {}
+    for sub in submissions:
+        current = latest_by_company.get(sub.company_name)
+        if current is None or _parse_datetime(sub.submitted_at) >= _parse_datetime(current.submitted_at):
+            latest_by_company[sub.company_name] = sub
     rows: list[CollectionTrackerRow] = []
     for company_name, schema in schemas_by_company.items():
         expected = {
@@ -196,11 +202,18 @@ def build_review_queue(
             key = (sub.company_name, response.metric_id.strip().upper())
             prev = previous_values.get(key)
             current = _to_float(response.value)
-            if prev and current is not None:
-                change = abs(current - prev) / abs(prev) * 100
-                if change > anomaly_threshold_pct:
-                    flags.append("period_anomaly")
-                    comments.append(f"{response.metric_id}: {change:.1f}% change from prior period")
+            if prev is not None and current is not None:
+                if prev == 0:
+                    if current != 0:
+                        flags.append("period_anomaly")
+                        comments.append(
+                            f"{response.metric_id}: changed from zero baseline to {current}"
+                        )
+                else:
+                    change = abs(current - prev) / abs(prev) * 100
+                    if change > anomaly_threshold_pct:
+                        flags.append("period_anomaly")
+                        comments.append(f"{response.metric_id}: {change:.1f}% change from prior period")
         if flags or sub.status != "approved":
             queue.append(ReviewQueueItem(
                 submission_id=sub.submission_id,
@@ -322,7 +335,7 @@ class PCAFResult(BaseModel):
 
 def calculate_pcaf_financed_emissions(position: PCAFPosition) -> PCAFResult:
     """Calculate financed emissions using investment value / enterprise value."""
-    attribution = position.investment_value_usd / position.enterprise_value_usd
+    attribution = min(1.0, position.investment_value_usd / position.enterprise_value_usd)
     return PCAFResult(
         company_name=position.company_name,
         attribution_factor=round(attribution, 6),
@@ -425,7 +438,13 @@ def build_issb_disclosure_pack(
     normalized: list[SourceLinkedAnswer] = []
     for answer in answers:
         sources = [node for node in answer.source_node_ids if not known_nodes or node in known_nodes]
-        normalized.append(answer.model_copy(update={"source_node_ids": sources}))
+        status = answer.status
+        if evidence_graph is not None and answer.source_node_ids and not sources:
+            status = "missing"
+        normalized.append(answer.model_copy(update={
+            "source_node_ids": sources,
+            "status": status,
+        }))
     return DisclosurePack(
         framework="ISSB S1/S2",
         version="S1-S2-2023",
@@ -506,9 +525,11 @@ JURISDICTION_PROFILES: dict[str, JurisdictionProfile] = {
 def select_jurisdiction_profile(jurisdiction: str) -> JurisdictionProfile:
     """Return a disclosure profile for a roadmap jurisdiction."""
     key = jurisdiction.strip()
-    if key not in JURISDICTION_PROFILES:
+    profile_by_lower = {name.lower(): profile for name, profile in JURISDICTION_PROFILES.items()}
+    profile = profile_by_lower.get(key.lower())
+    if profile is None:
         raise KeyError(f"Unknown jurisdiction profile: {jurisdiction}")
-    return JURISDICTION_PROFILES[key]
+    return profile
 
 
 def explore_framework_crosswalk(query: str) -> list[CrossReference]:
@@ -679,6 +700,8 @@ def decide_ai_extraction(review: AIExtractionReview, decision: ReviewDecision, r
     """Approve, reject, edit-require, or request evidence for AI extraction."""
     if decision == "approved" and review.confidence < 0.5:
         raise ValueError("Low-confidence AI output cannot be approved without editing or more evidence")
+    if decision == "approved" and not review.source_refs:
+        raise ValueError("AI output cannot be approved without at least one source reference")
     return review.model_copy(update={"decision": decision, "reviewer": reviewer})
 
 
@@ -865,7 +888,7 @@ def answer_portfolio_query(question: str, approved_records: list[MetricRecord]) 
     return PortfolioQueryResult(
         question=question,
         answer=answer,
-        citations=[ref for record in verified for ref in record.evidence_refs],
+        citations=sorted({ref for record in verified for ref in record.evidence_refs}),
     )
 
 
@@ -916,6 +939,16 @@ class AIGovernanceLog(BaseModel):
 
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def _parse_datetime(value: str) -> datetime:
+    """Parse ISO datetimes and normalize naive values to UTC."""
+    if not value:
+        return datetime.min.replace(tzinfo=timezone.utc)
+    parsed = datetime.fromisoformat(value)
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=timezone.utc)
+    return parsed
 
 
 def _to_float(value: Any) -> float | None:

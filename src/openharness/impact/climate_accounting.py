@@ -166,15 +166,15 @@ def _find_factor(activity: ActivityData, factors: list[EmissionFactor] | None = 
 
 
 def _data_quality_score(activity: ActivityData, factor: EmissionFactor) -> int:
-    score = 5
+    score = 3
     if activity.verified:
-        score -= 2
+        score += 1
     elif activity.source or activity.evidence_refs:
-        score -= 1
+        score += 1
     if factor.region == activity.region and activity.region != "global":
-        score -= 1
+        score += 1
     if activity.factor_id:
-        score -= 1
+        score += 1
     return max(1, min(5, score))
 
 

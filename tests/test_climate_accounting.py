@@ -98,6 +98,19 @@ def test_custom_region_factor_is_preferred() -> None:
     assert result.data_quality_score == 4
 
 
+def test_verified_activity_with_explicit_factor_scores_high_quality() -> None:
+    result = calculate_activity_emissions({
+        "activity_type": "electricity",
+        "value": 1000,
+        "unit": "kwh",
+        "scope": "scope2",
+        "method": "market_based",
+        "factor_id": "electricity:renewable:kwh:global:2025",
+        "verified": True,
+    })
+    assert result.data_quality_score == 5
+
+
 def test_unknown_factor_raises_clear_error() -> None:
     with pytest.raises(ValueError, match="Unknown emission factor"):
         calculate_activity_emissions({
