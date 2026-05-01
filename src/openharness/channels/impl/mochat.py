@@ -6,7 +6,7 @@ import asyncio
 import json
 from collections import deque
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 import httpx
@@ -15,8 +15,8 @@ import logging
 from openharness.channels.bus.events import OutboundMessage
 from openharness.channels.bus.queue import MessageBus
 from openharness.channels.impl.base import BaseChannel
+from openharness.config.paths import get_data_dir
 from openharness.config.schema import MochatConfig
-from openharness.utils.helpers import get_data_path
 
 logger = logging.getLogger(__name__)
 
@@ -101,7 +101,7 @@ def _make_synthetic_event(
         payload["authorInfo"] = _safe_dict(author_info)
     return {
         "type": "message.add",
-        "timestamp": timestamp or datetime.utcnow().isoformat(),
+        "timestamp": timestamp or datetime.now(UTC).isoformat(),
         "payload": payload,
     }
 
@@ -226,7 +226,7 @@ class MochatChannel(BaseChannel):
         self._socket: Any = None
         self._ws_connected = self._ws_ready = False
 
-        self._state_dir = get_data_path() / "mochat"
+        self._state_dir = get_data_dir() / "mochat"
         self._cursor_path = self._state_dir / "session_cursors.json"
         self._session_cursor: dict[str, int] = {}
         self._cursor_save_task: asyncio.Task | None = None
@@ -850,7 +850,7 @@ class MochatChannel(BaseChannel):
         try:
             self._state_dir.mkdir(parents=True, exist_ok=True)
             self._cursor_path.write_text(json.dumps({
-                "schemaVersion": 1, "updatedAt": datetime.utcnow().isoformat(),
+                "schemaVersion": 1, "updatedAt": datetime.now(UTC).isoformat(),
                 "cursors": self._session_cursor,
             }, ensure_ascii=False, indent=2) + "\n", "utf-8")
         except Exception as e:

@@ -1,0 +1,2725 @@
+{
+  "debug_plan": "project_document/debug/codebase_debug_plan.md",
+  "generated_at": "2026-05-01T02:24:38.771582+00:00",
+  "inventory": {
+    "api_route_count": 24,
+    "buckets": {
+      "examples": 1,
+      "ohmo": 15,
+      "scripts": 3,
+      "src": 349,
+      "tests": 124
+    },
+    "python_file_count": 492,
+    "tool_count": 71
+  },
+  "knowledge_gained": {
+    "architecture": {
+      "core_package": "openharness",
+      "main_surfaces": [
+        "impact engine under src/openharness/impact",
+        "agent tools under src/openharness/tools/impact",
+        "FastAPI gateway under src/openharness/api_gateway/router.py",
+        "Impact MCP server under src/openharness/impact/mcp_server.py",
+        "CLI and legacy OpenHarness runtime under src/openharness/cli.py and related modules",
+        "optional channel integrations under src/openharness/channels/impl",
+        "Streamlit dashboard and web console under src/openharness/dashboard and src/openharness/web"
+      ],
+      "product_package": "impact-vision",
+      "v3_trust_modules": [
+        "emission_factors",
+        "stakeholder_voice",
+        "evidence_workflow",
+        "verification_workspace",
+        "lp_narrative",
+        "greenwashing_reviewer",
+        "portfolio_nlq",
+        "exit_impact"
+      ]
+    },
+    "confirmed_fixes": [
+      "FastAPI runtime version aligned to 0.15.0",
+      "Impact MCP server runtime version aligned to 0.15.0",
+      "stale unused imports removed from tests/test_impact.py",
+      "API CORS wildcard origins no longer allow credentialed CORS by default",
+      "IMPACT_VISION_CORS_ORIGINS provides comma-separated hosted deployment origins",
+      "Copilot User-Agent now uses installed package metadata",
+      "Mochat synthetic event and cursor timestamps use timezone-aware UTC",
+      "Mochat channel imports existing get_data_dir helper instead of missing utils helper",
+      "openharness.utils.helpers now provides split_message and safe_filename for optional channels",
+      "Matrix channel imports get_data_dir from openharness.config.paths instead of missing config.loader",
+      "README.md and CHANGELOG.md document the hardening pass"
+    ],
+    "documentation_outputs": [
+      "README.md hardening note",
+      "CHANGELOG.md Unreleased hardening section",
+      "memory_bank.md verification and notes",
+      "project_document/debug/codebase_debug_plan.md",
+      "project_document/debug/logic_issue_improvement_plan.md",
+      "project_document/debug/logic_audit_report.md",
+      "docs/roadmap-v4.md"
+    ],
+    "logic_risk_interpretation": {
+      "async_warnings": "Windows/Python 3.13 subprocess cleanup warnings remain non-failing but should be investigated for flake reduction",
+      "broad_exception_handlers": "still high; many are intentional resilience paths, but user-facing silent handlers need characterization tests before edits",
+      "datetime_utcnow": "product occurrences removed in this pass; remaining occurrences are test fixtures",
+      "large_files": "report generation, command registry, MCP server, compact service, and legacy orchestration remain high-review-cost zones",
+      "mypy": "506 errors in 77 impact/tool files with explicit package bases; treat as staged typing hardening, not current runtime failure",
+      "stale_versions": "remaining old literals appear mostly to be legacy protocol/fallback versions and need classification before changing"
+    },
+    "next_recommended_work": [
+      "add metadata tests binding API/MCP/Copilot runtime versions to installed package metadata",
+      "add registry tests that fail when expected production tools are silently skipped",
+      "add characterization tests around the highest-risk silent exception handlers",
+      "document production CORS configuration for hosted deployments",
+      "start staged typing cleanup with fund_thesis.py, framework scoring modules, sdk.py, and mcp_server.py",
+      "investigate Windows/Python 3.13 async subprocess cleanup warnings"
+    ],
+    "roadmap_v4_market_research": {
+      "consultant_value_drivers": [
+        "tailored impact measurement frameworks",
+        "theory of change and strategy facilitation",
+        "impact evaluation and learning loops",
+        "ESG and E&S management systems",
+        "KPI framework design and staff capacity building",
+        "portfolio analysis, due diligence, verification, and reporting",
+        "AI-enabled data collection, workflow automation, benchmarking, and risk analytics",
+        "client-ready reports, training packs, and website diagnostic funnels"
+      ],
+      "roadmap_output": "docs/roadmap-v4.md",
+      "sources": [
+        "TSIC public services pages",
+        "Rimm Sustainability and myCSO public pages",
+        "Impact Institute impact consulting",
+        "ImpactMapper consulting service",
+        "Impact ROI services",
+        "Holtara impact-focused ESG services",
+        "Wellington IMM approach"
+      ]
+    },
+    "verification_evidence": {
+      "channel_api_mcp_subset": "85 passed",
+      "full_pytest": "1077 passed / 15 skipped / 1 xfailed",
+      "hardening_related_pytest": "36 passed",
+      "import_smoke": "37 package init files, 21 import groups, 71 tools, all checks passed",
+      "memory_db_json": "valid JSON",
+      "ruff": "clean on src, tests, and project_document/debug"
+    }
+  },
+  "logic_audit_report": "project_document/debug/logic_audit_report.md",
+  "logic_risk_findings": {
+    "bare_exception_handlers": [],
+    "broad_exception_handlers": [
+      {
+        "line": 229,
+        "path": "examples/generate_pig_farm_reports.py",
+        "type": "Exception"
+      },
+      {
+        "line": 116,
+        "path": "examples/generate_pig_farm_reports.py",
+        "type": "Exception"
+      },
+      {
+        "line": 209,
+        "path": "ohmo/gateway/bridge.py",
+        "type": "Exception"
+      },
+      {
+        "line": 661,
+        "path": "ohmo/gateway/runtime.py",
+        "type": "Exception"
+      },
+      {
+        "line": 247,
+        "path": "ohmo/gateway/service.py",
+        "type": "Exception"
+      },
+      {
+        "line": 132,
+        "path": "scripts/check_imports.py",
+        "type": "Exception"
+      },
+      {
+        "line": 109,
+        "path": "scripts/check_imports.py",
+        "type": "Exception"
+      },
+      {
+        "line": 95,
+        "path": "scripts/refresh_iris_catalog.py",
+        "type": "Exception"
+      },
+      {
+        "line": 172,
+        "path": "src/openharness/api/client.py",
+        "type": "Exception"
+      },
+      {
+        "line": 38,
+        "path": "src/openharness/api/codex_client.py",
+        "type": "Exception"
+      },
+      {
+        "line": 223,
+        "path": "src/openharness/api/codex_client.py",
+        "type": "Exception"
+      },
+      {
+        "line": 257,
+        "path": "src/openharness/api/openai_client.py",
+        "type": "Exception"
+      },
+      {
+        "line": 260,
+        "path": "src/openharness/api_gateway/router.py",
+        "type": "Exception"
+      },
+      {
+        "line": 696,
+        "path": "src/openharness/api_gateway/router.py",
+        "type": "Exception"
+      },
+      {
+        "line": 601,
+        "path": "src/openharness/auth/external.py",
+        "type": "Exception"
+      },
+      {
+        "line": 370,
+        "path": "src/openharness/auth/external.py",
+        "type": "Exception"
+      },
+      {
+        "line": 459,
+        "path": "src/openharness/auth/external.py",
+        "type": "Exception"
+      },
+      {
+        "line": 445,
+        "path": "src/openharness/auth/external.py",
+        "type": "Exception"
+      },
+      {
+        "line": 103,
+        "path": "src/openharness/auth/flows.py",
+        "type": "Exception"
+      },
+      {
+        "line": 409,
+        "path": "src/openharness/auth/manager.py",
+        "type": "Exception"
+      },
+      {
+        "line": 424,
+        "path": "src/openharness/auth/manager.py",
+        "type": "Exception"
+      },
+      {
+        "line": 436,
+        "path": "src/openharness/auth/manager.py",
+        "type": "Exception"
+      },
+      {
+        "line": 450,
+        "path": "src/openharness/auth/manager.py",
+        "type": "Exception"
+      },
+      {
+        "line": 107,
+        "path": "src/openharness/auth/storage.py",
+        "type": "Exception"
+      },
+      {
+        "line": 137,
+        "path": "src/openharness/auth/storage.py",
+        "type": "Exception"
+      },
+      {
+        "line": 159,
+        "path": "src/openharness/auth/storage.py",
+        "type": "Exception"
+      },
+      {
+        "line": 106,
+        "path": "src/openharness/channels/adapter.py",
+        "type": "Exception"
+      },
+      {
+        "line": 91,
+        "path": "src/openharness/channels/adapter.py",
+        "type": "Exception"
+      },
+      {
+        "line": 87,
+        "path": "src/openharness/channels/impl/dingtalk.py",
+        "type": "Exception"
+      },
+      {
+        "line": 161,
+        "path": "src/openharness/channels/impl/dingtalk.py",
+        "type": "Exception"
+      },
+      {
+        "line": 199,
+        "path": "src/openharness/channels/impl/dingtalk.py",
+        "type": "Exception"
+      },
+      {
+        "line": 259,
+        "path": "src/openharness/channels/impl/dingtalk.py",
+        "type": "Exception"
+      },
+      {
+        "line": 294,
+        "path": "src/openharness/channels/impl/dingtalk.py",
+        "type": "Exception"
+      },
+      {
+        "line": 334,
+        "path": "src/openharness/channels/impl/dingtalk.py",
+        "type": "Exception"
+      },
+      {
+        "line": 444,
+        "path": "src/openharness/channels/impl/dingtalk.py",
+        "type": "Exception"
+      },
+      {
+        "line": 243,
+        "path": "src/openharness/channels/impl/dingtalk.py",
+        "type": "Exception"
+      },
+      {
+        "line": 326,
+        "path": "src/openharness/channels/impl/dingtalk.py",
+        "type": "Exception"
+      },
+      {
+        "line": 155,
+        "path": "src/openharness/channels/impl/dingtalk.py",
+        "type": "Exception"
+      },
+      {
+        "line": 56,
+        "path": "src/openharness/channels/impl/discord.py",
+        "type": "Exception"
+      },
+      {
+        "line": 120,
+        "path": "src/openharness/channels/impl/discord.py",
+        "type": "Exception"
+      },
+      {
+        "line": 247,
+        "path": "src/openharness/channels/impl/discord.py",
+        "type": "Exception"
+      },
+      {
+        "line": 198,
+        "path": "src/openharness/channels/impl/discord.py",
+        "type": "Exception"
+      },
+      {
+        "line": 300,
+        "path": "src/openharness/channels/impl/discord.py",
+        "type": "Exception"
+      },
+      {
+        "line": 151,
+        "path": "src/openharness/channels/impl/email.py",
+        "type": "Exception"
+      },
+      {
+        "line": 355,
+        "path": "src/openharness/channels/impl/email.py",
+        "type": "Exception"
+      },
+      {
+        "line": 388,
+        "path": "src/openharness/channels/impl/email.py",
+        "type": "Exception"
+      },
+      {
+        "line": 98,
+        "path": "src/openharness/channels/impl/email.py",
+        "type": "Exception"
+      },
+      {
+        "line": 321,
+        "path": "src/openharness/channels/impl/email.py",
+        "type": "Exception"
+      },
+      {
+        "line": 370,
+        "path": "src/openharness/channels/impl/email.py",
+        "type": "Exception"
+      },
+      {
+        "line": 365,
+        "path": "src/openharness/channels/impl/feishu.py",
+        "type": "Exception"
+      },
+      {
+        "line": 628,
+        "path": "src/openharness/channels/impl/feishu.py",
+        "type": "Exception"
+      },
+      {
+        "line": 656,
+        "path": "src/openharness/channels/impl/feishu.py",
+        "type": "Exception"
+      },
+      {
+        "line": 679,
+        "path": "src/openharness/channels/impl/feishu.py",
+        "type": "Exception"
+      },
+      {
+        "line": 711,
+        "path": "src/openharness/channels/impl/feishu.py",
+        "type": "Exception"
+      },
+      {
+        "line": 799,
+        "path": "src/openharness/channels/impl/feishu.py",
+        "type": "Exception"
+      },
+      {
+        "line": 874,
+        "path": "src/openharness/channels/impl/feishu.py",
+        "type": "Exception"
+      },
+      {
+        "line": 906,
+        "path": "src/openharness/channels/impl/feishu.py",
+        "type": "Exception"
+      },
+      {
+        "line": 1027,
+        "path": "src/openharness/channels/impl/feishu.py",
+        "type": "Exception"
+      },
+      {
+        "line": 319,
+        "path": "src/openharness/channels/impl/feishu.py",
+        "type": "Exception"
+      },
+      {
+        "line": 167,
+        "path": "src/openharness/channels/impl/manager.py",
+        "type": "Exception"
+      },
+      {
+        "line": 205,
+        "path": "src/openharness/channels/impl/manager.py",
+        "type": "Exception"
+      },
+      {
+        "line": 229,
+        "path": "src/openharness/channels/impl/manager.py",
+        "type": "Exception"
+      },
+      {
+        "line": 103,
+        "path": "src/openharness/channels/impl/matrix.py",
+        "type": "Exception"
+      },
+      {
+        "line": 284,
+        "path": "src/openharness/channels/impl/matrix.py",
+        "type": "Exception"
+      },
+      {
+        "line": 329,
+        "path": "src/openharness/channels/impl/matrix.py",
+        "type": "Exception"
+      },
+      {
+        "line": 348,
+        "path": "src/openharness/channels/impl/matrix.py",
+        "type": "Exception"
+      },
+      {
+        "line": 418,
+        "path": "src/openharness/channels/impl/matrix.py",
+        "type": "Exception"
+      },
+      {
+        "line": 672,
+        "path": "src/openharness/channels/impl/matrix.py",
+        "type": "Exception"
+      },
+      {
+        "line": 698,
+        "path": "src/openharness/channels/impl/matrix.py",
+        "type": "Exception"
+      },
+      {
+        "line": 188,
+        "path": "src/openharness/channels/impl/matrix.py",
+        "type": "Exception"
+      },
+      {
+        "line": 454,
+        "path": "src/openharness/channels/impl/matrix.py",
+        "type": "Exception"
+      },
+      {
+        "line": 326,
+        "path": "src/openharness/channels/impl/mochat.py",
+        "type": "Exception"
+      },
+      {
+        "line": 411,
+        "path": "src/openharness/channels/impl/mochat.py",
+        "type": "Exception"
+      },
+      {
+        "line": 480,
+        "path": "src/openharness/channels/impl/mochat.py",
+        "type": "Exception"
+      },
+      {
+        "line": 506,
+        "path": "src/openharness/channels/impl/mochat.py",
+        "type": "Exception"
+      },
+      {
+        "line": 540,
+        "path": "src/openharness/channels/impl/mochat.py",
+        "type": "Exception"
+      },
+      {
+        "line": 840,
+        "path": "src/openharness/channels/impl/mochat.py",
+        "type": "Exception"
+      },
+      {
+        "line": 856,
+        "path": "src/openharness/channels/impl/mochat.py",
+        "type": "Exception"
+      },
+      {
+        "line": 872,
+        "path": "src/openharness/channels/impl/mochat.py",
+        "type": "Exception"
+      },
+      {
+        "line": 286,
+        "path": "src/openharness/channels/impl/mochat.py",
+        "type": "Exception"
+      },
+      {
+        "line": 492,
+        "path": "src/openharness/channels/impl/mochat.py",
+        "type": "Exception"
+      },
+      {
+        "line": 602,
+        "path": "src/openharness/channels/impl/mochat.py",
+        "type": "Exception"
+      },
+      {
+        "line": 629,
+        "path": "src/openharness/channels/impl/mochat.py",
+        "type": "Exception"
+      },
+      {
+        "line": 415,
+        "path": "src/openharness/channels/impl/mochat.py",
+        "type": "Exception"
+      },
+      {
+        "line": 116,
+        "path": "src/openharness/channels/impl/qq.py",
+        "type": "Exception"
+      },
+      {
+        "line": 139,
+        "path": "src/openharness/channels/impl/qq.py",
+        "type": "Exception"
+      },
+      {
+        "line": 85,
+        "path": "src/openharness/channels/impl/qq.py",
+        "type": "Exception"
+      },
+      {
+        "line": 97,
+        "path": "src/openharness/channels/impl/qq.py",
+        "type": "Exception"
+      },
+      {
+        "line": 57,
+        "path": "src/openharness/channels/impl/slack.py",
+        "type": "Exception"
+      },
+      {
+        "line": 105,
+        "path": "src/openharness/channels/impl/slack.py",
+        "type": "Exception"
+      },
+      {
+        "line": 179,
+        "path": "src/openharness/channels/impl/slack.py",
+        "type": "Exception"
+      },
+      {
+        "line": 199,
+        "path": "src/openharness/channels/impl/slack.py",
+        "type": "Exception"
+      },
+      {
+        "line": 72,
+        "path": "src/openharness/channels/impl/slack.py",
+        "type": "Exception"
+      },
+      {
+        "line": 103,
+        "path": "src/openharness/channels/impl/slack.py",
+        "type": "Exception"
+      },
+      {
+        "line": 162,
+        "path": "src/openharness/channels/impl/telegram.py",
+        "type": "Exception"
+      },
+      {
+        "line": 490,
+        "path": "src/openharness/channels/impl/telegram.py",
+        "type": "Exception"
+      },
+      {
+        "line": 248,
+        "path": "src/openharness/channels/impl/telegram.py",
+        "type": "Exception"
+      },
+      {
+        "line": 405,
+        "path": "src/openharness/channels/impl/telegram.py",
+        "type": "Exception"
+      },
+      {
+        "line": 279,
+        "path": "src/openharness/channels/impl/telegram.py",
+        "type": "Exception"
+      },
+      {
+        "line": 294,
+        "path": "src/openharness/channels/impl/telegram.py",
+        "type": "Exception"
+      },
+      {
+        "line": 94,
+        "path": "src/openharness/channels/impl/whatsapp.py",
+        "type": "Exception"
+      },
+      {
+        "line": 63,
+        "path": "src/openharness/channels/impl/whatsapp.py",
+        "type": "Exception"
+      },
+      {
+        "line": 58,
+        "path": "src/openharness/channels/impl/whatsapp.py",
+        "type": "Exception"
+      },
+      {
+        "line": 363,
+        "path": "src/openharness/cli.py",
+        "type": "Exception"
+      },
+      {
+        "line": 1166,
+        "path": "src/openharness/cli.py",
+        "type": "Exception"
+      },
+      {
+        "line": 1110,
+        "path": "src/openharness/cli.py",
+        "type": "Exception"
+      },
+      {
+        "line": 161,
+        "path": "src/openharness/commands/registry.py",
+        "type": "Exception"
+      },
+      {
+        "line": 302,
+        "path": "src/openharness/commands/registry.py",
+        "type": "Exception"
+      },
+      {
+        "line": 166,
+        "path": "src/openharness/commands/registry.py",
+        "type": "Exception"
+      },
+      {
+        "line": 942,
+        "path": "src/openharness/coordinator/agent_definitions.py",
+        "type": "Exception"
+      },
+      {
+        "line": 888,
+        "path": "src/openharness/coordinator/agent_definitions.py",
+        "type": "Exception"
+      },
+      {
+        "line": 37,
+        "path": "src/openharness/dashboard/app.py",
+        "type": "Exception"
+      },
+      {
+        "line": 626,
+        "path": "src/openharness/engine/query.py",
+        "type": "Exception"
+      },
+      {
+        "line": 494,
+        "path": "src/openharness/engine/query.py",
+        "type": "Exception"
+      },
+      {
+        "line": 161,
+        "path": "src/openharness/hooks/executor.py",
+        "type": "Exception"
+      },
+      {
+        "line": 107,
+        "path": "src/openharness/impact/branding.py",
+        "type": "Exception"
+      },
+      {
+        "line": 149,
+        "path": "src/openharness/impact/extractors/llm_extractor.py",
+        "type": "Exception"
+      },
+      {
+        "line": 80,
+        "path": "src/openharness/impact/five_dimensions.py",
+        "type": "Exception"
+      },
+      {
+        "line": 516,
+        "path": "src/openharness/impact/frameworks/sasb.py",
+        "type": "Exception"
+      },
+      {
+        "line": 116,
+        "path": "src/openharness/impact/fund_thesis.py",
+        "type": "Exception"
+      },
+      {
+        "line": 110,
+        "path": "src/openharness/impact/mcp_server.py",
+        "type": "Exception"
+      },
+      {
+        "line": 126,
+        "path": "src/openharness/impact/mcp_server.py",
+        "type": "Exception"
+      },
+      {
+        "line": 177,
+        "path": "src/openharness/impact/mcp_server.py",
+        "type": "Exception"
+      },
+      {
+        "line": 197,
+        "path": "src/openharness/impact/mcp_server.py",
+        "type": "Exception"
+      },
+      {
+        "line": 81,
+        "path": "src/openharness/impact/plugins.py",
+        "type": "Exception"
+      },
+      {
+        "line": 52,
+        "path": "src/openharness/impact/risk_opportunity.py",
+        "type": "Exception"
+      },
+      {
+        "line": 259,
+        "path": "src/openharness/impact/roadmap_v2.py",
+        "type": "Exception"
+      },
+      {
+        "line": 111,
+        "path": "src/openharness/impact/sdg_mapper.py",
+        "type": "Exception"
+      },
+      {
+        "line": 135,
+        "path": "src/openharness/impact/sdg_mapper.py",
+        "type": "Exception"
+      },
+      {
+        "line": 115,
+        "path": "src/openharness/mcp/client.py",
+        "type": "Exception"
+      },
+      {
+        "line": 142,
+        "path": "src/openharness/mcp/client.py",
+        "type": "Exception"
+      },
+      {
+        "line": 176,
+        "path": "src/openharness/mcp/client.py",
+        "type": "Exception"
+      },
+      {
+        "line": 203,
+        "path": "src/openharness/mcp/client.py",
+        "type": "Exception"
+      },
+      {
+        "line": 229,
+        "path": "src/openharness/mcp/client.py",
+        "type": "Exception"
+      },
+      {
+        "line": 95,
+        "path": "src/openharness/plugins/loader.py",
+        "type": "Exception"
+      },
+      {
+        "line": 1498,
+        "path": "src/openharness/services/compact/__init__.py",
+        "type": "Exception"
+      },
+      {
+        "line": 1144,
+        "path": "src/openharness/services/compact/__init__.py",
+        "type": "Exception"
+      },
+      {
+        "line": 202,
+        "path": "src/openharness/services/cron_scheduler.py",
+        "type": "Exception"
+      },
+      {
+        "line": 173,
+        "path": "src/openharness/services/cron_scheduler.py",
+        "type": "Exception"
+      },
+      {
+        "line": 273,
+        "path": "src/openharness/swarm/in_process.py",
+        "type": "Exception"
+      },
+      {
+        "line": 306,
+        "path": "src/openharness/swarm/in_process.py",
+        "type": "Exception"
+      },
+      {
+        "line": 312,
+        "path": "src/openharness/swarm/in_process.py",
+        "type": "Exception"
+      },
+      {
+        "line": 81,
+        "path": "src/openharness/swarm/subprocess_backend.py",
+        "type": "Exception"
+      },
+      {
+        "line": 668,
+        "path": "src/openharness/swarm/team_lifecycle.py",
+        "type": "Exception"
+      },
+      {
+        "line": 30,
+        "path": "src/openharness/themes/loader.py",
+        "type": "Exception"
+      },
+      {
+        "line": 19,
+        "path": "src/openharness/tools/__init__.py",
+        "type": "Exception"
+      },
+      {
+        "line": 79,
+        "path": "src/openharness/tools/agent_tool.py",
+        "type": "Exception"
+      },
+      {
+        "line": 36,
+        "path": "src/openharness/tools/impact/common.py",
+        "type": "Exception"
+      },
+      {
+        "line": 232,
+        "path": "src/openharness/tools/impact/common.py",
+        "type": "Exception"
+      },
+      {
+        "line": 259,
+        "path": "src/openharness/tools/impact/dd_checklist_tool.py",
+        "type": "Exception"
+      },
+      {
+        "line": 67,
+        "path": "src/openharness/tools/impact/evidence_review_tool.py",
+        "type": "Exception"
+      },
+      {
+        "line": 82,
+        "path": "src/openharness/tools/impact/evidence_review_tool.py",
+        "type": "Exception"
+      },
+      {
+        "line": 57,
+        "path": "src/openharness/tools/impact/exclusion_screening_tool.py",
+        "type": "Exception"
+      },
+      {
+        "line": 56,
+        "path": "src/openharness/tools/impact/exit_impact_tool.py",
+        "type": "Exception"
+      },
+      {
+        "line": 73,
+        "path": "src/openharness/tools/impact/exit_impact_tool.py",
+        "type": "Exception"
+      },
+      {
+        "line": 63,
+        "path": "src/openharness/tools/impact/greenwashing_reviewer_tool.py",
+        "type": "Exception"
+      },
+      {
+        "line": 1334,
+        "path": "src/openharness/tools/impact/impact_report_tool.py",
+        "type": "Exception"
+      },
+      {
+        "line": 1340,
+        "path": "src/openharness/tools/impact/impact_report_tool.py",
+        "type": "Exception"
+      },
+      {
+        "line": 2343,
+        "path": "src/openharness/tools/impact/impact_report_tool.py",
+        "type": "Exception"
+      },
+      {
+        "line": 1488,
+        "path": "src/openharness/tools/impact/impact_report_tool.py",
+        "type": "Exception"
+      },
+      {
+        "line": 237,
+        "path": "src/openharness/tools/impact/impact_report_tool.py",
+        "type": "Exception"
+      },
+      {
+        "line": 243,
+        "path": "src/openharness/tools/impact/impact_report_tool.py",
+        "type": "Exception"
+      },
+      {
+        "line": 76,
+        "path": "src/openharness/tools/impact/lp_narrative_tool.py",
+        "type": "Exception"
+      },
+      {
+        "line": 59,
+        "path": "src/openharness/tools/impact/lp_narrative_tool.py",
+        "type": "Exception"
+      },
+      {
+        "line": 115,
+        "path": "src/openharness/tools/impact/pitch_deck_analyze_tool.py",
+        "type": "Exception"
+      },
+      {
+        "line": 136,
+        "path": "src/openharness/tools/impact/pitch_deck_analyze_tool.py",
+        "type": "Exception"
+      },
+      {
+        "line": 49,
+        "path": "src/openharness/tools/impact/portfolio_query_tool.py",
+        "type": "Exception"
+      },
+      {
+        "line": 86,
+        "path": "src/openharness/tools/impact/stakeholder_voice_tool.py",
+        "type": "Exception"
+      },
+      {
+        "line": 94,
+        "path": "src/openharness/tools/impact/stakeholder_voice_tool.py",
+        "type": "Exception"
+      },
+      {
+        "line": 103,
+        "path": "src/openharness/tools/impact/stakeholder_voice_tool.py",
+        "type": "Exception"
+      },
+      {
+        "line": 64,
+        "path": "src/openharness/tools/impact/trend_analysis_tool.py",
+        "type": "Exception"
+      },
+      {
+        "line": 87,
+        "path": "src/openharness/tools/impact/verification_workspace_tool.py",
+        "type": "Exception"
+      },
+      {
+        "line": 79,
+        "path": "src/openharness/tools/impact/verification_workspace_tool.py",
+        "type": "Exception"
+      },
+      {
+        "line": 65,
+        "path": "src/openharness/tools/mcp_auth_tool.py",
+        "type": "Exception"
+      },
+      {
+        "line": 55,
+        "path": "src/openharness/tools/send_message_tool.py",
+        "type": "Exception"
+      },
+      {
+        "line": 179,
+        "path": "src/openharness/ui/backend_host.py",
+        "type": "Exception"
+      },
+      {
+        "line": 18,
+        "path": "src/openharness/ui/react_launcher.py",
+        "type": "Exception"
+      },
+      {
+        "line": 365,
+        "path": "src/openharness/ui/runtime.py",
+        "type": "Exception"
+      },
+      {
+        "line": 63,
+        "path": "src/openharness/utils/fs.py",
+        "type": "BaseException"
+      },
+      {
+        "line": 122,
+        "path": "src/openharness/utils/shell.py",
+        "type": "Exception"
+      },
+      {
+        "line": 99,
+        "path": "src/openharness/utils/shell.py",
+        "type": "Exception"
+      },
+      {
+        "line": 65,
+        "path": "src/openharness/web/streaming.py",
+        "type": "Exception"
+      },
+      {
+        "line": 46,
+        "path": "src/openharness/web/streaming.py",
+        "type": "Exception"
+      },
+      {
+        "line": 620,
+        "path": "tests/test_hooks_skills_plugins_real.py",
+        "type": "Exception"
+      },
+      {
+        "line": 649,
+        "path": "tests/test_merged_prs_on_autoagent.py",
+        "type": "Exception"
+      },
+      {
+        "line": 781,
+        "path": "tests/test_real_large_tasks.py",
+        "type": "Exception"
+      },
+      {
+        "line": 94,
+        "path": "tests/test_untested_features.py",
+        "type": "Exception"
+      }
+    ],
+    "cors_wildcard": [],
+    "datetime_utcnow": [
+      {
+        "line": 35,
+        "path": "tests/test_ohmo/test_gateway.py",
+        "text": "timestamp=datetime.utcnow(),"
+      },
+      {
+        "line": 47,
+        "path": "tests/test_ohmo/test_gateway.py",
+        "text": "timestamp=datetime.utcnow(),"
+      }
+    ],
+    "large_files": [
+      {
+        "bare_exception_handlers": [],
+        "broad_exception_handlers": [
+          {
+            "line": 365,
+            "type": "Exception"
+          },
+          {
+            "line": 628,
+            "type": "Exception"
+          },
+          {
+            "line": 656,
+            "type": "Exception"
+          },
+          {
+            "line": 679,
+            "type": "Exception"
+          },
+          {
+            "line": 711,
+            "type": "Exception"
+          },
+          {
+            "line": 799,
+            "type": "Exception"
+          },
+          {
+            "line": 874,
+            "type": "Exception"
+          },
+          {
+            "line": 906,
+            "type": "Exception"
+          },
+          {
+            "line": 1027,
+            "type": "Exception"
+          },
+          {
+            "line": 319,
+            "type": "Exception"
+          }
+        ],
+        "cors_wildcard": [],
+        "datetime_utcnow": [],
+        "large_file": true,
+        "line_count": 1028,
+        "long_functions": [
+          {
+            "length": 106,
+            "line": 923,
+            "name": "_on_message"
+          }
+        ],
+        "path": "src/openharness/channels/impl/feishu.py",
+        "silent_exception_handlers": [],
+        "stale_version_literals": []
+      },
+      {
+        "bare_exception_handlers": [],
+        "broad_exception_handlers": [
+          {
+            "line": 326,
+            "type": "Exception"
+          },
+          {
+            "line": 411,
+            "type": "Exception"
+          },
+          {
+            "line": 480,
+            "type": "Exception"
+          },
+          {
+            "line": 506,
+            "type": "Exception"
+          },
+          {
+            "line": 540,
+            "type": "Exception"
+          },
+          {
+            "line": 840,
+            "type": "Exception"
+          },
+          {
+            "line": 856,
+            "type": "Exception"
+          },
+          {
+            "line": 872,
+            "type": "Exception"
+          },
+          {
+            "line": 286,
+            "type": "Exception"
+          },
+          {
+            "line": 492,
+            "type": "Exception"
+          },
+          {
+            "line": 602,
+            "type": "Exception"
+          },
+          {
+            "line": 629,
+            "type": "Exception"
+          },
+          {
+            "line": 415,
+            "type": "Exception"
+          }
+        ],
+        "cors_wildcard": [],
+        "datetime_utcnow": [],
+        "large_file": true,
+        "line_count": 897,
+        "long_functions": [],
+        "path": "src/openharness/channels/impl/mochat.py",
+        "silent_exception_handlers": [
+          {
+            "line": 480,
+            "type": "Exception"
+          },
+          {
+            "line": 286,
+            "type": "Exception"
+          },
+          {
+            "line": 415,
+            "type": "Exception"
+          }
+        ],
+        "stale_version_literals": []
+      },
+      {
+        "bare_exception_handlers": [],
+        "broad_exception_handlers": [
+          {
+            "line": 363,
+            "type": "Exception"
+          },
+          {
+            "line": 1166,
+            "type": "Exception"
+          },
+          {
+            "line": 1110,
+            "type": "Exception"
+          }
+        ],
+        "cors_wildcard": [],
+        "datetime_utcnow": [],
+        "large_file": true,
+        "line_count": 1852,
+        "long_functions": [
+          {
+            "length": 80,
+            "line": 920,
+            "name": "_specialize_setup_target"
+          },
+          {
+            "length": 324,
+            "line": 1529,
+            "name": "main"
+          }
+        ],
+        "path": "src/openharness/cli.py",
+        "silent_exception_handlers": [
+          {
+            "line": 1110,
+            "type": "Exception"
+          }
+        ],
+        "stale_version_literals": []
+      },
+      {
+        "bare_exception_handlers": [],
+        "broad_exception_handlers": [
+          {
+            "line": 161,
+            "type": "Exception"
+          },
+          {
+            "line": 302,
+            "type": "Exception"
+          },
+          {
+            "line": 166,
+            "type": "Exception"
+          }
+        ],
+        "cors_wildcard": [],
+        "datetime_utcnow": [],
+        "large_file": true,
+        "line_count": 1675,
+        "long_functions": [
+          {
+            "length": 1411,
+            "line": 229,
+            "name": "create_default_command_registry"
+          },
+          {
+            "length": 83,
+            "line": 1168,
+            "name": "_theme_handler"
+          }
+        ],
+        "path": "src/openharness/commands/registry.py",
+        "silent_exception_handlers": [
+          {
+            "line": 166,
+            "type": "Exception"
+          }
+        ],
+        "stale_version_literals": [
+          {
+            "line": 266,
+            "project_version": "0.15.0",
+            "version": "0.1.6"
+          },
+          {
+            "line": 1424,
+            "project_version": "0.15.0",
+            "version": "0.1.6"
+          }
+        ]
+      },
+      {
+        "bare_exception_handlers": [],
+        "broad_exception_handlers": [],
+        "cors_wildcard": [],
+        "datetime_utcnow": [],
+        "large_file": true,
+        "line_count": 869,
+        "long_functions": [
+          {
+            "length": 105,
+            "line": 608,
+            "name": "resolve_auth"
+          }
+        ],
+        "path": "src/openharness/config/settings.py",
+        "silent_exception_handlers": [],
+        "stale_version_literals": []
+      },
+      {
+        "bare_exception_handlers": [],
+        "broad_exception_handlers": [
+          {
+            "line": 942,
+            "type": "Exception"
+          },
+          {
+            "line": 888,
+            "type": "Exception"
+          }
+        ],
+        "cors_wildcard": [],
+        "datetime_utcnow": [],
+        "large_file": true,
+        "line_count": 975,
+        "long_functions": [
+          {
+            "length": 198,
+            "line": 695,
+            "name": "load_agents_dir"
+          }
+        ],
+        "path": "src/openharness/coordinator/agent_definitions.py",
+        "silent_exception_handlers": [
+          {
+            "line": 942,
+            "type": "Exception"
+          }
+        ],
+        "stale_version_literals": []
+      },
+      {
+        "bare_exception_handlers": [],
+        "broad_exception_handlers": [
+          {
+            "line": 110,
+            "type": "Exception"
+          },
+          {
+            "line": 126,
+            "type": "Exception"
+          },
+          {
+            "line": 177,
+            "type": "Exception"
+          },
+          {
+            "line": 197,
+            "type": "Exception"
+          }
+        ],
+        "cors_wildcard": [],
+        "datetime_utcnow": [],
+        "large_file": true,
+        "line_count": 939,
+        "long_functions": [],
+        "path": "src/openharness/impact/mcp_server.py",
+        "silent_exception_handlers": [
+          {
+            "line": 110,
+            "type": "Exception"
+          },
+          {
+            "line": 126,
+            "type": "Exception"
+          },
+          {
+            "line": 177,
+            "type": "Exception"
+          },
+          {
+            "line": 197,
+            "type": "Exception"
+          }
+        ],
+        "stale_version_literals": []
+      },
+      {
+        "bare_exception_handlers": [],
+        "broad_exception_handlers": [],
+        "cors_wildcard": [],
+        "datetime_utcnow": [],
+        "large_file": true,
+        "line_count": 838,
+        "long_functions": [
+          {
+            "length": 412,
+            "line": 229,
+            "name": "render_dd_questionnaire_html"
+          },
+          {
+            "length": 159,
+            "line": 660,
+            "name": "render_dd_questionnaire_docx"
+          }
+        ],
+        "path": "src/openharness/impact/report_templates/dd_report_html.py",
+        "silent_exception_handlers": [],
+        "stale_version_literals": []
+      },
+      {
+        "bare_exception_handlers": [],
+        "broad_exception_handlers": [
+          {
+            "line": 259,
+            "type": "Exception"
+          }
+        ],
+        "cors_wildcard": [],
+        "datetime_utcnow": [],
+        "large_file": true,
+        "line_count": 1024,
+        "long_functions": [],
+        "path": "src/openharness/impact/roadmap_v2.py",
+        "silent_exception_handlers": [],
+        "stale_version_literals": []
+      },
+      {
+        "bare_exception_handlers": [],
+        "broad_exception_handlers": [
+          {
+            "line": 1498,
+            "type": "Exception"
+          },
+          {
+            "line": 1144,
+            "type": "Exception"
+          }
+        ],
+        "cors_wildcard": [],
+        "datetime_utcnow": [],
+        "large_file": true,
+        "line_count": 1580,
+        "long_functions": [
+          {
+            "length": 355,
+            "line": 975,
+            "name": "compact_conversation"
+          },
+          {
+            "length": 179,
+            "line": 1336,
+            "name": "auto_compact_if_needed"
+          }
+        ],
+        "path": "src/openharness/services/compact/__init__.py",
+        "silent_exception_handlers": [],
+        "stale_version_literals": []
+      },
+      {
+        "bare_exception_handlers": [],
+        "broad_exception_handlers": [],
+        "cors_wildcard": [],
+        "datetime_utcnow": [],
+        "large_file": true,
+        "line_count": 1168,
+        "long_functions": [],
+        "path": "src/openharness/swarm/permission_sync.py",
+        "silent_exception_handlers": [],
+        "stale_version_literals": []
+      },
+      {
+        "bare_exception_handlers": [],
+        "broad_exception_handlers": [
+          {
+            "line": 668,
+            "type": "Exception"
+          }
+        ],
+        "cors_wildcard": [],
+        "datetime_utcnow": [],
+        "large_file": true,
+        "line_count": 913,
+        "long_functions": [],
+        "path": "src/openharness/swarm/team_lifecycle.py",
+        "silent_exception_handlers": [
+          {
+            "line": 668,
+            "type": "Exception"
+          }
+        ],
+        "stale_version_literals": []
+      },
+      {
+        "bare_exception_handlers": [],
+        "broad_exception_handlers": [
+          {
+            "line": 1334,
+            "type": "Exception"
+          },
+          {
+            "line": 1340,
+            "type": "Exception"
+          },
+          {
+            "line": 2343,
+            "type": "Exception"
+          },
+          {
+            "line": 1488,
+            "type": "Exception"
+          },
+          {
+            "line": 237,
+            "type": "Exception"
+          },
+          {
+            "line": 243,
+            "type": "Exception"
+          }
+        ],
+        "cors_wildcard": [],
+        "datetime_utcnow": [],
+        "large_file": true,
+        "line_count": 2643,
+        "long_functions": [
+          {
+            "length": 103,
+            "line": 373,
+            "name": "_to_text"
+          },
+          {
+            "length": 188,
+            "line": 613,
+            "name": "_interactive_scoring_section"
+          },
+          {
+            "length": 181,
+            "line": 803,
+            "name": "_generate_executive_summary"
+          },
+          {
+            "length": 91,
+            "line": 1142,
+            "name": "_render_missing_metrics_section"
+          },
+          {
+            "length": 192,
+            "line": 1316,
+            "name": "_scoring_rationale_section"
+          },
+          {
+            "length": 791,
+            "line": 1510,
+            "name": "_to_html"
+          },
+          {
+            "length": 88,
+            "line": 2556,
+            "name": "_to_xlsx"
+          },
+          {
+            "length": 149,
+            "line": 222,
+            "name": "execute"
+          }
+        ],
+        "path": "src/openharness/tools/impact/impact_report_tool.py",
+        "silent_exception_handlers": [
+          {
+            "line": 1334,
+            "type": "Exception"
+          },
+          {
+            "line": 1340,
+            "type": "Exception"
+          },
+          {
+            "line": 2343,
+            "type": "Exception"
+          },
+          {
+            "line": 237,
+            "type": "Exception"
+          },
+          {
+            "line": 243,
+            "type": "Exception"
+          }
+        ],
+        "stale_version_literals": []
+      },
+      {
+        "bare_exception_handlers": [],
+        "broad_exception_handlers": [],
+        "cors_wildcard": [],
+        "datetime_utcnow": [],
+        "large_file": true,
+        "line_count": 813,
+        "long_functions": [],
+        "path": "src/openharness/web/console.py",
+        "silent_exception_handlers": [],
+        "stale_version_literals": []
+      },
+      {
+        "bare_exception_handlers": [],
+        "broad_exception_handlers": [],
+        "cors_wildcard": [],
+        "datetime_utcnow": [],
+        "large_file": true,
+        "line_count": 950,
+        "long_functions": [],
+        "path": "tests/test_engine/test_query_engine.py",
+        "silent_exception_handlers": [],
+        "stale_version_literals": []
+      },
+      {
+        "bare_exception_handlers": [],
+        "broad_exception_handlers": [],
+        "cors_wildcard": [],
+        "datetime_utcnow": [
+          {
+            "line": 35,
+            "text": "timestamp=datetime.utcnow(),"
+          },
+          {
+            "line": 47,
+            "text": "timestamp=datetime.utcnow(),"
+          }
+        ],
+        "large_file": true,
+        "line_count": 967,
+        "long_functions": [],
+        "path": "tests/test_ohmo/test_gateway.py",
+        "silent_exception_handlers": [],
+        "stale_version_literals": []
+      },
+      {
+        "bare_exception_handlers": [],
+        "broad_exception_handlers": [],
+        "cors_wildcard": [],
+        "datetime_utcnow": [],
+        "large_file": true,
+        "line_count": 1169,
+        "long_functions": [],
+        "path": "tests/test_tools/test_impact_tools_enhancements.py",
+        "silent_exception_handlers": [],
+        "stale_version_literals": []
+      },
+      {
+        "bare_exception_handlers": [],
+        "broad_exception_handlers": [
+          {
+            "line": 94,
+            "type": "Exception"
+          }
+        ],
+        "cors_wildcard": [],
+        "datetime_utcnow": [],
+        "large_file": true,
+        "line_count": 841,
+        "long_functions": [
+          {
+            "length": 82,
+            "line": 722,
+            "name": "test_full_swarm_autoagent"
+          }
+        ],
+        "path": "tests/test_untested_features.py",
+        "silent_exception_handlers": [],
+        "stale_version_literals": []
+      }
+    ],
+    "long_functions": [
+      {
+        "length": 153,
+        "line": 265,
+        "name": "run",
+        "path": "examples/generate_pig_farm_reports.py"
+      },
+      {
+        "length": 100,
+        "line": 194,
+        "name": "_prompt_channels",
+        "path": "ohmo/cli.py"
+      },
+      {
+        "length": 85,
+        "line": 554,
+        "name": "_format_channel_progress",
+        "path": "ohmo/gateway/runtime.py"
+      },
+      {
+        "length": 109,
+        "line": 355,
+        "name": "_convert_stream_event",
+        "path": "ohmo/gateway/runtime.py"
+      },
+      {
+        "length": 101,
+        "line": 240,
+        "name": "_stream_once",
+        "path": "src/openharness/api/codex_client.py"
+      },
+      {
+        "length": 118,
+        "line": 278,
+        "name": "_stream_once",
+        "path": "src/openharness/api/openai_client.py"
+      },
+      {
+        "length": 88,
+        "line": 171,
+        "name": "get_auth_status",
+        "path": "src/openharness/auth/manager.py"
+      },
+      {
+        "length": 97,
+        "line": 228,
+        "name": "_fetch_messages",
+        "path": "src/openharness/channels/impl/email.py"
+      },
+      {
+        "length": 106,
+        "line": 923,
+        "name": "_on_message",
+        "path": "src/openharness/channels/impl/feishu.py"
+      },
+      {
+        "length": 119,
+        "line": 35,
+        "name": "_init_channels",
+        "path": "src/openharness/channels/impl/manager.py"
+      },
+      {
+        "length": 93,
+        "line": 108,
+        "name": "_on_socket_request",
+        "path": "src/openharness/channels/impl/slack.py"
+      },
+      {
+        "length": 89,
+        "line": 207,
+        "name": "send",
+        "path": "src/openharness/channels/impl/telegram.py"
+      },
+      {
+        "length": 118,
+        "line": 336,
+        "name": "_on_message",
+        "path": "src/openharness/channels/impl/telegram.py"
+      },
+      {
+        "length": 80,
+        "line": 920,
+        "name": "_specialize_setup_target",
+        "path": "src/openharness/cli.py"
+      },
+      {
+        "length": 324,
+        "line": 1529,
+        "name": "main",
+        "path": "src/openharness/cli.py"
+      },
+      {
+        "length": 1411,
+        "line": 229,
+        "name": "create_default_command_registry",
+        "path": "src/openharness/commands/registry.py"
+      },
+      {
+        "length": 83,
+        "line": 1168,
+        "name": "_theme_handler",
+        "path": "src/openharness/commands/registry.py"
+      },
+      {
+        "length": 105,
+        "line": 608,
+        "name": "resolve_auth",
+        "path": "src/openharness/config/settings.py"
+      },
+      {
+        "length": 198,
+        "line": 695,
+        "name": "load_agents_dir",
+        "path": "src/openharness/coordinator/agent_definitions.py"
+      },
+      {
+        "length": 269,
+        "line": 251,
+        "name": "get_coordinator_system_prompt",
+        "path": "src/openharness/coordinator/coordinator_mode.py"
+      },
+      {
+        "length": 130,
+        "line": 107,
+        "name": "_company_assessment_tab",
+        "path": "src/openharness/dashboard/app.py"
+      },
+      {
+        "length": 153,
+        "line": 403,
+        "name": "_portfolio_tab",
+        "path": "src/openharness/dashboard/app.py"
+      },
+      {
+        "length": 108,
+        "line": 286,
+        "name": "_record_tool_carryover",
+        "path": "src/openharness/engine/query.py"
+      },
+      {
+        "length": 197,
+        "line": 396,
+        "name": "run_query",
+        "path": "src/openharness/engine/query.py"
+      },
+      {
+        "length": 112,
+        "line": 595,
+        "name": "_execute_tool_call",
+        "path": "src/openharness/engine/query.py"
+      },
+      {
+        "length": 82,
+        "line": 116,
+        "name": "analyze_document_coverage",
+        "path": "src/openharness/impact/dd_checklist.py"
+      },
+      {
+        "length": 119,
+        "line": 54,
+        "name": "evaluate_deal",
+        "path": "src/openharness/impact/deal_gate.py"
+      },
+      {
+        "length": 138,
+        "line": 69,
+        "name": "build_evidence_graph",
+        "path": "src/openharness/impact/evidence_graph.py"
+      },
+      {
+        "length": 126,
+        "line": 317,
+        "name": "assess_five_dimensions",
+        "path": "src/openharness/impact/five_dimensions.py"
+      },
+      {
+        "length": 81,
+        "line": 305,
+        "name": "assess_edci_coverage",
+        "path": "src/openharness/impact/frameworks/edci.py"
+      },
+      {
+        "length": 85,
+        "line": 284,
+        "name": "assess_double_materiality",
+        "path": "src/openharness/impact/frameworks/esrs.py"
+      },
+      {
+        "length": 99,
+        "line": 61,
+        "name": "check_sbti_alignment",
+        "path": "src/openharness/impact/frameworks/sbti.py"
+      },
+      {
+        "length": 82,
+        "line": 137,
+        "name": "assess_tcfd_alignment",
+        "path": "src/openharness/impact/frameworks/tcfd.py"
+      },
+      {
+        "length": 110,
+        "line": 41,
+        "name": "render_ic_memo_markdown",
+        "path": "src/openharness/impact/ic_memo.py"
+      },
+      {
+        "length": 257,
+        "line": 267,
+        "name": "render_ic_memo_html",
+        "path": "src/openharness/impact/ic_memo.py"
+      },
+      {
+        "length": 98,
+        "line": 68,
+        "name": "generate_lp_narrative",
+        "path": "src/openharness/impact/lp_narrative.py"
+      },
+      {
+        "length": 110,
+        "line": 194,
+        "name": "answer",
+        "path": "src/openharness/impact/portfolio_nlq.py"
+      },
+      {
+        "length": 412,
+        "line": 229,
+        "name": "render_dd_questionnaire_html",
+        "path": "src/openharness/impact/report_templates/dd_report_html.py"
+      },
+      {
+        "length": 159,
+        "line": 660,
+        "name": "render_dd_questionnaire_docx",
+        "path": "src/openharness/impact/report_templates/dd_report_html.py"
+      },
+      {
+        "length": 120,
+        "line": 247,
+        "name": "map_sdg_alignment",
+        "path": "src/openharness/impact/sdg_mapper.py"
+      },
+      {
+        "length": 98,
+        "line": 282,
+        "name": "score_feedback_quality",
+        "path": "src/openharness/impact/stakeholder_voice.py"
+      },
+      {
+        "length": 100,
+        "line": 98,
+        "name": "default_standards_registry",
+        "path": "src/openharness/impact/standards_registry.py"
+      },
+      {
+        "length": 94,
+        "line": 194,
+        "name": "assess_target_progress",
+        "path": "src/openharness/impact/trend_analysis.py"
+      },
+      {
+        "length": 82,
+        "line": 75,
+        "name": "evaluate",
+        "path": "src/openharness/permissions/checker.py"
+      },
+      {
+        "length": 102,
+        "line": 457,
+        "name": "_load_single_agent_file",
+        "path": "src/openharness/plugins/loader.py"
+      },
+      {
+        "length": 88,
+        "line": 70,
+        "name": "build_runtime_system_prompt",
+        "path": "src/openharness/prompts/context.py"
+      },
+      {
+        "length": 355,
+        "line": 975,
+        "name": "compact_conversation",
+        "path": "src/openharness/services/compact/__init__.py"
+      },
+      {
+        "length": 179,
+        "line": 1336,
+        "name": "auto_compact_if_needed",
+        "path": "src/openharness/services/compact/__init__.py"
+      },
+      {
+        "length": 82,
+        "line": 150,
+        "name": "execute_job",
+        "path": "src/openharness/services/cron_scheduler.py"
+      },
+      {
+        "length": 97,
+        "line": 196,
+        "name": "start_in_process_teammate",
+        "path": "src/openharness/swarm/in_process.py"
+      },
+      {
+        "length": 84,
+        "line": 185,
+        "name": "detect_pane_backend",
+        "path": "src/openharness/swarm/registry.py"
+      },
+      {
+        "length": 97,
+        "line": 24,
+        "name": "create_default_tool_registry",
+        "path": "src/openharness/tools/__init__.py"
+      },
+      {
+        "length": 112,
+        "line": 207,
+        "name": "_analyze",
+        "path": "src/openharness/tools/impact/beneficiary_feedback_tool.py"
+      },
+      {
+        "length": 107,
+        "line": 45,
+        "name": "execute",
+        "path": "src/openharness/tools/impact/data_quality_tool.py"
+      },
+      {
+        "length": 84,
+        "line": 129,
+        "name": "_handle_analyze",
+        "path": "src/openharness/tools/impact/dd_checklist_tool.py"
+      },
+      {
+        "length": 82,
+        "line": 49,
+        "name": "execute",
+        "path": "src/openharness/tools/impact/evidence_review_tool.py"
+      },
+      {
+        "length": 81,
+        "line": 43,
+        "name": "execute",
+        "path": "src/openharness/tools/impact/five_dimension_assess_tool.py"
+      },
+      {
+        "length": 103,
+        "line": 373,
+        "name": "_to_text",
+        "path": "src/openharness/tools/impact/impact_report_tool.py"
+      },
+      {
+        "length": 188,
+        "line": 613,
+        "name": "_interactive_scoring_section",
+        "path": "src/openharness/tools/impact/impact_report_tool.py"
+      },
+      {
+        "length": 181,
+        "line": 803,
+        "name": "_generate_executive_summary",
+        "path": "src/openharness/tools/impact/impact_report_tool.py"
+      },
+      {
+        "length": 91,
+        "line": 1142,
+        "name": "_render_missing_metrics_section",
+        "path": "src/openharness/tools/impact/impact_report_tool.py"
+      },
+      {
+        "length": 192,
+        "line": 1316,
+        "name": "_scoring_rationale_section",
+        "path": "src/openharness/tools/impact/impact_report_tool.py"
+      },
+      {
+        "length": 791,
+        "line": 1510,
+        "name": "_to_html",
+        "path": "src/openharness/tools/impact/impact_report_tool.py"
+      },
+      {
+        "length": 88,
+        "line": 2556,
+        "name": "_to_xlsx",
+        "path": "src/openharness/tools/impact/impact_report_tool.py"
+      },
+      {
+        "length": 149,
+        "line": 222,
+        "name": "execute",
+        "path": "src/openharness/tools/impact/impact_report_tool.py"
+      },
+      {
+        "length": 87,
+        "line": 177,
+        "name": "_generate",
+        "path": "src/openharness/tools/impact/lp_ddq_export_tool.py"
+      },
+      {
+        "length": 151,
+        "line": 324,
+        "name": "_generate_section_data",
+        "path": "src/openharness/tools/impact/lp_ddq_export_tool.py"
+      },
+      {
+        "length": 97,
+        "line": 47,
+        "name": "execute",
+        "path": "src/openharness/tools/impact/metric_recommender_tool.py"
+      },
+      {
+        "length": 106,
+        "line": 209,
+        "name": "_handle_dashboard",
+        "path": "src/openharness/tools/impact/pipeline_tool.py"
+      },
+      {
+        "length": 207,
+        "line": 97,
+        "name": "execute",
+        "path": "src/openharness/tools/impact/pitch_deck_analyze_tool.py"
+      },
+      {
+        "length": 87,
+        "line": 402,
+        "name": "_to_text",
+        "path": "src/openharness/tools/impact/portfolio_tool.py"
+      },
+      {
+        "length": 81,
+        "line": 86,
+        "name": "run_task_worker",
+        "path": "src/openharness/ui/app.py"
+      },
+      {
+        "length": 134,
+        "line": 169,
+        "name": "run_print_mode",
+        "path": "src/openharness/ui/app.py"
+      },
+      {
+        "length": 86,
+        "line": 81,
+        "name": "run",
+        "path": "src/openharness/ui/backend_host.py"
+      },
+      {
+        "length": 119,
+        "line": 194,
+        "name": "_process_line",
+        "path": "src/openharness/ui/backend_host.py"
+      },
+      {
+        "length": 205,
+        "line": 398,
+        "name": "_handle_select_command",
+        "path": "src/openharness/ui/backend_host.py"
+      },
+      {
+        "length": 93,
+        "line": 205,
+        "name": "_render_event",
+        "path": "src/openharness/ui/backend_host.py"
+      },
+      {
+        "length": 84,
+        "line": 56,
+        "name": "render_event",
+        "path": "src/openharness/ui/output.py"
+      },
+      {
+        "length": 176,
+        "line": 170,
+        "name": "build_runtime",
+        "path": "src/openharness/ui/runtime.py"
+      },
+      {
+        "length": 144,
+        "line": 481,
+        "name": "handle_line",
+        "path": "src/openharness/ui/runtime.py"
+      },
+      {
+        "length": 83,
+        "line": 51,
+        "name": "create_shell_subprocess",
+        "path": "src/openharness/utils/shell.py"
+      },
+      {
+        "length": 96,
+        "line": 98,
+        "name": "test_anthropic_client_refreshes_claude_token_on_request",
+        "path": "tests/test_api/test_client.py"
+      },
+      {
+        "length": 84,
+        "line": 144,
+        "name": "task_model_invokes_skill_tool",
+        "path": "tests/test_hooks_skills_plugins_real.py"
+      },
+      {
+        "length": 94,
+        "line": 237,
+        "name": "task_plugin_skill_in_agent_loop",
+        "path": "tests/test_hooks_skills_plugins_real.py"
+      },
+      {
+        "length": 143,
+        "line": 341,
+        "name": "task_hook_gates_writes_skill_guides",
+        "path": "tests/test_hooks_skills_plugins_real.py"
+      },
+      {
+        "length": 108,
+        "line": 493,
+        "name": "task_swarm_teammates_use_skills",
+        "path": "tests/test_hooks_skills_plugins_real.py"
+      },
+      {
+        "length": 93,
+        "line": 153,
+        "name": "task_memory_research_autoagent",
+        "path": "tests/test_merged_prs_on_autoagent.py"
+      },
+      {
+        "length": 127,
+        "line": 500,
+        "name": "task_full_dev_workflow",
+        "path": "tests/test_merged_prs_on_autoagent.py"
+      },
+      {
+        "length": 118,
+        "line": 169,
+        "name": "task_coordinator_code_review",
+        "path": "tests/test_real_large_tasks.py"
+      },
+      {
+        "length": 111,
+        "line": 297,
+        "name": "task_migration_plan_with_memory",
+        "path": "tests/test_real_large_tasks.py"
+      },
+      {
+        "length": 88,
+        "line": 418,
+        "name": "task_bugfix_in_worktree",
+        "path": "tests/test_real_large_tasks.py"
+      },
+      {
+        "length": 139,
+        "line": 517,
+        "name": "task_full_pipeline",
+        "path": "tests/test_real_large_tasks.py"
+      },
+      {
+        "length": 91,
+        "line": 665,
+        "name": "task_refactor_with_session",
+        "path": "tests/test_real_large_tasks.py"
+      },
+      {
+        "length": 82,
+        "line": 722,
+        "name": "test_full_swarm_autoagent",
+        "path": "tests/test_untested_features.py"
+      },
+      {
+        "length": 88,
+        "line": 40,
+        "name": "test_v3_tool_wrappers_execute_smoke_paths",
+        "path": "tests/test_v3_tool_wrappers.py"
+      }
+    ],
+    "silent_exception_handlers": [
+      {
+        "line": 247,
+        "path": "ohmo/gateway/service.py",
+        "type": "Exception"
+      },
+      {
+        "line": 601,
+        "path": "src/openharness/auth/external.py",
+        "type": "Exception"
+      },
+      {
+        "line": 370,
+        "path": "src/openharness/auth/external.py",
+        "type": "Exception"
+      },
+      {
+        "line": 103,
+        "path": "src/openharness/auth/flows.py",
+        "type": "Exception"
+      },
+      {
+        "line": 355,
+        "path": "src/openharness/channels/impl/email.py",
+        "type": "Exception"
+      },
+      {
+        "line": 321,
+        "path": "src/openharness/channels/impl/email.py",
+        "type": "Exception"
+      },
+      {
+        "line": 103,
+        "path": "src/openharness/channels/impl/matrix.py",
+        "type": "Exception"
+      },
+      {
+        "line": 284,
+        "path": "src/openharness/channels/impl/matrix.py",
+        "type": "Exception"
+      },
+      {
+        "line": 329,
+        "path": "src/openharness/channels/impl/matrix.py",
+        "type": "Exception"
+      },
+      {
+        "line": 348,
+        "path": "src/openharness/channels/impl/matrix.py",
+        "type": "Exception"
+      },
+      {
+        "line": 418,
+        "path": "src/openharness/channels/impl/matrix.py",
+        "type": "Exception"
+      },
+      {
+        "line": 480,
+        "path": "src/openharness/channels/impl/mochat.py",
+        "type": "Exception"
+      },
+      {
+        "line": 286,
+        "path": "src/openharness/channels/impl/mochat.py",
+        "type": "Exception"
+      },
+      {
+        "line": 415,
+        "path": "src/openharness/channels/impl/mochat.py",
+        "type": "Exception"
+      },
+      {
+        "line": 97,
+        "path": "src/openharness/channels/impl/qq.py",
+        "type": "Exception"
+      },
+      {
+        "line": 1110,
+        "path": "src/openharness/cli.py",
+        "type": "Exception"
+      },
+      {
+        "line": 166,
+        "path": "src/openharness/commands/registry.py",
+        "type": "Exception"
+      },
+      {
+        "line": 942,
+        "path": "src/openharness/coordinator/agent_definitions.py",
+        "type": "Exception"
+      },
+      {
+        "line": 37,
+        "path": "src/openharness/dashboard/app.py",
+        "type": "Exception"
+      },
+      {
+        "line": 161,
+        "path": "src/openharness/hooks/executor.py",
+        "type": "Exception"
+      },
+      {
+        "line": 107,
+        "path": "src/openharness/impact/branding.py",
+        "type": "Exception"
+      },
+      {
+        "line": 516,
+        "path": "src/openharness/impact/frameworks/sasb.py",
+        "type": "Exception"
+      },
+      {
+        "line": 116,
+        "path": "src/openharness/impact/fund_thesis.py",
+        "type": "Exception"
+      },
+      {
+        "line": 110,
+        "path": "src/openharness/impact/mcp_server.py",
+        "type": "Exception"
+      },
+      {
+        "line": 126,
+        "path": "src/openharness/impact/mcp_server.py",
+        "type": "Exception"
+      },
+      {
+        "line": 177,
+        "path": "src/openharness/impact/mcp_server.py",
+        "type": "Exception"
+      },
+      {
+        "line": 197,
+        "path": "src/openharness/impact/mcp_server.py",
+        "type": "Exception"
+      },
+      {
+        "line": 52,
+        "path": "src/openharness/impact/risk_opportunity.py",
+        "type": "Exception"
+      },
+      {
+        "line": 111,
+        "path": "src/openharness/impact/sdg_mapper.py",
+        "type": "Exception"
+      },
+      {
+        "line": 135,
+        "path": "src/openharness/impact/sdg_mapper.py",
+        "type": "Exception"
+      },
+      {
+        "line": 173,
+        "path": "src/openharness/services/cron_scheduler.py",
+        "type": "Exception"
+      },
+      {
+        "line": 312,
+        "path": "src/openharness/swarm/in_process.py",
+        "type": "Exception"
+      },
+      {
+        "line": 668,
+        "path": "src/openharness/swarm/team_lifecycle.py",
+        "type": "Exception"
+      },
+      {
+        "line": 19,
+        "path": "src/openharness/tools/__init__.py",
+        "type": "Exception"
+      },
+      {
+        "line": 36,
+        "path": "src/openharness/tools/impact/common.py",
+        "type": "Exception"
+      },
+      {
+        "line": 259,
+        "path": "src/openharness/tools/impact/dd_checklist_tool.py",
+        "type": "Exception"
+      },
+      {
+        "line": 67,
+        "path": "src/openharness/tools/impact/evidence_review_tool.py",
+        "type": "Exception"
+      },
+      {
+        "line": 82,
+        "path": "src/openharness/tools/impact/evidence_review_tool.py",
+        "type": "Exception"
+      },
+      {
+        "line": 57,
+        "path": "src/openharness/tools/impact/exclusion_screening_tool.py",
+        "type": "Exception"
+      },
+      {
+        "line": 56,
+        "path": "src/openharness/tools/impact/exit_impact_tool.py",
+        "type": "Exception"
+      },
+      {
+        "line": 73,
+        "path": "src/openharness/tools/impact/exit_impact_tool.py",
+        "type": "Exception"
+      },
+      {
+        "line": 63,
+        "path": "src/openharness/tools/impact/greenwashing_reviewer_tool.py",
+        "type": "Exception"
+      },
+      {
+        "line": 1334,
+        "path": "src/openharness/tools/impact/impact_report_tool.py",
+        "type": "Exception"
+      },
+      {
+        "line": 1340,
+        "path": "src/openharness/tools/impact/impact_report_tool.py",
+        "type": "Exception"
+      },
+      {
+        "line": 2343,
+        "path": "src/openharness/tools/impact/impact_report_tool.py",
+        "type": "Exception"
+      },
+      {
+        "line": 237,
+        "path": "src/openharness/tools/impact/impact_report_tool.py",
+        "type": "Exception"
+      },
+      {
+        "line": 243,
+        "path": "src/openharness/tools/impact/impact_report_tool.py",
+        "type": "Exception"
+      },
+      {
+        "line": 76,
+        "path": "src/openharness/tools/impact/lp_narrative_tool.py",
+        "type": "Exception"
+      },
+      {
+        "line": 59,
+        "path": "src/openharness/tools/impact/lp_narrative_tool.py",
+        "type": "Exception"
+      },
+      {
+        "line": 115,
+        "path": "src/openharness/tools/impact/pitch_deck_analyze_tool.py",
+        "type": "Exception"
+      },
+      {
+        "line": 136,
+        "path": "src/openharness/tools/impact/pitch_deck_analyze_tool.py",
+        "type": "Exception"
+      },
+      {
+        "line": 49,
+        "path": "src/openharness/tools/impact/portfolio_query_tool.py",
+        "type": "Exception"
+      },
+      {
+        "line": 86,
+        "path": "src/openharness/tools/impact/stakeholder_voice_tool.py",
+        "type": "Exception"
+      },
+      {
+        "line": 94,
+        "path": "src/openharness/tools/impact/stakeholder_voice_tool.py",
+        "type": "Exception"
+      },
+      {
+        "line": 103,
+        "path": "src/openharness/tools/impact/stakeholder_voice_tool.py",
+        "type": "Exception"
+      },
+      {
+        "line": 64,
+        "path": "src/openharness/tools/impact/trend_analysis_tool.py",
+        "type": "Exception"
+      },
+      {
+        "line": 87,
+        "path": "src/openharness/tools/impact/verification_workspace_tool.py",
+        "type": "Exception"
+      },
+      {
+        "line": 79,
+        "path": "src/openharness/tools/impact/verification_workspace_tool.py",
+        "type": "Exception"
+      },
+      {
+        "line": 65,
+        "path": "src/openharness/tools/mcp_auth_tool.py",
+        "type": "Exception"
+      },
+      {
+        "line": 18,
+        "path": "src/openharness/ui/react_launcher.py",
+        "type": "Exception"
+      },
+      {
+        "line": 365,
+        "path": "src/openharness/ui/runtime.py",
+        "type": "Exception"
+      }
+    ],
+    "stale_version_literals": [
+      {
+        "line": 266,
+        "path": "src/openharness/commands/registry.py",
+        "project_version": "0.15.0",
+        "version": "0.1.6"
+      },
+      {
+        "line": 1424,
+        "path": "src/openharness/commands/registry.py",
+        "project_version": "0.15.0",
+        "version": "0.1.6"
+      },
+      {
+        "line": 40,
+        "path": "tests/test_mcp/test_integration.py",
+        "project_version": "0.15.0",
+        "version": "1.0.0"
+      },
+      {
+        "line": 12,
+        "path": "tests/test_prompts/test_system_prompt.py",
+        "project_version": "0.15.0",
+        "version": "5.15.0"
+      },
+      {
+        "line": 18,
+        "path": "tests/test_prompts/test_system_prompt.py",
+        "project_version": "0.15.0",
+        "version": "3.10.17"
+      }
+    ],
+    "syntax_errors": []
+  },
+  "logic_risk_summary": {
+    "bare_exception_handlers": 0,
+    "broad_exception_handlers": 187,
+    "cors_wildcard": 0,
+    "datetime_utcnow": 2,
+    "large_files": 18,
+    "long_functions": 95,
+    "silent_exception_handlers": 61,
+    "stale_version_literals": 5,
+    "syntax_errors": 0
+  },
+  "project": {
+    "import_package": "openharness",
+    "name": "impact-vision",
+    "root": "D:\\coding\\impact-vision",
+    "version": "0.15.0"
+  },
+  "recommended_gates": [
+    "python scripts/check_imports.py --all",
+    "python -m ruff check src tests",
+    "python -m mypy src/openharness/impact src/openharness/tools/impact",
+    "python -m pytest tests -q"
+  ],
+  "runtime_surfaces": {
+    "api": {
+      "route_count": 24,
+      "routes": [
+        "/api/v1/batch",
+        "/api/v1/batch/{job_id}",
+        "/api/v1/cross-reference",
+        "/api/v1/data-quality",
+        "/api/v1/ddq-export",
+        "/api/v1/exclusion-screen",
+        "/api/v1/framework",
+        "/api/v1/gap-analysis",
+        "/api/v1/greenwashing",
+        "/api/v1/health",
+        "/api/v1/improvement-advisor",
+        "/api/v1/metric-recommend",
+        "/api/v1/monitoring",
+        "/api/v1/narrative",
+        "/api/v1/pipeline",
+        "/api/v1/pitch-deck",
+        "/api/v1/report",
+        "/api/v1/risk-opportunity",
+        "/api/v1/score",
+        "/api/v1/sdg-map",
+        "/api/v1/validate",
+        "/api/v1/webhook",
+        "/api/v1/webhook/{webhook_id}",
+        "/api/v1/webhooks"
+      ],
+      "version": "0.15.0"
+    },
+    "mcp": {
+      "name": "Impact Vision",
+      "version": "0.15.0"
+    },
+    "project_version": "0.15.0",
+    "tool_registry": {
+      "count": 71,
+      "names": [
+        "agent",
+        "ask_user_question",
+        "bash",
+        "beneficiary_feedback",
+        "brief",
+        "config",
+        "cron_create",
+        "cron_delete",
+        "cron_list",
+        "cron_toggle",
+        "cross_reference",
+        "dd_checklist",
+        "document_analysis",
+        "edit_file",
+        "emission_factors",
+        "enter_plan_mode",
+        "enter_worktree",
+        "evidence_review",
+        "exclusion_screening",
+        "exit_impact",
+        "exit_plan_mode",
+        "exit_worktree",
+        "five_dimension_assess",
+        "framework_assess",
+        "gap_analysis",
+        "glob",
+        "greenwashing_detect",
+        "greenwashing_reviewer",
+        "grep",
+        "guided_assessment",
+        "impact_data_quality",
+        "impact_metric_recommender",
+        "impact_report",
+        "impact_risk_opportunity",
+        "improvement_advisor",
+        "iris_catalog",
+        "lp_ddq_export",
+        "lp_narrative",
+        "lsp",
+        "mcp_auth",
+        "monitoring",
+        "narrative",
+        "notebook_edit",
+        "pipeline",
+        "pitch_deck_analyze",
+        "portfolio_analyze",
+        "portfolio_query",
+        "product_passport",
+        "read_file",
+        "remote_trigger",
+        "sdg_mapper",
+        "send_message",
+        "skill",
+        "sleep",
+        "stakeholder_voice",
+        "task_create",
+        "task_get",
+        "task_list",
+        "task_output",
+        "task_stop",
+        "task_update",
+        "team_create",
+        "team_delete",
+        "todo_write",
+        "tool_search",
+        "trend_analysis",
+        "verification_prep",
+        "verification_workspace",
+        "web_fetch",
+        "web_search",
+        "write_file"
+      ]
+    }
+  },
+  "schema_version": 1
+}

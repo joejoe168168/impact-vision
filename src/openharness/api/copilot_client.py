@@ -11,6 +11,7 @@ is required.
 
 from __future__ import annotations
 
+import importlib.metadata
 import logging
 from typing import AsyncIterator
 
@@ -29,11 +30,14 @@ from openharness.api.openai_client import OpenAICompatibleClient
 
 log = logging.getLogger(__name__)
 
-# ---------------------------------------------------------------------------
-# Header constants
-# ---------------------------------------------------------------------------
-
-_VERSION = "0.14.0"  # OpenHarness / Impact Vision version for User-Agent
+def _package_version() -> str:
+    """Return the installed package version for runtime headers."""
+    for package_name in ("impact-vision", "openharness"):
+        try:
+            return importlib.metadata.version(package_name)
+        except importlib.metadata.PackageNotFoundError:
+            continue
+    return "0.0.0"
 
 # Default model for Copilot requests when the configured model is not
 # available in the Copilot model catalog.
@@ -88,7 +92,7 @@ class CopilotClient:
         # Build the inner OpenAI-compatible client once.
         base_url = copilot_api_base(ent_url)
         default_headers: dict[str, str] = {
-            "User-Agent": f"openharness/{_VERSION}",
+            "User-Agent": f"openharness/{_package_version()}",
             "Openai-Intent": "conversation-edits",
         }
         raw_openai = AsyncOpenAI(

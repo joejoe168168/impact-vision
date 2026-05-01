@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 # package metadata. We keep the fields handy as module attributes so the CLI
 # (`impact-vision serve-mcp`) and docs can still surface them.
 IMPACT_VISION_MCP_NAME = "Impact Vision"
-IMPACT_VISION_MCP_VERSION = "0.7.0"
+IMPACT_VISION_MCP_VERSION = "0.15.0"
 IMPACT_VISION_MCP_DESCRIPTION = (
     "AI-powered impact measurement and SDG alignment tools for "
     "VC and impact investment funds. Provides 26+ tools for "

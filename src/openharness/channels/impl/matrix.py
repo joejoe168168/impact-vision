@@ -37,7 +37,7 @@ except ImportError as e:
 
 from openharness.channels.bus.events import OutboundMessage
 from openharness.channels.impl.base import BaseChannel
-from openharness.config.loader import get_data_dir
+from openharness.config.paths import get_data_dir
 from openharness.utils.helpers import safe_filename
 
 logger = logging.getLogger(__name__)

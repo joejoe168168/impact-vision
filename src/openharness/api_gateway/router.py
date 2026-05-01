@@ -63,6 +63,17 @@ from openharness.tools.impact.common import infer_themes, normalize_metric_map, 
 
 logger = logging.getLogger(__name__)
 
+
+def _parse_cors_origins(raw: str | None) -> list[str]:
+    """Parse comma-separated CORS origins, defaulting to local/dev openness."""
+    origins = [item.strip() for item in (raw or "").split(",") if item.strip()]
+    return origins or ["*"]
+
+
+_CORS_ORIGINS = _parse_cors_origins(os.environ.get("IMPACT_VISION_CORS_ORIGINS"))
+_CORS_ALLOW_CREDENTIALS = "*" not in _CORS_ORIGINS
+
+
 app = FastAPI(
     title="Impact Vision API",
     description=(
@@ -71,13 +82,13 @@ app = FastAPI(
         "5-Dimension scoring, SDG mapping, greenwashing detection, "
         "pipeline management, and comprehensive impact reporting."
     ),
-    version="0.14.0",
+    version="0.15.0",
 )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=_CORS_ORIGINS,
+    allow_credentials=_CORS_ALLOW_CREDENTIALS,
     allow_methods=["*"],
     allow_headers=["*"],
 )

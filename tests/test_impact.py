@@ -1,18 +1,11 @@
 """Tests for the Impact Vision engine."""
 
-import json
-from pathlib import Path
-
 import pytest
 
-from openharness.impact.catalog import (
-    get_default_json_path,
-    load_catalog_json,
-)
 from openharness.impact.database import MetricStore, get_metric_store
 from openharness.impact.five_dimensions import assess_five_dimensions
 from openharness.impact.gap_analysis import analyze_gaps
-from openharness.impact.models import Company, Metric, SDGGoal, SDGTarget
+from openharness.impact.models import Company
 from openharness.impact.sdg_mapper import map_sdg_alignment
 from openharness.impact.sdg_taxonomy import get_all_targets, get_sdg_goal, get_sdg_goals
 

@@ -6,6 +6,53 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Added
+
+- Whole-codebase bug/logic audit artifacts under `project_document/`:
+  `memory_bank_db.json`, `debug/codebase_debug_plan.md`,
+  `debug/logic_issue_improvement_plan.md`, `debug/logic_audit_report.md`,
+  and reusable debug probes for import/registry/runtime surface checks.
+- `docs/roadmap-v4.md`, a consultant-led product roadmap based on TSIC,
+  Rimm Sustainability, and broader impact-consulting market signals. It
+  reframes the next phase around consultant engagement workspaces, theory of
+  change strategy design, client data rooms, benchmarking/risk intelligence,
+  reporting studios, training engines, website productisation, and an
+  evidence-governed AI consultant copilot.
+- Cross-cutting hardening regression tests in `tests/test_bug_hardening.py`
+  covering API CORS defaults, timezone-aware Mochat events, Copilot runtime
+  version headers, and optional channel helper utilities.
+
+### Changed
+
+- API CORS configuration now reads `IMPACT_VISION_CORS_ORIGINS` and disables
+  credentialed CORS automatically when wildcard origins are active.
+- Copilot client `User-Agent` now uses installed package metadata instead of
+  a hard-coded release string.
+- Mochat cursor/synthetic-event timestamps now use timezone-aware UTC.
+
+### Fixed
+
+- Restored optional channel helper imports by adding
+  `openharness.utils.helpers.safe_filename()` and `split_message()`, unblocking
+  Discord/Telegram/Matrix channel modules that referenced the helper package.
+- Matrix channel now imports `get_data_dir()` from the existing
+  `openharness.config.paths` module instead of the nonexistent
+  `openharness.config.loader`.
+- API gateway and Impact MCP server runtime metadata now report `0.15.0`.
+- Cleaned stale unused imports from `tests/test_impact.py`.
+
+### Tests
+
+- Full-suite verification after the hardening pass:
+  `1077 passed / 15 skipped / 1 xfailed`.
+- Related hardening/channel/API/MCP subset: `85 passed`.
+- Import smoke: all `37` package `__init__.py` files present, all `21` import
+  groups verified, default registry bootstrapped with `71` tools.
+- `ruff check src tests project_document/debug` is clean.
+- Logic audit now reports `492` Python files scanned, `24` API routes,
+  `71` tools, `0` CORS wildcard findings, `2` remaining test-only
+  `datetime.utcnow()` occurrences, and `0` syntax errors.
+
 ## [0.15.0] - 2026-05-01 - "Trust Infrastructure"
 
 This release executes the first wave of the v3 roadmap (`docs/roadmap-v3.md`)
