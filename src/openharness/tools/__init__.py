@@ -103,6 +103,12 @@ def create_default_tool_registry(mcp_manager: McpClientManager | None = None) ->
         ("impact.portfolio_query_tool", "PortfolioQueryTool"),
         ("impact.stakeholder_voice_tool", "StakeholderVoiceTool"),
         ("impact.verification_workspace_tool", "VerificationWorkspaceTool"),
+        # v4 tools (Wave 1): consultant engagement workspace
+        ("impact.engagement_workspace_tool", "EngagementWorkspaceTool"),
+        # v4 tools (Wave 2): ToC canvas + KPI framework builder (Track 2)
+        ("impact.toc_builder_tool", "ToCBuilderTool"),
+        # v4 tools (Tracks 3-10): consolidated engagement suite
+        ("impact.engagement_suite_tool", "EngagementSuiteTool"),
     )
     for module_name, class_name in impact_tools:
         _register_if_available(registry, module_name, class_name)

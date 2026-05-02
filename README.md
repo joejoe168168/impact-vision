@@ -1,22 +1,10 @@
 # Impact Vision
 
-> **v0.15.0 · 2026-05-01 — "Trust Infrastructure"** — First wave of the v3 roadmap: versioned **emission-factor catalogue** with sensitivity bands, **stakeholder voice as evidence** (Lean Data templates + GDPR/PDPA consent + feedback↔claim linking), **AI extraction review queue** with policy-driven auto-approval and audit trail, **verification workspace** for third-party assurers, **LP narrative + Q&A workspace** constrained to verified data, **explainable greenwashing reviewer**, **portfolio natural-language query** with `ApprovedDataPolicy`, and **OPIM Principle 8 exit-impact assessment**. 8 new modules, 8 new agent tools, 59 new tests. Impact-suite verification: **290 passed / 4 skipped**. Whole-codebase hardening pass: **1077 passed / 15 skipped / 1 xfailed**, import smoke clean, ruff clean. Engineering plan in [docs/roadmap-v3-implementation.md](docs/roadmap-v3-implementation.md). See [CHANGELOG.md](CHANGELOG.md).
->
-> **Hardening note · 2026-05-01** — A whole-codebase bug/logic audit now lives in [`project_document/debug/logic_audit_report.md`](project_document/debug/logic_audit_report.md) with structured memory in [`project_document/memory_bank_db.json`](project_document/memory_bank_db.json). Fixes from that pass include API CORS credential safety for wildcard origins, package-metadata-based Copilot `User-Agent`, timezone-aware Mochat timestamps, restored optional channel helpers for Discord/Telegram/Matrix, and aligned API/MCP runtime versions.
->
-> **Roadmap v4 draft · 2026-05-01** — [`docs/roadmap-v4.md`](docs/roadmap-v4.md) reframes the next product phase from an impact-consultant perspective, using TSIC, Rimm Sustainability, and broader IMM/ESG consulting patterns to prioritise consultant workspaces, ToC strategy design, client data rooms, benchmarking/risk intelligence, reporting studios, training engines, website productisation, and an evidence-governed AI consultant copilot.
->
-> **v0.14.0 · 2026-04-21** — Phases 15.6 → 20 shipped in one drop: LLM extractor / verifier adapters, fund-branded reports, branching DD questionnaire, SSE streaming, carbon / biodiversity credit registries, Multiple-of-Impact + impact-adjusted IRR, GIIN-Compass-style peer benchmarks, blended-finance term sheets, ILPA LP portal, thesis marketplace, ISAE 3000 / AA1000 / CSRD / ISSB / SOC 2 packs, Bayesian + SROI + meta-analysis + spillover, satellite / survey / worker-voice / ecosystem-service layers, 6-language dashboard keys, 4 regional fund-thesis packs, 7 jurisdiction regulatory packs, FX normalization. 150 passed / 4 skipped / 0 failed, ruff clean.
-
 Open-source AI-powered impact measurement and SDG alignment agent for VC and impact investment funds.
 
-Built on [OpenHarness](https://github.com/HKUDS/OpenHarness), Impact Vision ships a conversational AI agent, a **CLI**, a **REST API** (26+ endpoints), an **MCP server** (26 tools), a **Streamlit dashboard** and a **single-file Web Console** — all backed by the same engine with deep expertise in GIIN's IRIS+ framework, UN SDGs, the 5 Dimensions of Impact, and 10 ESG / regulatory frameworks (ISSB, ESRS, SFDR, TCFD, SASB, GRI, PCAF, SBTi, EU Taxonomy, TNFD, CDP).
+Built on [OpenHarness](https://github.com/HKUDS/OpenHarness), Impact Vision ships a conversational AI agent, a **CLI**, a **REST API**, an **MCP server**, a **Streamlit dashboard**, and a **single-file Web Console** — all backed by the same engine with deep expertise in GIIN's IRIS+ framework, UN SDGs, the 5 Dimensions of Impact, and 10+ ESG / regulatory frameworks (ISSB, ESRS, SFDR, TCFD, SASB, GRI, PCAF, SBTi, EU Taxonomy, TNFD, CDP).
 
-> **Maintenance note · 2026-04-25** — Impact tool wrapper review completed: all **26 implemented impact tools** are exported and registered in the default tool registry. Regression fixes landed for `improvement_advisor` and `narrative` input normalization with SDG claims; focused verification: `126 passed` across `tests/test_tools/test_impact_tools_enhancements.py` and `tests/test_impact.py`; full-suite verification: `940 passed / 7 skipped / 1 xfailed`.
->
-> **Roadmap update · 2026-04-28** — Phase 11 report reliability items are complete, including snapshot regressions for `_to_html()` / `_to_text()`, target-progress input wiring, and end-to-end impact-claims rendering. A new research-backed institutional-readiness plan is available in [docs/roadmap-v2.md](docs/roadmap-v2.md), based on April 2026 signals from GIIN/ILPA, ISSB/ESRS, GHG Protocol, and impact-management market guidance.
->
-> **v2 implementation start · 2026-04-28** — The first v2 data-backbone tasks are underway: `MetricRecord` now provides a canonical reviewed metric contract with unit, period, source, owner, quality score, verification status, source type, and evidence references; `generate_investee_questionnaire_schema()` now turns sector templates or selected metrics into investee-ready form sections; collection submissions can now be validated, reviewed, approved, and converted into canonical records; `build_evidence_graph()` links claims, metrics, targets, source evidence, and report sections for lineage checks; `assess_metric_record_quality()` scores completeness, recency, consistency, source type, and verification level; `default_standards_registry()` exposes versioned IRIS+, EDCI, ISSB, ESRS, SFDR, GHG Protocol, PCAF, and OPIM rule-pack metadata; `AuditTrail.record_metric_event()` and `record_report_publication()` add hash-chained metric and report lifecycle events; EDCI completeness reports classify each required field as available, proxy, missing, or not applicable; `calculate_ghg_inventory()` now produces Scope 1/2 tCO2e results with factor provenance, method, version, and quality scoring; `openharness.impact.roadmap_v2` adds API-ready helpers for the remaining roadmap tracks, including collection links, review queues, import previews, Scope 3/PCAF, disclosure packs, LP bundles, assurance controls, causal workflows, and governed AI logs.
+Release history lives in [CHANGELOG.md](CHANGELOG.md). Strategy and engineering plans live in [`docs/`](docs/).
 
 ![Impact Vision Banner](docs/images/banner.png)
 
@@ -68,89 +56,10 @@ Key concepts Impact Vision helps with:
 8. Suggest the most important **follow-up questions** for the investment team
 9. Generate reports in **HTML** (with Plotly charts), **XLSX**, CSV, JSON, or text
 
-## For Fund Managers — 60-second workflow (v0.14.0)
-
-```python
-from openharness.impact.sdk import ImpactVision
-from openharness.impact.models import Company
-
-iv = ImpactVision()                          # regex extractor + heuristic verifier by default
-
-# 1) Assess a deal from a pitch deck / impact report
-asst = iv.assess_company_text(
-    "Acme Solar",
-    text=pitch_deck_text,
-    sector="energy",
-    country="KE",
-    impact_themes=["climate"],
-)
-
-# 2) Run it through your fund's IC gate (uses data/fund_thesis.yaml)
-sc = iv.evaluate_deal_against_thesis(
-    asst,
-    dd_coverage_pct=iv.run_dd_coverage(pitch_deck_text).coverage_pct,
-    greenwashing_score=iv.screen_greenwashing(asst.company).overall_score,
-)
-print(sc.overall_status)                     # "pass" / "warn" / "fail"
-
-# 3) IC memo — Markdown, HTML (print-ready), Word, PowerPoint
-iv.render_ic_memo(asst, scorecard=sc, output_format="html", path="ic/acme.html")
-iv.render_ic_memo(asst, scorecard=sc, output_format="docx", path="ic/acme.docx")
-
-# 4) DD Questionnaire Helper — risk-first HTML the analyst actually works from
-iv.render_dd_questionnaire_html(
-    pitch_deck_text, company_name="Acme Solar",
-    document_label="Pitch deck v3", path="dd/acme.html",
-)
-
-# 5) Same questionnaire as an editable Word doc with founder-response slots
-iv.render_dd_questionnaire_docx(
-    pitch_deck_text, company_name="Acme Solar",
-    document_label="Pitch deck v3", path="dd/acme.docx",
-)
-
-# 6) Portfolio-level roll-up weighted by capital deployed
-roll = iv.rollup([(asst_a, 5.0, 12.0), (asst_b, 8.0, 20.0)])   # (assessment, EUR_m, ownership_%)
-
-# 7) Next 12 months of LP report deliverables
-cal = iv.build_lp_calendar(horizon_months=12)
-```
-
-Prefer a browser? `impact-vision serve-web` launches the [Web Console](#web-console-power-user-ui) + REST API in one process at `http://127.0.0.1:8787` and puts all 26 tools one click away.
-
-**What's new in v0.15.0 — Trust Infrastructure (v3 roadmap, wave 1).**
-
-Detailed engineering plan: [docs/roadmap-v3-implementation.md](docs/roadmap-v3-implementation.md). Strategic roadmap: [docs/roadmap-v3.md](docs/roadmap-v3.md). Consultant-led v4 draft: [docs/roadmap-v4.md](docs/roadmap-v4.md).
-
-- **Versioned emission factors** (`openharness.impact.emission_factors`) — multi-revision factor catalogue (`EmissionFactorCatalogV2`) with low/high uncertainty bands, sensitivity rollups via `factor_sensitivity()` and `summarise_sensitivity()`, and `apply_catalog_to_inventory()` to reprice an existing GHG inventory with newer factors.
-- **Stakeholder voice as evidence** (`openharness.impact.stakeholder_voice`) — Lean Data survey templates (`build_lean_data_survey()`), GDPR/PDPA `ConsentRecord` lifecycle (`revoke_consent()`, `filter_active_responses()`), beneficiary feedback quality scoring (`score_feedback_quality()`), and `link_feedback_to_claims()` to bind feedback to impact claims as first-class evidence.
-- **AI extraction review queue** (`openharness.impact.evidence_workflow`) — policy-driven `ReviewQueue` with single + bulk decisions, auto-approval thresholds, and integrated audit-trail events for every review.
-- **Verification workspace** (`openharness.impact.verification_workspace`) — read-only assurance-pack workspace with `VerificationFinding` lifecycle (`open` → `in_review` → `resolved` / `unresolved`), threaded `VerificationComment`s, and explicit workspace closure.
-- **LP narrative + Q&A** (`openharness.impact.lp_narrative`) — `generate_lp_narrative()` produces audit-friendly LP narratives grounded in verified data; `LPQuestionWorkspace` constrains LP Q&A to verified evidence with citations and exportable transcripts.
-- **Greenwashing reviewer** (`openharness.impact.greenwashing_reviewer`) — explainable per-claim review with specificity classification (`concrete` / `mixed` / `vague` / `buzzword_only`), severity scoring, evidence + governance metadata, and propagation of overall scores to the company assessment.
-- **Portfolio NLQ** (`openharness.impact.portfolio_nlq`) — `parse_intent()` + `PortfolioNLQEngine` answer `average / total / top_n / compare` queries against canonical metric records only; `ApprovedDataPolicy` enforces verification-status filters and citations.
-- **Exit impact assessment** (`openharness.impact.exit_impact`) — OPIM Principle 8 workflow: `score_exit_impact()` over `ExitDurabilityRisk` items, `build_exit_plan()` for follow-ups, and explicit flags such as `unmitigated_risks`.
-- **Eight new agent tools** registered in `create_default_tool_registry()` — `EmissionFactorsTool`, `StakeholderVoiceTool`, `EvidenceReviewTool`, `VerificationWorkspaceTool`, `LPNarrativeTool`, `GreenwashingReviewerTool`, `PortfolioQueryTool`, `ExitImpactTool`.
-- **Whole-codebase hardening pass** — full suite now verifies at **1077 passed / 15 skipped / 1 xfailed** with import smoke and ruff clean. The pass fixed API CORS wildcard credential behavior, Copilot runtime version headers, Mochat UTC timestamps, optional channel helper imports, and API/MCP version metadata.
-
-**What's new in v0.14.0 — Phases 15.6 → 20 in one drop.**
-- **LLM extractor / verifier adapters** (`openharness.impact.extractors.llm_extractor|llm_verifier`) — OpenAI-compatible claim extractor and URL-grounded source verifier with offline-safe fallbacks, `<think>`-tag stripping, strict-JSON schema validation and a `known_sources` allow-list.
-- **Fund-branded reports** (`openharness.impact.branding`) — drop a `branding:` block into `fund_thesis.yaml` (logo URL, primary / accent colour, footer text) and every HTML surface (Impact, DD, IC memo, LP portal) picks it up via a tiny CSS override.
-- **DD Questionnaire v2 — branching** (`openharness.impact.questionnaire_v2`) — conditional follow-ups in HTML *and* Word, driven by a 3-predicate rules engine (`contains` / `equals` / `missing`).
-- **SSE streaming** (`openharness.web.streaming`) — `/api/v1/stream/echo` demo endpoint plus a `register_sse_endpoint()` plug-in hook for long-running tools.
-- **Carbon / biodiversity credit registries** (`openharness.impact.registries`) — unified `CreditRegistry` Protocol for Verra, Gold Standard, Puro.earth, BioCredits + portfolio roll-up.
-- **MOI + impact-adjusted IRR** (`openharness.impact.returns`) — Newton-Raphson, no scipy.
-- **GIIN Compass peer context** (`openharness.impact.external_benchmarks`) — sector × dimension quartile positioning with offline percentile snapshot.
-- **Blended-finance designer** (`openharness.impact.blended_finance`) — IL-Loan, SOC / DIB and impact-carry term sheets.
-- **ILPA LP portal + thesis marketplace** — capital-account statement, impact dashboard, audit trail, publish / subscribe / compare (`lp_portal`, `marketplace`).
-- **ISAE 3000 / AA1000 / CSRD / ISSB / SOC 2 packs** — `assurance`, `csrd_wizard`, `issb_reporting`, `soc2_checklist`, plus hash-chained `audit_trail`.
-- **Bayesian updater, meta-analysis, spillover, SROI, causal ingest** — zero-dep scientific-rigor layer (`bayes`, `meta_analysis`, `spillover`, `sroi`, `causal`).
-- **Satellite / survey / worker-voice / ecosystem** (`geospatial`, `surveys`, `worker_voice`, `ecosystem_services`) — Phase 19 primary-data adapters with deterministic offline stubs.
-- **Global reach** — 6-language dashboard key file, 4 regional fund-thesis packs, 7 jurisdiction regulatory packs, FX normalization (`i18n`, `fund_thesis.*.yaml`, `regulatory_packs`, `fx`).
-- **SDK facade** — every new module gets a one-line entry point on `ImpactVision` (`iv.compute_moi`, `iv.build_assurance_pack`, `iv.double_materiality`, `iv.regulatory_pack("EU-SFDR")`, `iv.convert_currency(1000, "MYR", "USD")`, …).
-- **Green CI** — **150 passed / 4 skipped / 0 failed**, `ruff check src/` clean.
-
-**Regulatory coverage shipped in v0.9.0** — financed emissions (PCAF), net-zero alignment (SBTi), EU Taxonomy alignment %, nature-related disclosures (TNFD v1), CDP intake. **Multi-tenant + RBAC, plug-in entry points, and hash-chained LP report feeds** shipped in v0.11.0. See the [Roadmap section](#roadmap-for-impact-investors--fund-managers) for what is planned next.
+> **Using Impact Vision in your fund workflow?** See the
+> [Fund Manager Quick Reference](docs/fund-manager-guide.md) for a
+> Python-first 60-second SDK walkthrough (deal scoring, IC memo,
+> DD questionnaire, portfolio roll-up, LP calendar).
 
 ## Quick Start (from scratch)
 
@@ -249,33 +158,28 @@ The wizard will guide you through these prompts:
 
 ```
 ? Base URL: https://openrouter.ai/api/v1              <-- press Enter (default)
-? Default model: nvidia/nemotron-3-super-120b-a12b:free  <-- type a model name
+? Default model: openai/gpt-oss-120b:free             <-- type a model name
 ```
 
 ```
 ? Enter API key for OpenRouter: sk-or-your-key-here    <-- paste your key
 ```
 
-```
-? Model: nvidia/nemotron-3-super-120b-a12b:free        <-- press Enter to confirm
-Setup complete:
-- profile: openrouter
-- provider: openai
-- auth_source: openai_api_key
-- model: nvidia/nemotron-3-super-120b-a12b:free
-```
-
 Done! You can now start the agent (Step 4).
 
-> **Free models:** Browse all free models at [openrouter.ai/models?q=free](https://openrouter.ai/models?q=free). Some examples:
+> **Free models (verified May 2026):** Browse the live list at
+> [openrouter.ai/models?q=free](https://openrouter.ai/models?q=free).
+> Impact analysis needs **tool calling**, so stick with these:
 >
-> | Model | Notes |
-> |-------|-------|
-> | `nvidia/nemotron-3-super-120b-a12b:free` | Strong reasoning, good for impact analysis |
-> | `google/gemini-2.5-flash:free` | Fast, good for quick tasks |
-> | `meta-llama/llama-4-maverick:free` | Open-source, balanced performance |
+> | Model | Context | Why we recommend it |
+> |-------|--------:|---------------------|
+> | `openai/gpt-oss-120b:free` | 131K | OpenAI open-weight MoE, native tool use, strong reasoning |
+> | `nvidia/nemotron-3-super-120b-a12b:free` | 1M | 1M-token window for long decks, strong multi-step reasoning |
+> | `z-ai/glm-4.5-air:free` | 131K | Hybrid-thinking MoE, cheap + fast, tool-calling |
+> | `google/gemma-4-31b-it:free` | 262K | Native function calling, multimodal, Apache 2.0 |
 >
-> You can change your model or update your API key later by running `impact-vision setup` again.
+> OpenRouter rotates free endpoints monthly — if a model 404s, re-run
+> `impact-vision setup` and pick another from the live list.
 
 #### Option B: Anthropic (Claude Sonnet) -- best quality for impact analysis
 
@@ -320,9 +224,9 @@ No API key needed -- everything runs locally on your GPU/CPU.
 | Ollama (local) | Privacy, offline use | Free (your hardware) |
 
 > **Model quality note:** Impact analysis requires models that support **tool calling** (function calling). Free models vary in quality -- some may not follow the impact expert persona or use the analysis tools correctly. For best results:
-> - **Recommended:** Claude Sonnet, GPT-5, or `google/gemini-2.5-flash` (via OpenRouter)
-> - **Good free options:** `google/gemini-2.5-flash:free`, `meta-llama/llama-4-maverick:free`
-> - **May struggle:** Very small models or models without tool-calling support
+> - **Recommended paid:** Claude Sonnet or GPT-5 for production DD work
+> - **Recommended free:** `openai/gpt-oss-120b:free`, `nvidia/nemotron-3-super-120b-a12b:free`, `z-ai/glm-4.5-air:free`
+> - **May struggle:** Very small models (<9B) or models without tool-calling support
 
 ### 4. Start the AI agent
 
@@ -393,19 +297,26 @@ Opens a web dashboard at http://localhost:8501 with 5 tabs: Assessment, IRIS+ Ca
 | `iv --help` | Show all commands |
 | `iv catalog stats` | Show catalog statistics |
 | `iv catalog search "query"` | Search IRIS+ metrics |
-| `iv framework list` | List all 10 ESG frameworks |
+| `iv framework list` | List all supported ESG / regulatory frameworks |
 | `iv framework scan "text"` | Quick multi-framework scan |
 | `iv framework xref OI4112` | Cross-reference a metric |
 | `iv dd list` | Show all 122 DD questions |
 | `iv dd categories` | List DD categories |
 | `iv dd analyze "text"` | Check text against DD checklist |
 | `iv ollama-setup` | Configure local LLM |
-| `iv serve-mcp` | Start MCP server for AI agents (26 tools + 5 resources) |
+| `iv serve-mcp` | Start MCP server for AI agents (37 tools + 5 resources) |
+| `iv serve-web` | Start Web Console + REST API at http://127.0.0.1:8787 |
 | `iv` | Start interactive AI agent |
 
 (`iv` is a shorthand for `impact-vision`)
 
 ## Usage
+
+Impact Vision ships **37 agent tools** covering the full investment lifecycle
+— pre-screen, due diligence, IC memo, portfolio monitoring, LP reporting,
+assurance, and post-exit review. Below are common prompts you can paste
+into the interactive agent (or the Web Console at
+`http://127.0.0.1:8787`). The agent will pick the right tools for you.
 
 ### Analyzing a Pitch Deck
 
@@ -421,6 +332,18 @@ The agent will use the `pitch_deck_analyze` tool which:
 - Runs the full DD checklist against the document
 - Presents addressed questions vs. gaps
 - Suggests follow-up questions to ask the investment team
+
+Follow-up prompts that chain the v3/v4 tools on the same deal:
+
+```
+> Run a 5-dimension assessment for BrightPath Finance with the claims you just extracted
+> Draft a Theory of Change for BrightPath and link it to IRIS+ metrics
+> Score greenwashing risk per-claim and show which claims need verification
+> Start an engagement workspace for BrightPath at the "scoping" stage
+> Attach a data pack: these metrics came from the audited FY24 statements
+> Build a completeness scorecard for the data pack and produce coaching cards
+> Run the AI extraction review queue over the claims you flagged as low-confidence
+```
 
 ### Browsing the IRIS+ Catalog
 
@@ -571,6 +494,71 @@ The agent will:
 > Submit company description data for the current step
 ```
 
+### Stakeholder Voice & Beneficiary Feedback
+
+```
+> Build a Lean Data survey template for smallholder farmers in Kenya
+> Register GDPR-compliant consent records for 50 beneficiaries
+> Score feedback quality and link responses to our outcome claims
+```
+
+### Climate Accounting (Scope 1/2/3 + PCAF)
+
+```
+> Calculate a Scope 1/2 GHG inventory from this fuel + electricity data
+> Apply emission factor catalog v2 with uncertainty bands
+> Run PCAF financed-emissions attribution for the loan book
+> Check SBTi 1.5 °C alignment
+```
+
+### AI Extraction Review & Evidence Governance
+
+```
+> Show the AI extraction review queue for BrightPath
+> Auto-approve claims above 0.85 confidence that cite audited sources
+> Flag any claim without a source URL for human review
+> Open a verification workspace for the assurer and share only approved evidence
+```
+
+### LP Narrative & Q&A (grounded in verified data)
+
+```
+> Generate an LP quarterly narrative for the Inclusive Finance fund
+> Answer LP question "what % of beneficiaries are women" using only approved data
+> Export the Q&A transcript with citations for the LPAC meeting
+```
+
+### Portfolio Natural-Language Query
+
+```
+> What was the average CO2e intensity across the climate portfolio last year?
+> Top 5 companies by beneficiary reach, verified data only
+> Compare SDG 5 coverage between Fund I and Fund II
+```
+
+### Exit Impact Assessment (OPIM Principle 8)
+
+```
+> Score exit-impact durability for Solar Co with acquirer profile "strategic utility"
+> List unmitigated risks and build a 12-month exit impact plan
+```
+
+### Consultant Engagements (v4 workspace)
+
+The v4 engagement suite is a single tool (`engagement_suite`) that covers
+scoping, data rooms, ToC/KPI design, reporting studios, training, public
+website output, and the three-pillar assurance bundle.
+
+```
+> Create an engagement workspace for "Acme Solar Advisory Q2" at scoping stage
+> Build a proposal with a fixed-fee rate card and send it for client signature
+> Design a Theory of Change + KPI tree and validate it against IRIS+
+> Build a client data room, score completeness, and issue coaching cards
+> Move the draft report from "in_review" to "published" and log the state change
+> Issue a readiness badge once training modules + diagnostic are complete
+> Sign the final assurance bundle (evidence graph + audit trail + workspace) with HMAC
+```
+
 ### Single-Prompt Mode
 
 For CI/CD or scripting:
@@ -581,40 +569,46 @@ impact-vision -p "Search IRIS+ catalog for climate-related metrics"
 
 ## CLI Reference
 
+`impact-vision` (or the `iv` shorthand) exposes seven top-level
+subcommand groups plus three service commands. Run any command with
+`--help` for full flags.
+
 ```bash
-# Interactive agent session
-impact-vision                              # Start interactive session
+# Interactive agent
+impact-vision                              # Start interactive agent session
 impact-vision -p "your prompt"             # Single prompt, then exit
 impact-vision --model opus                 # Use a specific model
 
-# Catalog management
-impact-vision catalog load [EXCEL_PATH]    # Load IRIS+ catalog from Excel
-impact-vision catalog load --force         # Force reload from Excel
-impact-vision catalog stats                # Show catalog statistics
-impact-vision catalog search "climate"     # Search metrics by keyword
+# Provider / auth setup
+impact-vision setup                        # Interactive provider wizard (OpenRouter/Claude/OpenAI/Ollama)
+impact-vision ollama-setup --model llama3.2
+impact-vision provider list | use | add | edit | remove
+impact-vision auth   login | status | logout | switch | copilot-login | codex-login | claude-login
 
-# Framework & DD CLI
-impact-vision framework list               # List all ESG frameworks
-impact-vision framework scan "description" # Quick multi-framework scan
-impact-vision framework xref OI4112        # Cross-reference lookup
-impact-vision dd list                      # List DD checklist questions
-impact-vision dd categories                # List categories with counts
-impact-vision dd analyze "text or file"    # Analyze text against DD checklist
+# IRIS+ catalog
+impact-vision catalog load [EXCEL_PATH] [--force]
+impact-vision catalog stats
+impact-vision catalog search "climate"
 
-# Local LLM setup
-impact-vision ollama-setup                 # Configure Ollama (default: llama3.2)
-impact-vision ollama-setup --model mistral # Use a different model
+# ESG / sustainability frameworks
+impact-vision framework list
+impact-vision framework scan "company description"
+impact-vision framework xref OI4112
 
-# Provider management
-impact-vision setup                        # Interactive provider setup
-impact-vision provider list                # List configured providers
-impact-vision provider use NAME            # Switch active provider
-impact-vision auth login                   # Authenticate with a provider
+# Due-diligence checklist (122 questions / 34 categories)
+impact-vision dd list [--category "What (Outcomes)"]
+impact-vision dd categories
+impact-vision dd analyze "text or /path/to/doc.txt"
 
-# MCP Server & API
-impact-vision serve-mcp                         # Start MCP server (stdio transport)
-impact-vision serve-mcp --transport sse         # Start MCP server (SSE, port 8765)
-impact-vision serve-mcp --transport sse --port 8766
+# Service surfaces
+impact-vision serve-mcp                                  # MCP server (stdio)
+impact-vision serve-mcp --transport sse --port 8765      # MCP over SSE
+impact-vision serve-web                                  # Web Console + REST API (http://127.0.0.1:8787)
+
+# Developer utilities
+impact-vision mcp      list | add | remove               # Manage MCP server configs
+impact-vision plugin   list | install | remove           # Manage entry-point plug-ins
+impact-vision cron     list | add | remove | run         # Cron scheduler for background jobs
 ```
 
 ## Architecture
@@ -623,6 +617,8 @@ impact-vision serve-mcp --transport sse --port 8766
 impact-vision/
 ├── src/openharness/
 │   ├── impact/                        # Impact measurement engine
+│   │   │
+│   │   │   # --- Core engine ---
 │   │   ├── models.py                  # Pydantic: Metric, Company, Assessment, SDG, ImpactClaim
 │   │   ├── catalog.py                 # IRIS+ 5.3c Excel ETL (263-column parser)
 │   │   ├── database.py                # In-memory MetricStore (search/filter/stats)
@@ -630,90 +626,104 @@ impact-vision/
 │   │   ├── five_dimensions.py         # What/Who/HowMuch/Contribution/Risk scoring
 │   │   ├── sdg_mapper.py              # Per-goal SDG alignment scorer (0-100)
 │   │   ├── gap_analysis.py            # Core Metric Set coverage analysis
-│   │   ├── dd_checklist.py            # DD question engine (load, analyze, suggest, evidence scoring)
-│   │   ├── benchmarks.py             # Sector benchmarks for 18 sectors
-│   │   ├── greenwashing.py           # Greenwashing detection (standard + Green Claims + FCA + NLP)
-│   │   ├── risk_opportunity.py       # Risk/opportunity with likelihood x severity matrix
-│   │   ├── storage.py                # SQLite persistence layer for assessments
-│   │   ├── report_templates/         # Jinja2-based HTML report template engine
-│   │   │   └── html_template.py      # Shared CSS, header/footer, SDG colors
-│   │   └── frameworks/               # ESG/sustainability frameworks (10 frameworks)
-│   │       ├── sasb.py                # SASB industry materiality (17 industries)
-│   │       ├── gri.py                 # GRI Universal + Topic Standards (34 standards)
-│   │       ├── tcfd.py                # TCFD / IFRS S2 climate disclosure (4 pillars)
-│   │       ├── sfdr_pai.py            # SFDR 14+9 PAI indicators + Article 6/8/9
-│   │       ├── edci.py                # EDCI 17 PE/VC ESG metrics
-│   │       ├── unpri.py              # UNPRI 6 Principles (27 actions)
-│   │       ├── theory_of_change.py   # RS Group + GIIN ToC framework
-│   │       ├── issb_ifrs_s1.py       # ISSB IFRS S1 General Requirements
-│   │       ├── issb_ifrs_s2.py       # ISSB IFRS S2 Climate Disclosures
-│   │       ├── esrs.py               # EU CSRD/ESRS Double Materiality (11 standards)
-│   │       ├── ifc_opim.py           # IFC Operating Principles for Impact Management
-│   │       └── cross_reference.py    # 59 cross-framework metric mappings
-│   ├── tools/impact/                  # Agent tools (26 LLM-callable tools)
-│   │   ├── pitch_deck_analyze_tool.py # PDF/TXT/MD intake + full pipeline
-│   │   ├── dd_checklist_tool.py       # DD question list/analyze/suggest
-│   │   ├── iris_catalog_tool.py       # IRIS+ catalog search/browse
-│   │   ├── sdg_mapper_tool.py         # SDG alignment scoring
-│   │   ├── five_dimension_assess_tool.py # 5-Dimension assessment + additionality
-│   │   ├── gap_analysis_tool.py       # Metric gap analysis
-│   │   ├── impact_report_tool.py      # Report generation (HTML/CSV/JSON/text/XLSX/PDF)
-│   │   ├── framework_tool.py          # Multi-framework ESG assessment (10 frameworks)
-│   │   ├── cross_reference_tool.py    # Cross-framework metric lookup
-│   │   ├── data_quality_tool.py       # Metric data quality assessment
-│   │   ├── metric_recommender_tool.py # IRIS+ metric recommendation engine
-│   │   ├── impact_risk_opportunity_tool.py # Risk/opportunity with 14 risk categories
-│   │   ├── lp_ddq_export_tool.py      # LP DDQ exporter (ILPA/GIIN/EDCI/SFDR, XLSX/CSV)
-│   │   ├── beneficiary_feedback_tool.py # Beneficiary feedback import & analysis
-│   │   ├── verification_prep_tool.py  # Impact verification readiness (IFC OPIM)
-│   │   ├── product_passport_tool.py   # EU Digital Product Passport import/mapping
-│   │   ├── pipeline_tool.py           # Investment pipeline management (8 stages)
-│   │   ├── monitoring_tool.py         # Continuous monitoring, alerts, re-assessment
-│   │   ├── improvement_advisor_tool.py # LLM-guided improvement recommendations
-│   │   ├── narrative_tool.py          # Impact narrative & case study generation
-│   │   ├── document_analysis_tool.py  # Multi-document comparison & verification
-│   │   ├── guided_assessment_tool.py  # Step-by-step assessment workflow
-│   │   ├── trend_analysis_tool.py     # Time-series metric trend analysis
-│   │   ├── greenwashing_tool.py       # Greenwashing detection tool
-│   │   ├── exclusion_screening_tool.py # Exclusion criteria screening
-│   │   ├── common.py                  # Shared input normalization helpers
-│   │   └── portfolio_tool.py          # Portfolio batch analysis + scenario modeling
-│   ├── impact/mcp_server.py          # MCP server (FastMCP, 26 tools + 5 resources)
-│   ├── api_gateway/router.py         # FastAPI REST API (26+ endpoints)
-│   ├── dashboard/                     # Streamlit visual dashboard
-│   │   └── app.py                     # 5-tab dashboard (Assessment/Catalog/DD/Framework/Portfolio)
+│   │   ├── dd_checklist.py            # DD question engine + NESTA evidence scoring
+│   │   ├── benchmarks.py              # Sector benchmarks for 18 sectors
+│   │   ├── greenwashing.py            # Greenwashing detection (standard + Green Claims + FCA + NLP)
+│   │   ├── risk_opportunity.py        # Risk/opportunity (likelihood × severity)
+│   │   ├── storage.py                 # SQLite persistence for assessments
+│   │   │
+│   │   │   # --- Fund workflow (v0.8+) ---
+│   │   ├── fund_thesis.py             # Fund impact thesis, IC gate, adverse thresholds
+│   │   ├── ic_memo.py                 # IC memo rendering (MD/HTML/DOCX/PPTX)
+│   │   ├── deal_gate.py               # Deal scorecard (pass/warn/fail gate)
+│   │   ├── portfolio_rollup.py        # Capital-weighted portfolio roll-up
+│   │   ├── lp_calendar.py             # 12-month LP reporting calendar
+│   │   ├── tenancy.py                 # Multi-tenant + RBAC
+│   │   ├── plugins.py                 # Entry-point plug-in discovery
+│   │   ├── signed_feed.py             # Hash-chained LP report feed (HMAC)
+│   │   ├── lp_portal.py               # ILPA-compatible LP portal
+│   │   ├── marketplace.py             # Thesis marketplace (publish/subscribe)
+│   │   │
+│   │   │   # --- Scientific rigor + primary data (v0.14.0) ---
+│   │   ├── extractors/                # Pluggable claim extractors (regex/LLM)
+│   │   ├── toc_graph.py               # Theory-of-Change graph + Mermaid renderer
+│   │   ├── counterfactual.py          # GIIN COMPASS additionality templates
+│   │   ├── bayes.py · meta_analysis.py · spillover.py · sroi.py · causal.py
+│   │   ├── geospatial.py · surveys.py · worker_voice.py · ecosystem_services.py
+│   │   ├── registries.py              # Verra/Gold Standard/Puro/BioCredits
+│   │   ├── returns.py                 # MOI + impact-adjusted IRR
+│   │   ├── external_benchmarks.py     # GIIN Compass peer quartiles
+│   │   ├── blended_finance.py         # IL-Loans, SOC/DIB, impact carry
+│   │   ├── assurance.py · csrd_wizard.py · issb_reporting.py · soc2_checklist.py
+│   │   ├── audit_trail.py             # Hash-chained lifecycle events
+│   │   ├── i18n.py · fx.py · regulatory_packs.py · branding.py
+│   │   │
+│   │   │   # --- v2 institutional backbone (v0.13+) ---
+│   │   ├── metric_records.py          # Canonical MetricRecord contract
+│   │   ├── investee_collection.py     # Questionnaire schema + submission lifecycle
+│   │   ├── climate_accounting.py      # Scope 1/2 GHG inventory
+│   │   ├── evidence_graph.py          # Claim↔metric↔target↔evidence lineage
+│   │   ├── standards_registry.py      # Versioned standards metadata
+│   │   ├── roadmap_v2.py              # Collection / disclosure / assurance helpers
+│   │   │
+│   │   │   # --- v3 Trust Infrastructure (v0.15.0) ---
+│   │   ├── emission_factors.py        # Versioned factors + sensitivity bands
+│   │   ├── stakeholder_voice.py       # Lean Data + GDPR/PDPA consent
+│   │   ├── evidence_workflow.py       # AI extraction review queue
+│   │   ├── verification_workspace.py  # Assurer workspace + findings
+│   │   ├── lp_narrative.py            # LP narrative + Q&A (approved-data only)
+│   │   ├── greenwashing_reviewer.py   # Per-claim explainable review
+│   │   ├── portfolio_nlq.py           # NL portfolio queries + ApprovedDataPolicy
+│   │   ├── exit_impact.py             # OPIM P8 exit-impact scoring
+│   │   │
+│   │   │   # --- v4 Engagement Suite (latest) ---
+│   │   ├── engagements/
+│   │   │   ├── workspace.py           # EngagementWorkspace + artifact audit hook
+│   │   │   ├── proposal.py            # Proposal builder + e-signature
+│   │   │   ├── toc_builder.py         # Wraps toc_graph + metric_recommender
+│   │   │   ├── data_room.py           # Completeness scorecard + coaching cards
+│   │   │   ├── value_creation.py      # Scenario + business case + risk scoring
+│   │   │   ├── reporting_studio.py    # Draft → review → published state machine
+│   │   │   ├── training.py            # Modules + diagnostic + readiness badge
+│   │   │   ├── website.py             # Public diagnostic + lead capture
+│   │   │   ├── copilot.py             # Governed AI: review queue + safe answer
+│   │   │   ├── regulatory.py          # Jurisdiction profiles + SFDR classification
+│   │   │   └── verification_bundle.py # 3-pillar signed assurance bundle (HMAC)
+│   │   │
+│   │   ├── report_templates/          # Jinja2-based HTML report templates
+│   │   ├── frameworks/                # 10 ESG/sustainability frameworks
+│   │   │   ├── sasb.py · gri.py · tcfd.py · sfdr_pai.py · edci.py
+│   │   │   ├── unpri.py · theory_of_change.py · issb_ifrs_s1.py · issb_ifrs_s2.py
+│   │   │   ├── esrs.py · ifc_opim.py · pcaf.py · sbti.py · eu_taxonomy.py
+│   │   │   ├── tnfd.py · cdp.py
+│   │   │   └── cross_reference.py     # 59 cross-framework metric mappings
+│   │   ├── mcp_server.py              # MCP server (FastMCP)
+│   │   └── sdk.py                     # High-level ImpactVision SDK facade
+│   │
+│   ├── tools/impact/                  # 37 LLM-callable agent tools (see "Tools" below)
+│   ├── api_gateway/router.py          # FastAPI REST API
+│   ├── web/                           # Single-file Web Console + SSE streaming
+│   ├── dashboard/app.py               # Streamlit 5-tab dashboard
 │   ├── skills/bundled/content/        # Agent knowledge (markdown)
-│   │   ├── iris-expert.md
-│   │   ├── sdg-alignment.md
-│   │   ├── five-dimensions.md
-│   │   ├── impact-dd-guide.md
-│   │   └── theory-of-change.md       # RS Group + GIIN ToC workflow
 │   ├── prompts/system_prompt.py       # Impact Vision persona + instructions
-│   └── cli.py                         # CLI with catalog subcommands + serve-mcp
+│   └── cli.py                         # CLI (7 subcommand groups + serve-mcp / serve-web)
 ├── data/
 │   ├── raw/                           # IRIS+ Excel file (not committed)
 │   ├── processed/                     # JSON catalog cache (auto-generated)
-│   ├── dd_checklist.yaml              # 122 DD questions (GIIN/PCV/Seraf/IMP/AFME + 15 sectors)
-│   ├── scoring_config.yaml           # Sector baselines, keyword boosts, risk/opportunity rules
-│   ├── sdg_keywords.yaml             # SDG keyword mappings for 20+ sectors
-│   └── i18n/                          # Localization (6 languages: en/es/fr/pt/zh/ar)
-│       ├── report_strings.yaml        # Report labels in 6 languages
-│       ├── dd_checklist_*.yaml        # Localized DD questions (5 languages)
-│       └── system_prompts.yaml        # Agent persona preambles
-├── examples/
-│   ├── sample_company.yaml            # Example company with IRIS+ metrics
-│   ├── sample_portfolio.csv           # Portfolio of 5 companies
-│   └── claude_desktop_config.json     # MCP config for Claude Desktop/Code
+│   ├── dd_checklist.yaml              # 122 DD questions / 34 categories
+│   ├── scoring_config.yaml            # Sector baselines + keyword boosts
+│   ├── sdg_keywords.yaml              # SDG keyword mappings for 20+ sectors
+│   ├── core_metric_set_per_sdg.yaml   # Curated SDG core metric set
+│   ├── fund_thesis.*.yaml             # Default + 4 regional thesis packs
+│   └── i18n/                          # 6 languages (en/es/fr/pt/zh/ar)
 ├── docs/
-│   └── cursor-integration.md          # Cursor/VS Code MCP integration guide
-├── scripts/
-│   └── check_imports.py              # CI import smoke checks (verify __init__.py + exports)
-├── .github/workflows/
-│   └── ci.yml                        # GitHub Actions: import checks, tests, lint
-└── tests/
-    ├── test_impact.py                # 54+ tests covering impact modules, tools + 10 frameworks
-    ├── test_report_generation.py     # 23 tests for reports, templates, and persistence
-    └── ...                           # 820+ tests across all subsystems
+│   ├── fund-manager-guide.md          # Python SDK walkthrough for funds
+│   ├── roadmap-v3.md / -v3-implementation.md
+│   ├── roadmap-v4.md                  # Consultant-led engagement suite
+│   └── cursor-integration.md          # Cursor/VS Code MCP setup
+├── examples/                          # Sample company, portfolio, MCP configs
+├── tests/                             # Test suite (impact + v2 + v3 + v4)
+└── .github/workflows/ci.yml           # Import smoke + tests + ruff
 ```
 
 ## DD Checklist
@@ -788,80 +798,139 @@ Questions are organized into **34 categories** (18 core + 15 sector-specific + 1
 
 </details>
 
-## Standards Supported
+## Frameworks & Standards
 
-### Core (v0.1)
-- **GIIN IRIS+ 5.3c**: Full catalog (~787 metrics), SDG mappings, 5-Dimension tags
-- **UN SDGs**: 17 Goals, 169 Targets with structured taxonomy
-- **Impact DD Checklist**: 122 questions across 34 categories (GIIN, PCV, Seraf, IMP, AFME + 15 sectors) with NESTA evidence scoring
-- **Sector Benchmarks**: 18 sectors with aggregated 5D scores, SDG coverage, and metric reporting benchmarks (GIIN survey data)
-- **Cross-Reference Mapping**: 59 entries mapping equivalent metrics across IRIS+, GRI, EDCI, SFDR PAI, SASB, TCFD, ESRS, and ISSB
+All frameworks below are exposed via the `framework_assess` tool, the
+MCP server, the REST API, and the Python SDK. Every framework ships with
+cross-references to IRIS+ metric IDs via the shared
+`cross_reference` module (59 concept mappings).
 
-### ESG & Regulatory Frameworks (v0.3)
-All accessible via the `framework_assess` tool:
+| Category | Framework | Coverage |
+|----------|-----------|----------|
+| **Core taxonomy** | GIIN IRIS+ 5.3c | ~787 metrics, SDG mappings, 5-Dimension tags |
+| | UN SDGs | 17 Goals, 169 Targets |
+| | Impact DD Checklist | 122 questions / 34 categories (GIIN, PCV, Seraf, IMP, AFME + 15 sectors) with NESTA evidence (1-5) |
+| | Sector Benchmarks | 18 sectors (GIIN survey data) with aggregated 5D scores and coverage |
+| | Cross-Reference Mapping | 59 concepts mapped across IRIS+/GRI/EDCI/SFDR PAI/SASB/TCFD/ESRS/ISSB/PCAF/SBTi/TNFD/CDP/EU Taxonomy |
+| **ESG disclosure** | SASB | 17 industries, 77+ material topics |
+| | GRI | 34 standards (Universal + Topic), 120+ disclosures |
+| | TCFD / IFRS S2 | 4 pillars, 11 disclosures, scenario analysis, Scope 1/2/3 |
+| | EDCI | 17 core PE/VC metrics (Environment/Social/Governance) |
+| | UNPRI | 6 Principles, 27 actions |
+| | Theory of Change | RS Group 8 Blended Value Principles + GIIN 8-step ToC Checklist |
+| | ISSB IFRS S1 | General sustainability disclosure (4 pillars) |
+| | ISSB IFRS S2 | Climate-related disclosures |
+| | EU CSRD / ESRS | 11 standards, double-materiality assessment |
+| **Regulatory** | SFDR | 14 mandatory + 9 optional PAI indicators, Article 6/8/9 classification, deadline scheduler |
+| | EU Taxonomy | 6 environmental objectives, DNSH + Minimum Safeguards |
+| | UK FCA Anti-Greenwashing Rule | Fair/clear/not-misleading assessment |
+| | EU Green Claims Directive | Evidence, comparability, third-party verification |
+| | EU Digital Product Passport (ESPR) | Import + map to IRIS+/ESRS/SDG |
+| | Per-jurisdiction packs | EU-SFDR, EU-CSRD, UK-FCA-SDR, US-SEC-ESG, HK-HKEX-ESG, AU-AASB-S2, ISSB-global |
+| **Climate & nature** | PCAF | Financed-emissions attribution, sector defaults, weighted data quality |
+| | SBTi (Net-Zero Standard v1.2) | 1.5 °C pathway, Scope-3 materiality, 2050 cap |
+| | TNFD v1 | 14 LEAP / pillar disclosures |
+| | CDP | Climate / water / forests questionnaire intake |
+| | GHG Protocol | Scope 1/2 inventory (Scope 3 via PCAF) with versioned factor catalog |
+| **Impact management** | IFC OPIM | 9-principle verification readiness + Principle 8 exit-impact |
+| | SROI | Deadweight / attribution / displacement / drop-off adjustments |
+| | MOI + Impact-adjusted IRR | Newton-Raphson, optional shadow price |
+| **Greenwashing & NLP** | Standard greenwashing scoring | Vague-language + quantitative-evidence checks |
+| | Green Authenticity Index (GAI) | Ratio of substantive to vague claims |
+| | Cheap Talk Index (CTI) | Forward-looking vs. evidenced statements |
+| | Per-claim explainable reviewer | `concrete` / `mixed` / `vague` / `buzzword_only` classification + severity |
+| **Assurance** | ISAE 3000 / AA1000 | Management-assertion + subject-matter + evidence register |
+| | SOC 2 Type II / ISO 27001 | Starter control set with readiness report |
+| | Verification workspace | Finding lifecycle + threaded comments (v0.15.0) |
+| | 3-pillar assurance bundle | HMAC-signed evidence graph + audit trail + workspace (v4) |
 
-| Framework | Coverage | Cross-references |
-|-----------|----------|------------------|
-| **SASB** | 17 industries, 77+ material topics (YAML-externalized) | IRIS+ metric IDs |
-| **GRI** | 34 standards (Universal + Topic), 120+ disclosures | IRIS+ metric IDs |
-| **TCFD / IFRS S2** | 4 pillars, 11 disclosures, scenario analysis | IRIS+, Scope 1/2/3 |
-| **SFDR PAI** | 14 mandatory + 9 optional PAI indicators, Article 6/8/9 classification | IRIS+, GRI |
-| **EDCI** | 17 core PE/VC metrics (Environment/Social/Governance) | IRIS+, GRI, SFDR PAI |
-| **UNPRI** | 6 Principles, 27 actions | ESG integration assessment |
-| **Theory of Change** | RS Group 8 Blended Value Principles + GIIN 8-step ToC Checklist | IMP, SDGs |
-| **ISSB IFRS S1** | General sustainability disclosure requirements (4 pillars) | TCFD, ESRS |
-| **ISSB IFRS S2** | Climate-related disclosures, Scope 1/2/3 | TCFD, ESRS, GRI |
-| **EU CSRD/ESRS** | 11 standards, double materiality assessment, data points | IRIS+, GRI, SFDR |
+### Agent Tools (37)
 
-### Regulatory Compliance (v0.2+)
-| Standard | Coverage |
-|----------|----------|
-| **EU Green Claims Directive** | Evidence, comparability, third-party verification, carbon offset rules |
-| **UK FCA Anti-Greenwashing Rule** | Fair/clear/not-misleading assessment, sustainability reference checks |
-| **EU Digital Product Passport (ESPR)** | Import DPP data, map to IRIS+/ESRS/SDG, assess completeness |
-| **IFC Operating Principles for Impact Management** | 9-principle verification readiness assessment |
+All tools below are exposed through the default OpenHarness tool registry
+and `openharness.tools.impact`, so the interactive agent, Web Console,
+REST API, and MCP server see the same surface.
 
-### Greenwashing & NLP Detection (v0.2+)
-| Capability | Description |
-|------------|-------------|
-| Standard greenwashing scoring | Vague language detection, quantitative evidence checks |
-| Green Authenticity Index (GAI) | Ratio of substantive to vague claims |
-| Cheap Talk Index (CTI) | Forward-looking vs. evidenced statement analysis |
-| Sentiment Deflection | Detects positive-framing bias around negative topics |
-| Claim Decomposition | Breaks claims into verifiable components |
-| ClimateBERT integration | Stub for deep NLP classification (ready for model integration) |
-
-### Tools (26 Impact Tools)
-All tools below are exposed through the default OpenHarness tool registry and `openharness.tools.impact` exports, so the interactive agent, tool search, Web Console, and registry-backed integrations see the same impact-tool surface.
+**Pre-screen & core assessment (7)**
 
 | Tool | Description |
 |------|-------------|
-| `pitch_deck_analyze` | PDF/TXT/MD intake with impact claim extraction and Company model |
-| `dd_checklist` | DD question list, document analysis, and targeted suggestions |
+| `pitch_deck_analyze` | PDF/TXT/MD intake with impact-claim extraction + Company model |
 | `iris_catalog` | IRIS+ catalog search, browse, filter by SDG/theme |
 | `sdg_mapper` | SDG alignment scoring with theme inference and evidence chains |
 | `five_dimension_assess` | 5-Dimension assessment with additionality & counterfactual prompts |
 | `gap_analysis` | Metric gap analysis vs Core Metric Set |
-| `greenwashing_detect` | Composite greenwashing screen (claim-metric gap, adverse omission, specificity, selectivity, verification) + Green Claims / FCA / GAI / Cheap-Talk Index |
-| `impact_report` | Interactive HTML reports with Plotly charts, PDF export, comparison mode |
-| `framework_assess` | Multi-framework ESG assessment (10 frameworks including ISSB, ESRS) |
-| `cross_reference` | Cross-framework metric lookup (59 mappings, PAI-prefix support) |
-| `impact_data_quality` | Assess quality of reported metrics -- flags placeholders, unknown IDs |
-| `impact_metric_recommender` | Recommend IRIS+ metrics based on themes, SDGs, and sector |
-| `impact_risk_opportunity` | Risk/opportunity with 14 risk categories, likelihood x severity matrix |
-| `lp_ddq_export` | Generate LP DDQ responses in ILPA, GIIN, EDCI, SFDR formats (XLSX/CSV) |
-| `portfolio_analyze` | Portfolio batch analysis, roll-ups, benchmarking, attribution |
-| `beneficiary_feedback` | Import and analyze beneficiary feedback data |
-| `verification_prep` | Impact verification readiness assessment (IFC OPIM 9 principles) |
-| `product_passport` | EU Digital Product Passport data import and IRIS+/ESRS mapping |
-| `pipeline` | Investment pipeline management (8 stages, transition tracking, dashboard) |
-| `monitoring` | Continuous monitoring, metric updates, alerts, automated re-assessment |
-| `improvement_advisor` | LLM-guided improvement recs, peer insights, SDG opportunity finder |
-| `narrative` | Impact narrative drafting (exec summary, key findings, case studies) |
+| `impact_metric_recommender` | Recommend IRIS+ metrics by theme, SDG, and sector |
+| `impact_data_quality` | Quality score for reported metrics (placeholders, unknown IDs) |
+
+**Due diligence & evidence (5)**
+
+| Tool | Description |
+|------|-------------|
+| `dd_checklist` | 122-question DD checklist, document analysis, and targeted suggestions |
 | `document_analysis` | Multi-document comparison, change detection, claim verification |
-| `guided_assessment` | Step-by-step assessment workflow with deal-stage templates |
+| `guided_assessment` | Step-by-step workflow with deal-stage templates |
+| `verification_prep` | IFC OPIM 9-principle readiness assessment |
+| `product_passport` | EU Digital Product Passport import and IRIS+/ESRS mapping |
+
+**Risk & credibility (4)**
+
+| Tool | Description |
+|------|-------------|
+| `greenwashing_detect` | Composite screen (5 sub-scores) + Green Claims / FCA / GAI / CTI |
+| `greenwashing_reviewer` | Per-claim explainable review with severity + governance metadata |
+| `impact_risk_opportunity` | 14 risk categories on a likelihood × severity matrix |
+| `exclusion_screening` | UNGC, weapons, fossil-fuel exclusion lists |
+
+**Frameworks & reporting (4)**
+
+| Tool | Description |
+|------|-------------|
+| `framework_assess` | Multi-framework ESG assessment (all frameworks in the table above) |
+| `cross_reference` | Cross-framework metric lookup (59 mappings) |
+| `impact_report` | Interactive HTML reports + XLSX/CSV/JSON/text/PDF |
+| `lp_ddq_export` | LP DDQ responses in ILPA, GIIN, EDCI, SFDR formats |
+
+**Portfolio workflow (5)**
+
+| Tool | Description |
+|------|-------------|
+| `portfolio_analyze` | Batch analysis, capital-weighted roll-ups, benchmarking |
+| `portfolio_query` | Natural-language portfolio queries (`ApprovedDataPolicy`-gated) |
+| `pipeline` | 8-stage investment pipeline with transition tracking |
+| `monitoring` | Continuous monitoring, metric updates, alerts, re-assessment |
 | `trend_analysis` | Time-series metric trend analysis with trajectory projection |
-| `exclusion_screening` | Exclusion criteria screening (UNGC, weapons, fossil fuel, etc.) |
+
+**Stakeholder voice & narrative (4)**
+
+| Tool | Description |
+|------|-------------|
+| `beneficiary_feedback` | Import and analyze beneficiary feedback data |
+| `stakeholder_voice` | Lean Data templates + GDPR/PDPA consent + feedback↔claim links |
+| `improvement_advisor` | LLM-guided improvement recs, peer insights, SDG opportunities |
+| `narrative` | Impact narrative drafting (exec summary, key findings, case studies) |
+
+**Trust infrastructure — v3 (4)**
+
+| Tool | Description |
+|------|-------------|
+| `emission_factors` | Versioned factor catalog, sensitivity bands, inventory repricing |
+| `evidence_review` | AI extraction review queue with policy-driven auto-approval |
+| `verification_workspace` | Assurer workspace with finding lifecycle and threaded comments |
+| `lp_narrative` | LP narrative + Q&A constrained to verified data with citations |
+
+**Exit & assurance (1)**
+
+| Tool | Description |
+|------|-------------|
+| `exit_impact` | OPIM Principle 8 scoring + exit plan |
+
+**Consultant engagement suite — v4 (3)**
+
+| Tool | Description |
+|------|-------------|
+| `engagement_workspace` | Engagement lifecycle (scoping → delivery → closeout) + artifact audit |
+| `toc_builder` | ToC canvas + logic-chain validator + multi-framework KPI generator (wraps v3 `toc_graph` + `metric_recommender`) |
+| `engagement_suite` | Umbrella tool for Tracks 3-10: proposal, data room, value-creation, reporting studio, training/readiness, public website, governed AI copilot, regulatory deadlines, 3-pillar assurance bundle |
 
 ## Streamlit Dashboard
 
@@ -880,8 +949,8 @@ The dashboard has 5 tabs:
 
 ## Web Console (power-user UI)
 
-For a browser-native IDE-like surface to every tool — useful when you want
-the full 26-tool set at your fingertips rather than Streamlit's 5 curated
+For a browser-native surface to every tool — useful when you want the
+full 37-tool set at your fingertips rather than Streamlit's 5 curated
 tabs — run the **web console**:
 
 ```bash
@@ -895,18 +964,12 @@ uvicorn openharness.web.app:app --host 127.0.0.1 --port 8787
 The console is a **single self-contained HTML file** (no build step, no
 JS framework) that sits on top of the existing FastAPI gateway:
 
-- Lists all **26 impact tools** in a searchable sidebar (`Ctrl/⌘+K` to focus).
-- Renders a dynamic form per tool and `POST`s to `/api/v1/*`.
+- Lists every impact tool in a searchable sidebar (`Ctrl/⌘+K` to focus).
+- Derives typed forms from `/openapi.json` and `POST`s to `/api/v1/*`.
 - Shows JSON results in a syntax-highlighted pane, with copy / save buttons.
+- Persists every run to `localStorage` so you can re-hydrate old invocations.
 - Optional bearer-token box for `IMPACT_VISION_API_KEY`-protected deployments.
 - Links to the live `/docs` (Swagger) and the GitHub repo.
-
-This mirrors the UX of open-source web front-ends for CLI agents such as
-[`sst/opencode`](https://github.com/sst/opencode),
-[`siteboon/claudecodeui`](https://github.com/siteboon/claudecodeui)
-and [`getAsterisk/claudia`](https://github.com/getAsterisk/claudia) —
-but bound to the Impact Vision tool surface rather than a generic shell,
-and without pulling in React / Electron.
 
 ## Development
 
@@ -917,59 +980,32 @@ pip install -e ".[dev]"
 # Run all tests
 python -m pytest tests/ -v
 
-# Run the Impact Vision engine and tool-wrapper subset
-python -m pytest tests/test_impact.py tests/test_tools/test_impact_tools_enhancements.py -v
+# Focused subsets
+python -m pytest tests/test_impact.py -v                    # engine + frameworks
+python -m pytest tests/test_v4_tracks_3_to_10.py -v         # v4 engagement suite
 
-# Run the broader phase/regression impact subset
-python -m pytest tests/test_impact.py tests/test_phase11_fixes.py tests/test_phases12_15.py tests/test_phases15_20.py -v
-
-# Run import smoke checks (verifies all package exports work)
+# Import smoke checks (verifies all package exports work)
 python scripts/check_imports.py --all
 
 # Lint
 ruff check src/
 ```
 
-### Testing Coverage
-
-900+ tests across all subsystems. The full suite is **940 passed / 7 skipped / 1 xfailed** as of 2026-04-25. The focused engine + tool-wrapper subset (`tests/test_impact.py` + `tests/test_tools/test_impact_tools_enhancements.py`) is **126 passed / 0 failed**. The broader phase impact subset (`test_impact.py` + `test_phase11_fixes.py` + `test_phases12_15.py` + `test_phases15_20.py`) was **150 passed / 4 skipped / 0 failed** at v0.14.0.
-
-| Test area | Tests | What it covers |
-|-----------|------:|----------------|
-| Impact engine | 46 | IRIS+ catalog, SDG mapping, 5D scoring, gap analysis, DD checklist, benchmarks, 10 frameworks, cross-references, ISSB, ESRS, greenwashing |
-| Phase 11 regressions | 19 (4 MCP-skip) | All 12 correctness findings from the original code review |
-| Phase 12-15 + v0.13 polish | 50 | Fund thesis, IC memo (MD/HTML/DOCX/PPTX), deal gate, portfolio roll-up, LP calendar, PCAF, SBTi, EU Taxonomy, TNFD, CDP, extractors, ToC, counterfactual, RBAC, plug-ins, signed feed, **DD Questionnaire Helper (HTML + DOCX)**, **Web Console routes** |
-| Report generation | 23+ | HTML/CSV/JSON/text report output, Jinja2, SQLite persistence |
-| Tools | ~40 | Tool registry, file/grep/glob/bash, MCP tools, integration flows |
-| Services | 14 | Compaction, session storage, token estimation |
-| Config/bridge/hooks | ~30 | Settings, work secrets, hook execution, hot reload |
-| Commands | ~20 | CLI commands, command registry |
-| Other | ~650+ | Permissions, memory, plugins, skills, swarm, coordinator, auth, prompts, sandbox, UI |
-
-### CI
-
-GitHub Actions runs on every push/PR to `main`:
-1. **Import smoke check** -- verifies all `__init__.py` files exist and critical imports resolve
-2. **Full test suite** -- `pytest tests/ -q --tb=short -x`
-3. **Lint** -- `ruff check src/`
-
-## License
-
-MIT License. See [LICENSE](LICENSE) for details.
+GitHub Actions runs import smoke, full tests, and ruff on every push/PR.
 
 ## MCP Server (Use with Claude, Cursor, VS Code)
 
-Impact Vision can run as an **MCP server**, exposing **26 impact tools** and **5 read-only resources** to any MCP-compatible AI client. The MCP wrapper layer was smoke-tested on 2026-04-25: all 26 tool wrappers, the monitoring update path, and all 5 resources returned valid outputs.
+Impact Vision can run as an **MCP server**, exposing the full impact
+tool surface and 5 read-only resources to any MCP-compatible AI client.
 
 ```bash
-# Start the MCP server (stdio transport, default)
-impact-vision serve-mcp
-
-# Or with SSE transport for remote access
-impact-vision serve-mcp --transport sse --port 8765
+impact-vision serve-mcp                              # stdio (desktop clients)
+impact-vision serve-mcp --transport sse --port 8765  # SSE (remote clients)
 ```
 
-Use stdio for local desktop clients such as Claude Desktop, Cursor, and VS Code. Use SSE when the MCP server is started separately and clients connect over HTTP.
+Use stdio for local desktop clients such as Claude Desktop, Cursor, and
+VS Code. Use SSE when the MCP server is started separately and clients
+connect over HTTP.
 
 ### Cursor / VS Code Setup
 
@@ -990,23 +1026,7 @@ Add to `.cursor/mcp.json`:
 
 Copy `examples/claude_desktop_config.json` to your Claude Desktop config directory.
 
-### MCP Tools
-
-The server exposes these 26 tools:
-
-| Area | Tools |
-|------|-------|
-| Core assessment | `five_dimension_assess`, `sdg_mapper`, `impact_report`, `gap_analysis`, `impact_data_quality` |
-| DD and evidence | `pitch_deck_analyze`, `dd_checklist`, `document_analysis`, `verification_prep`, `guided_assessment` |
-| Frameworks and standards | `framework_assess`, `cross_reference`, `iris_catalog`, `lp_ddq_export` |
-| Risk and credibility | `greenwashing_detect`, `exclusion_screening`, `impact_risk_opportunity` |
-| Portfolio workflow | `portfolio_analyze`, `pipeline`, `monitoring`, `trend_analysis` |
-| Recommendations and narrative | `impact_metric_recommender`, `improvement_advisor`, `narrative` |
-| Stakeholder/product data | `beneficiary_feedback`, `product_passport` |
-
 ### MCP Resources
-
-The server also exposes these resources:
 
 | Resource URI | Purpose |
 |--------------|---------|
@@ -1016,27 +1036,13 @@ The server also exposes these resources:
 | `impact://cross-reference/{metric_id}` | Cross-framework mapping for one metric |
 | `impact://sdg/goals` | UN SDG goal reference data |
 
-### Example MCP Prompts
-
-Once connected from Claude, Cursor, or VS Code, ask the client to call the tools directly:
-
-```text
-Use impact_report to assess Solar Co. Description: solar energy access for rural households. Sector: energy. Metrics: OI4112=100 tCO2e, PI4060=200.
-```
-
-```text
-Use pitch_deck_analyze on this memo text, then use document_analysis to compare the claims against our annual report.
-```
-
-```text
-Use pipeline to add Solar Co at screening, set a monitoring schedule, then record OI4112=150 and check alerts.
-```
-
-See [docs/cursor-integration.md](docs/cursor-integration.md) for the full setup guide and client-specific notes.
+See [docs/cursor-integration.md](docs/cursor-integration.md) for the full
+setup guide and client-specific notes.
 
 ## REST API
 
-Full FastAPI REST API with 26+ endpoints (version `0.14.0`):
+FastAPI REST gateway backing the Web Console, MCP server, and third-party
+integrations:
 
 ```bash
 # Start the API server
@@ -1046,177 +1052,33 @@ uvicorn openharness.api_gateway.router:app --reload
 IMPACT_VISION_API_KEY=your-secret-key uvicorn openharness.api_gateway.router:app
 ```
 
-Key endpoints: `/api/v1/score`, `/api/v1/sdg-map`, `/api/v1/greenwashing`, `/api/v1/report`, `/api/v1/pipeline`, `/api/v1/batch`, and more. See the auto-generated docs at `/docs`.
+Key endpoints: `/api/v1/score`, `/api/v1/sdg-map`, `/api/v1/greenwashing`,
+`/api/v1/report`, `/api/v1/pipeline`, `/api/v1/batch`, and more.
+See the auto-generated OpenAPI docs at `/docs`.
 
-## System Review (v0.14.0)
+## Roadmap
 
-A full code-base walk-through (models, scoring engines, frameworks, tools, MCP server, REST API, dashboard, Web Console) produced the following assessment. It is meant to be read alongside the roadmap below.
+Strategy and engineering plans live in [`docs/`](docs/):
 
-### What works well
+- [`docs/roadmap-v2.md`](docs/roadmap-v2.md) — April 2026 institutional-readiness
+  plan (data contracts, investee collection, climate accounting, LP reporting,
+  assurance controls, causal impact, governed AI).
+- [`docs/roadmap-v3.md`](docs/roadmap-v3.md) / [`-v3-implementation.md`](docs/roadmap-v3-implementation.md)
+  — Trust infrastructure (evidence review, verification workspace, LP
+  narrative, portfolio NLQ, exit impact). Shipped.
+- [`docs/roadmap-v4.md`](docs/roadmap-v4.md) — Consultant-led engagement
+  suite (Tracks 3-10). Backend shipped; frontend + paid-data wiring
+  deferred to Wave 5.
+- [`ROADMAP.md`](ROADMAP.md) — historical engineering record.
+- [`CHANGELOG.md`](CHANGELOG.md) — release notes.
 
-| Area | Notes |
-|------|-------|
-| **Architecture** | Clean separation of concerns: `impact/` (engine) · `impact/frameworks/` (standards) · `tools/impact/` (LLM-callable wrappers) · `api_gateway/` (REST) · `impact/mcp_server.py` (MCP) · `dashboard/` (Streamlit). Each layer is substitutable. |
-| **Data coverage** | 787 IRIS+ 5.3c metrics, 17 SDGs + 169 targets, 122 DD questions / 34 categories, 18 sector benchmarks, 10 ESG frameworks, ~55 cross-framework concept mappings. |
-| **Score transparency** | Every 5D score and SDG alignment carries a `provenance` label (`estimated` / `partial` / `evidence-based`) and a minimum-metric gate (`MIN_METRICS_FOR_ABOVE_BASELINE = 3`) that caps scores at 2.5 until real metrics are reported. This is a clear anti-inflation control. |
-| **Externalized config** | `data/scoring_config.yaml` and `data/sdg_keywords.yaml` let fund managers tune baselines/boosts without touching code. |
-| **Evidence rating** | NESTA Standards of Evidence (1–5) is wired into the DD engine and surfaced in reports. |
-| **Multi-surface** | Same engine is reachable via CLI, Streamlit, **Web Console** (`impact-vision serve-web`), REST API (26+ endpoints), and MCP (26 tools + 5 resources) — good for both analysts and autonomous agents. |
-| **Anti-greenwashing** | Composite score with 5 sub-dimensions (claim-metric gap, adverse omission, specificity, selectivity, verification) plus Green Claims / FCA / GAI / Cheap-Talk Index layers. |
-
-> **Note**: An earlier version of this README listed 12 correctness & linkage findings from a code review. All 12 have been fixed in Phase 11 (v0.7.0) with regression coverage in `tests/test_phase11_fixes.py`; see the roadmap below for the summary. Subsequent phases (12 → 15.5) layered fund workflow, regulatory completeness, pluggable intelligence, multi-tenancy + signed reporting, the DD Questionnaire Helper, Word export, and the Web Console on top of that stable core.
-
-## Roadmap for Impact Investors & Fund Managers
-
-**Latest planning draft:** see [docs/roadmap-v2.md](docs/roadmap-v2.md) for the April 2026 institutional-readiness roadmap. It reorganizes the remaining product direction around data contracts, investee collection, carbon accounting, standards interoperability, LP reporting, assurance controls, causal impact, and governed AI. The roadmap now has backend MVP coverage through canonical metric records, investee questionnaire schemas, submission/review states, evidence graphs, EDCI completeness, Scope 1/2 GHG inventory calculations, and `openharness.impact.roadmap_v2` helper contracts for the remaining collection, climate, disclosure, LP, controls, causal, and AI governance workflows.
-
-The historical roadmap below is retained as an implementation record for shipped phases and prior sequencing.
-
-The existing [ROADMAP.md](ROADMAP.md) tracks 197 completed engineering tasks across 10 internal phases. The list below complements that with **user-value milestones** — what would make the tool materially reduce an impact GP's workload at screening, DD, IC, monitoring and LP-reporting stages.
-
-### Phase 11 — Correctness & Credibility (P0) — **shipped (v0.7.0)**
-
-All 12 review findings have been fixed and covered by regression tests in
-`tests/test_phase11_fixes.py`.
-
-- [x] MCP resource runtime bugs fixed (`mcp_server.py`); standalone-logic tests added so the suite runs even without the optional `mcp` package.
-- [x] DD evidence-level scoping limited to matched snippets; word-boundary keyword matching added.
-- [x] `data/core_metric_set_per_sdg.yaml` introduced; SDG coverage now uses the curated core set with provenance tracked on `SDGAlignment.scoring_basis`.
-- [x] Per-dimension cap + base-line floor inconsistency in `_score_dimension` removed.
-- [x] `_ADVERSE_METRICS_BY_SECTOR` replaced with genuinely adverse indicators (NPL ratio, GHG intensity, worker fatalities, etc.).
-- [x] Every benchmark in `benchmarks.py` now carries `source`, `source_year`, `confidence`.
-- [x] All 14 mandatory + 9 optional SFDR PAI indicators have populated `iris_cross_refs`.
-- [x] Cross-reference map extended with **SASB metric codes** plus TNFD / PCAF / EU Taxonomy / CDP / SBTi codes and reverse-lookup helpers.
-- [x] Deferred package-rename + wheel-trim plan documented in `CLAUDE.md`.
-
-### Phase 12 — Fund Workflow (P1) — **shipped (v0.8.0)**
-
-- [x] **Fund impact thesis** — `data/fund_thesis.example.yaml` + `openharness.impact.fund_thesis` (SDG / 5D weights, IC gate, adverse thresholds, reporting cadence).
-- [x] **IC memo generator** — `openharness.impact.ic_memo` produces Markdown by default; Word (`python-docx`) and PowerPoint (`python-pptx`) renderers ship behind optional deps.
-- [x] **Deal scorecard / gate engine** — `openharness.impact.deal_gate.evaluate_deal` returns a `pass / warn / fail` `DealScorecard` with per-check diagnostics.
-- [x] **Capital-weighted portfolio roll-up** — `openharness.impact.portfolio_rollup.rollup_portfolio` weights 5D and SDG scores by $-deployed and (optionally) ownership.
-- [x] **LP reporting calendar** — `openharness.impact.lp_calendar.build_calendar` generates a 12-month deliverables schedule from the fund's reporting cadence.
-- [ ] Excel add-in / xlsxwriter templates (still pending).
-- [ ] Controversies feed (still pending).
-
-### Phase 13 — Regulatory Completeness (P1) — **shipped (v0.9.0)**
-
-- [x] **PCAF financed-emissions** — `openharness.impact.frameworks.pcaf` (per-asset-class attribution, sector-default emission intensities, weighted data quality score).
-- [x] **SBTi alignment checker** — `openharness.impact.frameworks.sbti.check_sbti_alignment` against Net-Zero Standard v1.2 (1.5 °C pathway, scope-3 materiality, 2050 cap).
-- [x] **EU Taxonomy** — `assess_taxonomy_alignment` for the 6 environmental objectives, DNSH and Minimum Safeguards screen.
-- [x] **TNFD v1** — all 14 LEAP / pillar disclosures + governance / strategy / risk / metrics coverage scoring.
-- [x] **CDP questionnaire intake** — climate / water / forests parser with critical-question gap report.
-
-### Phase 14 — Real Evidence & LLM Intelligence (P2) — **shipped (v0.10.0)**
-
-- [x] **Pluggable claim extractor** (`openharness.impact.extractors`) — `ClaimExtractor` Protocol + registry. Ships with `noop` and a deterministic `regex` extractor; LLM adapters drop in via `register_extractor`.
-- [x] **Pluggable source verifier** — `SourceVerifier` Protocol + `noop` and `heuristic` defaults. Production deployments swap in adapters for CDP / ISS ESG / SEC filings.
-- [x] **Theory-of-Change graph builder** — `openharness.impact.toc_graph` renders Mermaid flowcharts (Inputs → Activities → Outputs → Outcomes → Impact) with IRIS+ / SDG node annotations.
-- [x] **Counterfactual templates** — `openharness.impact.counterfactual` covers GIIN COMPASS *investor / enterprise / beneficiary* additionality with point + range estimates and rationale.
-- [x] **IRIS+ auto-refresh** — `scripts/refresh_iris_catalog.py` reloads the GIIN Excel, computes diffs, and refuses to overwrite on a > 10 % shrink unless `--force` is passed.
-
-### Phase 15 — Platform & Collaboration (P2) — **shipped (v0.11.0)**
-
-- [x] **Multi-tenant + RBAC** — `openharness.impact.tenancy` with `Tenant`, `User`, `Role`, `Permission`, `RBACPolicy`, `InMemoryRBACStore`. Built-in roles: viewer, analyst, ic_member, lp_relations, tenant_admin.
-- [x] **Per-GP plug-in hook** — `openharness.impact.plugins.discover_plugins()` walks Python entry-points (`impact_vision.extractors`, `impact_vision.verifiers`, `impact_vision.benchmarks`, `impact_vision.fund_thesis`, `impact_vision.report_renderers`).
-- [x] **Signed / hash-chained LP report feed** — `openharness.impact.signed_feed` (HMAC default; pluggable `Signer` for KMS / Ed25519). Each `SignedReport` carries `content_hash`, `prev_hash`, `signature`; `ReportFeed.verify()` replays the chain.
-- [x] **Python SDK** — `openharness.impact.sdk.ImpactVision` is the single high-level entry point used by the gateway, dashboard, notebooks and downstream plug-ins.
-- [x] **Carbon / biodiversity credit registry integration** — `openharness.impact.registries` ships a `CreditRegistry` Protocol, an `InMemoryCreditRegistry` seeded with Verra / Gold Standard / Puro.earth / BioCredits samples, and a `rollup_credits()` helper for portfolio aggregation. Shipped v0.14.0.
-- [x] **Impact-adjusted returns (MOI / impact-adjusted IRR)** — `openharness.impact.returns` provides `compute_moi()` and a Newton-Raphson `compute_irr()` with an optional `impact_shadow_price`. Shipped v0.14.0.
-
-### Phase 15.5 — Report & UI polish (P1) — **shipped (v0.13.0)**
-
-Ship-ready analyst surfaces for the artefacts GPs actually email around.
-
-- [x] **DD Questionnaire Helper** — the DD HTML renderer has been re-framed around *the work the GP still needs to do*: key risks first, then a priority-sorted information request (by severity and by the natural DD sequence Thesis → ToC → What → Who → How-much → Contribution → Risk → Measurement → Governance → Sector → Exit), then a consolidated evidence / document gaps checklist. Legacy coverage table moved to an appendix.
-- [x] **Word (.docx) export for the questionnaire** — `ImpactVision.render_dd_questionnaire_docx()` produces an editable `.docx` (via `python-docx`) the analyst can hand directly to the founder; mirrors the HTML sections with empty "Founder response" slots and a document-evidence checklist.
-- [x] **Impact-report rationale table fix** — the *"How this grade was calculated"* panel now uses fixed column widths, word-wrap and a responsive scroll fallback so every driver fits on a single page at 1080 px and on tablets.
-- [x] **Web Console (v1)** — `openharness.web` ships a single-file SPA mounted on top of the FastAPI gateway (`impact-vision serve-web`, default http://127.0.0.1:8787). Lists all 26 tools, renders a parameter form per tool, and calls `/api/v1/*` directly — no build step, no JS framework, no extra auth layer (reuses `IMPACT_VISION_API_KEY`). Mentally equivalent to `sst/opencode`, `siteboon/claudecodeui` or `getAsterisk/claudia` but bound to the Impact Vision tool surface.
-- [x] **GitHub Actions green** — ruff now passes clean on `src/` (5 F401 imports tidied) and the MCP FastMCP test no longer depends on removed `version`/`description` kwargs.
-
-### Phase 15.6 — Web Console v2 & LLM-in-the-loop (P1) — **shipped (v0.14.0)**
-
-- [x] **OpenAPI-driven forms** — the SPA fetches `/openapi.json` on page load, walks every `/api/v1/*` POST/PUT endpoint, resolves `$ref` / `allOf` request-body schemas, and derives typed inputs (string / integer / number / boolean / array / enum / object). Each form shows an `OpenAPI` / `fallback recipe` badge.
-- [x] **Session + artefact inbox (browser-side)** — every console invocation is persisted to `localStorage` (`impact_vision_runs_v1`, capped at 50). Clicking an entry re-hydrates the form and replays the cached response.
-- [x] **SSE streaming** — `openharness.web.streaming` exposes `/api/v1/stream/echo` and a `register_sse_endpoint()` plug-in hook for long-running tools.
-- [x] **LLM claim extractor (OpenAI-compatible)** — `openharness.impact.extractors.llm_extractor.LLMClaimExtractor` works against OpenAI / Anthropic-proxy / Ollama / Minimax / Moonshot with strict-JSON schema, `<think>`-tag stripping, and offline fallback to the regex extractor.
-- [x] **LLM verifier (URL-grounded)** — `LLMSourceVerifier` checks claims against an allow-listed fetcher and returns deterministic `VerificationResult` objects with offline fallback.
-- [x] **DD Questionnaire v2 (branching)** — `openharness.impact.questionnaire_v2` adds conditional follow-ups to HTML *and* `.docx` via a 3-predicate rules engine (`contains` / `equals` / `missing`).
-- [x] **Report branding from `fund_thesis.yaml`** — `openharness.impact.branding` (logo, primary / accent colour, footer text) auto-injected into every HTML surface.
-- [ ] **Web-console auth** — optional OAuth / magic-link (moved to post-v0.14.0 polish).
-
-### Phase 16 — Ecosystem (P3) — **shipped (v0.14.0)**
-
-Turn Impact Vision from a GP back-office tool into a two-sided market.
-
-- [x] **GIIN Compass peer context** — `openharness.impact.external_benchmarks` provides `PeerContext` with sector × dimension quartile positioning against an offline percentile snapshot; swap in a live provider by subclassing `ExternalBenchmarkProvider`.
-- [x] **Blended-finance instrument designer** — `openharness.impact.blended_finance` ships term-sheet helpers (`design_il_loan`, `design_soc`, `design_impact_carry`) for impact-linked loans, social-outcome contracts and impact carry.
-- [x] **ILPA-compatible LP portal** — `openharness.impact.lp_portal.LPPortal` produces capital-account statements, impact dashboards and signed audit-trail views on top of the Phase-15 hash-chained feed.
-- [x] **Marketplace of impact theses** — `openharness.impact.marketplace.ThesisMarketplace` supports publish / list / search / compare against `FundThesis` artefacts.
-- [x] **Carbon / biodiversity registry connectors** — see Phase 15 above (`registries.py`).
-- [x] **MOI + impact-adjusted IRR** — see Phase 15 above (`returns.py`).
-
-### Phase 17 — Assurance & Audit Readiness (P3) — **shipped (v0.14.0)**
-
-- [x] **ISAE 3000 / AA1000 assurance pack** — `openharness.impact.assurance` builds a management-assertion + subject-matter + evidence-register bundle.
-- [x] **CSRD / ESRS double-materiality wizard** — `openharness.impact.csrd_wizard` produces a `MaterialityMatrix` scored on impact × financial materiality.
-- [x] **ISSB IFRS S1 / S2 pack** — `openharness.impact.issb_reporting` assembles the governance / strategy / risk / metrics-and-targets four-pillar structure for both standards.
-- [x] **Immutable audit trail** — `openharness.impact.audit_trail.AuditTrail` wraps the Phase-15 `SignedReportFeed` so every scoring decision, input and override is hash-chained.
-- [x] **SOC 2 Type II / ISO 27001 readiness checklist** — `openharness.impact.soc2_checklist.default_checklist()` ships a starter control set with an auto-computed `ReadinessReport`.
-
-### Phase 18 — Causal & Scientific Rigor (P3) — **shipped (v0.14.0)**
-
-- [x] **RCT / quasi-experiment data ingest** — `openharness.impact.causal.StudyResult` + `update_counterfactual_prior()`.
-- [x] **Bayesian evidence updater** — `openharness.impact.bayes.BetaPosterior` with zero-dep normal-approximation credible intervals.
-- [x] **Meta-analysis library** — `openharness.impact.meta_analysis.pool_effects()` (fixed-effect inverse-variance weighting) and `deviation_flag()` at >2σ.
-- [x] **Spillover / leakage modelling** — `openharness.impact.spillover.adjust_node()` per theory-of-change node.
-- [x] **SROI calculator** — `openharness.impact.sroi.compute_sroi()` with deadweight / attribution / displacement / drop-off adjustments.
-
-### Phase 19 — Geospatial & Primary Data (P4) — **shipped (v0.14.0)**
-
-- [x] **Satellite-derived outcome layer** — `openharness.impact.geospatial` (`SatelliteProvider` Protocol + `DeterministicSatelliteProvider` stub for GFW / VIIRS / Sentinel-5P / WorldCover).
-- [x] **Survey connectors** — `openharness.impact.surveys` (`GenericCSVProvider` that reads SurveyCTO / Kobo / ODK / 60 Decibels CSV exports into `SurveyDataset`).
-- [x] **Worker-voice aggregation** — `openharness.impact.worker_voice.summarise()` feeds the 5D `Who` dimension.
-- [x] **Ecosystem service valuation** — `openharness.impact.ecosystem_services.UnitValueProvider` with pluggable per-service unit values (InVEST / ARIES replacement path).
-
-### Phase 20 — Global Reach (P4) — **shipped (v0.14.0)**
-
-- [x] **6-language dashboard keys** — `data/i18n/dashboard_keys.yaml` (`en` / `es` / `fr` / `pt` / `zh` / `ar`) with `openharness.impact.i18n.get_dashboard_strings()`.
-- [x] **Regional fund-thesis packs** — `data/fund_thesis.climate_eu.yaml`, `fund_thesis.inclusive_finance_africa.yaml`, `fund_thesis.gender_lens_south_asia.yaml`, `fund_thesis.indigenous_led_na.yaml`.
-- [x] **Per-jurisdiction regulatory packs** — `openharness.impact.regulatory_packs` covers EU-SFDR, EU-CSRD, UK-FCA-SDR, US-SEC-ESG, HK-HKEX-ESG, AU-AASB-S2, ISSB-global.
-- [x] **FX normalization** — `openharness.impact.fx.convert()` + `normalize_series()` on a pluggable `FXRateProvider` (ships with a static offline snapshot).
-
-### Phase 21 — Future Work (post-v0.14.0)
-
-The items below are now the live backlog. They fall into three tracks: *harden the platform* (server-side state, auth), *grow the data network* (live registry / benchmark pulls), and *prove the science* (empirical validation against real RCTs).
-
-- [ ] **Server-side session + artefact inbox** — migrate the browser-side run history to SQLite-backed sessions behind `IMPACT_VISION_API_KEY`; enables multi-analyst GP teams to share runs.
-- [ ] **Web-console auth** — optional OAuth / magic-link on top of the existing API key for multi-analyst GPs.
-- [ ] **Live registry + benchmark pulls** — replace the offline `InMemoryCreditRegistry` and `OfflineBenchmarkProvider` with scheduled jobs that hit Verra / Gold Standard / GIIN Compass live APIs (rate-limited, cached).
-- [ ] **ISSB XBRL tagging** — wait for the ISSB taxonomy to stabilise, then emit an XBRL submission pack alongside the JSON one.
-- [ ] **Empirical validation pipeline** — run the pig-farm demo against a J-PAL / 3ie study library nightly and flag any deal whose predicted 5D score deviates > 2σ from the meta-analytic mean.
-- [ ] **Formal SOC 2 Type II readiness review** — take the Phase-17 checklist through an external pre-audit.
-- [ ] **Marketplace discoverability** — public thesis marketplace (LP-facing) with GDPR / HKPDPO-compliant opt-in.
-
----
-
-### Verification status (v0.14.0, 2026-04-21)
-
-Actual numbers from a clean run of the impact subset (`pytest tests/test_impact.py tests/test_phase11_fixes.py tests/test_phases12_15.py tests/test_phases15_20.py -q`):
-
-| Surface | Coverage |
-|---|---|
-| `tests/test_impact.py` | **46 / 46** passing (engine + catalog + 5D + SDG + DD + benchmarks + all 10 frameworks) |
-| `tests/test_phase11_fixes.py` | **15 passing, 4 skipped** (the 4 MCP-integration tests skip when the optional `mcp` package is absent) |
-| `tests/test_phases12_15.py` | **46 / 46** passing (fund workflow, IC memo MD/HTML/DOCX/PPTX, deal gate, portfolio roll-up, LP calendar, PCAF, SBTi, EU Taxonomy, TNFD, CDP, extractors, ToC, counterfactual, RBAC, plug-ins, signed feed, DD Questionnaire Helper HTML + .docx, Web Console routes + Phase 15.6 OpenAPI walker & history) |
-| `tests/test_phases15_20.py` | **43 / 43** passing (LLM extractor/verifier fallbacks, credit registries, MOI/IRR, peer benchmarks, blended finance, LP portal, marketplace, ISAE/CSRD/ISSB/SOC2 packs, audit trail, causal, Bayes, meta-analysis, spillover, SROI, satellite/survey/worker-voice/ecosystem, i18n, regional theses, regulatory packs, FX, branding, DD-v2 branching, SSE streaming, SDK facade) |
-| **Impact subset total** | **150 passed / 4 skipped / 0 failed** (~6.3s on a laptop) |
-| **Ruff** | `ruff check src/` — clean (0 errors) |
-| **CI** | GitHub Actions: Import smoke ✅ · Tests ✅ · Lint ✅ · Frontend typecheck ✅ |
-
----
+## Contributing
 
 Have ideas? Open an [issue](https://github.com/joejoe168168/impact-vision/issues) or submit a PR!
+
+## License
+
+MIT License. See [LICENSE](LICENSE) for details.
 
 ## Acknowledgments
 

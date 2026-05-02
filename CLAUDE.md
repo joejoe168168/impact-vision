@@ -8,6 +8,55 @@ Current release: **0.15.0 (Trust Infrastructure)**. The v3 roadmap
 causal-style claims, stakeholder voice as evidence, governed AI, and an
 LP-grade assurance bundle.
 
+**v4 (Consultant-Led Product Strategy)** — see `docs/roadmap-v4.md`. v4 is an
+integration / packaging wave, not a re-implementation wave: engineering rule
+is that new code lives in `impact/engagements/`, `tools/impact/engagement_*`
+/ `tools/impact/toc_*`, and `frontend/`, and must never fork an existing v3
+module. Progress so far:
+
+- **Wave 1 / Track 1 — Consultant Engagement Workspace** (shipped). The
+  `impact.engagements` package ships 12 productised engagement bundles, a
+  proposal builder, a 7-phase consultant checklist, an audit-logged
+  deliverable state machine, client-type templates, and the
+  `engagement_workspace` agent tool.
+- **Wave 2 / Track 2 — Theory of Change + KPI framework builder** (shipped).
+  `impact.engagements.toc_builder` wraps the existing v3 `toc_graph`
+  renderer and the 59-concept cross-reference map into a consultant-facing
+  ToC canvas, an 11-rule logic-chain validator (missing assumptions, weak
+  causal links, unmeasured outcomes, risk blind spots, equity lens), and
+  a multi-framework KPI generator, exposed through the `toc_builder`
+  agent tool.
+- **Tracks 3-10 — Integration Wave** (shipped). Eight backend modules in
+  `impact.engagements` plus a consolidated `engagement_suite` agent tool
+  (46 actions) covering the consultant workflow end-to-end:
+  - `engagements.data_room` (Track 3) — data request packs, completeness
+    scoring, exception workflow, multi-entity rollup, coaching cards.
+  - `engagements.value_creation` (Track 4) — pluggable `BenchmarkProvider`,
+    peer dashboard, impact risk rating, value-creation plan, business
+    case + scenario engine, supply-chain hotspot ranker.
+  - `engagements.reporting_studio` (Track 5) — 6 named report templates,
+    approval state machine, claim review panel, executive deck outline,
+    public microsite bundle, multi-audience rewrite scaffold.
+  - `engagements.training` (Track 6) — training plan generator (maturity
+    stage aware), 6 workshop packs, investee coaching cards, learning
+    loop, readiness badges with threshold enforcement.
+  - `engagements.website` (Track 7, backend-only) — 7-question diagnostic
+    quiz + scoring, productised-engagement gallery, benchmark teaser,
+    playbook library, privacy-preserving upload demo, GDPR/PDPA-aware
+    lead capture, white-label partner metadata.
+  - `engagements.copilot` (Track 8) — AI output provenance
+    (`CopilotOutput` + `CopilotReviewQueue`), deterministic challenge
+    mode, client-safe answer mode bound to approved evidence only,
+    prefix-based meeting-note ingestion.
+  - `engagements.regulatory` (Track 9) — 8 jurisdiction profiles
+    (EU / UK / US / Singapore / Switzerland / Canada / Japan / Australia),
+    SFDR + UK SDR classifiers, deadline calendar, regulator-facing
+    narrative composer.
+  - `engagements.verification_bundle` (Track 10) — BlueMark-style
+    3-Pillar Verification Bundle (Mandate / Practice / Reporting) with a
+    HMAC-signed assurance manifest, verifier token + expiry, verifier
+    marketplace directory, assurance-ready badge.
+
 ## Core Workflow
 
 1. User uploads a pitch deck / investment memo PDF
@@ -44,6 +93,57 @@ Layered on top of the v2 institutional-readiness backbone (canonical
 
 Each module ships with a matching agent tool registered in
 `create_default_tool_registry()` (see `tools/impact/__init__.py`).
+
+## Documentation conventions (keep README.md newcomer-focused)
+
+The project has an explicit preference for a **short, newcomer-friendly
+`README.md`**. When you edit docs, obey these rules:
+
+1. **Changelog content belongs in `CHANGELOG.md`, not `README.md`.**
+   Do not add or restore any of the following to `README.md`:
+   - Top-of-file blockquote banners like `> **v0.x.y · YYYY-MM-DD** — ...`.
+   - "What's new in v0.x.y" sections.
+   - "Maintenance note · YYYY-MM-DD", "Roadmap update · ...", or
+     "Hardening note · ..." style blockquotes.
+   - Phase-by-phase implementation checklists (e.g. "Phase 12 — Fund
+     Workflow (P1) — **shipped (v0.8.0)**" blocks).
+   - "Verification status" / test-count tables tied to a specific version.
+   - "System Review (v0.x.y)" retrospectives.
+
+   Version tags are allowed **inline inside feature tables** (e.g.
+   "Verification workspace (v0.15.0)") because they describe capability
+   provenance rather than a release log.
+
+2. **Keep release notes in one place.** New version stories go in
+   `CHANGELOG.md`. Strategic direction goes in `docs/roadmap-*.md`. The
+   `README.md` links to both with one-line pointers.
+
+3. **Fund-manager / LP / consultant "how do I…" walkthroughs belong in
+   `docs/fund-manager-guide.md`** (or a new `docs/*.md`). The `README.md`
+   links to them from the "Core Use Case" section.
+
+4. **Don't bloat the `README.md` with exhaustive test tables, CI output,
+   or QA verification matrices.** A one-liner that CI runs import smoke
+   + pytest + ruff is enough.
+
+5. **Tool / CLI / architecture sections must be kept current.** When you
+   add or remove an agent tool, CLI subcommand, or top-level package,
+   update the matching `README.md` table and architecture tree. Tool
+   count references in the `README.md` (currently **37**) must match
+   `openharness.tools.impact.__all__`.
+
+6. **Frameworks & Standards is a single consolidated table.** Do not
+   split it back into "Core / ESG / Regulatory / Greenwashing /
+   Assurance" H3 subsections — the one-table view is easier for new
+   users to scan.
+
+7. When in doubt about a piece of content, ask: *would a first-time
+   user clicking into the repo on GitHub benefit from seeing this in the
+   first scroll?* If not, move it to `CHANGELOG.md`, `docs/`, or
+   `ROADMAP.md`.
+
+The current `README.md` is ~850 lines; keep it at or below that. If it
+grows past ~1000, trim before shipping.
 
 ## Engineering housekeeping (deferred refactor)
 
@@ -95,6 +195,22 @@ src/openharness/
 │   ├── greenwashing_reviewer.py   # v3 per-claim explainable greenwashing review
 │   ├── portfolio_nlq.py           # v3 NL query engine + ApprovedDataPolicy
 │   ├── exit_impact.py             # v3 OPIM P8 exit-impact scoring + plan
+│   ├── engagements/               # v4 W1+W2: consultant workspace + ToC builder
+│   │   ├── models.py              # Engagement / Deliverable / Checklist / Override
+│   │   ├── bundles.py             # 12 productised engagement bundles (§4a)
+│   │   ├── checklist.py           # 7-phase consultant checklist generator
+│   │   ├── proposal.py            # Proposal builder (scope/workplan/fees/risk)
+│   │   ├── templates.py           # Reusable client-type template library
+│   │   ├── toc_builder.py         # v4 W2: ToC canvas + validator + KPI generator
+│   │   ├── data_room.py           # v4 T3: data request packs + completeness + coaching
+│   │   ├── value_creation.py      # v4 T4: benchmarks + risk + value plan + scenarios
+│   │   ├── reporting_studio.py    # v4 T5: multi-audience report + claim review + deck
+│   │   ├── training.py            # v4 T6: training plan + workshops + readiness badges
+│   │   ├── website.py             # v4 T7: diagnostic + gallery + playbooks + leads
+│   │   ├── copilot.py             # v4 T8: AI output provenance + challenge + safe answer
+│   │   ├── regulatory.py          # v4 T9: jurisdictions + SFDR/UK SDR + deadlines
+│   │   ├── verification_bundle.py # v4 T10: BlueMark 3-pillar bundle + signed manifest
+│   │   └── workspace.py           # In-memory store + audit-trail integration
 │   ├── report_templates/          # Jinja2-based HTML report template engine
 │   │   └── html_template.py       # Shared CSS, header/footer, SDG colors
 │   └── frameworks/                # ESG/sustainability frameworks (10 frameworks)
@@ -135,6 +251,9 @@ src/openharness/
 │   ├── greenwashing_reviewer_tool.py  # v3 explainable greenwashing review
 │   ├── portfolio_query_tool.py    # v3 portfolio NL query engine
 │   ├── exit_impact_tool.py        # v3 OPIM P8 exit-impact scoring + plan
+│   ├── engagement_workspace_tool.py # v4 W1 Track 1 consultant workspace
+│   ├── toc_builder_tool.py        # v4 W2 Track 2 ToC canvas + KPI framework
+│   ├── engagement_suite_tool.py   # v4 Tracks 3-10 consolidated surface (46 actions)
 │   ├── common.py                  # Shared input normalization helpers
 │   └── portfolio_tool.py          # Portfolio batch analysis + scenario modeling
 ├── dashboard/                     # Streamlit dashboard (5 tabs, optional auth)

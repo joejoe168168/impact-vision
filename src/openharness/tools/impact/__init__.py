@@ -6,6 +6,8 @@ from openharness.tools.impact.data_quality_tool import DataQualityTool
 from openharness.tools.impact.dd_checklist_tool import DdChecklistTool
 from openharness.tools.impact.document_analysis_tool import DocumentAnalysisTool
 from openharness.tools.impact.emission_factors_tool import EmissionFactorsTool
+from openharness.tools.impact.engagement_suite_tool import EngagementSuiteTool
+from openharness.tools.impact.engagement_workspace_tool import EngagementWorkspaceTool
 from openharness.tools.impact.evidence_review_tool import EvidenceReviewTool
 from openharness.tools.impact.exclusion_screening_tool import ExclusionScreeningTool
 from openharness.tools.impact.exit_impact_tool import ExitImpactTool
@@ -31,6 +33,7 @@ from openharness.tools.impact.portfolio_tool import PortfolioTool
 from openharness.tools.impact.product_passport_tool import ProductPassportTool
 from openharness.tools.impact.sdg_mapper_tool import SdgMapperTool
 from openharness.tools.impact.stakeholder_voice_tool import StakeholderVoiceTool
+from openharness.tools.impact.toc_builder_tool import ToCBuilderTool
 from openharness.tools.impact.trend_analysis_tool import TrendAnalysisTool
 from openharness.tools.impact.verification_prep_tool import VerificationPrepTool
 from openharness.tools.impact.verification_workspace_tool import VerificationWorkspaceTool
@@ -42,6 +45,8 @@ __all__ = [
     "DdChecklistTool",
     "DocumentAnalysisTool",
     "EmissionFactorsTool",
+    "EngagementSuiteTool",
+    "EngagementWorkspaceTool",
     "EvidenceReviewTool",
     "ExclusionScreeningTool",
     "ExitImpactTool",
@@ -67,6 +72,7 @@ __all__ = [
     "ProductPassportTool",
     "SdgMapperTool",
     "StakeholderVoiceTool",
+    "ToCBuilderTool",
     "TrendAnalysisTool",
     "VerificationPrepTool",
     "VerificationWorkspaceTool",

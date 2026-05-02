@@ -1,13 +1,228 @@
 # Changelog
 
-All notable changes to Impact Vision are recorded here.
+All notable changes to Impact Vision are recorded here. **This is the
+single source of truth for release history** — please do not duplicate
+version banners, "What's new" blocks, phase status tables, or
+verification matrices in `README.md`. See
+[`CLAUDE.md`](CLAUDE.md#documentation-conventions-keep-readmemd-newcomer-focused)
+for documentation conventions.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Changed
+
+- **README.md deep cleanup (2026-05-02).** Removed all changelog-style
+  banners, "What's new in v0.14.0 / v0.15.0" blocks, "System Review
+  (v0.14.0)", phase-by-phase roadmap history, and verification-status
+  tables from `README.md`. Moved the Python SDK 60-second walkthrough to
+  a new [`docs/fund-manager-guide.md`](docs/fund-manager-guide.md).
+  Consolidated the four "Standards Supported" sub-tables into one single
+  framework table. Rewrote the Architecture tree, CLI Reference, and
+  Agent Tools section against the current codebase (37 impact tools,
+  including v3 trust-infrastructure and v4 engagement-suite tools).
+  Verified the recommended OpenRouter free models against the live list
+  (May 2026) — swapped out stale `google/gemini-2.5-flash:free` and
+  `meta-llama/llama-4-maverick:free` for current free models with
+  verified tool-calling support. Codified the "README = newcomer
+  docs only, changelog lives here" rule in `CLAUDE.md` so future
+  edits don't regress.
+
+### Fixed
+
+- **v4 Tracks 3-10 deep review — 3 logic bugs + 1 name collision fixed.**
+  - `engagements.data_room.score_completeness` previously counted an
+    empty-value submission as *covering* a required metric, inflating
+    coverage and hiding the gap. Empty values now correctly leave the
+    metric in the missing set and are surfaced as a single (not
+    duplicated) `missing` exception.
+  - `engagements.data_room.build_coaching_cards` used to fall back to
+    `entity_name="Unknown"` for any exception whose metric was not in
+    the caller's missing list (`unverified`, `stale`, `proxy`, etc.).
+    The helper now takes an optional ``submissions`` argument and
+    resolves the entity via `submission_id`, keeping the coaching card
+    routed to the right investee.
+  - `engagements.website.score_diagnostic` previously incremented
+    ``max_score`` per answer, so a caller sending duplicate answers
+    for the same question inflated the denominator. The scorer now
+    collapses duplicates (last-wins) and computes ``max_score`` from
+    the question catalogue.
+  - Renamed `engagements.regulatory.JurisdictionProfile` →
+    `RegulatoryJurisdictionProfile` to resolve a public-API collision
+    with the leaner v3 `roadmap_v2.JurisdictionProfile`. v3 call sites
+    (`select_jurisdiction_profile`) are unchanged; v4's richer profile
+    now has a distinct name and no longer shadows the v3 export.
+
 ### Added
 
+- `EngagementWorkspace.record_artifact(engagement_id, kind=..., ...)` —
+  generic audit-trail anchor used by Tracks 3-10 callers (data packs,
+  reports, assurance bundles, verifier tokens, etc.). Every invocation
+  appends a hash-chained event to the v3 `AuditTrail`, closing the
+  Sopact-counter "consultant override must be legible" requirement for
+  the new integration-wave modules.
+- Security note added to `build_assurance_bundle` / `verify_assurance_bundle`
+  docstrings clarifying that the default HMAC secret mirrors the v3
+  `AuditTrail` demo default and MUST be replaced with a KMS/HSM key in
+  production.
+- 9 new regression tests in `tests/test_v4_tracks_3_to_10.py` covering
+  the three logic bugs, the workspace `record_artifact` audit event,
+  the suite tool's error surface (missing payloads / invalid
+  transitions / unknown templates), an exhaustive SFDR classification
+  matrix, deadline scheduling under overdue/due-soon fiscal year ends,
+  and the copilot queue's unsafe-approval blockers. v4 test count is
+  now **88 (23 + 18 + 47)**; full suite is **1165 passing, 15 skipped, 1 xfailed, 0 failures**.
+
+### Added
+
+- **v4 Tracks 3-10 — Integration Wave complete**. Eight new modules in
+  `impact.engagements` and one consolidated agent tool (`engagement_suite`)
+  that dispatches across them. Every module is wired through the v3
+  `AuditTrail` singleton and ships deterministic defaults so CI runs
+  without external data.
+  - `engagements.data_room` (Track 3) — `DataRequestPack` with bundle-aware
+    guidance cards (definition, examples, acceptable evidence, common
+    mistakes), `DataRoomSubmission` / `FieldSubmission`,
+    `score_completeness()` (per-entity coverage + `missing` / `unverified`
+    exception detection), `rollup_multi_entity()` (per-metric fill rate
+    across entities), and `build_coaching_cards()` that convert exceptions
+    into coaching prompts.
+  - `engagements.value_creation` (Track 4) — `BenchmarkProvider` protocol
+    with a seeded `InMemoryBenchmarkProvider`, `PeerDashboard`,
+    `ImpactRiskRating` with material-risk flagging, `ValueCreationPlan`
+    that ties actions to KPI gaps / material risks / peer gaps,
+    `BusinessCase` (revenue / cost / risk-avoidance upside + valuation
+    multiple), `run_scenario()` compound-multiplier sensitivity engine,
+    and `score_supply_chain_hotspots()` for Scope 3 supplier ranking.
+  - `engagements.reporting_studio` (Track 5) — audience- and
+    evidence-depth-aware `Report` + `ReportSection` with 6 named
+    templates (IMM Baseline, Impact DD, ESG Baseline, Portfolio Deep Dive,
+    Annual Impact, Exit/VDD), `transition_report()` state machine (draft →
+    in_review → approved → published → superseded), `ClaimReview` panel
+    with `decide_claim()`, `build_executive_deck()` one-click outline,
+    `build_public_microsite()` for Track 7 microsites, and
+    `rewrite_for_audiences()` deterministic multi-audience rewrites
+    covering founder / IC / LP / board / public / regulator / verifier.
+  - `engagements.training` (Track 6) — `build_training_plan()` keyed to
+    maturity stage, 6 workshop packs (ToC, KPI design, ESG baseline, data
+    quality, stakeholder voice, reporting) with agendas + prompts +
+    deliverables, `build_coaching_card()` for investees,
+    `record_learning_loop()`, and `issue_readiness_badge()` (data /
+    report / assurance / LP) with threshold enforcement.
+  - `engagements.website` (Track 7, backend-only) — 7-question diagnostic
+    quiz with maturity scoring, gallery of productised engagements,
+    benchmark teaser, 5-entry playbook library, privacy-preserving upload
+    demo (never echoes source text), GDPR/PDPA-aware `capture_lead()`,
+    and white-label `PartnerMode` metadata.
+  - `engagements.copilot` (Track 8) — `CopilotOutput` with prompt / model /
+    model_version / source_refs / reviewer / decision provenance and a
+    `policy_passed` computed gate, `CopilotReviewQueue` that blocks
+    approval of low-confidence or unsourced outputs, deterministic
+    `run_challenge()` mode (unsupported_claim / weak_toc_link /
+    missing_stakeholder / missing_evidence / unclear_baseline),
+    `answer_from_approved_evidence()` client-safe answer scaffold, and
+    `extract_meeting_notes()` prefix-based ingestion.
+  - `engagements.regulatory` (Track 9) — 8 `JurisdictionProfile` entries
+    (EU, UK, US, Singapore, Switzerland, Canada, Japan, Australia) each
+    listing `RegulatoryObligation`s, SFDR Article 6/8/9 classifier,
+    UK SDR label classifier with anti-greenwashing enforcement,
+    `schedule_deadlines()` calendar tied to fiscal year end, and
+    `build_regulator_narrative()` compositor.
+  - `engagements.verification_bundle` (Track 10) — BlueMark-style
+    3-Pillar Verification: `MandatePack` (6 checks) + `PracticePack`
+    (9 OPIM principles) + `ReportingPack` (claim-by-claim review), HMAC
+    + SHA-256 signed `AssuranceManifest`, `verify_assurance_bundle()`
+    tamper-detection, `VerifierToken` with hashed secret + expiry,
+    `VERIFIER_MARKETPLACE` directory (BlueMark, KPMG, DNV), and
+    `evaluate_assurance_readiness()` badge driven by per-pillar
+    completion thresholds.
+- New consolidated agent tool `engagement_suite`
+  (`tools/impact/engagement_suite_tool.py`) — one action-dispatched tool
+  exposing 46 actions across Tracks 3-10 (data room, value creation,
+  reporting studio, training, website, copilot governance, regulatory
+  workbench, verification bundle). Registered in
+  `create_default_tool_registry()`. Avoids tool-sprawl by composing
+  existing modules rather than spawning 8 near-identical tools.
+- `tests/test_v4_tracks_3_to_10.py` — 38 new tests covering every
+  function from the 8 new modules plus an end-to-end smoke test that
+  walks the consolidated tool through at least one action per track
+  (including a sign/verify roundtrip for the assurance bundle and a
+  tamper detection assertion). After the deep-review regression
+  additions (see Fixed section) the Tracks 3-10 count grew to 47 and
+  the total v4 test suite stands at **88 tests** (Track 1: 23,
+  Track 2: 18, Tracks 3-10: 47), all green.
+- **v4 Wave 2 — Theory of Change + KPI Framework Builder (Track 2)**.
+  New `impact.engagements.toc_builder` module that wraps the existing v3
+  `impact.toc_graph` Mermaid renderer and
+  `impact.frameworks.cross_reference` crosswalk to deliver the critical
+  items from roadmap-v4 Track 2:
+  - `ToCCanvas` + `ToCCanvasNode` + `ToCCanvasEdge` + `ToCAssumption` +
+    `ToCRisk` — a consultant-facing ToC canvas with explicit problem,
+    stakeholders, inputs, activities, outputs, outcomes, impact,
+    assumptions, risks, and an equity & inclusion lens (Track 2.1).
+  - `draft_toc_from_intake()` — deterministic first-pass drafting hook so
+    the canvas always has something for the consultant to challenge
+    (positions us for Track 8's LLM draft without requiring it now).
+  - `validate_toc_canvas()` — rules-based logic-chain validator covering
+    missing problem/outcomes/impact, weak causal links (untested edges),
+    unmeasured outcomes (no IRIS+ mapping), missing or untested
+    assumptions, missing stakeholder / equity lens, and risks without
+    mitigation plans (Track 2.2).
+  - `generate_kpi_framework()` — generates an engagement-scoped
+    `KPIFramework` by reusing the v3 IRIS+ metric-recommender scoring
+    logic and lifting every pick through the cross-reference map to GRI,
+    EDCI, SASB, TCFD, ISSB, ESRS, TNFD, PCAF, EU Taxonomy, CDP, SBTi, and
+    SFDR PAI (Track 2.3). `lock_kpi_framework()` freezes a framework so
+    downstream tools treat it as immutable.
+- `EngagementWorkspace` gained `attach_toc_canvas`, `validate_toc`,
+  `mark_toc_node_reviewed`, `generate_kpi_framework_for`,
+  `lock_kpi_framework_for`, and `get_kpi_framework` helpers that thread
+  every change through the v3 `AuditTrail` (the Sopact counter-position
+  requirement that consultant review be legible and audit-logged).
+- New agent tool `toc_builder` (`tools/impact/toc_builder_tool.py`)
+  exposing the full Track 2 surface — draft, attach, validate, mark
+  reviewed, generate KPI, lock KPI, render Mermaid/Markdown — registered
+  in `create_default_tool_registry()`.
+- `tests/test_v4_toc_builder.py` — 18 new tests covering draft,
+  validator rules (all 11 rule codes), cross-reference expansion,
+  workspace wiring, audit-trail integration, and full agent-tool smoke
+  paths.
+- **v4 Wave 1 — Consultant Engagement Workspace (Track 1)**. New
+  `impact.engagements` package that packages v3 capabilities into a
+  consulting engagement lifecycle per `docs/roadmap-v4.md`:
+  - `engagements.models` — canonical `Engagement`, `Deliverable`,
+    `ChecklistItem`, `EngagementDocument`, `EngagementNote`,
+    `EngagementDecision`, and `ConsultantOverride` contracts. Deliverables
+    and engagements ship a validated state machine (planned → in_progress →
+    draft → client_review → final; proposal → active → on_hold → closed).
+  - `engagements.bundles` — 12 productised engagement bundles from
+    roadmap-v4 §4a (Strategy/IMM, DD-Light/Mid/Full IWA, ESG Baseline,
+    Annual Impact Report, LP DDQ, BlueMark-style 3-Pillar Verification,
+    Exit/VDD, Regulatory, Stakeholder Voice, Capacity Training) each
+    referencing the existing v3 agent tools that compose them — no v3
+    module is forked, matching the roadmap's "integration wave" rule.
+  - `engagements.checklist` — seven-phase consultant checklist generator
+    (Discovery → Data Request → Stakeholder Map → ToC Workshop → KPI
+    Design → Reporting → Training) with sequential `depends_on` linkage.
+  - `engagements.proposal` — deterministic proposal builder turning a
+    bundle pick + intake notes into scope, workplan, assumptions, fees,
+    outputs, and risk caveats.
+  - `engagements.templates` — reusable client-type template library for
+    funds, corporate CSR, foundations, nonprofits, and social enterprises.
+  - `engagements.workspace` — in-memory `EngagementWorkspace` store that
+    hashes document content, routes every state change through
+    `AuditTrail`, and captures consultant overrides of AI suggestions as
+    first-class records (the Sopact counter-position feature).
+- New agent tool `engagement_workspace` (`tools/impact/engagement_workspace_tool.py`)
+  exposing the full Track 1 surface to MCP/CLI callers with 18 actions
+  (list/browse bundles + templates, build proposal, create engagement,
+  drive deliverable + checklist state machines, attach documents, record
+  decisions / overrides, export state). Registered in
+  `create_default_tool_registry()`.
+- `tests/test_v4_engagement_workspace.py` — 23 tests covering the bundle
+  catalog, checklist generator, proposal builder, state machines,
+  audit-trail integration, and the full agent-tool smoke path.
 - Whole-codebase bug/logic audit artifacts under `project_document/`:
   `memory_bank_db.json`, `debug/codebase_debug_plan.md`,
   `debug/logic_issue_improvement_plan.md`, `debug/logic_audit_report.md`,

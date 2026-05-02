@@ -1,8 +1,8 @@
 # Impact Vision — Roadmap v4.0
 
 **Date:** 2026-05-02 (amended after extensive review of the consultant landscape
-and an audit of existing v3 capabilities)  
-**Status:** Consultant-Led Product Strategy — Integration Wave  
+and an audit of existing v3 capabilities; updated after Tracks 1-10 backend ship)  
+**Status:** Consultant-Led Product Strategy — Integration Wave (Backend complete for all 10 tracks; frontend + paid-data wiring deferred to Wave 5)  
 **Audience:** product, engineering, impact consultants, fund operators  
 **Thesis:** v3 already shipped most of the discrete capabilities a consultant
 needs (evidence graph, OPIM verification workspace, LP narrative, stakeholder
@@ -247,17 +247,18 @@ consultant can launch a project without picking 30 tools by hand.
 ### Track 1: Consultant Engagement Workspace
 
 **Timeline:** Q2 2026  
+**Status:** Wave-1 foundation landed (see `impact.engagements` + `engagement_workspace` tool).  
 **Goal:** Convert Impact Vision from a collection of tools into a managed
 consulting engagement workspace.
 
-| # | Item | Priority | Effort |
-|---|---|---|---|
-| 1.1 | Engagement model: client, fund, programme, scope, timeline, deliverables, owner, review status | Critical | M |
-| 1.2 | Proposal builder: turn intake notes into scope, workplan, assumptions, fees, outputs, and risk caveats | High | M |
-| 1.3 | Consultant checklist: discovery, data request, stakeholder map, ToC workshop, KPI design, reporting, training | Critical | S |
-| 1.4 | Engagement evidence vault: all uploaded docs, interview notes, data files, decisions, and outputs linked to audit trail | Critical | M |
-| 1.5 | Client-ready deliverable tracker with draft/review/final states and export bundles | High | M |
-| 1.6 | Reusable template library by client type: fund, corporate CSR, foundation, nonprofit, social enterprise | High | M |
+| # | Item | Priority | Effort | Status |
+|---|---|---|---|---|
+| 1.1 | Engagement model: client, fund, programme, scope, timeline, deliverables, owner, review status | Critical | M | Done (`engagements.models.Engagement`) |
+| 1.2 | Proposal builder: turn intake notes into scope, workplan, assumptions, fees, outputs, and risk caveats | High | M | Done (`engagements.proposal.build_proposal`) |
+| 1.3 | Consultant checklist: discovery, data request, stakeholder map, ToC workshop, KPI design, reporting, training | Critical | S | Done (`engagements.checklist.build_consultant_checklist`) |
+| 1.4 | Engagement evidence vault: all uploaded docs, interview notes, data files, decisions, and outputs linked to audit trail | Critical | M | Done (`EngagementWorkspace.attach_document` / `record_decision` / `record_override` with `AuditTrail` integration) |
+| 1.5 | Client-ready deliverable tracker with draft/review/final states and export bundles | High | M | Done for state machine; export bundle deferred to Wave 4 reporting studio |
+| 1.6 | Reusable template library by client type: fund, corporate CSR, foundation, nonprofit, social enterprise | High | M | Done (`engagements.templates.CLIENT_TEMPLATE_LIBRARY`) |
 
 **Value add:** TSIC-style advisory work becomes repeatable, auditable, and
 faster to deliver.
@@ -265,34 +266,36 @@ faster to deliver.
 ### Track 2: Theory Of Change And Strategy Builder
 
 **Timeline:** Q2-Q3 2026  
+**Status:** Critical items (2.1-2.3) shipped in Wave 2; 2.4-2.6 partially stubbed.  
 **Goal:** Make ToC and strategy design a guided, evidence-backed workflow.
 
-| # | Item | Priority | Effort |
-|---|---|---|---|
-| 2.1 | Interactive ToC canvas: problem, stakeholders, inputs, activities, outputs, outcomes, impact, assumptions | Critical | L |
-| 2.2 | Logic-chain validator: flags missing assumptions, weak causal links, unmeasured outcomes, and risk blind spots | Critical | M |
-| 2.3 | KPI framework generator: maps ToC outcomes to IRIS+, SDGs, EDCI, ESRS, GRI, ISSB, and custom KPIs | Critical | M |
-| 2.4 | Strategy-options simulator: compare target groups, geographies, interventions, and impact themes | High | L |
-| 2.5 | Stakeholder workshop pack: agenda, facilitation prompts, interview guide, and consensus scoring | High | M |
-| 2.6 | Equity and inclusion lens: checks who benefits, who is excluded, and whose voice is missing | High | M |
+| # | Item | Priority | Effort | Status |
+|---|---|---|---|---|
+| 2.1 | Interactive ToC canvas: problem, stakeholders, inputs, activities, outputs, outcomes, impact, assumptions | Critical | L | Done — `engagements.toc_builder.ToCCanvas` + `draft_toc_from_intake` (data model + Mermaid render via v3 `toc_graph`) |
+| 2.2 | Logic-chain validator: flags missing assumptions, weak causal links, unmeasured outcomes, and risk blind spots | Critical | M | Done — `validate_toc_canvas` (11 rule codes covering problem statement, outcomes/impact existence, input-traceability, IRIS+ indicator coverage, assumption attachment + testing, causal strength, stakeholders, equity lens, risk mitigations) |
+| 2.3 | KPI framework generator: maps ToC outcomes to IRIS+, SDGs, EDCI, ESRS, GRI, ISSB, and custom KPIs | Critical | M | Done — `generate_kpi_framework` wraps the v3 IRIS+ scoring logic and `cross_reference.lookup_by_iris` to expand each pick across GRI / EDCI / SASB / TCFD / ISSB / ESRS / TNFD / PCAF / EU Taxonomy / CDP / SBTi / SFDR PAI |
+| 2.4 | Strategy-options simulator: compare target groups, geographies, interventions, and impact themes | High | L | Not started |
+| 2.5 | Stakeholder workshop pack: agenda, facilitation prompts, interview guide, and consensus scoring | High | M | Partially — `engagements.checklist` "Stakeholder Map" / "ToC Workshop" phases ship facilitation prompts; full consensus scoring outstanding |
+| 2.6 | Equity and inclusion lens: checks who benefits, who is excluded, and whose voice is missing | High | M | Partially — canvas carries `equity_notes` + per-node `equity_segment`; validator enforces an equity lens rule; structured equity dashboard outstanding |
 
 **Value add:** Impact Vision supports strategy facilitation, not just reporting.
 
 ### Track 3: Client And Investee Data Room
 
 **Timeline:** Q3 2026  
+**Status:** Critical items (3.3-3.6) shipped; 3.1/3.2/3.7 backend-only (data models ready, frontend outstanding).  
 **Goal:** Productise Rimm-style data collection while preserving evidence
 governance.
 
-| # | Item | Priority | Effort |
-|---|---|---|---|
-| 3.1 | Client portal for data requests, questionnaires, file uploads, comments, and status tracking | Critical | L |
-| 3.2 | Dynamic assessment builder with 4,000-question ambition: standards, geography, sector, fund thesis, client maturity | High | L |
-| 3.3 | Smart data request packs by engagement type: DD, annual impact report, ESG baseline, CSR strategy, exit impact | Critical | M |
-| 3.4 | Automated evidence completeness scoring by deliverable and framework | High | M |
-| 3.5 | Data quality exception workflow: missing, stale, inconsistent, proxy, unverified, outlier | Critical | M |
-| 3.6 | Client guidance cards: definition, examples, source docs, acceptable evidence, common mistakes | High | M |
-| 3.7 | Multi-entity consolidation: business units, portfolio companies, programmes, geographies | High | L |
+| # | Item | Priority | Effort | Status |
+|---|---|---|---|---|
+| 3.1 | Client portal for data requests, questionnaires, file uploads, comments, and status tracking | Critical | L | Partially — backend data contracts landed (`DataRequestPack`, `DataRoomSubmission`, `issued_links`); UI deferred to Wave 5 frontend |
+| 3.2 | Dynamic assessment builder with 4,000-question ambition: standards, geography, sector, fund thesis, client maturity | High | L | Partially — bundle-aware field catalogue + `extra_fields` override; 4k-question taxonomy is later work |
+| 3.3 | Smart data request packs by engagement type: DD, annual impact report, ESG baseline, CSR strategy, exit impact | Critical | M | Done — `build_data_request_pack` keyed to every v4 engagement bundle |
+| 3.4 | Automated evidence completeness scoring by deliverable and framework | High | M | Done — `score_completeness` (per-entity coverage, required/submitted counts) + `overall_coverage_pct` computed field |
+| 3.5 | Data quality exception workflow: missing, stale, inconsistent, proxy, unverified, outlier | Critical | M | Done — `DataQualityException` with all six exception kinds and status lifecycle |
+| 3.6 | Client guidance cards: definition, examples, source docs, acceptable evidence, common mistakes | High | M | Done — every field carries guidance cards; `build_coaching_cards` lifts exceptions into investee-facing prescriptions |
+| 3.7 | Multi-entity consolidation: business units, portfolio companies, programmes, geographies | High | L | Done — `rollup_multi_entity` with per-entity coverage + per-metric fill rate + computed overall fill rate |
 
 **Value add:** consultants spend less time chasing spreadsheets and more time
 interpreting results.
@@ -300,17 +303,18 @@ interpreting results.
 ### Track 4: Benchmarking, Risk And Value Creation Intelligence
 
 **Timeline:** Q3-Q4 2026  
+**Status:** All seven items shipped as deterministic backend engines; paid-dataset wiring is a Wave 5 concern.  
 **Goal:** Add business-value and peer-context intelligence to impact data.
 
-| # | Item | Priority | Effort |
-|---|---|---|---|
-| 4.1 | Benchmark provider interface: offline sample now, pluggable paid/open datasets later | Critical | M |
-| 4.2 | Peer benchmark dashboard by sector, geography, company size, fund strategy, and metric | High | L |
-| 4.3 | ESG/impact risk rating with material risk categories and mitigation actions | Critical | M |
-| 4.4 | Value-creation plan: recommends operational actions tied to KPI gaps, risk, and expected outcomes | Critical | L |
-| 4.5 | ESG/impact business-case model: estimate revenue, cost, risk, valuation, funding, and impact upside | High | L |
-| 4.6 | Scenario and sensitivity engine for impact and ESG interventions | High | L |
-| 4.7 | Supply-chain and Scope 3 assessment workflow for supplier questionnaires and hotspot analysis | Medium | L |
+| # | Item | Priority | Effort | Status |
+|---|---|---|---|---|
+| 4.1 | Benchmark provider interface: offline sample now, pluggable paid/open datasets later | Critical | M | Done — `BenchmarkProvider` protocol + seeded `InMemoryBenchmarkProvider` + global default override hooks |
+| 4.2 | Peer benchmark dashboard by sector, geography, company size, fund strategy, and metric | High | L | Done — `PeerDashboard` bundled from provider results; filter fields available on `BenchmarkQuery` |
+| 4.3 | ESG/impact risk rating with material risk categories and mitigation actions | Critical | M | Done — `ImpactRiskRating` with 14 categories, likelihood×severity scoring, and `material_risks` computed field |
+| 4.4 | Value-creation plan: recommends operational actions tied to KPI gaps, risk, and expected outcomes | Critical | L | Done — `build_value_creation_plan` ties actions to KPI gaps / risks / peer gaps with effort + timing |
+| 4.5 | ESG/impact business-case model: estimate revenue, cost, risk, valuation, funding, and impact upside | High | L | Done — `BusinessCase` with revenue / cost / risk-avoidance / valuation-multiple inputs and computed uplift |
+| 4.6 | Scenario and sensitivity engine for impact and ESG interventions | High | L | Done — `run_scenario` compound-multiplier sensitivity engine (downside / base / upside) |
+| 4.7 | Supply-chain and Scope 3 assessment workflow for supplier questionnaires and hotspot analysis | Medium | L | Done — `score_supply_chain_hotspots` with spend×intensity → estimated tCO2e ranking |
 
 **Value add:** move from "what is your score?" to "what should management do
 next and why does it matter commercially?"
@@ -318,16 +322,17 @@ next and why does it matter commercially?"
 ### Track 5: Consultant-Grade Reporting Studio
 
 **Timeline:** Q4 2026  
+**Status:** All six items shipped (deck export = outline; PPTX render deferred to Wave 5 frontend).  
 **Goal:** Make reports configurable by audience and engagement type.
 
-| # | Item | Priority | Effort |
-|---|---|---|---|
-| 5.1 | Report builder with sections, audience, tone, evidence depth, visuals, and approval workflow | Critical | L |
-| 5.2 | Engagement-specific templates: IMM baseline, impact DD, ESG baseline, portfolio deep dive, annual report, exit report | Critical | M |
-| 5.3 | One-click executive deck: board/IC-ready PowerPoint from verified data | High | M |
-| 5.4 | Public website impact microsite generator for client-facing case studies and claims | Medium | L |
-| 5.5 | Claim review panel embedded in reports: approved, caveated, rejected, needs evidence | Critical | M |
-| 5.6 | Multi-audience narratives: founder, IC, LP, board, public, regulator, verifier | High | M |
+| # | Item | Priority | Effort | Status |
+|---|---|---|---|---|
+| 5.1 | Report builder with sections, audience, tone, evidence depth, visuals, and approval workflow | Critical | L | Done — `Report` + `ReportSection` (audience / evidence_depth / tone / visuals) with draft → in_review → approved → published → superseded state machine |
+| 5.2 | Engagement-specific templates: IMM baseline, impact DD, ESG baseline, portfolio deep dive, annual report, exit report | Critical | M | Done — 6 named templates (`REPORT_TEMPLATES`) with section titles + tool references + default evidence depth |
+| 5.3 | One-click executive deck: board/IC-ready PowerPoint from verified data | High | M | Done — `build_executive_deck` outline (cover + per-section slides + recommendations); PPTX render is a later wiring concern |
+| 5.4 | Public website impact microsite generator for client-facing case studies and claims | Medium | L | Done — `build_public_microsite` returns a `PublicMicrositeBundle` of slug-keyed pages |
+| 5.5 | Claim review panel embedded in reports: approved, caveated, rejected, needs evidence | Critical | M | Done — `ClaimReview` + `decide_claim` with `claim_status_counts` and `claim_ready_pct` computed fields |
+| 5.6 | Multi-audience narratives: founder, IC, LP, board, public, regulator, verifier | High | M | Done — `rewrite_for_audiences` + `AUDIENCE_HINTS` covering all seven audiences |
 
 **Value add:** consultants can deliver polished outputs without losing evidence
 discipline.
@@ -335,16 +340,17 @@ discipline.
 ### Track 6: Training And Capacity-Building Engine
 
 **Timeline:** Q4 2026-Q1 2027  
+**Status:** 5 / 6 shipped; consultant knowledge base (6.5) still backed by inline prompts only.  
 **Goal:** Productise consultant training and client enablement.
 
-| # | Item | Priority | Effort |
-|---|---|---|---|
-| 6.1 | Training-plan generator from client maturity, gaps, and engagement objectives | High | M |
-| 6.2 | Workshop packs: ToC, KPI design, ESG baseline, data quality, stakeholder voice, reporting | High | M |
-| 6.3 | Investee coaching cards tied to failed validations and missing evidence | Critical | S |
-| 6.4 | Learning loop: training assigned → action completed → data improves → score updates | Medium | M |
-| 6.5 | Consultant knowledge base: reusable explanations, examples, case studies, and facilitation notes | High | M |
-| 6.6 | Certification/readiness badges: data-ready, report-ready, assurance-ready, LP-ready | Medium | M |
+| # | Item | Priority | Effort | Status |
+|---|---|---|---|---|
+| 6.1 | Training-plan generator from client maturity, gaps, and engagement objectives | High | M | Done — `build_training_plan` keyed to `MaturityStage` with effort scaling |
+| 6.2 | Workshop packs: ToC, KPI design, ESG baseline, data quality, stakeholder voice, reporting | High | M | Done — 6 `WorkshopPack`s with agendas + facilitation prompts + deliverables |
+| 6.3 | Investee coaching cards tied to failed validations and missing evidence | Critical | S | Done — `InvesteeCoachingCard` via `build_coaching_card` + `engagements.data_room.build_coaching_cards` |
+| 6.4 | Learning loop: training assigned → action completed → data improves → score updates | Medium | M | Done — `LearningLoopEntry` + `record_learning_loop` captures the four-step loop |
+| 6.5 | Consultant knowledge base: reusable explanations, examples, case studies, and facilitation notes | High | M | Partially — `PLAYBOOK_PAGES` (Track 7) ships 5 playbooks; consultant-only KB still inline in workshop pack prompts |
+| 6.6 | Certification/readiness badges: data-ready, report-ready, assurance-ready, LP-ready | Medium | M | Done — `ReadinessBadge` via `issue_readiness_badge` with per-kind threshold enforcement |
 
 **Value add:** Impact Vision becomes a way for consultants to scale their
 expertise, not just run analyses.
@@ -352,18 +358,19 @@ expertise, not just run analyses.
 ### Track 7: Website Productisation And Conversion
 
 **Timeline:** Q1 2027  
+**Status:** Backend data layer for all 7 items shipped; frontend rendering deferred to Wave 5 frontend wiring.  
 **Goal:** Turn the public website into a guided product funnel for funds,
 consultants, corporates, and social enterprises.
 
-| # | Item | Priority | Effort |
-|---|---|---|---|
-| 7.1 | Public diagnostic quiz: "How mature is your impact measurement system?" with instant recommendations | Critical | M |
-| 7.2 | Sample report gallery: DD, LP report, assurance pack, stakeholder voice, exit impact | High | M |
-| 7.3 | Interactive benchmark teaser with anonymised sample data | Medium | M |
-| 7.4 | Consultant playbook pages: ToC design, KPI framework, stakeholder voice, ESG/impact DD, assurance readiness | High | M |
-| 7.5 | Lead capture from diagnostic outputs into a scoped engagement workspace | High | M |
-| 7.6 | "Upload a memo" demo flow with redacted sample outputs and clear privacy boundaries | Critical | L |
-| 7.7 | Partner page for consultants: white-label reporting, template library, methodology governance | Medium | M |
+| # | Item | Priority | Effort | Status |
+|---|---|---|---|---|
+| 7.1 | Public diagnostic quiz: "How mature is your impact measurement system?" with instant recommendations | Critical | M | Done (backend) — 7-question quiz + `score_diagnostic` mapping to `initial → optimising` with category-driven recommendations |
+| 7.2 | Sample report gallery: DD, LP report, assurance pack, stakeholder voice, exit impact | High | M | Done (backend) — `REPORT_GALLERY` seeded with 5 items across audiences |
+| 7.3 | Interactive benchmark teaser with anonymised sample data | Medium | M | Done (backend) — `build_benchmark_teaser` + `BenchmarkTeaser` structured output |
+| 7.4 | Consultant playbook pages: ToC design, KPI framework, stakeholder voice, ESG/impact DD, assurance readiness | High | M | Done (backend) — 5-entry `PLAYBOOK_PAGES` catalogue |
+| 7.5 | Lead capture from diagnostic outputs into a scoped engagement workspace | High | M | Done (backend) — `capture_lead` with required consent + valid-email check |
+| 7.6 | "Upload a memo" demo flow with redacted sample outputs and clear privacy boundaries | Critical | L | Done (backend) — `run_upload_demo` hashes source text, never echoes, returns sanitised outputs only |
+| 7.7 | Partner page for consultants: white-label reporting, template library, methodology governance | Medium | M | Done (backend) — `describe_partner_mode` returns white-label metadata pinned to a methodology version |
 
 **Value add:** the website demonstrates expertise and routes users into the
 right workflow instead of acting as a static brochure.
@@ -371,35 +378,37 @@ right workflow instead of acting as a static brochure.
 ### Track 8: AI Consultant Copilot With Governance
 
 **Timeline:** Q1-Q2 2027  
+**Status:** Governance scaffolding shipped; LLM call plane (8.1 / 8.3) wires to Track 8 prompt/model metadata but no LLM invocation yet.  
 **Goal:** Give consultants an AI assistant that drafts, checks, and challenges
 work without inventing unsupported claims.
 
-| # | Item | Priority | Effort |
-|---|---|---|---|
-| 8.1 | Engagement copilot: ask questions across client docs, metrics, evidence, notes, and reports | Critical | L |
-| 8.2 | Consultant challenge mode: identifies unsupported claims, weak ToC links, and missing stakeholder perspectives | Critical | M |
-| 8.3 | Proposal and SOW copilot grounded in selected deliverables and known assumptions | High | M |
-| 8.4 | Meeting note ingestion: extracts decisions, action items, risks, and evidence references | High | M |
-| 8.5 | AI output review queue with prompt/version/model metadata and reviewer decisions | Critical | M |
-| 8.6 | Client-safe answer mode: only answers from approved evidence and marks gaps explicitly | Critical | M |
+| # | Item | Priority | Effort | Status |
+|---|---|---|---|---|
+| 8.1 | Engagement copilot: ask questions across client docs, metrics, evidence, notes, and reports | Critical | L | Partially — `EngagementQuery` + `answer_from_approved_evidence` client-safe scaffold; LLM call plane is wiring work |
+| 8.2 | Consultant challenge mode: identifies unsupported claims, weak ToC links, and missing stakeholder perspectives | Critical | M | Done — deterministic `run_challenge` covering 5 finding categories |
+| 8.3 | Proposal and SOW copilot grounded in selected deliverables and known assumptions | High | M | Partially — `CopilotOutput.kind` includes `proposal_draft` / `sow_draft` with full provenance; deterministic proposal already in Track 1 (`build_proposal`) |
+| 8.4 | Meeting note ingestion: extracts decisions, action items, risks, and evidence references | High | M | Done — prefix-based `extract_meeting_notes` seeds the engagement audit log |
+| 8.5 | AI output review queue with prompt/version/model metadata and reviewer decisions | Critical | M | Done — `CopilotOutput` (prompt + model + model_version + source_refs) + `CopilotReviewQueue` that blocks approval of low-confidence / unsourced outputs |
+| 8.6 | Client-safe answer mode: only answers from approved evidence and marks gaps explicitly | Critical | M | Done — `answer_from_approved_evidence` returns citations only and escalates when no approved data matches |
 
 **Value add:** consultants get speed without sacrificing credibility.
 
 ### Track 9: Regulatory Compliance Workbench
 
 **Timeline:** Q3-Q4 2026  
+**Status:** All seven items shipped; double-materiality dashboard (9.4) and ISSB readiness (9.5) compose the existing v3 modules via `JurisdictionProfile.obligations`.  
 **Goal:** Match Holtara's "Regulatory support" service line by turning the
 existing v3 framework modules into a guided, jurisdiction-aware workbench.
 
-| # | Item | Priority | Effort |
-|---|---|---|---|
-| 9.1 | Jurisdiction selector (EU, UK, US, Singapore, Switzerland, Canada) wiring SFDR, SDR, SEC climate, CSRD/ESRS, ISSB, MAS green taxonomy | Critical | M |
-| 9.2 | SFDR Article 6/8/9 fund classification wizard with PAI completeness check | Critical | M |
-| 9.3 | UK SDR labelling wizard (Sustainability Focus / Improvers / Impact / Mixed Goals) with anti-greenwashing check | Critical | M |
-| 9.4 | CSRD/ESRS double-materiality assessment workspace with sector overlay and assurance-ready evidence pack (reuse `impact/csrd_wizard.py`) | High | L |
-| 9.5 | ISSB IFRS S1/S2 readiness assessment with TCFD legacy mapping | High | M |
-| 9.6 | Regulatory deadline calendar with portfolio-wide gap dashboard | High | M |
-| 9.7 | Auto-generated regulator-facing narrative (reuse `regulatory_packs.py` + `lp_narrative.py`) with caveat panel | Critical | M |
+| # | Item | Priority | Effort | Status |
+|---|---|---|---|---|
+| 9.1 | Jurisdiction selector (EU, UK, US, Singapore, Switzerland, Canada) wiring SFDR, SDR, SEC climate, CSRD/ESRS, ISSB, MAS green taxonomy | Critical | M | Done — 8 jurisdictions (adds Japan + Australia) wired via `JURISDICTION_PROFILES` |
+| 9.2 | SFDR Article 6/8/9 fund classification wizard with PAI completeness check | Critical | M | Done — `classify_sfdr` with DNSH + good-governance + PAI gap detection |
+| 9.3 | UK SDR labelling wizard (Sustainability Focus / Improvers / Impact / Mixed Goals) with anti-greenwashing check | Critical | M | Done — `classify_uk_sdr` enforces anti-greenwashing review + evidence-of-impact gate |
+| 9.4 | CSRD/ESRS double-materiality assessment workspace with sector overlay and assurance-ready evidence pack (reuse `impact/csrd_wizard.py`) | High | L | Partially — `csrd_double_materiality` obligation wired; sector overlay + evidence-pack export still reuses v3 `csrd_wizard` directly |
+| 9.5 | ISSB IFRS S1/S2 readiness assessment with TCFD legacy mapping | High | M | Done — ISSB S1 + S2 obligations wired; crosswalk handled by `frameworks/cross_reference` |
+| 9.6 | Regulatory deadline calendar with portfolio-wide gap dashboard | High | M | Done — `schedule_deadlines` returns a per-obligation `RegulatoryDeadline` list with computed `days_until_due` and status |
+| 9.7 | Auto-generated regulator-facing narrative (reuse `regulatory_packs.py` + `lp_narrative.py`) with caveat panel | Critical | M | Done — `build_regulator_narrative` composes jurisdiction obligations into governance / strategy / metrics sections with an explicit caveat panel |
 
 **Value add:** consultants stop maintaining separate spreadsheets per regulator
 and clients get a single regulatory view across the engagement.
@@ -407,18 +416,19 @@ and clients get a single regulatory view across the engagement.
 ### Track 10: Impact Verification & Assurance Bundle (BlueMark-Style 3-Pillar)
 
 **Timeline:** Q4 2026 - Q1 2027  
+**Status:** All seven items shipped. PDF export (10.6) returns the signed JSON manifest; PDF render is a Wave 5 wiring task.  
 **Goal:** Productise the verification workspace into the three pillars LPs and
 verifiers already recognise from BlueMark / OPIM Principle 9.
 
-| # | Item | Priority | Effort |
-|---|---|---|---|
-| 10.1 | Pillar 1 — Mandate verification workspace: thesis, theory of change, governance, exclusions, additionality, beneficiary lens | Critical | M |
-| 10.2 | Pillar 2 — Practice verification workspace: OPIM 9-principle alignment with evidence references and finding lifecycle (reuse `verification_workspace.py` + `ifc_opim.py`) | Critical | M |
-| 10.3 | Pillar 3 — Reporting verification workspace: claim-by-claim review of LP narrative against evidence graph and audit trail | Critical | M |
-| 10.4 | Verifier-facing read-only role with engagement-scoped tokens and immutable manifest export | Critical | M |
-| 10.5 | Independent-verifier marketplace metadata (reuse `marketplace.py`) so consultants can hand off to BlueMark / DNV / KPMG without duplicating data | High | M |
-| 10.6 | Annual assurance bundle: PDF + JSON-LD + signed manifest (reuse `signed_feed.py`) sufficient for OPIM Principle 9 publication | Critical | M |
-| 10.7 | "Assurance-Ready" badge on engagement workspace driven by completeness scoring and review-queue resolution | High | S |
+| # | Item | Priority | Effort | Status |
+|---|---|---|---|---|
+| 10.1 | Pillar 1 — Mandate verification workspace: thesis, theory of change, governance, exclusions, additionality, beneficiary lens | Critical | M | Done — `MandatePack` with 6 default `MandateItem`s covering all six pillar-1 checks |
+| 10.2 | Pillar 2 — Practice verification workspace: OPIM 9-principle alignment with evidence references and finding lifecycle (reuse `verification_workspace.py` + `ifc_opim.py`) | Critical | M | Done — `PracticePack` ships all 9 OPIM principles; finding lifecycle reuses v3 `verification_workspace` |
+| 10.3 | Pillar 3 — Reporting verification workspace: claim-by-claim review of LP narrative against evidence graph and audit trail | Critical | M | Done — `ReportingPack` with per-claim `ReportingClaim` review lifecycle |
+| 10.4 | Verifier-facing read-only role with engagement-scoped tokens and immutable manifest export | Critical | M | Done — `issue_verifier_token` (hashed secret, 90-day default expiry, read-only scopes) + `AssuranceManifest` export |
+| 10.5 | Independent-verifier marketplace metadata (reuse `marketplace.py`) so consultants can hand off to BlueMark / DNV / KPMG without duplicating data | High | M | Done — `VERIFIER_MARKETPLACE` seeded with BlueMark, KPMG, DNV entries with accreditations + supported methodologies |
+| 10.6 | Annual assurance bundle: PDF + JSON-LD + signed manifest (reuse `signed_feed.py`) sufficient for OPIM Principle 9 publication | Critical | M | Done (backend) — `build_assurance_bundle` produces an HMAC-SHA256 signed manifest + per-pillar hash; `verify_assurance_bundle` recomputes and compares; PDF render is a Wave 5 wiring task |
+| 10.7 | "Assurance-Ready" badge on engagement workspace driven by completeness scoring and review-queue resolution | High | S | Done — `evaluate_assurance_readiness` issues an `AssuranceReadinessBadge` keyed to per-pillar completion thresholds |
 
 **Value add:** Impact Vision becomes the system the verifier asks for, not just
 the system the consultant uses.
