@@ -1,12 +1,19 @@
 # Impact Vision — Roadmap v4.0
 
-**Date:** 2026-05-01  
-**Status:** Consultant-Led Product Strategy  
+**Date:** 2026-05-02 (amended after extensive review of the consultant landscape
+and an audit of existing v3 capabilities)  
+**Status:** Consultant-Led Product Strategy — Integration Wave  
 **Audience:** product, engineering, impact consultants, fund operators  
-**Thesis:** v3 made Impact Vision more assurance-ready. v4 should make it a
-working system for impact consultants: a platform that scopes engagements,
-builds strategy, collects evidence, trains clients, benchmarks performance, and
-turns expert judgement into reusable digital workflows.
+**Thesis:** v3 already shipped most of the discrete capabilities a consultant
+needs (evidence graph, OPIM verification workspace, LP narrative, stakeholder
+voice, exit impact, regulatory packs, IRIS+/EDCI/ESRS/ISSB/GRI/SASB/TCFD/SFDR
+frameworks, climate accounting, MCP + REST API, monitoring, pipeline). What is
+**missing is the engagement layer that ties them together**: a consultant
+project workspace, a Tideline-style Impact Management Compass scaffold, a
+Holtara-style "service across the investment cycle" navigation, a BlueMark
+3-pillar verification bundle, and a public website that productises the
+methodology. v4 should therefore be **mostly an integration, packaging, and
+workflow wave**, not a re-implementation wave.
 
 ---
 
@@ -50,10 +57,55 @@ Implication for Impact Vision: v4 should productise the analyst workflow around
 data intake, benchmarking, scenario analysis, report automation, and advisory
 dashboards while keeping v3's evidence-governance advantage.
 
+### Tideline + BlueMark: Impact Management Compass And Three-Pillar Verification
+
+Tideline (200+ projects, 130+ clients, $200B+ in capital) is structured around
+five service lines under its **Impact Management Compass**:
+
+1. **Strategy Development** — investment thesis, impact themes, lens design.
+2. **Impact Management System Design** — governance, IMM policies, KPIs.
+3. **Impact Due Diligence** — pre-investment screening and impact thesis test.
+4. **Impact Monitoring & Reporting** — IRIS+/EDCI/ILPA-aligned reporting.
+5. **Impact Verification (BlueMark)** — independent assurance against OPIM,
+   IMP, GIIN IRIS+, GRI, PRI, SDG Impact, SDR, and SFDR.
+
+BlueMark's verification methodology splits assurance into **three pillars**:
+
+- **Impact Mandate verification** — does the strategy itself credibly target
+  impact?
+- **Impact Management Practice verification** — are the OPIM-aligned processes
+  actually being executed?
+- **Impact Reporting verification** — is what is published to LPs honest,
+  complete, and tied to evidence?
+
+Implication for Impact Vision: package v3's modules into the **Compass + 3-pillar**
+shape consultants and their LPs already recognise, rather than asking the market
+to learn a new mental model.
+
+### Holtara, Impact Institute, ImpactMapper, ImpactVC: One-Stop-Shop Pattern
+
+- **Holtara** (Apex Group): explicit "one-stop-shop, services across the
+  investment cycle" structured as **Impact strategy → Regulatory support →
+  Screening & DD → Monitoring & data (Holtara.io platform) → Independent
+  verification → Reporting impact**, plus training for investment teams and
+  portfolio companies, and explicit impact VDD/exit reports for value at exit.
+- **Impact Institute**: modular DD (Light / Mid / Full) anchored in the
+  Impact-Weighted Accounts framework, with monetisation, attribution, and IMM
+  (Impact Multiple of Money) as headline outputs; one Impact Investor Tool
+  (IIT) covers calculation models, periodic data requests, and aggregated
+  fund reporting.
+- **ImpactMapper**: bundles **Reports + Advisement + Software** with custom
+  surveys, outcome harvesting, and human-stories storytelling alongside
+  metrics. Recently published a Responsible AI approach.
+- **ImpactVC** (incubated at Better Society Capital): publishes open-source
+  **Founders Playbook** and **VC Playbook** plus impact coaching and training
+  programmes for VCs. Validates the open-source playbook + community surface
+  as a credible go-to-market pattern.
+
 ### Broader Consultant Pattern
 
-Impact Institute, ImpactMapper, Impact ROI, Holtara, and investor IMM guidance
-converge around the same needs:
+Impact Institute, ImpactMapper, Impact ROI, Holtara, Tideline/BlueMark, ImpactVC,
+TSIC, and investor IMM guidance converge around the same needs:
 
 - Theory of Change and logic-chain design.
 - Practical KPI frameworks linked to strategy.
@@ -61,11 +113,39 @@ converge around the same needs:
 - Portfolio and programme evaluation.
 - Impact reporting adapted to different audiences.
 - Training and capacity building.
-- Business-case/value-creation analysis for ESG and impact.
+- Business-case / value-creation playbooks tied to alpha generation.
 - Impact due diligence, verification, value creation, and exit reporting.
+- Regulatory advisory across SFDR, SDR, SEC climate, CSRD/ESRS, and ISSB.
 
 Implication for Impact Vision: v4 should be less "tool menu" and more
 "consulting workflow engine."
+
+### The Sopact Counter-Position (And Why It Matters For v4)
+
+Sopact has explicitly argued (2026-04 page on Theory of Change) that
+"consultation-driven Theory of Change is over" because AI now collapses
+qualitative analysis, framework extraction, and IRIS+/SROI alignment from
+months to seconds. They reposition the bottleneck as **persistent stakeholder
+identity and longitudinal data ownership**, not framework facilitation.
+
+This is a direct attack on the value proposition of every consultant Impact
+Vision plans to serve. v4 must not pretend it isn't happening. Our response:
+
+1. **Don't out-Sopact Sopact on framework auto-generation** — they already
+   ship that. Instead, position Impact Vision's ToC builder (Track 2) as
+   **AI-drafted, consultant-curated, evidence-bound**: AI extracts the
+   first-pass ToC from intake docs, the consultant interrogates and rewrites
+   it in a workshop, and every assumption/outcome is bound to evidence in the
+   v3 evidence graph so it can be verified later.
+2. **Make the consultant's judgement legible** — every consultant override of
+   an AI suggestion should be logged as a reviewer event in `audit_trail.py`
+   so the workshop output is itself an auditable artefact.
+3. **Lean into governance and assurance** — Sopact has no audit trail, no
+   immutable manifest, no OPIM-aligned verification workspace. Those are
+   v3 strengths the v4 surface should make obvious.
+4. **Take the persistent-identity critique seriously** — extend
+   `stakeholder_voice.py` so beneficiaries get a stable ID across rounds,
+   not a per-survey row. (See Track 3.X amendment below.)
 
 ---
 
@@ -105,7 +185,64 @@ Strategic moves:
 
 ---
 
-## 4. V4 Strategic Tracks
+## 4. Codebase Reuse Map (v3 → v4 Delta)
+
+Before any new track is started, the engineering team must read this table.
+Most v4 user-facing concepts already have a v3 backing module; v4 is mostly
+a **packaging, navigation, and workflow** wave on top.
+
+| v4 Capability | Already shipped in v3 | New work needed in v4 |
+|---|---|---|
+| Theory of Change canvas | `impact/toc_graph.py`, `frameworks/theory_of_change.py` | Visual canvas, AI-draft from intake docs, consultant override audit |
+| KPI framework generator | `tools/impact/metric_recommender_tool.py`, IRIS+ catalog, cross-reference | Bundle by engagement type, lock & version per project |
+| Investee data room | `impact/investee_collection.py`, `questionnaire_v2.py`, `surveys.py`, `tools/.../beneficiary_feedback_tool.py` | Client portal UI, dynamic builder, expiry/no-auth links, multi-entity roll-up |
+| Evidence graph + audit | `impact/evidence_graph.py`, `audit_trail.py`, `evidence_workflow.py`, `verification_workspace.py` | Engagement-scoped views, deliverable-bound completeness scoring |
+| LP narrative + Q&A | `impact/lp_narrative.py`, `lp_portal.py`, `lp_calendar.py`, `tools/.../lp_narrative_tool.py`, `lp_ddq_export_tool.py` | Multi-audience templating (LP/IC/board/regulator), approval workflow |
+| Greenwashing review | `impact/greenwashing.py`, `greenwashing_reviewer.py`, `tools/.../greenwashing_*tool.py` | Embed in report builder claim review panel |
+| Climate accounting | `impact/climate_accounting.py`, `emission_factors.py` | Supplier questionnaire flow + Scope 3 hotspot UI |
+| Causal & contribution | `impact/causal.py`, `counterfactual.py`, `sroi.py`, `bayes.py`, `meta_analysis.py`, `spillover.py` | Surface in ToC validator and value-creation engine |
+| Risk / opportunity | `impact/risk_opportunity.py`, `tools/.../impact_risk_opportunity_tool.py` | Material risk register and mitigation actions per engagement |
+| Benchmarks | `impact/benchmarks.py`, `external_benchmarks.py` | Pluggable provider interface, peer dashboard, anonymised teaser |
+| Pipeline / monitoring | `tools/.../pipeline_tool.py`, `monitoring_tool.py`, `trend_analysis_tool.py` | Engagement workspace overlay, deliverable tracker |
+| Exit impact | `impact/exit_impact.py`, `tools/.../exit_impact_tool.py` | Wrap as Impact VDD / exit report bundle |
+| Frameworks (10+) | `frameworks/{sasb,gri,tcfd,sfdr_pai,edci,unpri,issb_ifrs_s1,issb_ifrs_s2,esrs,ifc_opim,tnfd}.py` | Regulatory wizard navigation (Track 9) |
+| MCP / API surface | `impact/mcp_server.py`, `api_gateway/router.py`, `sdk.py`, `plugins.py`, `marketplace.py`, `tenancy.py`, `soc2_checklist.py` | Engagement-scoped tokens, white-label tenancy, partner portal |
+| Stakeholder voice | `impact/stakeholder_voice.py`, `worker_voice.py`, `tools/.../stakeholder_voice_tool.py` | Persistent stakeholder ID across rounds (Sopact-counter) |
+| Document intelligence | `tools/.../document_analysis_tool.py`, `pitch_deck_analyze_tool.py`, `impact/extractors/` | Meeting-note ingestion, decision/action extraction |
+| AI governance | `impact/evidence_workflow.py`, AI extraction review queue, `evidence_review_tool.py` | Prompt/version/model metadata on every output, copilot review queue |
+| Improvement advice | `tools/.../improvement_advisor_tool.py`, `narrative_tool.py`, `guided_assessment_tool.py` | Reframe as Value Creation Plan deliverable |
+
+**Engineering rule for v4:** if a feature has a v3 backing module, the v4
+ticket is *integration only*, not re-implementation. New code lives in
+`impact/engagements/`, `tools/impact/engagement_*`, and the public website
+(`frontend/`). Avoid forking existing modules.
+
+---
+
+## 4a. Engagement-Type Bundles (Productised Service Lines)
+
+Tideline, Holtara, Impact Institute, and TSIC all sell *named* engagements.
+v4 should ship the same packaged offerings on top of existing tools so a
+consultant can launch a project without picking 30 tools by hand.
+
+| Engagement | Compass step | Bundled tools (existing) | New v4 wrapper |
+|---|---|---|---|
+| **Impact Strategy / IMM Baseline** | Strategy + System Design | ToC builder, fund_thesis, KPI generator, sdg_mapper, five_dimension_assess | "Strategy Engagement" template, workshop pack |
+| **Impact DD (Light)** | DD | dd_checklist, pitch_deck_analyze, exclusion_screening, greenwashing | DD-Light report template, 3-day SLA scaffold |
+| **Impact DD (Mid)** | DD | + 5D, sdg_mapper, framework_tool, risk_opportunity, benchmarks | DD-Mid template with KPI term-sheet annex |
+| **Impact DD (Full / IWA-style)** | DD | + sroi, causal, counterfactual, scenario_modeling, climate_accounting | Quantified IMM (Impact Multiple of Money) report |
+| **ESG Baseline** | System Design | framework_tool (CSRD/ESRS, ISSB, SASB, GRI, TCFD), data_quality, exclusion_screening, regulatory_packs | ESG Baseline workspace + materiality matrix |
+| **Annual Impact Report** | Monitoring & Reporting | impact_report, lp_narrative, narrative_tool, trend_analysis, monitoring_tool | Multi-audience report builder (Track 5) |
+| **LP DDQ Response Pack** | Monitoring & Reporting | lp_ddq_export_tool, lp_portal, evidence_workflow | LP Q&A workspace constrained to verified data |
+| **Impact Verification (3-pillar)** | Verification | verification_workspace, verification_prep, evidence_graph, audit_trail, ifc_opim | BlueMark-style 3-pillar bundle (Track 10) |
+| **Impact VDD / Exit Report** | Exit | exit_impact, lp_narrative, evidence_graph, returns | Exit-ready bundle, OPIM Principle 8 narrative |
+| **Regulatory Compliance** | Regulatory | sfdr_pai, esrs, csrd_wizard, regulatory_packs, climate_accounting | SFDR/SDR/SEC/CSRD wizard navigator (Track 9) |
+| **Stakeholder Voice Study** | Cross-cutting | stakeholder_voice, worker_voice, surveys, beneficiary_feedback | Persistent stakeholder ID (Sopact-counter) |
+| **Capacity Building / Training** | Cross-cutting | improvement_advisor, narrative_tool, dd_checklist, evidence_workflow | Workshop pack generator (Track 6) |
+
+---
+
+## 4b. V4 Strategic Tracks
 
 ### Track 1: Consultant Engagement Workspace
 
@@ -248,6 +385,44 @@ work without inventing unsupported claims.
 
 **Value add:** consultants get speed without sacrificing credibility.
 
+### Track 9: Regulatory Compliance Workbench
+
+**Timeline:** Q3-Q4 2026  
+**Goal:** Match Holtara's "Regulatory support" service line by turning the
+existing v3 framework modules into a guided, jurisdiction-aware workbench.
+
+| # | Item | Priority | Effort |
+|---|---|---|---|
+| 9.1 | Jurisdiction selector (EU, UK, US, Singapore, Switzerland, Canada) wiring SFDR, SDR, SEC climate, CSRD/ESRS, ISSB, MAS green taxonomy | Critical | M |
+| 9.2 | SFDR Article 6/8/9 fund classification wizard with PAI completeness check | Critical | M |
+| 9.3 | UK SDR labelling wizard (Sustainability Focus / Improvers / Impact / Mixed Goals) with anti-greenwashing check | Critical | M |
+| 9.4 | CSRD/ESRS double-materiality assessment workspace with sector overlay and assurance-ready evidence pack (reuse `impact/csrd_wizard.py`) | High | L |
+| 9.5 | ISSB IFRS S1/S2 readiness assessment with TCFD legacy mapping | High | M |
+| 9.6 | Regulatory deadline calendar with portfolio-wide gap dashboard | High | M |
+| 9.7 | Auto-generated regulator-facing narrative (reuse `regulatory_packs.py` + `lp_narrative.py`) with caveat panel | Critical | M |
+
+**Value add:** consultants stop maintaining separate spreadsheets per regulator
+and clients get a single regulatory view across the engagement.
+
+### Track 10: Impact Verification & Assurance Bundle (BlueMark-Style 3-Pillar)
+
+**Timeline:** Q4 2026 - Q1 2027  
+**Goal:** Productise the verification workspace into the three pillars LPs and
+verifiers already recognise from BlueMark / OPIM Principle 9.
+
+| # | Item | Priority | Effort |
+|---|---|---|---|
+| 10.1 | Pillar 1 — Mandate verification workspace: thesis, theory of change, governance, exclusions, additionality, beneficiary lens | Critical | M |
+| 10.2 | Pillar 2 — Practice verification workspace: OPIM 9-principle alignment with evidence references and finding lifecycle (reuse `verification_workspace.py` + `ifc_opim.py`) | Critical | M |
+| 10.3 | Pillar 3 — Reporting verification workspace: claim-by-claim review of LP narrative against evidence graph and audit trail | Critical | M |
+| 10.4 | Verifier-facing read-only role with engagement-scoped tokens and immutable manifest export | Critical | M |
+| 10.5 | Independent-verifier marketplace metadata (reuse `marketplace.py`) so consultants can hand off to BlueMark / DNV / KPMG without duplicating data | High | M |
+| 10.6 | Annual assurance bundle: PDF + JSON-LD + signed manifest (reuse `signed_feed.py`) sufficient for OPIM Principle 9 publication | Critical | M |
+| 10.7 | "Assurance-Ready" badge on engagement workspace driven by completeness scoring and review-queue resolution | High | S |
+
+**Value add:** Impact Vision becomes the system the verifier asks for, not just
+the system the consultant uses.
+
 ---
 
 ## 5. Website Feature Recommendations
@@ -302,6 +477,16 @@ These are the highest-value public/product website additions:
 - Engagement copilot with client-safe answer mode.
 - Website upload-and-preview demo flow.
 
+### Wave 5 — Regulatory & Verification Bundles (8-12 weeks)
+
+- Regulatory Compliance Workbench (Track 9): SFDR, SDR, SEC climate,
+  CSRD/ESRS, ISSB wizards across the existing framework modules.
+- BlueMark-style 3-Pillar Verification Bundle (Track 10) with verifier
+  marketplace handoff and signed assurance manifest.
+- Persistent stakeholder-identity layer on `stakeholder_voice.py` to close
+  the Sopact gap.
+- Partner / consultant white-label tenancy hardening.
+
 ---
 
 ## 7. Proposed V4 Success Metrics
@@ -314,6 +499,18 @@ These are the highest-value public/product website additions:
 - **Training impact:** measurable data-quality improvement after coaching cards.
 - **Governance:** 100% of AI-generated client-facing claims pass review queue
   or are explicitly caveated.
+- **Bundle adoption:** 70% of new engagements launched from a named template
+  (Strategy / DD-Light / DD-Mid / DD-Full / ESG Baseline / Annual / LP DDQ /
+  Verification / Exit / Regulatory / Stakeholder Voice / Training).
+- **Regulatory coverage:** at least one regulator wizard (SFDR, SDR, CSRD,
+  ISSB) used in 50% of EU/UK engagements within two quarters of Wave 5.
+- **Verifier handoff:** at least three independent verifiers (BlueMark
+  equivalent + two big-4 / DNV / KPMG) able to consume the signed assurance
+  manifest without manual re-extraction.
+- **Reuse discipline:** zero new modules duplicating an existing v3 module
+  (enforced via `Codebase Reuse Map` in PR review).
+- **Persistent identity:** every stakeholder feedback record links to a
+  stable `stakeholder_id` across at least two collection rounds.
 
 ---
 
@@ -337,3 +534,58 @@ These are the highest-value public/product website additions:
   <https://www.holtara.com/strategy-and-transformation/impact-positive-solutions/>
 - Wellington — IMM approach:
   <https://www.wellington.com/en-us/institutional/sustainability/our-approach-to-imm>
+- Tideline — Services overview and Impact Management Compass:
+  <https://tideline.com/> and <https://tideline.com/services/>
+- Tideline — Impact Verification (BlueMark spin-out):
+  <https://tideline.com/services/impact-verification/>
+- BlueMark — three-pillar verification methodology and ILPA partnership:
+  <https://bluemark.co/> and
+  <https://bluemark.co/bluemark-and-tideline-to-partner-with-ilpa-to-bring-impact-investing-tools-and-insights-to-limited-partners/>
+- Holtara — Impact-focused services (one-stop-shop, six service lines):
+  <https://www.holtara.com/solutions/impact/>
+- Impact Institute — Impact Due Diligence brochure (Light / Mid / Full
+  modular IWA-based DD, Impact Investor Tool):
+  <https://www.impactinstitute.com/wp-content/uploads/Impact_Due_Diligence_Website_Download-1.pdf>
+- ImpactMapper — Reports + Advisement + Software trio, Responsible AI:
+  <https://www.impactmapper.com/>
+- ImpactVC (Better Society Capital) — open-source VC and Founders Playbooks:
+  <https://www.impactvc.co/>
+- Sopact — "Theory of Change" 2026-04 essay arguing the consultation-driven
+  era is over: <https://www.sopact.com/use-case/theory-of-change>
+- Tideline / Impact Alpha — Impact value-creation playbooks for alpha:
+  <https://impactalpha.com/the-xs-and-os-of-impact-how-impact-value-creation-playbooks-can-generate-alpha/>
+- Watershed — audit-grade carbon platform with Product Footprints AI:
+  <https://watershed.com/>
+- EvalCommunity Academy — AI-powered Theory of Change & Logframe Builder
+  (intervention logic, indicators, MOV, assumptions):
+  <https://academy.evalcommunity.com/tools/ai-powered-theory-of-change-and-logframe-builder/>
+
+---
+
+## 9. Amendment Notes (2026-05-02)
+
+This amendment (vs. the 2026-05-01 original) adds:
+
+1. **Tideline + BlueMark** signal section and a 3-pillar verification track
+   (new Track 10) so v4 explicitly sells the verification bundle LPs already
+   ask for.
+2. **Holtara, Impact Institute, ImpactMapper, ImpactVC** signal section to
+   capture the one-stop-shop / modular DD / playbook patterns already proven
+   in market.
+3. A **direct response to Sopact's "consultation-driven ToC is over"
+   argument** — v4 must position the consultant-curated, evidence-bound,
+   audit-logged ToC as the differentiator, plus add persistent stakeholder
+   identity as a defensive feature.
+4. A **Codebase Reuse Map (Section 4)** that lists every v3 module the new
+   v4 surface should reuse. Engineering rule: no re-implementation of an
+   existing module; v4 work lives in `impact/engagements/`,
+   `tools/impact/engagement_*`, and `frontend/`.
+5. **Engagement-Type Bundles (Section 4a)** — a productised service catalog
+   (Strategy, DD-Light/Mid/Full, ESG Baseline, Annual Report, LP DDQ,
+   Verification, Exit / VDD, Regulatory, Stakeholder Voice, Training) that
+   maps each engagement to the existing tools that should be wired together.
+6. A new **Regulatory Compliance Workbench (Track 9)** wrapping the existing
+   SFDR, SDR, SEC, CSRD/ESRS, ISSB modules into a jurisdiction-aware wizard.
+7. **Wave 5** in the implementation plan and four new success metrics
+   covering bundle adoption, regulatory coverage, verifier handoff, reuse
+   discipline, and persistent stakeholder identity.
