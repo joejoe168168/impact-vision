@@ -27,55 +27,55 @@ from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 _DIMENSION_IMPROVEMENT_STRATEGIES: dict[str, list[dict[str, str]]] = {
     "what": [
-        {"metric": "PI4060", "action": "Track impact category (positive/negative/both)", "effort": "quick win"},
-        {"metric": "PI2028", "action": "Define and track specific outcome indicators", "effort": "medium-term"},
-        {"metric": "PI1779", "action": "Measure changes in target population well-being", "effort": "medium-term"},
+        {"metric": "OD6247", "action": "Define social impact objectives", "effort": "quick win"},
+        {"metric": "OD4108", "action": "Define environmental impact objectives", "effort": "quick win"},
+        {"metric": "OD4091", "action": "Define and track social and environmental targets", "effort": "medium-term"},
     ],
     "who": [
-        {"metric": "PI9468", "action": "Define and characterize target beneficiary population", "effort": "quick win"},
-        {"metric": "PI3468", "action": "Track demographics of beneficiaries served", "effort": "medium-term"},
-        {"metric": "OI8536", "action": "Measure reach into underserved/marginalized populations", "effort": "medium-term"},
+        {"metric": "OD7212", "action": "Define target stakeholders", "effort": "quick win"},
+        {"metric": "PD5752", "action": "Track target-stakeholder demographics", "effort": "medium-term"},
+        {"metric": "PI4237", "action": "Measure reach into historically marginalized populations", "effort": "medium-term"},
     ],
     "how_much": [
-        {"metric": "PI5490", "action": "Quantify scale of impact (total beneficiaries reached)", "effort": "quick win"},
-        {"metric": "PI1855", "action": "Measure depth of impact per beneficiary", "effort": "medium-term"},
-        {"metric": "PI4840", "action": "Track duration of impact sustainability", "effort": "strategic"},
+        {"metric": "PI4060", "action": "Quantify client reach", "effort": "quick win"},
+        {"metric": "PI2476", "action": "Quantify wider communities served", "effort": "medium-term"},
+        {"metric": "PI7163", "action": "Measure target-stakeholder satisfaction", "effort": "medium-term"},
     ],
     "contribution": [
-        {"metric": "PI7734", "action": "Establish counterfactual or baseline comparison", "effort": "medium-term"},
-        {"metric": "OI6074", "action": "Document additionality — what would not have happened without you", "effort": "medium-term"},
-        {"metric": "PI3922", "action": "Get independent verification of impact claims", "effort": "strategic"},
+        {"metric": "OD7900", "action": "Document relationship to target stakeholders", "effort": "medium-term"},
+        {"metric": "OI7914", "action": "Set up regular stakeholder engagement", "effort": "medium-term"},
+        {"metric": "OI8113", "action": "Run market research on client needs and alternatives", "effort": "strategic"},
     ],
     "risk": [
-        {"metric": "PI3230", "action": "Assess and document potential negative impacts", "effort": "quick win"},
-        {"metric": "PI7985", "action": "Implement mitigation strategies for identified risks", "effort": "medium-term"},
-        {"metric": "OI2734", "action": "Set up regular stakeholder feedback loops", "effort": "medium-term"},
+        {"metric": "OI8001", "action": "Document worker-safety policies", "effort": "quick win"},
+        {"metric": "OI1042", "action": "Track employee grievances registered", "effort": "medium-term"},
+        {"metric": "OI3601", "action": "Maintain an employee feedback and grievance system", "effort": "medium-term"},
     ],
 }
 
 _SECTOR_PEER_PATTERNS: dict[str, dict[str, list[str]]] = {
     "agriculture": {
-        "common_metrics": ["PI5490", "OI4112", "PI2028", "OI8536", "PI1779"],
+        "common_metrics": ["PI4060", "PI9991", "PI5935", "OI4112", "PI3468"],
         "typical_programs": ["Smallholder training", "Sustainable sourcing", "Climate-resilient varieties"],
         "partnerships": ["Agricultural extension services", "Microfinance institutions", "Research institutes"],
     },
     "healthcare": {
-        "common_metrics": ["PI5490", "PI2028", "PI3468", "OI8536", "PI1855"],
+        "common_metrics": ["PI4060", "PI3902", "PI7191", "OI5049", "PI7163"],
         "typical_programs": ["Community health workers", "Telemedicine", "Preventive care"],
         "partnerships": ["Ministries of Health", "WHO", "Local NGOs"],
     },
     "fintech": {
-        "common_metrics": ["PI5490", "PI9468", "OI4869", "PI3468", "OI8536"],
+        "common_metrics": ["PI4060", "PI7098", "PI3193", "PI7467", "FP2635"],
         "typical_programs": ["Financial literacy", "Agent banking", "Credit scoring for underserved"],
         "partnerships": ["Central banks", "MFIs", "Mobile network operators"],
     },
     "energy": {
-        "common_metrics": ["OI4112", "PI5490", "PI2028", "OI1395", "OI6074"],
+        "common_metrics": ["PI2822", "PI8706", "PI5842", "OI4112", "OI9604"],
         "typical_programs": ["Off-grid solar", "Mini-grids", "Clean cooking"],
         "partnerships": ["Energy regulators", "Development finance", "Technology providers"],
     },
     "education": {
-        "common_metrics": ["PI5490", "PI2028", "PI3468", "PI1855", "OI8536"],
+        "common_metrics": ["PI2389", "PI2822", "PI1902", "PI9910", "PI7163"],
         "typical_programs": ["EdTech platforms", "Teacher training", "Scholarship programs"],
         "partnerships": ["Ministries of Education", "UNICEF", "Corporate partners"],
     },

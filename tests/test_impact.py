@@ -185,10 +185,10 @@ class TestFrameworks:
     def test_edci_assess(self) -> None:
         from openharness.impact.frameworks.edci import assess_edci_coverage
         result = assess_edci_coverage(
-            reported_data={"OI4112": "80", "OI6213": "85"},
-            company_description="We track employee turnover, female leadership, and energy use",
+            reported_data={"OI4112": "80", "OI1075": "40%"},
+            company_description="We track employee turnover, female leadership, and renewable energy use",
         )
-        assert result["total"] == 17
+        assert result["total"] == 19
         assert result["addressed"] > 0
 
     def test_unpri_assess(self) -> None:
@@ -234,12 +234,15 @@ class TestFrameworks:
         )
         assert "overall_readiness" in result
         assert "pillar_scores" in result
+        assert result["assessment_basis"] == "screening_readiness_not_compliance_opinion"
 
     def test_esrs_standards(self) -> None:
         from openharness.impact.frameworks.esrs import get_esrs_standards
         standards = get_esrs_standards()
-        assert len(standards) >= 10
+        assert len(standards) == 12
+        assert standards[0].code == "ESRS 1"
         names = [s.name for s in standards]
+        assert "General Requirements" in names
         assert any("Climate" in n for n in names)
         assert any("Workforce" in n for n in names)
 
@@ -252,6 +255,7 @@ class TestFrameworks:
         assert result["total_topics"] > 0
         assert result["material_topics"] >= 0
         assert "topics" in result
+        assert result["requires_stakeholder_validation"] is True
 
     def test_esrs_data_points(self) -> None:
         from openharness.impact.frameworks.esrs import get_total_data_points
@@ -281,10 +285,17 @@ class TestCrossReference:
         results = lookup_by_sfdr(1)
         assert len(results) > 0
 
+    def test_lookup_by_issb_and_esrs(self) -> None:
+        from openharness.impact.frameworks.cross_reference import lookup_by_esrs, lookup_by_issb
+
+        assert lookup_by_issb("S2-MT-1")
+        assert lookup_by_esrs("E1-6")
+
     def test_search_cross_references(self) -> None:
         from openharness.impact.frameworks.cross_reference import search_cross_references
         results = search_cross_references("gender")
         assert len(results) > 0
+        assert results[0].mapping_confidence in {"direct", "partial", "proxy", "conceptual"}
 
     def test_total_mappings(self) -> None:
         from openharness.impact.frameworks.cross_reference import get_all_cross_references

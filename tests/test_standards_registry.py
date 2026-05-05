@@ -34,9 +34,25 @@ def test_registry_lookup_supports_aliases_and_versions() -> None:
     registry = default_standards_registry()
 
     assert registry.get("IRIS+").key == "IRIS_PLUS@5.3c"
+    assert registry.get("ILPA EDCI").key == "EDCI@2026"
     assert registry.get("IFRS S2").standard_id == "ISSB"
+    assert registry.get("ESRS").version == "2023-delegated-act"
     assert registry.get("ESRS", version="2025-exposure-draft").status == "draft"
     assert get_default_standard("SFDR PAI").standard_id == "SFDR"
+
+
+def test_registry_captures_current_standard_requirements() -> None:
+    registry = default_standards_registry()
+
+    edci = registry.get("EDCI")
+    esrs = registry.get("ESRS")
+    opim = registry.get("OPIM")
+
+    assert edci.requirements_url == "https://www.esgdc.org/metrics/"
+    assert "Cybersecurity" in edci.requirement_ids
+    assert len(esrs.requirement_ids) == 12
+    assert "ESRS 1" in esrs.requirement_ids
+    assert "Principle 7 covers impact at exit" in opim.notes
 
 
 def test_active_rule_packs_include_under_revision_climate_methods() -> None:

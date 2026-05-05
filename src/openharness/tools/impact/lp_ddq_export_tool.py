@@ -55,9 +55,9 @@ LP_DDQ_TEMPLATES = {
         "name": "EDCI Annual Survey",
         "description": "ESG Data Convergence Initiative annual portfolio company survey",
         "sections": [
-            {"id": "edci-e", "question": "Environment metrics (Scope 1/2/3, renewable energy, net zero)", "data_sources": ["edci_environment"]},
-            {"id": "edci-s", "question": "Social metrics (injuries, diversity, engagement, wages)", "data_sources": ["edci_social"]},
-            {"id": "edci-g", "question": "Governance metrics (board independence, data privacy, ESG oversight)", "data_sources": ["edci_governance"]},
+            {"id": "edci-e", "question": "Environment metrics (GHG emissions, decarbonization, renewable energy)", "data_sources": ["edci_environment"]},
+            {"id": "edci-s", "question": "Social metrics (work-related accidents, diversity, hiring, engagement)", "data_sources": ["edci_social"]},
+            {"id": "edci-g", "question": "Governance metrics (cybersecurity testing)", "data_sources": ["edci_governance"]},
         ],
     },
     "sfdr": {
@@ -466,7 +466,7 @@ class LpDdqExportTool(BaseTool):
                 social_metrics = {mid: val for mid, val in company.reported_metrics.items() if mid.startswith("PI")}
                 parts.append(f"  Social: {len(social_metrics)} social metrics reported")
             if "edci_governance" in sources:
-                parts.append("  Governance: Board composition and oversight data pending")
+                parts.append("  Governance: Cybersecurity testing data pending")
 
         if not parts:
             parts.append("[Data not available — provide company description, sector, reported metrics, and SDG claims for comprehensive responses.]")

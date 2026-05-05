@@ -54,12 +54,12 @@ def test_record_report_publication_event() -> None:
         report_format="html",
         actor="lp-relations",
         period="2026-Q4",
-        standards=["IRIS_PLUS@5.3c", "EDCI@2025"],
+        standards=["IRIS_PLUS@5.3c", "EDCI@2026"],
         evidence_manifest_hash="abc123",
         report_hash="def456",
     )
 
     assert event.report_kind == "report.published"
-    assert event.payload["standards"] == ["IRIS_PLUS@5.3c", "EDCI@2025"]
+    assert event.payload["standards"] == ["IRIS_PLUS@5.3c", "EDCI@2026"]
     assert event.payload["evidence_manifest_hash"] == "abc123"
     assert trail.verify() == (True, [])

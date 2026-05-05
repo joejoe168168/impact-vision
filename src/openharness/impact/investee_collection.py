@@ -15,11 +15,11 @@ from openharness.tools.impact.common import normalize_metric_ids, normalize_sect
 
 SECTOR_METRIC_TEMPLATES: dict[str, list[str]] = {
     "energy": ["OI4112", "OI6697", "PI8706", "PI2822"],
-    "fintech": ["PI4060", "PI2740", "OI6213", "OI1571"],
-    "financial": ["PI4060", "PI2740", "OI6213", "OI1571"],
+    "fintech": ["PI4060", "PI3193", "OI6213", "OI1571"],
+    "financial": ["PI4060", "PI3193", "OI6213", "OI1571"],
     "healthcare": ["PI4060", "PI3902", "PI7191", "OI8869"],
     "health": ["PI4060", "PI3902", "PI7191", "OI8869"],
-    "agriculture": ["PI4060", "PI1290", "OI5409", "PI3687"],
+    "agriculture": ["PI4060", "PI1290", "PI9991", "PI3687"],
     "education": ["PI4060", "PI2389", "PI2822", "OI8869"],
     "circular_economy": ["OI6697", "OI2535", "OI7920", "OI1479"],
     "livestock": ["PI4060", "OI4112", "OI6697", "PI3687"],

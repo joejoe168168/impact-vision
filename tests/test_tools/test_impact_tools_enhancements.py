@@ -684,7 +684,12 @@ class TestGreenwashing:
             name="Verified Solar",
             description="We deployed 500MW solar capacity, measured and verified by third-party audit. Baseline established 2020.",
             sector="energy",
-            reported_metrics={"OI4112": "1200 tCO2e", "PI4060": "25000", "OI9803": "500MW"},
+            reported_metrics={
+                "OI4112": "1200 tCO2e",
+                "OI9604": "400 tCO2e",
+                "PI4060": "25000",
+                "OI0263": "500 ML",
+            },
             sdg_claims=[7, 13],
         )
         result = assess_greenwashing(company)
@@ -954,6 +959,7 @@ class TestISSBS1:
         )
         assert "overall_readiness" in result
         assert result["overall_readiness"] > 0
+        assert result["assessment_basis"] == "screening_readiness_not_compliance_opinion"
         assert len(result["pillar_scores"]) == 4
 
     def test_issb_framework_tool_handler(self):

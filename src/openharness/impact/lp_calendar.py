@@ -39,10 +39,10 @@ REPORT_INPUT_CHECKLIST: dict[str, list[str]] = {
         "Strategy & theory of change narrative",
     ],
     "edci": [
-        "EDCI Core Metric Set values per portco",
-        "Workforce composition (S1-S6)",
-        "Climate metrics (E1-E6)",
-        "Governance & ownership data (G1-G3)",
+        "EDCI 2026 KPI values per portco",
+        "Workforce and engagement fields (S1-S11)",
+        "Climate and decarbonization fields (E1-E7)",
+        "Cybersecurity testing field (G1)",
     ],
     "sfdr_pai": [
         "All 14 mandatory PAI indicator values",

@@ -817,10 +817,10 @@ def calculate_difference_in_differences(
 
 
 class ExitImpactAssessment(BaseModel):
-    """Impact at exit assessment linked to OPIM Principle 8."""
+    """Impact at exit assessment linked to OPIM Principle 7."""
 
     company_name: str
-    opim_principle: str = "OPIM Principle 8"
+    opim_principle: str = "OPIM Principle 7"
     durability_risks: list[str] = Field(default_factory=list)
     post_exit_actions: list[str] = Field(default_factory=list)
     residual_score: int = Field(ge=0, le=100)

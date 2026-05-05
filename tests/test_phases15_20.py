@@ -132,7 +132,7 @@ class TestBlendedFinance:
         from openharness.impact.blended_finance import design_il_loan
         t = design_il_loan(
             borrower="Acme", principal_usd=5_000_000, base_rate_bps=600,
-            tenor_months=60, kpi_id="IRIS+PI1234",
+            tenor_months=60, kpi_id="IRIS+OI2764",
             kpi_description="tCO2e avoided", baseline=1000, target=5000,
         )
         bps = [s.rate_bps for s in t.step_schedule]
@@ -197,7 +197,7 @@ class TestAssurance:
             assertion_text="We believe the following disclosures are fairly stated.",
             prepared_by="CFO",
             subject_description="Portfolio-level impact KPIs",
-            metrics=["PI5380", "OI6541"],
+            metrics=["PI2822", "OI2764"],
         )
         assert pack.standard == "ISAE3000"
         assert pack.assertion.prepared_by == "CFO"

@@ -183,7 +183,7 @@ LP reporting is where fund managers spend the most time and where quality matter
 | 15.5 | Impact-weighted returns analysis — overlay impact scores on financial IRR/MOIC, compute impact-adjusted performance | Medium | L |
 | 15.6 | Vintage year comparison — compare fund impact performance across vintages with normalized metrics | Medium | M |
 | 15.7 | Peer fund benchmarking — anonymized comparison against GIIN survey medians and sector benchmarks | Medium | M |
-| 15.8 | Exit impact assessment — structured framework for measuring sustained impact post-exit (IFC OPIM Principle 8) | Medium | L |
+| 15.8 | Exit impact assessment — structured framework for measuring sustained impact post-exit (IFC OPIM Principle 7) | Medium | L |
 
 ---
 

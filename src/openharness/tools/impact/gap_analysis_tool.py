@@ -16,7 +16,7 @@ class GapAnalysisInput(BaseModel):
     company_name: str = Field(description="Name of the company")
     reported_metrics: dict[str, str] = Field(
         default_factory=dict,
-        description="IRIS+ metric ID -> value (e.g. {'PI4060': '10000', 'OI6024': '150'})",
+        description="IRIS+ metric ID -> value (e.g. {'PI4060': '10000', 'OI8869': '150'})",
     )
     impact_themes: list[str] = Field(default_factory=list)
     custom_metric_set: list[str] = Field(

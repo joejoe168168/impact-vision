@@ -24,6 +24,7 @@ from openharness.impact.frameworks.theory_of_change import (
 )
 from openharness.impact.frameworks.cross_reference import (
     CrossReference, lookup_by_iris, lookup_by_gri, lookup_by_edci, lookup_by_sfdr,
+    lookup_by_issb, lookup_by_esrs,
     search_cross_references, get_all_cross_references, format_cross_reference,
 )
 from openharness.impact.frameworks.pcaf import (
@@ -55,8 +56,8 @@ __all__ = [
     "TheoryOfChange", "ToCPrinciple", "get_rs_group_principles",
     "get_giin_toc_checklist", "assess_toc_alignment", "assess_toc_completeness",
     "CrossReference", "lookup_by_iris", "lookup_by_gri", "lookup_by_edci",
-    "lookup_by_sfdr", "search_cross_references", "get_all_cross_references",
-    "format_cross_reference",
+    "lookup_by_sfdr", "lookup_by_issb", "lookup_by_esrs", "search_cross_references",
+    "get_all_cross_references", "format_cross_reference",
     # Phase 13 frameworks
     "FinancedEmissionsInput", "FinancedEmissionsResult", "PCAFRollup",
     "calculate_financed_emissions", "rollup_pcaf",

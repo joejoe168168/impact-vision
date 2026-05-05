@@ -27,7 +27,7 @@ class ESRSDisclosure(BaseModel):
 
 
 class ESRSTopic(BaseModel):
-    """An ESRS topical standard (e.g. E1 Climate Change)."""
+    """An ESRS standard or topical area (e.g. ESRS 1, E1 Climate Change)."""
 
     code: str
     name: str
@@ -38,11 +38,25 @@ class ESRSTopic(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# ESRS standards — cross-cutting, environment, social, governance
+# ESRS standards — general, cross-cutting, environment, social, governance
 # ---------------------------------------------------------------------------
 
 ESRS_STANDARDS: list[ESRSTopic] = [
     # Cross-cutting
+    ESRSTopic(
+        code="ESRS 1",
+        name="General Requirements",
+        pillar="cross-cutting",
+        description="Overall reporting principles, double materiality, value chain, time horizons, and sustainability-statement structure",
+        disclosures=[
+            ESRSDisclosure(code="ESRS1-1", name="Basis for preparation and presentation"),
+            ESRSDisclosure(code="ESRS1-2", name="Qualitative characteristics of information"),
+            ESRSDisclosure(code="ESRS1-3", name="Double materiality as the basis for sustainability disclosures"),
+            ESRSDisclosure(code="ESRS1-4", name="Due diligence and value chain boundaries"),
+            ESRSDisclosure(code="ESRS1-5", name="Time horizons and reporting boundaries"),
+        ],
+        keywords=["double materiality", "value chain", "due diligence", "reporting boundary", "sustainability statement"],
+    ),
     ESRSTopic(
         code="ESRS 2",
         name="General Disclosures",
@@ -259,6 +273,8 @@ class MaterialityResult(BaseModel):
     impact_material: bool = False
     financial_material: bool = False
     double_material: bool = False
+    materiality_status: str = "not_indicated"
+    confidence: str = "low"
     impact_evidence: list[str] = Field(default_factory=list)
     financial_evidence: list[str] = Field(default_factory=list)
     disclosures_addressed: int = 0
@@ -287,10 +303,12 @@ def assess_double_materiality(
     sector: str = "",
     reported_metrics: dict[str, str] | None = None,
 ) -> dict:
-    """Run a double-materiality assessment across all ESRS topics.
+    """Run a double-materiality screening across all ESRS standards.
 
-    Returns per-topic impact materiality, financial materiality, and
-    a combined double-materiality flag with coverage analysis.
+    Returns per-topic potential impact materiality, potential financial
+    materiality, and a combined potential double-materiality flag with coverage
+    analysis. This screening does not replace a CSRD-compliant double
+    materiality process with stakeholder validation.
     """
     text = f"{description} {document_text} {sector}".lower()
     metrics = reported_metrics or {}
@@ -328,6 +346,16 @@ def assess_double_materiality(
 
         is_impact = len(impact_evidence) >= 2
         is_financial = len(financial_evidence) >= 1
+        materiality_status = (
+            "potential_double_material"
+            if is_impact and is_financial
+            else "potential_impact_material"
+            if is_impact
+            else "potential_financial_material"
+            if is_financial
+            else "not_indicated"
+        )
+        confidence = "medium" if is_impact and is_financial else "low" if (is_impact or is_financial) else "low"
         total = len(topic.disclosures)
         cov = round(addressed / total * 100, 1) if total else 0.0
 
@@ -338,6 +366,8 @@ def assess_double_materiality(
             impact_material=is_impact,
             financial_material=is_financial,
             double_material=is_impact and is_financial,
+            materiality_status=materiality_status,
+            confidence=confidence,
             impact_evidence=list(set(impact_evidence)),
             financial_evidence=list(set(financial_evidence)),
             disclosures_addressed=addressed,
@@ -353,6 +383,8 @@ def assess_double_materiality(
 
     return {
         "framework": "EU CSRD / ESRS (European Sustainability Reporting Standards)",
+        "assessment_basis": "keyword_and_metric_screening_not_csrd_double_materiality_opinion",
+        "requires_stakeholder_validation": True,
         "total_topics": len(ESRS_STANDARDS),
         "material_topics": len(material_topics),
         "double_material_topics": len(double_topics),
@@ -361,8 +393,12 @@ def assess_double_materiality(
         "overall_coverage_pct": round(addressed_disc / total_disc * 100, 1) if total_disc else 0.0,
         "topics": [r.model_dump() for r in results],
         "summary": (
-            f"{len(material_topics)}/{len(ESRS_STANDARDS)} topics material "
-            f"({len(double_topics)} double-material). "
+            f"{len(material_topics)}/{len(ESRS_STANDARDS)} standards with materiality signals "
+            f"({len(double_topics)} potentially double-material). "
             f"Disclosure coverage: {addressed_disc}/{total_disc}."
         ),
+        "limitations": [
+            "Materiality flags are screening signals, not final ESRS materiality conclusions.",
+            "A CSRD-ready process requires stakeholder input, IRO validation, thresholds, and governance sign-off.",
+        ],
     }

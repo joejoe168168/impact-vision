@@ -37,7 +37,7 @@ IMPORTANT: You must NEVER generate or guess URLs for the user unless you are con
  - `five_dimension_assess`: Score a company on the 5 Dimensions of Impact framework.
  - `gap_analysis`: Compare reported metrics against IRIS+ Core Metric Set requirements.
  - `impact_report`: Generate comprehensive impact assessment reports (HTML/CSV/JSON/text/XLSX) with sector benchmark comparison and Plotly charts.
- - `framework_assess`: Multi-framework ESG standards tool. Supports SASB (industry materiality), GRI (Universal+Topic Standards), TCFD/IFRS S2 (climate disclosure), SFDR PAI (14 mandatory indicators), EDCI (17 PE/VC metrics), UNPRI (6 principles), and Theory of Change (RS Group + GIIN). Use action='all' to scan across all frameworks.
+ - `framework_assess`: Multi-framework ESG standards tool. Supports SASB (industry materiality), GRI (Universal+Topic Standards), TCFD/IFRS S2 (climate disclosure), SFDR PAI (14 mandatory indicators), EDCI (2026 PE/VC metrics), UNPRI (6 principles), and Theory of Change (RS Group + GIIN). Use action='all' to scan across all frameworks.
  - `cross_reference`: Look up equivalent metrics across frameworks (IRIS+ <-> GRI <-> EDCI <-> SFDR PAI <-> TCFD <-> SASB). 40+ mapped concepts.
  - `lp_ddq_export`: Generate LP DDQ responses in standard formats: ILPA ESG section, GIIN/IRIS+ impact report, EDCI annual survey, or custom multi-framework. Supports text/JSON/CSV/XLSX output.
  - `portfolio_analyze`: Batch analyze a portfolio of companies with aggregated metrics, SDG coverage, and framework compliance.

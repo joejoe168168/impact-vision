@@ -53,7 +53,7 @@
 | **Beneficiary/stakeholder voice as evidence** | High | ✅ Sopact (partial) | ❌ Missing | **Strengthen** — 60 Decibels integrations + Lean Data templates + LLM analysis |
 | **Investee self-service data collection** | High | ❌ Missing | ✅ Novata (core) | **Differentiate** — add evidence governance + guidance cards + anomaly detection |
 | **AI governance & output reviewability** | High | ⚠️ Emerging | ❌ Missing | **Moat** — every AI extraction = confidence + prompt version + human reviewer state |
-| **Exit impact & sustainability post-exit** | Medium | ❌ Missing | ❌ Missing | **Adjacent** — combine causal logic + stakeholder follow-up + OPIM Principle 8 |
+| **Exit impact & sustainability post-exit** | Medium | ❌ Missing | ❌ Missing | **Adjacent** — combine causal logic + stakeholder follow-up + OPIM Principle 7 |
 | **Multi-framework interoperability** | High | ❌ Missing | ✅ Strong | **Match** — implement Novata's breadth with Impact Vision's evidence layer |
 
 ---
@@ -158,7 +158,7 @@
 | 5.3 | Evidence-strength grading (NESTA 1-5 levels): from opinion to RCT; paired with evidence graph | Critical | M |
 | 5.4 | SROI calculator with sensitivity ranges and value-bank source tracking (HACT, NEF, AAVS) | High | L |
 | 5.5 | Difference-in-differences calculator for pre/post with control group proxy data from sector benchmarks | Medium | L |
-| 5.6 | Exit impact assessment framework: sustained impact post-exit (OPIM Principle 8) | Medium | M |
+| 5.6 | Exit impact assessment framework: sustained impact post-exit (OPIM Principle 7) | Medium | M |
 | 5.7 | Impact learning loop: hypothesis → metric → result → management action → follow-up, all versioned and audited | High | M |
 | 5.8 | Spillover & displacement detection: identify potential negative spillovers across portfolio | Medium | M |
 

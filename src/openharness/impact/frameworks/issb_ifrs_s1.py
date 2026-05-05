@@ -181,7 +181,7 @@ IFRS_S1 = ISSBS1Framework(pillars=[
                     "Metrics used to measure performance against targets",
                     "Industry-based metrics (SASB reference)",
                 ],
-                iris_cross_refs=["OI4112", "OI1479", "PI4060", "OI9803"],
+                iris_cross_refs=["OI4112", "OI9604", "OI1479", "PI4060"],
             ),
             ISSBS1Disclosure(
                 code="S1-MT-2",
@@ -215,12 +215,21 @@ def assess_ifrs_s1_readiness(
 ) -> dict:
     """Quick readiness check against IFRS S1 requirements.
 
-    Returns a readiness score (0-100) and per-pillar status.
+    Returns a screening readiness score (0-100) and per-pillar status. This is
+    not a compliance opinion; source-linked disclosure packs should be used for
+    assurance or external reporting.
     """
     desc = f"{description} {governance_info}".lower()
     reported = reported_metrics or {}
 
     pillar_scores: dict[str, dict] = {}
+
+    def _status(score: float) -> str:
+        if score >= 75:
+            return "evidence_ready"
+        if score >= 50:
+            return "partial"
+        return "gaps"
 
     gov_score = 0
     if any(w in desc for w in ("board", "committee", "oversight", "governance")):
@@ -229,7 +238,8 @@ def assess_ifrs_s1_readiness(
         gov_score += 30
     if any(w in desc for w in ("sustainability", "esg", "climate", "impact")):
         gov_score += 30
-    pillar_scores["governance"] = {"score": min(gov_score, 100), "status": "addressed" if gov_score >= 50 else "gaps"}
+    gov_score = min(gov_score, 100)
+    pillar_scores["governance"] = {"score": gov_score, "status": _status(gov_score)}
 
     str_score = 0
     if any(w in desc for w in ("risk", "opportunity", "threat")):
@@ -240,7 +250,8 @@ def assess_ifrs_s1_readiness(
         str_score += 25
     if any(w in desc for w in ("financial", "revenue", "cost", "cash flow")):
         str_score += 25
-    pillar_scores["strategy"] = {"score": min(str_score, 100), "status": "addressed" if str_score >= 50 else "gaps"}
+    str_score = min(str_score, 100)
+    pillar_scores["strategy"] = {"score": str_score, "status": _status(str_score)}
 
     rm_score = 0
     if risk_process_described:
@@ -249,7 +260,8 @@ def assess_ifrs_s1_readiness(
         rm_score += 30
     if any(w in desc for w in ("monitor", "mitigate", "control")):
         rm_score += 20
-    pillar_scores["risk_management"] = {"score": min(rm_score, 100), "status": "addressed" if rm_score >= 50 else "gaps"}
+    rm_score = min(rm_score, 100)
+    pillar_scores["risk_management"] = {"score": rm_score, "status": _status(rm_score)}
 
     mt_score = 0
     if reported:
@@ -258,9 +270,11 @@ def assess_ifrs_s1_readiness(
         mt_score += 30
     if any(w in desc for w in ("metric", "kpi", "indicator", "measurement", "baseline")):
         mt_score += 20
-    pillar_scores["metrics_and_targets"] = {"score": min(mt_score, 100), "status": "addressed" if mt_score >= 50 else "gaps"}
+    mt_score = min(mt_score, 100)
+    pillar_scores["metrics_and_targets"] = {"score": mt_score, "status": _status(mt_score)}
 
     overall = round(sum(p["score"] for p in pillar_scores.values()) / 4, 1)
+    readiness_level = "evidence_ready" if overall >= 75 else "partial" if overall >= 50 else "screening_gaps"
 
     recommendations = []
     if pillar_scores["governance"]["score"] < 50:
@@ -275,7 +289,13 @@ def assess_ifrs_s1_readiness(
     return {
         "framework": "IFRS S1",
         "overall_readiness": overall,
+        "readiness_level": readiness_level,
+        "assessment_basis": "screening_readiness_not_compliance_opinion",
         "pillar_scores": pillar_scores,
         "total_disclosures": sum(len(p.disclosures) for p in IFRS_S1.pillars),
         "recommendations": recommendations,
+        "limitations": [
+            "Keyword and metric presence do not prove IFRS S1 disclosure compliance.",
+            "Use source-linked answers and reviewer sign-off for reporting or assurance.",
+        ],
     }

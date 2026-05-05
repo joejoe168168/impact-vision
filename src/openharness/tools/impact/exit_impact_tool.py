@@ -1,4 +1,4 @@
-"""Tool: OPIM Principle 8 exit-impact assessment (v3 Track 5.6)."""
+"""Tool: OPIM Principle 7 exit-impact assessment (v3 Track 5.6)."""
 
 from __future__ import annotations
 
@@ -35,9 +35,10 @@ class ExitImpactInput(BaseModel):
 class ExitImpactTool(BaseTool):
     name = "exit_impact"
     description = (
-        "OPIM Principle 8 exit-impact assessment. Build a plan with durability risks, "
-        "post-exit follow-ups, and residual impact claims, then compute a deterministic "
-        "0-100 residual-impact score with band classification and recommendations."
+        "OPIM Principle 7 exit-impact assessment with Principle 8 learning context. "
+        "Build a plan with durability risks, post-exit follow-ups, and residual impact "
+        "claims, then compute a deterministic 0-100 residual-impact score with band "
+        "classification and recommendations."
     )
     input_model = ExitImpactInput
 

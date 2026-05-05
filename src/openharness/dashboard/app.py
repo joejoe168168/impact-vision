@@ -381,7 +381,7 @@ def _framework_scan_tab():
 
         with col2:
             st.subheader("EDCI")
-            st.progress(edci["coverage_pct"] / 100, text=f"{edci['coverage_pct']}% ({edci['addressed']}/17)")
+            st.progress(edci["coverage_pct"] / 100, text=f"{edci['coverage_pct']}% ({edci['addressed']}/{edci['total']})")
             for cat, data in edci["by_category"].items():
                 st.write(f"  {cat}: {data['coverage_pct']}%")
 

@@ -18,11 +18,11 @@ from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 IFC_OPIM_PRINCIPLES = [
     {"id": 1, "name": "Strategic Intent", "requirement": "Define strategic impact objectives consistent with the investment strategy"},
     {"id": 2, "name": "Origination & Structuring", "requirement": "Manage strategic impact on a portfolio basis with each investment contributing to the intent"},
-    {"id": 3, "name": "Portfolio Management", "requirement": "Establish the Manager's contribution to the achievement of impact"},
+    {"id": 3, "name": "Manager Contribution", "requirement": "Establish the Manager's contribution to the achievement of impact"},
     {"id": 4, "name": "Impact at Entry", "requirement": "Assess expected impact of each investment at entry based on a systematic approach"},
-    {"id": 5, "name": "Impact at Exit", "requirement": "Assess, address, monitor, and manage potential negative impacts"},
+    {"id": 5, "name": "Negative Impact Assessment", "requirement": "Assess, address, monitor, and manage potential negative impacts of each investment"},
     {"id": 6, "name": "Monitoring", "requirement": "Monitor the progress of each investment in achieving impact against expectations and respond appropriately"},
-    {"id": 7, "name": "Exit Considerations", "requirement": "Conduct exits considering the effect on sustained impact"},
+    {"id": 7, "name": "Impact at Exit", "requirement": "Conduct exits considering the effect on sustained impact"},
     {"id": 8, "name": "Review & Feedback", "requirement": "Review, document, and improve decisions and processes based on impact and lessons learned"},
     {"id": 9, "name": "Independent Verification", "requirement": "Publicly disclose alignment with Principles and arrange for independent verification"},
 ]
@@ -45,6 +45,7 @@ class VerificationPrepInput(BaseModel):
     impact_themes: list[str] = Field(default_factory=list)
     has_theory_of_change: bool = Field(default=False, description="Whether a ToC document exists")
     has_impact_policy: bool = Field(default=False, description="Whether an impact/ESG policy exists")
+    has_exclusion_screening: bool = Field(default=False, description="Whether negative-impact or exclusion screening is documented")
     has_external_audit: bool = Field(default=False, description="Whether external audit has been conducted")
     verification_target: str = Field(
         default="bluemark",
@@ -206,7 +207,7 @@ class VerificationPrepTool(BaseTool):
             "beneficiary_feedback": company.beneficiary_feedback is not None,
             "stakeholder_engagement": len(company.impact_themes) > 0,
             "impact_risk_assessment": False,
-            "exclusion_screening": len(company.exclusion_flags) > 0 or True,
+            "exclusion_screening": args.has_exclusion_screening or len(company.exclusion_flags) > 0,
         }
         return checks.get(item, False)
 
@@ -252,12 +253,15 @@ class VerificationPrepTool(BaseTool):
             ok = len(company.reported_metrics) >= 1 and len(company.sdg_claims) >= 1
             return ok, "Entry assessment data available" if ok else "Need pre-investment impact assessment"
         elif principle_id == 5:
-            return len(company.exclusion_flags) == 0, "No exclusion flags" if not company.exclusion_flags else f"Flags: {', '.join(company.exclusion_flags[:3])}"
+            ok = args.has_exclusion_screening or len(company.exclusion_flags) > 0
+            if company.exclusion_flags:
+                return ok, f"Screening documented; flags: {', '.join(company.exclusion_flags[:3])}"
+            return ok, "Negative-impact screening documented" if ok else "Document negative-impact and exclusion screening"
         elif principle_id == 6:
             ok = len(company.reported_metrics) >= 3
             return ok, "Active monitoring via IRIS+ metrics" if ok else "Establish ongoing metric monitoring"
         elif principle_id == 7:
-            return False, "Exit impact sustainability not yet assessed (future feature)"
+            return False, "Exit impact sustainability not yet assessed"
         elif principle_id == 8:
             ok = args.has_impact_policy
             return ok, "Impact policy supports review process" if ok else "Create formal impact review process"

@@ -34,12 +34,12 @@ CDP_TO_IRIS: dict[str, list[str]] = {
     "C4.1a": [],               # absolute targets
     "C4.1b": [],               # intensity targets
     # Emissions methodology & data
-    "C6.1": ["OI3525"],        # Scope 1
-    "C6.3": ["OI3525"],        # Scope 2
-    "C6.5": ["OI3525"],        # Scope 3
-    "C7.1a": ["OI3525"],       # breakdown by GHG
+    "C6.1": ["OI4112"],        # Scope 1
+    "C6.3": ["OI9604"],        # Scope 2
+    "C6.5": ["OI1479", "OI5732"],  # Scope 3 / total emissions with scope classification
+    "C7.1a": ["OI6041", "OI5732"],  # breakdown by GHG and scope
     # Emissions performance
-    "C9.1": ["OI3525"],
+    "C9.1": ["OI4862"],
     # Verification
     "C10.1a": [],              # third-party verification
     # Carbon pricing

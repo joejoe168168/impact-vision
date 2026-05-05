@@ -51,12 +51,12 @@ class FrameworkTool(BaseTool):
         "- **GRI**: Browse Universal + Topic Standards (200/300/400 series), match to relevant topics\n"
         "- **TCFD / IFRS S2**: Assess climate disclosure across 4 pillars (Governance, Strategy, Risk, Metrics)\n"
         "- **SFDR PAI**: Check coverage of 14 mandatory EU Principal Adverse Impact indicators\n"
-        "- **EDCI**: Assess 17 core PE/VC ESG metrics (with IRIS+, GRI, SFDR cross-references)\n"
+        "- **EDCI**: Assess 2026 private-markets KPI fields, including non-core fields\n"
         "- **UNPRI**: Self-assess alignment with the 6 Principles for Responsible Investment\n"
         "- **ToC**: Theory of Change assessment using RS Group's Blended Value principles "
         "and GIIN IRIS+ ToC Checklist\n"
         "- **ISSB S1**: IFRS S1 General Sustainability Disclosure readiness (4 pillars, 12 disclosures)\n"
-        "- **ESRS**: EU CSRD/ESRS double materiality assessment (12 topical standards, ~100 disclosures)\n"
+        "- **ESRS**: EU CSRD/ESRS double materiality screening (12 standards)\n"
         "- **all**: Quick scan across all frameworks\n\n"
         "Actions: 'list' (browse), 'match' (find relevant topics), 'assess' (coverage analysis)"
     )
@@ -228,9 +228,15 @@ class FrameworkTool(BaseTool):
 
         if args.action in ("match", "assess"):
             result = assess_sfdr_compliance(args.reported_metrics, args.description, args.document_text)
-            lines = [f"SFDR PAI Compliance ({result['coverage_pct']}% | {result['addressed']}/{result['total']})\n"]
+            lines = [f"SFDR PAI Coverage Screen ({result['coverage_pct']}% | {result['addressed']}/{result['total']} reportable)\n"]
             for ind in result["indicators"]:
-                status = "[OK]" if ind["addressed"] else "[GAP]"
+                status = {
+                    "available": "[DATA]",
+                    "proxy": "[PROXY]",
+                    "not_applicable": "[N/A]",
+                    "mentioned": "[MENTION]",
+                    "missing": "[GAP]",
+                }.get(ind.get("status", "missing"), "[GAP]")
                 lines.append(f"  {status} PAI {ind['number']}: {ind['name']} ({ind['category']})")
                 if ind["evidence"]:
                     lines.append(f"    Evidence: {', '.join(ind['evidence'][:3])}")
@@ -246,7 +252,7 @@ class FrameworkTool(BaseTool):
         if args.action == "list":
             cat = args.category or None
             metrics = get_edci_metrics(cat)
-            lines = [f"EDCI Core PE/VC Metrics ({len(metrics)} metrics):\n"]
+            lines = [f"EDCI 2026 Private-Markets KPI Map ({len(metrics)} fields):\n"]
             current_cat = ""
             for m in metrics:
                 if m.category != current_cat:
@@ -254,18 +260,28 @@ class FrameworkTool(BaseTool):
                     lines.append(f"\n--- {current_cat.upper()} ---")
                 iris = f" (IRIS+: {', '.join(m.iris_cross_refs)})" if m.iris_cross_refs else ""
                 gri = f" (GRI: {', '.join(m.gri_cross_refs)})" if m.gri_cross_refs else ""
-                lines.append(f"  {m.id}: {m.name} [{m.unit}]{iris}{gri}")
+                requirement = "core" if m.required else "non-core"
+                lines.append(f"  {m.id}: {m.name} [{m.unit}; {requirement}]{iris}{gri}")
                 lines.append(f"    {m.description}")
             return ToolResult(output="\n".join(lines))
 
         if args.action in ("match", "assess"):
             result = assess_edci_coverage(args.reported_metrics, args.description, args.document_text)
-            lines = [f"EDCI Coverage ({result['coverage_pct']}% | {result['addressed']}/{result['total']})\n"]
+            lines = [
+                f"EDCI Coverage Screen ({result['coverage_pct']}% | {result['addressed']}/{result['total']})",
+                f"Core coverage: {result['required_coverage_pct']}% ({result['required_addressed']}/{result['required_total']})",
+                "",
+            ]
             for cat_name, cat_data in result["by_category"].items():
                 lines.append(f"  {cat_name.upper()}: {cat_data['coverage_pct']}% ({cat_data['addressed']}/{cat_data['total']})")
             lines.append("")
             for m in result["metrics"]:
-                status = "[OK]" if m["addressed"] else "[GAP]"
+                status = {
+                    "available": "[DATA]",
+                    "proxy": "[PROXY]",
+                    "heuristic": "[MENTION]",
+                    "missing": "[GAP]",
+                }.get(m.get("evidence_status", "missing"), "[GAP]")
                 lines.append(f"  {status} {m['id']}: {m['name']}")
                 if m["evidence"]:
                     lines.append(f"    Evidence: {', '.join(m['evidence'][:3])}")
@@ -410,17 +426,18 @@ class FrameworkTool(BaseTool):
             result = assess_ifrs_s1_readiness(
                 description=text,
                 reported_metrics=args.reported_metrics,
-                targets_set=bool(args.reported_metrics),
+                targets_set=any(w in text.lower() for w in ("target", "targets", "goal", "baseline")),
             )
 
             lines = [
-                "IFRS S1 READINESS ASSESSMENT",
+                "IFRS S1 READINESS SCREEN",
                 "=" * 50,
                 f"Overall Readiness: {result['overall_readiness']}%",
+                f"Readiness Level: {result['readiness_level']}",
                 "",
             ]
             for pillar_name, info in result["pillar_scores"].items():
-                status_icon = "[OK]" if info["status"] == "addressed" else "[GAP]"
+                status_icon = "[OK]" if info["score"] >= 50 else "[GAP]"
                 lines.append(f"  {status_icon} {pillar_name.replace('_', ' ').title()}: {info['score']}%")
 
             if result["recommendations"]:
@@ -456,13 +473,16 @@ class FrameworkTool(BaseTool):
             result = assess_ifrs_s2_readiness(
                 description=text,
                 reported_metrics=args.reported_metrics,
-                targets_set=bool(args.reported_metrics),
+                has_scenario_analysis="scenario" in text.lower(),
+                has_transition_plan="transition plan" in text.lower(),
+                targets_set=any(w in text.lower() for w in ("target", "targets", "science-based", "science based")),
             )
 
             lines = [
-                "IFRS S2 CLIMATE DISCLOSURE READINESS",
+                "IFRS S2 CLIMATE DISCLOSURE READINESS SCREEN",
                 "=" * 50,
                 f"Overall Readiness: {result['overall_readiness']}%",
+                f"Readiness Level: {result['readiness_level']}",
                 f"Note: {result.get('tcfd_equivalence', '')}",
                 "",
             ]
@@ -486,7 +506,7 @@ class FrameworkTool(BaseTool):
         if args.action == "list":
             standards = get_esrs_standards()
             total = get_total_data_points()
-            lines = [f"EU CSRD / ESRS Standards ({len(standards)} topics, {total} disclosures)\n"]
+            lines = [f"EU CSRD / ESRS Standards ({len(standards)} standards, {total} disclosures)\n"]
             current_pillar = ""
             for s in standards:
                 if s.pillar != current_pillar:
@@ -513,10 +533,10 @@ class FrameworkTool(BaseTool):
                 reported_metrics=args.reported_metrics,
             )
             lines = [
-                "EU CSRD / ESRS DOUBLE MATERIALITY ASSESSMENT",
+                "EU CSRD / ESRS DOUBLE MATERIALITY SCREEN",
                 "=" * 50,
-                f"Material topics: {result['material_topics']}/{result['total_topics']}",
-                f"Double-material topics: {result['double_material_topics']}",
+                f"Potential material topics: {result['material_topics']}/{result['total_topics']}",
+                f"Potential double-material topics: {result['double_material_topics']}",
                 f"Disclosure coverage: {result['overall_coverage_pct']}% ({result['disclosures_addressed']}/{result['total_disclosures']})",
                 "",
             ]
@@ -589,12 +609,12 @@ class FrameworkTool(BaseTool):
             "  gri       - GRI Universal + Topic Standards (30+ standards, 120+ disclosures)",
             "  tcfd      - TCFD / IFRS S2 Climate Disclosure (4 pillars, 11 disclosures)",
             "  sfdr_pai  - SFDR PAI Indicators (14 mandatory EU indicators)",
-            "  edci      - EDCI PE/VC Metrics (17 core ESG metrics with cross-references)",
+            "  edci      - EDCI 2026 private-markets KPI fields, including non-core fields",
             "  unpri     - UN PRI Self-Assessment (6 principles, 27 actions)",
             "  toc       - Theory of Change (RS Group Blended Value + GIIN ToC Checklist)",
             "  issb_s1   - IFRS S1 General Sustainability Disclosure (4 pillars, 12 disclosures)",
             "  issb_s2   - IFRS S2 Climate-related Disclosures (4 pillars, 13 disclosures, subsumes TCFD)",
-            "  esrs      - EU CSRD/ESRS Double Materiality (12 topics, ~100 disclosures)",
+            "  esrs      - EU CSRD/ESRS Double Materiality (12 standards)",
             "  opim      - IFC Operating Principles for Impact Management (9 principles)",
             "",
             "Use framework='<name>' with action='list' to browse, 'match' to find relevant topics,",
@@ -650,19 +670,21 @@ class FrameworkTool(BaseTool):
 
         issb = assess_ifrs_s1_readiness(
             description=args.description, reported_metrics=args.reported_metrics,
-            targets_set=bool(args.reported_metrics),
+            targets_set=any(w in args.description.lower() for w in ("target", "targets", "goal", "baseline")),
         )
         lines.append(f"ISSB IFRS S1: {issb['overall_readiness']}% readiness ({issb['total_disclosures']} disclosures)")
 
         issb_s2 = assess_ifrs_s2_readiness(
             description=args.description, reported_metrics=args.reported_metrics,
-            targets_set=bool(args.reported_metrics),
+            has_scenario_analysis="scenario" in args.description.lower(),
+            has_transition_plan="transition plan" in args.description.lower(),
+            targets_set=any(w in args.description.lower() for w in ("target", "targets", "science-based", "science based")),
         )
         lines.append(f"ISSB IFRS S2 (Climate): {issb_s2['overall_readiness']}% readiness (subsumes TCFD)")
 
         esrs = assess_double_materiality(args.description, args.document_text, args.sector, args.reported_metrics)
         lines.append(
-            f"ESRS (CSRD): {esrs['material_topics']}/{esrs['total_topics']} material topics, "
+            f"ESRS (CSRD): {esrs['material_topics']}/{esrs['total_topics']} standards with potential materiality signals, "
             f"{esrs['overall_coverage_pct']}% disclosure coverage"
         )
 

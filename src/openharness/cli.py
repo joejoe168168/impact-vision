@@ -427,7 +427,7 @@ def framework_list_cmd() -> None:
         ("gri", "GRI Universal + Topic Standards", "30+ standards, 120+ disclosures"),
         ("tcfd", "TCFD / IFRS S2 Climate Disclosure", "4 pillars, 11 disclosures"),
         ("sfdr_pai", "SFDR PAI Indicators", "14 mandatory EU indicators"),
-        ("edci", "EDCI PE/VC Metrics", "17 core ESG metrics"),
+        ("edci", "EDCI PE/VC Metrics", "2026 KPI fields incl. non-core"),
         ("unpri", "UN PRI Self-Assessment", "6 principles, 27 actions"),
         ("toc", "Theory of Change", "RS Group + GIIN ToC Checklist"),
     ]

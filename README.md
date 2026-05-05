@@ -416,7 +416,7 @@ The agent will:
 > What are the material SASB topics for a fintech company?
 > Assess TCFD alignment for our climate disclosure
 > Check SFDR PAI compliance for the portfolio
-> Show the 17 EDCI PE/VC metrics and which we're reporting
+> Show the EDCI 2026 private-markets KPI fields and which we're reporting
 > Run a UNPRI self-assessment for our fund
 > Assess ISSB IFRS S1 general disclosure readiness
 > Check ISSB IFRS S2 climate disclosure for our carbon data
@@ -674,7 +674,7 @@ impact-vision/
 │   │   ├── lp_narrative.py            # LP narrative + Q&A (approved-data only)
 │   │   ├── greenwashing_reviewer.py   # Per-claim explainable review
 │   │   ├── portfolio_nlq.py           # NL portfolio queries + ApprovedDataPolicy
-│   │   ├── exit_impact.py             # OPIM P8 exit-impact scoring
+│   │   ├── exit_impact.py             # OPIM P7 exit-impact scoring + P8 learning context
 │   │   │
 │   │   │   # --- v4 Engagement Suite (latest) ---
 │   │   ├── engagements/
@@ -815,7 +815,7 @@ cross-references to IRIS+ metric IDs via the shared
 | **ESG disclosure** | SASB | 17 industries, 77+ material topics |
 | | GRI | 34 standards (Universal + Topic), 120+ disclosures |
 | | TCFD / IFRS S2 | 4 pillars, 11 disclosures, scenario analysis, Scope 1/2/3 |
-| | EDCI | 17 core PE/VC metrics (Environment/Social/Governance) |
+| | EDCI | 2026 PE/VC KPI fields, including non-core cybersecurity testing |
 | | UNPRI | 6 Principles, 27 actions |
 | | Theory of Change | RS Group 8 Blended Value Principles + GIIN 8-step ToC Checklist |
 | | ISSB IFRS S1 | General sustainability disclosure (4 pillars) |

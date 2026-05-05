@@ -136,11 +136,11 @@ def framework_list() -> str:
         {"id": "sasb", "name": "SASB Industry-Specific", "industries": "77+"},
         {"id": "tcfd", "name": "TCFD / IFRS S2 Climate", "pillars": 4},
         {"id": "sfdr", "name": "SFDR PAI Indicators", "indicators": 14},
-        {"id": "edci", "name": "EDCI PE/VC ESG", "metrics": 17},
+        {"id": "edci", "name": "EDCI PE/VC ESG", "metrics": "2026 KPI fields incl. non-core"},
         {"id": "unpri", "name": "UNPRI 6 Principles", "actions": 27},
         {"id": "issb_s1", "name": "ISSB IFRS S1 General", "pillars": 4},
         {"id": "issb_s2", "name": "ISSB IFRS S2 Climate", "pillars": 4},
-        {"id": "esrs", "name": "EU CSRD/ESRS", "topics": "12+"},
+        {"id": "esrs", "name": "EU CSRD/ESRS", "standards": 12},
         {"id": "opim", "name": "IFC Operating Principles", "principles": 9},
     ]
     return json.dumps({"frameworks": frameworks}, indent=2)

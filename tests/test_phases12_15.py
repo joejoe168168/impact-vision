@@ -67,6 +67,19 @@ class TestSDKFundWorkflow:
         # IC gate detail must appear
         assert "IC Gate Detail" in memo
 
+    def test_assess_company_text_sets_geography_from_country_argument(self):
+        iv = ImpactVision()
+
+        assessment = iv.assess_company_text(
+            "Geo Co",
+            text="Solar irrigation provider serving smallholder farmers.",
+            sector="agriculture",
+            country="Kenya",
+        )
+
+        assert assessment.company.geography == "Kenya"
+        assert not hasattr(assessment.company, "country")
+
     def test_lp_calendar_is_populated(self):
         iv = ImpactVision()
         cal = iv.build_lp_calendar(thesis=iv.load_thesis(), horizon_months=12)

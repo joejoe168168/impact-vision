@@ -24,7 +24,7 @@ can cleanly identify the **gaps** v3 must fill.
 | **2** Investee data collection | `investee_collection.py`, `roadmap_v2.{issue_collection_link, build_collection_tracker, build_review_queue, preview_csv_metric_import, harmonize_uploaded_metrics}`, `questionnaire_v2.py` | Wider sector starter templates, additional helpers (covered by reusing `default_metric_ids_for_sector` + new tools) |
 | **3** Carbon & climate | `climate_accounting.py`, `roadmap_v2.{estimate_scope3_proxy, calculate_pcaf_financed_emissions, calculate_carbon_intensity, build_climate_coverage_dashboard}` | **Versioned emission-factor catalog loader** + sensitivity bounds + named factor revisions (`emission_factors.py`) |
 | **4** Stakeholder voice | `surveys.py`, `worker_voice.py`, `tools/impact/beneficiary_feedback_tool.py`, `models.BeneficiaryFeedback` | **Lean Data survey templates**, **GDPR/PDPA consent records**, **feedback-as-evidence** linkage to claims, **feedback quality score** (`stakeholder_voice.py`) |
-| **5** Causal & attribution | `counterfactual.py`, `causal.py`, `spillover.py`, `sroi.py`, `roadmap_v2.{run_contribution_analysis, score_evidence_strength, calculate_difference_in_differences, ImpactLearningLoop}` | **OPIM Principle 8 exit-impact** workflow with durability risks and post-exit follow-ups (`exit_impact.py`) |
+| **5** Causal & attribution | `counterfactual.py`, `causal.py`, `spillover.py`, `sroi.py`, `roadmap_v2.{run_contribution_analysis, score_evidence_strength, calculate_difference_in_differences, ImpactLearningLoop}` | **OPIM Principle 7 exit-impact** workflow with Principle 8 learning context (`exit_impact.py`) |
 | **6** Standards interoperability | `frameworks/*`, `roadmap_v2.{build_issb_disclosure_pack, build_esrs_disclosure_pack, autofill_sfdr_pai, JURISDICTION_PROFILES, run_rule_pack_tests, monitor_regulatory_change}` | (no new module required — surfaced through tools) |
 | **7** LP reporting & portal | `lp_portal.py`, `roadmap_v2.build_lp_export_bundle`, `branding.py` | **AI LP narrative** generator + **LP question/answer workspace** with citations to approved evidence (`lp_narrative.py`) |
 | **8** Assurance & verification | `assurance.py`, `roadmap_v2.{run_control_checks, ExceptionRegisterEntry, AIExtractionReview}` | **Verifier workspace** (read-only evidence + comment threads + findings + signed API surface) (`verification_workspace.py`) |
@@ -151,7 +151,7 @@ Natural-language portfolio query engine **constrained to approved data**:
 
 ### 2.8 `exit_impact.py` (Track 5.6)
 
-OPIM Principle 8 exit-impact assessment workflow:
+OPIM Principle 7 exit-impact assessment workflow:
 
 - `ExitDurabilityRisk` — risk category, likelihood, severity, mitigation
   plan, owner.

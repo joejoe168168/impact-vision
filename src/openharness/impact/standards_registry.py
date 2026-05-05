@@ -19,8 +19,10 @@ class StandardVersion(BaseModel):
     status: StandardStatus = "active"
     effective_date: str = ""
     source_url: str = ""
+    requirements_url: str = ""
     aliases: list[str] = Field(default_factory=list)
     scope: list[str] = Field(default_factory=list)
+    requirement_ids: list[str] = Field(default_factory=list)
     notes: str = ""
 
     @field_validator("standard_id")
@@ -31,7 +33,7 @@ class StandardVersion(BaseModel):
             raise ValueError("standard_id is required")
         return cleaned
 
-    @field_validator("aliases", "scope")
+    @field_validator("aliases", "scope", "requirement_ids")
     @classmethod
     def dedupe_text_list(cls, values: list[str]) -> list[str]:
         out: list[str] = []
@@ -67,7 +69,11 @@ class StandardsRegistry(BaseModel):
         return [item for item in self.standards if item.status == status]
 
     def get(self, standard_id: str, version: str | None = None) -> StandardVersion:
-        """Get a standard by ID or alias, selecting the newest entry when version is omitted."""
+        """Get a standard by ID or alias.
+
+        When no version is supplied, prefer active/under-revision rule packs over
+        drafts or superseded versions, then choose the newest version string.
+        """
         matches = [
             item
             for item in self.standards
@@ -76,7 +82,7 @@ class StandardsRegistry(BaseModel):
         if not matches:
             suffix = f" version {version}" if version else ""
             raise KeyError(f"Unknown standard '{standard_id}'{suffix}")
-        return sorted(matches, key=lambda item: item.version, reverse=True)[0]
+        return sorted(matches, key=lambda item: (_status_rank(item.status), item.version), reverse=True)[0]
 
     def active_rule_packs(self) -> list[StandardVersion]:
         """Return standards that should be used by default in new reports."""
@@ -103,19 +109,33 @@ def default_standards_registry() -> StandardsRegistry:
             name="GIIN IRIS+ Catalog of Metrics",
             version="5.3c",
             status="active",
-            effective_date="2023",
+            effective_date="2025-12",
             source_url="https://iris.thegiin.org/",
+            requirements_url="https://iris.thegiin.org/catalog/download/",
             aliases=["IRIS+", "GIIN IRIS", "IRIS"],
             scope=["impact metrics", "SDG alignment", "5 dimensions"],
+            notes="Current public IRIS+ catalog is v5.3c, released December 2025.",
         ),
         StandardVersion(
             standard_id="EDCI",
             name="ESG Data Convergence Initiative Metrics",
-            version="2025",
+            version="2026",
             status="active",
-            source_url="https://ilpa.org/industry-guidance/environmental-social-governance/data-convergence-initiative/",
+            source_url="https://www.esgdc.org/metrics/",
+            requirements_url="https://www.esgdc.org/metrics/",
             aliases=["ILPA EDCI", "ESG Data Convergence Initiative"],
-            scope=["private markets ESG", "GHG", "workforce", "governance"],
+            scope=["private markets ESG", "GHG", "decarbonization", "workforce", "cybersecurity"],
+            requirement_ids=[
+                "GHG Emissions",
+                "Decarbonization",
+                "Renewable Energy",
+                "Diversity",
+                "Work-related Accidents",
+                "Net New Hires",
+                "Employee Engagement",
+                "Cybersecurity",
+            ],
+            notes="Public 2026 EDCI materials add cybersecurity and classify selected fields as non-core.",
         ),
         StandardVersion(
             standard_id="ISSB",
@@ -124,8 +144,11 @@ def default_standards_registry() -> StandardsRegistry:
             status="active",
             effective_date="2024-01-01",
             source_url="https://www.ifrs.org/issued-standards/ifrs-sustainability-standards-navigator/",
+            requirements_url="https://www.ifrs.org/sustainability/knowledge-hub/introduction-to-issb-and-ifrs-sustainability-disclosure-standards/",
             aliases=["IFRS S1", "IFRS S2", "ISSB S1/S2"],
             scope=["general sustainability disclosure", "climate disclosure"],
+            requirement_ids=["governance", "strategy", "risk_management", "metrics_and_targets"],
+            notes="IFRS S1 and S2 were issued in June 2023 and are effective for annual reporting periods beginning on or after 2024-01-01.",
         ),
         StandardVersion(
             standard_id="ESRS",
@@ -134,8 +157,11 @@ def default_standards_registry() -> StandardsRegistry:
             status="active",
             effective_date="2024-01-01",
             source_url="https://finance.ec.europa.eu/capital-markets-union-and-financial-markets/company-reporting-and-auditing/company-reporting/corporate-sustainability-reporting_en",
+            requirements_url="https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32023R2772",
             aliases=["CSRD ESRS", "EFRAG ESRS"],
-            scope=["double materiality", "EU sustainability reporting"],
+            scope=["double materiality", "EU sustainability reporting", "12 sector-agnostic standards"],
+            requirement_ids=["ESRS 1", "ESRS 2", "E1", "E2", "E3", "E4", "E5", "S1", "S2", "S3", "S4", "G1"],
+            notes="First set of adopted sector-agnostic ESRS: ESRS 1, ESRS 2, E1-E5, S1-S4, and G1.",
         ),
         StandardVersion(
             standard_id="ESRS",
@@ -154,8 +180,10 @@ def default_standards_registry() -> StandardsRegistry:
             status="active",
             effective_date="2023-01-01",
             source_url="https://finance.ec.europa.eu/sustainable-finance/disclosures/sustainability-related-disclosure-financial-services-sector_en",
+            requirements_url="https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32022R1288",
             aliases=["SFDR PAI", "PAI"],
             scope=["principal adverse impacts", "financial-market disclosure"],
+            requirement_ids=[f"PAI-{n}" for n in range(1, 15)],
         ),
         StandardVersion(
             standard_id="GHG_PROTOCOL",
@@ -191,8 +219,11 @@ def default_standards_registry() -> StandardsRegistry:
             version="2019",
             status="active",
             source_url="https://www.impactprinciples.org/",
+            requirements_url="https://www.impactprinciples.org/common-and-emerging-practices/",
             aliases=["IFC OPIM", "Impact Principles"],
             scope=["impact management system", "verification", "impact at exit"],
+            requirement_ids=[f"Principle {n}" for n in range(1, 10)],
+            notes="Principle 7 covers impact at exit; Principle 8 covers review, documentation, and learning.",
         ),
     ])
 
@@ -207,6 +238,15 @@ def _matches_standard(item: StandardVersion, standard_id: str) -> bool:
     candidates = {item.standard_id.lower()}
     candidates.update(alias.lower().replace("-", "_").replace(" ", "_") for alias in item.aliases)
     return needle in candidates
+
+
+def _status_rank(status: StandardStatus) -> int:
+    return {
+        "active": 4,
+        "under_revision": 3,
+        "draft": 2,
+        "superseded": 1,
+    }[status]
 
 
 __all__ = [

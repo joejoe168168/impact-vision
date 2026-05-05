@@ -44,108 +44,118 @@ _BUZZWORDS = {
     "carbon-neutral", "climate-positive", "circular", "regenerative",
 }
 
-# Genuinely *adverse* metrics — i.e. things that, when reported, demonstrate
-# the company is monitoring its negative impact. Picked from IRIS+ + sector
-# best-practice. Sources: GIIN IRIS+ 5.3c, SASB sector standards, PCAF.
-# An IRIS+ ID is used when one exists; otherwise an indicator label is given so
-# the GP can mark a custom metric ID against the same concept.
+# Genuinely *adverse* metrics — things that, when reported, demonstrate
+# the company is monitoring potential negative impact. IRIS+ metric IDs are
+# used only where the bundled IRIS+ 5.3c catalog contains a suitable metric;
+# otherwise a CUSTOM:* label marks a non-IRIS sector indicator.
 _ADVERSE_METRICS_BY_SECTOR: dict[str, list[str]] = {
     # Microfinance / consumer lending: client over-indebtedness, pricing,
     # complaints, loan-loss provisioning, harassment.
     "fintech": [
-        "PD8330",   # Average APR / cost of credit (proxy: pricing)
-        "PI8675",   # Client over-indebtedness rate
+        "PI7467",   # Effective Interest Rate (EIR)
+        "PI4733",   # Repayment Capacity Analysis
         "OI4753",   # Client protection / over-indebtedness policy
-        "PD3076",   # Portfolio at Risk > 30 days (PAR30)
-        "OI5049",   # Client complaints rate (Lean Data)
+        "FP2635",   # Non-Performing Loans (Portfolio at Risk): 30 Days
+        "PI5216",   # Complaints Ratio
+        "OI5049",   # Client Feedback System
     ],
     "financial": [
-        "PD8330", "PI8675", "OI4753", "PD3076", "OI5049",
+        "PI7467", "PI4733", "OI4753", "FP2635", "PI5216", "OI5049",
     ],
     # Energy: scope 1+2+3, water, methane, project-related displacement.
     "energy": [
         "OI4112",   # GHG Emissions: Direct (Scope 1)
-        "OI1479",   # GHG Emissions: Indirect (Scope 2)
-        "OI9803",   # Water Withdrawal: Total
-        "OI8869",   # Worker fatalities / TRIR
-        "PI8330",   # Communities displaced / resettled
+        "OI9604",   # GHG Emissions: Indirect (Scope 2)
+        "OI1479",   # GHG Emissions: Total
+        "OI0263",   # Water Withdrawn
+        "OI3757",   # Occupational Injuries
+        "OI6525",   # Occupational Fatalities
+        "PI1297",   # Individuals Displaced: Total
     ],
     # Agriculture / food: pesticides, soil/water, smallholder pricing.
     "agriculture": [
         "OI4112",   # GHG (incl. land use change)
-        "PI3468",   # Pesticide / fertiliser application intensity
-        "OI9803",   # Water withdrawal in water-stressed areas
-        "PI8330",   # Producer income vs. living-income benchmark
-        "OI4753",   # Child / forced labour policy
+        "OI2569",   # Land Directly Controlled: Treated with Pesticides
+        "OI7394",   # Pesticide Hazard Classification Type
+        "OI3637",   # Water Consumed: Regions with High Water Stress
+        "PI1568",   # Producer Price Premium
+        "CUSTOM:child_forced_labor_policy",
     ],
     "livestock": [
-        "OI4112", "OI9803", "PI3468", "OI4753",
+        "OI4112", "OI0263", "OI2569", "OI7394", "CUSTOM:animal_welfare_incidents",
     ],
     # Healthcare: avoidable adverse events, antibiotic stewardship, affordability.
     "healthcare": [
         "OI4753",   # Patient safety / adverse event rate
-        "PI8675",   # Avoidable readmission rate
-        "PD8330",   # Average out-of-pocket cost per visit (affordability)
+        "PI7161",   # Target Stakeholder Injuries
+        "PI8145",   # Target Stakeholder Fatalities
+        "PI7395",   # Target Stakeholder Spending: Health
         "OI5049",   # Patient complaints
     ],
-    "health": ["OI4753", "PI8675", "PD8330", "OI5049"],
+    "health": ["OI4753", "PI7161", "PI8145", "PI7395", "OI5049"],
     # Technology / SaaS: data breaches, content moderation, model bias, e-waste.
     "technology": [
-        "OI4732",   # Data privacy breach incidents
-        "OI4753",   # Content moderation / harm mitigation policy
-        "OI9803",   # Energy consumption (data centre)
-        "OI4112",   # Scope 2 emissions
+        "EDCI-G1",   # Cybersecurity testing
+        "CUSTOM:data_breach_incidents",
+        "CUSTOM:content_moderation_incidents",
+        "PD6596",    # Energy Consumption of Product
+        "OI9604",    # Scope 2 emissions
     ],
-    "ict": ["OI4732", "OI4753", "OI9803", "OI4112"],
+    "ict": ["EDCI-G1", "CUSTOM:data_breach_incidents", "PD6596", "OI9604"],
     # Manufacturing: scope 1/2/3, hazardous waste, occupational injury.
     "manufacturing": [
-        "OI4112", "OI1479", "OI9803",
-        "OI8869",   # Lost-time injury rate (LTIR)
-        "PI3468",   # Hazardous waste generated
+        "OI4112", "OI9604", "OI1479",
+        "OI0263",
+        "OI3757",   # Occupational Injuries
+        "OI1346",   # Hazardous Waste Produced
     ],
     # Mining / extractives: tailings, biodiversity, community grievances.
     "mining": [
-        "OI4112", "OI9803", "PI3468",
-        "OI4324",   # Community grievances / FPIC
-        "OI8869",   # Worker fatalities
-        "OI4753",   # Tailings management policy
+        "OI4112", "OI0263", "OI1346",
+        "OI5929",   # Biodiversity Assessment
+        "OI1042",   # Number of Employee Grievances Registered
+        "OI6525",   # Occupational Fatalities
+        "CUSTOM:tailings_management",
     ],
     "extractives": [
-        "OI4112", "OI9803", "PI3468", "OI4324", "OI8869", "OI4753",
+        "OI4112", "OI0263", "OI1346", "OI5929", "OI1042", "OI6525", "CUSTOM:tailings_management",
     ],
     # Real estate / construction: embodied carbon, displacement.
     "real estate": [
-        "OI4112", "OI9803", "OI8869",
-        "PI8330",   # Tenant displacement / affordability
+        "OI4112", "OI9604", "OI3757",
+        "PI6303",   # Eviction Rate
+        "PD5833",   # Percent Affordable Housing
+        "PI1297",   # Individuals Displaced: Total
     ],
     "construction": [
-        "OI4112", "OI9803", "OI8869", "PI3468",
+        "OI4112", "OI9604", "OI3757", "OI1346",
     ],
     # Transport / logistics: scope 1, NOx/PM, road safety.
     "transport": [
-        "OI4112", "OI9803", "OI8869",
+        "OI4112", "OI9604", "OI3757", "CUSTOM:nox_pm_emissions", "CUSTOM:road_safety_incidents",
     ],
-    "logistics": ["OI4112", "OI9803", "OI8869"],
+    "logistics": ["OI4112", "OI9604", "OI3757", "CUSTOM:nox_pm_emissions", "CUSTOM:road_safety_incidents"],
     # Education: drop-out, debt burden.
     "education": [
         "OI5049",   # Learner complaints
-        "PI8675",   # Drop-out rate
-        "PD8330",   # Tuition vs. household income (affordability)
+        "PI9910",   # Student Dropout Rate
+        "PI6941",   # Cost Transparency
+        "CUSTOM:student_debt_burden",
     ],
     # Water / sanitation: leakage, affordability, source depletion.
     "water": [
-        "OI9803", "PI3468", "PD8330",
+        "OI0263", "OI1697", "OI0386", "PI6941",
     ],
     # Waste: landfill diversion, hazardous handling.
     "waste management": [
-        "OI4112", "PI3468", "OI8869",
+        "OI4112", "OI1346", "OI3757",
     ],
     # Default: GHG + worker safety as universal adverse signals.
     "default": [
         "OI4112",   # Scope 1
-        "OI1479",   # Scope 2
-        "OI8869",   # Worker fatalities / LTIR
-        "OI4753",   # Adverse incident policy
+        "OI9604",   # Scope 2
+        "OI3757",   # Occupational Injuries
+        "OI6525",   # Occupational Fatalities
     ],
 }
 

@@ -128,7 +128,7 @@ _COMPANY_FIELDS = [
     {"k": "sector",              "t": "text",     "label": "Sector (e.g. AgriTech, HealthTech)"},
     {"k": "geography",           "t": "text",     "label": "Geography"},
     {"k": "impact_themes",       "t": "text",     "label": "Impact themes (comma-separated)"},
-    {"k": "reported_metrics",    "t": "textarea", "label": "Reported metrics (JSON: {\"PI5380\": 1200})"},
+    {"k": "reported_metrics",    "t": "textarea", "label": "Reported metrics (JSON: {\"PI2822\": 1200})"},
     {"k": "sdg_claims",          "t": "text",     "label": "Claimed SDGs (comma-separated integers, e.g. 2,3,8)"},
 ]
 
@@ -530,20 +530,20 @@ function fillSampleData() {
   const form = document.getElementById("toolForm");
   const sample = {
     company_name: "Acme Solar",
-    company_description: "Off-grid solar home systems for smallholder farmers in East Africa. 220k homes electrified since 2019, measured via PI5380 (beneficiaries reached) and OI6541 (GHG avoided).",
+    company_description: "Off-grid solar home systems for smallholder farmers in East Africa. 220k homes electrified since 2019, measured via PI2822 (new energy access clients) and OI2764 (GHG avoided).",
     sector: "energy",
     geography: "KE",
     impact_themes: "climate, energy access",
-    reported_metrics: '{"PI5380": 220000, "OI6541": 145000}',
+    reported_metrics: '{"PI2822": 220000, "OI2764": 145000}',
     sdg_claims: "7,13",
     claims_text: "We deliver life-changing clean energy to millions of families. Our mission is to power sustainable futures.",
     deck_text: "Acme Solar. Series B. Deploys solar home systems across Kenya and Uganda.",
     framework: "sfdr",
-    metric_id: "PI5380",
+    metric_id: "PI2822",
     format: "json",
     action: "add",
     payload: '{"deal_id": "ACM-001", "stage": "due_diligence"}',
-    history: '{"2024-Q1": {"PI5380": 180000}, "2024-Q2": {"PI5380": 220000}}',
+    history: '{"2024-Q1": {"PI2822": 180000}, "2024-Q2": {"PI2822": 220000}}',
     companies: '[{"company_name": "Acme Solar", "sector": "energy"}, {"company_name": "Blue Agua", "sector": "water"}]',
   };
   for (const el of form.querySelectorAll("input[name], textarea[name], select[name]")) {

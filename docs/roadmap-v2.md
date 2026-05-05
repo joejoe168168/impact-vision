@@ -142,7 +142,7 @@ The v1 roadmap correctly identified investee data collection, carbon accounting,
 | 7.3 | Evidence-strength ladder with study design, sample size, third-party review, and beneficiary voice inputs | High | M |
 | 7.4 | SROI model templates with assumptions, sensitivity ranges, and value-bank source tracking | High | L |
 | 7.5 | Difference-in-differences calculator for pre/post and comparator data | Medium | L |
-| 7.6 | Exit impact assessment template linked to OPIM Principle 8 and post-exit durability | Medium | M |
+| 7.6 | Exit impact assessment template linked to OPIM Principle 7 and post-exit durability | Medium | M |
 | 7.7 | Impact learning loop: hypothesis, metric, result, management action, follow-up period | High | M |
 
 ### Track 8: Governed AI & Market Intelligence

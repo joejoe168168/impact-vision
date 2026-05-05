@@ -310,9 +310,10 @@ engineering plan is in `docs/roadmap-v3-implementation.md`.
   extracts `average / total / top_n / compare` intents; `PortfolioNLQEngine`
   answers with citations to canonical metric records only.
 - **Exit impact assessment** (`impact.exit_impact`).
-  OPIM Principle 8 workflow with `ExitDurabilityRisk` scoring,
-  `score_exit_impact()` for strong vs. weak exit plans, `PostExitFollowUp`
-  scheduling, and `build_exit_plan()` flag detection (e.g. `unmitigated_risks`).
+  OPIM Principle 7 workflow with Principle 8 learning context,
+  `ExitDurabilityRisk` scoring, `score_exit_impact()` for strong vs. weak exit
+  plans, `PostExitFollowUp` scheduling, and `build_exit_plan()` flag detection
+  (e.g. `unmitigated_risks`).
 - **Eight new agent tools** wrapping each module:
   `EmissionFactorsTool`, `StakeholderVoiceTool`, `EvidenceReviewTool`,
   `VerificationWorkspaceTool`, `LPNarrativeTool`, `GreenwashingReviewerTool`,
@@ -1204,7 +1205,7 @@ All 12 issues identified in the v0.6 codebase review have been resolved with reg
 - GRI Universal + Topic Standards (34 standards, 120+ disclosures)
 - TCFD / IFRS S2 climate disclosure (4 pillars, 11 disclosures)
 - SFDR PAI (14 mandatory EU indicators)
-- EDCI (17 core PE/VC ESG metrics with cross-references)
+- EDCI (2026 private-markets ESG KPI set with cross-references)
 - UNPRI self-assessment (6 Principles, 27 actions)
 - Theory of Change (RS Group Blended Value + GIIN IRIS+ 8-step checklist)
 - Cross-reference mapping (40+ entries across IRIS+, GRI, EDCI, SFDR, SASB, TCFD)

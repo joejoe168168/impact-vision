@@ -102,6 +102,7 @@ class ImpactVision:
         text: str,
         sector: str | None = None,
         country: str | None = None,
+        geography: str | None = None,
         impact_themes: list[str] | None = None,
     ) -> Assessment:
         """Quick-start: extract claims from `text`, build a Company, assess.
@@ -111,10 +112,11 @@ class ImpactVision:
         explicit `reported_metrics` so the 5D engine has hard data.
         """
         claims = self._extractor.extract(text)
+        extracted_geography = next((c.geography for c in claims if c.geography), "")
         company = Company(
             name=company_name,
             sector=sector or "",
-            country=country or "",
+            geography=geography or country or extracted_geography or "",
             description=text[:1000],
             impact_themes=impact_themes or [],
         )

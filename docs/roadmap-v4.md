@@ -235,7 +235,7 @@ consultant can launch a project without picking 30 tools by hand.
 | **Annual Impact Report** | Monitoring & Reporting | impact_report, lp_narrative, narrative_tool, trend_analysis, monitoring_tool | Multi-audience report builder (Track 5) |
 | **LP DDQ Response Pack** | Monitoring & Reporting | lp_ddq_export_tool, lp_portal, evidence_workflow | LP Q&A workspace constrained to verified data |
 | **Impact Verification (3-pillar)** | Verification | verification_workspace, verification_prep, evidence_graph, audit_trail, ifc_opim | BlueMark-style 3-pillar bundle (Track 10) |
-| **Impact VDD / Exit Report** | Exit | exit_impact, lp_narrative, evidence_graph, returns | Exit-ready bundle, OPIM Principle 8 narrative |
+| **Impact VDD / Exit Report** | Exit | exit_impact, lp_narrative, evidence_graph, returns | Exit-ready bundle, OPIM Principle 7 narrative |
 | **Regulatory Compliance** | Regulatory | sfdr_pai, esrs, csrd_wizard, regulatory_packs, climate_accounting | SFDR/SDR/SEC/CSRD wizard navigator (Track 9) |
 | **Stakeholder Voice Study** | Cross-cutting | stakeholder_voice, worker_voice, surveys, beneficiary_feedback | Persistent stakeholder ID (Sopact-counter) |
 | **Capacity Building / Training** | Cross-cutting | improvement_advisor, narrative_tool, dd_checklist, evidence_workflow | Workshop pack generator (Track 6) |

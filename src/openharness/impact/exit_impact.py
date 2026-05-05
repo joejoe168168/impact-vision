@@ -1,9 +1,9 @@
-"""Exit impact assessment workflow (v3 Track 5.6, OPIM Principle 8).
+"""Exit impact assessment workflow (v3 Track 5.6, OPIM Principle 7).
 
-The Operating Principles for Impact Management Principle 8 requires that
-investors "review, document, and improve decisions and processes based
-on the achievement of impact and lessons learned." For impact funds at
-exit, this translates to four concrete questions:
+The Operating Principles for Impact Management Principle 7 requires investors
+to consider how exit timing, structure, and process affect sustained impact.
+Principle 8 then turns the resulting evidence into review and learning. For
+impact funds at exit, this translates to four concrete questions:
 
 1. Does the impact persist after the fund's exit?
 2. What durability risks (commercial, governance, regulatory) threaten
@@ -96,7 +96,8 @@ class ExitImpactPlan(BaseModel):
     impact_claims: list[ImpactClaim] = Field(default_factory=list)
     contribution_summary: str = ""
     counterfactual_summary: str = ""
-    opim_principle: str = "OPIM Principle 8"
+    opim_principle: str = "OPIM Principle 7"
+    learning_principle: str = "OPIM Principle 8"
     notes: str = ""
 
 

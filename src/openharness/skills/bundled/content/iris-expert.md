@@ -29,14 +29,16 @@ and 5-Dimension tags.
 
 ## Key Metric IDs to Know
 
-- **PI4060**: Clients: Total (core metric for all organizations)
-- **PI9468**: Revenue (financial performance baseline)
-- **OI6024**: Direct Employees: Total
-- **PI5957**: Greenhouse Gas Emissions: Total
-- **PI1349**: Direct Beneficiaries: Total
-- **OI4112**: Social and Environmental Objectives
-- **PI2088**: Client Individuals: Female (gender lens)
-- **PI2740**: Client Individuals: Living in Poverty
+- **PI4060**: Client Individuals: Total
+- **FP8300**: Sales Revenue: Collected Directly
+- **OI8869**: Permanent Employees: Total
+- **OI1479**: Greenhouse Gas Emissions: Total
+- **PI2476**: Communities Served
+- **OD6247**: Social Impact Objectives
+- **OD4108**: Environmental Impact Objectives
+- **PI8330**: Client Individuals: Female
+- **PI3193**: Client Individuals: Poor
+- **PI7098**: Client Individuals: Low Income
 
 ## Rules
 

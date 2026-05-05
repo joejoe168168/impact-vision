@@ -155,7 +155,7 @@ IFRS_S2 = ISSBS2Framework(
                     paragraph_ref="S2.29",
                     guidance="Disclose GHG emissions (Scope 1, 2, 3), climate-related transition and physical risks, capital deployment.",
                     tcfd_equivalent="TCFD Metrics a)",
-                    iris_cross_refs=["OI4112", "OI9803"],
+                    iris_cross_refs=["OI4112", "OI9604", "OI1479"],
                     data_requirements=[
                         "Scope 1 GHG emissions (tCO2e)",
                         "Scope 2 GHG emissions (tCO2e)",
@@ -206,12 +206,23 @@ def assess_ifrs_s2_readiness(
     ghg_scopes_reported: list[int] | None = None,
     targets_set: bool = False,
 ) -> dict:
-    """Quick climate disclosure readiness assessment against IFRS S2."""
+    """Quick climate disclosure readiness screening against IFRS S2.
+
+    This is not a compliance opinion. It separates readiness signals from the
+    source-linked disclosure evidence needed for external reporting.
+    """
     reported_metrics = reported_metrics or {}
     ghg_scopes_reported = ghg_scopes_reported or []
     text = description.lower()
 
     pillar_scores: list[dict] = []
+
+    def _status(score: float) -> str:
+        if score >= 75:
+            return "evidence_ready"
+        if score >= 50:
+            return "partial"
+        return "gaps"
 
     gov_score = 0.0
     gov_keywords = ["board", "committee", "governance", "oversight", "director"]
@@ -220,7 +231,8 @@ def assess_ifrs_s2_readiness(
     gov_score += min(30, sum(10 for k in climate_keywords if k in text))
     if "management" in text and any(k in text for k in climate_keywords):
         gov_score += 30
-    pillar_scores.append({"pillar": "Governance", "score": min(100, gov_score), "max": 100})
+    gov_score = min(100, gov_score)
+    pillar_scores.append({"pillar": "Governance", "score": gov_score, "max": 100, "status": _status(gov_score)})
 
     strat_score = 0.0
     if "transition" in text or "physical risk" in text:
@@ -231,7 +243,8 @@ def assess_ifrs_s2_readiness(
         strat_score += 25
     strat_keywords = ["resilience", "scenario", "pathway", "decarboni"]
     strat_score += min(25, sum(8 for k in strat_keywords if k in text))
-    pillar_scores.append({"pillar": "Strategy", "score": min(100, strat_score), "max": 100})
+    strat_score = min(100, strat_score)
+    pillar_scores.append({"pillar": "Strategy", "score": strat_score, "max": 100, "status": _status(strat_score)})
 
     rm_score = 0.0
     rm_keywords = ["risk management", "risk assessment", "risk identification", "enterprise risk"]
@@ -240,20 +253,27 @@ def assess_ifrs_s2_readiness(
         rm_score += 20
     if "integration" in text or "integrated" in text:
         rm_score += 30
-    pillar_scores.append({"pillar": "Risk Management", "score": min(100, rm_score), "max": 100})
+    rm_score = min(100, rm_score)
+    pillar_scores.append({"pillar": "Risk Management", "score": rm_score, "max": 100, "status": _status(rm_score)})
 
     mt_score = 0.0
-    ghg_ids = {"OI4112", "OI9803"}
-    if ghg_ids & set(reported_metrics.keys()):
+    normalized_metric_ids = {str(metric_id).strip().upper() for metric_id in reported_metrics}
+    ghg_ids = {"OI4112", "OI1479"}
+    energy_ids = {"OI8825", "OI3324", "OI1496", "OI9624"}
+    if ghg_ids & normalized_metric_ids:
         mt_score += 20
+    if energy_ids & normalized_metric_ids:
+        mt_score += 10
     mt_score += len(ghg_scopes_reported) * 15
     if targets_set:
         mt_score += 20
     if "science" in text and "based" in text:
         mt_score += 10
-    pillar_scores.append({"pillar": "Metrics and Targets", "score": min(100, mt_score), "max": 100})
+    mt_score = min(100, mt_score)
+    pillar_scores.append({"pillar": "Metrics and Targets", "score": mt_score, "max": 100, "status": _status(mt_score)})
 
     overall = round(sum(p["score"] for p in pillar_scores) / len(pillar_scores), 1) if pillar_scores else 0
+    readiness_level = "evidence_ready" if overall >= 75 else "partial" if overall >= 50 else "screening_gaps"
 
     recommendations: list[str] = []
     if pillar_scores[0]["score"] < 40:
@@ -268,7 +288,13 @@ def assess_ifrs_s2_readiness(
     return {
         "framework": "ISSB IFRS S2 — Climate-related Disclosures",
         "overall_readiness": overall,
+        "readiness_level": readiness_level,
+        "assessment_basis": "screening_readiness_not_compliance_opinion",
         "pillar_scores": pillar_scores,
         "recommendations": recommendations,
         "tcfd_equivalence": "IFRS S2 fully subsumes TCFD recommendations with additional requirements",
+        "limitations": [
+            "Keyword and metric presence do not prove IFRS S2 disclosure compliance.",
+            "Use source-linked answers, GHG methodology details, and reviewer sign-off for reporting or assurance.",
+        ],
     }

@@ -150,7 +150,7 @@ class TestSDGCoreMetricSet:
             sdg_claims=[1, 5, 8],
             reported_metrics={
                 "PI4060": "12000",
-                "PI2740": "8500",
+                "PI3193": "8500",
                 "OI4753": "Yes",
                 "OI6213": "62%",
                 "OI1571": "45%",
@@ -272,6 +272,28 @@ class TestSFDRPAILinkage:
             assert pai.iris_cross_refs, (
                 f"Optional PAI #{pai.number} '{pai.name}' has no IRIS+ cross-reference"
             )
+
+    def test_direct_pai_keys_count_as_reported_data(self) -> None:
+        from openharness.impact.frameworks.sfdr_pai import assess_sfdr_compliance
+
+        result = assess_sfdr_compliance(reported_data={"SFDR PAI 1": "100 tCO2e", "pai-13": "40%"})
+        rows = {row["number"]: row for row in result["indicators"]}
+
+        assert rows[1]["addressed"] is True
+        assert rows[13]["addressed"] is True
+        assert "PAI 1 reported" in rows[1]["evidence"]
+
+    def test_text_mentions_do_not_count_as_reportable_pai_coverage(self) -> None:
+        from openharness.impact.frameworks.sfdr_pai import assess_sfdr_compliance
+
+        result = assess_sfdr_compliance(
+            company_description="The company mentions GHG emissions and gender pay gap governance.",
+        )
+        rows = {row["number"]: row for row in result["indicators"]}
+
+        assert rows[1]["status"] == "mentioned"
+        assert rows[1]["addressed"] is False
+        assert result["addressed"] == 0
 
 
 # ---------------------------------------------------------------------------

@@ -1,4 +1,4 @@
-"""Tests for v3 OPIM Principle 8 exit impact assessment."""
+"""Tests for v3 OPIM Principle 7 exit impact assessment."""
 
 from __future__ import annotations
 
@@ -64,6 +64,8 @@ def test_score_exit_impact_strong_when_well_documented() -> None:
             ImpactClaim(text="2,000 households served", evidence_strength=5),
         ],
     )
+    assert plan.opim_principle == "OPIM Principle 7"
+    assert plan.learning_principle == "OPIM Principle 8"
     score = score_exit_impact(plan)
     assert score.band in {"moderate", "strong"}
     assert score.residual_score >= 60

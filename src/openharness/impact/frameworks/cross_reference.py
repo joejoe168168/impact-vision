@@ -6,6 +6,8 @@ Enables lookup in any direction: given a metric in one standard, find equivalent
 
 from __future__ import annotations
 
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 
@@ -32,6 +34,11 @@ class CrossReference(BaseModel):
     issb: list[str] = Field(default_factory=list)
     esrs: list[str] = Field(default_factory=list)
     sdg_goals: list[int] = Field(default_factory=list)
+    mapping_confidence: Literal["direct", "partial", "proxy", "conceptual"] = "direct"
+    mapping_basis: Literal["metric", "disclosure", "conceptual", "proxy"] = "conceptual"
+    confidence: Literal["high", "medium", "low"] = "medium"
+    source_url: str = ""
+    notes: str = ""
 
 
 CROSS_REFERENCE_MAP: list[CrossReference] = [
@@ -113,7 +120,6 @@ CROSS_REFERENCE_MAP: list[CrossReference] = [
     CrossReference(
         concept="Energy Consumption",
         gri=["302-1"],
-        edci=["EDCI-E5"],
         sfdr_pai=[6],
         sasb_dimension="Environment",
         sasb_codes=["EM-EP-130a.1", "RT-CH-130a.1", "RT-EE-130a.1"],
@@ -124,7 +130,7 @@ CROSS_REFERENCE_MAP: list[CrossReference] = [
     ),
     CrossReference(
         concept="Renewable Energy Share",
-        edci=["EDCI-E4"],
+        edci=["EDCI-E7"],
         sfdr_pai=[5],
         gri=["302-1"],
         sasb_codes=["IF-EU-000.D"],
@@ -134,7 +140,7 @@ CROSS_REFERENCE_MAP: list[CrossReference] = [
     ),
     CrossReference(
         concept="Net Zero Commitment",
-        edci=["EDCI-E6"],
+        edci=["EDCI-E5", "EDCI-E6"],
         tcfd=["MET-C"],
         sbti=["SBTi-Net-Zero", "SBTi-1.5C-Aligned"],
         cdp=["CDP-Climate-C4.1"],
@@ -197,34 +203,36 @@ CROSS_REFERENCE_MAP: list[CrossReference] = [
         concept="Total Employees",
         iris_plus=["OI8869"],
         gri=["2-7", "401-1"],
-        edci=["EDCI-S7"],
         sasb_dimension="Human Capital",
         sasb_codes=["FN-CB-000.B", "RT-CH-000.B"],
         esrs=["S1-6"],
         sdg_goals=[8],
+        mapping_confidence="proxy",
+        notes="EDCI 2026 tracks net new hires and turnover, not total employee headcount.",
     ),
     CrossReference(
         concept="Female Employees (%)",
         iris_plus=["OI6213"],
         gri=["405-1"],
-        edci=["EDCI-S4"],
         sfdr_pai=[13],
         sasb_codes=["FN-CB-330a.1"],
         esrs=["S1-9"],
         sdg_goals=[5, 10],
+        mapping_confidence="proxy",
+        notes="EDCI 2026 diversity fields cover women on board, women in C-suite, and under-represented groups.",
     ),
     CrossReference(
         concept="Female in Management/C-Suite",
         iris_plus=["OI1571"],
         gri=["405-1"],
-        edci=["EDCI-S5"],
+        edci=["EDCI-S6"],
         sdg_goals=[5],
     ),
     CrossReference(
         concept="Female on Board",
         iris_plus=["OI1075"],
         gri=["405-1"],
-        edci=["EDCI-S6"],
+        edci=["EDCI-S4"],
         sfdr_pai=[13],
         sdg_goals=[5],
     ),
@@ -232,16 +240,17 @@ CROSS_REFERENCE_MAP: list[CrossReference] = [
         concept="Gender Pay Gap / Wage Equity",
         iris_plus=["OI1582"],
         gri=["405-2"],
-        edci=["EDCI-S8"],
         sfdr_pai=[12, 23],
         sasb_codes=["FN-CB-330a.1"],
         esrs=["S1-16"],
         sdg_goals=[5, 8, 10],
+        mapping_confidence="proxy",
+        notes="EDCI 2026 diversity fields do not include gender pay gap.",
     ),
     CrossReference(
         concept="Work-Related Injuries",
         gri=["403-9"],
-        edci=["EDCI-S1", "EDCI-S2"],
+        edci=["EDCI-S1", "EDCI-S2", "EDCI-S3"],
         sasb_dimension="Human Capital",
         sasb_codes=["EM-EP-320a.1", "RT-CH-320a.1", "EM-MM-320a.1"],
         esrs=["S1-14"],
@@ -249,7 +258,7 @@ CROSS_REFERENCE_MAP: list[CrossReference] = [
     ),
     CrossReference(
         concept="Employee Engagement / NPS",
-        edci=["EDCI-S3"],
+        edci=["EDCI-S9", "EDCI-S10", "EDCI-S11"],
         sdg_goals=[8],
     ),
     # Social - Clients/Beneficiaries
@@ -274,19 +283,24 @@ CROSS_REFERENCE_MAP: list[CrossReference] = [
         concept="Board Composition/Independence",
         iris_plus=["OI1075"],
         gri=["2-9"],
-        edci=["EDCI-G1"],
+        edci=["EDCI-S4"],
+        mapping_confidence="proxy",
+        notes="EDCI diversity captures women on board, not board independence.",
     ),
     CrossReference(
         concept="Data Privacy & Security",
         gri=["418-1"],
-        edci=["EDCI-G2"],
+        edci=["EDCI-G1"],
         sasb_dimension="Social Capital",
+        mapping_confidence="proxy",
+        notes="EDCI 2026 maps this concept narrowly to cybersecurity testing.",
     ),
     CrossReference(
         concept="ESG/Sustainability Oversight",
         gri=["2-12"],
-        edci=["EDCI-G3"],
         tcfd=["GOV-A", "GOV-B"],
+        mapping_confidence="proxy",
+        notes="EDCI 2026 public KPI categories do not include board ESG oversight.",
     ),
     CrossReference(
         concept="Anti-Corruption",
@@ -368,8 +382,9 @@ CROSS_REFERENCE_MAP: list[CrossReference] = [
         concept="Living Wage / Market Presence",
         iris_plus=["OI1582"],
         gri=["202-1"],
-        edci=["EDCI-S8"],
         sdg_goals=[1, 8],
+        mapping_confidence="proxy",
+        notes="Living wage is an adjacent ESG datapoint, not an EDCI 2026 KPI category.",
     ),
     # Land Use
     CrossReference(
@@ -400,9 +415,14 @@ CROSS_REFERENCE_MAP: list[CrossReference] = [
     # Financial Inclusion Depth
     CrossReference(
         concept="Financial Inclusion Depth",
-        iris_plus=["PI4060", "PI2740"],
+        iris_plus=["PI4060", "PI3193", "PI4237"],
         sasb_dimension="Social Capital",
         sdg_goals=[1, 8, 10],
+        mapping_confidence="proxy",
+        notes=(
+            "Uses current IRIS+ client total and underserved-client disaggregations; "
+            "the older poverty-client reference is not present in the bundled 5.3c catalog."
+        ),
     ),
     # Access Metrics
     CrossReference(
@@ -429,6 +449,7 @@ CROSS_REFERENCE_MAP: list[CrossReference] = [
     CrossReference(
         concept="Employee Turnover Rate",
         gri=["401-1"],
+        edci=["EDCI-S8"],
         sasb_dimension="Human Capital",
         esrs=["S1-6"],
         sdg_goals=[8],
@@ -515,6 +536,8 @@ _pcaf_index: dict[str, list[CrossReference]] = {}
 _eutax_index: dict[str, list[CrossReference]] = {}
 _cdp_index: dict[str, list[CrossReference]] = {}
 _sbti_index: dict[str, list[CrossReference]] = {}
+_issb_index: dict[str, list[CrossReference]] = {}
+_esrs_index: dict[str, list[CrossReference]] = {}
 _concept_index: dict[str, CrossReference] = {}
 
 for _xref in CROSS_REFERENCE_MAP:
@@ -539,6 +562,10 @@ for _xref in CROSS_REFERENCE_MAP:
         _cdp_index.setdefault(_id, []).append(_xref)
     for _id in _xref.sbti:
         _sbti_index.setdefault(_id, []).append(_xref)
+    for _id in _xref.issb:
+        _issb_index.setdefault(_id, []).append(_xref)
+    for _id in _xref.esrs:
+        _esrs_index.setdefault(_id, []).append(_xref)
 
 
 def lookup_by_iris(metric_id: str) -> list[CrossReference]:
@@ -582,6 +609,14 @@ def lookup_by_sbti(code: str) -> list[CrossReference]:
     return _sbti_index.get(code, [])
 
 
+def lookup_by_issb(code: str) -> list[CrossReference]:
+    return _issb_index.get(code, [])
+
+
+def lookup_by_esrs(code: str) -> list[CrossReference]:
+    return _esrs_index.get(code, [])
+
+
 def search_cross_references(query: str) -> list[CrossReference]:
     """Search cross-references by concept name."""
     q = query.lower()
@@ -595,6 +630,8 @@ def get_all_cross_references() -> list[CrossReference]:
 def format_cross_reference(xref: CrossReference) -> str:
     """Format a cross-reference for display."""
     parts = [f"[{xref.concept}]"]
+    if xref.mapping_confidence != "direct":
+        parts.append(f"  Mapping confidence: {xref.mapping_confidence}")
     if xref.iris_plus:
         parts.append(f"  IRIS+: {', '.join(xref.iris_plus)}")
     if xref.gri:
@@ -628,4 +665,6 @@ def format_cross_reference(xref: CrossReference) -> str:
         parts.append(f"  SBTi: {', '.join(xref.sbti)}")
     if xref.sdg_goals:
         parts.append(f"  SDGs: {', '.join(f'{g}' for g in xref.sdg_goals)}")
+    if xref.notes:
+        parts.append(f"  Notes: {xref.notes}")
     return "\n".join(parts)
