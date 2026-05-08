@@ -11,6 +11,39 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Added
+
+- **v5 decision workflow suite for fund managers, project owners, and
+  Impact / ESG consultants.** Added decision-useful workflows that turn
+  the existing assessment engine into investment committee and LP-ready
+  outputs:
+  - `impact.decision_workflow` with quick screen, IC workflow summary,
+    deal comparison, and LP readiness scoring.
+  - `impact.evidence_chain_renderer` to link reported metrics and claims
+    back to the IMP five dimensions without changing the scoring model.
+  - `impact.verdict_engine` for pass / caution / fail verdict cards with
+    top findings, strengths, and next steps.
+  - `impact.regulatory_calendar` as a planning-friendly wrapper around
+    jurisdiction deadline scheduling.
+  - New agent tools `decision_workflow` and `regulatory_calendar`,
+    registered in the default tool registry and exposed through the SDK,
+    MCP server, REST API, and Web Console.
+  - IC memo renderers now accept verdict cards and a "Proof of Rigor"
+    appendix so reviewers can see the evidence, claim gaps, and warnings
+    behind the recommendation.
+  - 5-Dimension assessment metadata now includes evidence chains, and
+    impact report JSON now enriches each dimension with tracked metrics
+    plus gap-analysis metric suggestions.
+  - Pitch-deck extraction now keeps suggested metrics separate from
+    reported evidence, including explicit metadata and saved YAML fields
+    that prevent recommendations from being treated as verified data.
+  - README and the fund-manager guide now document the 39-tool impact
+    surface and the new v5 workflows.
+  - Added regression coverage for decision workflows, regulatory
+    calendars, REST/MCP public surfaces, report metric enrichment, and
+    pitch-deck evidence integrity. Verified full suite:
+    **1202 passed, 7 skipped, 1 xfailed**.
+
 ### Changed
 
 - **README.md deep cleanup (2026-05-02).** Removed all changelog-style

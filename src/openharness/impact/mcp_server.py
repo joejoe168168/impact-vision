@@ -480,6 +480,87 @@ async def impact_report(
 
 
 @mcp.tool()
+async def decision_workflow(
+    action: str = "quick_screen",
+    company_name: str = "",
+    company_description: str = "",
+    sector: str = "",
+    geography: str = "",
+    impact_themes: list[str] | None = None,
+    reported_metrics: dict[str, str] | None = None,
+    sdg_claims: list[int] | None = None,
+    claims: list[dict[str, Any]] | None = None,
+    metric_records: list[dict[str, Any]] | None = None,
+    company_a: dict[str, Any] | None = None,
+    company_b: dict[str, Any] | None = None,
+    thesis_path: str = "",
+    dd_coverage_pct: float | None = None,
+    exclusion_pass: bool | None = None,
+    memo_format: str = "markdown",
+    output_format: str = "json",
+) -> str:
+    """Run fund-manager decision workflows.
+
+    Actions: quick_screen, ic_workflow, deal_compare, lp_readiness.
+    """
+    from openharness.tools.impact.decision_workflow_tool import (
+        DecisionWorkflowInput,
+        DecisionWorkflowTool,
+    )
+
+    tool = DecisionWorkflowTool()
+    args = DecisionWorkflowInput(
+        action=action,  # type: ignore[arg-type]
+        company_name=company_name,
+        company_description=company_description,
+        sector=sector,
+        geography=geography,
+        impact_themes=impact_themes or [],
+        reported_metrics=reported_metrics or {},
+        sdg_claims=sdg_claims or [],
+        claims=claims or [],
+        metric_records=metric_records or [],
+        company_a=company_a or {},
+        company_b=company_b or {},
+        thesis_path=thesis_path,
+        dd_coverage_pct=dd_coverage_pct,
+        exclusion_pass=exclusion_pass,
+        memo_format=memo_format,  # type: ignore[arg-type]
+        output_format=output_format,  # type: ignore[arg-type]
+    )
+    result = await tool.execute(args, _get_tool_context())
+    return result.output
+
+
+@mcp.tool()
+async def regulatory_calendar(
+    action: str = "schedule",
+    jurisdiction: str = "EU",
+    fiscal_year_end: str = "",
+    engagement_id: str = "",
+    owner: str = "",
+    output_format: str = "text",
+) -> str:
+    """Build regulatory deadline calendars and list supported jurisdictions."""
+    from openharness.tools.impact.regulatory_calendar_tool import (
+        RegulatoryCalendarInput,
+        RegulatoryCalendarTool,
+    )
+
+    tool = RegulatoryCalendarTool()
+    args = RegulatoryCalendarInput(
+        action=action,  # type: ignore[arg-type]
+        jurisdiction=jurisdiction,  # type: ignore[arg-type]
+        fiscal_year_end=fiscal_year_end,
+        engagement_id=engagement_id,
+        owner=owner,
+        output_format=output_format,  # type: ignore[arg-type]
+    )
+    result = await tool.execute(args, _get_tool_context())
+    return result.output
+
+
+@mcp.tool()
 async def impact_data_quality(
     company_name: str,
     reported_metrics: dict[str, str] | None = None,

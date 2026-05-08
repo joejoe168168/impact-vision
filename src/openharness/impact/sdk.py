@@ -30,6 +30,13 @@ from openharness.impact.dd_checklist import (
     load_checklist,
 )
 from openharness.impact.deal_gate import DealScorecard, evaluate_deal
+from openharness.impact.decision_workflow import (
+    assess_lp_readiness,
+    build_ic_workflow_summary,
+    compare_deals,
+    quick_screen,
+    render_evidence_chains,
+)
 from openharness.impact.extractors import (
     ExtractedClaim,
     VerificationResult,
@@ -47,6 +54,7 @@ from openharness.impact.portfolio_rollup import (
     PortfolioRollup,
     rollup_portfolio,
 )
+from openharness.impact.regulatory_calendar import build_regulatory_calendar
 from openharness.impact.sdg_mapper import map_sdg_alignment
 
 
@@ -206,6 +214,22 @@ class ImpactVision:
         thesis = thesis or self.load_thesis(thesis_path)
         return build_calendar(thesis, horizon_months=horizon_months)
 
+    @staticmethod
+    def build_regulatory_calendar(
+        *,
+        jurisdiction: str = "EU",
+        fiscal_year_end=None,
+        engagement_id: str = "",
+        owner: str = "",
+    ):
+        """Build a regulatory deadline calendar for a jurisdiction."""
+        return build_regulatory_calendar(
+            jurisdiction=jurisdiction,  # type: ignore[arg-type]
+            fiscal_year_end=fiscal_year_end,
+            engagement_id=engagement_id,
+            owner=owner,
+        )
+
     # ------------------------------------------------------------------
     # Due diligence + greenwashing screen
     # ------------------------------------------------------------------
@@ -308,6 +332,77 @@ class ImpactVision:
         claims: list[dict] | None = None,
     ):
         return assess_greenwashing(company, claims=claims)
+
+    def render_evidence_chains(
+        self,
+        assessment: Assessment,
+        *,
+        claims: list[dict] | None = None,
+        metric_records: list[dict] | None = None,
+    ):
+        """Return score-to-evidence chains for each 5D dimension."""
+        return render_evidence_chains(
+            assessment,
+            self._store,
+            claims=claims,
+            metric_records=metric_records,
+        )
+
+    def quick_screen(
+        self,
+        company: Company,
+        *,
+        thesis: FundThesis | None = None,
+        thesis_path: str | Path | None = None,
+        claims: list[dict] | None = None,
+        dd_coverage_pct: float | None = None,
+        exclusion_pass: bool | None = None,
+    ):
+        """Run the v5 60-second deal screen."""
+        thesis = thesis or self.load_thesis(thesis_path)
+        return quick_screen(
+            company,
+            self._store,
+            thesis,
+            claims=claims,
+            dd_coverage_pct=dd_coverage_pct,
+            exclusion_pass=exclusion_pass,
+        )
+
+    def build_ic_workflow_summary(
+        self,
+        company: Company,
+        *,
+        thesis: FundThesis | None = None,
+        thesis_path: str | Path | None = None,
+        claims: list[dict] | None = None,
+        metric_records: list[dict] | None = None,
+        dd_coverage_pct: float | None = None,
+        exclusion_pass: bool | None = None,
+        memo_format: str = "markdown",
+    ):
+        """Build the v5 IC summary: assessment, gate, verdict, proof appendix, memo."""
+        thesis = thesis or self.load_thesis(thesis_path)
+        return build_ic_workflow_summary(
+            company,
+            self._store,
+            thesis,
+            claims=claims,
+            metric_records=metric_records,
+            dd_coverage_pct=dd_coverage_pct,
+            exclusion_pass=exclusion_pass,
+            memo_format=memo_format,  # type: ignore[arg-type]
+        )
+
+    @staticmethod
+    def compare_deals(summary_a, summary_b):
+        """Compare two IC workflow summaries side-by-side."""
+        return compare_deals(summary_a, summary_b)
+
+    @staticmethod
+    def assess_lp_readiness(summary):
+        """Return LP-ready / needs-work / blocked status for an IC workflow summary."""
+        return assess_lp_readiness(summary)
 
     # ------------------------------------------------------------------
     # Phase 15–20 additions. These are thin passthroughs that keep the

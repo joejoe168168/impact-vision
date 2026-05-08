@@ -18,6 +18,8 @@ Endpoints (v1):
     POST /api/v1/metric-recommend     - IRIS+ metric recommendations
     POST /api/v1/exclusion-screen     - Exclusion criteria screening
     POST /api/v1/report               - Impact report generation
+    POST /api/v1/decision-workflow    - Quick screen, IC workflow, deal comparison, LP readiness
+    POST /api/v1/regulatory-calendar  - Regulatory deadline calendar
     POST /api/v1/pitch-deck           - Pitch deck analysis
     POST /api/v1/ddq-export           - LP DDQ export
     POST /api/v1/pipeline             - Pipeline management
@@ -155,6 +157,28 @@ class ReportRequest(CompanyRequest):
     report_type: str = Field(default="full", description="Report type: full, target_progress, lp_ready")
 
 
+class DecisionWorkflowRequest(CompanyRequest):
+    action: str = Field(default="quick_screen", description="quick_screen, ic_workflow, deal_compare, lp_readiness")
+    claims: list[dict[str, Any]] = Field(default_factory=list)
+    metric_records: list[dict[str, Any]] = Field(default_factory=list)
+    company_a: dict[str, Any] = Field(default_factory=dict)
+    company_b: dict[str, Any] = Field(default_factory=dict)
+    thesis_path: str = ""
+    dd_coverage_pct: float | None = None
+    exclusion_pass: bool | None = None
+    memo_format: str = "markdown"
+    output_format: str = "json"
+
+
+class RegulatoryCalendarRequest(BaseModel):
+    action: str = Field(default="schedule", description="schedule or list_jurisdictions")
+    jurisdiction: str = "EU"
+    fiscal_year_end: str = ""
+    engagement_id: str = ""
+    owner: str = ""
+    output_format: str = "json"
+
+
 class PipelineRequest(BaseModel):
     action: str = Field(description="Action: add, update, list, get, delete, transition, history, summary")
     company_name: str = ""
@@ -268,7 +292,7 @@ async def _fire_webhooks(event: str, payload: dict) -> None:
 
 @app.get("/api/v1/health")
 async def health():
-    return {"status": "ok", "version": "0.14.0", "engine": "impact-vision", "tools": 26}
+    return {"status": "ok", "version": "0.15.0", "engine": "impact-vision", "tools": 39}
 
 
 @app.post("/api/v1/score", dependencies=[Depends(verify_api_key)])
@@ -540,6 +564,61 @@ async def generate_report(req: ReportRequest):
     payload = {"result": result.output, "format": req.output_format, "report_type": req.report_type}
     await _fire_webhooks("assessment_complete", {"company": req.company_name, "report_type": req.report_type})
     return payload
+
+
+@app.post("/api/v1/decision-workflow", dependencies=[Depends(verify_api_key)])
+async def decision_workflow_endpoint(req: DecisionWorkflowRequest):
+    from openharness.tools.impact.decision_workflow_tool import (
+        DecisionWorkflowInput,
+        DecisionWorkflowTool,
+    )
+
+    tool = DecisionWorkflowTool()
+    args = DecisionWorkflowInput(
+        action=req.action,  # type: ignore[arg-type]
+        company_name=req.company_name,
+        company_description=req.company_description,
+        sector=req.sector,
+        geography=req.geography,
+        impact_themes=req.impact_themes,
+        reported_metrics=req.reported_metrics,
+        sdg_claims=req.sdg_claims,
+        claims=req.claims,
+        metric_records=req.metric_records,
+        company_a=req.company_a,
+        company_b=req.company_b,
+        thesis_path=req.thesis_path,
+        dd_coverage_pct=req.dd_coverage_pct,
+        exclusion_pass=req.exclusion_pass,
+        memo_format=req.memo_format,  # type: ignore[arg-type]
+        output_format=req.output_format,  # type: ignore[arg-type]
+    )
+    result = await tool.execute(args, _get_tool_context())
+    if result.is_error:
+        raise HTTPException(status_code=400, detail=result.output)
+    return {"result": result.output, "metadata": result.metadata}
+
+
+@app.post("/api/v1/regulatory-calendar", dependencies=[Depends(verify_api_key)])
+async def regulatory_calendar_endpoint(req: RegulatoryCalendarRequest):
+    from openharness.tools.impact.regulatory_calendar_tool import (
+        RegulatoryCalendarInput,
+        RegulatoryCalendarTool,
+    )
+
+    tool = RegulatoryCalendarTool()
+    args = RegulatoryCalendarInput(
+        action=req.action,  # type: ignore[arg-type]
+        jurisdiction=req.jurisdiction,  # type: ignore[arg-type]
+        fiscal_year_end=req.fiscal_year_end,
+        engagement_id=req.engagement_id,
+        owner=req.owner,
+        output_format=req.output_format,  # type: ignore[arg-type]
+    )
+    result = await tool.execute(args, _get_tool_context())
+    if result.is_error:
+        raise HTTPException(status_code=400, detail=result.output)
+    return {"result": result.output, "metadata": result.metadata}
 
 
 @app.post("/api/v1/pitch-deck", dependencies=[Depends(verify_api_key)])

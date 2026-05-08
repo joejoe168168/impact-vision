@@ -304,7 +304,7 @@ Opens a web dashboard at http://localhost:8501 with 5 tabs: Assessment, IRIS+ Ca
 | `iv dd categories` | List DD categories |
 | `iv dd analyze "text"` | Check text against DD checklist |
 | `iv ollama-setup` | Configure local LLM |
-| `iv serve-mcp` | Start MCP server for AI agents (37 tools + 5 resources) |
+| `iv serve-mcp` | Start MCP server for AI agents (39 impact tools + 5 resources) |
 | `iv serve-web` | Start Web Console + REST API at http://127.0.0.1:8787 |
 | `iv` | Start interactive AI agent |
 
@@ -312,7 +312,7 @@ Opens a web dashboard at http://localhost:8501 with 5 tabs: Assessment, IRIS+ Ca
 
 ## Usage
 
-Impact Vision ships **37 agent tools** covering the full investment lifecycle
+Impact Vision ships **39 impact agent tools** covering the full investment lifecycle
 — pre-screen, due diligence, IC memo, portfolio monitoring, LP reporting,
 assurance, and post-exit review. Below are common prompts you can paste
 into the interactive agent (or the Web Console at
@@ -700,7 +700,7 @@ impact-vision/
 │   │   ├── mcp_server.py              # MCP server (FastMCP)
 │   │   └── sdk.py                     # High-level ImpactVision SDK facade
 │   │
-│   ├── tools/impact/                  # 37 LLM-callable agent tools (see "Tools" below)
+│   ├── tools/impact/                  # 39 LLM-callable impact agent tools (see "Tools" below)
 │   ├── api_gateway/router.py          # FastAPI REST API
 │   ├── web/                           # Single-file Web Console + SSE streaming
 │   ├── dashboard/app.py               # Streamlit 5-tab dashboard
@@ -844,7 +844,7 @@ cross-references to IRIS+ metric IDs via the shared
 | | Verification workspace | Finding lifecycle + threaded comments (v0.15.0) |
 | | 3-pillar assurance bundle | HMAC-signed evidence graph + audit trail + workspace (v4) |
 
-### Agent Tools (37)
+### Agent Tools (39)
 
 All tools below are exposed through the default OpenHarness tool registry
 and `openharness.tools.impact`, so the interactive agent, Web Console,
@@ -889,6 +889,13 @@ REST API, and MCP server see the same surface.
 | `cross_reference` | Cross-framework metric lookup (59 mappings) |
 | `impact_report` | Interactive HTML reports + XLSX/CSV/JSON/text/PDF |
 | `lp_ddq_export` | LP DDQ responses in ILPA, GIIN, EDCI, SFDR formats |
+
+**Decision workflow — v5 (2)**
+
+| Tool | Description |
+|------|-------------|
+| `decision_workflow` | Quick screen, IC memo proof bundle, deal comparison, and LP readiness |
+| `regulatory_calendar` | Jurisdiction-specific reporting deadlines for fund and engagement planning |
 
 **Portfolio workflow (5)**
 
@@ -950,7 +957,7 @@ The dashboard has 5 tabs:
 ## Web Console (power-user UI)
 
 For a browser-native surface to every tool — useful when you want the
-full 37-tool set at your fingertips rather than Streamlit's 5 curated
+full 39-tool set at your fingertips rather than Streamlit's 5 curated
 tabs — run the **web console**:
 
 ```bash

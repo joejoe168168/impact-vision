@@ -5,8 +5,9 @@ from __future__ import annotations
 from pydantic import BaseModel, Field
 
 from openharness.impact.database import ensure_catalog_loaded
+from openharness.impact.decision_workflow import render_evidence_chains
 from openharness.impact.five_dimensions import assess_five_dimensions, assess_additionality
-from openharness.impact.models import Company
+from openharness.impact.models import Assessment, Company
 from openharness.tools.impact.common import infer_themes, normalize_metric_map, normalize_sector
 from openharness.tools.impact.exclusion_screening_tool import quick_exclusion_check
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
@@ -63,6 +64,8 @@ class FiveDimensionAssessTool(BaseTool):
         result = assess_five_dimensions(
             company, store, theme=args.focus_theme or None
         )
+        assessment = Assessment(company=company, five_dimensions=result)
+        evidence_chains = render_evidence_chains(assessment, store)
 
         prov_label = {"evidence-based": "Evidence-based", "partial": "Partially evidenced", "estimated": "Estimated (no metrics reported)"}
         lines = [
@@ -118,6 +121,10 @@ class FiveDimensionAssessTool(BaseTool):
             output="\n".join(lines),
             metadata={
                 "assessment": result.model_dump(),
+                "evidence_chains": {
+                    key: value.model_dump(mode="json")
+                    for key, value in evidence_chains.items()
+                },
                 "additionality": additionality,
             },
         )

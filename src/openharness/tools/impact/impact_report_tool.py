@@ -301,6 +301,8 @@ class ImpactReportTool(BaseTool):
         if company.beneficiary_feedback:
             report_data["beneficiary_feedback"] = company.beneficiary_feedback.model_dump()
 
+        _attach_tracked_metrics_to_five_dimensions(report_data)
+
         from openharness.impact.benchmarks import compare_to_benchmark
         if "five_dimensions" in report_data and company.sector:
             fd = report_data["five_dimensions"]
@@ -366,8 +368,45 @@ class ImpactReportTool(BaseTool):
 
         return ToolResult(
             output=output,
-            metadata={"format": args.output_format},
+            metadata={"format": args.output_format, "report_data": report_data},
         )
+
+
+def _attach_tracked_metrics_to_five_dimensions(data: dict) -> None:
+    """Add render-friendly tracked metric IDs to 5D dimension payloads.
+
+    The scoring engine returns counts and gaps, while the report UI can render a
+    clearer "tracked metrics" overlay when each dimension carries explicit IDs.
+    This is derived from the gap-analysis metric metadata and does not affect
+    scoring.
+    """
+    fd = data.get("five_dimensions")
+    gap = data.get("gap_analysis")
+    if not isinstance(fd, dict) or not isinstance(gap, dict):
+        return
+
+    group_to_key = {
+        "what": "what",
+        "who": "who",
+        "how much": "how_much",
+        "contribution": "contribution",
+        "risk": "risk",
+    }
+    tracked_by_dim: dict[str, list[str]] = {key: [] for key in group_to_key.values()}
+    for metric in gap.get("reported", []) + gap.get("extra_metrics_reported", []):
+        metric_id = str(metric.get("id", "")).strip()
+        if not metric_id:
+            continue
+        for group in metric.get("dimension_groups") or []:
+            dim_key = group_to_key.get(str(group).lower())
+            if dim_key and metric_id not in tracked_by_dim[dim_key]:
+                tracked_by_dim[dim_key].append(metric_id)
+
+    for dim_key, metric_ids in tracked_by_dim.items():
+        dim = fd.get(dim_key)
+        if isinstance(dim, dict):
+            existing = [str(item) for item in dim.get("metrics_tracked", [])]
+            dim["metrics_tracked"] = list(dict.fromkeys(existing + metric_ids))
 
 
 def _to_text(data: dict) -> str:

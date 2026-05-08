@@ -3,6 +3,7 @@
 from openharness.tools.impact.beneficiary_feedback_tool import BeneficiaryFeedbackTool
 from openharness.tools.impact.cross_reference_tool import CrossReferenceTool
 from openharness.tools.impact.data_quality_tool import DataQualityTool
+from openharness.tools.impact.decision_workflow_tool import DecisionWorkflowTool
 from openharness.tools.impact.dd_checklist_tool import DdChecklistTool
 from openharness.tools.impact.document_analysis_tool import DocumentAnalysisTool
 from openharness.tools.impact.emission_factors_tool import EmissionFactorsTool
@@ -31,6 +32,7 @@ from openharness.tools.impact.pitch_deck_analyze_tool import PitchDeckAnalyzeToo
 from openharness.tools.impact.portfolio_query_tool import PortfolioQueryTool
 from openharness.tools.impact.portfolio_tool import PortfolioTool
 from openharness.tools.impact.product_passport_tool import ProductPassportTool
+from openharness.tools.impact.regulatory_calendar_tool import RegulatoryCalendarTool
 from openharness.tools.impact.sdg_mapper_tool import SdgMapperTool
 from openharness.tools.impact.stakeholder_voice_tool import StakeholderVoiceTool
 from openharness.tools.impact.toc_builder_tool import ToCBuilderTool
@@ -42,6 +44,7 @@ __all__ = [
     "BeneficiaryFeedbackTool",
     "CrossReferenceTool",
     "DataQualityTool",
+    "DecisionWorkflowTool",
     "DdChecklistTool",
     "DocumentAnalysisTool",
     "EmissionFactorsTool",
@@ -70,6 +73,7 @@ __all__ = [
     "PortfolioQueryTool",
     "PortfolioTool",
     "ProductPassportTool",
+    "RegulatoryCalendarTool",
     "SdgMapperTool",
     "StakeholderVoiceTool",
     "ToCBuilderTool",

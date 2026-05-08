@@ -202,6 +202,15 @@ def analyze_gaps(
         "missing_by_dimension": missing_by_dimension,
         "required": required_metrics,
         "extra_metrics_reported": extra_metrics,
+        "suggested_metrics": [
+            {
+                "iris_id": info["id"],
+                "name": info["name"],
+                "dimension_groups": info.get("dimension_groups", []),
+                "unit": info.get("unit", ""),
+            }
+            for info in missing_metrics[:10]
+        ],
         "recommendations": _generate_recommendations(missing_metrics, coverage_pct),
     }
 

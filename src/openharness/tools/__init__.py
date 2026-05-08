@@ -85,6 +85,7 @@ def create_default_tool_registry(mcp_manager: McpClientManager | None = None) ->
         ("impact.improvement_advisor_tool", "ImprovementAdvisorTool"),
         ("impact.cross_reference_tool", "CrossReferenceTool"),
         ("impact.data_quality_tool", "DataQualityTool"),
+        ("impact.decision_workflow_tool", "DecisionWorkflowTool"),
         ("impact.lp_ddq_export_tool", "LpDdqExportTool"),
         ("impact.metric_recommender_tool", "MetricRecommenderTool"),
         ("impact.monitoring_tool", "MonitoringTool"),
@@ -92,6 +93,7 @@ def create_default_tool_registry(mcp_manager: McpClientManager | None = None) ->
         ("impact.pipeline_tool", "PipelineTool"),
         ("impact.portfolio_tool", "PortfolioTool"),
         ("impact.product_passport_tool", "ProductPassportTool"),
+        ("impact.regulatory_calendar_tool", "RegulatoryCalendarTool"),
         ("impact.trend_analysis_tool", "TrendAnalysisTool"),
         ("impact.verification_prep_tool", "VerificationPrepTool"),
         # v3 tools (0.15.0): trust infrastructure

@@ -26,6 +26,7 @@ from openharness.impact.greenwashing import (
     assess_greenwashing,
 )
 from openharness.impact.models import Company, ImpactClaim
+from openharness.impact.verdict_engine import VerdictCard, build_verdict_card
 
 
 SpecificityLabel = Literal["concrete", "mixed", "vague", "buzzword_only"]
@@ -53,6 +54,7 @@ class GreenwashingReviewerOutput(BaseModel):
     company_name: str
     reviewed_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     overall: GreenwashingScore
+    verdict_card: VerdictCard | None = None
     items: list[ClaimReviewItem] = Field(default_factory=list)
     governance: dict[str, Any] = Field(default_factory=dict)
 
@@ -211,6 +213,7 @@ def review_company_claims(
     return GreenwashingReviewerOutput(
         company_name=company.name,
         overall=overall,
+        verdict_card=build_verdict_card(company, overall),
         items=items,
         governance=governance,
     )

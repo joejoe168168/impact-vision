@@ -207,6 +207,24 @@ class TestJSONReport:
         parsed = json.loads(json_str)
         assert parsed["company"]["name"] == "TestCo"
 
+    def test_report_json_enriches_tracked_metrics_and_gap_suggestions(self) -> None:
+        from openharness.tools.base import ToolExecutionContext
+        from openharness.tools.impact.impact_report_tool import ImpactReportInput, ImpactReportTool
+
+        args = ImpactReportInput(
+            company_name="EvidenceCo",
+            company_description="Solar energy access for rural households.",
+            sector="energy",
+            reported_metrics={"PI4060": "5000"},
+            output_format="json",
+        )
+        result = asyncio.run(ImpactReportTool().execute(args, ToolExecutionContext(cwd=Path.cwd())))
+
+        payload = json.loads(result.output)
+        assert "PI4060" in payload["five_dimensions"]["who"]["metrics_tracked"]
+        assert payload["gap_analysis"]["suggested_metrics"]
+        assert payload["gap_analysis"]["suggested_metrics"][0]["iris_id"]
+
 
 class TestTemplateEngine:
     def test_render_header(self) -> None:

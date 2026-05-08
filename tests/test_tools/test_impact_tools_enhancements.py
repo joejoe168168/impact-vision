@@ -557,6 +557,36 @@ class TestNewTools:
         assert not result.is_error
         assert "PITCH DECK / MEMO ANALYSIS" in result.output
 
+    def test_pitch_deck_suggestions_are_not_reported_evidence(self, tmp_path):
+        import yaml
+
+        from openharness.tools.base import ToolExecutionContext
+        from openharness.tools.impact.pitch_deck_analyze_tool import PitchDeckAnalyzeInput, PitchDeckAnalyzeTool
+
+        out = tmp_path / "company.yaml"
+        tool = PitchDeckAnalyzeTool()
+        result = asyncio.run(tool.execute(
+            PitchDeckAnalyzeInput(
+                text=(
+                    "Solar Co provides clean energy access to rural households and "
+                    "supports SDG 7 with renewable energy services."
+                ),
+                save_company_yaml=str(out),
+            ),
+            ToolExecutionContext(cwd=Path(".")),
+        ))
+
+        assert not result.is_error
+        company = result.metadata["extracted_company"]
+        assert company["reported_metrics"] == {}
+        assert result.metadata["suggested_metrics"]
+        assert "suggested metrics are recommendations" in result.output
+
+        saved = yaml.safe_load(out.read_text(encoding="utf-8"))
+        assert saved["reported_metrics"] == {}
+        assert saved["metric_recommendations"]
+        assert "not reported evidence" in saved["evidence_note"]
+
 
 class TestScoreProvenance:
     def test_provenance_estimated_when_no_metrics(self):

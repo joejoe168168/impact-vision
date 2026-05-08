@@ -154,7 +154,12 @@ class PitchDeckAnalyzeTool(BaseTool):
                 [m.id for m in suggested_metrics[:10]], store,
             )
             if args.save_company_yaml and extracted_company:
-                _save_company_yaml(extracted_company, args.save_company_yaml, context.cwd)
+                _save_company_yaml(
+                    extracted_company,
+                    args.save_company_yaml,
+                    context.cwd,
+                    suggested_metric_ids=[m.id for m in suggested_metrics[:15]],
+                )
 
         lines = [
             f"PITCH DECK / MEMO ANALYSIS: {source_name}",
@@ -280,7 +285,10 @@ class PitchDeckAnalyzeTool(BaseTool):
             lines.append(f"  Geography: {extracted_company.geography or 'Not detected'}")
             lines.append(f"  Themes: {', '.join(extracted_company.impact_themes) or 'None'}")
             lines.append(f"  SDG Claims: {', '.join(f'SDG {g}' for g in extracted_company.sdg_claims) or 'None'}")
-            lines.append(f"  Suggested Metrics: {len(extracted_company.reported_metrics)}")
+            lines.append(f"  Reported Metrics: {len(extracted_company.reported_metrics)}")
+            lines.append(f"  Suggested Metrics: {len(suggested_metrics[:15])}")
+            if suggested_metrics:
+                lines.append("  Note: suggested metrics are recommendations, not reported evidence.")
             if args.save_company_yaml:
                 lines.append(f"  Saved to: {args.save_company_yaml}")
             lines.append("")
@@ -292,6 +300,19 @@ class PitchDeckAnalyzeTool(BaseTool):
             "detected_themes": detected_themes,
             "detected_sdgs": sorted(detected_sdgs),
             "suggested_metrics": [m.id for m in suggested_metrics[:15]],
+            "suggested_metric_details": [
+                {
+                    "metric_id": m.id,
+                    "name": m.name,
+                    "primary_impact_category": m.primary_impact_category,
+                    "sdg_goals": m.sdg_goals,
+                }
+                for m in suggested_metrics[:15]
+            ],
+            "evidence_note": (
+                "suggested_metrics are recommendations only and are not included in "
+                "extracted_company.reported_metrics unless a reported value/source is present"
+            ),
             "text_length": len(text),
             "pages": len(page_texts),
         }
@@ -681,7 +702,13 @@ def _detect_geography(text: str) -> str:
     return best_geo
 
 
-def _save_company_yaml(company, yaml_path: str, cwd) -> None:
+def _save_company_yaml(
+    company,
+    yaml_path: str,
+    cwd,
+    *,
+    suggested_metric_ids: list[str] | None = None,
+) -> None:
     """Save a Company model as YAML for reuse."""
     import yaml
     from pathlib import Path
@@ -699,5 +726,11 @@ def _save_company_yaml(company, yaml_path: str, cwd) -> None:
         "impact_themes": company.impact_themes,
         "sdg_claims": company.sdg_claims,
         "reported_metrics": {k: v for k, v in company.reported_metrics.items()},
+        "metric_recommendations": suggested_metric_ids or [],
+        "evidence_note": (
+            "metric_recommendations are suggested IRIS+ metrics only; they are not "
+            "reported evidence and should not be copied into reported_metrics until "
+            "a source value is available."
+        ),
     }
     path.write_text(yaml.dump(data, default_flow_style=False, allow_unicode=True), encoding="utf-8")
