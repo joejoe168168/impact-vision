@@ -60,7 +60,18 @@ class VerificationWorkspaceTool(BaseTool):
     input_model = VerificationWorkspaceInput
 
     def is_read_only(self, arguments: BaseModel) -> bool:
-        return arguments.action == "snapshot" if hasattr(arguments, "action") else False
+        # The base registry occasionally hands in a plain dict (e.g. from
+        # the MCP gateway) which doesn't expose ``.action`` directly. Validate
+        # first so a passive caller doesn't accidentally trip the write path.
+        try:
+            args = (
+                arguments
+                if isinstance(arguments, VerificationWorkspaceInput)
+                else VerificationWorkspaceInput.model_validate(arguments)
+            )
+        except Exception:
+            return False
+        return args.action == "snapshot"
 
     async def execute(self, arguments: BaseModel, context: ToolExecutionContext) -> ToolResult:
         args = arguments if isinstance(arguments, VerificationWorkspaceInput) else VerificationWorkspaceInput.model_validate(arguments)

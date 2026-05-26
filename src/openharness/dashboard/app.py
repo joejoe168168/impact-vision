@@ -17,28 +17,41 @@ st.set_page_config(page_title="Impact Vision", page_icon="🌍", layout="wide")
 def _check_auth() -> bool:
     """Optional basic auth via environment variables or Streamlit secrets.
 
-    Set IMPACT_VISION_USERNAME and IMPACT_VISION_PASSWORD environment variables,
-    or add them under [dashboard] in .streamlit/secrets.toml:
+    Set both IMPACT_VISION_USERNAME and IMPACT_VISION_PASSWORD env vars, or
+    add them under ``[dashboard]`` in ``.streamlit/secrets.toml``:
 
         [dashboard]
         username = "admin"
         password = "your-secure-password"
 
-    If neither is set, the dashboard runs without authentication.
+    If *neither* is set, the dashboard runs without authentication. If only
+    one of them is set, the dashboard refuses to start to avoid the previous
+    "set password but no username" footgun, which silently disabled auth.
     """
     import os
+    import secrets
+
     username = os.environ.get("IMPACT_VISION_USERNAME", "")
     password = os.environ.get("IMPACT_VISION_PASSWORD", "")
 
-    if not username:
+    if not username and not password:
         try:
             username = st.secrets.get("dashboard", {}).get("username", "")
             password = st.secrets.get("dashboard", {}).get("password", "")
         except Exception:
             pass
 
-    if not username:
+    if not username and not password:
         return True
+
+    if not username or not password:
+        st.title("Impact Vision - Configuration error")
+        st.error(
+            "Dashboard auth is partially configured. Set BOTH "
+            "IMPACT_VISION_USERNAME and IMPACT_VISION_PASSWORD (or remove both) "
+            "before starting the dashboard."
+        )
+        return False
 
     if "authenticated" not in st.session_state:
         st.session_state.authenticated = False
@@ -52,7 +65,11 @@ def _check_auth() -> bool:
         pass_input = st.text_input("Password", type="password")
         submitted = st.form_submit_button("Login")
         if submitted:
-            if user_input == username and pass_input == password:
+            # Constant-time comparisons defeat the timing-attack class of
+            # exploits that the older direct ``==`` form was vulnerable to.
+            user_ok = secrets.compare_digest(user_input.encode("utf-8"), username.encode("utf-8"))
+            pass_ok = secrets.compare_digest(pass_input.encode("utf-8"), password.encode("utf-8"))
+            if user_ok and pass_ok:
                 st.session_state.authenticated = True
                 st.rerun()
             else:
@@ -207,12 +224,19 @@ def _company_assessment_tab():
                 st.write(f"- **{m['id']}**: {m['name']}")
 
         if sector:
+            from openharness.tools.impact.common import normalize_sector
+
             five_d_scores = {
                 "what": fd.what.score, "who": fd.who.score,
                 "how_much": fd.how_much.score, "contribution": fd.contribution.score,
                 "risk": fd.risk.score,
             }
-            bm = compare_to_benchmark(sector, five_d_scores, fd.overall_score, gaps["coverage_percentage"])
+            # Normalise sector here too — the sector variable may carry
+            # user-friendly labels like "Financial Services" that the
+            # benchmark store keys via canonical short keys ("fintech").
+            bm = compare_to_benchmark(
+                normalize_sector(sector), five_d_scores, fd.overall_score, gaps["coverage_percentage"]
+            )
             if bm.get("benchmark_available"):
                 st.subheader("Sector Benchmark Comparison")
                 st.caption(f"{bm['sector']} ({bm.get('sample_note', '')})")

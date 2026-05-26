@@ -2,11 +2,105 @@
 
 from __future__ import annotations
 
+import html
 import re
 from collections.abc import Iterable
 
 
 METRIC_ID_PATTERN = re.compile(r"^(PI|OI|OD|FP|PD)\d{4}$", re.IGNORECASE)
+
+
+_NEGATION_PHRASES = (
+    "not ",
+    "no ",
+    "don't ",
+    "doesn't ",
+    "do not ",
+    "does not ",
+    "without ",
+    "lack ",
+    "lacks ",
+    "lacking ",
+    "unable to ",
+    "anti-",
+    "anti ",
+    "free of ",
+    "free from ",
+    "zero ",
+    "never ",
+)
+
+
+_NEGATION_NEXT_WINDOW = ("policy", "policies", "framework", "free", "compliance")
+
+
+def keyword_not_negated(text: str, keyword: str, *, window: int = 30) -> bool:
+    """Check that ``keyword`` appears in ``text`` without nearby negation.
+
+    A keyword is considered *not negated* if at least one occurrence has no
+    negation phrase in the ``window`` characters that precede it.
+    """
+    text = text.lower()
+    keyword = keyword.lower()
+    idx = text.find(keyword)
+    while idx >= 0:
+        prefix = text[max(0, idx - window) : idx]
+        if not any(neg in prefix for neg in _NEGATION_PHRASES):
+            return True
+        idx = text.find(keyword, idx + len(keyword))
+    return False
+
+
+def has_word(text: str, term: str) -> bool:
+    """Word-boundary aware substring check (no leading/trailing word chars)."""
+    if not term:
+        return False
+    return bool(re.search(r"\b" + re.escape(term.lower()) + r"\b", text.lower()))
+
+
+def keyword_match_with_context(
+    text: str,
+    keyword: str,
+    *,
+    window: int = 30,
+) -> bool:
+    """Return True only when ``keyword`` matches as a phrase and is not negated.
+
+    Multi-word keywords are matched as substrings (since ``\\b`` does not
+    naturally handle whitespace), and negation is checked via
+    :func:`keyword_not_negated`. Single-word keywords additionally require a
+    word-boundary match to avoid spurious matches inside other words.
+    """
+    if not keyword:
+        return False
+    lower_text = text.lower()
+    lower_kw = keyword.lower()
+    if " " in lower_kw or "-" in lower_kw:
+        if lower_kw not in lower_text:
+            return False
+    elif not has_word(lower_text, lower_kw):
+        return False
+    return keyword_not_negated(lower_text, lower_kw, window=window)
+
+
+def safe_html(value: object | None) -> str:
+    """HTML-escape ``value`` for safe interpolation into HTML/SVG strings."""
+    if value is None:
+        return ""
+    return html.escape(str(value), quote=True)
+
+
+def clamp_pct(value: float | int) -> float:
+    """Clamp a percentage-like number to the inclusive 0..100 range."""
+    try:
+        v = float(value)
+    except (TypeError, ValueError):
+        return 0.0
+    if v < 0:
+        return 0.0
+    if v > 100:
+        return 100.0
+    return v
 
 _DEFAULTS_THEME_HINTS: dict[str, list[str]] = {
     "climate": ["Climate Mitigation", "Climate Adaptation"],

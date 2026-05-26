@@ -263,7 +263,15 @@ class Company(BaseModel):
 
     name: str
     description: str = ""
-    sector: str = ""
+    sector: str = Field(
+        default="",
+        description=(
+            "Sector key. Common labels like 'Financial Services' / 'Healthcare' / "
+            "'Clean Energy' are auto-mapped to canonical engine keys (e.g. 'fintech', "
+            "'healthcare', 'energy') so downstream scorers, benchmarks, and adverse-"
+            "metric rules pick the right configuration."
+        ),
+    )
     geography: str = Field(default="", description="Country or region (e.g. 'Kenya', 'Southeast Asia')")
     stage: Literal["", "pre-seed", "seed", "series-a", "series-b", "growth", "mature"] = Field(
         default="", description="Investment stage"
@@ -300,6 +308,27 @@ class Company(BaseModel):
         default_factory=list,
         description="Chronological log of metric changes and verification events",
     )
+
+    @field_validator("sector", mode="before")
+    @classmethod
+    def _normalize_sector(cls, v: object) -> str:
+        """Map user-facing sector labels onto canonical engine keys.
+
+        The 5D scorer, sector benchmarks, the greenwashing engine and the
+        report templates all key off short canonical strings like ``fintech``
+        or ``healthcare``. Without normalisation a tool caller passing
+        ``"Financial Services"`` would silently fall through to the
+        ``"default"`` configuration, which historically caused SFDR PAI
+        adverse-metric checks to fire on the wrong reference set.
+        """
+        if v is None:
+            return ""
+        if not isinstance(v, str):
+            v = str(v)
+        # Local import to avoid a circular import (tools depend on models).
+        from openharness.tools.impact.common import normalize_sector
+
+        return normalize_sector(v)
 
 
 PIPELINE_STAGES = (

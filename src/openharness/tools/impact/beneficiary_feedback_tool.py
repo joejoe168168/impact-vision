@@ -62,6 +62,10 @@ class BeneficiaryFeedbackTool(BaseTool):
     )
     input_model = BeneficiaryFeedbackInput
 
+    def is_read_only(self, arguments: BaseModel) -> bool:
+        # Pure analysis tool: no disk writes, no audit-trail mutation.
+        return True
+
     async def execute(self, arguments: BaseModel, context: ToolExecutionContext) -> ToolResult:
         args = (
             arguments

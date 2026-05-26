@@ -10,6 +10,7 @@ import yaml
 from pydantic import BaseModel, Field
 
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
+from openharness.tools.impact.common import keyword_match_with_context
 
 
 _DEFAULT_CRITERIA: dict[str, dict] = {
@@ -96,7 +97,13 @@ class ExclusionScreeningTool(BaseTool):
             if args.severity_filter != "all" and severity != args.severity_filter:
                 continue
 
-            matched_keywords = [kw for kw in cat.get("keywords", []) if kw.lower() in text]
+            # Use word-boundary aware, negation-aware matching so that copy
+            # like "we have a strict no-tobacco policy" or "anti-bribery
+            # framework" doesn't fire as a mandatory exclusion.
+            matched_keywords = [
+                kw for kw in cat.get("keywords", [])
+                if keyword_match_with_context(text, kw)
+            ]
             if matched_keywords:
                 hits.append({
                     "category": category_id,
@@ -154,7 +161,10 @@ def quick_exclusion_check(company_name: str, description: str, sector: str) -> d
     text = f"{company_name} {description} {sector}".lower()
     flags: list[str] = []
     for category_id, cat in criteria.items():
-        matched = [kw for kw in cat.get("keywords", []) if kw.lower() in text]
+        matched = [
+            kw for kw in cat.get("keywords", [])
+            if keyword_match_with_context(text, kw)
+        ]
         if matched:
             flags.append(f"{cat.get('label', category_id)} ({', '.join(matched)})")
     return {"passed": len(flags) == 0, "failed": len(flags) > 0, "flags": flags}

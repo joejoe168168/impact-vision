@@ -25,11 +25,27 @@ from pydantic import BaseModel, Field
 from openharness.impact.models import Company
 
 
+# Single-word vague verbs (matched against tokenised words).
 _VAGUE_VERBS = {
     "aim", "aspire", "believe", "commit", "contribute", "dedicated", "endeavor",
     "expect", "hope", "intend", "plan", "pledge", "promise", "seek", "strive",
-    "support", "try", "work toward", "working toward",
+    "support", "try",
 }
+
+# Multi-word vague phrases (matched as substrings against the lowered text).
+# These cannot be detected by single-token set intersection; matching them as
+# phrases prevents the most diagnostic kind of greenwashy phrasing from being
+# silently ignored by the specificity scorer.
+_VAGUE_PHRASES = (
+    "work toward",
+    "working toward",
+    "work towards",
+    "working towards",
+    "plan to",
+    "aim to",
+    "strive to",
+    "committed to",
+)
 
 _CONCRETE_VERBS = {
     "achieved", "completed", "delivered", "deployed", "doubled", "eliminated",
@@ -236,7 +252,14 @@ def assess_greenwashing(
 
 
 def _score_claim_metric_gap(company: Company, metrics: set[str]) -> float:
-    """Score: do SDG claims and themes have supporting metrics?"""
+    """Score: do SDG claims and themes have supporting metrics?
+
+    Earlier versions checked whether the theme name appeared inside reported
+    metric *values*, which almost never matched in practice (values are usually
+    numbers or short strings). We instead resolve the IRIS+ theme→metric map
+    via the in-memory store so a "Financial Inclusion" theme is supported when
+    any metric in that theme family has been reported.
+    """
     claims_count = len(company.sdg_claims) + len(company.impact_themes)
     if claims_count == 0:
         return 20.0
@@ -245,15 +268,30 @@ def _score_claim_metric_gap(company: Company, metrics: set[str]) -> float:
         return min(100, 40 + claims_count * 8)
 
     supported = 0
+    try:
+        from openharness.impact.database import get_metric_store
+
+        store = get_metric_store()
+    except Exception:  # pragma: no cover - cataloge optional in some test paths
+        store = None
+
     for theme in company.impact_themes:
+        theme_metric_ids: set[str] = set()
+        if store is not None:
+            try:
+                theme_metric_ids = {m.id.upper() for m in store.filter_by_theme(theme)}
+            except Exception:  # pragma: no cover
+                theme_metric_ids = set()
+        if theme_metric_ids and metrics & theme_metric_ids:
+            supported += 1
+            continue
+        # Fallback: legacy string-overlap check (kept for catalog-less tests).
         theme_lower = theme.lower()
         if any(theme_lower in str(v).lower() for v in company.reported_metrics.values()):
             supported += 1
 
-    # Only count metrics that relate to claimed themes/SDGs, not all metrics
     relevant_metric_count = supported
     if company.sdg_claims:
-        # Each SDG claim with at least one metric provides some support
         relevant_metric_count += min(len(metrics), len(company.sdg_claims))
 
     support_ratio = relevant_metric_count / max(1, claims_count)
@@ -262,7 +300,12 @@ def _score_claim_metric_gap(company: Company, metrics: set[str]) -> float:
 
 def _score_adverse_omission(company: Company, metrics: set[str]) -> float:
     """Score: are sector-appropriate negative-impact metrics missing?"""
-    sector = company.sector.lower()
+    # Defensive: most call paths normalise via the Company validator, but we
+    # still apply normalize_sector here so older callers that bypass the model
+    # (e.g. constructed via direct attribute setting) get the right table.
+    from openharness.tools.impact.common import normalize_sector
+
+    sector = normalize_sector(company.sector or "")
     required = _ADVERSE_METRICS_BY_SECTOR.get(sector, _ADVERSE_METRICS_BY_SECTOR["default"])
 
     if not required:
@@ -274,9 +317,12 @@ def _score_adverse_omission(company: Company, metrics: set[str]) -> float:
 
 def _score_specificity(text: str, claims: list[dict[str, Any]] | None) -> float:
     """Score: are claims vague or concrete?"""
-    words = set(re.findall(r"\b\w+\b", text.lower()))
+    lowered = text.lower()
+    words = set(re.findall(r"\b\w+\b", lowered))
 
     vague_count = len(words & _VAGUE_VERBS)
+    # Multi-word vague phrases need substring matching: tokenisation drops them.
+    vague_count += sum(1 for phrase in _VAGUE_PHRASES if phrase in lowered)
     concrete_count = len(words & _CONCRETE_VERBS)
     buzzword_count = len(words & _BUZZWORDS)
 
@@ -304,7 +350,9 @@ def _score_selectivity(company: Company, metrics: set[str]) -> float:
         return 60.0
 
     # Check if any reported metrics are from the adverse/risk set for this sector
-    sector = company.sector.lower()
+    from openharness.tools.impact.common import normalize_sector
+
+    sector = normalize_sector(company.sector or "")
     adverse_set = set(_ADVERSE_METRICS_BY_SECTOR.get(sector, _ADVERSE_METRICS_BY_SECTOR["default"]))
     has_adverse_metrics = bool(metrics & adverse_set)
 

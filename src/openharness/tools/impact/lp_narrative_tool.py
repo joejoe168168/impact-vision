@@ -40,7 +40,15 @@ class LPNarrativeTool(BaseTool):
     input_model = LPNarrativeInput
 
     def is_read_only(self, arguments: BaseModel) -> bool:
-        return arguments.action in {"generate", "qa_export"} if hasattr(arguments, "action") else False
+        try:
+            args = (
+                arguments
+                if isinstance(arguments, LPNarrativeInput)
+                else LPNarrativeInput.model_validate(arguments)
+            )
+        except Exception:
+            return False
+        return args.action in {"generate", "qa_export"}
 
     async def execute(self, arguments: BaseModel, context: ToolExecutionContext) -> ToolResult:
         # Local imports keep the package import graph acyclic.

@@ -47,7 +47,7 @@ class FrameworkTool(BaseTool):
     name = "framework_assess"
     description = (
         "Multi-framework ESG and sustainability standards tool. Supports:\n"
-        "- **SASB**: Match company to industry-specific materiality topics (17 industries, 77+ topics)\n"
+        "- **SASB**: Match company to industry-specific materiality topics across all SASB industries\n"
         "- **GRI**: Browse Universal + Topic Standards (200/300/400 series), match to relevant topics\n"
         "- **TCFD / IFRS S2**: Assess climate disclosure across 4 pillars (Governance, Strategy, Risk, Metrics)\n"
         "- **SFDR PAI**: Check coverage of 14 mandatory EU Principal Adverse Impact indicators\n"
@@ -605,7 +605,7 @@ class FrameworkTool(BaseTool):
             "Available Sustainability & ESG Frameworks:",
             "=" * 50,
             "",
-            "  sasb      - SASB Industry-Specific Materiality (25 industries, 120+ topics)",
+            "  sasb      - SASB Industry-Specific Materiality (industry-aware topics)",
             "  gri       - GRI Universal + Topic Standards (30+ standards, 120+ disclosures)",
             "  tcfd      - TCFD / IFRS S2 Climate Disclosure (4 pillars, 11 disclosures)",
             "  sfdr_pai  - SFDR PAI Indicators (14 mandatory EU indicators)",
@@ -626,6 +626,7 @@ class FrameworkTool(BaseTool):
         """Run a quick scan across all frameworks."""
         from openharness.impact.frameworks.edci import assess_edci_coverage
         from openharness.impact.frameworks.esrs import assess_double_materiality
+        from openharness.impact.frameworks.ifc_opim import assess_opim_alignment
         from openharness.impact.frameworks.issb_ifrs_s1 import assess_ifrs_s1_readiness
         from openharness.impact.frameworks.issb_ifrs_s2 import assess_ifrs_s2_readiness
         from openharness.impact.frameworks.sasb import match_sasb_industry
@@ -688,6 +689,36 @@ class FrameworkTool(BaseTool):
             f"{esrs['overall_coverage_pct']}% disclosure coverage"
         )
 
+        # IFC OPIM. The framework='all' scan was previously skipping OPIM
+        # entirely even though it was listed in the supported frameworks; LP
+        # DDQ scans rely on it. We derive boolean signals from the description
+        # and reported metrics so the call works without bespoke input flags.
+        full_text = " ".join([args.description or "", args.document_text or ""]).lower()
+        opim = assess_opim_alignment(
+            has_impact_thesis=any(
+                kw in full_text
+                for kw in ("impact thesis", "theory of change", "impact strategy")
+            ),
+            has_theory_of_change="theory of change" in full_text or "tor" in full_text,
+            has_impact_policy=any(
+                kw in full_text for kw in ("impact policy", "esg policy", "responsible investment policy")
+            ),
+            has_external_audit=any(
+                kw in full_text
+                for kw in ("external audit", "third-party verification", "bluemark", "independent verification")
+            ),
+            metrics_count=len(args.reported_metrics or {}),
+            sdg_count=sum(1 for k in (args.themes or []) if "sdg" in str(k).lower()),
+            has_exclusion_screening=any(
+                kw in full_text
+                for kw in ("exclusion list", "exclusion criteria", "negative screen", "sin stocks")
+            ),
+        )
+        lines.append(
+            f"IFC OPIM: {opim.get('overall_score', 0)}% alignment "
+            f"({opim.get('addressed_principles', 0)}/{opim.get('total_principles', 9)} principles)"
+        )
+
         lines.append("")
         lines.append("Use framework='<name>' with action='assess' for detailed analysis.")
 
@@ -695,5 +726,12 @@ class FrameworkTool(BaseTool):
 
 
 def _bar(pct: float, width: int = 15) -> str:
-    filled = int(pct / 100 * width)
+    # Defensive clamp so a malformed engine output (or a typo upstream) never
+    # produces a negative-width or wrap-around bar.
+    try:
+        pct_v = float(pct)
+    except (TypeError, ValueError):
+        pct_v = 0.0
+    pct_v = max(0.0, min(100.0, pct_v))
+    filled = int(pct_v / 100 * width)
     return "[" + "#" * filled + "-" * (width - filled) + "]"

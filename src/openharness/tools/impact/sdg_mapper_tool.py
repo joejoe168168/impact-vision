@@ -103,5 +103,6 @@ class SdgMapperTool(BaseTool):
 
 
 def _score_bar(score: float, width: int = 20) -> str:
+    score = max(0.0, min(100.0, float(score or 0)))
     filled = int(score / 100 * width)
     return "[" + "#" * filled + "-" * (width - filled) + "]"

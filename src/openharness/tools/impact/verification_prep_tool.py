@@ -61,6 +61,10 @@ class VerificationPrepTool(BaseTool):
     )
     input_model = VerificationPrepInput
 
+    def is_read_only(self, arguments: BaseModel) -> bool:
+        # Read-only audit aid; no file writes, no state mutation.
+        return True
+
     async def execute(self, arguments: BaseModel, context: ToolExecutionContext) -> ToolResult:
         args = (
             arguments

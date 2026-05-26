@@ -12,7 +12,7 @@ Actions:
   ``rollup_entities``, ``build_coaching_cards``.
 * **value_creation** (Track 4): ``benchmark``, ``risk_rating``,
   ``value_plan``, ``business_case``, ``run_scenario``, ``supply_hotspots``.
-* **reporting** (Track 5): ``list_templates``, ``build_report``,
+* **reporting** (Track 5): ``list_report_templates``, ``build_report``,
   ``transition_report``, ``decide_claim``, ``executive_deck``,
   ``public_microsite``, ``rewrite_audiences``.
 * **training** (Track 6): ``training_plan``, ``workshop_pack``,
@@ -320,7 +320,15 @@ class EngagementSuiteTool(BaseTool):
             return {"plan": plan.model_dump(mode="json")}
 
         if action == "business_case":
-            case = build_business_case(engagement_id=args.engagement_id, **p)
+            # ``build_business_case`` accepts whatever fields ``BusinessCase``
+            # exposes; ``engagement_id`` is one of them, so a payload that
+            # also contains ``engagement_id`` would raise a duplicate-keyword
+            # ``TypeError``. Strip conflicting keys and let the explicit
+            # ``args.engagement_id`` win.
+            payload_kwargs = {k: v for k, v in p.items() if k != "engagement_id"}
+            case = build_business_case(
+                engagement_id=args.engagement_id, **payload_kwargs
+            )
             return {"case": case.model_dump(mode="json")}
 
         if action == "run_scenario":
@@ -423,11 +431,23 @@ class EngagementSuiteTool(BaseTool):
             return {"pack": get_workshop_pack(p["pack_id"]).model_dump(mode="json")}
 
         if action == "coaching_card":
-            card = build_coaching_card(**p)
+            try:
+                card = build_coaching_card(**p)
+            except TypeError as e:
+                raise ValueError(
+                    f"coaching_card payload mismatch: {e}. Expected keys: "
+                    "entity_name, failed_validation, prescription, example, severity"
+                ) from e
             return {"card": card.model_dump(mode="json")}
 
         if action == "learning_loop":
-            loop = record_learning_loop(**p)
+            try:
+                loop = record_learning_loop(**p)
+            except TypeError as e:
+                raise ValueError(
+                    f"learning_loop payload mismatch: {e}. Expected keys: "
+                    "training_assigned, action_completed, data_improvement, score_change"
+                ) from e
             return {"loop": loop.model_dump(mode="json")}
 
         if action == "issue_badge":

@@ -94,11 +94,34 @@ def _get_keyword_boosts() -> dict[str, dict[str, float]]:
     return config.get("keyword_dimension_boosts", _DEFAULTS_KEYWORD_BOOST)
 
 
-_NEGATION_PHRASES = ("not ", "no ", "don't ", "doesn't ", "do not ", "does not ", "without ", "lack ", "unable to ")
+_NEGATION_PHRASES = (
+    "not ", "no ", "don't ", "doesn't ", "do not ", "does not ",
+    "without ", "lack ", "lacks ", "lacking ", "unable to ",
+    "anti-", "anti ", "free of ", "free from ", "zero ", "never ",
+)
+
+
 def _get_min_metrics_threshold() -> int:
     config = _load_scoring_config()
     return int(config.get("min_metrics_for_above_baseline", 3))
 
+
+def __getattr__(name: str):
+    """Lazy module-level attribute access to keep config-driven values fresh.
+
+    Earlier versions snapshotted ``MIN_METRICS_FOR_ABOVE_BASELINE`` at import
+    time, so subsequent edits to ``data/scoring_config.yaml`` had no effect on
+    long-lived processes. Reading the threshold via ``__getattr__`` re-uses the
+    config cache while still allowing the cache to be reset for tests.
+    """
+    if name == "MIN_METRICS_FOR_ABOVE_BASELINE":
+        return _get_min_metrics_threshold()
+    raise AttributeError(name)
+
+
+# Compatibility alias evaluated once at import for code paths that captured
+# the value into a local. Callers wanting always-current values should access
+# the attribute directly each time.
 MIN_METRICS_FOR_ABOVE_BASELINE = _get_min_metrics_threshold()
 
 
@@ -296,9 +319,17 @@ _MITIGATION_PATTERNS = (
 
 
 def _compute_negative_impact_penalty(company: Company) -> float:
-    """Compute a risk dimension penalty (0-1.5) for adverse impacts without mitigation."""
+    """Compute a risk dimension penalty (0-1.5) for adverse impacts without mitigation.
+
+    The match is negation-aware so that a company describing itself as
+    "free of forced labor" or "without harmful side effects" is not penalised
+    as if it acknowledged those harms.
+    """
     text = f"{company.description} {company.sector} {' '.join(company.impact_themes)}".lower()
-    adverse_count = sum(1 for p in _ADVERSE_IMPACT_PATTERNS if p in text)
+    adverse_count = sum(
+        1 for p in _ADVERSE_IMPACT_PATTERNS
+        if p in text and _keyword_not_negated(text, p)
+    )
     mitigation_count = sum(1 for p in _MITIGATION_PATTERNS if p in text)
 
     if adverse_count == 0:

@@ -27,6 +27,14 @@ from openharness.tools.impact.common import (
     normalize_sector,
 )
 
+
+def _esc(value: object | None) -> str:
+    """HTML-escape ``value`` for safe interpolation into report HTML."""
+    if value is None:
+        return ""
+    return html.escape(str(value), quote=True)
+
+
 _SECTOR_OPPORTUNITIES: dict[str, list[str]] = {
     "agriculture": [
         "Food security: improving access to nutritious food for underserved populations",
@@ -361,9 +369,23 @@ class ImpactReportTool(BaseTool):
 
         if args.output_format == "html" and len(output) > 2000:
             summary = _to_text(report_data)
+            hint = (
+                "Tip: pass output_path='report.html' to save the full report; "
+                "the HTML payload is also available under metadata['html']."
+            )
             return ToolResult(
-                output=f"HTML report generated ({len(output)} chars). Text summary:\n\n{summary}",
-                metadata={"format": args.output_format, "html_length": len(output)},
+                output=(
+                    f"HTML report generated ({len(output)} chars). "
+                    f"{hint}\n\nText summary:\n\n{summary}"
+                ),
+                metadata={
+                    "format": args.output_format,
+                    "html_length": len(output),
+                    # Keep the full HTML available to programmatic callers so
+                    # the rendered output isn't silently discarded when no
+                    # output_path is provided.
+                    "html": output,
+                },
             )
 
         return ToolResult(
@@ -687,11 +709,17 @@ def _interactive_scoring_section(fd: dict, sdg_alignments: list, company_name: s
          "dims": {"risk": 0.7}, "sdgs": []},
     ]
 
+    import hashlib as _hashlib
     import json as _json
     import re as _re
     items_json = _json.dumps(items)
     base_json = _json.dumps(base_scores)
-    company_name_safe = _re.sub(r'[^a-zA-Z0-9]', '-', company_name).lower().strip('-') or 'default'
+    # The slug alone collides for visually similar names ("BrightPath, Inc."
+    # vs "BrightPath Inc"). Mix in a short hash of the original name so two
+    # different companies never overwrite each other's local state.
+    name_slug = _re.sub(r'[^a-zA-Z0-9]', '-', company_name or '').lower().strip('-') or 'default'
+    name_hash = _hashlib.sha1((company_name or '').encode('utf-8')).hexdigest()[:8]
+    company_name_safe = f"{name_slug}-{name_hash}"
 
     return f"""
 <h3 style="margin-top:24px">Improve Your Score</h3>
@@ -1280,9 +1308,9 @@ def _impact_pathway_section(data: dict) -> str:
 
     inputs_items = []
     if company.get("sector"):
-        inputs_items.append(f"Sector: {company['sector']}")
+        inputs_items.append(f"Sector: {_esc(company['sector'])}")
     if company.get("geography"):
-        inputs_items.append(f"Geography: {company['geography']}")
+        inputs_items.append(f"Geography: {_esc(company['geography'])}")
     reported_count = ga.get("metrics_reported", 0) if ga else 0
     if reported_count:
         inputs_items.append(f"{reported_count} metrics reported")
@@ -1294,9 +1322,9 @@ def _impact_pathway_section(data: dict) -> str:
         desc = company["description"]
         if len(desc) > 60:
             desc = desc[:57] + "..."
-        activities.append(desc)
+        activities.append(_esc(desc))
     if company.get("impact_themes"):
-        activities.extend(company["impact_themes"][:2])
+        activities.extend(_esc(t) for t in company["impact_themes"][:2])
     if not activities:
         activities.append("Core operations")
 
@@ -1305,7 +1333,7 @@ def _impact_pathway_section(data: dict) -> str:
         dim = fd.get(dim_name, {})
         tracked = dim.get("metrics_tracked", [])
         if tracked:
-            outputs.extend(str(t) for t in tracked[:2])
+            outputs.extend(_esc(t) for t in tracked[:2])
     if not outputs:
         outputs.append("Metrics to be reported")
 
@@ -1313,7 +1341,7 @@ def _impact_pathway_section(data: dict) -> str:
     top_sdgs = sorted(sdg, key=lambda s: s.get("score", 0), reverse=True)[:3]
     for s in top_sdgs:
         if s.get("score", 0) > 0:
-            outcomes.append(f"SDG {s['goal']}: {s.get('goal_name', '')[:25]}")
+            outcomes.append(f"SDG {_esc(s.get('goal'))}: {_esc(s.get('goal_name', '')[:25])}")
     if not outcomes:
         outcomes.append("SDG alignment pending")
 
@@ -1561,7 +1589,7 @@ def _to_html(data: dict) -> str:
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Impact Report: {company['name']}</title>
+<title>Impact Report: {_esc(company.get('name', ''))}</title>
 <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 <style>
 :root {{
@@ -1850,18 +1878,23 @@ tr.sdg-collapsed.show, tr.sdg-collapsed.show + tr.sdg-detail {{ display: table-r
 </nav>
 <div class="report-header">
 <h1>Impact Assessment Report</h1>
-<p class="subtitle">{company['name']}{' | ' + company.get('sector', '') if company.get('sector') else ''}</p>
+<p class="subtitle">{_esc(company.get('name', ''))}{' | ' + _esc(company.get('sector', '')) if company.get('sector') else ''}</p>
 <div class="meta-row">
-  <span>Generated: {data['generated_at'][:10]}</span>
-  <span>Standard: {data['catalog_version']}</span>
+  <span>Generated: {_esc(data.get('generated_at', '')[:10])}</span>
+  <span>Standard: {_esc(data.get('catalog_version', ''))}</span>
 </div>""")
 
     if company.get("impact_themes") or company.get("sdg_claims"):
         sections.append('<div class="tag-row">')
         for t in company.get("impact_themes", []):
-            sections.append(f'<span class="tag">{t}</span>')
+            sections.append(f'<span class="tag">{_esc(t)}</span>')
         for g in company.get("sdg_claims", []):
-            sections.append(f'<span class="tag">SDG {g}</span>')
+            try:
+                goal = int(g)
+            except (TypeError, ValueError):
+                continue
+            if 1 <= goal <= 17:
+                sections.append(f'<span class="tag">SDG {goal}</span>')
         sections.append('</div>')
     sections.append('</div>')
 

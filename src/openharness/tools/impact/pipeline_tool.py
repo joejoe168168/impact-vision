@@ -7,6 +7,7 @@ with CSV/XLSX import/export and funnel analytics.
 from __future__ import annotations
 
 import csv
+import html as _html
 import io
 import json
 from pathlib import Path
@@ -17,6 +18,16 @@ from pydantic import BaseModel, Field
 from openharness.impact.models import PIPELINE_STAGES
 from openharness.impact.storage import get_assessment_store
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
+
+
+_VALID_PRIORITIES = ("high", "medium", "low")
+
+
+def _esc(value: object | None) -> str:
+    """HTML-escape ``value`` for safe interpolation into the dashboard HTML."""
+    if value is None:
+        return ""
+    return _html.escape(str(value), quote=True)
 
 
 class PipelineInput(BaseModel):
@@ -136,6 +147,14 @@ class PipelineTool(BaseTool):
         if not entry:
             return ToolResult(output=f"Not found: {args.company_name}")
         transitions = store.get_transitions(args.company_name)
+        # ``investment_size`` is a float|None; ``0`` is a valid deliberate value
+        # ("we passed but logged the prospect"). Distinguish it from "no value
+        # supplied" by checking ``is not None`` rather than truthiness.
+        investment_size = entry.get("investment_size")
+        if investment_size is not None:
+            investment_line = f"Investment: ${investment_size:,.0f}"
+        else:
+            investment_line = "Investment: N/A"
         lines = [
             f"Company: {entry['company_name']}",
             f"Stage: {entry['pipeline_stage']}",
@@ -144,7 +163,7 @@ class PipelineTool(BaseTool):
             f"Sector: {entry.get('sector', 'N/A')}",
             f"Geography: {entry.get('geography', 'N/A')}",
             f"SDG Focus: {', '.join(str(s) for s in entry.get('sdg_focus', []))}",
-            f"Investment: ${entry['investment_size']:,.0f}" if entry.get('investment_size') else "Investment: N/A",
+            investment_line,
             f"Tags: {', '.join(entry.get('tags', []))}",
             f"Notes: {entry.get('notes', '')}",
         ]
@@ -199,10 +218,19 @@ class PipelineTool(BaseTool):
         if not summary:
             return ToolResult(output="Pipeline is empty")
         total = sum(summary.values())
+        max_bar = 10
+        max_count = max((summary.get(stage, 0) for stage in PIPELINE_STAGES), default=0)
+        scale = 1
+        if max_count > max_bar:
+            # Render proportionally so a single large stage doesn't blow out the
+            # column width when the portfolio has > 10 entries in any stage.
+            scale = max_count
         lines = [f"Pipeline Summary ({total} companies):"]
         for stage in PIPELINE_STAGES:
             count = summary.get(stage, 0)
-            bar = "█" * count + "░" * (max(0, 10 - count))
+            filled = min(max_bar, count) if scale == 1 else round(count / scale * max_bar)
+            filled = max(0, min(max_bar, filled))
+            bar = "█" * filled + "░" * (max_bar - filled)
             lines.append(f"  {stage:17s} {bar} {count}")
         return ToolResult(output="\n".join(lines), metadata={"summary": summary, "total": total})
 
@@ -292,11 +320,12 @@ font:{{family:'Inter,sans-serif'}}}},{{responsive:true}});
             stage = e["pipeline_stage"]
             color = stage_colors.get(stage, "#666")
             sdg_str = ", ".join(str(s) for s in e.get("sdg_focus", []))
+            stage_label = stage.replace("_", " ").title()
             html_parts.append(
-                f'<tr><td><strong>{e["company_name"]}</strong></td>'
-                f'<td><span class="stage-badge" style="background:{color}20;color:{color}">{stage.replace("_"," ").title()}</span></td>'
-                f'<td>{e.get("sector","")}</td><td>{e.get("geography","")}</td>'
-                f'<td>{sdg_str}</td><td>{e.get("priority","medium")}</td></tr>'
+                f'<tr><td><strong>{_esc(e.get("company_name", ""))}</strong></td>'
+                f'<td><span class="stage-badge" style="background:{color}20;color:{color}">{_esc(stage_label)}</span></td>'
+                f'<td>{_esc(e.get("sector",""))}</td><td>{_esc(e.get("geography",""))}</td>'
+                f'<td>{_esc(sdg_str)}</td><td>{_esc(e.get("priority","medium"))}</td></tr>'
             )
         html_parts.append('</table></body></html>')
 
@@ -315,6 +344,9 @@ font:{{family:'Inter,sans-serif'}}}},{{responsive:true}});
 
     async def _handle_import_csv(self, args: PipelineInput, store, context) -> ToolResult:
         csv_content = args.csv_data
+        # Note: ``output_path`` is overloaded as the input path here for
+        # ergonomic parity with export_csv. We could rename, but breaking the
+        # public contract is worse than the small confusion.
         if not csv_content and args.output_path:
             path = Path(args.output_path)
             if not path.is_absolute():
@@ -325,26 +357,47 @@ font:{{family:'Inter,sans-serif'}}}},{{responsive:true}});
             return ToolResult(output="Provide csv_data or output_path with CSV content", is_error=True)
         reader = csv.DictReader(io.StringIO(csv_content))
         imported = 0
+        warnings: list[str] = []
         for row in reader:
             name = row.get("company_name", "").strip()
             if not name:
                 continue
-            sdgs = []
+            sdgs: list[int] = []
             raw_sdg = row.get("sdg_focus", "")
             if raw_sdg:
-                sdgs = [int(s.strip()) for s in raw_sdg.split(",") if s.strip().isdigit()]
+                for piece in raw_sdg.split(","):
+                    piece = piece.strip()
+                    if not piece.isdigit():
+                        continue
+                    goal = int(piece)
+                    if 1 <= goal <= 17:
+                        if goal not in sdgs:
+                            sdgs.append(goal)
+                    else:
+                        warnings.append(
+                            f"Row '{name}': dropped out-of-range SDG goal {goal} (valid: 1-17)"
+                        )
             inv = None
             raw_inv = row.get("investment_size", "")
             if raw_inv:
                 try:
                     inv = float(raw_inv.replace(",", ""))
                 except ValueError:
-                    pass
+                    warnings.append(
+                        f"Row '{name}': could not parse investment_size '{raw_inv}'"
+                    )
+            raw_priority = (row.get("priority") or "medium").strip().lower()
+            if raw_priority not in _VALID_PRIORITIES:
+                warnings.append(
+                    f"Row '{name}': priority '{raw_priority}' is not one of "
+                    f"{', '.join(_VALID_PRIORITIES)}; defaulting to 'medium'"
+                )
+                raw_priority = "medium"
             store.upsert_pipeline_entry(
                 company_name=name,
                 pipeline_stage=row.get("pipeline_stage", "sourcing"),
                 assigned_to=row.get("assigned_to", ""),
-                priority=row.get("priority", "medium"),
+                priority=raw_priority,
                 tags=[t.strip() for t in row.get("tags", "").split(",") if t.strip()],
                 sector=row.get("sector", ""),
                 geography=row.get("geography", ""),
@@ -353,7 +406,13 @@ font:{{family:'Inter,sans-serif'}}}},{{responsive:true}});
                 notes=row.get("notes", ""),
             )
             imported += 1
-        return ToolResult(output=f"Imported {imported} pipeline entries from CSV")
+        message = f"Imported {imported} pipeline entries from CSV"
+        if warnings:
+            message += "\n\nWarnings:\n  - " + "\n  - ".join(warnings)
+        return ToolResult(
+            output=message,
+            metadata={"imported": imported, "warnings": warnings},
+        )
 
     async def _handle_export_csv(self, args: PipelineInput, store, context) -> ToolResult:
         entries = store.list_pipeline()

@@ -10,7 +10,37 @@ from typing import Optional
 
 import typer
 
-__version__ = "0.14.0"
+
+def _resolve_version() -> str:
+    """Read the canonical version from package metadata.
+
+    Hardcoding ``__version__`` here is a perpetual source of doc-drift: the
+    last few releases shipped with a stale literal because the bump on
+    ``pyproject.toml`` was not mirrored in the CLI. ``importlib.metadata``
+    keeps a single source of truth.
+    """
+    try:
+        from importlib.metadata import PackageNotFoundError, version
+
+        return version("impact-vision")
+    except (PackageNotFoundError, Exception):  # noqa: BLE001 - defensive
+        return "0.0.0+unknown"
+
+
+__version__ = _resolve_version()
+
+
+def _resolve_tool_count() -> int:
+    """Count of impact agent tools currently registered.
+
+    Single source of truth for ``serve-mcp`` / banner messaging.
+    """
+    try:
+        from openharness.tools.impact import __all__ as _impact_all
+
+        return len(_impact_all)
+    except Exception:  # noqa: BLE001 - defensive
+        return 0
 
 
 def _version_callback(value: bool) -> None:
@@ -60,12 +90,29 @@ app.add_typer(dd_app)
 @app.command("serve-mcp")
 def serve_mcp(
     transport: str = typer.Option("stdio", help="Transport: stdio or sse"),
-    host: str = typer.Option("0.0.0.0", help="Host for SSE transport"),
+    host: str = typer.Option(
+        "127.0.0.1",
+        help=(
+            "Host for SSE transport. Defaults to 127.0.0.1 to avoid binding "
+            "to all interfaces; pass '0.0.0.0' explicitly to expose."
+        ),
+    ),
     port: int = typer.Option(8765, help="Port for SSE transport"),
 ) -> None:
-    """Start the Impact Vision MCP server exposing all 26 impact tools."""
+    """Start the Impact Vision MCP server.
+
+    The server exposes the full impact-tool surface registered in
+    ``openharness.tools.impact``. The exact tool count is sourced at runtime
+    from ``len(openharness.tools.impact.__all__)`` so this docstring never
+    drifts from reality.
+    """
     from openharness.impact.mcp_server import mcp as mcp_server  # noqa: F811
 
+    print(
+        f"impact-vision serve-mcp: exposing {_resolve_tool_count()} impact tools "
+        f"over {transport}",
+        file=sys.stderr,
+    )
     if transport == "sse":
         mcp_server.settings.host = host
         mcp_server.settings.port = port

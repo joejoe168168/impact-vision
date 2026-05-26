@@ -104,16 +104,14 @@ class PitchDeckAnalyzeTool(BaseTool):
             source_stem = "raw_text"
         elif args.url.strip():
             try:
-                from urllib.request import urlopen
-
-                with urlopen(args.url, timeout=10) as response:
-                    raw = response.read()
-                text = raw.decode("utf-8", errors="replace")
-                page_texts = [{"page": 1, "text": text}]
-                source_name = args.url
-                source_stem = "url_document"
-            except Exception as e:
+                text = _fetch_url_text(args.url)
+            except _UrlFetchError as e:
+                return ToolResult(output=f"Refused to fetch URL: {e}", is_error=True)
+            except Exception as e:  # noqa: BLE001
                 return ToolResult(output=f"Failed to fetch URL: {e}", is_error=True)
+            page_texts = [{"page": 1, "text": text}]
+            source_name = args.url
+            source_stem = "url_document"
         elif args.file_path.strip():
             path = Path(args.file_path)
             if not path.is_absolute():
@@ -333,13 +331,19 @@ _LANG_MARKERS = {
 
 
 def _detect_language(text: str) -> str:
-    """Detect document language from text content. Returns ISO 639-1 code."""
+    """Detect document language from text content. Returns ISO 639-1 code.
+
+    Falls back to ``en`` when no language scores ``>= 3`` matches; this avoids
+    an insertion-order bias where ``max()`` would return whichever language
+    happens to be defined first when every score is zero.
+    """
     text_lower = text.lower()
     scores: dict[str, int] = {}
     for lang, markers in _LANG_MARKERS.items():
         scores[lang] = sum(1 for m in markers if m in text_lower)
-    best = max(scores, key=scores.get) if scores else "en"
-    return best if scores.get(best, 0) >= 3 else "en"
+    if not scores or max(scores.values()) < 3:
+        return "en"
+    return max(scores, key=scores.get)
 
 
 def _extract_pdf_text(path: Path) -> tuple[str, list[dict]]:
@@ -702,6 +706,83 @@ def _detect_geography(text: str) -> str:
     return best_geo
 
 
+class _UrlFetchError(Exception):
+    """Raised when ``_fetch_url_text`` refuses to fetch a URL."""
+
+
+_URL_MAX_BYTES = 50 * 1024 * 1024  # 50 MB cap on remote document size
+
+
+def _fetch_url_text(url: str) -> str:
+    """Fetch a URL and return decoded text with SSRF / size guardrails.
+
+    The original implementation passed any URL straight to ``urlopen`` with no
+    scheme allow-list, no host filtering and no size cap, which made the tool a
+    classic SSRF vector when mounted via MCP/HTTP. This wrapper enforces:
+
+    * scheme must be ``http`` or ``https``;
+    * host must not resolve to a private/loopback/link-local address;
+    * response is capped at ``_URL_MAX_BYTES``;
+    * binary content (e.g. ``application/pdf``) is rejected with a clear
+      message that asks the caller to download the file locally and use
+      ``file_path`` instead.
+    """
+    import ipaddress
+    import socket
+    from urllib.parse import urlparse
+    from urllib.request import Request, urlopen
+
+    parsed = urlparse(url)
+    scheme = (parsed.scheme or "").lower()
+    if scheme not in ("http", "https"):
+        raise _UrlFetchError(
+            f"Only http(s) URLs are allowed, got scheme '{scheme or 'none'}'."
+        )
+    host = parsed.hostname
+    if not host:
+        raise _UrlFetchError("URL is missing a host component.")
+
+    # Block private/loopback/link-local hosts. We resolve the hostname rather
+    # than relying on the literal so attackers can't hide behind DNS labels.
+    try:
+        infos = socket.getaddrinfo(host, None)
+    except socket.gaierror as e:
+        raise _UrlFetchError(f"DNS lookup failed for '{host}': {e}") from e
+    for info in infos:
+        ip_str = info[4][0]
+        try:
+            ip = ipaddress.ip_address(ip_str)
+        except ValueError:
+            continue
+        if (
+            ip.is_private
+            or ip.is_loopback
+            or ip.is_link_local
+            or ip.is_reserved
+            or ip.is_multicast
+            or ip.is_unspecified
+        ):
+            raise _UrlFetchError(
+                f"Refusing to fetch '{host}' which resolves to non-public "
+                f"address {ip_str}."
+            )
+
+    request = Request(url, headers={"User-Agent": "impact-vision/1.0"})
+    with urlopen(request, timeout=10) as response:  # noqa: S310 - validated above
+        content_type = (response.headers.get("Content-Type") or "").lower()
+        if "pdf" in content_type or content_type.startswith(("application/octet-stream", "image/", "video/", "audio/")):
+            raise _UrlFetchError(
+                f"Remote content type '{content_type}' is not text. Download "
+                "the file locally and pass it via 'file_path' instead."
+            )
+        raw = response.read(_URL_MAX_BYTES + 1)
+    if len(raw) > _URL_MAX_BYTES:
+        raise _UrlFetchError(
+            f"Remote document exceeds {_URL_MAX_BYTES // (1024 * 1024)} MB cap."
+        )
+    return raw.decode("utf-8", errors="replace")
+
+
 def _save_company_yaml(
     company,
     yaml_path: str,
@@ -713,9 +794,29 @@ def _save_company_yaml(
     import yaml
     from pathlib import Path
 
-    path = Path(yaml_path)
-    if not path.is_absolute():
-        path = cwd / path
+    raw_path = Path(yaml_path).expanduser()
+    is_absolute = raw_path.is_absolute()
+    candidate = raw_path if is_absolute else (cwd / raw_path)
+    resolved = candidate.resolve()
+
+    # Confine relative paths under ``cwd`` so a malicious payload like
+    # ``save_company_yaml="../../etc/passwd"`` cannot escape the project root
+    # when the tool is mounted in a multi-tenant MCP/HTTP runtime. Absolute
+    # paths are trusted because the caller has explicitly opted into a
+    # specific destination — the typical library / CLI flow.
+    if not is_absolute:
+        try:
+            cwd_resolved = Path(cwd).resolve()
+        except Exception:
+            cwd_resolved = Path.cwd().resolve()
+        try:
+            resolved.relative_to(cwd_resolved)
+        except ValueError as e:
+            raise PermissionError(
+                f"Refusing to write '{resolved}' outside of working directory "
+                f"'{cwd_resolved}'"
+            ) from e
+    path = resolved
     path.parent.mkdir(parents=True, exist_ok=True)
 
     data = {

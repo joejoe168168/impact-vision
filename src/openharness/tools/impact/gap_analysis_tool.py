@@ -69,7 +69,8 @@ class GapAnalysisTool(BaseTool):
         ]
 
         bar_width = 30
-        filled = int(result["coverage_percentage"] / 100 * bar_width)
+        coverage_pct = max(0.0, min(100.0, float(result.get("coverage_percentage", 0) or 0)))
+        filled = int(coverage_pct / 100 * bar_width)
         lines.append("[" + "#" * filled + "-" * (bar_width - filled) + f"] {result['coverage_percentage']}%")
         lines.append("")
 
@@ -88,9 +89,15 @@ class GapAnalysisTool(BaseTool):
             lines.append("")
 
         if result.get("extra_metrics_reported"):
-            lines.append(f"Additional metrics reported ({len(result['extra_metrics_reported'])}):")
-            for m in result["extra_metrics_reported"][:5]:
+            extras = result["extra_metrics_reported"]
+            shown = extras[:5]
+            lines.append(f"Additional metrics reported ({len(extras)}):")
+            for m in shown:
                 lines.append(f"  * {m['id']}: {m['name']} = {m.get('value', 'N/A')}")
+            if len(extras) > len(shown):
+                lines.append(
+                    f"  ... and {len(extras) - len(shown)} more (full list in result metadata)"
+                )
             lines.append("")
 
         if result["recommendations"]:

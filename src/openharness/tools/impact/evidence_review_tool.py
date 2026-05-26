@@ -44,7 +44,15 @@ class EvidenceReviewTool(BaseTool):
     input_model = EvidenceReviewInput
 
     def is_read_only(self, arguments: BaseModel) -> bool:
-        return arguments.action == "queue_summary" if hasattr(arguments, "action") else False
+        try:
+            args = (
+                arguments
+                if isinstance(arguments, EvidenceReviewInput)
+                else EvidenceReviewInput.model_validate(arguments)
+            )
+        except Exception:
+            return False
+        return args.action == "queue_summary"
 
     async def execute(self, arguments: BaseModel, context: ToolExecutionContext) -> ToolResult:
         # Imports are local to break a circular import: metric_records.py loads

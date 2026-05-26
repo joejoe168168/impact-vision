@@ -22,10 +22,33 @@ logger = logging.getLogger(__name__)
 # package metadata. We keep the fields handy as module attributes so the CLI
 # (`impact-vision serve-mcp`) and docs can still surface them.
 IMPACT_VISION_MCP_NAME = "Impact Vision"
-IMPACT_VISION_MCP_VERSION = "0.15.0"
+
+
+def _impact_vision_version() -> str:
+    """Return the installed package version, or a placeholder if unavailable."""
+    try:
+        from importlib.metadata import PackageNotFoundError, version
+
+        return version("impact-vision")
+    except (PackageNotFoundError, Exception):  # noqa: BLE001
+        return "0.0.0+unknown"
+
+
+def _impact_tool_count() -> int:
+    """Count of impact agent tools registered in the package surface."""
+    try:
+        from openharness.tools.impact import __all__ as _impact_all
+
+        return len(_impact_all)
+    except Exception:  # noqa: BLE001
+        return 0
+
+
+IMPACT_VISION_MCP_VERSION = _impact_vision_version()
 IMPACT_VISION_MCP_DESCRIPTION = (
     "AI-powered impact measurement and SDG alignment tools for "
-    "VC and impact investment funds. Provides 26+ tools for "
+    "VC and impact investment funds. Provides "
+    f"{_impact_tool_count() or 'multiple'} agent tools for "
     "5-Dimension scoring, SDG mapping, greenwashing detection, "
     "pipeline management, and comprehensive impact reporting."
 )

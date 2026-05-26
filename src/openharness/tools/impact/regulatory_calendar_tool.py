@@ -54,6 +54,22 @@ class RegulatoryCalendarTool(BaseTool):
                 )
             return ToolResult(output="\n".join(lines), metadata=payload)
 
+        # Validate the FY-end early so users get a friendly error instead of a
+        # raw ``ValueError`` from deep inside the engine when they pass
+        # "31/12/2026" or similar.
+        if args.fiscal_year_end:
+            try:
+                from datetime import date as _date
+
+                _date.fromisoformat(args.fiscal_year_end[:10])
+            except ValueError:
+                return ToolResult(
+                    output=(
+                        "fiscal_year_end must be in ISO format (YYYY-MM-DD). "
+                        f"Got: {args.fiscal_year_end!r}. Examples: '2026-12-31', '2027-03-31'."
+                    ),
+                    is_error=True,
+                )
         calendar = build_regulatory_calendar(
             jurisdiction=args.jurisdiction,
             fiscal_year_end=args.fiscal_year_end or None,

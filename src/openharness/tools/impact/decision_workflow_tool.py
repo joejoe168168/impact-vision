@@ -138,7 +138,29 @@ class DecisionWorkflowTool(BaseTool):
 
 def _result(payload: dict, output_format: str) -> ToolResult:
     if output_format == "text":
-        lines = [f"{key}: {value}" for key, value in payload.items() if key != "memo"]
+        # Render scalar/list/dict fields first, then append the memo block at
+        # the bottom so a CLI consumer of ic_workflow gets the full IC memo
+        # (which is usually the primary deliverable). Earlier versions
+        # silently dropped 'memo' under output_format='text', which made the
+        # tool effectively useless for CLI workflows.
+        lines: list[str] = []
+        memo: object | None = None
+        for key, value in payload.items():
+            if key == "memo":
+                memo = value
+                continue
+            lines.append(f"{key}: {value}")
+        if memo:
+            lines.append("")
+            lines.append("=" * 50)
+            lines.append("MEMO")
+            lines.append("=" * 50)
+            if isinstance(memo, dict):
+                for sub_key, sub_value in memo.items():
+                    lines.append(f"\n[{sub_key}]")
+                    lines.append(str(sub_value))
+            else:
+                lines.append(str(memo))
         return ToolResult(output="\n".join(lines), metadata=payload)
     return ToolResult(output=json.dumps(payload, indent=2, default=str), metadata=payload)
 

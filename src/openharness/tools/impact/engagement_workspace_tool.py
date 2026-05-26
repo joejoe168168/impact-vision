@@ -223,7 +223,13 @@ class EngagementWorkspaceTool(BaseTool):
         if args.action == "get_bundle":
             if not args.bundle_id:
                 raise ValueError("bundle_id is required")
-            bundle = ENGAGEMENT_BUNDLES[args.bundle_id]  # type: ignore[index]
+            try:
+                bundle = ENGAGEMENT_BUNDLES[args.bundle_id]  # type: ignore[index]
+            except KeyError as e:
+                available = ", ".join(sorted(ENGAGEMENT_BUNDLES.keys()))
+                raise ValueError(
+                    f"Unknown bundle_id '{args.bundle_id}'. Available: {available}"
+                ) from e
             return {"bundle": bundle.model_dump(mode="json")}
 
         if args.action == "list_templates":
@@ -237,7 +243,13 @@ class EngagementWorkspaceTool(BaseTool):
         if args.action == "get_template":
             if not args.template_id:
                 raise ValueError("template_id is required")
-            template = CLIENT_TEMPLATE_LIBRARY[args.template_id]
+            try:
+                template = CLIENT_TEMPLATE_LIBRARY[args.template_id]
+            except KeyError as e:
+                available = ", ".join(sorted(CLIENT_TEMPLATE_LIBRARY.keys()))
+                raise ValueError(
+                    f"Unknown template_id '{args.template_id}'. Available: {available}"
+                ) from e
             return {"template": template.model_dump(mode="json")}
 
         if args.action == "build_proposal":
