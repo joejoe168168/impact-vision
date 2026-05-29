@@ -304,7 +304,7 @@ Opens a web dashboard at http://localhost:8501 with 5 tabs: Assessment, IRIS+ Ca
 | `iv dd categories` | List DD categories |
 | `iv dd analyze "text"` | Check text against DD checklist |
 | `iv ollama-setup` | Configure local LLM |
-| `iv serve-mcp` | Start MCP server for AI agents (39 impact tools + 5 resources) |
+| `iv serve-mcp` | Start MCP server for AI agents (45 impact tools + 5 resources) |
 | `iv serve-web` | Start Web Console + REST API at http://127.0.0.1:8787 |
 | `iv` | Start interactive AI agent |
 
@@ -312,7 +312,7 @@ Opens a web dashboard at http://localhost:8501 with 5 tabs: Assessment, IRIS+ Ca
 
 ## Usage
 
-Impact Vision ships **39 impact agent tools** covering the full investment lifecycle
+Impact Vision ships **45 impact agent tools** covering the full investment lifecycle
 — pre-screen, due diligence, IC memo, portfolio monitoring, LP reporting,
 assurance, and post-exit review. Below are common prompts you can paste
 into the interactive agent (or the Web Console at
@@ -393,6 +393,8 @@ Follow-up prompts that chain the v3/v4 tools on the same deal:
 ```
 
 HTML reports include an **Interactive Score Improvement** section -- check boxes for practices your organization follows (e.g., "We track beneficiaries", "We have a Theory of Change") and watch scores update in real-time with a before/after radar chart.
+
+Reports are built for sharing with investment committees, LPs, and regulators: an **audience filter** (LP / IC / regulator / public) tailors which sections show, an **executive tear sheet** gives an at-a-glance summary, **confidence bands** surface evidence quality, and every section is **collapsible** with copy-link anchors for deep-linking. The reading chrome (progress bar, scrollspy table of contents, sticky company/grade header) is **WCAG 2.2 AA accessible** -- skip links, keyboard navigation, and reduced-motion support -- with an in-browser **dark mode** toggle and **white-label branding**. Print and PDF output ships a cover page, running page numbers, and a confidentiality footer, and the **PDF export is tagged (PDF/UA-1)** for accessibility.
 
 ### Improving Scores Through Q&A
 
@@ -700,7 +702,7 @@ impact-vision/
 │   │   ├── mcp_server.py              # MCP server (FastMCP)
 │   │   └── sdk.py                     # High-level ImpactVision SDK facade
 │   │
-│   ├── tools/impact/                  # 39 LLM-callable impact agent tools (see "Tools" below)
+│   ├── tools/impact/                  # 45 LLM-callable impact agent tools (see "Tools" below)
 │   ├── api_gateway/router.py          # FastAPI REST API
 │   ├── web/                           # Single-file Web Console + SSE streaming
 │   ├── dashboard/app.py               # Streamlit 5-tab dashboard
@@ -820,21 +822,30 @@ cross-references to IRIS+ metric IDs via the shared
 | | Theory of Change | RS Group 8 Blended Value Principles + GIIN 8-step ToC Checklist |
 | | ISSB IFRS S1 | General sustainability disclosure (4 pillars) |
 | | ISSB IFRS S2 | Climate-related disclosures |
-| | EU CSRD / ESRS | 11 standards, double-materiality assessment |
+| | EU CSRD / ESRS | 11 standards, double-materiality; current to Omnibus I (Directive (EU) 2026/470) |
+| | EFRAG VSME | Voluntary SME standard: Basic B1-B11 + Comprehensive C1-C9 (post-Omnibus default for out-of-scope SMEs) |
+| | 2X Criteria | Gender-lens investing standard (6 dimensions + governance/GBVH minimum requirements) |
+| | TISFD (beta) | Inequality & Social-related Financial Disclosures readiness: 4 pillars, 13 disclosures, GRI/ESRS crosswalk |
 | **Regulatory** | SFDR | 14 mandatory + 9 optional PAI indicators, Article 6/8/9 classification, deadline scheduler |
+| | EU Omnibus I scope | CSRD/CSDDD in-scope decision tree (employee + turnover thresholds, FY2025-26 pause, VSME fallback) |
+| | CSDDD / HRDD | UNGP + OECD 6-step value-chain human-rights due diligence (salience ranking, grievance score, remediation tracker, readiness band) |
 | | EU Taxonomy | 6 environmental objectives, DNSH + Minimum Safeguards |
 | | UK FCA Anti-Greenwashing Rule | Fair/clear/not-misleading assessment |
 | | EU Green Claims Directive | Evidence, comparability, third-party verification |
 | | EU Digital Product Passport (ESPR) | Import + map to IRIS+/ESRS/SDG |
-| | Per-jurisdiction packs | EU-SFDR, EU-CSRD, UK-FCA-SDR, US-SEC-ESG, HK-HKEX-ESG, AU-AASB-S2, ISSB-global |
+| | Per-jurisdiction packs | EU-SFDR, EU-CSRD, EU-CSDDD, UK-FCA-SDR, US-SEC-ESG, HK-HKEX-ESG, AU-AASB-S2, ISSB-global |
 | **Climate & nature** | PCAF | Financed-emissions attribution, sector defaults, weighted data quality |
 | | SBTi (Net-Zero Standard v1.2) | 1.5 °C pathway, Scope-3 materiality, 2050 cap |
 | | TNFD v1 | 14 LEAP / pillar disclosures |
 | | CDP | Climate / water / forests questionnaire intake |
 | | GHG Protocol | Scope 1/2 inventory (Scope 3 via PCAF) with versioned factor catalog |
+| | NGFS scenarios | Physical/transition portfolio exposure across 7 NGFS pathways + illustrative value-at-risk |
 | **Impact management** | IFC OPIM | 9-principle verification readiness + Principle 8 exit-impact |
 | | SROI | Deadweight / attribution / displacement / drop-off adjustments |
 | | MOI + Impact-adjusted IRR | Newton-Raphson, optional shadow price |
+| | IFVI / VBA monetary valuation | Value-factor catalogue → net monetary impact, benefit/cost ratio, impact multiple of money |
+| | Welfare quantifier (QALYs) | breadth × depth × theme × geography → QALYs / lives improved + cost-per-QALY + portfolio roll-up |
+| | Impact Target Setter | Context-driven conservative/base/stretch IRIS+/SDG target ranges from theme × geography × capital |
 | **Greenwashing & NLP** | Standard greenwashing scoring | Vague-language + quantitative-evidence checks |
 | | Green Authenticity Index (GAI) | Ratio of substantive to vague claims |
 | | Cheap Talk Index (CTI) | Forward-looking vs. evidenced statements |
@@ -843,8 +854,9 @@ cross-references to IRIS+ metric IDs via the shared
 | | SOC 2 Type II / ISO 27001 | Starter control set with readiness report |
 | | Verification workspace | Finding lifecycle + threaded comments (v0.15.0) |
 | | 3-pillar assurance bundle | HMAC-signed evidence graph + audit trail + workspace (v4) |
+| | AI governance (EU AI Act) | Model card + data lineage + human-oversight log + risk classification & obligations |
 
-### Agent Tools (39)
+### Agent Tools (45)
 
 All tools below are exposed through the default OpenHarness tool registry
 and `openharness.tools.impact`, so the interactive agent, Web Console,
@@ -881,20 +893,21 @@ REST API, and MCP server see the same surface.
 | `impact_risk_opportunity` | 14 risk categories on a likelihood × severity matrix |
 | `exclusion_screening` | UNGC, weapons, fossil-fuel exclusion lists |
 
-**Frameworks & reporting (4)**
+**Frameworks & reporting (5)**
 
 | Tool | Description |
 |------|-------------|
-| `framework_assess` | Multi-framework ESG assessment (all frameworks in the table above) |
+| `framework_assess` | Multi-framework ESG assessment (all frameworks in the table above, incl. VSME, 2X Criteria, TISFD) |
 | `cross_reference` | Cross-framework metric lookup (59 mappings) |
 | `impact_report` | Interactive HTML reports + XLSX/CSV/JSON/text/PDF |
+| `impact_valuation` | IFVI/VBA monetary impact accounting: value factors → net monetary impact, benefit/cost ratio, impact multiple of money |
 | `lp_ddq_export` | LP DDQ responses in ILPA, GIIN, EDCI, SFDR formats |
 
 **Decision workflow — v5 (2)**
 
 | Tool | Description |
 |------|-------------|
-| `decision_workflow` | Quick screen, IC memo proof bundle, deal comparison, and LP readiness |
+| `decision_workflow` | Quick screen, IC memo proof bundle, deal comparison, LP readiness, and context-driven impact target setting (`set_targets`) |
 | `regulatory_calendar` | Jurisdiction-specific reporting deadlines for fund and engagement planning |
 
 **Portfolio workflow (5)**
@@ -939,6 +952,16 @@ REST API, and MCP server see the same surface.
 | `toc_builder` | ToC canvas + logic-chain validator + multi-framework KPI generator (wraps v3 `toc_graph` + `metric_recommender`) |
 | `engagement_suite` | Umbrella tool for Tracks 3-10: proposal, data room, value-creation, reporting studio, training/readiness, public website, governed AI copilot, regulatory deadlines, 3-pillar assurance bundle |
 
+**Frontier measurement & governance — v5 (5)**
+
+| Tool | Description |
+|------|-------------|
+| `impact_quantifier` | Welfare quantifier (GIIN Impact Lab lineage): breadth × depth × theme × geography → QALYs + lives improved, cost-per-QALY, portfolio roll-up |
+| `hrdd_assess` | Human-rights & value-chain due diligence (UNGP + OECD 6-step + CSDDD): salience ranking, grievance score, remediation tracker, CSDDD readiness band |
+| `climate_scenario_risk` | NGFS physical/transition scenario screen with portfolio-weighted exposure, combined score, and illustrative value-at-risk per scenario |
+| `ai_governance` | AI governance artifact (EU AI Act-aware): model card, data lineage, human-oversight log from the copilot review queue, risk classification + obligations |
+| `investee_portal` | Generate a self-contained offline HTML data-collection portal (guided questionnaire, SFDR PAI plain language, validation, "why we ask", JSON export) |
+
 ## Streamlit Dashboard
 
 For a visual alternative to the CLI agent:
@@ -957,7 +980,7 @@ The dashboard has 5 tabs:
 ## Web Console (power-user UI)
 
 For a browser-native surface to every tool — useful when you want the
-full 39-tool set at your fingertips rather than Streamlit's 5 curated
+full 45-tool set at your fingertips rather than Streamlit's 5 curated
 tabs — run the **web console**:
 
 ```bash

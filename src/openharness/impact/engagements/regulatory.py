@@ -89,11 +89,30 @@ _EU = RegulatoryJurisdictionProfile(
             owner_hint="ESG analyst",
         ),
         RegulatoryObligation(
+            obligation_id="omnibus_scope_check",
+            framework="CSRD/ESRS (Omnibus I)",
+            title="CSRD scope determination (Omnibus I)",
+            summary=(
+                "Confirm CSRD scope post-Omnibus I (>1,000 employees AND >€450M "
+                "turnover). If out of scope, decide VSME voluntary reporting."
+            ),
+            recurrence="one_off",
+            owner_hint="compliance lead",
+        ),
+        RegulatoryObligation(
             obligation_id="csrd_double_materiality",
             framework="CSRD/ESRS",
             title="Double-materiality assessment",
-            summary="Impact + financial materiality workspace with assurance-ready evidence.",
+            summary="Impact + financial materiality workspace with assurance-ready evidence (in-scope undertakings; FY2027 under simplified ESRS).",
             recurrence="annual",
+        ),
+        RegulatoryObligation(
+            obligation_id="csddd_value_chain_dd",
+            framework="CSDDD (Omnibus I)",
+            title="Value-chain human-rights & environmental due diligence",
+            summary="HRDD per CSDDD as amended by Omnibus I (>5,000 employees + €1.5B turnover; applies 2029-07-26). Voluntary OECD/UNGP HRDD otherwise.",
+            recurrence="annual",
+            owner_hint="ESG / legal",
         ),
         RegulatoryObligation(
             obligation_id="issb_s1_general",
@@ -366,6 +385,131 @@ def classify_uk_sdr(input: UKSDRLabelInput) -> UKSDRLabelResult:
     )
 
 
+# ------------------------------------------- EU Omnibus I scope decision tree
+
+
+class EUOmnibusScopeInput(BaseModel):
+    """Inputs for the post-Omnibus-I CSRD/CSDDD scope decision (Directive (EU) 2026/470)."""
+
+    employees: int = Field(ge=0, description="Average number of employees")
+    net_turnover_eur_m: float = Field(ge=0, description="Net turnover in € millions")
+    is_eu_undertaking: bool = True
+    eu_turnover_eur_m: float = Field(
+        default=0.0, ge=0, description="EU-generated net turnover (€m) for non-EU groups"
+    )
+    is_listed: bool = False
+    was_wave1_reporter: bool = Field(
+        default=False, description="Already reported CSRD for FY starting 2024 (Wave 1)"
+    )
+
+
+class EUOmnibusScopeResult(BaseModel):
+    """Result of the Omnibus I scope determination."""
+
+    as_of: str = "2026-03-18"
+    legal_basis: str = "Directive (EU) 2026/470 (Omnibus I)"
+    csrd_in_scope: bool
+    csddd_in_scope: bool
+    csrd_first_reporting_fy: str = ""
+    may_pause_fy2025_2026: bool = False
+    vsme_recommended: bool = False
+    rationale: list[str] = Field(default_factory=list)
+    next_steps: list[str] = Field(default_factory=list)
+
+
+# Post-Omnibus-I cumulative thresholds.
+_CSRD_EMPLOYEE_THRESHOLD = 1000
+_CSRD_TURNOVER_THRESHOLD_EUR_M = 450.0
+_CSDDD_EMPLOYEE_THRESHOLD = 5000
+_CSDDD_TURNOVER_THRESHOLD_EUR_M = 1500.0
+
+
+def assess_eu_omnibus_scope(input: EUOmnibusScopeInput) -> EUOmnibusScopeResult:
+    """Decide CSRD/CSDDD scope under the final Omnibus I Directive (EU) 2026/470.
+
+    CSRD now requires BOTH >1,000 employees AND >€450M net turnover (for non-EU
+    groups, >€450M EU turnover). CSDDD requires >5,000 employees AND >€1.5B
+    turnover and applies from 2029-07-26. Out-of-scope SMEs are steered to the
+    VSME voluntary standard.
+    """
+    rationale: list[str] = []
+    next_steps: list[str] = []
+
+    turnover = input.net_turnover_eur_m if input.is_eu_undertaking else input.eu_turnover_eur_m
+    turnover_label = "net turnover" if input.is_eu_undertaking else "EU net turnover"
+
+    csrd_in_scope = (
+        input.employees > _CSRD_EMPLOYEE_THRESHOLD
+        and turnover > _CSRD_TURNOVER_THRESHOLD_EUR_M
+    )
+    if csrd_in_scope:
+        rationale.append(
+            f"In CSRD scope: {input.employees} employees > {_CSRD_EMPLOYEE_THRESHOLD} "
+            f"AND {turnover_label} €{turnover:.0f}M > €{_CSRD_TURNOVER_THRESHOLD_EUR_M:.0f}M."
+        )
+    else:
+        rationale.append(
+            f"Out of CSRD scope: requires BOTH >{_CSRD_EMPLOYEE_THRESHOLD} employees "
+            f"AND >€{_CSRD_TURNOVER_THRESHOLD_EUR_M:.0f}M {turnover_label} "
+            f"(have {input.employees} employees / €{turnover:.0f}M)."
+        )
+        if input.is_listed:
+            rationale.append(
+                "Listed SMEs were removed from mandatory CSRD scope by Omnibus I."
+            )
+
+    csddd_in_scope = (
+        input.employees > _CSDDD_EMPLOYEE_THRESHOLD
+        and turnover > _CSDDD_TURNOVER_THRESHOLD_EUR_M
+    )
+    rationale.append(
+        ("In CSDDD scope" if csddd_in_scope else "Out of CSDDD scope")
+        + f": threshold is >{_CSDDD_EMPLOYEE_THRESHOLD} employees AND "
+        f">€{_CSDDD_TURNOVER_THRESHOLD_EUR_M:.0f}M turnover (applies 2029-07-26)."
+    )
+
+    may_pause = bool(input.was_wave1_reporter and not csrd_in_scope)
+    if may_pause:
+        rationale.append(
+            "Former Wave 1 reporter below new thresholds: may pause FY2025-FY2026 "
+            "reporting (subject to national transposition)."
+        )
+
+    vsme_recommended = not csrd_in_scope
+    first_fy = "FY2027" if csrd_in_scope else ""
+
+    if csrd_in_scope:
+        next_steps.append(
+            "Prepare ESRS sustainability statement; first year under new scope is "
+            "FY2027 (simplified ESRS delegated act targeted 2026-09)."
+        )
+        next_steps.append("Run the double-materiality assessment (csrd_wizard).")
+    else:
+        next_steps.append(
+            "Not mandatorily in scope — consider the VSME voluntary standard to "
+            "satisfy investor/bank/customer data requests (framework_assess: vsme)."
+        )
+    if csddd_in_scope:
+        next_steps.append(
+            "Build the CSDDD value-chain HRDD register (hrdd module); applies 2029-07-26."
+        )
+    else:
+        next_steps.append(
+            "CSDDD not legally required, but OECD/UNGP-aligned HRDD remains an LP "
+            "expectation — evidence it voluntarily via the hrdd module."
+        )
+
+    return EUOmnibusScopeResult(
+        csrd_in_scope=csrd_in_scope,
+        csddd_in_scope=csddd_in_scope,
+        csrd_first_reporting_fy=first_fy,
+        may_pause_fy2025_2026=may_pause,
+        vsme_recommended=vsme_recommended,
+        rationale=rationale,
+        next_steps=next_steps,
+    )
+
+
 # --------------------------------------------------- Deadline calendar
 
 
@@ -494,6 +638,8 @@ def build_regulator_narrative(
 
 __all__ = [
     "DeadlineStatus",
+    "EUOmnibusScopeInput",
+    "EUOmnibusScopeResult",
     "FundLabelEU",
     "FundLabelUK",
     "JURISDICTION_PROFILES",
@@ -506,6 +652,7 @@ __all__ = [
     "SFDRClassificationResult",
     "UKSDRLabelInput",
     "UKSDRLabelResult",
+    "assess_eu_omnibus_scope",
     "build_regulator_narrative",
     "classify_sfdr",
     "classify_uk_sdr",

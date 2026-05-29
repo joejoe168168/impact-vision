@@ -13,6 +13,122 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ### Added
 
+- **Roadmap v5 — regulatory currency + frontier measurement.** See
+  [`docs/roadmap-v5.md`](docs/roadmap-v5.md). Shipped so far:
+  - **EU Omnibus I currency (Track A1).** `standards_registry` now cites
+    Directive (EU) 2026/470 (ESRS Omnibus active + new CSDDD standard);
+    `regulatory_packs` carries refreshed CSRD thresholds, a new `EU-CSDDD`
+    pack, and `as_of` / `legal_basis` provenance fields; new
+    `engagements.regulatory.assess_eu_omnibus_scope` decision tree (CSRD/CSDDD
+    in-scope, FY2025-26 pause eligibility, VSME fallback) exposed via the
+    `engagement_suite` tool (`assess_eu_omnibus_scope` action).
+  - **EFRAG VSME voluntary standard (Track A2).** `frameworks.vsme` with the
+    Basic (B1-B11) + Comprehensive (C1-C9) disclosure catalogue and a
+    coverage screen, exposed via `framework_assess` (`vsme`, with
+    `category=basic|comprehensive`).
+  - **2X Criteria gender-lens screen (Track B3).** `frameworks.two_x` scoring
+    the six 2X dimensions plus the mandatory governance + GBVH minimum
+    requirements, exposed via `framework_assess` (`two_x`).
+  - **IFVI/VBA monetary impact valuation (Track B1).** New
+    `impact.impact_valuation` (value-factor catalogue → monetised benefit/cost
+    ledger, net monetary impact, benefit/cost ratio, impact intensity, and an
+    impact-weighted return / impact multiple of money) and the
+    `impact_valuation` agent tool. `fund_analytics.impact_weighted_returns_stub`
+    now computes a real impact-weighted IRR when financial returns are supplied.
+  - **GIIN Impact Performance Benchmarks (Track C1).** New
+    `impact.giin_benchmarks` with seeded sector KPI quartile distributions
+    (agriculture, clean energy, financial inclusion, forestry, healthcare),
+    SDG-need contextualisation, and a `GIINImpactBenchmarkProvider` that plugs
+    into the engagement-suite benchmark protocol. Exposed via `engagement_suite`
+    (`benchmark` with `provider="giin"`, `list_giin_benchmarks`,
+    `giin_kpi_context`).
+  - **Accessible, provenance-aware reports (Track D2 + D3).** The flagship
+    HTML impact report and the shared `report_v2` chrome now meet WCAG 2.2 AA:
+    a "skip to main content" link, a `<main>` landmark, an `aria-label`led
+    table of contents, `role="img"` + descriptive alt-text on every Plotly
+    chart (each backed by an adjacent data table), keyboard-operable
+    disclosure rows (5D / SDG / impact-claim) with `role="button"`,
+    `tabindex`, Enter/Space handlers and `aria-expanded`, visible focus
+    outlines, and a `prefers-reduced-motion` guard. Evidence provenance is now
+    surfaced inline via an `.evidence-badge` component (verified / reported /
+    estimated / proxy / unverified / suggested) that uses label + shape, not
+    colour alone, with an accessible source/confidence tooltip and a legend;
+    the 5D table's score-provenance column renders these badges. New
+    `render_provenance_badge()` / `render_evidence_legend()` helpers and a
+    `theme="dark"` option on `wrap_document()` are exported from
+    `report_templates` for reuse by the IC memo and DD report (Track D1
+    chrome unification landed additively rather than as a risky rewrite).
+  - **Welfare quantifier — QALYs / lives improved (Track B2).** New
+    `impact.impact_quantifier` converts breadth × depth × theme × geography ×
+    duration × additionality into Quality-Adjusted Life Years and "lives
+    meaningfully improved", with cost-per-QALY, monetised welfare, and a
+    portfolio roll-up by theme/geography. New `impact_quantifier` agent tool.
+  - **Human-rights & value-chain due diligence (Track A3).** New `impact.hrdd`
+    aligned to UNGP (Protect/Respect/Remedy), the OECD 6-step cycle, and EU
+    CSDDD: salience ranking (severity × likelihood with gross-risk escalation
+    for forced/child labour & modern slavery), value-chain tier mapping, a
+    UNGP-Principle-31 grievance-effectiveness score, a remediation state
+    machine, OECD step coverage, and a CSDDD readiness band. New `hrdd_assess`
+    agent tool (`assess`, `seed_from_text`).
+  - **TISFD readiness (Track B4).** New `frameworks.tisfd` — a beta,
+    forward-looking Inequality & Social-related Financial Disclosures readiness
+    screen across the 4 TCFD-style pillars (13 disclosures; pay, labour
+    conditions, freedom of association, community, inequality) with a GRI/ESRS
+    crosswalk and an explicit beta label. Exposed via `framework_assess`
+    (`tisfd`).
+  - **Context-driven impact target setter (Track B5).** New
+    `impact.impact_target_setter` derives conservative / base / stretch IRIS+/SDG
+    target ranges (plus an annual trajectory) from theme × geography × capital.
+    Wired into `decision_workflow` as `action='set_targets'`.
+  - **NGFS climate scenario risk (Track E1).** New `impact.climate_scenario`
+    scores portfolio physical & transition exposure across seven NGFS scenarios
+    (orderly / disorderly / hot-house / too-little-too-late) using sector
+    sensitivities, returning a combined risk score, an illustrative value-at-risk
+    haircut per scenario, and the most-exposed holdings. New
+    `climate_scenario_risk` agent tool.
+  - **AI governance artifact (Track E2).** New `impact.ai_governance` produces a
+    model card, per-artefact data-lineage records, and a human-oversight log
+    assembled from the copilot review queue, plus an EU AI Act risk
+    classification (unacceptable / high / limited / minimal) and the
+    transparency / human-oversight / record-keeping obligation checklist. New
+    `ai_governance` agent tool; builds on `engagements.copilot`.
+  - **Investee data-collection portal (Track C2).** New
+    `impact.investee_portal` generates a self-contained, offline, single-file
+    HTML questionnaire (client-side validation, SFDR PAI plain-language
+    rewrites, a per-field "why we ask" feedback loop, a progress bar, WCAG 2.2
+    AA structure, and local JSON export — no server). New `investee_portal`
+    agent tool (`generate`, `schema`).
+  - **Decision-useful report UX (Tracks D4-D7).** The flagship HTML report now
+    ships an accessible **audience filter** (LP / IC / regulator / public
+    toolbar that segments sections by lens, hidden in print), an **executive
+    tear sheet** ("At a glance" single-screen summary with a `page-break-after`
+    for a clean one-page PDF), **uncertainty visualization** (a
+    provenance-derived confidence band rendered as an accessible error-bar), a
+    **dark theme** (`theme="dark"`), **white-label branding** wiring
+    (`branding` input → `branding.py` tokens), and a tagged **PDF/UA-1** export
+    with heading bookmarks from `_to_pdf`.
+  - **Interactive reading chrome (Track D polish).** The HTML report gained a
+    top **reading-progress bar**, a floating **utility dock** (in-browser
+    light/dark toggle that persists the reader's choice in `localStorage`, a
+    "save as PDF / print" button, and a back-to-top control), **scrollspy**
+    that highlights the current section in the on-page table of contents,
+    **copy-link anchors** on every section heading for deep-linking an LP or IC
+    straight to a section, and **collapsible major sections** (per-section
+    carets plus "Expand all / Collapse all" controls), and a scroll-activated
+    **sticky mini-header** (company name + overall grade/score) for orientation
+    in long reports. Collapse state survives audience-filter switches and
+    auto-expands for print/PDF so nothing is lost. All of it is
+    keyboard-accessible, respects `prefers-reduced-motion`, the sticky header is
+    `aria-hidden` (it duplicates the main header already in the a11y tree), and
+    the interactive chrome is hidden in print/PDF output.
+  - **Print/PDF polish (Track D).** Added a print-only **cover page** (title,
+    company, sector, overall grade/score, generation date, standard, and a
+    confidentiality notice) plus `@page` **running footer** with "Page X / Y"
+    page numbers and a confidentiality line, a running header that repeats the
+    company name (via `string-set`/`string()`), and `break-inside: avoid` on
+    cards/tables/charts so the WeasyPrint PDF deliverable paginates cleanly. The
+    cover is hidden on screen and the on-screen header is suppressed in print to
+    avoid duplication.
 - **v5 decision workflow suite for fund managers, project owners, and
   Impact / ESG consultants.** Added decision-useful workflows that turn
   the existing assessment engine into investment committee and LP-ready

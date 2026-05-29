@@ -79,8 +79,11 @@ def create_default_tool_registry(mcp_manager: McpClientManager | None = None) ->
         ("impact.pitch_deck_analyze_tool", "PitchDeckAnalyzeTool"),
         ("impact.greenwashing_tool", "GreenwashingDetectorTool"),
         ("impact.guided_assessment_tool", "GuidedAssessmentTool"),
+        ("impact.hrdd_tool", "HRDDTool"),
+        ("impact.impact_quantifier_tool", "ImpactQuantifierTool"),
         ("impact.impact_risk_opportunity_tool", "ImpactRiskOpportunityTool"),
         ("impact.impact_report_tool", "ImpactReportTool"),
+        ("impact.impact_valuation_tool", "ImpactValuationTool"),
         ("impact.framework_tool", "FrameworkTool"),
         ("impact.improvement_advisor_tool", "ImprovementAdvisorTool"),
         ("impact.cross_reference_tool", "CrossReferenceTool"),
@@ -111,6 +114,10 @@ def create_default_tool_registry(mcp_manager: McpClientManager | None = None) ->
         ("impact.toc_builder_tool", "ToCBuilderTool"),
         # v4 tools (Tracks 3-10): consolidated engagement suite
         ("impact.engagement_suite_tool", "EngagementSuiteTool"),
+        # v5 tools: frontier measurement, HRDD, climate scenarios, AI governance, investee portal
+        ("impact.climate_scenario_tool", "ClimateScenarioTool"),
+        ("impact.ai_governance_tool", "AIGovernanceTool"),
+        ("impact.investee_portal_tool", "InvesteePortalTool"),
     )
     for module_name, class_name in impact_tools:
         _register_if_available(registry, module_name, class_name)

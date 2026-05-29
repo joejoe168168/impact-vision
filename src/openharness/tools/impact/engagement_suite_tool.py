@@ -10,8 +10,10 @@ Actions:
 
 * **data_room** (Track 3): ``build_request_pack``, ``score_completeness``,
   ``rollup_entities``, ``build_coaching_cards``.
-* **value_creation** (Track 4): ``benchmark``, ``risk_rating``,
-  ``value_plan``, ``business_case``, ``run_scenario``, ``supply_hotspots``.
+* **value_creation** (Track 4): ``benchmark`` (set ``provider="giin"`` for the
+  GIIN Impact Performance Benchmarks), ``list_giin_benchmarks``,
+  ``giin_kpi_context``, ``risk_rating``, ``value_plan``, ``business_case``,
+  ``run_scenario``, ``supply_hotspots``.
 * **reporting** (Track 5): ``list_report_templates``, ``build_report``,
   ``transition_report``, ``decide_claim``, ``executive_deck``,
   ``public_microsite``, ``rewrite_audiences``.
@@ -22,8 +24,9 @@ Actions:
   ``upload_demo``, ``partner_mode``.
 * **copilot** (Track 8): ``run_challenge``, ``safe_answer``,
   ``extract_meeting_notes``.
-* **regulatory** (Track 9): ``list_jurisdictions``, ``classify_sfdr``,
-  ``classify_uk_sdr``, ``schedule_deadlines``, ``regulator_narrative``.
+* **regulatory** (Track 9): ``list_jurisdictions``,
+  ``assess_eu_omnibus_scope``, ``classify_sfdr``, ``classify_uk_sdr``,
+  ``schedule_deadlines``, ``regulator_narrative``.
 * **verification** (Track 10): ``build_bundle``, ``verify_bundle``,
   ``readiness_badge``, ``issue_verifier_token``,
   ``list_verifier_marketplace``.
@@ -42,6 +45,7 @@ from openharness.impact.engagements import (
     DataRoomSubmission,
     DiagnosticAnswer,
     EngagementQuery,
+    EUOmnibusScopeInput,
     ImpactRiskEntry,
     MandatePack,
     PracticePack,
@@ -52,6 +56,7 @@ from openharness.impact.engagements import (
     UKSDRLabelInput,
     ValueCreationAction,
     answer_from_approved_evidence,
+    assess_eu_omnibus_scope,
     build_assurance_bundle,
     build_business_case,
     build_coaching_card,
@@ -103,6 +108,11 @@ from openharness.impact.engagements.website import (
     build_benchmark_teaser,
     describe_partner_mode,
 )
+from openharness.impact.giin_benchmarks import (
+    GIINImpactBenchmarkProvider,
+    contextualise_kpi,
+    list_giin_benchmarks,
+)
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 
@@ -114,6 +124,8 @@ SuiteAction = Literal[
     "build_coaching_cards",
     # Track 4
     "benchmark",
+    "list_giin_benchmarks",
+    "giin_kpi_context",
     "risk_rating",
     "value_plan",
     "business_case",
@@ -150,6 +162,7 @@ SuiteAction = Literal[
     "extract_meeting_notes",
     # Track 9
     "list_jurisdictions",
+    "assess_eu_omnibus_scope",
     "classify_sfdr",
     "classify_uk_sdr",
     "schedule_deadlines",
@@ -190,6 +203,8 @@ class EngagementSuiteTool(BaseTool):
 
     _READONLY_ACTIONS: set[str] = {
         "benchmark",
+        "list_giin_benchmarks",
+        "giin_kpi_context",
         "run_scenario",
         "supply_hotspots",
         "list_report_templates",
@@ -211,6 +226,7 @@ class EngagementSuiteTool(BaseTool):
         "safe_answer",
         "extract_meeting_notes",
         "list_jurisdictions",
+        "assess_eu_omnibus_scope",
         "classify_sfdr",
         "classify_uk_sdr",
         "schedule_deadlines",
@@ -293,12 +309,36 @@ class EngagementSuiteTool(BaseTool):
 
         # ------------- Track 4
         if action == "benchmark":
-            provider = get_default_benchmark_provider()
+            provider = (
+                GIINImpactBenchmarkProvider()
+                if str(p.get("provider", "")).lower() in {"giin", "giin_impact_performance"}
+                else get_default_benchmark_provider()
+            )
             queries = [BenchmarkQuery.model_validate(q) for q in p.get("queries", [])]
             dashboard = build_peer_dashboard(
                 provider, queries, engagement_id=args.engagement_id
             )
             return {"dashboard": dashboard.model_dump(mode="json")}
+
+        if action == "list_giin_benchmarks":
+            benchmarks = list_giin_benchmarks(p.get("sector") or None)
+            return {"benchmarks": [b.model_dump(mode="json") for b in benchmarks]}
+
+        if action == "giin_kpi_context":
+            ctx = contextualise_kpi(
+                sector=p.get("sector", ""),
+                metric_id=p.get("metric_id", ""),
+                value=float(p.get("value", 0.0)),
+            )
+            if ctx is None:
+                return {
+                    "error": "No GIIN benchmark for that sector/metric.",
+                    "available": [
+                        {"sector": b.sector, "metric_id": b.metric_id}
+                        for b in list_giin_benchmarks(p.get("sector") or None)
+                    ],
+                }
+            return {"context": ctx.model_dump(mode="json")}
 
         if action == "risk_rating":
             entries = [ImpactRiskEntry.model_validate(r) for r in p.get("entries", [])]
@@ -540,6 +580,10 @@ class EngagementSuiteTool(BaseTool):
         # ------------- Track 9
         if action == "list_jurisdictions":
             return {"jurisdictions": [j.model_dump(mode="json") for j in list_jurisdictions()]}
+
+        if action == "assess_eu_omnibus_scope":
+            result = assess_eu_omnibus_scope(EUOmnibusScopeInput.model_validate(p))
+            return {"result": result.model_dump(mode="json")}
 
         if action == "classify_sfdr":
             result = classify_sfdr(SFDRClassificationInput.model_validate(p))

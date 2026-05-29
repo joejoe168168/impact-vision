@@ -242,11 +242,66 @@ table.data tbody tr:hover td { background: var(--primary-light); }
 .footer a { color: var(--accent); text-decoration: none; }
 .footer a:hover { text-decoration: underline; }
 
+/* ---------- Accessibility (WCAG 2.2 AA) ---------- */
+.skip-link {
+  position: absolute; left: -9999px; top: 0; z-index: 1000;
+  background: var(--primary); color: #fff; padding: 10px 16px;
+  border-radius: 0 0 var(--radius-sm) 0; font-weight: 600; text-decoration: none;
+}
+.skip-link:focus { left: 0; }
+a:focus-visible, button:focus-visible, [tabindex]:focus-visible,
+summary:focus-visible, .toc a:focus-visible {
+  outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 3px;
+}
+.visually-hidden {
+  position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important; animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important; scroll-behavior: auto !important;
+  }
+}
+
+/* ---------- Evidence-provenance badges (Track D3) ---------- */
+.evidence-badge {
+  display: inline-flex; align-items: center; gap: 5px; vertical-align: middle;
+  padding: 2px 9px; border-radius: var(--radius-pill);
+  font-size: 0.7em; font-weight: 650; letter-spacing: 0.02em;
+  border: 1px solid var(--border-strong); background: var(--neutral-light);
+  color: var(--text-secondary); text-decoration: none;
+}
+.evidence-badge::before {
+  content: ""; width: 7px; height: 7px; border-radius: 50%;
+  background: var(--neutral); flex: 0 0 auto;
+}
+.evidence-badge.verified { background: var(--success-light); color: var(--success-dark); border-color: var(--success); }
+.evidence-badge.verified::before { background: var(--success); }
+.evidence-badge.reported { background: var(--primary-light); color: var(--primary-dark); border-color: var(--accent); }
+.evidence-badge.reported::before { background: var(--accent); }
+.evidence-badge.estimated, .evidence-badge.proxy { background: var(--warning-light); color: var(--warning-dark); border-color: var(--warning); }
+.evidence-badge.estimated::before, .evidence-badge.proxy::before { background: var(--warning); }
+.evidence-badge.unverified, .evidence-badge.suggested { background: var(--danger-light); color: var(--danger-dark); border-color: var(--danger); }
+.evidence-badge.unverified::before, .evidence-badge.suggested::before { background: var(--danger); }
+.evidence-legend { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 10px 0; font-size: 0.86em; }
+.evidence-legend .ev-title { font-weight: 650; color: var(--text-secondary); }
+
+/* ---------- Dark mode + white-label opt-in (Track D7) ---------- */
+.theme-dark {
+  --surface: #1c2128; --bg: #0d1117; --text: #e6edf3;
+  --text-secondary: #b6bec8; --text-muted: #8b949e;
+  --border: #30363d; --border-strong: #454d56;
+  --primary-light: #15304d; --neutral-light: #1b222b;
+  --success-light: #12351d; --warning-light: #3a2a12; --danger-light: #3a1518;
+}
+
 /* ---------- Print ---------- */
 @media print {
   body { background: white; }
   .page { display: block; max-width: 100%; padding: 0; }
   aside.toc { display: none; }
+  .skip-link { display: none; }
   .report-hero { background: var(--primary) !important;
                  -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   section.card { box-shadow: none; border: 1px solid #ccc; break-inside: avoid; page-break-inside: avoid; }
@@ -331,18 +386,81 @@ def render_footer(note: str | None = None) -> str:
     )
 
 
+EVIDENCE_BADGE_KINDS = {"verified", "reported", "estimated", "proxy", "unverified", "suggested"}
+
+# Default human-readable labels for each provenance kind.
+_EVIDENCE_LABELS: dict[str, str] = {
+    "verified": "Verified",
+    "reported": "Reported",
+    "estimated": "Estimated",
+    "proxy": "Proxy",
+    "unverified": "Unverified",
+    "suggested": "Suggested",
+}
+
+
+def render_provenance_badge(
+    kind: str,
+    *,
+    label: str | None = None,
+    source: str = "",
+    confidence: str = "",
+) -> str:
+    """Render an inline evidence-provenance badge (Track D3).
+
+    ``kind`` is one of ``verified`` / ``reported`` / ``estimated`` / ``proxy`` /
+    ``unverified`` / ``suggested``. ``source`` and ``confidence`` are surfaced as
+    an accessible ``title`` tooltip so an LP or verifier can see, at a glance,
+    where a number came from and how trustworthy it is.
+    """
+    k = kind.strip().lower()
+    if k not in EVIDENCE_BADGE_KINDS:
+        k = "unverified"
+    text = label or _EVIDENCE_LABELS.get(k, k.title())
+    tip_parts = [_EVIDENCE_LABELS.get(k, k.title())]
+    if source:
+        tip_parts.append(f"source: {source}")
+    if confidence:
+        tip_parts.append(f"confidence: {confidence}")
+    title = " · ".join(tip_parts)
+    return (
+        f'<span class="evidence-badge {k}" title="{title}" '
+        f'role="img" aria-label="Evidence: {title}">{text}</span>'
+    )
+
+
+def render_evidence_legend(kinds: Iterable[str] | None = None) -> str:
+    """Render a legend explaining the evidence-provenance badges."""
+    selected = list(kinds) if kinds is not None else [
+        "verified", "reported", "estimated", "unverified",
+    ]
+    badges = "".join(render_provenance_badge(k) for k in selected)
+    return (
+        '<div class="evidence-legend">'
+        '<span class="ev-title">Evidence provenance:</span>'
+        f'{badges}'
+        '</div>'
+    )
+
+
 def wrap_document(
     *,
     title: str,
     body_html: str,
     extra_head: str = "",
     include_plotly: bool = False,
+    theme: str = "",
 ) -> str:
-    """Return a complete self-contained HTML document with the shared CSS."""
+    """Return a complete self-contained HTML document with the shared CSS.
+
+    Adds a skip link and a ``<main>`` landmark for keyboard / screen-reader
+    accessibility (WCAG 2.2 AA). ``theme="dark"`` opts into the dark palette.
+    """
     plotly = (
         '<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>'
         if include_plotly else ""
     )
+    body_class = ' class="theme-dark"' if theme.strip().lower() == "dark" else ""
     return (
         '<!DOCTYPE html>'
         '<html lang="en"><head>'
@@ -352,8 +470,11 @@ def wrap_document(
         f'{plotly}'
         f'<style>{REPORT_CSS_V2}</style>'
         f'{extra_head}'
-        '</head><body>'
+        f'</head><body{body_class}>'
+        '<a class="skip-link" href="#main-content">Skip to main content</a>'
+        '<main id="main-content" tabindex="-1">'
         f'{body_html}'
+        '</main>'
         '</body></html>'
     )
 

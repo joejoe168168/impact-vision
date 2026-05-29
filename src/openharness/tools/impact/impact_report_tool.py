@@ -211,6 +211,25 @@ class ImpactReportInput(BaseModel):
         default="",
         description="Optional previous assessment ID for side-by-side comparison.",
     )
+    theme: Literal["", "dark"] = Field(
+        default="",
+        description="HTML report theme. 'dark' renders the dark palette (accessible-by-default).",
+    )
+    branding: dict = Field(
+        default_factory=dict,
+        description=(
+            "Optional white-label branding for HTML output: {fund_name, primary_color, "
+            "accent_color, logo_url, footer_text}. Colors must be hex."
+        ),
+    )
+    audience: Literal["full", "lp", "ic", "regulator", "public"] = Field(
+        default="full",
+        description=(
+            "Audience lens for the HTML report. 'full' shows everything; "
+            "'lp'/'ic'/'regulator'/'public' pre-select an audience filter that the "
+            "reader can still toggle in the browser."
+        ),
+    )
 
 
 class ImpactReportTool(BaseTool):
@@ -267,6 +286,8 @@ class ImpactReportTool(BaseTool):
             "company": company.model_dump(),
             "generated_at": datetime.now(timezone.utc).isoformat(),
             "catalog_version": "IRIS+ 5.3c",
+            "theme": args.theme,
+            "audience": args.audience,
         }
         if impact_claims:
             report_data["impact_claims"] = [claim.model_dump() for claim in impact_claims]
@@ -339,6 +360,12 @@ class ImpactReportTool(BaseTool):
             output = _to_csv(report_data)
         elif args.output_format in ("html", "pdf"):
             output = _to_html(report_data)
+            if args.branding:
+                try:
+                    from openharness.impact.branding import inject_branding_css, load_branding
+                    output = inject_branding_css(output, load_branding(raw=args.branding))
+                except Exception:  # noqa: BLE001 — branding must never break the report
+                    pass
         elif args.report_type == "target_progress":
             output = _to_target_progress_text(report_data)
         elif args.report_type == "lp_ready":
@@ -1154,10 +1181,10 @@ def _impact_claims_section(data: dict) -> str:
         conf_color = "#2e7d32" if conf >= 0.7 else "#f57c00" if conf >= 0.4 else "#c62828"
 
         parts.append(f'<div class="claim-card" data-claim-idx="{i}"{hidden}>')
-        parts.append('<div class="claim-header" onclick="this.parentElement.querySelector(\'.claim-body\').classList.toggle(\'active\')">')
+        parts.append('<div class="claim-header" role="button" tabindex="0" aria-expanded="false" onclick="var b=this.parentElement.querySelector(\'.claim-body\');var o=b.classList.toggle(\'active\');this.setAttribute(\'aria-expanded\',o?\'true\':\'false\')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();this.click()}">')
         parts.append(f'<span class="claim-badge {safe_cat}">{safe_cat}</span>')
         parts.append(f'<span class="claim-text">{safe_text[:120]}{"..." if len(text) > 120 else ""}</span>')
-        parts.append('<span class="claim-toggle">&#9660;</span>')
+        parts.append('<span class="claim-toggle" aria-hidden="true">&#9660;</span>')
         parts.append("</div>")
         parts.append('<div class="claim-body">')
 
@@ -1574,9 +1601,384 @@ def _scoring_rationale_section(data: dict) -> str:
     return "\n".join(html)
 
 
+# Which report sections (by H2 id) each audience cares about. Sections not
+# listed here default to "all audiences". Drives the Track D4 audience filter.
+_AUDIENCE_SECTION_MAP: dict[str, list[str]] = {
+    "executive-summary": ["lp", "ic", "regulator", "public"],
+    "sec-5d": ["lp", "ic", "regulator", "public"],
+    "sec-sdg": ["lp", "ic", "regulator", "public"],
+    "sec-claims": ["lp", "ic", "regulator", "public"],
+    "sec-pathway": ["lp", "ic", "public"],
+    "sec-opp-risk": ["lp", "ic", "regulator"],
+    "sec-gap": ["ic"],
+    "sec-greenwashing": ["ic", "regulator"],
+    "sec-benchmark": ["lp", "ic"],
+    "sec-metrics": ["lp", "ic", "regulator"],
+    "sec-targets": ["lp", "ic", "public"],
+    "sec-beneficiary": ["lp", "public", "regulator"],
+}
+
+# Illustrative confidence-band half-widths (in score points, 0-5 scale) by
+# provenance — used for the Track D5 uncertainty visualization.
+_PROVENANCE_BAND: dict[str, float] = {
+    "evidence-based": 0.3,
+    "partial": 0.6,
+    "estimated": 1.0,
+}
+
+
+def _render_audience_toolbar(data: dict) -> str:
+    """Render the Track D4 audience-filter toolbar."""
+    initial = str(data.get("audience", "full")).lower()
+    if initial not in ("full", "lp", "ic", "regulator", "public"):
+        initial = "full"
+    buttons = [
+        ("full", "Everything"),
+        ("lp", "LP"),
+        ("ic", "Investment Committee"),
+        ("regulator", "Regulator"),
+        ("public", "Public"),
+    ]
+    parts = [
+        f'<div class="audience-bar" role="group" aria-label="Audience view" data-initial="{initial}">',
+        '<span class="aud-label">View as:</span>',
+    ]
+    for key, label in buttons:
+        pressed = "true" if key == initial else "false"
+        parts.append(
+            f'<button type="button" class="aud-btn" data-aud="{key}" aria-pressed="{pressed}">{label}</button>'
+        )
+    parts.append('</div>')
+    return "".join(parts)
+
+
+def _render_uncertainty_block(score: float, provenance: str) -> str:
+    """Render a Track D5 confidence-band visualization for a 0-5 score."""
+    half = _PROVENANCE_BAND.get(provenance, 0.8)
+    lo = max(0.0, score - half)
+    hi = min(5.0, score + half)
+    left = lo / 5 * 100
+    width = max(1.0, (hi - lo) / 5 * 100)
+    point = min(100.0, score / 5 * 100)
+    prov_label = {
+        "evidence-based": "evidence-based (narrow band)",
+        "partial": "partial evidence (moderate band)",
+        "estimated": "estimated (wide band)",
+    }.get(provenance, "estimated")
+    return (
+        '<div class="uncertainty">'
+        '<div class="ci-track" role="img" '
+        f'aria-label="Confidence band {lo:.1f} to {hi:.1f} out of 5 around a score of {score:.1f}; {prov_label}">'
+        f'<div class="ci-band" style="left:{left:.1f}%;width:{width:.1f}%"></div>'
+        f'<div class="ci-point" style="left:{point:.1f}%"></div>'
+        '</div>'
+        f'<div class="ci-note">Score {score:.1f}/5 &middot; indicative range {lo:.1f}&ndash;{hi:.1f} '
+        f'({prov_label}). Bands are illustrative, derived from evidence provenance.</div>'
+        '</div>'
+    )
+
+
+def _render_tear_sheet(data: dict) -> str:
+    """Render the Track D6 single-screen executive tear sheet."""
+    company = data["company"]
+    fd = data.get("five_dimensions", {})
+    grade = fd.get("overall_grade", "—")
+    score = fd.get("overall_score", 0.0)
+    provenance = fd.get("overall_provenance", "estimated")
+    grade_class = f"grade-{str(grade)[0]}" if grade and grade != "—" else ""
+
+    stats: list[str] = [
+        f'<div class="tear-stat"><div class="v {grade_class}">{_esc(grade)}</div><div class="l">Overall grade</div></div>',
+        f'<div class="tear-stat"><div class="v">{score:.1f}<span style="font-size:0.5em;color:var(--text-secondary)">/5</span></div><div class="l">Impact score</div></div>',
+    ]
+
+    sdgs = sorted(
+        [a for a in data.get("sdg_alignments", []) if a.get("score", 0) > 0],
+        key=lambda a: a.get("score", 0), reverse=True,
+    )[:3]
+    if sdgs:
+        sdg_str = ", ".join(f"SDG {a['goal']}" for a in sdgs)
+        stats.append(f'<div class="tear-stat"><div class="v" style="font-size:1.05em">{_esc(sdg_str)}</div><div class="l">Top SDG alignment</div></div>')
+
+    gw = data.get("greenwashing", {})
+    if gw:
+        risk = gw.get("risk_level") or gw.get("overall_risk") or ("Low" if gw.get("overall_score", 0) < 30 else "Medium" if gw.get("overall_score", 0) < 60 else "High")
+        stats.append(f'<div class="tear-stat"><div class="v" style="font-size:1.2em">{_esc(str(risk))}</div><div class="l">Greenwashing risk</div></div>')
+
+    bm = data.get("benchmark_comparison", {})
+    if bm.get("benchmark_available") and bm.get("percentile") is not None:
+        stats.append(f'<div class="tear-stat"><div class="v">{_esc(bm["percentile"])}<span style="font-size:0.5em">pct</span></div><div class="l">Sector percentile</div></div>')
+
+    claims = data.get("impact_claims", [])
+    if claims:
+        stats.append(f'<div class="tear-stat"><div class="v">{len(claims)}</div><div class="l">Impact claims</div></div>')
+
+    name = _esc(company.get("name", ""))
+    sector = _esc(company.get("sector", ""))
+    sub = f"{name}{' · ' + sector if sector else ''}"
+    uncertainty = _render_uncertainty_block(score, provenance) if fd else ""
+    return (
+        '<section class="tear-sheet" id="tear-sheet" aria-label="Executive summary at a glance">'
+        f'<h2>At a glance</h2>'
+        f'<p style="color:var(--text-secondary);margin:0">{sub}</p>'
+        f'<div class="tear-grid">{"".join(stats)}</div>'
+        f'{uncertainty}'
+        '</section>'
+    )
+
+
+def _audience_filter_script() -> str:
+    """JS that filters report sections by audience (Track D4)."""
+    import json as _json
+    audience_map = _json.dumps(_AUDIENCE_SECTION_MAP)
+    return (
+        "<script>(function(){\n"
+        f"var MAP = {audience_map};\n"
+        "var ALL = ['lp','ic','regulator','public'];\n"
+        "var main = document.getElementById('main-content');\n"
+        "var bar = document.querySelector('.audience-bar');\n"
+        "if(!main || !bar) return;\n"
+        "var groups = [], current = null;\n"
+        "Array.prototype.forEach.call(main.children, function(el){\n"
+        "  var id = el.id;\n"
+        "  var isAnchor = (id && MAP.hasOwnProperty(id)) || (el.tagName === 'H2' && id);\n"
+        "  if(isAnchor){ current = {aud: MAP[id] || ALL, els:[el]}; groups.push(current); }\n"
+        "  else if(current){ current.els.push(el); }\n"
+        "});\n"
+        "function apply(aud){\n"
+        "  groups.forEach(function(g){\n"
+        "    var show = aud === 'full' || g.aud.indexOf(aud) !== -1;\n"
+        "    g.els.forEach(function(e){ e.style.display = show ? '' : 'none'; });\n"
+        "  });\n"
+        "}\n"
+        "bar.querySelectorAll('.aud-btn').forEach(function(btn){\n"
+        "  btn.addEventListener('click', function(){\n"
+        "    bar.querySelectorAll('.aud-btn').forEach(function(b){ b.setAttribute('aria-pressed', b===btn ? 'true':'false'); });\n"
+        "    apply(btn.dataset.aud);\n"
+        "  });\n"
+        "});\n"
+        "var init = bar.dataset.initial || 'full';\n"
+        "if(init !== 'full'){ apply(init); }\n"
+        "})();</script>"
+    )
+
+
+_ICON_SUN = (
+    '<svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+    'stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/>'
+    '<path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.4 1.4M17.6 17.6L19 19M19 5l-1.4 1.4M6.4 17.6L5 19"/></svg>'
+)
+_ICON_MOON = (
+    '<svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+    'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+    '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>'
+)
+_ICON_TOP = (
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" '
+    'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>'
+)
+_ICON_PRINT = (
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '
+    'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+    '<path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"/></svg>'
+)
+
+
+def _render_print_cover(data: dict) -> str:
+    """Render the print/PDF-only cover page (hidden on screen).
+
+    Marked ``aria-hidden`` because it is a paginated-media convenience that
+    duplicates the on-screen report header.
+    """
+    company = data.get("company", {})
+    name = _esc(company.get("name", "")) or "Impact report"
+    sector = _esc(company.get("sector", ""))
+    fd = data.get("five_dimensions", {})
+    gen = _esc(data.get("generated_at", "")[:10])
+    std = _esc(data.get("catalog_version", ""))
+
+    parts = [
+        '<section class="print-cover" aria-hidden="true">',
+        '<div class="pc-kicker">Impact Assessment</div>',
+        '<div class="pc-title">Impact Assessment Report</div>',
+        f'<div class="pc-company">{name}</div>',
+    ]
+    if sector:
+        parts.append(f'<div class="pc-sector">{sector}</div>')
+    if fd:
+        grade = fd.get("overall_grade")
+        if grade:
+            grade_class = f"grade-{str(grade)[0]}"
+            score = fd.get("overall_score")
+            score_html = (
+                f'<span style="font-size:0.4em;color:var(--text-secondary);font-weight:600"> {score:.1f}/5</span>'
+                if score is not None else ""
+            )
+            parts.append(f'<div class="pc-grade {grade_class}">{_esc(grade)}{score_html}</div>')
+    meta_bits = []
+    if gen:
+        meta_bits.append(f"Generated {gen}")
+    if std:
+        meta_bits.append(f"Standard: {std}")
+    parts.append('<div class="pc-meta">')
+    parts.append(" &middot; ".join(meta_bits))
+    parts.append(
+        '<div class="pc-confidential">Confidential &mdash; prepared for internal investment '
+        'and LP use. Not for public distribution.</div>'
+    )
+    parts.append('</div></section>')
+    return "".join(parts)
+
+
+def _render_sticky_header(data: dict) -> str:
+    """Render the scroll-activated sticky mini-header (company + grade).
+
+    Marked ``aria-hidden`` because it visually duplicates the main report
+    header, which already lives in the accessibility tree.
+    """
+    company = data.get("company", {})
+    name = _esc(company.get("name", "")) or "Impact report"
+    sector = company.get("sector", "")
+    fd = data.get("five_dimensions", {})
+    parts = [
+        '<div class="mini-header" aria-hidden="true">',
+        f'<span class="mh-name">{name}</span>',
+    ]
+    if sector:
+        parts.append(f'<span class="mh-sector">{_esc(sector)}</span>')
+    parts.append('<span class="mh-spacer"></span>')
+    if fd:
+        grade = fd.get("overall_grade")
+        if grade:
+            grade_class = f"grade-{str(grade)[0]}"
+            parts.append(f'<span class="mh-grade {grade_class}">{_esc(grade)}</span>')
+        score = fd.get("overall_score")
+        if score is not None:
+            parts.append(f'<span class="mh-score">{score:.1f}/5</span>')
+    parts.append('</div>')
+    return "".join(parts)
+
+
+def _render_utility_dock() -> str:
+    """Render the floating utility dock (theme toggle, back-to-top, print)."""
+    return (
+        '<div class="util-dock" role="group" aria-label="Report controls">'
+        f'<button type="button" class="theme-toggle" aria-pressed="false" '
+        f'aria-label="Toggle dark mode" title="Toggle dark mode">{_ICON_MOON}{_ICON_SUN}</button>'
+        f'<button type="button" class="print-btn" aria-label="Print or save as PDF" '
+        f'title="Print / Save as PDF">{_ICON_PRINT}</button>'
+        f'<button type="button" class="to-top" aria-label="Back to top" '
+        f'title="Back to top">{_ICON_TOP}</button>'
+        '</div>'
+    )
+
+
+def _report_ux_script() -> str:
+    """Reading progress, scrollspy TOC highlight, theme toggle, back-to-top, print."""
+    return (
+        "<script>(function(){\n"
+        "var doc=document.documentElement, body=document.body;\n"
+        "var prog=document.getElementById('read-progress');\n"
+        "var toTop=document.querySelector('.util-dock .to-top');\n"
+        "var themeBtn=document.querySelector('.util-dock .theme-toggle');\n"
+        "var printBtn=document.querySelector('.util-dock .print-btn');\n"
+        "var mini=document.querySelector('.mini-header');\n"
+        "function onScroll(){\n"
+        "  var st=doc.scrollTop||body.scrollTop;\n"
+        "  var h=doc.scrollHeight-doc.clientHeight;\n"
+        "  var p=h>0?st/h*100:0;\n"
+        "  if(prog){ prog.style.width=p.toFixed(1)+'%'; }\n"
+        "  if(toTop){ toTop.classList.toggle('show', st>400); }\n"
+        "  if(mini){ mini.classList.toggle('show', st>240); }\n"
+        "}\n"
+        "window.addEventListener('scroll', onScroll, {passive:true}); onScroll();\n"
+        "if(toTop){ toTop.addEventListener('click', function(){ window.scrollTo({top:0, behavior:'smooth'}); }); }\n"
+        "if(printBtn){ printBtn.addEventListener('click', function(){ window.print(); }); }\n"
+        "if(themeBtn){\n"
+        "  try{ if(localStorage.getItem('iv-theme')==='dark'){ body.classList.add('theme-dark'); } }catch(e){}\n"
+        "  function sync(){ themeBtn.setAttribute('aria-pressed', body.classList.contains('theme-dark')?'true':'false'); }\n"
+        "  sync();\n"
+        "  themeBtn.addEventListener('click', function(){\n"
+        "    var dark=body.classList.toggle('theme-dark');\n"
+        "    try{ localStorage.setItem('iv-theme', dark?'dark':'light'); }catch(e){}\n"
+        "    sync();\n"
+        "  });\n"
+        "}\n"
+        "var links=Array.prototype.slice.call(document.querySelectorAll('.report-toc a'));\n"
+        "var targets=links.map(function(a){ var id=a.getAttribute('href'); return id?document.querySelector(id):null; });\n"
+        "if('IntersectionObserver' in window){\n"
+        "  var seen={};\n"
+        "  var obs=new IntersectionObserver(function(entries){\n"
+        "    entries.forEach(function(en){ seen[en.target.id]=en.isIntersecting; });\n"
+        "    var activeId=null;\n"
+        "    for(var i=0;i<targets.length;i++){ var t=targets[i]; if(t && seen[t.id]){ activeId=t.id; break; } }\n"
+        "    links.forEach(function(a){ a.classList.toggle('active', a.getAttribute('href')==='#'+activeId); });\n"
+        "  }, {rootMargin:'-10% 0px -70% 0px'});\n"
+        "  targets.forEach(function(t){ if(t) obs.observe(t); });\n"
+        "}\n"
+        "var LINK_SVG='<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1\"/><path d=\"M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1\"/></svg>';\n"
+        "var main2=document.getElementById('main-content');\n"
+        "if(main2){ Array.prototype.forEach.call(main2.querySelectorAll('h2[id]'), function(h){\n"
+        "  var b=document.createElement('button');\n"
+        "  b.type='button'; b.className='h-anchor'; b.innerHTML=LINK_SVG;\n"
+        "  b.setAttribute('aria-label','Copy link to this section'); b.title='Copy link to this section';\n"
+        "  b.addEventListener('click', function(){\n"
+        "    var url=location.href.split('#')[0]+'#'+h.id;\n"
+        "    try{ history.replaceState(null,'',  '#'+h.id); }catch(e){}\n"
+        "    var done=function(){ b.classList.add('copied'); setTimeout(function(){ b.classList.remove('copied'); },1200); };\n"
+        "    if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(url).then(done, done); }\n"
+        "    else { location.hash=h.id; done(); }\n"
+        "  });\n"
+        "  h.appendChild(b);\n"
+        "}); }\n"
+        "})();</script>"
+    )
+
+
+def _collapsible_sections_script() -> str:
+    """Make each major (h2) section collapsible, plus expand/collapse-all controls."""
+    return (
+        "<script>(function(){\n"
+        "var main=document.getElementById('main-content');\n"
+        "if(!main) return;\n"
+        "var CARET='<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M6 9l6 6 6-6\"/></svg>';\n"
+        "var heads=Array.prototype.slice.call(main.querySelectorAll('h2[id]'));\n"
+        "var sections=[];\n"
+        "heads.forEach(function(h){\n"
+        "  var body=[]; var n=h.nextElementSibling;\n"
+        "  while(n && n.tagName !== 'H2'){ body.push(n); n=n.nextElementSibling; }\n"
+        "  var btn=document.createElement('button');\n"
+        "  btn.type='button'; btn.className='sec-toggle'; btn.innerHTML=CARET;\n"
+        "  btn.setAttribute('aria-expanded','true');\n"
+        "  btn.setAttribute('aria-label','Collapse or expand this section');\n"
+        "  var sec={head:h, body:body, btn:btn};\n"
+        "  function set(open){\n"
+        "    btn.setAttribute('aria-expanded', open?'true':'false');\n"
+        "    body.forEach(function(e){ e.classList.toggle('sec-collapsed-body', !open); });\n"
+        "  }\n"
+        "  sec.set=set;\n"
+        "  btn.addEventListener('click', function(){ set(btn.getAttribute('aria-expanded')!=='true'); });\n"
+        "  h.insertBefore(btn, h.firstChild);\n"
+        "  sections.push(sec);\n"
+        "});\n"
+        "if(!sections.length) return;\n"
+        "var bar=document.createElement('div');\n"
+        "bar.className='collapse-controls';\n"
+        "var ca=document.createElement('button'); ca.type='button'; ca.className='collapse-all'; ca.textContent='Collapse all';\n"
+        "var ea=document.createElement('button'); ea.type='button'; ea.className='expand-all'; ea.textContent='Expand all';\n"
+        "ca.addEventListener('click', function(){ sections.forEach(function(s){ s.set(false); }); });\n"
+        "ea.addEventListener('click', function(){ sections.forEach(function(s){ s.set(true); }); });\n"
+        "bar.appendChild(ca); bar.appendChild(ea);\n"
+        "var anchor=document.querySelector('.audience-bar') || (sections[0] && sections[0].head);\n"
+        "if(anchor && anchor.parentNode){ anchor.parentNode.insertBefore(bar, anchor.nextSibling); }\n"
+        "})();</script>"
+    )
+
+
 def _to_html(data: dict) -> str:
     company = data["company"]
     sections: list[str] = []
+    body_class = ' class="theme-dark"' if str(data.get("theme", "")).lower() == "dark" else ""
     sdg_colors_map = {
         1: "#E5243B", 2: "#DDA63A", 3: "#4C9F38", 4: "#C5192D", 5: "#FF3A21",
         6: "#26BDE2", 7: "#FCC30B", 8: "#A21942", 9: "#FD6925", 10: "#DD1367",
@@ -1860,10 +2262,151 @@ tr.sdg-collapsed.show, tr.sdg-collapsed.show + tr.sdg-detail {{ display: table-r
 }}
 @media(max-width: 1360px) {{ .report-toc {{ display: none; }} }}
 @media print {{ .report-toc {{ display: none; }} }}
+
+/* ---------- Accessibility (WCAG 2.2 AA) ---------- */
+.skip-link {{ position:absolute; left:-9999px; top:0; z-index:1000; background:var(--primary); color:#fff; padding:10px 16px; border-radius:0 0 8px 0; font-weight:600; text-decoration:none; }}
+.skip-link:focus {{ left:0; }}
+a:focus-visible, button:focus-visible, [tabindex]:focus-visible {{ outline:3px solid var(--accent); outline-offset:2px; border-radius:3px; }}
+tr.dim-clickable:focus-visible, tr.sdg-clickable:focus-visible, .claim-header:focus-visible {{ outline:3px solid var(--accent); outline-offset:-3px; }}
+.visually-hidden {{ position:absolute !important; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }}
+@media (prefers-reduced-motion: reduce) {{ *, *::before, *::after {{ animation-duration:0.001ms !important; transition-duration:0.001ms !important; scroll-behavior:auto !important; }} }}
+
+/* ---------- Evidence-provenance badges (Track D3) ---------- */
+.evidence-badge {{ display:inline-flex; align-items:center; gap:5px; vertical-align:middle; padding:2px 9px; border-radius:9999px; font-size:0.7em; font-weight:650; letter-spacing:0.02em; border:1px solid #bdc1c6; background:#f1f3f4; color:#5f6368; text-decoration:none; }}
+.evidence-badge::before {{ content:""; width:7px; height:7px; border-radius:50%; background:#5f6368; flex:0 0 auto; }}
+.evidence-badge.verified {{ background:var(--success-light); color:#1b5e20; border-color:var(--success); }}
+.evidence-badge.verified::before {{ background:var(--success); }}
+.evidence-badge.reported {{ background:var(--primary-light); color:var(--primary-dark); border-color:var(--accent); }}
+.evidence-badge.reported::before {{ background:var(--accent); }}
+.evidence-badge.estimated, .evidence-badge.proxy {{ background:var(--warning-light); color:#e65100; border-color:var(--warning); }}
+.evidence-badge.estimated::before, .evidence-badge.proxy::before {{ background:var(--warning); }}
+.evidence-badge.unverified, .evidence-badge.suggested {{ background:var(--danger-light); color:#b71c1c; border-color:var(--danger); }}
+.evidence-badge.unverified::before, .evidence-badge.suggested::before {{ background:var(--danger); }}
+.evidence-legend {{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin:12px 0; font-size:0.86em; }}
+.evidence-legend .ev-title {{ font-weight:650; color:var(--text-secondary); }}
+
+/* ---------- Audience filter (Track D4) ---------- */
+.audience-bar {{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:18px 0;
+  padding:10px 14px; background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius-sm); box-shadow:var(--shadow-sm); }}
+.audience-bar .aud-label {{ font-weight:650; color:var(--text-secondary); font-size:0.85em; margin-right:4px; }}
+.audience-bar button {{ font:inherit; font-size:0.82em; font-weight:600; cursor:pointer;
+  padding:6px 14px; border-radius:999px; border:1px solid var(--accent); background:transparent;
+  color:var(--accent); }}
+.audience-bar button[aria-pressed="true"] {{ background:var(--accent); color:#fff; }}
+@media print {{ .audience-bar {{ display:none; }} }}
+
+/* ---------- Executive tear sheet (Track D6) ---------- */
+.tear-sheet {{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+  box-shadow:var(--shadow-sm); padding:22px 26px; margin:8px 0 24px; }}
+.tear-sheet h2 {{ margin-top:0; border:none; padding:0; }}
+.tear-grid {{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:16px; margin-top:12px; }}
+.tear-stat {{ border-left:3px solid var(--accent); padding:4px 0 4px 12px; }}
+.tear-stat .v {{ font-size:1.5em; font-weight:700; line-height:1.1; }}
+.tear-stat .l {{ font-size:0.75em; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.03em; }}
+@media print {{ .tear-sheet {{ page-break-after:always; }} }}
+
+/* ---------- Uncertainty band (Track D5) ---------- */
+.uncertainty {{ margin-top:8px; }}
+.uncertainty .ci-track {{ position:relative; height:14px; background:#e8eaed; border-radius:7px; overflow:hidden; }}
+body.theme-dark .uncertainty .ci-track {{ background:#2c3444; }}
+.uncertainty .ci-band {{ position:absolute; top:0; bottom:0; background:var(--accent-light); opacity:0.5; }}
+.uncertainty .ci-point {{ position:absolute; top:-3px; width:3px; height:20px; background:var(--primary); border-radius:2px; }}
+.uncertainty .ci-note {{ font-size:0.78em; color:var(--text-secondary); margin-top:4px; }}
+
+/* ---------- Dark theme (Track D7) ---------- */
+body.theme-dark {{ --surface:#1e2330; --bg:#141821; --text:#e6e9ef; --text-secondary:#9aa3b2;
+  --border:#2c3444; --primary-light:#16263f; --accent-light:#3a6ea5; --success-light:#16301a;
+  --warning-light:#33260f; --danger-light:#3a1414;
+  --shadow-sm:0 1px 3px rgba(0,0,0,0.5); --shadow-md:0 4px 12px rgba(0,0,0,0.6); }}
+body.theme-dark .bar-track {{ background:#2c3444; }}
+body.theme-dark tr:hover td {{ background:#222a3a; }}
+body.theme-dark th {{ color:#ffffff; }}
+
+/* ---------- Reading progress + utility dock + scrollspy (Track D polish) ---------- */
+.read-progress {{ position:fixed; top:0; left:0; height:3px; width:0; z-index:1200;
+  background:linear-gradient(90deg, var(--accent), var(--success)); transition:width 0.08s linear; }}
+.util-dock {{ position:fixed; right:18px; bottom:18px; z-index:1100; display:flex; flex-direction:column; gap:10px; }}
+.util-dock button {{ width:44px; height:44px; border-radius:50%; border:1px solid var(--border);
+  background:var(--surface); color:var(--text); box-shadow:var(--shadow-md); cursor:pointer;
+  display:flex; align-items:center; justify-content:center; padding:0;
+  transition:transform 0.15s ease, background 0.15s ease; }}
+.util-dock button:hover {{ transform:translateY(-2px); background:var(--primary-light); color:var(--primary); }}
+.util-dock button svg {{ width:20px; height:20px; }}
+.util-dock .to-top {{ opacity:0; transform:translateY(8px); pointer-events:none; }}
+.util-dock .to-top.show {{ opacity:1; transform:none; pointer-events:auto; }}
+.icon-sun {{ display:none; }} .icon-moon {{ display:inline-flex; }}
+body.theme-dark .icon-moon {{ display:none; }} body.theme-dark .icon-sun {{ display:inline-flex; }}
+.report-toc a.active {{ color:var(--primary); background:var(--primary-light);
+  border-left-color:var(--primary); font-weight:650; }}
+/* copy-link anchors on section headings */
+main h2 {{ position:relative; }}
+.h-anchor {{ border:none; background:transparent; cursor:pointer; color:var(--text-secondary);
+  opacity:0; margin-left:8px; padding:2px 4px; font-size:0.6em; vertical-align:middle;
+  transition:opacity 0.15s, color 0.15s; }}
+main h2:hover .h-anchor, .h-anchor:focus-visible {{ opacity:1; }}
+.h-anchor:hover {{ color:var(--accent); }}
+.h-anchor.copied {{ color:var(--success); opacity:1; }}
+.h-anchor svg {{ width:15px; height:15px; vertical-align:middle; }}
+/* collapsible major sections */
+.sec-toggle {{ border:none; background:transparent; cursor:pointer; color:var(--text-secondary);
+  padding:0 8px 0 0; font-size:0.8em; line-height:1; vertical-align:middle; }}
+.sec-toggle:hover {{ color:var(--primary); }}
+.sec-toggle svg {{ width:13px; height:13px; transition:transform 0.2s ease; }}
+.sec-toggle[aria-expanded="false"] svg {{ transform:rotate(-90deg); }}
+.sec-collapsed-body {{ display:none !important; }}
+.collapse-controls {{ display:flex; gap:8px; align-items:center; margin:0 0 18px; }}
+.collapse-controls button {{ font:inherit; font-size:0.78em; font-weight:600; cursor:pointer;
+  padding:5px 12px; border-radius:999px; border:1px solid var(--border); background:transparent;
+  color:var(--text-secondary); }}
+.collapse-controls button:hover {{ color:var(--primary); border-color:var(--accent); }}
+/* sticky mini-header on scroll */
+.mini-header {{ position:fixed; top:0; left:0; right:0; z-index:1150; display:flex; align-items:center;
+  gap:12px; padding:9px 22px; background:var(--surface); border-bottom:1px solid var(--border);
+  box-shadow:var(--shadow-sm); transform:translateY(-105%); transition:transform 0.25s ease; }}
+.mini-header.show {{ transform:none; }}
+.mini-header .mh-name {{ font-weight:700; color:var(--text); font-size:0.92em; }}
+.mini-header .mh-sector {{ color:var(--text-secondary); font-size:0.8em; }}
+.mini-header .mh-spacer {{ flex:1; }}
+.mini-header .mh-grade {{ font-weight:800; font-size:1.05em; }}
+.mini-header .mh-score {{ color:var(--text-secondary); font-size:0.8em; }}
+body.theme-dark .mini-header {{ box-shadow:0 2px 8px rgba(0,0,0,0.6); }}
+@media print {{ .read-progress, .util-dock, .h-anchor, .sec-toggle, .collapse-controls, .mini-header {{ display:none; }}
+  .sec-collapsed-body {{ display:revert !important; }} }}
+
+/* ---------- Print / PDF cover page + running footer (Track D polish) ---------- */
+.print-cover {{ display:none; }}
+@page {{ size:A4; margin:20mm 18mm 18mm 18mm;
+  @bottom-left {{ content:"Impact Vision \u2014 Confidential"; font-size:8pt; color:#9aa0a6; }}
+  @bottom-right {{ content:"Page " counter(page) " / " counter(pages); font-size:8pt; color:#9aa0a6; }}
+  @top-right {{ content:string(doc-company); font-size:8pt; color:#b0b6bd; }}
+}}
+@page :first {{ margin:0;
+  @bottom-left {{ content:none; }} @bottom-right {{ content:none; }} @top-right {{ content:none; }}
+}}
+@media print {{
+  .report-header {{ display:none; }}
+  .print-cover {{ display:flex; flex-direction:column; min-height:96vh;
+    padding:34mm 26mm 20mm; page-break-after:always; }}
+  .print-cover .pc-kicker {{ text-transform:uppercase; letter-spacing:0.18em; font-size:10pt;
+    color:var(--accent); font-weight:700; }}
+  .print-cover .pc-title {{ font-size:30pt; font-weight:800; margin:8px 0 4px; color:var(--primary); line-height:1.1; }}
+  .print-cover .pc-company {{ font-size:19pt; font-weight:700; margin-top:26px; string-set:doc-company content(); }}
+  .print-cover .pc-sector {{ font-size:11pt; color:var(--text-secondary); margin-top:2px; }}
+  .print-cover .pc-grade {{ font-size:46pt; font-weight:800; margin-top:26px; line-height:1; }}
+  .print-cover .pc-meta {{ margin-top:auto; font-size:9pt; color:var(--text-secondary);
+    border-top:1px solid var(--border); padding-top:10px; }}
+  .print-cover .pc-confidential {{ font-size:9pt; color:#9aa0a6; margin-top:6px; }}
+  .score-card, .claim-card, .metric-card, table, .chart-box, .coverage-hero {{ break-inside:avoid; }}
+  h2 {{ break-after:avoid; }}
+}}
 </style>
 </head>
-<body>
-<nav class="report-toc">
+<body{body_class}>
+<a class="skip-link" href="#main-content">Skip to main content</a>
+<div class="read-progress" id="read-progress" aria-hidden="true"></div>
+{_render_sticky_header(data)}
+<nav class="report-toc" aria-label="Report contents">
   <h4>On this page</h4>
   <a href="#executive-summary">Executive summary</a>
   <a href="#sec-5d">5 Dimensions</a>
@@ -1876,6 +2419,8 @@ tr.sdg-collapsed.show, tr.sdg-collapsed.show + tr.sdg-detail {{ display: table-r
   <a href="#sec-metrics">Metric tracking</a>
   <a href="#sec-claims">Impact claims</a>
 </nav>
+<main id="main-content" tabindex="-1">
+{_render_print_cover(data)}
 <div class="report-header">
 <h1>Impact Assessment Report</h1>
 <p class="subtitle">{_esc(company.get('name', ''))}{' | ' + _esc(company.get('sector', '')) if company.get('sector') else ''}</p>
@@ -1898,6 +2443,9 @@ tr.sdg-collapsed.show, tr.sdg-collapsed.show + tr.sdg-detail {{ display: table-r
         sections.append('</div>')
     sections.append('</div>')
 
+    sections.append(_render_audience_toolbar(data))
+    sections.append(_render_tear_sheet(data))
+
     sections.append(_generate_executive_summary(data, company))
 
     comp_html = _comparison_section(data)
@@ -1917,7 +2465,7 @@ tr.sdg-collapsed.show, tr.sdg-collapsed.show + tr.sdg-detail {{ display: table-r
 <div class="score-card" id="delta-card" style="display:none"><div class="value" id="main-delta" style="font-size:1.4em;color:var(--text-secondary)">+0.0</div><div class="label">Improvement</div></div>
 </div>
 <div class="five-d-grid">
-<div class="chart-box" id="radar-chart"></div>
+<div class="chart-box" id="radar-chart" role="img" aria-label="Radar chart of the five impact dimension scores (What, Who, How Much, Contribution, Risk). Scores are listed in the adjacent table."></div>
 <div class="chart-box">
 <table id="dim-table">
 <tr><th>Dimension</th><th>Score</th><th style="min-width:120px">Progress</th><th>Confidence</th><th>Metrics</th><th>Rationale</th></tr>
@@ -1937,13 +2485,13 @@ tr.sdg-collapsed.show, tr.sdg-collapsed.show + tr.sdg-detail {{ display: table-r
             gaps_preview = ", ".join(g.split(" (")[0] for g in dim.get("gaps", [])[:3])
             gaps_tooltip = f' title="{gaps_preview}"' if gaps_preview else ""
             prov = dim.get("provenance", "estimated")
-            prov_color = "var(--success)" if prov == "evidence-based" else "var(--warning)" if prov == "partial" else "var(--text-secondary)"
+            prov_badge = {"evidence-based": "verified", "partial": "estimated", "estimated": "estimated"}.get(prov, "unverified")
             prov_label = prov.replace("-", " ").title() if prov else "Estimated"
-            sections.append(f"""<tr class="dim-clickable" data-dim="{dim_name}">
-<td><strong>{dim['dimension']}</strong> <span style="font-size:0.7em;color:var(--text-secondary)">&#9660;</span></td>
+            sections.append(f"""<tr class="dim-clickable" data-dim="{dim_name}" tabindex="0" role="button" aria-expanded="false" aria-controls="overlay-{dim_name}">
+<td><strong>{dim['dimension']}</strong> <span style="font-size:0.7em;color:var(--text-secondary)" aria-hidden="true">&#9660;</span></td>
 <td style="font-weight:600" id="dim-score-{dim_name}">{dim['score']}/5</td>
 <td><div class="bar-track"><div class="bar-fill {bar_color}" id="dim-bar-{dim_name}" style="width:{pct}%"></div></div></td>
-<td style="font-size:0.8em;color:{prov_color};font-weight:500">{prov_label}</td>
+<td><span class="evidence-badge {prov_badge}" title="Score provenance: {prov_label}">{prov_label}</span></td>
 <td class="metrics-cell" style="font-size:0.85em"><span style="color:{metric_color};font-weight:600">{reported}/{available}</span>
 <span style="color:var(--text-secondary)"{gaps_tooltip}>{' tracked' if reported > 0 else ' not tracked'}</span></td>
 <td class="notes">{dim['notes']}</td>
@@ -1976,12 +2524,29 @@ tr.sdg-collapsed.show, tr.sdg-collapsed.show + tr.sdg-detail {{ display: table-r
             sections.append('</div></div></td></tr>')
 
         sections.append("</table>")
+        sections.append(
+            '<div class="evidence-legend"><span class="ev-title">Score provenance:</span>'
+            '<span class="evidence-badge verified" title="Backed by reported IRIS+ metrics / verified evidence">Evidence Based</span>'
+            '<span class="evidence-badge estimated" title="Partial evidence or keyword/sector heuristic">Partial / Estimated</span>'
+            '<span class="evidence-badge unverified" title="No supporting metrics reported">Unverified</span>'
+            '</div>'
+        )
         sections.append("""<script>
 document.querySelectorAll('.dim-clickable').forEach(function(row) {
-  row.addEventListener('click', function() {
-    var dim = this.dataset.dim;
+  function toggleRow() {
+    var dim = row.dataset.dim;
     var overlay = document.getElementById('overlay-' + dim);
-    if (overlay) overlay.classList.toggle('active');
+    if (overlay) {
+      var open = overlay.classList.toggle('active');
+      row.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+  }
+  row.addEventListener('click', toggleRow);
+  row.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+      e.preventDefault();
+      toggleRow();
+    }
   });
 });
 </script>""")
@@ -2127,7 +2692,7 @@ Plotly.newPlot('radar-chart', [{{
         sections.append(f"""
 <h2 id="sec-sdg">SDG Alignment <span style="font-size:0.65em;color:var(--text-secondary);font-weight:400">({len(aligned)} goals · top {min(visible_limit, len(aligned))} shown)</span></h2>
 <div class="five-d-grid">
-<div class="chart-box" id="sdg-chart"></div>
+<div class="chart-box" id="sdg-chart" role="img" aria-label="Bar chart of SDG alignment scores. The same scores are listed in the adjacent table."></div>
 <div class="chart-box">
 <table id="sdg-table">
 <tr><th>SDG</th><th>Name</th><th>Score</th><th>Confidence</th><th>Matched Metrics</th></tr>
@@ -2141,8 +2706,8 @@ Plotly.newPlot('radar-chart', [{{
                 "low": "color:var(--danger);font-weight:600",
             }.get(a["confidence"], "")
             collapse_cls = " sdg-collapsed" if a["goal"] in collapsed_ids else ""
-            sections.append(f"""<tr class="sdg-clickable{collapse_cls}" data-sdg="{a['goal']}">
-<td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:{sdg_color};margin-right:6px;vertical-align:middle"></span>SDG {a['goal']} <span style="font-size:0.7em;color:var(--text-secondary)">&#9660;</span></td>
+            sections.append(f"""<tr class="sdg-clickable{collapse_cls}" data-sdg="{a['goal']}" tabindex="0" role="button" aria-expanded="false" aria-controls="sdg-detail-{a['goal']}">
+<td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:{sdg_color};margin-right:6px;vertical-align:middle" aria-hidden="true"></span>SDG {a['goal']} <span style="font-size:0.7em;color:var(--text-secondary)" aria-hidden="true">&#9660;</span></td>
 <td>{a.get('goal_name', '')}</td>
 <td style="font-weight:600">{a['score']}</td><td style="{conf_style}">{a['confidence']}</td><td style="font-size:0.85em">{metrics_str}</td>
 </tr>""")
@@ -2192,10 +2757,20 @@ Plotly.newPlot('radar-chart', [{{
         sections.append("</div></div>")
         sections.append("""<script>
 document.querySelectorAll('.sdg-clickable').forEach(function(row) {
-  row.addEventListener('click', function() {
-    var sdg = this.dataset.sdg;
+  function toggleSdg() {
+    var sdg = row.dataset.sdg;
     var detail = document.getElementById('sdg-detail-' + sdg);
-    if (detail) detail.classList.toggle('active');
+    if (detail) {
+      var open = detail.classList.toggle('active');
+      row.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+  }
+  row.addEventListener('click', toggleSdg);
+  row.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+      e.preventDefault();
+      toggleSdg();
+    }
   });
 });
 (function(){
@@ -2320,7 +2895,7 @@ Plotly.newPlot('sdg-chart', [{{
 <h2 id="sec-benchmark">Sector Benchmark Comparison</h2>
 <p style="color:var(--text-secondary);font-size:0.9em;margin-bottom:12px">{bm['sector']} | {bm.get('sample_note', '')}</p>
 <div class="chart-row">
-<div class="chart-box" id="benchmark-chart"></div>
+<div class="chart-box" id="benchmark-chart" role="img" aria-label="Chart comparing this company's dimension scores against sector benchmarks. The same values are listed in the adjacent table."></div>
 <div class="chart-box">
 <table>
 <tr><th>Dimension</th><th>Your Score</th><th>Benchmark</th><th>Delta</th></tr>
@@ -2364,7 +2939,13 @@ Plotly.newPlot('benchmark-chart', [
     if pathway_html:
         sections.append(pathway_html)
 
-    sections.append("""
+    sections.append(_audience_filter_script())
+    sections.append(_report_ux_script())
+    sections.append(_collapsible_sections_script())
+
+    sections.append(f"""
+</main>
+{_render_utility_dock()}
 <div class="footer">
 Generated by <a href="#">Impact Vision</a> &mdash; Open-source impact measurement engine &mdash; IRIS+ 5.3c
 </div>
@@ -2385,10 +2966,21 @@ def _to_pdf(html: str, output_path: str, context) -> ToolResult:
 
     try:
         import weasyprint  # type: ignore[import-untyped]
-        weasyprint.HTML(string=html).write_pdf(str(path))
+        # Emit a tagged, accessible PDF/UA-1 document with heading bookmarks when
+        # the installed WeasyPrint supports it (>= 57); fall back gracefully.
+        document = weasyprint.HTML(string=html)
+        pdf_ua = False
+        try:
+            document.write_pdf(str(path), pdf_variant="pdf/ua-1")
+            pdf_ua = True
+        except TypeError:
+            document.write_pdf(str(path))
         return ToolResult(
-            output=f"PDF report saved to: {path}",
-            metadata={"output_path": str(path), "format": "pdf"},
+            output=(
+                f"PDF report saved to: {path}"
+                + (" (tagged PDF/UA-1, accessible)" if pdf_ua else "")
+            ),
+            metadata={"output_path": str(path), "format": "pdf", "pdf_ua": pdf_ua},
         )
     except ImportError:
         html_path = path.with_suffix(".html")

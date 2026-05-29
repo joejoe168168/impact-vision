@@ -1,6 +1,8 @@
 """Impact-specific tools for IRIS+ metrics, SDG alignment, and impact assessment."""
 
+from openharness.tools.impact.ai_governance_tool import AIGovernanceTool
 from openharness.tools.impact.beneficiary_feedback_tool import BeneficiaryFeedbackTool
+from openharness.tools.impact.climate_scenario_tool import ClimateScenarioTool
 from openharness.tools.impact.cross_reference_tool import CrossReferenceTool
 from openharness.tools.impact.data_quality_tool import DataQualityTool
 from openharness.tools.impact.decision_workflow_tool import DecisionWorkflowTool
@@ -18,9 +20,13 @@ from openharness.tools.impact.gap_analysis_tool import GapAnalysisTool
 from openharness.tools.impact.greenwashing_reviewer_tool import GreenwashingReviewerTool
 from openharness.tools.impact.greenwashing_tool import GreenwashingDetectorTool
 from openharness.tools.impact.guided_assessment_tool import GuidedAssessmentTool
+from openharness.tools.impact.hrdd_tool import HRDDTool
+from openharness.tools.impact.impact_quantifier_tool import ImpactQuantifierTool
 from openharness.tools.impact.impact_risk_opportunity_tool import ImpactRiskOpportunityTool
 from openharness.tools.impact.impact_report_tool import ImpactReportTool
+from openharness.tools.impact.impact_valuation_tool import ImpactValuationTool
 from openharness.tools.impact.improvement_advisor_tool import ImprovementAdvisorTool
+from openharness.tools.impact.investee_portal_tool import InvesteePortalTool
 from openharness.tools.impact.iris_catalog_tool import IrisCatalogTool
 from openharness.tools.impact.lp_ddq_export_tool import LpDdqExportTool
 from openharness.tools.impact.lp_narrative_tool import LPNarrativeTool
@@ -41,7 +47,9 @@ from openharness.tools.impact.verification_prep_tool import VerificationPrepTool
 from openharness.tools.impact.verification_workspace_tool import VerificationWorkspaceTool
 
 __all__ = [
+    "AIGovernanceTool",
     "BeneficiaryFeedbackTool",
+    "ClimateScenarioTool",
     "CrossReferenceTool",
     "DataQualityTool",
     "DecisionWorkflowTool",
@@ -59,9 +67,13 @@ __all__ = [
     "GreenwashingDetectorTool",
     "GreenwashingReviewerTool",
     "GuidedAssessmentTool",
+    "HRDDTool",
+    "ImpactQuantifierTool",
     "ImpactRiskOpportunityTool",
     "ImpactReportTool",
+    "ImpactValuationTool",
     "ImprovementAdvisorTool",
+    "InvesteePortalTool",
     "IrisCatalogTool",
     "LPNarrativeTool",
     "LpDdqExportTool",

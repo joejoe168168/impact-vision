@@ -43,6 +43,18 @@ from openharness.impact.frameworks.tnfd import (
 from openharness.impact.frameworks.cdp import (
     CDPResponse, CDPIntakeResult, parse_cdp_responses,
 )
+from openharness.impact.frameworks.vsme import (
+    VSMEDisclosure, VSMEDisclosureResult, VSMEAssessmentResult,
+    VSME_DISCLOSURES, get_vsme_disclosures, assess_vsme,
+)
+from openharness.impact.frameworks.two_x import (
+    TwoXInput, TwoXDimensionResult, TwoXResult,
+    assess_2x_criteria, screen_2x_from_text,
+)
+from openharness.impact.frameworks.tisfd import (
+    TISFDDisclosure, TISFDAssessmentResult, TISFD_DISCLOSURES,
+    get_tisfd_disclosures, assess_tisfd_readiness,
+)
 
 __all__ = [
     "SASBStandard", "get_sasb_industries", "match_sasb_industry",
@@ -65,4 +77,10 @@ __all__ = [
     "EconomicActivity", "TaxonomyAlignmentResult", "assess_taxonomy_alignment",
     "TNFDDisclosure", "TNFDInput", "TNFDAssessmentResult", "TNFD_DISCLOSURES", "assess_tnfd",
     "CDPResponse", "CDPIntakeResult", "parse_cdp_responses",
+    "VSMEDisclosure", "VSMEDisclosureResult", "VSMEAssessmentResult",
+    "VSME_DISCLOSURES", "get_vsme_disclosures", "assess_vsme",
+    "TwoXInput", "TwoXDimensionResult", "TwoXResult",
+    "assess_2x_criteria", "screen_2x_from_text",
+    "TISFDDisclosure", "TISFDAssessmentResult", "TISFD_DISCLOSURES",
+    "get_tisfd_disclosures", "assess_tisfd_readiness",
 ]

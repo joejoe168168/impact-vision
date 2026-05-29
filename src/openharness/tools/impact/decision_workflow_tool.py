@@ -15,18 +15,20 @@ from openharness.impact.decision_workflow import (
     quick_screen,
 )
 from openharness.impact.fund_thesis import load_fund_thesis
+from openharness.impact.impact_target_setter import TargetSetterInput, set_impact_targets
 from openharness.impact.models import Company
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 from openharness.tools.impact.common import infer_themes, normalize_metric_map, normalize_sdg_goals, normalize_sector
 
 
 class DecisionWorkflowInput(BaseModel):
-    action: Literal["quick_screen", "ic_workflow", "deal_compare", "lp_readiness"] = Field(
+    action: Literal["quick_screen", "ic_workflow", "deal_compare", "lp_readiness", "set_targets"] = Field(
         description=(
             "'quick_screen': 60-second Aligned/Improvable/Red Flag screen. "
             "'ic_workflow': full IC summary with memo, verdict, and proof appendix. "
             "'deal_compare': compare company_a and company_b. "
-            "'lp_readiness': LP-ready badge and blockers."
+            "'lp_readiness': LP-ready badge and blockers. "
+            "'set_targets': context-driven impact-target ranges from theme/geography/capital."
         )
     )
     company_name: str = ""
@@ -44,6 +46,11 @@ class DecisionWorkflowInput(BaseModel):
     dd_coverage_pct: float | None = None
     exclusion_pass: bool | None = None
     memo_format: Literal["markdown", "html"] = "markdown"
+    # Target-setter (action='set_targets')
+    target_theme: str = Field(default="", description="Impact theme for set_targets (e.g. 'financial_inclusion')")
+    target_capital_usd: float = Field(default=0.0, description="Capital to deploy for set_targets")
+    target_horizon_years: int = Field(default=5, description="Time horizon (years) for set_targets")
+    target_ambition: Literal["conservative", "base", "stretch"] = "base"
     output_format: Literal["json", "text"] = "json"
 
 
@@ -81,7 +88,9 @@ class DecisionWorkflowTool(BaseTool):
     name = "decision_workflow"
     description = (
         "Fund-manager decision workflows: quick screen, IC workflow summary with proof appendix, "
-        "deal comparison, and LP readiness badge. Uses existing 5D, SDG, greenwashing, and IC gates."
+        "deal comparison, LP readiness badge, and context-driven impact target setting "
+        "(theme/geography/capital -> conservative/base/stretch IRIS+/SDG target ranges). "
+        "Uses existing 5D, SDG, greenwashing, and IC gates."
     )
     input_model = DecisionWorkflowInput
 
@@ -90,6 +99,18 @@ class DecisionWorkflowTool(BaseTool):
 
     async def execute(self, arguments: BaseModel, context: ToolExecutionContext) -> ToolResult:
         args = arguments if isinstance(arguments, DecisionWorkflowInput) else DecisionWorkflowInput.model_validate(arguments)
+
+        if args.action == "set_targets":
+            theme = args.target_theme or (args.impact_themes[0] if args.impact_themes else "general")
+            result = set_impact_targets(TargetSetterInput(
+                theme=theme,
+                geography=args.geography or "unknown",
+                capital_usd=args.target_capital_usd,
+                time_horizon_years=args.target_horizon_years,
+                ambition=args.target_ambition,
+            ))
+            return _result(result.model_dump(mode="json"), args.output_format)
+
         try:
             store = ensure_catalog_loaded()
         except FileNotFoundError as e:

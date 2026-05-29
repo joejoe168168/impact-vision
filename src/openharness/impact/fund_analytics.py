@@ -31,27 +31,67 @@ def impact_weighted_returns_stub(
     company_results: list[dict],
     financial_returns: dict[str, float] | None = None,
 ) -> dict:
-    """Stub for impact-weighted returns calculation.
+    """Impact-weighted returns calculation (Impact-Weighted Accounts lineage).
 
-    When financial return data is available, this will compute impact-weighted
-    returns using the methodology from the Impact-Weighted Accounts Initiative
-    (Harvard Business School / Global Steering Group for Impact Investment).
+    When ``financial_returns`` ({company_name: IRR%}) is supplied, computes a
+    portfolio IRR weighted by each company's impact score (5D), illustrating how
+    return concentrates in higher- vs lower-impact holdings. When no financial
+    data is supplied, returns the portfolio impact score only.
 
-    Currently returns a placeholder structure.
+    For full monetary impact accounting (turning outcomes into a $ benefit/cost
+    ledger, net monetary impact, and impact multiple of money), use
+    :mod:`openharness.impact.impact_valuation` (``impact_valuation`` tool).
     """
     financial_returns = financial_returns or {}
     n = len(company_results)
 
     avg_impact = sum(r.get("five_dim_score", 0) for r in company_results) / n if n > 0 else 0
 
-    return {
+    result: dict = {
         "method": "impact-weighted_returns",
-        "status": "stub",
-        "note": "Provide financial_returns dict ({company_name: IRR%}) to compute impact-weighted returns",
+        "status": "computed" if financial_returns else "no_financial_data",
         "portfolio_impact_score": round(avg_impact, 2),
         "companies_with_financial_data": len(financial_returns),
         "companies_without_financial_data": n - len(financial_returns),
+        "monetary_valuation_hint": (
+            "Use the impact_valuation tool for IFVI/VBA monetary impact accounting "
+            "(net monetary impact, benefit/cost ratio, impact multiple of money)."
+        ),
     }
+
+    if not financial_returns:
+        result["note"] = "Provide financial_returns dict ({company_name: IRR%}) to compute impact-weighted returns"
+        return result
+
+    weighted_num = 0.0
+    weight_sum = 0.0
+    simple_sum = 0.0
+    matched = 0
+    for r in company_results:
+        name = r.get("name") or r.get("company_name") or ""
+        if name not in financial_returns:
+            continue
+        irr = float(financial_returns[name])
+        weight = max(float(r.get("five_dim_score", 0)), 0.0)
+        weighted_num += irr * weight
+        weight_sum += weight
+        simple_sum += irr
+        matched += 1
+
+    simple_avg = round(simple_sum / matched, 2) if matched else 0.0
+    impact_weighted = round(weighted_num / weight_sum, 2) if weight_sum > 0 else simple_avg
+    result.update({
+        "matched_companies": matched,
+        "simple_average_irr_pct": simple_avg,
+        "impact_weighted_irr_pct": impact_weighted,
+        "impact_tilt_pct": round(impact_weighted - simple_avg, 2),
+        "interpretation": (
+            "Positive tilt: returns concentrate in higher-impact holdings."
+            if impact_weighted >= simple_avg
+            else "Negative tilt: returns concentrate in lower-impact holdings."
+        ),
+    })
+    return result
 
 
 def assess_portfolio_additionality(

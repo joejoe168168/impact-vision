@@ -169,9 +169,50 @@ def default_standards_registry() -> StandardsRegistry:
             version="2025-exposure-draft",
             status="draft",
             source_url="https://www.efrag.org/",
-            aliases=["Amended ESRS", "ESRS Omnibus Draft"],
+            aliases=["ESRS Omnibus Draft"],
             scope=["double materiality", "EU sustainability reporting"],
-            notes="Draft simplification package; keep separate from adopted ESRS rule packs.",
+            notes="Historical draft simplification package; finalised as Directive (EU) 2026/470 (see ESRS@2026-omnibus-i).",
+        ),
+        StandardVersion(
+            standard_id="ESRS",
+            name="ESRS under the Omnibus I simplification (Directive (EU) 2026/470)",
+            version="2026-omnibus-i",
+            status="under_revision",
+            effective_date="2026-03-18",
+            source_url="https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=OJ:L_202600470",
+            requirements_url="https://finance.ec.europa.eu/capital-markets-union-and-financial-markets/company-reporting-and-auditing/company-reporting/corporate-sustainability-reporting_en",
+            aliases=["Omnibus I", "Amended ESRS", "ESRS Omnibus", "CSRD Omnibus"],
+            scope=["double materiality", "EU sustainability reporting", "scope reduction"],
+            notes=(
+                "Omnibus I Directive (EU) 2026/470 entered into force 2026-03-18. "
+                "CSRD mandatory scope narrowed to undertakings with >1,000 employees "
+                "AND >EUR 450M net turnover (cumulative); listed-SME and most former "
+                "Wave 2/3 entities out of scope; sector-specific ESRS removed. "
+                "Member States transpose by 2027-03-19, applying from FY2027. A "
+                "SIMPLIFIED ESRS delegated act is targeted for 2026-09 (FY2027 use); "
+                "until adopted, the 2023-delegated-act ESRS remain the substantive "
+                "rule set for in-scope reporters."
+            ),
+        ),
+        StandardVersion(
+            standard_id="CSDDD",
+            name="Corporate Sustainability Due Diligence Directive (as amended by Omnibus I)",
+            version="2026-omnibus-i",
+            status="active",
+            effective_date="2029-07-26",
+            source_url="https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=OJ:L_202600470",
+            aliases=["CS3D", "CSDDD", "Corporate Sustainability Due Diligence"],
+            scope=["human rights due diligence", "environmental due diligence", "value chain"],
+            requirement_ids=["identify", "prevent", "mitigate", "remediate", "grievance", "monitor"],
+            notes=(
+                "Amended by Omnibus I (Directive (EU) 2026/470). Application deferred "
+                "to 2029-07-26 (MS transposition by 2028-07-26). Scope narrowed to "
+                ">5,000 employees + EUR 1.5B net worldwide turnover (non-EU: EUR 1.5B "
+                "EU turnover). Climate transition-plan adoption obligation removed; "
+                "EU-harmonised civil-liability regime removed (national law applies); "
+                "penalties capped at 3% of net global turnover. HRDD/OECD-UNGP "
+                "expectations remain a market/LP norm regardless of legal scope."
+            ),
         ),
         StandardVersion(
             standard_id="SFDR",

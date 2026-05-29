@@ -108,6 +108,78 @@ class TestHTMLReport:
         html = _to_html(data)
         assert "plotly" in html.lower()
 
+    def test_to_html_includes_ux_polish_chrome(self) -> None:
+        """Track D polish: reading progress, utility dock, scrollspy."""
+        from openharness.tools.impact.impact_report_tool import _to_html
+        data = _make_report_data()
+        html = _to_html(data)
+        # reading-progress bar
+        assert '<div class="read-progress"' in html
+        # floating utility dock with the three controls, rendered after <main>
+        assert html.index('<div class="util-dock"') > html.rindex("</main>")
+        assert html.count('class="theme-toggle"') == 1
+        assert 'class="print-btn"' in html
+        assert 'class="to-top"' in html
+        # in-browser dark-mode toggle persists choice + swaps sun/moon icons
+        assert "iv-theme" in html
+        assert "icon-sun" in html and "icon-moon" in html
+        # scrollspy TOC highlighting
+        assert "IntersectionObserver" in html
+        assert ".report-toc a.active" in html
+        # copy-link anchors on section headings (deep-linking for LP/IC sharing)
+        assert "h-anchor" in html
+        assert "Copy link to this section" in html
+        # collapsible major sections + expand/collapse-all controls
+        assert "sec-toggle" in html
+        assert "sec-collapsed-body" in html
+        assert "Collapse all" in html and "Expand all" in html
+        # sticky mini-header on scroll (aria-hidden, duplicates main header)
+        assert '<div class="mini-header" aria-hidden="true">' in html
+        assert "mh-name" in html
+
+    def test_to_html_sticky_header_shows_grade(self) -> None:
+        from openharness.tools.impact.impact_report_tool import _to_html
+        data = _make_report_data("StickyCo")
+        data["five_dimensions"] = {
+            "what": {"dimension": "What", "score": 3.0, "metrics_reported": 1, "metrics_available": 10, "gaps": [], "notes": "t", "provenance": "partial"},
+            "who": {"dimension": "Who", "score": 2.5, "metrics_reported": 0, "metrics_available": 8, "gaps": [], "notes": "t", "provenance": "estimated"},
+            "how_much": {"dimension": "How Much", "score": 2.0, "metrics_reported": 0, "metrics_available": 6, "gaps": [], "notes": "t", "provenance": "estimated"},
+            "contribution": {"dimension": "Contribution", "score": 2.5, "metrics_reported": 0, "metrics_available": 5, "gaps": [], "notes": "t", "provenance": "estimated"},
+            "risk": {"dimension": "Risk", "score": 2.0, "metrics_reported": 0, "metrics_available": 4, "gaps": [], "notes": "t", "provenance": "estimated"},
+            "overall_score": 2.4, "overall_grade": "C+", "overall_provenance": "partial",
+        }
+        html = _to_html(data)
+        assert '<span class="mh-name">StickyCo</span>' in html
+        assert "mh-grade grade-C" in html
+        assert "2.4/5" in html
+
+    def test_to_html_print_cover_and_page_footer(self) -> None:
+        """Track D polish: print-only cover page + @page running footer."""
+        from openharness.tools.impact.impact_report_tool import _to_html
+        data = _make_report_data("CoverCo")
+        html = _to_html(data)
+        # print-only cover page, hidden on screen, before the report header
+        assert '<section class="print-cover" aria-hidden="true">' in html
+        assert 'class="pc-company">CoverCo</div>' in html
+        assert "Not for public distribution" in html
+        assert html.index('class="print-cover"') < html.index('class="report-header"')
+        # @page running footer with page numbers + confidentiality
+        assert "@page {" in html
+        assert "counter(page)" in html and "counter(pages)" in html
+        assert "@page :first" in html
+        # running header captures the company name via string-set/string()
+        assert "string-set:doc-company content()" in html
+        # em-dash rendered as a real character, not a broken octal escape
+        assert "\u2014 Confidential" in html
+        assert "\x81" not in html
+
+    def test_to_html_dark_theme_applies_body_class(self) -> None:
+        from openharness.tools.impact.impact_report_tool import _to_html
+        data = _make_report_data()
+        data["theme"] = "dark"
+        html = _to_html(data)
+        assert '<body class="theme-dark">' in html
+
     def test_to_html_with_five_dimensions(self) -> None:
         from openharness.tools.impact.impact_report_tool import _to_html
         data = _make_report_data()

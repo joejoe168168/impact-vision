@@ -20,7 +20,7 @@ from pydantic import BaseModel, Field
 
 
 Jurisdiction = Literal[
-    "EU-SFDR", "EU-CSRD", "UK-FCA-SDR",
+    "EU-SFDR", "EU-CSRD", "EU-CSDDD", "UK-FCA-SDR",
     "US-SEC-ESG", "HK-HKEX-ESG", "AU-AASB-S2",
     "GLOBAL-ISSB",
 ]
@@ -41,6 +41,8 @@ class RegulatoryPack(BaseModel):
     filings: list[RegulatoryFiling]
     required_metrics: list[str] = Field(default_factory=list)
     notes: str = ""
+    as_of: str = Field(default="", description="Date the pack was last verified, YYYY-MM-DD")
+    legal_basis: str = Field(default="", description="Primary legal citation, e.g. Directive (EU) 2026/470")
 
 
 _PACKS: dict[str, RegulatoryPack] = {
@@ -68,9 +70,14 @@ _PACKS: dict[str, RegulatoryPack] = {
     "EU-CSRD": RegulatoryPack(
         jurisdiction="EU-CSRD",
         issuer="European Commission / EFRAG",
+        as_of="2026-03-18",
+        legal_basis="Directive (EU) 2026/470 (Omnibus I), in force 2026-03-18",
         in_scope_summary=(
-            "Large EU and third-country undertakings with EU turnover > €150M; "
-            "staggered from FY2024 onwards."
+            "POST-OMNIBUS I: mandatory only for undertakings meeting BOTH "
+            ">1,000 employees AND >€450M net turnover. Non-EU groups: >€450M EU "
+            "turnover with an in-scope EU subsidiary or a >€200M EU branch. "
+            "Listed SMEs and most former Wave 2/3 entities are now OUT of scope; "
+            "former Wave 1 reporters below the thresholds may pause FY2025-FY2026."
         ),
         filings=[
             RegulatoryFiling(name="ESRS sustainability statement in mgmt report",
@@ -81,6 +88,41 @@ _PACKS: dict[str, RegulatoryPack] = {
             "ESRS E1 climate", "ESRS E2 pollution", "ESRS E3 water",
             "ESRS S1 own-workforce", "ESRS G1 business-conduct",
         ],
+        notes=(
+            "Member States transpose Omnibus I by 2027-03-19; new scope applies "
+            "from FY2027. Sector-specific ESRS removed. A SIMPLIFIED ESRS "
+            "delegated act is targeted for 2026-09. Undertakings below 1,000 "
+            "employees may refuse data requests exceeding the VSME voluntary "
+            "standard — use the VSME module for those investees."
+        ),
+    ),
+    "EU-CSDDD": RegulatoryPack(
+        jurisdiction="EU-CSDDD",
+        issuer="European Commission",
+        as_of="2026-03-18",
+        legal_basis="CSDDD as amended by Directive (EU) 2026/470 (Omnibus I)",
+        in_scope_summary=(
+            "POST-OMNIBUS I: applies to companies with >5,000 employees AND "
+            ">€1.5B net worldwide turnover (non-EU: >€1.5B EU turnover). "
+            "Application deferred to 2029-07-26; MS transposition by 2028-07-26."
+        ),
+        filings=[
+            RegulatoryFiling(
+                name="Human-rights & environmental due-diligence statement",
+                cadence="annual", format="narrative + value-chain risk register",
+                deadline_days_after_period=120),
+        ],
+        required_metrics=[
+            "salient_human_rights_issues", "value_chain_risk_register",
+            "grievance_mechanism", "remediation_actions",
+        ],
+        notes=(
+            "Climate transition-plan ADOPTION obligation removed by Omnibus I; "
+            "EU-harmonised civil-liability regime removed (national law applies); "
+            "penalties capped at 3% of net global turnover. Even when out of legal "
+            "scope, OECD Guidelines / UNGP-aligned HRDD remains an LP and customer "
+            "expectation — use the hrdd module to evidence it."
+        ),
     ),
     "UK-FCA-SDR": RegulatoryPack(
         jurisdiction="UK-FCA-SDR",

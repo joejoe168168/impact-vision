@@ -14,7 +14,7 @@ from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 
 class FrameworkInput(BaseModel):
-    framework: Literal["sasb", "gri", "tcfd", "sfdr_pai", "edci", "unpri", "toc", "issb_s1", "issb_s2", "esrs", "opim", "all"] = Field(
+    framework: Literal["sasb", "gri", "tcfd", "sfdr_pai", "edci", "unpri", "toc", "issb_s1", "issb_s2", "esrs", "vsme", "two_x", "tisfd", "opim", "all"] = Field(
         description=(
             "Which framework to query. 'all' runs a quick scan across all frameworks."
         )
@@ -57,6 +57,13 @@ class FrameworkTool(BaseTool):
         "and GIIN IRIS+ ToC Checklist\n"
         "- **ISSB S1**: IFRS S1 General Sustainability Disclosure readiness (4 pillars, 12 disclosures)\n"
         "- **ESRS**: EU CSRD/ESRS double materiality screening (12 standards)\n"
+        "- **VSME**: EFRAG Voluntary SME Standard coverage (Basic B1-B11 + Comprehensive C1-C9); "
+        "post-Omnibus-I default reporting set for investee SMEs out of CSRD scope "
+        "(use category='basic' or 'comprehensive')\n"
+        "- **two_x**: 2X Criteria gender-lens screen (Entrepreneurship/Leadership/Employment/"
+        "Supply Chain/Products/Portfolio + mandatory governance & GBVH minimum requirements)\n"
+        "- **tisfd**: TISFD (beta) Inequality & Social-related Financial Disclosures readiness "
+        "(4 pillars; pay/labour/freedom-of-association/community/inequality; ISSB/GRI/ESRS crosswalk)\n"
         "- **all**: Quick scan across all frameworks\n\n"
         "Actions: 'list' (browse), 'match' (find relevant topics), 'assess' (coverage analysis)"
     )
@@ -86,6 +93,9 @@ class FrameworkTool(BaseTool):
             "issb_s1": self._handle_issb_s1,
             "issb_s2": self._handle_issb_s2,
             "esrs": self._handle_esrs,
+            "vsme": self._handle_vsme,
+            "two_x": self._handle_two_x,
+            "tisfd": self._handle_tisfd,
             "opim": self._handle_opim,
             "all": self._handle_all_list,
         }
@@ -560,6 +570,168 @@ class FrameworkTool(BaseTool):
 
         return ToolResult(output=f"ESRS does not support action: {args.action}", is_error=True)
 
+    def _handle_vsme(self, args: FrameworkInput) -> ToolResult:
+        from openharness.impact.frameworks.vsme import assess_vsme, get_vsme_disclosures
+
+        module = (args.category or "comprehensive").strip().lower()
+        if module not in {"basic", "comprehensive"}:
+            module = "comprehensive"
+
+        if args.action == "list":
+            disclosures = get_vsme_disclosures(None if module == "comprehensive" else "basic")
+            lines = [
+                f"EFRAG Voluntary SME Standard (VSME) — {module.title()} module "
+                f"({len(disclosures)} disclosures)\n",
+                "Post-Omnibus-I default reporting set for investee SMEs out of CSRD scope.\n",
+            ]
+            current = ""
+            for d in disclosures:
+                tag = f"{d.module}/{d.pillar}"
+                if tag != current:
+                    current = tag
+                    lines.append(f"\n--- {d.module.upper()} · {d.pillar.upper()} ---")
+                xref = f" (ESRS: {', '.join(d.esrs_cross_refs)})" if d.esrs_cross_refs else ""
+                lines.append(f"  [{d.code}] {d.name}{xref}")
+                if d.description:
+                    lines.append(f"    {d.description[:120]}")
+            return ToolResult(output="\n".join(lines))
+
+        if args.action in ("match", "assess"):
+            result = assess_vsme(
+                description=args.description,
+                document_text=args.document_text,
+                sector=args.sector,
+                reported_metrics=args.reported_metrics,
+                module=module,
+            )
+            lines = [
+                f"EFRAG VSME COVERAGE SCREEN — {result.module.title()} module",
+                "=" * 50,
+                f"Overall coverage: {result.overall_coverage_pct}% "
+                f"({result.basic_addressed + result.comprehensive_addressed}/"
+                f"{result.basic_total + result.comprehensive_total})",
+                f"Basic: {result.basic_addressed}/{result.basic_total}"
+                + (f"  |  Comprehensive: {result.comprehensive_addressed}/{result.comprehensive_total}"
+                   if result.comprehensive_total else ""),
+                "",
+            ]
+            for d in result.disclosures:
+                icon = "[OK]" if d.addressed else "[GAP]"
+                ev = f"  evidence: {', '.join(d.evidence[:3])}" if d.evidence else ""
+                lines.append(f"  {icon} {d.code}: {d.name}{ev}")
+            if result.gaps:
+                lines.append("")
+                lines.append(f"Top gaps: {'; '.join(result.gaps[:5])}")
+            return ToolResult(output="\n".join(lines), metadata=result.model_dump())
+
+        return ToolResult(output=f"VSME does not support action: {args.action}", is_error=True)
+
+    def _handle_two_x(self, args: FrameworkInput) -> ToolResult:
+        from openharness.impact.frameworks.two_x import screen_2x_from_text
+
+        if args.action == "list":
+            lines = [
+                "2X Criteria (2X Global, 2024) — gender-lens investing standard\n",
+                "Dimensions (meet ≥1 threshold to qualify):",
+                "  1. Entrepreneurship    - women ownership ≥51% OR woman-founded",
+                "  2. Leadership          - women in senior mgmt / board ≥30%",
+                "  3. Employment          - women workforce ≥30% (sector-specific) + quality indicator",
+                "  4. Supply Chain        - women-owned supplier spend / commitments",
+                "  5. Products & Services - product disproportionately benefits women",
+                "  6. Portfolio (FIs)     - share of portfolio that is 2X-aligned",
+                "",
+                "Minimum requirements (MANDATORY to qualify):",
+                "  - Governance accountability for gender commitments",
+                "  - Prevention of gender-based violence & harassment (GBVH)",
+                "",
+                "Provide structured numbers via reported_metrics (e.g. women_ownership_pct, "
+                "women_senior_management_pct, women_board_pct, women_workforce_pct, "
+                "women_owned_supplier_pct, portfolio_2x_aligned_pct).",
+            ]
+            return ToolResult(output="\n".join(lines))
+
+        if args.action in ("match", "assess"):
+            result = screen_2x_from_text(
+                description=args.description,
+                document_text=args.document_text,
+                reported_metrics=args.reported_metrics,
+            )
+            lines = [
+                "2X CRITERIA SCREEN (gender-lens investing)",
+                "=" * 50,
+                result.summary,
+                "",
+            ]
+            for d in result.dimensions:
+                icon = "[OK]" if d.met else "[--]"
+                lines.append(f"  {icon} {d.dimension}: {d.rationale}")
+            lines.append("")
+            mr = "[OK]" if result.minimum_requirements_met else "[GAP]"
+            lines.append(f"  {mr} Minimum requirements (governance + GBVH)")
+            for gap in result.minimum_requirement_gaps:
+                lines.append(f"      - {gap}")
+            if result.recommendations:
+                lines.append("")
+                lines.append("Recommendations:")
+                for r in result.recommendations:
+                    lines.append(f"  - {r}")
+            return ToolResult(output="\n".join(lines), metadata=result.model_dump())
+
+        return ToolResult(output=f"2X does not support action: {args.action}", is_error=True)
+
+    def _handle_tisfd(self, args: FrameworkInput) -> ToolResult:
+        from openharness.impact.frameworks.tisfd import (
+            FRAMEWORK_STATUS, assess_tisfd_readiness, get_tisfd_disclosures,
+        )
+
+        if args.action == "list":
+            pillar = args.category or None
+            disclosures = get_tisfd_disclosures(pillar)
+            lines = [
+                f"TISFD — Inequality & Social-related Financial Disclosures [{FRAMEWORK_STATUS}]",
+                f"({len(disclosures)} beta recommended disclosures across 4 pillars)\n",
+            ]
+            current = ""
+            for d in disclosures:
+                if d.pillar != current:
+                    current = d.pillar
+                    lines.append(f"\n--- {current.replace('_', ' ').upper()} ---")
+                xref = ""
+                if d.gri_cross_refs:
+                    xref += f" (GRI: {', '.join(d.gri_cross_refs)})"
+                if d.esrs_cross_refs:
+                    xref += f" (ESRS: {', '.join(d.esrs_cross_refs)})"
+                lines.append(f"  [{d.code}] {d.title}{xref}")
+                lines.append(f"    {d.description}")
+            return ToolResult(output="\n".join(lines))
+
+        if args.action in ("match", "assess"):
+            result = assess_tisfd_readiness(
+                description=args.description,
+                document_text=args.document_text,
+                reported_metrics=args.reported_metrics,
+            )
+            lines = [
+                "TISFD READINESS SCREEN (beta)",
+                "=" * 50,
+                f"Status: {result.status}",
+                f"Overall readiness: {result.overall_readiness_pct}% — {result.readiness_level}",
+                "",
+            ]
+            for ps in result.pillar_scores:
+                icon = "[OK]" if ps.coverage_pct >= 50 else "[GAP]"
+                lines.append(f"  {icon} {ps.pillar.replace('_', ' ').title()}: {ps.coverage_pct}% ({ps.addressed}/{ps.total})")
+            if result.recommendations:
+                lines.append("")
+                lines.append("Recommendations:")
+                for r in result.recommendations:
+                    lines.append(f"  - {r}")
+            lines.append("")
+            lines.append(f"NOTE: {result.beta_notice}")
+            return ToolResult(output="\n".join(lines), metadata=result.model_dump())
+
+        return ToolResult(output=f"TISFD does not support action: {args.action}", is_error=True)
+
     def _handle_opim(self, args: FrameworkInput) -> ToolResult:
         from openharness.impact.frameworks.ifc_opim import assess_opim_alignment, get_opim_framework
 
@@ -615,7 +787,10 @@ class FrameworkTool(BaseTool):
             "  issb_s1   - IFRS S1 General Sustainability Disclosure (4 pillars, 12 disclosures)",
             "  issb_s2   - IFRS S2 Climate-related Disclosures (4 pillars, 13 disclosures, subsumes TCFD)",
             "  esrs      - EU CSRD/ESRS Double Materiality (12 standards)",
-            "  opim      - IFC Operating Principles for Impact Management (9 principles)",
+            "  vsme      - EFRAG Voluntary SME Standard (Basic B1-B11 + Comprehensive C1-C9)",
+        "  two_x     - 2X Criteria gender-lens investing standard (2X Global 2024)",
+        "  tisfd     - TISFD Inequality & Social-related Financial Disclosures (beta, 4 pillars)",
+        "  opim      - IFC Operating Principles for Impact Management (9 principles)",
             "",
             "Use framework='<name>' with action='list' to browse, 'match' to find relevant topics,",
             "or 'assess' to check coverage. Use framework='all' with action='assess' to scan all.",
