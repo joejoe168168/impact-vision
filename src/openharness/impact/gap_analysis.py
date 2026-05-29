@@ -69,10 +69,28 @@ _FALLBACK_UNIT: dict[str, str] = {
 }
 
 
+def _clip(text: str, limit: int) -> str:
+    """Truncate ``text`` to ``limit`` chars on a word boundary, adding an ellipsis.
+
+    Avoids ragged mid-word cuts (e.g. "...passed th") produced by a raw slice so
+    that every consumer of this dict — the HTML report, JSON and CSV exports —
+    receives readable text. Falls back to a hard slice only when there is no
+    nearby space.
+    """
+    text = (text or "").strip()
+    if len(text) <= limit:
+        return text
+    cut = text[:limit].rstrip()
+    sp = cut.rfind(" ")
+    if sp > limit * 0.6:
+        cut = cut[:sp].rstrip()
+    return cut.rstrip(",;:.") + "\u2026"
+
+
 def _metric_info(metric_id: str, metric_obj) -> dict:
     """Build a rich, renderable dict describing a Core Metric Set entry."""
     name = metric_obj.name if metric_obj else metric_id
-    definition = metric_obj.definition[:240] if metric_obj and metric_obj.definition else ""
+    definition = _clip(metric_obj.definition, 240) if metric_obj and metric_obj.definition else ""
     section = metric_obj.section if metric_obj else ""
     subsection = metric_obj.subsection if metric_obj else ""
     reporting_format = metric_obj.reporting_format if metric_obj else ""
@@ -92,7 +110,7 @@ def _metric_info(metric_id: str, metric_obj) -> dict:
 
     unit = reporting_format or _FALLBACK_UNIT.get(metric_id, "")
     how_to_measure = (
-        calculation.strip() if calculation else usage_guidance[:240].strip()
+        calculation.strip() if calculation else _clip(usage_guidance, 240)
     )
 
     category = section
@@ -109,7 +127,7 @@ def _metric_info(metric_id: str, metric_obj) -> dict:
         "reporting_format": reporting_format,
         "unit": unit,
         "calculation": calculation.strip(),
-        "usage_guidance": usage_guidance[:320].strip(),
+        "usage_guidance": _clip(usage_guidance, 320),
         "how_to_measure": how_to_measure,
         "dimension_tags": dim_tags_full,
         "dimension_groups": dim_groups,

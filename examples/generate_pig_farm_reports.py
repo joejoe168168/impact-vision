@@ -262,12 +262,18 @@ def fetch_profile(*, offline: bool, model: str) -> dict[str, Any]:
 # 4. Report generation
 # ---------------------------------------------------------------------------
 
-def run(profile: dict[str, Any], out_dir: Path) -> list[Path]:
-    out_dir.mkdir(parents=True, exist_ok=True)
+def assess_and_assemble(profile: dict[str, Any]) -> dict[str, Any]:
+    """Run the full assessment pipeline and assemble the ``report_data`` dict.
 
-    # --- 4.1 Assess the company using the pitch text so the extractor
-    #          populates reported_metrics and the downstream engine runs
-    #          full 5D + SDG + greenwashing + benchmark.
+    Returns a bundle with the company assessment, DD coverage, greenwashing
+    screen, IC scorecard/thesis and the assembled ``report_data`` that the
+    flagship ``impact_report`` HTML renderer expects. Split out from
+    :func:`run` so other demos (e.g. ``DEMO/generate_demo.py``) can reuse the
+    identical pipeline without duplicating ~80 lines of assembly.
+    """
+    # --- Assess the company using the pitch text so the extractor
+    #     populates reported_metrics and the downstream engine runs
+    #     full 5D + SDG + greenwashing + benchmark.
     iv = ImpactVision()
     comp = Company(
         name=profile["name"],
@@ -292,12 +298,12 @@ def run(profile: dict[str, Any], out_dir: Path) -> list[Path]:
     assess.company.description = comp.description or pitch[:1000]
     assess.company.sdg_claims = comp.sdg_claims
 
-    # --- 4.2 DD + greenwashing so we can feed them into the IC memo
+    # --- DD + greenwashing so we can feed them into the IC memo
     print("[demo] running DD coverage + greenwashing screen …", flush=True)
     dd = iv.run_dd_coverage(pitch)
     gw = iv.screen_greenwashing(assess.company)
 
-    # --- 4.3 IC gate using default or repo-provided thesis
+    # --- IC gate using default or repo-provided thesis
     print("[demo] running IC gate …", flush=True)
     thesis = iv.load_thesis()
     scorecard = iv.evaluate_deal_against_thesis(
@@ -311,20 +317,16 @@ def run(profile: dict[str, Any], out_dir: Path) -> list[Path]:
         flush=True,
     )
 
-    # --- 4.4 Render the three HTML reports
-    print("[demo] rendering HTML reports …", flush=True)
-
-    # (a) main impact report — assemble the same report_data shape the
-    #     MCP `impact_report` tool builds, so the full stack (executive
-    #     summary + KPI strip + TOC + gap analysis + benchmark + pathway
-    #     + metric tracking + claims) renders.
+    # --- Assemble the same report_data shape the MCP `impact_report` tool
+    #     builds, so the full stack (executive summary + KPI strip + TOC +
+    #     gap analysis + benchmark + pathway + metric tracking + claims)
+    #     renders.
     from openharness.impact.benchmarks import compare_to_benchmark
     from openharness.impact.database import get_metric_store
     from openharness.impact.gap_analysis import analyze_gaps
     from openharness.impact.sdg_mapper import generate_sdg_gap_recommendations
     from openharness.tools.impact.impact_report_tool import (
         _infer_opportunities_and_risks,
-        _to_html,
     )
     # Use the full IRIS+ catalog so missing-metric rows get names,
     # definitions, units, and dimension tags.
@@ -374,6 +376,34 @@ def run(profile: dict[str, Any], out_dir: Path) -> list[Path]:
         )
         if bm.get("benchmark_available"):
             report_data["benchmark_comparison"] = bm
+
+    return {
+        "comp": comp,
+        "assess": assess,
+        "dd": dd,
+        "gw": gw,
+        "thesis": thesis,
+        "scorecard": scorecard,
+        "report_data": report_data,
+    }
+
+
+def run(profile: dict[str, Any], out_dir: Path) -> list[Path]:
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    from openharness.tools.impact.impact_report_tool import _to_html
+
+    bundle = assess_and_assemble(profile)
+    comp = bundle["comp"]
+    assess = bundle["assess"]
+    dd = bundle["dd"]
+    gw = bundle["gw"]
+    thesis = bundle["thesis"]
+    scorecard = bundle["scorecard"]
+    report_data = bundle["report_data"]
+
+    # --- Render the three HTML reports
+    print("[demo] rendering HTML reports …", flush=True)
 
     impact_path = out_dir / "pig_farm_impact_report.html"
     impact_path.write_text(_to_html(report_data), encoding="utf-8")

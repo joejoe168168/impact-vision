@@ -69,3 +69,6 @@ react_tui_smoke.txt
 # Temporary / scratch files (root only, so __init__.py is not ignored)
 /_*.py
 /_*.txt
+
+# demo screenshot tooling cache (vendored plotly.min.js, fetched on demand)
+demo/.cache/

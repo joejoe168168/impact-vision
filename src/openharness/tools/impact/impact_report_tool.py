@@ -1077,6 +1077,22 @@ def _generate_executive_summary(data: dict, company: dict) -> str:
     return body
 
 
+def _truncate(text: str, limit: int) -> str:
+    """Truncate ``text`` to ``limit`` chars on a word boundary, adding an ellipsis.
+
+    Avoids the ragged mid-word cuts (e.g. "...passed th") produced by a raw
+    slice. Falls back to a hard slice only when there is no nearby space.
+    """
+    text = (text or "").strip()
+    if len(text) <= limit:
+        return text
+    cut = text[:limit].rstrip()
+    sp = cut.rfind(" ")
+    if sp > limit * 0.6:
+        cut = cut[:sp].rstrip()
+    return cut.rstrip(",;:.") + "\u2026"
+
+
 def _metric_tracking_dashboard(data: dict) -> str:
     """Generate a metric tracking status dashboard (card grid)."""
     fd = data.get("five_dimensions", {})
@@ -1124,6 +1140,23 @@ def _metric_tracking_dashboard(data: dict) -> str:
             "status": "gap",
             "unit": m.get("unit", "") or m.get("reporting_format", ""),
         }
+
+    # Resolve any metric whose name still equals its code (5D-only gaps that
+    # never received catalog enrichment) against the IRIS+ catalog so cards
+    # show human-readable names instead of bare IDs (e.g. "OI0263").
+    _unresolved = [m for m in (*tracked.values(), *gaps.values()) if m["name"] == m["id"]]
+    if _unresolved:
+        try:
+            from openharness.impact.database import get_metric_store
+            _store = get_metric_store()
+            for _m in _unresolved:
+                _rec = _store.get(_m["id"])
+                if _rec is not None and getattr(_rec, "name", ""):
+                    _m["name"] = _rec.name
+                    if not _m.get("unit"):
+                        _m["unit"] = getattr(_rec, "unit", "") or ""
+        except Exception:  # noqa: BLE001 — never let a catalog lookup break the report
+            pass
 
     all_metrics = list(tracked.values()) + list(gaps.values())
     if not all_metrics:
@@ -1307,7 +1340,7 @@ def _render_missing_metrics_section(ga: dict) -> str:
             if how:
                 label = f"{how_src}: " if how_src else "How to measure: "
                 parts.append(
-                    f'<div class="mm-def"><strong style="color:var(--text)">{label}</strong>{how[:260]}</div>'
+                    f'<div class="mm-def"><strong style="color:var(--text)">{label}</strong>{_truncate(how, 260)}</div>'
                 )
             parts.append('</div>')
             parts.append('<div class="mm-side"><dl>')
@@ -1346,10 +1379,7 @@ def _impact_pathway_section(data: dict) -> str:
 
     activities = []
     if company.get("description"):
-        desc = company["description"]
-        if len(desc) > 60:
-            desc = desc[:57] + "..."
-        activities.append(_esc(desc))
+        activities.append(_esc(_truncate(company["description"], 90)))
     if company.get("impact_themes"):
         activities.extend(_esc(t) for t in company["impact_themes"][:2])
     if not activities:
@@ -1368,7 +1398,7 @@ def _impact_pathway_section(data: dict) -> str:
     top_sdgs = sorted(sdg, key=lambda s: s.get("score", 0), reverse=True)[:3]
     for s in top_sdgs:
         if s.get("score", 0) > 0:
-            outcomes.append(f"SDG {_esc(s.get('goal'))}: {_esc(s.get('goal_name', '')[:25])}")
+            outcomes.append(f"SDG {_esc(s.get('goal'))}: {_esc(_truncate(s.get('goal_name', ''), 40))}")
     if not outcomes:
         outcomes.append("SDG alignment pending")
 
@@ -1883,6 +1913,30 @@ def _report_ux_script() -> str:
         "var themeBtn=document.querySelector('.util-dock .theme-toggle');\n"
         "var printBtn=document.querySelector('.util-dock .print-btn');\n"
         "var mini=document.querySelector('.mini-header');\n"
+        "function ivRethemeCharts(){\n"
+        "  if(typeof Plotly==='undefined') return;\n"
+        "  var dark=body.classList.contains('theme-dark');\n"
+        "  var font=dark?'#e6e9ef':'#1f2937';\n"
+        "  var grid=dark?'rgba(255,255,255,0.14)':'rgba(0,0,0,0.08)';\n"
+        "  var line=dark?'rgba(255,255,255,0.30)':'rgba(0,0,0,0.18)';\n"
+        "  ['radar-chart','sdg-chart','benchmark-chart'].forEach(function(id){\n"
+        "    var el=document.getElementById(id);\n"
+        "    if(!el||!el.data||!el._fullLayout) return;\n"
+        "    var up={'font.color':font,'legend.font.color':font};\n"
+        "    if(el._fullLayout.polar){\n"
+        "      up['polar.bgcolor']='rgba(0,0,0,0)';\n"
+        "      up['polar.radialaxis.gridcolor']=grid; up['polar.radialaxis.linecolor']=line; up['polar.radialaxis.tickfont.color']=font;\n"
+        "      up['polar.angularaxis.gridcolor']=grid; up['polar.angularaxis.linecolor']=line; up['polar.angularaxis.tickfont.color']=font;\n"
+        "    } else {\n"
+        "      up['xaxis.gridcolor']=grid; up['xaxis.linecolor']=line; up['xaxis.tickfont.color']=font; up['xaxis.zerolinecolor']=grid;\n"
+        "      up['yaxis.gridcolor']=grid; up['yaxis.linecolor']=line; up['yaxis.tickfont.color']=font; up['yaxis.zerolinecolor']=grid;\n"
+        "    }\n"
+        "    try{ Plotly.relayout(el, up); }catch(e){}\n"
+        "  });\n"
+        "}\n"
+        "window.ivRethemeCharts=ivRethemeCharts;\n"
+        "window.addEventListener('load', function(){ setTimeout(ivRethemeCharts, 60); });\n"
+        "setTimeout(ivRethemeCharts, 500);\n"
         "function onScroll(){\n"
         "  var st=doc.scrollTop||body.scrollTop;\n"
         "  var h=doc.scrollHeight-doc.clientHeight;\n"
@@ -1897,11 +1951,11 @@ def _report_ux_script() -> str:
         "if(themeBtn){\n"
         "  try{ if(localStorage.getItem('iv-theme')==='dark'){ body.classList.add('theme-dark'); } }catch(e){}\n"
         "  function sync(){ themeBtn.setAttribute('aria-pressed', body.classList.contains('theme-dark')?'true':'false'); }\n"
-        "  sync();\n"
+        "  sync(); ivRethemeCharts();\n"
         "  themeBtn.addEventListener('click', function(){\n"
         "    var dark=body.classList.toggle('theme-dark');\n"
         "    try{ localStorage.setItem('iv-theme', dark?'dark':'light'); }catch(e){}\n"
-        "    sync();\n"
+        "    sync(); ivRethemeCharts();\n"
         "  });\n"
         "}\n"
         "var links=Array.prototype.slice.call(document.querySelectorAll('.report-toc a'));\n"
@@ -2114,9 +2168,16 @@ tr:hover td {{ background: var(--primary-light); }}
 
 /* 7.2.4 -- 5D layout: radar at top, full-width table below */
 .five-d-grid {{ display: grid; grid-template-columns: minmax(340px, 0.9fr) minmax(360px, 1.4fr); gap: 20px; margin: 16px 0; align-items: stretch; }}
-@media(max-width: 860px) {{ .five-d-grid {{ grid-template-columns: 1fr; }} }}
+@media(max-width: 1024px) {{ .five-d-grid {{ grid-template-columns: 1fr; }} }}
+/* The 5-Dimension table has 6 columns incl. a wide Rationale; the 1080px body
+   cap makes a side-by-side card too narrow, so stack it: radar above (centred),
+   full-width table below. The 5-column SDG grid still sits side-by-side. */
+.five-d-grid.dim-stack {{ grid-template-columns: 1fr; }}
+.five-d-grid.dim-stack #radar-chart {{ max-width: 620px; width: 100%; margin: 0 auto; }}
 .five-d-grid .chart-box {{ padding: 20px; }}
 .five-d-grid #radar-chart {{ min-height: 360px; }}
+.table-scroll {{ overflow-x: auto; -webkit-overflow-scrolling: touch; }}
+#dim-table {{ width: 100%; }}
 #dim-table th, #dim-table td {{ vertical-align: top; }}
 #dim-table td.notes {{ white-space: normal; color: var(--text-secondary); font-size: 0.85em; line-height: 1.45; }}
 #dim-table td.metrics-cell {{ white-space: nowrap; }}
@@ -2464,9 +2525,10 @@ body.theme-dark .mini-header {{ box-shadow:0 2px 8px rgba(0,0,0,0.6); }}
 <div class="score-card"><div class="value" style="font-size:0.9em;color:{'var(--success)' if fd.get('overall_provenance') == 'evidence-based' else 'var(--warning)' if fd.get('overall_provenance') == 'partial' else 'var(--danger)'}">{'Evidence-Based' if fd.get('overall_provenance') == 'evidence-based' else 'Partial' if fd.get('overall_provenance') == 'partial' else 'Estimated'}</div><div class="label">Confidence</div></div>
 <div class="score-card" id="delta-card" style="display:none"><div class="value" id="main-delta" style="font-size:1.4em;color:var(--text-secondary)">+0.0</div><div class="label">Improvement</div></div>
 </div>
-<div class="five-d-grid">
-<div class="chart-box" id="radar-chart" role="img" aria-label="Radar chart of the five impact dimension scores (What, Who, How Much, Contribution, Risk). Scores are listed in the adjacent table."></div>
+<div class="five-d-grid dim-stack">
+<div class="chart-box" id="radar-chart" role="img" aria-label="Radar chart of the five impact dimension scores (What, Who, How Much, Contribution, Risk). Scores are listed below in the table."></div>
 <div class="chart-box">
+<div class="table-scroll">
 <table id="dim-table">
 <tr><th>Dimension</th><th>Score</th><th style="min-width:120px">Progress</th><th>Confidence</th><th>Metrics</th><th>Rationale</th></tr>
 """)
@@ -2523,7 +2585,7 @@ body.theme-dark .mini-header {{ box-shadow:0 2px 8px rgba(0,0,0,0.6); }}
                 sections.append('<span style="font-size:0.82em;color:var(--text-secondary)">Report more metrics to receive suggestions</span>')
             sections.append('</div></div></td></tr>')
 
-        sections.append("</table>")
+        sections.append("</table></div>")
         sections.append(
             '<div class="evidence-legend"><span class="ev-title">Score provenance:</span>'
             '<span class="evidence-badge verified" title="Backed by reported IRIS+ metrics / verified evidence">Evidence Based</span>'
@@ -2586,7 +2648,7 @@ Plotly.newPlot('radar-chart', [{{
   line: {{color: '#1976d2', width: 2.5}}, marker: {{size: 7, color: '#1976d2'}},
   name: 'Current'
 }}], {{
-  polar: {{radialaxis: {{visible: true, range: [0, 5], tickfont: {{size: 10}}}}, angularaxis: {{tickfont: {{size: 11}}}}}},
+  polar: {{bgcolor: 'rgba(0,0,0,0)', radialaxis: {{visible: true, range: [0, 5], tickfont: {{size: 10}}}}, angularaxis: {{tickfont: {{size: 11}}}}}},
   showlegend: true, legend: {{orientation: 'h', y: -0.1}},
   height: 380, margin: {{l: 70, r: 70, t: 40, b: 40}},
   paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',

@@ -26,6 +26,8 @@ Release history lives in [CHANGELOG.md](CHANGELOG.md). Strategy and engineering 
 </table>
 
 > **Try it yourself:** See a [sample HTML report](examples/sample_impact_report.html) generated for a pig farm in Malaysia.
+>
+> **More samples:** Browse the full set of generated deliverables — impact report (light / dark / white-label), IC memo, DD report and investee portal — in [`demo/`](demo/) (open [`demo/index.html`](demo/index.html) for the gallery).
 
 ## What is Impact Investing?
 

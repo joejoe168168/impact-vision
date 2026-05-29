@@ -1,0 +1,355 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Impact data request — Kampung Makmur Pig Farm Sdn Bhd</title><style>
+:root {
+  --primary: #0d47a1; --primary-light: #e3f2fd; --primary-dark: #002171;
+  --accent: #1976d2; --accent-light: #63a4ff;
+  --success: #2e7d32; --success-light: #e8f5e9; --success-dark: #1b5e20;
+  --warning: #f57c00; --warning-light: #fff3e0; --warning-dark: #e65100;
+  --danger: #c62828;  --danger-light: #ffebee;  --danger-dark: #b71c1c;
+  --neutral: #5f6368; --neutral-light: #f5f7fa;
+  --surface: #ffffff; --bg: #f5f7fa;
+  --text: #1a1a2e; --text-secondary: #5f6368; --text-muted: #9aa0a6;
+  --border: #e0e4e8; --border-strong: #bdc1c6;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+  --shadow-lg: 0 10px 25px rgba(0,0,0,0.10);
+  --radius: 14px; --radius-sm: 8px; --radius-pill: 9999px;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-sans); color: var(--text); background: var(--bg);
+  line-height: 1.55; -webkit-font-smoothing: antialiased;
+  font-feature-settings: "cv11","ss01","ss03"; text-rendering: optimizeLegibility;
+}
+.page {
+  max-width: 1200px; margin: 0 auto; padding: 32px 24px 64px;
+  display: grid; grid-template-columns: 220px 1fr; gap: 28px;
+}
+@media(max-width: 900px){ .page { grid-template-columns: 1fr; } aside.toc { display: none; } }
+
+/* ---------- Sticky Table of Contents ---------- */
+aside.toc {
+  position: sticky; top: 24px; align-self: start;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 18px 16px; box-shadow: var(--shadow-sm); font-size: 0.85em;
+}
+aside.toc h4 {
+  font-size: 0.72em; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--text-muted); margin-bottom: 10px; font-weight: 700;
+}
+aside.toc a {
+  display: block; color: var(--text-secondary); text-decoration: none;
+  padding: 6px 10px; border-radius: var(--radius-sm); margin: 2px 0;
+  border-left: 2px solid transparent; transition: all 0.15s;
+}
+aside.toc a:hover, aside.toc a.active {
+  color: var(--primary); background: var(--primary-light); border-left-color: var(--primary);
+}
+main { min-width: 0; }
+
+/* ---------- Header hero ---------- */
+.report-hero {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 55%, #4fc3f7 100%);
+  color: white; padding: 40px 44px; border-radius: var(--radius);
+  margin-bottom: 28px; box-shadow: var(--shadow-lg);
+  position: relative; overflow: hidden;
+}
+.report-hero::after {
+  content: ""; position: absolute; top: -40%; right: -10%;
+  width: 380px; height: 380px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,0.18), transparent 65%);
+  pointer-events: none;
+}
+.report-hero .eyebrow {
+  text-transform: uppercase; letter-spacing: 0.12em; font-size: 0.72em;
+  opacity: 0.85; margin-bottom: 6px; font-weight: 600;
+}
+.report-hero h1 {
+  font-size: 1.9em; font-weight: 750; margin-bottom: 8px;
+  letter-spacing: -0.02em; line-height: 1.15;
+}
+.report-hero .subtitle { opacity: 0.92; font-size: 0.98em; max-width: 65ch; }
+.report-hero .meta-row {
+  display: flex; gap: 20px; flex-wrap: wrap; margin-top: 16px;
+  opacity: 0.85; font-size: 0.82em;
+}
+.report-hero .meta-row b { font-weight: 600; opacity: 0.95; }
+.tag-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+.tag {
+  display: inline-block; background: rgba(255,255,255,0.22);
+  backdrop-filter: blur(6px);
+  padding: 4px 12px; border-radius: var(--radius-pill); font-size: 0.78em; font-weight: 500;
+}
+
+/* ---------- KPI strip ---------- */
+.kpi-strip {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px; margin: 20px 0 30px;
+}
+.kpi-tile {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 18px 20px 16px;
+  box-shadow: var(--shadow-sm); position: relative; overflow: hidden;
+}
+.kpi-tile::before {
+  content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+  background: var(--accent);
+}
+.kpi-tile.pass::before { background: var(--success); }
+.kpi-tile.warn::before { background: var(--warning); }
+.kpi-tile.fail::before, .kpi-tile.bad::before { background: var(--danger); }
+.kpi-tile .kpi-label {
+  font-size: 0.72em; color: var(--text-muted); text-transform: uppercase;
+  letter-spacing: 0.08em; font-weight: 600; margin-bottom: 8px;
+}
+.kpi-tile .kpi-value { font-size: 1.9em; font-weight: 750; line-height: 1.05; color: var(--text); }
+.kpi-tile .kpi-sub { font-size: 0.78em; color: var(--text-secondary); margin-top: 6px; }
+.kpi-tile .kpi-badge {
+  display: inline-block; padding: 2px 10px; border-radius: var(--radius-pill);
+  font-size: 0.68em; font-weight: 700; text-transform: uppercase;
+}
+.kpi-badge.pass { background: var(--success-light); color: var(--success-dark); }
+.kpi-badge.warn { background: var(--warning-light); color: var(--warning-dark); }
+.kpi-badge.fail { background: var(--danger-light);  color: var(--danger-dark); }
+.kpi-badge.neutral { background: var(--neutral-light); color: var(--neutral); }
+
+/* ---------- Sections ---------- */
+section.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 24px 28px;
+  margin: 22px 0; box-shadow: var(--shadow-sm);
+}
+h2.section-title {
+  color: var(--text); font-size: 1.25em; font-weight: 700;
+  margin-bottom: 6px; display: flex; align-items: center; gap: 10px;
+}
+h2.section-title::before {
+  content: ""; width: 4px; height: 22px; background: var(--primary);
+  border-radius: 2px;
+}
+.section-lede {
+  color: var(--text-secondary); font-size: 0.92em; margin-bottom: 18px;
+}
+h3 { color: var(--text); font-size: 1.02em; margin: 18px 0 8px; font-weight: 650; }
+
+/* ---------- Score / grade cards ---------- */
+.cards-row { display: flex; gap: 14px; flex-wrap: wrap; margin: 14px 0; }
+.score-card {
+  flex: 0 0 auto; background: var(--neutral-light);
+  border-radius: var(--radius); padding: 18px 24px; text-align: center;
+  border: 1px solid var(--border); min-width: 120px;
+}
+.score-card .value { font-size: 2.2em; font-weight: 750; line-height: 1.05; color: var(--text); }
+.score-card .label {
+  font-size: 0.72em; color: var(--text-muted); margin-top: 6px;
+  text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;
+}
+.grade-A { color: var(--success); }
+.grade-B { color: #558b2f; }
+.grade-C { color: #f9a825; }
+.grade-D { color: #e65100; }
+.grade-F { color: var(--danger); }
+
+/* ---------- Tables ---------- */
+table.data {
+  border-collapse: collapse; width: 100%; margin: 12px 0;
+  background: var(--surface); border-radius: var(--radius-sm);
+  overflow: hidden; border: 1px solid var(--border); font-size: 0.9em;
+}
+table.data th {
+  background: var(--neutral-light); color: var(--text);
+  font-weight: 650; padding: 10px 14px; text-align: left;
+  text-transform: uppercase; font-size: 0.72em; letter-spacing: 0.06em;
+  border-bottom: 1px solid var(--border);
+}
+table.data td { border-bottom: 1px solid var(--border); padding: 10px 14px; }
+table.data tbody tr:last-child td { border-bottom: none; }
+table.data tbody tr:hover td { background: var(--primary-light); }
+
+/* ---------- Progress bars ---------- */
+.bar-track {
+  background: #eceff1; border-radius: 6px; height: 10px; width: 100%; overflow: hidden;
+}
+.bar-fill { height: 100%; border-radius: 6px; transition: width 0.4s ease; }
+.bar-fill.blue   { background: linear-gradient(90deg, var(--accent), var(--accent-light)); }
+.bar-fill.green  { background: linear-gradient(90deg, #43a047, #66bb6a); }
+.bar-fill.orange { background: linear-gradient(90deg, #ef6c00, #ffa726); }
+.bar-fill.red    { background: linear-gradient(90deg, var(--danger), #ef5350); }
+.bar-fill.coverage { background: linear-gradient(90deg, var(--primary), var(--accent)); }
+
+/* ---------- Status pills ---------- */
+.pill {
+  display: inline-block; padding: 3px 10px; border-radius: var(--radius-pill);
+  font-size: 0.72em; font-weight: 650; text-transform: uppercase; letter-spacing: 0.04em;
+}
+.pill.pass { background: var(--success-light); color: var(--success-dark); }
+.pill.warn { background: var(--warning-light); color: var(--warning-dark); }
+.pill.fail { background: var(--danger-light);  color: var(--danger-dark); }
+.pill.na   { background: var(--neutral-light); color: var(--neutral); }
+
+/* ---------- Callouts ---------- */
+.callout {
+  border-left: 4px solid var(--primary); background: var(--primary-light);
+  padding: 14px 18px; border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  margin: 10px 0; font-size: 0.9em; color: var(--text);
+}
+.callout.warn   { border-color: var(--warning); background: var(--warning-light); }
+.callout.danger { border-color: var(--danger);  background: var(--danger-light); }
+.callout.ok     { border-color: var(--success); background: var(--success-light); }
+
+/* ---------- Footer ---------- */
+.footer {
+  margin-top: 40px; padding: 18px 0; border-top: 1px solid var(--border);
+  color: var(--text-muted); font-size: 0.8em; text-align: center;
+}
+.footer a { color: var(--accent); text-decoration: none; }
+.footer a:hover { text-decoration: underline; }
+
+/* ---------- Accessibility (WCAG 2.2 AA) ---------- */
+.skip-link {
+  position: absolute; left: -9999px; top: 0; z-index: 1000;
+  background: var(--primary); color: #fff; padding: 10px 16px;
+  border-radius: 0 0 var(--radius-sm) 0; font-weight: 600; text-decoration: none;
+}
+.skip-link:focus { left: 0; }
+a:focus-visible, button:focus-visible, [tabindex]:focus-visible,
+summary:focus-visible, .toc a:focus-visible {
+  outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 3px;
+}
+.visually-hidden {
+  position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important; animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important; scroll-behavior: auto !important;
+  }
+}
+
+/* ---------- Evidence-provenance badges (Track D3) ---------- */
+.evidence-badge {
+  display: inline-flex; align-items: center; gap: 5px; vertical-align: middle;
+  padding: 2px 9px; border-radius: var(--radius-pill);
+  font-size: 0.7em; font-weight: 650; letter-spacing: 0.02em;
+  border: 1px solid var(--border-strong); background: var(--neutral-light);
+  color: var(--text-secondary); text-decoration: none;
+}
+.evidence-badge::before {
+  content: ""; width: 7px; height: 7px; border-radius: 50%;
+  background: var(--neutral); flex: 0 0 auto;
+}
+.evidence-badge.verified { background: var(--success-light); color: var(--success-dark); border-color: var(--success); }
+.evidence-badge.verified::before { background: var(--success); }
+.evidence-badge.reported { background: var(--primary-light); color: var(--primary-dark); border-color: var(--accent); }
+.evidence-badge.reported::before { background: var(--accent); }
+.evidence-badge.estimated, .evidence-badge.proxy { background: var(--warning-light); color: var(--warning-dark); border-color: var(--warning); }
+.evidence-badge.estimated::before, .evidence-badge.proxy::before { background: var(--warning); }
+.evidence-badge.unverified, .evidence-badge.suggested { background: var(--danger-light); color: var(--danger-dark); border-color: var(--danger); }
+.evidence-badge.unverified::before, .evidence-badge.suggested::before { background: var(--danger); }
+.evidence-legend { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 10px 0; font-size: 0.86em; }
+.evidence-legend .ev-title { font-weight: 650; color: var(--text-secondary); }
+
+/* ---------- Dark mode + white-label opt-in (Track D7) ---------- */
+.theme-dark {
+  --surface: #1c2128; --bg: #0d1117; --text: #e6edf3;
+  --text-secondary: #b6bec8; --text-muted: #8b949e;
+  --border: #30363d; --border-strong: #454d56;
+  --primary-light: #15304d; --neutral-light: #1b222b;
+  --success-light: #12351d; --warning-light: #3a2a12; --danger-light: #3a1518;
+}
+
+/* ---------- Print ---------- */
+@media print {
+  body { background: white; }
+  .page { display: block; max-width: 100%; padding: 0; }
+  aside.toc { display: none; }
+  .skip-link { display: none; }
+  .report-hero { background: var(--primary) !important;
+                 -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  section.card { box-shadow: none; border: 1px solid #ccc; break-inside: avoid; page-break-inside: avoid; }
+  .kpi-tile { box-shadow: none; break-inside: avoid; }
+  h2.section-title { break-after: avoid; }
+}
+</style><style>
+.portal-intro{background:var(--primary-light,#e3f2fd);border-left:4px solid var(--primary,#1565c0);
+  padding:14px 18px;border-radius:8px;margin:16px 0;}
+fieldset.portal-section{border:1px solid var(--border,#d0d7de);border-radius:12px;padding:18px 20px;margin:18px 0;}
+fieldset.portal-section>legend{font-weight:700;font-size:1.1rem;padding:0 8px;}
+.portal-q{margin:14px 0;padding:12px 0;border-bottom:1px solid var(--border,#eee);}
+.portal-q:last-child{border-bottom:none;}
+.portal-q label{display:block;font-weight:600;margin-bottom:4px;}
+.portal-q .req{color:#c62828;margin-left:3px;}
+.portal-q input,.portal-q select,.portal-q textarea{width:100%;max-width:520px;padding:8px 10px;
+  border:1px solid var(--border,#c0c7d0);border-radius:8px;font:inherit;}
+.portal-q textarea{min-height:80px;}
+.portal-q .why{font-size:0.85em;color:var(--text-secondary,#5f6368);margin-top:4px;}
+.portal-q .plain{font-size:0.8em;color:var(--text-secondary,#5f6368);font-style:italic;}
+.portal-q .unit{font-size:0.8em;color:var(--text-secondary,#5f6368);margin-left:6px;}
+.portal-q .field-error{color:#c62828;font-size:0.82em;margin-top:4px;display:none;}
+.portal-q.invalid input,.portal-q.invalid select,.portal-q.invalid textarea{border-color:#c62828;}
+.portal-actions{margin:24px 0;display:flex;gap:12px;flex-wrap:wrap;align-items:center;}
+.portal-btn{background:var(--primary,#1565c0);color:#fff;border:none;padding:10px 20px;border-radius:8px;
+  font-weight:600;cursor:pointer;}
+.portal-btn.secondary{background:#fff;color:var(--primary,#1565c0);border:1px solid var(--primary,#1565c0);}
+#portal-status{font-size:0.9em;}
+.portal-progress{height:8px;background:#eceff1;border-radius:99px;overflow:hidden;margin:8px 0 0;}
+.portal-progress>span{display:block;height:100%;background:var(--success,#2e7d32);width:0;transition:width .2s;}
+</style><script defer>
+(function(){
+  var form = document.getElementById('investee-form');
+  var status = document.getElementById('portal-status');
+  var bar = document.getElementById('portal-bar');
+  if(!form) return;
+  function updateProgress(){
+    var qs = form.querySelectorAll('.portal-q');
+    var filled = 0;
+    qs.forEach(function(q){
+      var c = q.querySelector('input,select,textarea');
+      if(c && String(c.value).trim() !== '') filled++;
+    });
+    var pct = qs.length ? Math.round(filled/qs.length*100) : 0;
+    if(bar) bar.style.width = pct + '%';
+    if(status) status.textContent = filled + ' of ' + qs.length + ' answered (' + pct + '%)';
+  }
+  function validate(){
+    var ok = true;
+    form.querySelectorAll('.portal-q').forEach(function(q){
+      var c = q.querySelector('input,select,textarea');
+      var err = q.querySelector('.field-error');
+      var bad = false, msg = 'This field is required.';
+      if(!c) return;
+      var v = String(c.value).trim();
+      if(q.dataset.required === 'true' && v === ''){ bad = true; }
+      if(v !== '' && (q.dataset.type === 'number' || q.dataset.type === 'percent')){
+        var num = parseFloat(v);
+        if(isNaN(num)){ bad = true; msg = 'Enter a number.'; }
+        else if(c.min !== '' && num < parseFloat(c.min)){ bad = true; msg = 'Must be ≥ ' + c.min + '.'; }
+        else if(c.max !== '' && num > parseFloat(c.max)){ bad = true; msg = 'Must be ≤ ' + c.max + '.'; }
+      }
+      q.classList.toggle('invalid', bad);
+      if(err){ err.style.display = bad ? 'block' : 'none'; if(bad) err.textContent = msg; }
+      if(bad) ok = false;
+    });
+    return ok;
+  }
+  form.addEventListener('input', updateProgress);
+  document.getElementById('portal-export').addEventListener('click', function(){
+    if(!validate()){ if(status) status.textContent = 'Please fix the highlighted fields.'; return; }
+    var data = {};
+    form.querySelectorAll('.portal-q').forEach(function(q){
+      var c = q.querySelector('input,select,textarea');
+      if(c && String(c.value).trim() !== '') data[q.dataset.qid] = c.value;
+    });
+    var blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'investee_submission.json';
+    a.click();
+    if(status) status.textContent = 'Saved investee_submission.json — send this file back to your investor.';
+  });
+  updateProgress();
+})();
+</script></head><body><a class="skip-link" href="#main-content">Skip to main content</a><main id="main-content" tabindex="-1"><div class="report-hero"><h1>Impact &amp; ESG data request</h1><p>Prepared for Kampung Makmur Pig Farm Sdn Bhd by Meridian Impact Partners.</p></div><div class="portal-intro"><strong>Why this matters:</strong> consistent, comparable impact data is what lets your investor tell your story credibly to their own LPs and regulators. Every question explains <em>why we need it</em>. Answer what you can — leave blanks where data isn't ready yet. Your answers stay in your browser until you export and send them.</div><div class="portal-progress" aria-hidden="true"><span id="portal-bar"></span></div><p id="portal-status" role="status" aria-live="polite"></p><form id="investee-form" novalidate><fieldset class="portal-section"><legend>Company basics</legend><p class="why">A few facts so we can tailor the right impact metrics to your business.</p><div class="portal-q" data-qid="company_name" data-required="true" data-type="text"><label for="company_name">Company name<span class="req" aria-hidden="true">*</span></label><input type="text" id="company_name" name="company_name" aria-required="true" required aria-describedby="company_name-why"><div class="field-error" id="company_name-error" role="alert">This field is required.</div><div class="why" id="company_name-why">Why we ask: Identifies your submission and links it to our records.</div></div><div class="portal-q" data-qid="sector" data-required="true" data-type="text"><label for="sector">Primary sector<span class="req" aria-hidden="true">*</span></label><input type="text" id="sector" name="sector" aria-required="true" required aria-describedby="sector-why"><div class="field-error" id="sector-error" role="alert">This field is required.</div><div class="why" id="sector-why">Why we ask: Determines which IRIS+ metrics and benchmarks apply to you.</div></div><div class="portal-q" data-qid="geography" data-required="false" data-type="text"><label for="geography">Main country/region of operation</label><input type="text" id="geography" name="geography" aria-describedby="geography-why"><div class="field-error" id="geography-error" role="alert">This field is required.</div><div class="why" id="geography-why">Why we ask: Lets us contextualise impact against local need and regulation.</div></div><div class="portal-q" data-qid="employees" data-required="false" data-type="number"><label for="employees">Total employees (FTE)<span class="unit">people</span></label><input type="number" step="any" id="employees" name="employees" min="0.0" aria-describedby="employees-why"><div class="field-error" id="employees-error" role="alert">This field is required.</div><div class="why" id="employees-why">Why we ask: Used for per-capita intensity metrics and CSRD/VSME scope checks.</div></div></fieldset><fieldset class="portal-section"><legend>Impact thesis &amp; outcomes</legend><p class="why">Your intended impact and the outcomes you can already evidence.</p><div class="portal-q" data-qid="impact_thesis" data-required="true" data-type="longtext"><label for="impact_thesis">What change are you trying to create?<span class="req" aria-hidden="true">*</span></label><textarea id="impact_thesis" name="impact_thesis" aria-required="true" required aria-describedby="impact_thesis-why"></textarea><div class="field-error" id="impact_thesis-error" role="alert">This field is required.</div><div class="why" id="impact_thesis-why">Why we ask: The basis of your theory of change — we map it to SDGs and IRIS+ outcomes.</div></div><div class="portal-q" data-qid="beneficiaries" data-required="false" data-type="number"><label for="beneficiaries">People meaningfully reached (last 12 months)<span class="unit">people</span></label><input type="number" step="any" id="beneficiaries" name="beneficiaries" min="0.0" aria-describedby="beneficiaries-why"><div class="field-error" id="beneficiaries-error" role="alert">This field is required.</div><div class="why" id="beneficiaries-why">Why we ask: Breadth of impact — feeds the welfare (QALY) quantifier and SDG-need context.</div></div><div class="portal-q" data-qid="underserved_share" data-required="false" data-type="percent"><label for="underserved_share">Share of beneficiaries who are underserved<span class="unit">%</span></label><input type="number" step="any" id="underserved_share" name="underserved_share" min="0.0" max="100.0" aria-describedby="underserved_share-why"><div class="field-error" id="underserved_share-error" role="alert">This field is required.</div><div class="why" id="underserved_share-why">Why we ask: Depth/additionality — underserved reach scores higher on the 5 Dimensions.</div></div></fieldset><fieldset class="portal-section"><legend>SFDR Principal Adverse Impacts (plain language)</legend><p class="why">These map to the EU SFDR mandatory adverse-impact indicators. We&#x27;ve translated the jargon — answer what you can; leave blanks where data isn&#x27;t ready.</p><div class="portal-q" data-qid="pai_1" data-required="false" data-type="number"><label for="pai_1">Your total greenhouse-gas emissions<span class="unit">tCO2e</span></label><div class="plain">SFDR PAI 1: GHG emissions</div><input type="number" step="any" id="pai_1" name="pai_1" min="0.0" aria-describedby="pai_1-why"><div class="field-error" id="pai_1-error" role="alert">This field is required.</div><div class="why" id="pai_1-why">Why we ask: Scope 1+2 (and 3 if known) GHG emissions. Required by EU SFDR if we market this fund as Article 8/9.</div></div><div class="portal-q" data-qid="pai_3" data-required="false" data-type="number"><label for="pai_3">How carbon-intensive your revenue is<span class="unit">tCO2e/€M</span></label><div class="plain">SFDR PAI 3: GHG intensity of investee companies</div><input type="number" step="any" id="pai_3" name="pai_3" min="0.0" aria-describedby="pai_3-why"><div class="field-error" id="pai_3-error" role="alert">This field is required.</div><div class="why" id="pai_3-why">Why we ask: GHG emissions per €M revenue. Required by EU SFDR if we market this fund as Article 8/9.</div></div><div class="portal-q" data-qid="pai_4" data-required="false" data-type="boolean"><label for="pai_4">Do you operate in fossil fuels?</label><div class="plain">SFDR PAI 4: Exposure to companies active in the fossil fuel sector</div><select id="pai_4" name="pai_4" aria-describedby="pai_4-why"><option value="">—</option><option value="yes">Yes</option><option value="no">No</option></select><div class="field-error" id="pai_4-error" role="alert">This field is required.</div><div class="why" id="pai_4-why">Why we ask: Any revenue from the fossil-fuel sector. Required by EU SFDR if we market this fund as Article 8/9.</div></div><div class="portal-q" data-qid="pai_5" data-required="false" data-type="percent"><label for="pai_5">Share of energy from non-renewable sources<span class="unit">%</span></label><div class="plain">SFDR PAI 5: Share of non-renewable energy consumption and production</div><input type="number" step="any" id="pai_5" name="pai_5" min="0.0" max="100.0" aria-describedby="pai_5-why"><div class="field-error" id="pai_5-error" role="alert">This field is required.</div><div class="why" id="pai_5-why">Why we ask: Non-renewable energy consumption/production share. Required by EU SFDR if we market this fund as Article 8/9.</div></div><div class="portal-q" data-qid="pai_10" data-required="false" data-type="boolean"><label for="pai_10">Any breaches of UN Global Compact / OECD Guidelines?</label><div class="plain">SFDR PAI 10: Violations of UNGC principles and OECD Guidelines for MNEs</div><select id="pai_10" name="pai_10" aria-describedby="pai_10-why"><option value="">—</option><option value="yes">Yes</option><option value="no">No</option></select><div class="field-error" id="pai_10-error" role="alert">This field is required.</div><div class="why" id="pai_10-why">Why we ask: Violations of responsible-business principles. Required by EU SFDR if we market this fund as Article 8/9.</div></div><div class="portal-q" data-qid="pai_13" data-required="false" data-type="percent"><label for="pai_13">Share of women on your board<span class="unit">%</span></label><div class="plain">SFDR PAI 13: Board gender diversity</div><input type="number" step="any" id="pai_13" name="pai_13" min="0.0" max="100.0" aria-describedby="pai_13-why"><div class="field-error" id="pai_13-error" role="alert">This field is required.</div><div class="why" id="pai_13-why">Why we ask: Board gender diversity. Required by EU SFDR if we market this fund as Article 8/9.</div></div></fieldset><div class="portal-actions"><button type="button" id="portal-export" class="portal-btn">Save &amp; export my answers</button><span class="why">No data is uploaded — export creates a JSON file you send back.</span></div></form></main></body></html>

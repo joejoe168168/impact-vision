@@ -1,0 +1,23 @@
+{
+  "name": "Kampung Makmur Pig Farm Sdn Bhd",
+  "sector": "agriculture",
+  "geography": "Malaysia",
+  "description": "Kampung Makmur is a 3,000-sow commercial pig farm in Johor, Malaysia, operating an integrated breed-to-finish facility with a licensed biogas-to-power plant. It supplies 45,000 market hogs per year to the Klang Valley through three halal-adjacent processors and a cold-chain distribution partnership with a regional retailer. Founded in 2014 by a second-generation farmer, the company has repositioned itself around animal welfare, antibiotic-stewardship and manure-to-energy circularity following the regional ASF outbreaks.",
+  "impact_themes": [
+    "sustainable agriculture",
+    "waste-to-energy",
+    "jobs",
+    "animal welfare",
+    "smallholder livelihoods"
+  ],
+  "sdg_claims": [
+    2,
+    6,
+    7,
+    8,
+    12,
+    13
+  ],
+  "pitch_text": "Kampung Makmur is a 3,000-sow integrated pig farm in Kluang, Johor, serving West Malaysia's growing protein demand. Since 2022 we have reduced antibiotic use by 62% through vaccination and group-housing, and replaced 100% of conventional slatted housing with deep-litter, enrichment-enabled pens benchmarked against the EU Welfare Quality protocol. Our biogas plant captures methane from manure lagoons and generates 1.8 GWh of electricity per year, replacing ~920 tonnes CO2e of grid emissions and cutting our grid electricity purchases by 74%. Effluent is processed through a 3-stage anaerobic-lagoon + constructed-wetland system; treated water is reused for flushing. Water withdrawal per kg of live weight dropped 31% versus our 2020 baseline, independently verified by SIRIM. We employ 142 staff, of whom 38% are women and 64% are from Kluang district; median wage is 42% above the Johor agricultural minimum and every worker is enrolled in SOCSO and EPF. We run an outgrower programme with 18 smallholder piggeries, supplying feed and veterinary support at wholesale cost; participating smallholders report average income uplifts of RM 1,850 per month (baseline: RM 900). A 2024 randomized pilot with Universiti Putra Malaysia compared 120 outgrower households to a matched control group and found 23% higher household food-security scores and 17% higher child school attendance. We are SEDEX-audited and have a 4-tier grievance mechanism. Risks we actively manage include: (i) ASF biosecurity — all farms are fenced, SPF breeding stock, shower-in/out protocol, quarterly third-party audit by the Department of Veterinary Services; (ii) nutrient run-off during monsoon — on-site retention ponds sized to 1-in-100-year storm, automated ammonia sensors; (iii) community odour — a covered-lagoon retrofit was completed in Q3 2025 and the formal complaints rate has dropped from 14 to 2 per year. Over the next five years we target: 45% reduction in Scope 1+2 emissions intensity (kg CO2e / kg live weight); 80% of breeding sows in group-housing ≥ 10 weeks after weaning; 35 outgrower households onboarded; and a SBTi near-term target submission by 2027. We report against IRIS+, SDG 2/6/7/8/12/13, GRI standards, and have commissioned a first independent ESG audit for FY2026.",
+  "reported_metrics": {}
+}

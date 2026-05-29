@@ -1,0 +1,1811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Impact Report: Kampung Makmur Pig Farm Sdn Bhd</title>
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<style>
+:root {
+  --primary: #0d47a1; --primary-light: #e3f2fd; --primary-dark: #002171;
+  --accent: #1976d2; --accent-light: #63a4ff;
+  --success: #2e7d32; --success-light: #e8f5e9;
+  --warning: #f57c00; --warning-light: #fff3e0;
+  --danger: #c62828; --danger-light: #ffebee;
+  --surface: #ffffff; --bg: #f5f7fa; --text: #1a1a2e; --text-secondary: #5f6368;
+  --border: #e0e4e8; --shadow-sm: 0 1px 3px rgba(0,0,0,0.08); --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
+  --radius: 12px; --radius-sm: 8px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 1080px; margin: 0 auto; padding: 32px 24px; color: var(--text); background: var(--bg); line-height: 1.5; }
+.report-header { background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%); color: white; padding: 36px 40px; border-radius: var(--radius); margin-bottom: 28px; box-shadow: var(--shadow-md); }
+.report-header h1 { font-size: 1.75em; font-weight: 700; margin-bottom: 6px; letter-spacing: -0.02em; }
+.report-header .subtitle { opacity: 0.9; font-size: 0.95em; }
+.report-header .meta-row { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 12px; opacity: 0.85; font-size: 0.85em; }
+.report-header .meta-row span { display: flex; align-items: center; gap: 4px; }
+.tag-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.tag { display: inline-block; background: rgba(255,255,255,0.2); padding: 3px 12px; border-radius: 20px; font-size: 0.8em; }
+h2 { color: var(--primary); font-size: 1.3em; margin: 32px 0 16px; padding-bottom: 8px; border-bottom: 2px solid var(--primary-light); font-weight: 600; }
+h3 { color: var(--text); font-size: 1.05em; margin: 20px 0 10px; font-weight: 600; }
+.cards-row { display: flex; gap: 16px; flex-wrap: wrap; margin: 16px 0; }
+.score-card { flex: 0 0 auto; background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow-sm); padding: 20px 28px; text-align: center; border: 1px solid var(--border); min-width: 130px; }
+.score-card .value { font-size: 2.2em; font-weight: 700; line-height: 1.1; }
+.score-card .label { font-size: 0.8em; color: var(--text-secondary); margin-top: 6px; text-transform: uppercase; letter-spacing: 0.03em; }
+.grade-A { color: var(--success); } .grade-B { color: #558b2f; } .grade-C { color: #f9a825; } .grade-D { color: #e65100; } .grade-F { color: var(--danger); }
+.chart-row { display: flex; gap: 20px; flex-wrap: wrap; margin: 16px 0; }
+.chart-box { flex: 1 1 420px; min-width: 0; background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow-sm); padding: 20px; border: 1px solid var(--border); overflow: hidden; }
+table { border-collapse: collapse; width: 100%; margin: 12px 0; background: var(--surface); border-radius: var(--radius-sm); overflow: hidden; box-shadow: var(--shadow-sm); font-size: 0.9em; }
+th { background: var(--primary); color: white; font-weight: 600; padding: 12px 14px; text-align: left; text-transform: uppercase; font-size: 0.75em; letter-spacing: 0.05em; }
+td { border-bottom: 1px solid var(--border); padding: 10px 14px; }
+tr:hover td { background: var(--primary-light); }
+.bar-track { background: #e8eaed; border-radius: 6px; height: 10px; width: 100%; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 6px; transition: width 0.4s ease; }
+.bar-fill.blue { background: linear-gradient(90deg, var(--accent), var(--accent-light)); }
+.bar-fill.green { background: linear-gradient(90deg, #43a047, #66bb6a); }
+.bar-fill.orange { background: linear-gradient(90deg, #ef6c00, #ffa726); }
+.bar-fill.red { background: linear-gradient(90deg, #c62828, #ef5350); }
+.bar-fill.coverage { background: linear-gradient(90deg, var(--primary), var(--accent)); }
+.rec { background: var(--warning-light); padding: 14px 18px; border-left: 4px solid var(--warning); margin: 8px 0; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: 0.9em; line-height: 1.6; }
+.bm-delta.positive { color: var(--success); font-weight: 700; }
+.bm-delta.negative { color: var(--danger); font-weight: 700; }
+.bm-delta.neutral { color: var(--text-secondary); font-weight: 600; }
+.coverage-hero { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow-sm); padding: 24px 28px; border: 1px solid var(--border); margin: 16px 0; display: flex; align-items: center; gap: 20px; }
+.coverage-hero .pct { font-size: 2.5em; font-weight: 800; color: var(--primary); line-height: 1; }
+.coverage-hero .detail { flex: 1; }
+.coverage-hero .bar-track { height: 14px; margin-top: 8px; }
+.footer { margin-top: 48px; padding: 20px 0; border-top: 2px solid var(--border); color: var(--text-secondary); font-size: 0.8em; text-align: center; }
+.footer a { color: var(--accent); text-decoration: none; }
+@media(max-width: 700px) { .chart-row { flex-direction: column; } .chart-box { flex-basis: 100%; } }
+
+/* 7.1.1 -- 5D Overlay Panel */
+.dim-clickable { cursor: pointer; }
+.dim-clickable:hover td { background: var(--primary-light) !important; }
+.dim-overlay { display: none; }
+.dim-overlay.active { display: table-row; }
+.dim-overlay td { background: #f8fafe; padding: 16px 14px; }
+.dim-overlay-content { display: flex; gap: 16px; flex-wrap: wrap; }
+.dim-overlay-col { flex: 1 1 200px; min-width: 180px; }
+.dim-overlay-col h4 { font-size: 0.85em; color: var(--primary); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.03em; }
+.metric-pill { display: inline-block; padding: 3px 10px; border-radius: 14px; font-size: 0.78em; margin: 2px 3px; font-weight: 500; }
+.metric-pill.tracked { background: var(--success-light); color: var(--success); }
+.metric-pill.gap { background: var(--danger-light); color: var(--danger); }
+.metric-pill.partial { background: var(--warning-light); color: var(--warning); }
+.dim-suggestion { font-size: 0.82em; color: var(--text-secondary); margin: 4px 0; padding-left: 12px; border-left: 2px solid var(--warning); }
+
+/* 7.1.2 -- SDG Drill-down */
+.sdg-clickable { cursor: pointer; }
+.sdg-clickable:hover td { background: #fff9e6 !important; }
+.sdg-detail { display: none; }
+.sdg-detail.active { display: table-row; }
+.sdg-detail td { background: #fffef5; padding: 16px 14px; }
+.evidence-chain { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; margin: 6px 0; }
+.chain-node { background: var(--primary-light); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 6px 10px; font-size: 0.78em; text-align: center; max-width: 160px; }
+.chain-arrow { color: var(--text-secondary); font-size: 1.1em; }
+.chain-confidence { font-size: 0.7em; color: var(--text-secondary); }
+.sdg-rec { font-size: 0.82em; padding: 6px 10px; background: var(--warning-light); border-radius: var(--radius-sm); margin: 3px 0; }
+
+/* 7.1.3 -- Metric Tracking Dashboard */
+.metric-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin: 16px 0; }
+.metric-card { background: var(--surface); border-radius: var(--radius-sm); box-shadow: var(--shadow-sm); padding: 14px 16px; border: 1px solid var(--border); border-top: 3px solid var(--border); }
+.metric-card.tracked { border-top-color: var(--success); }
+.metric-card.gap { border-top-color: var(--danger); }
+.metric-card.partial { border-top-color: var(--warning); }
+.metric-card .mc-id { font-size: 0.75em; color: var(--text-secondary); font-weight: 600; }
+.metric-card .mc-name { font-size: 0.88em; font-weight: 600; margin: 4px 0; }
+.metric-card .mc-status { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.72em; font-weight: 600; text-transform: uppercase; }
+.mc-status.tracked { background: var(--success-light); color: var(--success); }
+.mc-status.gap { background: var(--danger-light); color: var(--danger); }
+.mc-status.partial { background: var(--warning-light); color: var(--warning); }
+
+/* 7.1.4 -- Claim Evidence Cards */
+.claim-card { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow-sm); padding: 16px 20px; margin: 10px 0; border: 1px solid var(--border); transition: box-shadow 0.2s; }
+.claim-card:hover { box-shadow: var(--shadow-md); }
+.claim-header { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.claim-text { flex: 1; font-size: 0.9em; }
+.claim-badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 0.72em; font-weight: 600; text-transform: uppercase; }
+.claim-badge.outcome { background: #e8f5e9; color: #2e7d32; }
+.claim-badge.output { background: #e3f2fd; color: #1565c0; }
+.claim-badge.activity { background: #fff3e0; color: #e65100; }
+.claim-badge.intent { background: #f3e5f5; color: #7b1fa2; }
+.claim-badge.risk { background: #ffebee; color: #c62828; }
+.claim-body { display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+.claim-body.active { display: block; }
+.confidence-bar { background: #e8eaed; border-radius: 6px; height: 8px; width: 100px; display: inline-block; overflow: hidden; vertical-align: middle; }
+.confidence-fill { height: 100%; border-radius: 6px; }
+.chip { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.75em; margin: 2px; background: var(--primary-light); color: var(--primary); }
+.claim-toggle { color: var(--text-secondary); font-size: 0.85em; }
+
+/* 7.2.3 -- Impact Pathway Diagram */
+.pathway { display: flex; align-items: stretch; gap: 0; margin: 20px 0; overflow-x: auto; padding: 10px 0; }
+.pathway-stage { flex: 1 1 150px; min-width: 130px; text-align: center; position: relative; }
+.pathway-box { background: var(--surface); border: 2px solid var(--primary-light); border-radius: var(--radius-sm); padding: 12px 10px; margin: 0 6px; min-height: 80px; display: flex; flex-direction: column; justify-content: center; }
+.pathway-box h4 { font-size: 0.78em; color: var(--primary); text-transform: uppercase; margin-bottom: 6px; }
+.pathway-box .items { font-size: 0.78em; color: var(--text); }
+.pathway-box .confidence-label { font-size: 0.68em; color: var(--text-secondary); margin-top: 4px; }
+.pathway-arrow { position: absolute; right: -10px; top: 50%; transform: translateY(-50%); color: var(--primary); font-size: 1.4em; z-index: 1; }
+
+/* 7.2.4 -- 5D layout: radar at top, full-width table below */
+.five-d-grid { display: grid; grid-template-columns: minmax(340px, 0.9fr) minmax(360px, 1.4fr); gap: 20px; margin: 16px 0; align-items: stretch; }
+@media(max-width: 1024px) { .five-d-grid { grid-template-columns: 1fr; } }
+/* The 5-Dimension table has 6 columns incl. a wide Rationale; the 1080px body
+   cap makes a side-by-side card too narrow, so stack it: radar above (centred),
+   full-width table below. The 5-column SDG grid still sits side-by-side. */
+.five-d-grid.dim-stack { grid-template-columns: 1fr; }
+.five-d-grid.dim-stack #radar-chart { max-width: 620px; width: 100%; margin: 0 auto; }
+.five-d-grid .chart-box { padding: 20px; }
+.five-d-grid #radar-chart { min-height: 360px; }
+.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+#dim-table { width: 100%; }
+#dim-table th, #dim-table td { vertical-align: top; }
+#dim-table td.notes { white-space: normal; color: var(--text-secondary); font-size: 0.85em; line-height: 1.45; }
+#dim-table td.metrics-cell { white-space: nowrap; }
+
+/* 7.2.5 -- SDG chart + collapsible rows */
+.sdg-toggle { display: inline-block; margin: 10px 0 14px; padding: 6px 14px; background: var(--primary-light); color: var(--primary); border: none; border-radius: var(--radius-sm); font-size: 0.82em; font-weight: 600; cursor: pointer; }
+.sdg-toggle:hover { background: #cfe3ff; }
+tr.sdg-collapsed, tr.sdg-collapsed + tr.sdg-detail { display: none; }
+tr.sdg-collapsed.show, tr.sdg-collapsed.show + tr.sdg-detail { display: table-row; }
+
+/* 7.2.6 -- Missing Metrics rich table */
+.missing-metrics-group { margin: 18px 0; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--surface); box-shadow: var(--shadow-sm); }
+.missing-metrics-group summary { padding: 14px 18px; cursor: pointer; font-weight: 600; color: var(--primary); background: var(--primary-light); list-style: none; display: flex; justify-content: space-between; align-items: center; }
+.missing-metrics-group summary::-webkit-details-marker { display: none; }
+.missing-metrics-group summary::after { content: '▾'; font-size: 0.9em; color: var(--primary); transition: transform 0.2s; }
+.missing-metrics-group[open] summary::after { transform: rotate(180deg); }
+.missing-metric-card { padding: 14px 18px; border-top: 1px solid var(--border); display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1.2fr); gap: 14px; }
+@media(max-width: 760px) { .missing-metric-card { grid-template-columns: 1fr; } }
+.missing-metric-card:first-of-type { border-top: none; }
+.missing-metric-card .mm-head { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 6px; }
+.missing-metric-card .mm-id { font-family: 'SF Mono', Consolas, monospace; font-size: 0.78em; background: var(--bg); color: var(--text-secondary); padding: 2px 8px; border-radius: 4px; letter-spacing: 0.02em; }
+.missing-metric-card .mm-name { font-weight: 600; font-size: 0.95em; color: var(--text); }
+.missing-metric-card .mm-def { font-size: 0.85em; color: var(--text-secondary); margin-top: 4px; line-height: 1.5; }
+.missing-metric-card .mm-side dl { margin: 0; font-size: 0.82em; }
+.missing-metric-card .mm-side dt { color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; font-size: 0.72em; font-weight: 600; margin-top: 6px; }
+.missing-metric-card .mm-side dd { margin: 2px 0 0; color: var(--text); line-height: 1.4; }
+.missing-metric-card .mm-chip { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.72em; margin: 2px 4px 2px 0; font-weight: 600; }
+.missing-metric-card .mm-chip.dim { background: var(--primary-light); color: var(--primary); }
+.missing-metric-card .mm-chip.sdg { background: #fff4dc; color: #8a5a00; }
+.missing-metric-card .mm-chip.unit { background: var(--success-light); color: var(--success); }
+
+/* 7.2.7 -- Scoring rationale panel */
+.rationale-panel { margin: 22px 0; padding: 20px 22px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-sm); }
+.rationale-headline { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 10px; flex-wrap: wrap; }
+.rationale-overall { font-size: 2.6em; font-weight: 800; color: var(--primary); line-height: 1; }
+.rationale-overall-max { font-size: 0.4em; color: var(--text-secondary); margin-left: 4px; font-weight: 400; }
+.rationale-grade { display: inline-block; padding: 4px 12px; margin-left: 12px; background: var(--primary-light); color: var(--primary); border-radius: 16px; font-size: 1em; font-weight: 700; vertical-align: super; }
+.rationale-prov { font-size: 0.95em; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+.rationale-intro { font-size: 0.9em; color: var(--text-secondary); line-height: 1.6; margin: 6px 0 14px; }
+.rationale-table-wrap { overflow-x: auto; margin: 8px 0 10px; }
+.rationale-table { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 0.82em; }
+.rationale-table col.col-dim { width: 24%; }
+.rationale-table col.col-final { width: 9%; }
+.rationale-table col.col-baseline { width: 11%; }
+.rationale-table col.col-lift { width: 12%; }
+.rationale-table col.col-metrics { width: 13%; }
+.rationale-table col.col-driver { width: 31%; }
+.rationale-table th { background: var(--bg); color: var(--text); padding: 8px 10px; font-size: 0.72em; text-align: left; vertical-align: top; }
+.rationale-table td { padding: 8px 10px; vertical-align: top; word-break: break-word; overflow-wrap: break-word; line-height: 1.42; }
+.rationale-table td.r-final,
+.rationale-table td.r-baseline,
+.rationale-table td.r-lift,
+.rationale-table td.r-metrics { white-space: nowrap; }
+.rationale-table td.r-driver { font-size: 0.92em; color: var(--text-secondary); }
+.rationale-table td.r-dim { line-height: 1.35; }
+.rationale-table td.r-dim .prov-badge { display: inline-block; margin: 2px 0 0; }
+@media (max-width: 780px) {
+  .rationale-table { table-layout: auto; font-size: 0.78em; min-width: 640px; }
+  .rationale-table th, .rationale-table td { padding: 6px 8px; }
+}
+.rationale-cap-tag { font-size: 0.7em; background: var(--warning-light); color: var(--warning); padding: 1px 6px; border-radius: 8px; margin-left: 4px; white-space: nowrap; }
+.prov-badge { font-size: 0.64em; padding: 2px 7px; border-radius: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; margin-left: 6px; white-space: nowrap; }
+.rationale-levers { margin: 12px 0; padding: 14px 16px; background: var(--warning-light); border-left: 4px solid var(--warning); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+.rationale-levers-title { font-size: 0.88em; color: var(--text); font-weight: 600; margin-bottom: 6px; }
+.rationale-lever-list { margin: 0; padding-left: 20px; font-size: 0.85em; color: var(--text-secondary); }
+.rationale-lever-list code { font-size: 0.9em; background: rgba(255,255,255,0.7); padding: 1px 6px; border-radius: 4px; color: var(--text); }
+.rationale-legend { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border); font-size: 0.82em; color: var(--text-secondary); }
+.rationale-legend .legend-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+
+/* 7.1.5 -- Print/PDF */
+@media print {
+  body { background: white; max-width: 100%; padding: 16px; font-size: 10pt; }
+  .report-header { background: #0d47a1 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .score-card, .chart-box, .claim-card, .metric-card { break-inside: avoid; }
+  #interactive-panel, .dim-clickable .claim-toggle { display: none !important; }
+  .dim-overlay, .sdg-detail, .claim-body { display: table-row !important; }
+  .claim-body { display: block !important; }
+  h2 { break-before: page; }
+  .footer { break-before: avoid; }
+}
+
+/* 7.1.6 -- Report Comparison */
+.comparison-table { width: 100%; border-collapse: collapse; }
+.comparison-table th { background: var(--primary); color: white; padding: 10px; font-size: 0.8em; }
+.comparison-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); font-size: 0.88em; }
+.delta-up { color: var(--success); font-weight: 700; }
+.delta-down { color: var(--danger); font-weight: 700; }
+.delta-same { color: var(--text-secondary); }
+
+/* v0.12 -- Executive Summary KPI strip & callouts */
+.kpi-strip {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px; margin: 0 0 20px;
+}
+.kpi-tile {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px 18px; box-shadow: var(--shadow-sm);
+  position: relative; overflow: hidden;
+}
+.kpi-tile::before {
+  content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+  background: var(--accent);
+}
+.kpi-tile.pass::before { background: var(--success); }
+.kpi-tile.warn::before { background: var(--warning); }
+.kpi-tile.fail::before { background: var(--danger);  }
+.kpi-tile.neutral::before { background: #9aa0a6; }
+.kpi-tile .kpi-label {
+  font-size: 0.72em; color: #5f6368; text-transform: uppercase;
+  letter-spacing: 0.06em; font-weight: 600; margin-bottom: 6px;
+}
+.kpi-tile .kpi-value { font-size: 1.7em; font-weight: 750; line-height: 1.05; color: var(--text); }
+.kpi-tile .kpi-sub { font-size: 0.78em; color: var(--text-secondary); margin-top: 4px; }
+.callout {
+  border-left: 4px solid var(--primary); background: var(--primary-light);
+  padding: 12px 16px; border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  margin: 10px 0; font-size: 0.9em; color: var(--text);
+}
+.callout.warn   { border-color: var(--warning); background: var(--warning-light); }
+.callout.danger { border-color: var(--danger);  background: var(--danger-light); }
+.callout.ok     { border-color: var(--success); background: var(--success-light); }
+
+/* v0.12 -- TOC sidebar */
+.report-toc {
+  position: fixed; top: 32px; left: 16px; width: 210px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px 14px;
+  box-shadow: var(--shadow-sm); font-size: 0.84em;
+  max-height: calc(100vh - 64px); overflow-y: auto;
+}
+.report-toc h4 {
+  font-size: 0.7em; text-transform: uppercase; letter-spacing: 0.08em;
+  color: #9aa0a6; margin-bottom: 8px; font-weight: 700;
+}
+.report-toc a {
+  display: block; color: var(--text-secondary); text-decoration: none;
+  padding: 5px 9px; border-radius: var(--radius-sm); margin: 1px 0;
+  border-left: 2px solid transparent; transition: all 0.15s;
+}
+.report-toc a:hover {
+  color: var(--primary); background: var(--primary-light);
+  border-left-color: var(--primary);
+}
+@media(max-width: 1360px) { .report-toc { display: none; } }
+@media print { .report-toc { display: none; } }
+
+/* ---------- Accessibility (WCAG 2.2 AA) ---------- */
+.skip-link { position:absolute; left:-9999px; top:0; z-index:1000; background:var(--primary); color:#fff; padding:10px 16px; border-radius:0 0 8px 0; font-weight:600; text-decoration:none; }
+.skip-link:focus { left:0; }
+a:focus-visible, button:focus-visible, [tabindex]:focus-visible { outline:3px solid var(--accent); outline-offset:2px; border-radius:3px; }
+tr.dim-clickable:focus-visible, tr.sdg-clickable:focus-visible, .claim-header:focus-visible { outline:3px solid var(--accent); outline-offset:-3px; }
+.visually-hidden { position:absolute !important; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration:0.001ms !important; transition-duration:0.001ms !important; scroll-behavior:auto !important; } }
+
+/* ---------- Evidence-provenance badges (Track D3) ---------- */
+.evidence-badge { display:inline-flex; align-items:center; gap:5px; vertical-align:middle; padding:2px 9px; border-radius:9999px; font-size:0.7em; font-weight:650; letter-spacing:0.02em; border:1px solid #bdc1c6; background:#f1f3f4; color:#5f6368; text-decoration:none; }
+.evidence-badge::before { content:""; width:7px; height:7px; border-radius:50%; background:#5f6368; flex:0 0 auto; }
+.evidence-badge.verified { background:var(--success-light); color:#1b5e20; border-color:var(--success); }
+.evidence-badge.verified::before { background:var(--success); }
+.evidence-badge.reported { background:var(--primary-light); color:var(--primary-dark); border-color:var(--accent); }
+.evidence-badge.reported::before { background:var(--accent); }
+.evidence-badge.estimated, .evidence-badge.proxy { background:var(--warning-light); color:#e65100; border-color:var(--warning); }
+.evidence-badge.estimated::before, .evidence-badge.proxy::before { background:var(--warning); }
+.evidence-badge.unverified, .evidence-badge.suggested { background:var(--danger-light); color:#b71c1c; border-color:var(--danger); }
+.evidence-badge.unverified::before, .evidence-badge.suggested::before { background:var(--danger); }
+.evidence-legend { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin:12px 0; font-size:0.86em; }
+.evidence-legend .ev-title { font-weight:650; color:var(--text-secondary); }
+
+/* ---------- Audience filter (Track D4) ---------- */
+.audience-bar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:18px 0;
+  padding:10px 14px; background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius-sm); box-shadow:var(--shadow-sm); }
+.audience-bar .aud-label { font-weight:650; color:var(--text-secondary); font-size:0.85em; margin-right:4px; }
+.audience-bar button { font:inherit; font-size:0.82em; font-weight:600; cursor:pointer;
+  padding:6px 14px; border-radius:999px; border:1px solid var(--accent); background:transparent;
+  color:var(--accent); }
+.audience-bar button[aria-pressed="true"] { background:var(--accent); color:#fff; }
+@media print { .audience-bar { display:none; } }
+
+/* ---------- Executive tear sheet (Track D6) ---------- */
+.tear-sheet { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+  box-shadow:var(--shadow-sm); padding:22px 26px; margin:8px 0 24px; }
+.tear-sheet h2 { margin-top:0; border:none; padding:0; }
+.tear-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:16px; margin-top:12px; }
+.tear-stat { border-left:3px solid var(--accent); padding:4px 0 4px 12px; }
+.tear-stat .v { font-size:1.5em; font-weight:700; line-height:1.1; }
+.tear-stat .l { font-size:0.75em; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.03em; }
+@media print { .tear-sheet { page-break-after:always; } }
+
+/* ---------- Uncertainty band (Track D5) ---------- */
+.uncertainty { margin-top:8px; }
+.uncertainty .ci-track { position:relative; height:14px; background:#e8eaed; border-radius:7px; overflow:hidden; }
+body.theme-dark .uncertainty .ci-track { background:#2c3444; }
+.uncertainty .ci-band { position:absolute; top:0; bottom:0; background:var(--accent-light); opacity:0.5; }
+.uncertainty .ci-point { position:absolute; top:-3px; width:3px; height:20px; background:var(--primary); border-radius:2px; }
+.uncertainty .ci-note { font-size:0.78em; color:var(--text-secondary); margin-top:4px; }
+
+/* ---------- Dark theme (Track D7) ---------- */
+body.theme-dark { --surface:#1e2330; --bg:#141821; --text:#e6e9ef; --text-secondary:#9aa3b2;
+  --border:#2c3444; --primary-light:#16263f; --accent-light:#3a6ea5; --success-light:#16301a;
+  --warning-light:#33260f; --danger-light:#3a1414;
+  --shadow-sm:0 1px 3px rgba(0,0,0,0.5); --shadow-md:0 4px 12px rgba(0,0,0,0.6); }
+body.theme-dark .bar-track { background:#2c3444; }
+body.theme-dark tr:hover td { background:#222a3a; }
+body.theme-dark th { color:#ffffff; }
+
+/* ---------- Reading progress + utility dock + scrollspy (Track D polish) ---------- */
+.read-progress { position:fixed; top:0; left:0; height:3px; width:0; z-index:1200;
+  background:linear-gradient(90deg, var(--accent), var(--success)); transition:width 0.08s linear; }
+.util-dock { position:fixed; right:18px; bottom:18px; z-index:1100; display:flex; flex-direction:column; gap:10px; }
+.util-dock button { width:44px; height:44px; border-radius:50%; border:1px solid var(--border);
+  background:var(--surface); color:var(--text); box-shadow:var(--shadow-md); cursor:pointer;
+  display:flex; align-items:center; justify-content:center; padding:0;
+  transition:transform 0.15s ease, background 0.15s ease; }
+.util-dock button:hover { transform:translateY(-2px); background:var(--primary-light); color:var(--primary); }
+.util-dock button svg { width:20px; height:20px; }
+.util-dock .to-top { opacity:0; transform:translateY(8px); pointer-events:none; }
+.util-dock .to-top.show { opacity:1; transform:none; pointer-events:auto; }
+.icon-sun { display:none; } .icon-moon { display:inline-flex; }
+body.theme-dark .icon-moon { display:none; } body.theme-dark .icon-sun { display:inline-flex; }
+.report-toc a.active { color:var(--primary); background:var(--primary-light);
+  border-left-color:var(--primary); font-weight:650; }
+/* copy-link anchors on section headings */
+main h2 { position:relative; }
+.h-anchor { border:none; background:transparent; cursor:pointer; color:var(--text-secondary);
+  opacity:0; margin-left:8px; padding:2px 4px; font-size:0.6em; vertical-align:middle;
+  transition:opacity 0.15s, color 0.15s; }
+main h2:hover .h-anchor, .h-anchor:focus-visible { opacity:1; }
+.h-anchor:hover { color:var(--accent); }
+.h-anchor.copied { color:var(--success); opacity:1; }
+.h-anchor svg { width:15px; height:15px; vertical-align:middle; }
+/* collapsible major sections */
+.sec-toggle { border:none; background:transparent; cursor:pointer; color:var(--text-secondary);
+  padding:0 8px 0 0; font-size:0.8em; line-height:1; vertical-align:middle; }
+.sec-toggle:hover { color:var(--primary); }
+.sec-toggle svg { width:13px; height:13px; transition:transform 0.2s ease; }
+.sec-toggle[aria-expanded="false"] svg { transform:rotate(-90deg); }
+.sec-collapsed-body { display:none !important; }
+.collapse-controls { display:flex; gap:8px; align-items:center; margin:0 0 18px; }
+.collapse-controls button { font:inherit; font-size:0.78em; font-weight:600; cursor:pointer;
+  padding:5px 12px; border-radius:999px; border:1px solid var(--border); background:transparent;
+  color:var(--text-secondary); }
+.collapse-controls button:hover { color:var(--primary); border-color:var(--accent); }
+/* sticky mini-header on scroll */
+.mini-header { position:fixed; top:0; left:0; right:0; z-index:1150; display:flex; align-items:center;
+  gap:12px; padding:9px 22px; background:var(--surface); border-bottom:1px solid var(--border);
+  box-shadow:var(--shadow-sm); transform:translateY(-105%); transition:transform 0.25s ease; }
+.mini-header.show { transform:none; }
+.mini-header .mh-name { font-weight:700; color:var(--text); font-size:0.92em; }
+.mini-header .mh-sector { color:var(--text-secondary); font-size:0.8em; }
+.mini-header .mh-spacer { flex:1; }
+.mini-header .mh-grade { font-weight:800; font-size:1.05em; }
+.mini-header .mh-score { color:var(--text-secondary); font-size:0.8em; }
+body.theme-dark .mini-header { box-shadow:0 2px 8px rgba(0,0,0,0.6); }
+@media print { .read-progress, .util-dock, .h-anchor, .sec-toggle, .collapse-controls, .mini-header { display:none; }
+  .sec-collapsed-body { display:revert !important; } }
+
+/* ---------- Print / PDF cover page + running footer (Track D polish) ---------- */
+.print-cover { display:none; }
+@page { size:A4; margin:20mm 18mm 18mm 18mm;
+  @bottom-left { content:"Impact Vision — Confidential"; font-size:8pt; color:#9aa0a6; }
+  @bottom-right { content:"Page " counter(page) " / " counter(pages); font-size:8pt; color:#9aa0a6; }
+  @top-right { content:string(doc-company); font-size:8pt; color:#b0b6bd; }
+}
+@page :first { margin:0;
+  @bottom-left { content:none; } @bottom-right { content:none; } @top-right { content:none; }
+}
+@media print {
+  .report-header { display:none; }
+  .print-cover { display:flex; flex-direction:column; min-height:96vh;
+    padding:34mm 26mm 20mm; page-break-after:always; }
+  .print-cover .pc-kicker { text-transform:uppercase; letter-spacing:0.18em; font-size:10pt;
+    color:var(--accent); font-weight:700; }
+  .print-cover .pc-title { font-size:30pt; font-weight:800; margin:8px 0 4px; color:var(--primary); line-height:1.1; }
+  .print-cover .pc-company { font-size:19pt; font-weight:700; margin-top:26px; string-set:doc-company content(); }
+  .print-cover .pc-sector { font-size:11pt; color:var(--text-secondary); margin-top:2px; }
+  .print-cover .pc-grade { font-size:46pt; font-weight:800; margin-top:26px; line-height:1; }
+  .print-cover .pc-meta { margin-top:auto; font-size:9pt; color:var(--text-secondary);
+    border-top:1px solid var(--border); padding-top:10px; }
+  .print-cover .pc-confidential { font-size:9pt; color:#9aa0a6; margin-top:6px; }
+  .score-card, .claim-card, .metric-card, table, .chart-box, .coverage-hero { break-inside:avoid; }
+  h2 { break-after:avoid; }
+}
+</style>
+</head>
+<body class="theme-dark">
+<a class="skip-link" href="#main-content">Skip to main content</a>
+<div class="read-progress" id="read-progress" aria-hidden="true"></div>
+<div class="mini-header" aria-hidden="true"><span class="mh-name">Kampung Makmur Pig Farm Sdn Bhd</span><span class="mh-sector">agriculture</span><span class="mh-spacer"></span><span class="mh-grade grade-C">C</span><span class="mh-score">1.9/5</span></div>
+<nav class="report-toc" aria-label="Report contents">
+  <h4>On this page</h4>
+  <a href="#executive-summary">Executive summary</a>
+  <a href="#sec-5d">5 Dimensions</a>
+  <a href="#sec-sdg">SDG alignment</a>
+  <a href="#sec-pathway">Impact pathway</a>
+  <a href="#sec-opp-risk">Opportunities &amp; risks</a>
+  <a href="#sec-gap">Gap analysis</a>
+  <a href="#sec-greenwashing">Greenwashing</a>
+  <a href="#sec-benchmark">Benchmarks</a>
+  <a href="#sec-metrics">Metric tracking</a>
+  <a href="#sec-claims">Impact claims</a>
+</nav>
+<main id="main-content" tabindex="-1">
+<section class="print-cover" aria-hidden="true"><div class="pc-kicker">Impact Assessment</div><div class="pc-title">Impact Assessment Report</div><div class="pc-company">Kampung Makmur Pig Farm Sdn Bhd</div><div class="pc-sector">agriculture</div><div class="pc-grade grade-C">C<span style="font-size:0.4em;color:var(--text-secondary);font-weight:600"> 1.9/5</span></div><div class="pc-meta">Generated 2026-05-29 &middot; Standard: IRIS+ 5.3c<div class="pc-confidential">Confidential &mdash; prepared for internal investment and LP use. Not for public distribution.</div></div></section>
+<div class="report-header">
+<h1>Impact Assessment Report</h1>
+<p class="subtitle">Kampung Makmur Pig Farm Sdn Bhd | agriculture</p>
+<div class="meta-row">
+  <span>Generated: 2026-05-29</span>
+  <span>Standard: IRIS+ 5.3c</span>
+</div>
+<div class="tag-row">
+<span class="tag">sustainable agriculture</span>
+<span class="tag">waste-to-energy</span>
+<span class="tag">jobs</span>
+<span class="tag">animal welfare</span>
+<span class="tag">smallholder livelihoods</span>
+<span class="tag">SDG 2</span>
+<span class="tag">SDG 6</span>
+<span class="tag">SDG 7</span>
+<span class="tag">SDG 8</span>
+<span class="tag">SDG 12</span>
+<span class="tag">SDG 13</span>
+</div>
+</div>
+<div class="audience-bar" role="group" aria-label="Audience view" data-initial="full"><span class="aud-label">View as:</span><button type="button" class="aud-btn" data-aud="full" aria-pressed="true">Everything</button><button type="button" class="aud-btn" data-aud="lp" aria-pressed="false">LP</button><button type="button" class="aud-btn" data-aud="ic" aria-pressed="false">Investment Committee</button><button type="button" class="aud-btn" data-aud="regulator" aria-pressed="false">Regulator</button><button type="button" class="aud-btn" data-aud="public" aria-pressed="false">Public</button></div>
+<section class="tear-sheet" id="tear-sheet" aria-label="Executive summary at a glance"><h2>At a glance</h2><p style="color:var(--text-secondary);margin:0">Kampung Makmur Pig Farm Sdn Bhd · agriculture</p><div class="tear-grid"><div class="tear-stat"><div class="v grade-C">C</div><div class="l">Overall grade</div></div><div class="tear-stat"><div class="v">1.9<span style="font-size:0.5em;color:var(--text-secondary)">/5</span></div><div class="l">Impact score</div></div><div class="tear-stat"><div class="v" style="font-size:1.05em">SDG 2, SDG 13, SDG 6</div><div class="l">Top SDG alignment</div></div><div class="tear-stat"><div class="v" style="font-size:1.2em">High</div><div class="l">Greenwashing risk</div></div></div><div class="uncertainty"><div class="ci-track" role="img" aria-label="Confidence band 0.9 to 2.9 out of 5 around a score of 1.9; estimated (wide band)"><div class="ci-band" style="left:18.0%;width:40.0%"></div><div class="ci-point" style="left:38.0%"></div></div><div class="ci-note">Score 1.9/5 &middot; indicative range 0.9&ndash;2.9 (estimated (wide band)). Bands are illustrative, derived from evidence provenance.</div></div></section>
+<div class="section" id="executive-summary"><h2>Executive Summary</h2><div class="content"><div class="kpi-strip"><div class="kpi-tile neutral"><div class="kpi-label">5-Dimension overall</div><div class="kpi-value"><span class="grade-C">1.9<span style="font-size:0.55em;color:var(--text-muted)">/5</span></span></div><div class="kpi-sub">Grade C · estimated</div></div><div class="kpi-tile neutral"><div class="kpi-label">Top SDG</div><div class="kpi-value">SDG 2</div><div class="kpi-sub">Zero Hunger · 28/100</div></div><div class="kpi-tile fail"><div class="kpi-label">Core-metric coverage</div><div class="kpi-value">0%</div><div class="kpi-sub">IRIS+ core set addressed</div></div><div class="kpi-tile fail"><div class="kpi-label">Greenwashing risk</div><div class="kpi-value">75<span style="font-size:0.55em;color:var(--text-muted)">/100</span></div><div class="kpi-sub">High Risk</div></div></div><p><strong>Kampung Makmur Pig Farm Sdn Bhd</strong> (agriculture) received an overall impact score of <strong>1.9/5.0 (Grade C)</strong>. Score confidence is rated as <em>estimated</em>.</p><p>Strongest SDG alignments: SDG 2 (Zero Hunger), SDG 13 (Climate Action), SDG 6 (Clean Water and Sanitation).</p><p>Greenwashing risk assessment: <strong>High Risk</strong> (score: 75.3/100).</p><p>Core Metric Set coverage: 0%.</p><p><em>Generated by Impact Vision using IRIS+ metrics, the 5 Dimensions of Impact, and multi-framework ESG analysis. Scores based on limited data should be validated with additional evidence before being relied upon for investment decisions.</em></p><div class="callout warn"><b>Watch-outs</b><ul style="margin:6px 0 0 18px"><li>Weakest dimension is <b>Risk</b> (1.3/5) — prioritise evidence here.</li><li>No SDG scored ≥ 60/100 — consider deepening the metric coverage on the top goal.</li><li>Core-metric coverage is 0% — the fund's IC will likely flag this as an evidence gap.</li><li>Greenwashing composite is 75/100 — review claim-metric gaps and any unverified certifications before LP distribution.</li></ul></div><div class="callout "><b>Recommended next steps</b><ul style="margin:6px 0 0 18px"><li>Obtain outcome-level data (pre/post or independent surveys) to move from estimated to evidence-based scoring.</li><li>Add 3–5 IRIS+ metrics aligned to SDG 2 in the next reporting cycle.</li><li>Start tracking <code>FP3021</code> (Revenue from Grants and Donations).</li></ul></div></div></div>
+
+<h2 id="sec-5d">5 Dimensions of Impact</h2>
+<div class="cards-row">
+<div class="score-card"><div class="value grade-C" id="main-grade">C</div><div class="label">Overall Grade</div></div>
+<div class="score-card"><div class="value" id="main-overall">1.9<span style="font-size:0.5em;color:var(--text-secondary)">/5</span></div><div class="label">Overall Score</div></div>
+<div class="score-card"><div class="value" style="font-size:0.9em;color:var(--danger)">Estimated</div><div class="label">Confidence</div></div>
+<div class="score-card" id="delta-card" style="display:none"><div class="value" id="main-delta" style="font-size:1.4em;color:var(--text-secondary)">+0.0</div><div class="label">Improvement</div></div>
+</div>
+<div class="five-d-grid dim-stack">
+<div class="chart-box" id="radar-chart" role="img" aria-label="Radar chart of the five impact dimension scores (What, Who, How Much, Contribution, Risk). Scores are listed below in the table."></div>
+<div class="chart-box">
+<div class="table-scroll">
+<table id="dim-table">
+<tr><th>Dimension</th><th>Score</th><th style="min-width:120px">Progress</th><th>Confidence</th><th>Metrics</th><th>Rationale</th></tr>
+
+<tr class="dim-clickable" data-dim="what" tabindex="0" role="button" aria-expanded="false" aria-controls="overlay-what">
+<td><strong>What</strong> <span style="font-size:0.7em;color:var(--text-secondary)" aria-hidden="true">&#9660;</span></td>
+<td style="font-weight:600" id="dim-score-what">2.3/5</td>
+<td><div class="bar-track"><div class="bar-fill orange" id="dim-bar-what" style="width:46%"></div></div></td>
+<td><span class="evidence-badge estimated" title="Score provenance: Estimated">Estimated</span></td>
+<td class="metrics-cell" style="font-size:0.85em"><span style="color:var(--danger);font-weight:600">0/27</span>
+<span style="color:var(--text-secondary)" title="OI0263, OI0386, OI2340"> not tracked</span></td>
+<td class="notes">Estimated from sector/description (27 metrics available to track)</td>
+</tr>
+<tr class="dim-overlay" id="overlay-what"><td colspan="6"><div class="dim-overlay-content">
+<div class="dim-overlay-col"><h4>Tracked Metrics</h4>
+<span style="font-size:0.82em;color:var(--text-secondary)">No metrics tracked (27 available)</span>
+</div><div class="dim-overlay-col"><h4>Gaps</h4>
+<span class="metric-pill gap">OI0263</span>
+<span class="metric-pill gap">OI0386</span>
+<span class="metric-pill gap">OI2340</span>
+<span class="metric-pill gap">OI2764</span>
+<span class="metric-pill gap">OI3344</span>
+<span class="metric-pill gap">OI3781</span>
+</div><div class="dim-overlay-col"><h4>Suggestions</h4>
+<div class="dim-suggestion">Start tracking IRIS+ metrics to strengthen evidence and move beyond estimated scores</div>
+<div class="dim-suggestion">Measure HOW MUCH: track scale (# stakeholders), depth (degree of change), and duration</div>
+<div class="dim-suggestion">Assess CONTRIBUTION: establish counterfactual or benchmark comparison</div>
+</div></div></td></tr>
+<tr class="dim-clickable" data-dim="who" tabindex="0" role="button" aria-expanded="false" aria-controls="overlay-who">
+<td><strong>Who</strong> <span style="font-size:0.7em;color:var(--text-secondary)" aria-hidden="true">&#9660;</span></td>
+<td style="font-weight:600" id="dim-score-who">2.5/5</td>
+<td><div class="bar-track"><div class="bar-fill orange" id="dim-bar-who" style="width:50%"></div></div></td>
+<td><span class="evidence-badge estimated" title="Score provenance: Estimated">Estimated</span></td>
+<td class="metrics-cell" style="font-size:0.85em"><span style="color:var(--danger);font-weight:600">0/13</span>
+<span style="color:var(--text-secondary)" title="OI0667, OI0933, OI2799"> not tracked</span></td>
+<td class="notes">Estimated from sector/description (13 metrics available to track)</td>
+</tr>
+<tr class="dim-overlay" id="overlay-who"><td colspan="6"><div class="dim-overlay-content">
+<div class="dim-overlay-col"><h4>Tracked Metrics</h4>
+<span style="font-size:0.82em;color:var(--text-secondary)">No metrics tracked (13 available)</span>
+</div><div class="dim-overlay-col"><h4>Gaps</h4>
+<span class="metric-pill gap">OI0667</span>
+<span class="metric-pill gap">OI0933</span>
+<span class="metric-pill gap">OI2799</span>
+<span class="metric-pill gap">OI4221</span>
+<span class="metric-pill gap">PI1002</span>
+<span class="metric-pill gap">PI1207</span>
+</div><div class="dim-overlay-col"><h4>Suggestions</h4>
+<div class="dim-suggestion">Start tracking IRIS+ metrics to strengthen evidence and move beyond estimated scores</div>
+<div class="dim-suggestion">Measure HOW MUCH: track scale (# stakeholders), depth (degree of change), and duration</div>
+<div class="dim-suggestion">Assess CONTRIBUTION: establish counterfactual or benchmark comparison</div>
+</div></div></td></tr>
+<tr class="dim-clickable" data-dim="how_much" tabindex="0" role="button" aria-expanded="false" aria-controls="overlay-how_much">
+<td><strong>How Much</strong> <span style="font-size:0.7em;color:var(--text-secondary)" aria-hidden="true">&#9660;</span></td>
+<td style="font-weight:600" id="dim-score-how_much">1.8/5</td>
+<td><div class="bar-track"><div class="bar-fill orange" id="dim-bar-how_much" style="width:36%"></div></div></td>
+<td><span class="evidence-badge estimated" title="Score provenance: Estimated">Estimated</span></td>
+<td class="metrics-cell" style="font-size:0.85em"><span style="color:var(--danger);font-weight:600">0/15</span>
+<span style="color:var(--text-secondary)" title="OI2764, OI5951, PI1207"> not tracked</span></td>
+<td class="notes">Scale=1.8, Depth=1.8, Duration=1.8</td>
+</tr>
+<tr class="dim-overlay" id="overlay-how_much"><td colspan="6"><div class="dim-overlay-content">
+<div class="dim-overlay-col"><h4>Tracked Metrics</h4>
+<span style="font-size:0.82em;color:var(--text-secondary)">No metrics tracked (15 available)</span>
+</div><div class="dim-overlay-col"><h4>Gaps</h4>
+<span class="metric-pill gap">OI2764</span>
+<span class="metric-pill gap">OI5951</span>
+<span class="metric-pill gap">PI1207</span>
+<span class="metric-pill gap">PI2894</span>
+<span class="metric-pill gap">PI3419</span>
+<span class="metric-pill gap">PI1207</span>
+</div><div class="dim-overlay-col"><h4>Suggestions</h4>
+<div class="dim-suggestion">Start tracking IRIS+ metrics to strengthen evidence and move beyond estimated scores</div>
+<div class="dim-suggestion">Measure HOW MUCH: track scale (# stakeholders), depth (degree of change), and duration</div>
+<div class="dim-suggestion">Assess CONTRIBUTION: establish counterfactual or benchmark comparison</div>
+</div></div></td></tr>
+<tr class="dim-clickable" data-dim="contribution" tabindex="0" role="button" aria-expanded="false" aria-controls="overlay-contribution">
+<td><strong>Contribution</strong> <span style="font-size:0.7em;color:var(--text-secondary)" aria-hidden="true">&#9660;</span></td>
+<td style="font-weight:600" id="dim-score-contribution">1.8/5</td>
+<td><div class="bar-track"><div class="bar-fill orange" id="dim-bar-contribution" style="width:36%"></div></div></td>
+<td><span class="evidence-badge estimated" title="Score provenance: Estimated">Estimated</span></td>
+<td class="metrics-cell" style="font-size:0.85em"><span style="color:var(--danger);font-weight:600">0/10</span>
+<span style="color:var(--text-secondary)" title="OI0667, OI9101, PI1207"> not tracked</span></td>
+<td class="notes">Depth=1.8, Duration=1.8</td>
+</tr>
+<tr class="dim-overlay" id="overlay-contribution"><td colspan="6"><div class="dim-overlay-content">
+<div class="dim-overlay-col"><h4>Tracked Metrics</h4>
+<span style="font-size:0.82em;color:var(--text-secondary)">No metrics tracked (10 available)</span>
+</div><div class="dim-overlay-col"><h4>Gaps</h4>
+<span class="metric-pill gap">OI0667</span>
+<span class="metric-pill gap">OI9101</span>
+<span class="metric-pill gap">PI1207</span>
+<span class="metric-pill gap">PI1568</span>
+<span class="metric-pill gap">PI2476</span>
+<span class="metric-pill gap">PI1142</span>
+</div><div class="dim-overlay-col"><h4>Suggestions</h4>
+<div class="dim-suggestion">Start tracking IRIS+ metrics to strengthen evidence and move beyond estimated scores</div>
+<div class="dim-suggestion">Measure HOW MUCH: track scale (# stakeholders), depth (degree of change), and duration</div>
+<div class="dim-suggestion">Assess CONTRIBUTION: establish counterfactual or benchmark comparison</div>
+</div></div></td></tr>
+<tr class="dim-clickable" data-dim="risk" tabindex="0" role="button" aria-expanded="false" aria-controls="overlay-risk">
+<td><strong>Risk</strong> <span style="font-size:0.7em;color:var(--text-secondary)" aria-hidden="true">&#9660;</span></td>
+<td style="font-weight:600" id="dim-score-risk">1.3/5</td>
+<td><div class="bar-track"><div class="bar-fill red" id="dim-bar-risk" style="width:26%"></div></div></td>
+<td><span class="evidence-badge estimated" title="Score provenance: Estimated">Estimated</span></td>
+<td class="metrics-cell" style="font-size:0.85em"><span style="color:var(--danger);font-weight:600">0/4</span>
+<span style="color:var(--text-secondary)" title="PD8501, PI0510, PI1899"> not tracked</span></td>
+<td class="notes">Estimated from sector/description (4 metrics available to track)</td>
+</tr>
+<tr class="dim-overlay" id="overlay-risk"><td colspan="6"><div class="dim-overlay-content">
+<div class="dim-overlay-col"><h4>Tracked Metrics</h4>
+<span style="font-size:0.82em;color:var(--text-secondary)">No metrics tracked (4 available)</span>
+</div><div class="dim-overlay-col"><h4>Gaps</h4>
+<span class="metric-pill gap">PD8501</span>
+<span class="metric-pill gap">PI0510</span>
+<span class="metric-pill gap">PI1899</span>
+<span class="metric-pill gap">PI1911</span>
+</div><div class="dim-overlay-col"><h4>Suggestions</h4>
+<div class="dim-suggestion">Start tracking IRIS+ metrics to strengthen evidence and move beyond estimated scores</div>
+<div class="dim-suggestion">Measure HOW MUCH: track scale (# stakeholders), depth (degree of change), and duration</div>
+<div class="dim-suggestion">Assess CONTRIBUTION: establish counterfactual or benchmark comparison</div>
+</div></div></td></tr>
+</table></div>
+<div class="evidence-legend"><span class="ev-title">Score provenance:</span><span class="evidence-badge verified" title="Backed by reported IRIS+ metrics / verified evidence">Evidence Based</span><span class="evidence-badge estimated" title="Partial evidence or keyword/sector heuristic">Partial / Estimated</span><span class="evidence-badge unverified" title="No supporting metrics reported">Unverified</span></div>
+<script>
+document.querySelectorAll('.dim-clickable').forEach(function(row) {
+  function toggleRow() {
+    var dim = row.dataset.dim;
+    var overlay = document.getElementById('overlay-' + dim);
+    if (overlay) {
+      var open = overlay.classList.toggle('active');
+      row.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+  }
+  row.addEventListener('click', toggleRow);
+  row.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+      e.preventDefault();
+      toggleRow();
+    }
+  });
+});
+</script>
+
+<div style="margin:12px 0;padding:12px 16px;background:var(--danger-light);border-left:4px solid var(--danger);border-radius:var(--radius-sm);font-size:0.85em">
+Scores are primarily <strong>estimated</strong> from keywords and sector heuristics. Report at least 3 IRIS+ metrics per dimension for evidence-based scores.
+</div>
+
+<div style="margin-top:12px;padding:12px 16px;background:var(--primary-light);border-radius:var(--radius-sm);font-size:0.85em">
+<strong>Metric Tracking:</strong> 0 of 69 available IRIS+ metrics reported
+(0% coverage).
+Top gaps: OI0263, OI0386, OI2340, OI0667, OI0933
+</div>
+</div></div>
+<script>
+Plotly.newPlot('radar-chart', [{
+  type: 'scatterpolar', r: [2.3,2.5,1.8,1.8,1.3,2.3],
+  theta: ["What","Who","How Much","Contribution","Risk","What"],
+  fill: 'toself', fillcolor: 'rgba(25,118,210,0.12)',
+  line: {color: '#1976d2', width: 2.5}, marker: {size: 7, color: '#1976d2'},
+  name: 'Current'
+}], {
+  polar: {bgcolor: 'rgba(0,0,0,0)', radialaxis: {visible: true, range: [0, 5], tickfont: {size: 10}}, angularaxis: {tickfont: {size: 11}}},
+  showlegend: true, legend: {orientation: 'h', y: -0.1},
+  height: 380, margin: {l: 70, r: 70, t: 40, b: 40},
+  paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
+  font: {family: 'Inter, -apple-system, sans-serif'}
+}, {responsive: true});
+</script>
+
+<h3 style="margin-top:24px">Improve Your Score</h3>
+<p style="color:var(--text-secondary);font-size:0.85em;margin-bottom:12px">
+Check practices your organization follows. The radar chart and scores above update in real-time.
+</p>
+<div id="interactive-panel" style="background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:20px;border:1px solid var(--border);margin:0 0 16px">
+<div id="checklist-items"></div>
+</div>
+<script>
+(function() {
+  const items = [{"id": "beneficiaries", "label": "We track the number of direct beneficiaries served", "dims": {"who": 0.6, "how_much": 0.3}, "sdgs": [1, 2, 3]}, {"id": "outcomes", "label": "We measure outcomes (not just outputs) for beneficiaries", "dims": {"what": 0.7, "how_much": 0.4}, "sdgs": []}, {"id": "ghg", "label": "We track greenhouse gas emissions or have reduction targets", "dims": {"risk": 0.5, "what": 0.3}, "sdgs": [13, 7]}, {"id": "water", "label": "We measure water usage or have water stewardship practices", "dims": {"risk": 0.4, "what": 0.3}, "sdgs": [6, 14]}, {"id": "gender", "label": "We track gender diversity in our workforce/beneficiaries", "dims": {"who": 0.5, "contribution": 0.2}, "sdgs": [5, 10]}, {"id": "local_hiring", "label": "We prioritize hiring from local/underserved communities", "dims": {"contribution": 0.6, "who": 0.3}, "sdgs": [8, 10, 1]}, {"id": "supply_chain", "label": "We have responsible supply chain policies", "dims": {"risk": 0.5, "contribution": 0.3}, "sdgs": [12, 8]}, {"id": "baseline", "label": "We have baseline data from before our intervention started", "dims": {"contribution": 0.7, "how_much": 0.3}, "sdgs": []}, {"id": "third_party", "label": "We have third-party verification or independent audits", "dims": {"risk": 0.8, "contribution": 0.4}, "sdgs": []}, {"id": "theory_of_change", "label": "We have a documented Theory of Change", "dims": {"what": 0.5, "contribution": 0.4}, "sdgs": []}, {"id": "stakeholder", "label": "We regularly collect feedback from beneficiaries/stakeholders", "dims": {"who": 0.4, "how_much": 0.3, "risk": 0.2}, "sdgs": []}, {"id": "negative_screen", "label": "We assess and mitigate negative/unintended impacts", "dims": {"risk": 0.7}, "sdgs": []}];
+  const baseScores = {"what": 2.3, "who": 2.5, "how_much": 1.8, "contribution": 1.8, "risk": 1.3};
+  const origOverall = 1.90;
+  const dimNames = ['what','who','how_much','contribution','risk'];
+  const dimLabels = {what:'What',who:'Who',how_much:'How Much',contribution:'Contribution',risk:'Risk'};
+  const dimKeys = {what:'what',who:'who',how_much:'how_much',contribution:'contribution',risk:'risk'};
+
+  const container = document.getElementById('checklist-items');
+  items.forEach(function(item) {
+    const div = document.createElement('div');
+    div.style.cssText = 'padding:8px 0;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:12px';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox'; cb.id = 'chk-'+item.id;
+    cb.style.cssText = 'width:18px;height:18px;cursor:pointer;accent-color:#1976d2;flex-shrink:0';
+    cb.addEventListener('change', recalc);
+    const lbl = document.createElement('label');
+    lbl.htmlFor = 'chk-'+item.id;
+    lbl.textContent = item.label;
+    lbl.style.cssText = 'cursor:pointer;font-size:0.9em;flex:1';
+    const dims = Object.keys(item.dims).map(function(d) { return dimLabels[d]; }).join(', ');
+    const tag = document.createElement('span');
+    tag.textContent = dims;
+    tag.style.cssText = 'font-size:0.7em;color:var(--text-secondary);background:var(--primary-light);padding:2px 8px;border-radius:10px;white-space:nowrap';
+    div.appendChild(cb); div.appendChild(lbl); div.appendChild(tag);
+    container.appendChild(div);
+  });
+
+  function getGrade(s) {
+    if (s >= 4.0) return 'A';
+    if (s >= 3.0) return 'B';
+    if (s >= 2.0) return 'C';
+    if (s >= 1.0) return 'D';
+    return 'F';
+  }
+  function gradeClass(g) { return 'grade-'+g[0]; }
+
+  const STORAGE_KEY = 'impact-vision-scenario-' + 'kampung-makmur-pig-farm-sdn-bhd-7be76ba6';
+
+  function saveState() {
+    const state = {};
+    items.forEach(function(item) {
+      const cb = document.getElementById('chk-'+item.id);
+      if (cb) state[item.id] = cb.checked;
+    });
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+  }
+
+  function loadState() {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (!saved) return;
+      const state = JSON.parse(saved);
+      items.forEach(function(item) {
+        const cb = document.getElementById('chk-'+item.id);
+        if (cb && state[item.id]) cb.checked = true;
+      });
+      recalc();
+    } catch(e) {}
+  }
+
+  function recalc() {
+    const scores = {};
+    dimNames.forEach(function(d) { scores[d] = baseScores[d]; });
+    let anyChecked = false;
+    items.forEach(function(item) {
+      const cb = document.getElementById('chk-'+item.id);
+      if (cb && cb.checked) {
+        anyChecked = true;
+        Object.keys(item.dims).forEach(function(d) {
+          scores[d] = Math.min(5.0, scores[d] + item.dims[d]);
+        });
+      }
+    });
+    saveState();
+    const avg = dimNames.reduce(function(s,d){ return s+scores[d]; }, 0) / 5;
+    const grade = getGrade(avg);
+    const delta = avg - origOverall;
+
+    const gradeEl = document.getElementById('main-grade');
+    if (gradeEl) {
+      gradeEl.textContent = grade;
+      gradeEl.className = 'value ' + gradeClass(grade);
+    }
+    const overallEl = document.getElementById('main-overall');
+    if (overallEl) {
+      overallEl.innerHTML = avg.toFixed(1) + '<span style="font-size:0.5em;color:var(--text-secondary)">/5</span>';
+    }
+    const deltaCard = document.getElementById('delta-card');
+    const deltaEl = document.getElementById('main-delta');
+    if (deltaCard && deltaEl) {
+      deltaCard.style.display = anyChecked ? 'block' : 'none';
+      deltaEl.textContent = (delta >= 0 ? '+' : '') + delta.toFixed(1);
+      deltaEl.style.color = delta > 0 ? 'var(--success)' : 'var(--text-secondary)';
+    }
+
+    dimNames.forEach(function(d) {
+      const scoreEl = document.getElementById('dim-score-'+d);
+      if (scoreEl) scoreEl.textContent = scores[d].toFixed(1) + '/5';
+      const barEl = document.getElementById('dim-bar-'+d);
+      if (barEl) {
+        const pct = Math.round(scores[d] / 5 * 100);
+        barEl.style.width = pct + '%';
+        barEl.className = 'bar-fill ' + (pct >= 60 ? 'green' : pct >= 30 ? 'orange' : 'red');
+      }
+    });
+
+    const vals = dimNames.map(function(d) { return scores[d]; });
+    vals.push(vals[0]);
+    const labels = dimNames.map(function(d) { return dimLabels[d]; });
+    labels.push(labels[0]);
+    const baseVals = dimNames.map(function(d) { return baseScores[d]; });
+    baseVals.push(baseVals[0]);
+
+    const traces = anyChecked ? [
+      {type:'scatterpolar', r:baseVals, theta:labels, fill:'toself', fillcolor:'rgba(176,190,197,0.15)',
+        line:{color:'#b0bec5',width:1.5,dash:'dot'}, marker:{size:5}, name:'Before'},
+      {type:'scatterpolar', r:vals, theta:labels, fill:'toself', fillcolor:'rgba(25,118,210,0.15)',
+        line:{color:'#1976d2',width:2.5}, marker:{size:7,color:'#1976d2'}, name:'With improvements'}
+    ] : [
+      {type:'scatterpolar', r:vals, theta:labels, fill:'toself', fillcolor:'rgba(25,118,210,0.12)',
+        line:{color:'#1976d2',width:2.5}, marker:{size:7,color:'#1976d2'}, name:'Current'}
+    ];
+
+    Plotly.react('radar-chart', traces, {
+      polar:{radialaxis:{visible:true,range:[0,5],tickfont:{size:10}},angularaxis:{tickfont:{size:11}}},
+      showlegend:true, legend:{orientation:'h',y:-0.1},
+      height:380, margin:{l:70,r:70,t:40,b:40},
+      paper_bgcolor:'transparent', plot_bgcolor:'transparent',
+      font:{family:'Inter, -apple-system, sans-serif'}
+    }, {responsive:true});
+  }
+  loadState();
+})();
+</script>
+<h3>Recommendations</h3>
+<div class="rec">Start tracking IRIS+ metrics to strengthen evidence and move beyond estimated scores</div>
+<div class="rec">Measure HOW MUCH: track scale (# stakeholders), depth (degree of change), and duration</div>
+<div class="rec">Assess CONTRIBUTION: establish counterfactual or benchmark comparison</div>
+<div class="rec">Evaluate RISK: assess evidence risk, execution risk, and external risk factors</div>
+
+<h2 id="sec-sdg">SDG Alignment <span style="font-size:0.65em;color:var(--text-secondary);font-weight:400">(16 goals · top 6 shown)</span></h2>
+<div class="five-d-grid">
+<div class="chart-box" id="sdg-chart" role="img" aria-label="Bar chart of SDG alignment scores. The same scores are listed in the adjacent table."></div>
+<div class="chart-box">
+<table id="sdg-table">
+<tr><th>SDG</th><th>Name</th><th>Score</th><th>Confidence</th><th>Matched Metrics</th></tr>
+
+<tr class="sdg-clickable" data-sdg="2" tabindex="0" role="button" aria-expanded="false" aria-controls="sdg-detail-2">
+<td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#DDA63A;margin-right:6px;vertical-align:middle" aria-hidden="true"></span>SDG 2 <span style="font-size:0.7em;color:var(--text-secondary)" aria-hidden="true">&#9660;</span></td>
+<td>Zero Hunger</td>
+<td style="font-weight:600">28.0</td><td style="color:#f57c00;font-weight:600">medium</td><td style="font-size:0.85em"></td>
+</tr>
+<tr class="sdg-detail" id="sdg-detail-2"><td colspan="5">
+<div style="margin-bottom:8px"><strong style="font-size:0.82em">Evidence Chains:</strong>
+<div class="evidence-chain">
+<span class="chain-node">Kampung Makmur is a 3,000-sow integrated pig farm in Kluang,</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">Description Inference</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">SDG 2<br><span class="chain-confidence">100% conf.</span></span>
+</div>
+<div class="evidence-chain">
+<span class="chain-node">Theme: sustainable agriculture</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">Theme Alignment</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">SDG 2<br><span class="chain-confidence">20% conf.</span></span>
+</div>
+</div>
+<div><strong style="font-size:0.82em">Recommendations:</strong>
+<div class="sdg-rec">Report metrics ID0120, ID1046, ID8539 to strengthen SDG 2 evidence (0/255 currently tracked)</div>
+<div class="sdg-rec">Add specific outcome descriptions related to "Zero Hunger" targets in company documentation</div>
+<div class="sdg-rec">Add impact themes: Access To Quality Education, Access To Quality Healthcare</div>
+</div>
+</td></tr>
+<tr class="sdg-clickable" data-sdg="13" tabindex="0" role="button" aria-expanded="false" aria-controls="sdg-detail-13">
+<td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#3F7E44;margin-right:6px;vertical-align:middle" aria-hidden="true"></span>SDG 13 <span style="font-size:0.7em;color:var(--text-secondary)" aria-hidden="true">&#9660;</span></td>
+<td>Climate Action</td>
+<td style="font-weight:600">28.0</td><td style="color:#f57c00;font-weight:600">medium</td><td style="font-size:0.85em"></td>
+</tr>
+<tr class="sdg-detail" id="sdg-detail-13"><td colspan="5">
+<div style="margin-bottom:8px"><strong style="font-size:0.82em">Evidence Chains:</strong>
+<div class="evidence-chain">
+<span class="chain-node">Kampung Makmur is a 3,000-sow integrated pig farm in Kluang,</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">Description Inference</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">SDG 13<br><span class="chain-confidence">100% conf.</span></span>
+</div>
+<div class="evidence-chain">
+<span class="chain-node">Theme: sustainable agriculture</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">Theme Alignment</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">SDG 13<br><span class="chain-confidence">20% conf.</span></span>
+</div>
+</div>
+<div><strong style="font-size:0.82em">Recommendations:</strong>
+<div class="sdg-rec">Report metrics OD4108, OD4882, OD6247 to strengthen SDG 13 evidence (0/185 currently tracked)</div>
+<div class="sdg-rec">Add specific outcome descriptions related to "Climate Action" targets in company documentation</div>
+<div class="sdg-rec">Add impact themes: Access To Quality Education, Access To Quality Healthcare</div>
+</div>
+</td></tr>
+<tr class="sdg-clickable" data-sdg="6" tabindex="0" role="button" aria-expanded="false" aria-controls="sdg-detail-6">
+<td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#26BDE2;margin-right:6px;vertical-align:middle" aria-hidden="true"></span>SDG 6 <span style="font-size:0.7em;color:var(--text-secondary)" aria-hidden="true">&#9660;</span></td>
+<td>Clean Water and Sanitation</td>
+<td style="font-weight:600">25.5</td><td style="color:#f57c00;font-weight:600">medium</td><td style="font-size:0.85em"></td>
+</tr>
+<tr class="sdg-detail" id="sdg-detail-6"><td colspan="5">
+<div style="margin-bottom:8px"><strong style="font-size:0.82em">Evidence Chains:</strong>
+<div class="evidence-chain">
+<span class="chain-node">Kampung Makmur is a 3,000-sow integrated pig farm in Kluang,</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">Description Inference</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">SDG 6<br><span class="chain-confidence">90% conf.</span></span>
+</div>
+<div class="evidence-chain">
+<span class="chain-node">Theme: sustainable agriculture</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">Theme Alignment</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">SDG 6<br><span class="chain-confidence">20% conf.</span></span>
+</div>
+</div>
+<div><strong style="font-size:0.82em">Recommendations:</strong>
+<div class="sdg-rec">Report metrics OD4108, OD6247, OD6737 to strengthen SDG 6 evidence (0/198 currently tracked)</div>
+<div class="sdg-rec">Add specific outcome descriptions related to "Clean Water and Sanitation" targets in company documentation</div>
+<div class="sdg-rec">Add impact themes: Access To Quality Education, Access To Quality Healthcare</div>
+</div>
+</td></tr>
+<tr class="sdg-clickable" data-sdg="7" tabindex="0" role="button" aria-expanded="false" aria-controls="sdg-detail-7">
+<td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#FCC30B;margin-right:6px;vertical-align:middle" aria-hidden="true"></span>SDG 7 <span style="font-size:0.7em;color:var(--text-secondary)" aria-hidden="true">&#9660;</span></td>
+<td>Affordable and Clean Energy</td>
+<td style="font-weight:600">25.5</td><td style="color:#f57c00;font-weight:600">medium</td><td style="font-size:0.85em"></td>
+</tr>
+<tr class="sdg-detail" id="sdg-detail-7"><td colspan="5">
+<div style="margin-bottom:8px"><strong style="font-size:0.82em">Evidence Chains:</strong>
+<div class="evidence-chain">
+<span class="chain-node">Kampung Makmur is a 3,000-sow integrated pig farm in Kluang,</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">Description Inference</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">SDG 7<br><span class="chain-confidence">90% conf.</span></span>
+</div>
+<div class="evidence-chain">
+<span class="chain-node">Theme: sustainable agriculture</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">Theme Alignment</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">SDG 7<br><span class="chain-confidence">20% conf.</span></span>
+</div>
+</div>
+<div><strong style="font-size:0.82em">Recommendations:</strong>
+<div class="sdg-rec">Report metrics OD4108, OD6247, OI0685 to strengthen SDG 7 evidence (0/133 currently tracked)</div>
+<div class="sdg-rec">Add specific outcome descriptions related to "Affordable and Clean Energy" targets in company documentation</div>
+<div class="sdg-rec">Add impact themes: Access To Quality Education, Access To Quality Healthcare</div>
+</div>
+</td></tr>
+<tr class="sdg-clickable" data-sdg="12" tabindex="0" role="button" aria-expanded="false" aria-controls="sdg-detail-12">
+<td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#BF8B2E;margin-right:6px;vertical-align:middle" aria-hidden="true"></span>SDG 12 <span style="font-size:0.7em;color:var(--text-secondary)" aria-hidden="true">&#9660;</span></td>
+<td>Responsible Consumption and Production</td>
+<td style="font-weight:600">25.5</td><td style="color:#f57c00;font-weight:600">medium</td><td style="font-size:0.85em"></td>
+</tr>
+<tr class="sdg-detail" id="sdg-detail-12"><td colspan="5">
+<div style="margin-bottom:8px"><strong style="font-size:0.82em">Evidence Chains:</strong>
+<div class="evidence-chain">
+<span class="chain-node">Kampung Makmur is a 3,000-sow integrated pig farm in Kluang,</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">Description Inference</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">SDG 12<br><span class="chain-confidence">90% conf.</span></span>
+</div>
+<div class="evidence-chain">
+<span class="chain-node">Theme: sustainable agriculture</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">Theme Alignment</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">SDG 12<br><span class="chain-confidence">20% conf.</span></span>
+</div>
+</div>
+<div><strong style="font-size:0.82em">Recommendations:</strong>
+<div class="sdg-rec">Report metrics ID0120, ID1046, ID8539 to strengthen SDG 12 evidence (0/324 currently tracked)</div>
+<div class="sdg-rec">Add specific outcome descriptions related to "Responsible Consumption and Production" targets in company documentation</div>
+<div class="sdg-rec">Add impact themes: Access To Quality Education, Access To Quality Healthcare</div>
+</div>
+</td></tr>
+<tr class="sdg-clickable" data-sdg="15" tabindex="0" role="button" aria-expanded="false" aria-controls="sdg-detail-15">
+<td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#56C02B;margin-right:6px;vertical-align:middle" aria-hidden="true"></span>SDG 15 <span style="font-size:0.7em;color:var(--text-secondary)" aria-hidden="true">&#9660;</span></td>
+<td>Life on Land</td>
+<td style="font-weight:600">25.5</td><td style="color:#f57c00;font-weight:600">medium</td><td style="font-size:0.85em"></td>
+</tr>
+<tr class="sdg-detail" id="sdg-detail-15"><td colspan="5">
+<div style="margin-bottom:8px"><strong style="font-size:0.82em">Evidence Chains:</strong>
+<div class="evidence-chain">
+<span class="chain-node">Kampung Makmur is a 3,000-sow integrated pig farm in Kluang,</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">Description Inference</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">SDG 15<br><span class="chain-confidence">90% conf.</span></span>
+</div>
+<div class="evidence-chain">
+<span class="chain-node">Theme: sustainable agriculture</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">Theme Alignment</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">SDG 15<br><span class="chain-confidence">20% conf.</span></span>
+</div>
+</div>
+<div><strong style="font-size:0.82em">Recommendations:</strong>
+<div class="sdg-rec">Report metrics OD4108, OD8536, OI1047 to strengthen SDG 15 evidence (0/65 currently tracked)</div>
+<div class="sdg-rec">Add specific outcome descriptions related to "Life on Land" targets in company documentation</div>
+<div class="sdg-rec">Add impact themes: Access To Quality Education, Access To Quality Healthcare</div>
+</div>
+</td></tr>
+<tr class="sdg-clickable sdg-collapsed" data-sdg="8" tabindex="0" role="button" aria-expanded="false" aria-controls="sdg-detail-8">
+<td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#A21942;margin-right:6px;vertical-align:middle" aria-hidden="true"></span>SDG 8 <span style="font-size:0.7em;color:var(--text-secondary)" aria-hidden="true">&#9660;</span></td>
+<td>Decent Work and Economic Growth</td>
+<td style="font-weight:600">23.0</td><td style="color:#f57c00;font-weight:600">medium</td><td style="font-size:0.85em"></td>
+</tr>
+<tr class="sdg-detail" id="sdg-detail-8"><td colspan="5">
+<div style="margin-bottom:8px"><strong style="font-size:0.82em">Evidence Chains:</strong>
+<div class="evidence-chain">
+<span class="chain-node">Kampung Makmur is a 3,000-sow integrated pig farm in Kluang,</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">Description Inference</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">SDG 8<br><span class="chain-confidence">80% conf.</span></span>
+</div>
+<div class="evidence-chain">
+<span class="chain-node">Theme: sustainable agriculture</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">Theme Alignment</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">SDG 8<br><span class="chain-confidence">20% conf.</span></span>
+</div>
+</div>
+<div><strong style="font-size:0.82em">Recommendations:</strong>
+<div class="sdg-rec">Report metrics FP2635, FP5979, FP6354 to strengthen SDG 8 evidence (0/468 currently tracked)</div>
+<div class="sdg-rec">Add specific outcome descriptions related to "Decent Work and Economic Growth" targets in company documentation</div>
+<div class="sdg-rec">Add impact themes: Access To Quality Education, Access To Quality Healthcare</div>
+</div>
+</td></tr>
+<tr class="sdg-clickable sdg-collapsed" data-sdg="9" tabindex="0" role="button" aria-expanded="false" aria-controls="sdg-detail-9">
+<td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#FD6925;margin-right:6px;vertical-align:middle" aria-hidden="true"></span>SDG 9 <span style="font-size:0.7em;color:var(--text-secondary)" aria-hidden="true">&#9660;</span></td>
+<td>Industry, Innovation and Infrastructure</td>
+<td style="font-weight:600">23.0</td><td style="color:#f57c00;font-weight:600">medium</td><td style="font-size:0.85em"></td>
+</tr>
+<tr class="sdg-detail" id="sdg-detail-9"><td colspan="5">
+<div style="margin-bottom:8px"><strong style="font-size:0.82em">Evidence Chains:</strong>
+<div class="evidence-chain">
+<span class="chain-node">Kampung Makmur is a 3,000-sow integrated pig farm in Kluang,</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">Description Inference</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">SDG 9<br><span class="chain-confidence">80% conf.</span></span>
+</div>
+<div class="evidence-chain">
+<span class="chain-node">Theme: sustainable agriculture</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">Theme Alignment</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">SDG 9<br><span class="chain-confidence">20% conf.</span></span>
+</div>
+</div>
+<div><strong style="font-size:0.82em">Recommendations:</strong>
+<div class="sdg-rec">Report metrics FP2635, FP5979, FP6354 to strengthen SDG 9 evidence (0/271 currently tracked)</div>
+<div class="sdg-rec">Add specific outcome descriptions related to "Industry, Innovation and Infrastructure" targets in company documentation</div>
+<div class="sdg-rec">Add impact themes: Access To Quality Education, Access To Quality Healthcare</div>
+</div>
+</td></tr>
+<tr class="sdg-clickable sdg-collapsed" data-sdg="11" tabindex="0" role="button" aria-expanded="false" aria-controls="sdg-detail-11">
+<td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#FD9D24;margin-right:6px;vertical-align:middle" aria-hidden="true"></span>SDG 11 <span style="font-size:0.7em;color:var(--text-secondary)" aria-hidden="true">&#9660;</span></td>
+<td>Sustainable Cities and Communities</td>
+<td style="font-weight:600">23.0</td><td style="color:#f57c00;font-weight:600">medium</td><td style="font-size:0.85em"></td>
+</tr>
+<tr class="sdg-detail" id="sdg-detail-11"><td colspan="5">
+<div style="margin-bottom:8px"><strong style="font-size:0.82em">Evidence Chains:</strong>
+<div class="evidence-chain">
+<span class="chain-node">Kampung Makmur is a 3,000-sow integrated pig farm in Kluang,</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">Description Inference</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">SDG 11<br><span class="chain-confidence">80% conf.</span></span>
+</div>
+<div class="evidence-chain">
+<span class="chain-node">Theme: sustainable agriculture</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">Theme Alignment</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">SDG 11<br><span class="chain-confidence">20% conf.</span></span>
+</div>
+</div>
+<div><strong style="font-size:0.82em">Recommendations:</strong>
+<div class="sdg-rec">Report metrics FP2635, FP5979, FP6354 to strengthen SDG 11 evidence (0/332 currently tracked)</div>
+<div class="sdg-rec">Add specific outcome descriptions related to "Sustainable Cities and Communities" targets in company documentation</div>
+<div class="sdg-rec">Add impact themes: Access To Quality Education, Access To Quality Healthcare</div>
+</div>
+</td></tr>
+<tr class="sdg-clickable sdg-collapsed" data-sdg="5" tabindex="0" role="button" aria-expanded="false" aria-controls="sdg-detail-5">
+<td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#FF3A21;margin-right:6px;vertical-align:middle" aria-hidden="true"></span>SDG 5 <span style="font-size:0.7em;color:var(--text-secondary)" aria-hidden="true">&#9660;</span></td>
+<td>Gender Equality</td>
+<td style="font-weight:600">20.5</td><td style="color:#f57c00;font-weight:600">medium</td><td style="font-size:0.85em"></td>
+</tr>
+<tr class="sdg-detail" id="sdg-detail-5"><td colspan="5">
+<div style="margin-bottom:8px"><strong style="font-size:0.82em">Evidence Chains:</strong>
+<div class="evidence-chain">
+<span class="chain-node">Kampung Makmur is a 3,000-sow integrated pig farm in Kluang,</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">Description Inference</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">SDG 5<br><span class="chain-confidence">70% conf.</span></span>
+</div>
+<div class="evidence-chain">
+<span class="chain-node">Theme: sustainable agriculture</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">Theme Alignment</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">SDG 5<br><span class="chain-confidence">20% conf.</span></span>
+</div>
+</div>
+<div><strong style="font-size:0.82em">Recommendations:</strong>
+<div class="sdg-rec">Report metrics FP2635, FP5979, FP6354 to strengthen SDG 5 evidence (0/168 currently tracked)</div>
+<div class="sdg-rec">Add specific outcome descriptions related to "Gender Equality" targets in company documentation</div>
+<div class="sdg-rec">Add impact themes: Access To Quality Education, Access To Quality Healthcare</div>
+</div>
+</td></tr>
+<tr class="sdg-clickable sdg-collapsed" data-sdg="1" tabindex="0" role="button" aria-expanded="false" aria-controls="sdg-detail-1">
+<td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#E5243B;margin-right:6px;vertical-align:middle" aria-hidden="true"></span>SDG 1 <span style="font-size:0.7em;color:var(--text-secondary)" aria-hidden="true">&#9660;</span></td>
+<td>No Poverty</td>
+<td style="font-weight:600">18.0</td><td style="color:var(--danger);font-weight:600">low</td><td style="font-size:0.85em"></td>
+</tr>
+<tr class="sdg-detail" id="sdg-detail-1"><td colspan="5">
+<div style="margin-bottom:8px"><strong style="font-size:0.82em">Evidence Chains:</strong>
+<div class="evidence-chain">
+<span class="chain-node">Kampung Makmur is a 3,000-sow integrated pig farm in Kluang,</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">Description Inference</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">SDG 1<br><span class="chain-confidence">60% conf.</span></span>
+</div>
+<div class="evidence-chain">
+<span class="chain-node">Theme: sustainable agriculture</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">Theme Alignment</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">SDG 1<br><span class="chain-confidence">20% conf.</span></span>
+</div>
+</div>
+<div><strong style="font-size:0.82em">Recommendations:</strong>
+<div class="sdg-rec">Report metrics FP2460, FP2635, FP5979 to strengthen SDG 1 evidence (0/386 currently tracked)</div>
+<div class="sdg-rec">Add specific outcome descriptions related to "No Poverty" targets in company documentation</div>
+<div class="sdg-rec">Add impact themes: Access To Quality Education, Access To Quality Healthcare</div>
+</div>
+</td></tr>
+<tr class="sdg-clickable sdg-collapsed" data-sdg="16" tabindex="0" role="button" aria-expanded="false" aria-controls="sdg-detail-16">
+<td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#00689D;margin-right:6px;vertical-align:middle" aria-hidden="true"></span>SDG 16 <span style="font-size:0.7em;color:var(--text-secondary)" aria-hidden="true">&#9660;</span></td>
+<td>Peace, Justice and Strong Institutions</td>
+<td style="font-weight:600">18.0</td><td style="color:var(--danger);font-weight:600">low</td><td style="font-size:0.85em"></td>
+</tr>
+<tr class="sdg-detail" id="sdg-detail-16"><td colspan="5">
+<div style="margin-bottom:8px"><strong style="font-size:0.82em">Evidence Chains:</strong>
+<div class="evidence-chain">
+<span class="chain-node">Kampung Makmur is a 3,000-sow integrated pig farm in Kluang,</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">Description Inference</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">SDG 16<br><span class="chain-confidence">60% conf.</span></span>
+</div>
+<div class="evidence-chain">
+<span class="chain-node">Theme: sustainable agriculture</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">Theme Alignment</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">SDG 16<br><span class="chain-confidence">20% conf.</span></span>
+</div>
+</div>
+<div><strong style="font-size:0.82em">Recommendations:</strong>
+<div class="sdg-rec">Report metrics ID0120, ID1046, ID8539 to strengthen SDG 16 evidence (0/27 currently tracked)</div>
+<div class="sdg-rec">Add specific outcome descriptions related to "Peace, Justice and Strong Institutions" targets in company documentation</div>
+<div class="sdg-rec">Add impact themes: Access To Quality Education, Access To Quality Healthcare</div>
+</div>
+</td></tr>
+<tr class="sdg-clickable sdg-collapsed" data-sdg="4" tabindex="0" role="button" aria-expanded="false" aria-controls="sdg-detail-4">
+<td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#C5192D;margin-right:6px;vertical-align:middle" aria-hidden="true"></span>SDG 4 <span style="font-size:0.7em;color:var(--text-secondary)" aria-hidden="true">&#9660;</span></td>
+<td>Quality Education</td>
+<td style="font-weight:600">15.5</td><td style="color:var(--danger);font-weight:600">low</td><td style="font-size:0.85em"></td>
+</tr>
+<tr class="sdg-detail" id="sdg-detail-4"><td colspan="5">
+<div style="margin-bottom:8px"><strong style="font-size:0.82em">Evidence Chains:</strong>
+<div class="evidence-chain">
+<span class="chain-node">Kampung Makmur is a 3,000-sow integrated pig farm in Kluang,</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">Description Inference</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">SDG 4<br><span class="chain-confidence">50% conf.</span></span>
+</div>
+<div class="evidence-chain">
+<span class="chain-node">Theme: sustainable agriculture</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">Theme Alignment</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">SDG 4<br><span class="chain-confidence">20% conf.</span></span>
+</div>
+</div>
+<div><strong style="font-size:0.82em">Recommendations:</strong>
+<div class="sdg-rec">Report metrics ID0120, ID1046, ID8539 to strengthen SDG 4 evidence (0/127 currently tracked)</div>
+<div class="sdg-rec">Add specific outcome descriptions related to "Quality Education" targets in company documentation</div>
+<div class="sdg-rec">Add impact themes: Access To Quality Education, Access To Quality Healthcare</div>
+</div>
+</td></tr>
+<tr class="sdg-clickable sdg-collapsed" data-sdg="10" tabindex="0" role="button" aria-expanded="false" aria-controls="sdg-detail-10">
+<td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#DD1367;margin-right:6px;vertical-align:middle" aria-hidden="true"></span>SDG 10 <span style="font-size:0.7em;color:var(--text-secondary)" aria-hidden="true">&#9660;</span></td>
+<td>Reduced Inequalities</td>
+<td style="font-weight:600">15.5</td><td style="color:var(--danger);font-weight:600">low</td><td style="font-size:0.85em"></td>
+</tr>
+<tr class="sdg-detail" id="sdg-detail-10"><td colspan="5">
+<div style="margin-bottom:8px"><strong style="font-size:0.82em">Evidence Chains:</strong>
+<div class="evidence-chain">
+<span class="chain-node">Kampung Makmur is a 3,000-sow integrated pig farm in Kluang,</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">Description Inference</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">SDG 10<br><span class="chain-confidence">50% conf.</span></span>
+</div>
+<div class="evidence-chain">
+<span class="chain-node">Theme: sustainable agriculture</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">Theme Alignment</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">SDG 10<br><span class="chain-confidence">20% conf.</span></span>
+</div>
+</div>
+<div><strong style="font-size:0.82em">Recommendations:</strong>
+<div class="sdg-rec">Report metrics FP2635, FP5979, FP6354 to strengthen SDG 10 evidence (0/395 currently tracked)</div>
+<div class="sdg-rec">Add specific outcome descriptions related to "Reduced Inequalities" targets in company documentation</div>
+<div class="sdg-rec">Add impact themes: Access To Quality Education, Access To Quality Healthcare</div>
+</div>
+</td></tr>
+<tr class="sdg-clickable sdg-collapsed" data-sdg="14" tabindex="0" role="button" aria-expanded="false" aria-controls="sdg-detail-14">
+<td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#0A97D9;margin-right:6px;vertical-align:middle" aria-hidden="true"></span>SDG 14 <span style="font-size:0.7em;color:var(--text-secondary)" aria-hidden="true">&#9660;</span></td>
+<td>Life Below Water</td>
+<td style="font-weight:600">15.5</td><td style="color:var(--danger);font-weight:600">low</td><td style="font-size:0.85em"></td>
+</tr>
+<tr class="sdg-detail" id="sdg-detail-14"><td colspan="5">
+<div style="margin-bottom:8px"><strong style="font-size:0.82em">Evidence Chains:</strong>
+<div class="evidence-chain">
+<span class="chain-node">Kampung Makmur is a 3,000-sow integrated pig farm in Kluang,</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">Description Inference</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">SDG 14<br><span class="chain-confidence">50% conf.</span></span>
+</div>
+<div class="evidence-chain">
+<span class="chain-node">Theme: sustainable agriculture</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">Theme Alignment</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">SDG 14<br><span class="chain-confidence">20% conf.</span></span>
+</div>
+</div>
+<div><strong style="font-size:0.82em">Recommendations:</strong>
+<div class="sdg-rec">Report metrics OD4108, OD8536, OI1047 to strengthen SDG 14 evidence (0/26 currently tracked)</div>
+<div class="sdg-rec">Add specific outcome descriptions related to "Life Below Water" targets in company documentation</div>
+<div class="sdg-rec">Add impact themes: Agriculture, Air</div>
+</div>
+</td></tr>
+<tr class="sdg-clickable sdg-collapsed" data-sdg="3" tabindex="0" role="button" aria-expanded="false" aria-controls="sdg-detail-3">
+<td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#4C9F38;margin-right:6px;vertical-align:middle" aria-hidden="true"></span>SDG 3 <span style="font-size:0.7em;color:var(--text-secondary)" aria-hidden="true">&#9660;</span></td>
+<td>Good Health and Well-being</td>
+<td style="font-weight:600">13.0</td><td style="color:var(--danger);font-weight:600">low</td><td style="font-size:0.85em"></td>
+</tr>
+<tr class="sdg-detail" id="sdg-detail-3"><td colspan="5">
+<div style="margin-bottom:8px"><strong style="font-size:0.82em">Evidence Chains:</strong>
+<div class="evidence-chain">
+<span class="chain-node">Kampung Makmur is a 3,000-sow integrated pig farm in Kluang,</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">Description Inference</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">SDG 3<br><span class="chain-confidence">40% conf.</span></span>
+</div>
+<div class="evidence-chain">
+<span class="chain-node">Theme: sustainable agriculture</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">Theme Alignment</span><span class="chain-arrow">&#8594;</span>
+<span class="chain-node">SDG 3<br><span class="chain-confidence">20% conf.</span></span>
+</div>
+</div>
+<div><strong style="font-size:0.82em">Recommendations:</strong>
+<div class="sdg-rec">Report metrics ID0120, ID1046, ID8539 to strengthen SDG 3 evidence (0/165 currently tracked)</div>
+<div class="sdg-rec">Add specific outcome descriptions related to "Good Health and Well-being" targets in company documentation</div>
+<div class="sdg-rec">Add impact themes: Access To Quality Education, Access To Quality Healthcare</div>
+</div>
+</td></tr>
+</table>
+<button type="button" class="sdg-toggle" id="sdg-toggle-btn" data-hidden="10">Show all 16 goals (10 with low alignment)</button>
+</div></div>
+<script>
+document.querySelectorAll('.sdg-clickable').forEach(function(row) {
+  function toggleSdg() {
+    var sdg = row.dataset.sdg;
+    var detail = document.getElementById('sdg-detail-' + sdg);
+    if (detail) {
+      var open = detail.classList.toggle('active');
+      row.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+  }
+  row.addEventListener('click', toggleSdg);
+  row.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+      e.preventDefault();
+      toggleSdg();
+    }
+  });
+});
+(function(){
+  var btn = document.getElementById('sdg-toggle-btn');
+  if (!btn) return;
+  var n = parseInt(btn.dataset.hidden, 10) || 0;
+  btn.addEventListener('click', function(){
+    var rows = document.querySelectorAll('#sdg-table tr.sdg-collapsed');
+    var expanded = rows.length && rows[0].classList.contains('show');
+    rows.forEach(function(r){ r.classList.toggle('show'); });
+    btn.textContent = expanded
+      ? ('Show all ' + (rows.length + document.querySelectorAll('#sdg-table tr.sdg-clickable:not(.sdg-collapsed)').length) + ' goals (' + n + ' with low alignment)')
+      : ('Hide ' + n + ' low-alignment goals');
+  });
+})();
+</script>
+<script>
+Plotly.newPlot('sdg-chart', [{
+  type: 'bar', x: ["SDG 2","SDG 13","SDG 6","SDG 7","SDG 12","SDG 15","SDG 8","SDG 9","SDG 11","SDG 5","SDG 1","SDG 16","SDG 4","SDG 10","SDG 14","SDG 3"], y: [28.0,28.0,25.5,25.5,25.5,25.5,23.0,23.0,23.0,20.5,18.0,18.0,15.5,15.5,15.5,13.0],
+  marker: {color: ["#DDA63A","#3F7E44","#26BDE2","#FCC30B","#BF8B2E","#56C02B","#A21942","#FD6925","#FD9D24","#FF3A21","#E5243B","#00689D","#C5192D","#DD1367","#0A97D9","#4C9F38"], line: {width: 0}, cornerradius: 4},
+  text: [28.0,28.0,25.5,25.5,25.5,25.5,23.0,23.0,23.0,20.5,18.0,18.0,15.5,15.5,15.5,13.0], textposition: 'outside', textfont: {size: 11, family: 'Inter, sans-serif'}
+}], {
+  yaxis: {range: [0, 41.4], title: 'Alignment Score', gridcolor: '#f0f0f0', titlefont: {size: 12}},
+  xaxis: {tickangle: -30, tickfont: {size: 10}},
+  height: 360, margin: {l: 55, r: 20, t: 20, b: 60},
+  paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
+  font: {family: 'Inter, -apple-system, sans-serif'}
+}, {responsive: true});
+</script>
+
+<h2 id="sec-opp-risk">Impact Opportunities & Risks</h2>
+<div class="chart-row">
+<div class="chart-box">
+<h3 style="color:var(--success)">Opportunities</h3>
+<div class="rec" style="border-left-color:var(--success);background:var(--success-light)">+ Food security: improving access to nutritious food for underserved populations</div>
+<div class="rec" style="border-left-color:var(--success);background:var(--success-light)">+ Poverty reduction: increasing income for smallholder farmers</div>
+<div class="rec" style="border-left-color:var(--success);background:var(--success-light)">+ Sustainable supply chains: promoting responsible sourcing and production</div>
+<div class="rec" style="border-left-color:var(--success);background:var(--success-light)">+ Climate adaptation: developing climate-resilient farming practices</div>
+<div class="rec" style="border-left-color:var(--success);background:var(--success-light)">+ Rural employment: creating jobs in farming communities</div>
+<div class="rec" style="border-left-color:var(--success);background:var(--success-light)">+ Clean energy access: providing affordable clean energy to underserved areas</div>
+<div class="rec" style="border-left-color:var(--success);background:var(--success-light)">+ Climate mitigation: reducing greenhouse gas emissions</div>
+<div class="rec" style="border-left-color:var(--success);background:var(--success-light)">+ Energy independence: reducing reliance on fossil fuels</div>
+<div class="rec" style="border-left-color:var(--success);background:var(--success-light)">+ Job creation: creating green energy employment opportunities</div>
+</div>
+<div class="chart-box">
+<h3 style="color:var(--danger)">Risks</h3>
+<div class="rec" style="border-left-color:var(--danger);background:var(--danger-light)">! Environmental degradation: soil depletion, water pollution from fertilizers/pesticides</div>
+<div class="rec" style="border-left-color:var(--danger);background:var(--danger-light)">! Climate vulnerability: sensitivity to extreme weather events and climate change</div>
+<div class="rec" style="border-left-color:var(--danger);background:var(--danger-light)">! Labor conditions: risk of exploitative labor practices</div>
+<div class="rec" style="border-left-color:var(--danger);background:var(--danger-light)">! Land use change: deforestation or biodiversity loss from land conversion</div>
+<div class="rec" style="border-left-color:var(--danger);background:var(--danger-light)">! Market volatility: commodity price fluctuations affecting farmer incomes</div>
+<div class="rec" style="border-left-color:var(--danger);background:var(--danger-light)">! Environmental impact: land use, waste from equipment, resource extraction</div>
+<div class="rec" style="border-left-color:var(--danger);background:var(--danger-light)">! Community displacement: risk of displacing communities for energy projects</div>
+<div class="rec" style="border-left-color:var(--danger);background:var(--danger-light)">! Technology risk: rapidly changing technology making investments obsolete</div>
+</div></div>
+
+<h2 id="sec-gap">Gap Analysis</h2>
+<div class="coverage-hero">
+  <div class="pct" style="color:var(--danger)">0.0%</div>
+  <div class="detail">
+    <div style="font-weight:600;font-size:1.1em">Core Metric Set Coverage</div>
+    <div style="color:var(--text-secondary);font-size:0.9em">0 of 16 metrics reported | 16 missing</div>
+    <div class="bar-track"><div class="bar-fill red" style="width:0%"></div></div>
+  </div>
+</div>
+
+<h3 id="sec-missing-metrics">Missing Metrics <span style="font-size:0.7em;color:var(--text-secondary);font-weight:400">(16 gaps grouped into 10 categories)</span></h3>
+<p style="color:var(--text-secondary);font-size:0.88em;margin-bottom:12px">Click any group to see what the metric means, the expected unit, how to measure it, and which 5D dimensions or SDGs it supports. Reporting any of these will move your scores out of the "Estimated" confidence band.</p>
+<details class="missing-metrics-group" open><summary>Financial Performance / Income Statement <span style="font-weight:400;color:var(--text-secondary);font-size:0.85em">&nbsp;1 metric missing</span></summary>
+<div class="missing-metric-card">
+<div class="mm-main">
+<div class="mm-head"><div><span class="mm-name">Revenue from Grants and Donations</span></div><span class="mm-id">FP3021</span></div>
+<div class="mm-def">Value of revenue contributed as grants and donations during the reporting period.</div>
+<div class="mm-def"><strong style="color:var(--text)">Usage guidance: </strong>This metric is intended to capture revenue from both unrestricted and restricted operating grants and donations. It should not include equity grants for capital, grants intended for future operating periods, or grants that will be passed…</div>
+</div>
+<div class="mm-side"><dl>
+<dt>Expected unit</dt><dd><span class="mm-chip unit">Reporting Currency (OD5990)</span></dd>
+<dt>Supports 5D</dt><dd><span class="mm-chip dim">How Much</span></dd>
+<dt>Maps to SDGs</dt><dd><span class="mm-chip sdg" style="opacity:0.55">No mapped SDGs</span></dd>
+</dl></div>
+</div>
+</details>
+<details class="missing-metrics-group"><summary>Financial Performance / Ratios, Concepts, and Calculations <span style="font-weight:400;color:var(--text-secondary);font-size:0.85em">&nbsp;1 metric missing</span></summary>
+<div class="missing-metric-card">
+<div class="mm-main">
+<div class="mm-head"><div><span class="mm-name">Revenue Growth</span></div><span class="mm-id">FP4761</span></div>
+<div class="mm-def">Percentage growth in value of the organization's revenue from one reporting period to another.</div>
+<div class="mm-def"><strong style="color:var(--text)">Calculation: </strong>= [ Total Revenue (FP6510) in reporting period 2 - Total Revenue (FP6510) in reporting period 1 ] / Total Revenue (FP6510) in reporting period 1 × 100</div>
+</div>
+<div class="mm-side"><dl>
+<dt>Expected unit</dt><dd><span class="mm-chip unit">Decimal</span></dd>
+<dt>Supports 5D</dt><dd><span class="mm-chip dim">How Much</span></dd>
+<dt>Maps to SDGs</dt><dd><span class="mm-chip sdg" style="opacity:0.55">No mapped SDGs</span></dd>
+</dl></div>
+</div>
+</details>
+<details class="missing-metrics-group"><summary>Operational Impact / Employees <span style="font-weight:400;color:var(--text-secondary);font-size:0.85em">&nbsp;3 metrics missing</span></summary>
+<div class="missing-metric-card">
+<div class="mm-main">
+<div class="mm-head"><div><span class="mm-name">Full-time Employees: Female Managers</span></div><span class="mm-id">OI1571</span></div>
+<div class="mm-def">Number of paid, full-time, female management employees (managers) at the organization as of the end of the reporting period.</div>
+<div class="mm-def"><strong style="color:var(--text)">Usage guidance: </strong>This metric is intended to capture the number of unique, individual female managers employed by the organization in full-time roles as of the end of the reporting period. This metric excludes Temporary Employees (OI9028).
+
+Organizations…</div>
+</div>
+<div class="mm-side"><dl>
+<dt>Expected unit</dt><dd><span class="mm-chip unit">Unit Referenced within Metric Definition</span></dd>
+<dt>Supports 5D</dt><dd><span class="mm-chip dim">How Much</span> <span class="mm-chip dim">Who</span></dd>
+<dt>Maps to SDGs</dt><dd><span class="mm-chip sdg">SDG 1</span> <span class="mm-chip sdg">SDG 2</span> <span class="mm-chip sdg">SDG 5</span> <span class="mm-chip sdg">SDG 8</span> <span class="mm-chip sdg">SDG 10</span> <span class="mm-chip sdg">SDG 11</span> <span class="mm-chip sdg">SDG 12</span> <span class="mm-chip sdg">SDG 13</span></dd>
+</dl></div>
+</div>
+<div class="missing-metric-card">
+<div class="mm-main">
+<div class="mm-head"><div><span class="mm-name">Full-time Employees: Female</span></div><span class="mm-id">OI6213</span></div>
+<div class="mm-def">Number of paid, full-time, female employees at the organization as of the end of the reporting period.</div>
+<div class="mm-def"><strong style="color:var(--text)">Usage guidance: </strong>This metric is intended to capture the number of unique, female individuals employed by the organization in full-time roles as of the end of the reporting period. This metric excludes Temporary Employees (OI9028).
+
+To report in line with…</div>
+</div>
+<div class="mm-side"><dl>
+<dt>Expected unit</dt><dd><span class="mm-chip unit">Unit Referenced within Metric Definition</span></dd>
+<dt>Supports 5D</dt><dd><span class="mm-chip dim">How Much</span> <span class="mm-chip dim">Who</span></dd>
+<dt>Maps to SDGs</dt><dd><span class="mm-chip sdg">SDG 1</span> <span class="mm-chip sdg">SDG 2</span> <span class="mm-chip sdg">SDG 5</span> <span class="mm-chip sdg">SDG 8</span> <span class="mm-chip sdg">SDG 10</span> <span class="mm-chip sdg">SDG 11</span> <span class="mm-chip sdg">SDG 12</span> <span class="mm-chip sdg">SDG 13</span></dd>
+</dl></div>
+</div>
+<div class="missing-metric-card">
+<div class="mm-main">
+<div class="mm-head"><div><span class="mm-name">Permanent Employees: Total</span></div><span class="mm-id">OI8869</span></div>
+<div class="mm-def">Number of people in paid employment with the organization as of the end of the reporting period, whether they are full-time or part-time.</div>
+<div class="mm-def"><strong style="color:var(--text)">Usage guidance: </strong>This metric is intended to capture the number of unique individuals employed by the organization in full- or part-time roles as of the end of the reporting period. This metric excludes Temporary Employees (OI9028).
+
+This metric is…</div>
+</div>
+<div class="mm-side"><dl>
+<dt>Expected unit</dt><dd><span class="mm-chip unit">Unit Referenced within Metric Definition</span></dd>
+<dt>Supports 5D</dt><dd><span class="mm-chip dim">How Much</span> <span class="mm-chip dim">Who</span></dd>
+<dt>Maps to SDGs</dt><dd><span class="mm-chip sdg">SDG 1</span> <span class="mm-chip sdg">SDG 2</span> <span class="mm-chip sdg">SDG 8</span> <span class="mm-chip sdg">SDG 9</span> <span class="mm-chip sdg">SDG 10</span> <span class="mm-chip sdg">SDG 11</span> <span class="mm-chip sdg">SDG 13</span></dd>
+</dl></div>
+</div>
+</details>
+<details class="missing-metrics-group"><summary>Operational Impact / Environmental Performance <span style="font-weight:400;color:var(--text-secondary);font-size:0.85em">&nbsp;2 metrics missing</span></summary>
+<div class="missing-metric-card">
+<div class="mm-main">
+<div class="mm-head"><div><span class="mm-name">Greenhouse Gas Emissions: Total</span></div><span class="mm-id">OI1479</span></div>
+<div class="mm-def">Amount of greenhouse gases (GHG) emitted as a result of the organization's operations during the reporting period.</div>
+<div class="mm-def"><strong style="color:var(--text)">Usage guidance: </strong>This metric is intended to capture the total amount of greenhouse gases emitted during the reporting period. To disaggregate by scope (that is, source) of greenhouse gas emissions, organizations are encouraged to report Greenhouse Gas…</div>
+</div>
+<div class="mm-side"><dl>
+<dt>Expected unit</dt><dd><span class="mm-chip unit">Number of Metric Tons of CO2 Equivalent</span></dd>
+<dt>Supports 5D</dt><dd><span class="mm-chip dim">What</span></dd>
+<dt>Maps to SDGs</dt><dd><span class="mm-chip sdg">SDG 13</span></dd>
+</dl></div>
+</div>
+<div class="missing-metric-card">
+<div class="mm-main">
+<div class="mm-head"><div><span class="mm-name">Greenhouse Gas Emissions: Direct (Scope 1)</span></div><span class="mm-id">OI4112</span></div>
+<div class="mm-def">Amount of greenhouse gases (GHG) emitted from direct emissions sources as a result of the organization's operations during the reporting period.</div>
+<div class="mm-def"><strong style="color:var(--text)">Usage guidance: </strong>This metric is intended to capture the amount of greenhouse gases emitted directly from sources owned or controlled by the organization during the reporting period. For tools that may be helpful in calculating this and related metrics…</div>
+</div>
+<div class="mm-side"><dl>
+<dt>Expected unit</dt><dd><span class="mm-chip unit">Number of Metric Tons of CO2 Equivalent</span></dd>
+<dt>Supports 5D</dt><dd><span class="mm-chip dim">What</span></dd>
+<dt>Maps to SDGs</dt><dd><span class="mm-chip sdg">SDG 13</span></dd>
+</dl></div>
+</div>
+</details>
+<details class="missing-metrics-group"><summary>Operational Impact / Governance & Ownership <span style="font-weight:400;color:var(--text-secondary);font-size:0.85em">&nbsp;1 metric missing</span></summary>
+<div class="missing-metric-card">
+<div class="mm-main">
+<div class="mm-head"><div><span class="mm-name">Board of Directors: Total</span></div><span class="mm-id">OI1075</span></div>
+<div class="mm-def">Number of members of the organization's board of directors or other governing body as of the end of the reporting period.</div>
+<div class="mm-def"><strong style="color:var(--text)">Usage guidance: </strong>This metric is intended to capture the overall size of the organization’s board of directors or governing body. A board of directors is a group of individuals legally responsible to govern a corporation and responsible to the shareholders…</div>
+</div>
+<div class="mm-side"><dl>
+<dt>Expected unit</dt><dd><span class="mm-chip unit">Unit Referenced within Metric Definition</span></dd>
+<dt>Supports 5D</dt><dd><span class="mm-chip dim">How Much</span> <span class="mm-chip dim">Who</span></dd>
+<dt>Maps to SDGs</dt><dd><span class="mm-chip sdg" style="opacity:0.55">No mapped SDGs</span></dd>
+</dl></div>
+</div>
+</details>
+<details class="missing-metrics-group"><summary>Operational Impact / Social Policies <span style="font-weight:400;color:var(--text-secondary);font-size:0.85em">&nbsp;4 metrics missing</span></summary>
+<div class="missing-metric-card">
+<div class="mm-main">
+<div class="mm-head"><div><span class="mm-name">Community Service Policy</span></div><span class="mm-id">OI4324</span></div>
+<div class="mm-def">Indicates whether the organization implements a community service policy.</div>
+<div class="mm-def"><strong style="color:var(--text)">Usage guidance: </strong>This metric is intended to capture the organization’s policy on community service. Examples of policy details to footnote may include provisions for time spent volunteering during traditional work hours, whether for company-organized…</div>
+</div>
+<div class="mm-side"><dl>
+<dt>Expected unit</dt><dd><span class="mm-chip unit">Yes/No</span></dd>
+<dt>Supports 5D</dt><dd><span class="mm-chip dim">Contribution</span></dd>
+<dt>Maps to SDGs</dt><dd><span class="mm-chip sdg">SDG 9</span> <span class="mm-chip sdg">SDG 11</span> <span class="mm-chip sdg">SDG 12</span></dd>
+</dl></div>
+</div>
+<div class="missing-metric-card">
+<div class="mm-main">
+<div class="mm-head"><div><span class="mm-name">Social and Environmental Performance Reporting</span></div><span class="mm-id">OI4732</span></div>
+<div class="mm-def">Indicates whether the organization reports its social and environmental performance to relevant stakeholders.</div>
+<div class="mm-def"><strong style="color:var(--text)">Usage guidance: </strong>This metric is intended to capture whether or not the organization reports its social and environmental performance. Examples of information that may be included in performance reports, to footnote, include: social and/or environmental…</div>
+</div>
+<div class="mm-side"><dl>
+<dt>Expected unit</dt><dd><span class="mm-chip unit">Yes/No</span></dd>
+<dt>Supports 5D</dt><dd><span class="mm-chip dim">Contribution</span></dd>
+<dt>Maps to SDGs</dt><dd><span class="mm-chip sdg">SDG 1</span> <span class="mm-chip sdg">SDG 8</span> <span class="mm-chip sdg">SDG 9</span> <span class="mm-chip sdg">SDG 11</span> <span class="mm-chip sdg">SDG 12</span> <span class="mm-chip sdg">SDG 13</span></dd>
+</dl></div>
+</div>
+<div class="missing-metric-card">
+<div class="mm-main">
+<div class="mm-head"><div><span class="mm-name">Client Protection Policy</span></div><span class="mm-id">OI4753</span></div>
+<div class="mm-def">Indicates whether the organization has a written policy for client protection and a system to monitor compliance with this policy.</div>
+<div class="mm-def"><strong style="color:var(--text)">Usage guidance: </strong>This metric is intended to capture the organization’s policy on client protection, including market conduct rules and client protection regulation, whether created voluntarily or through government mandate.
+
+Examples of policy…</div>
+</div>
+<div class="mm-side"><dl>
+<dt>Expected unit</dt><dd><span class="mm-chip unit">Yes/No</span></dd>
+<dt>Supports 5D</dt><dd><span class="mm-chip dim">Risk</span></dd>
+<dt>Maps to SDGs</dt><dd><span class="mm-chip sdg">SDG 1</span> <span class="mm-chip sdg">SDG 2</span> <span class="mm-chip sdg">SDG 3</span> <span class="mm-chip sdg">SDG 5</span> <span class="mm-chip sdg">SDG 6</span> <span class="mm-chip sdg">SDG 7</span> <span class="mm-chip sdg">SDG 8</span> <span class="mm-chip sdg">SDG 9</span><span class="mm-chip sdg" style="opacity:0.7">+3</span></dd>
+</dl></div>
+</div>
+<div class="missing-metric-card">
+<div class="mm-main">
+<div class="mm-head"><div><span class="mm-name">Client Feedback System</span></div><span class="mm-id">OI5049</span></div>
+<div class="mm-def">Indicates whether the organization implements a feedback system to solicit client feedback and has an established procedure and/or committee to receive and handle client feedback.</div>
+<div class="mm-def"><strong style="color:var(--text)">Usage guidance: </strong>This metric is intended to capture whether the organization has a system for requesting and receiving feedback from clients. Feedback systems should be designed to capture positive feedback, questions, and complaints. Organizations can…</div>
+</div>
+<div class="mm-side"><dl>
+<dt>Expected unit</dt><dd><span class="mm-chip unit">Yes/No</span></dd>
+<dt>Supports 5D</dt><dd><span class="mm-chip dim">Contribution</span></dd>
+<dt>Maps to SDGs</dt><dd><span class="mm-chip sdg">SDG 1</span> <span class="mm-chip sdg">SDG 2</span> <span class="mm-chip sdg">SDG 3</span> <span class="mm-chip sdg">SDG 5</span> <span class="mm-chip sdg">SDG 6</span> <span class="mm-chip sdg">SDG 7</span> <span class="mm-chip sdg">SDG 8</span> <span class="mm-chip sdg">SDG 9</span><span class="mm-chip sdg" style="opacity:0.7">+3</span></dd>
+</dl></div>
+</div>
+</details>
+<details class="missing-metrics-group"><summary>Operational Impact / Wages <span style="font-weight:400;color:var(--text-secondary);font-size:0.85em">&nbsp;1 metric missing</span></summary>
+<div class="missing-metric-card">
+<div class="mm-main">
+<div class="mm-head"><div><span class="mm-name">Wage Equity</span></div><span class="mm-id">OI1582</span></div>
+<div class="mm-def">Ratio of the wages paid during the reporting period to the highest-compensated full-time employee (including bonus and excluding benefits) compared to the lowest-paid full-time employee.</div>
+<div class="mm-def"><strong style="color:var(--text)">Calculation: </strong>= Wages of highest-paid full-time employee during the reporting period / Wages of lowest-paid full-time employee during the reporting period</div>
+</div>
+<div class="mm-side"><dl>
+<dt>Expected unit</dt><dd><span class="mm-chip unit">Decimal</span></dd>
+<dt>Supports 5D</dt><dd><span class="mm-chip dim">What</span></dd>
+<dt>Maps to SDGs</dt><dd><span class="mm-chip sdg">SDG 1</span> <span class="mm-chip sdg">SDG 8</span> <span class="mm-chip sdg">SDG 10</span></dd>
+</dl></div>
+</div>
+</details>
+<details class="missing-metrics-group"><summary>Organizational Description / Impact Objectives <span style="font-weight:400;color:var(--text-secondary);font-size:0.85em">&nbsp;1 metric missing</span></summary>
+<div class="missing-metric-card">
+<div class="mm-main">
+<div class="mm-head"><div><span class="mm-name">Social and Environmental Targets</span></div><span class="mm-id">OD4091</span></div>
+<div class="mm-def">Describes the quantifiable social and environmental targets set by the organization.</div>
+<div class="mm-def"><strong style="color:var(--text)">Usage guidance: </strong>This metric is intended to capture the organization’s social and/or environmental targets. Typically consistent with the organization's mission, these targets should be specific, measurable, attainable, relevant, and time bound. Other…</div>
+</div>
+<div class="mm-side"><dl>
+<dt>Expected unit</dt><dd><span class="mm-chip unit">Text</span></dd>
+<dt>Supports 5D</dt><dd><span class="mm-chip dim">Contribution</span></dd>
+<dt>Maps to SDGs</dt><dd><span class="mm-chip sdg" style="opacity:0.55">No mapped SDGs</span></dd>
+</dl></div>
+</div>
+</details>
+<details class="missing-metrics-group"><summary>Organizational Description / Organizational Information <span style="font-weight:400;color:var(--text-secondary);font-size:0.85em">&nbsp;1 metric missing</span></summary>
+<div class="missing-metric-card">
+<div class="mm-main">
+<div class="mm-head"><div><span class="mm-name">Client Model</span></div><span class="mm-id">OD8350</span></div>
+<div class="mm-def">Describes the client model of the organization. Select all that apply:
+
+- Business-to-Business (B2B)
+- Business-to-Consumer (B2C)
+- Business-to-Government (B2G)
+- Peer-to-Peer (P2P)</div>
+<div class="mm-def"><strong style="color:var(--text)">Usage guidance: </strong>This metric is intended to capture the type of relationship between the organization and its clients.
+
+In a Business-to-Business client model, the organization sells its goods or services to other businesses, formally or informally.
+
+In a…</div>
+</div>
+<div class="mm-side"><dl>
+<dt>Expected unit</dt><dd><span class="mm-chip unit">Selection</span></dd>
+<dt>Supports 5D</dt><dd><span class="mm-chip dim">What</span></dd>
+<dt>Maps to SDGs</dt><dd><span class="mm-chip sdg" style="opacity:0.55">No mapped SDGs</span></dd>
+</dl></div>
+</div>
+</details>
+<details class="missing-metrics-group"><summary>Product Impact / Client Information <span style="font-weight:400;color:var(--text-secondary);font-size:0.85em">&nbsp;1 metric missing</span></summary>
+<div class="missing-metric-card">
+<div class="mm-main">
+<div class="mm-head"><div><span class="mm-name">Client Individuals: Total</span></div><span class="mm-id">PI4060</span></div>
+<div class="mm-def">Number of unique individuals who were clients of the organization during the reporting period.</div>
+<div class="mm-def"><strong style="color:var(--text)">Usage guidance: </strong>This metric is intended to capture the number of unique clients who received the organization's products or services during the reporting period. It is not a measure of foot traffic, nor is it intended to capture the number of consumer…</div>
+</div>
+<div class="mm-side"><dl>
+<dt>Expected unit</dt><dd><span class="mm-chip unit">Unit Referenced within Metric Definition</span></dd>
+<dt>Supports 5D</dt><dd><span class="mm-chip dim">How Much</span> <span class="mm-chip dim">Who</span></dd>
+<dt>Maps to SDGs</dt><dd><span class="mm-chip sdg">SDG 1</span> <span class="mm-chip sdg">SDG 2</span> <span class="mm-chip sdg">SDG 3</span> <span class="mm-chip sdg">SDG 4</span> <span class="mm-chip sdg">SDG 6</span> <span class="mm-chip sdg">SDG 7</span> <span class="mm-chip sdg">SDG 8</span> <span class="mm-chip sdg">SDG 9</span><span class="mm-chip sdg" style="opacity:0.7">+4</span></dd>
+</dl></div>
+</div>
+</details>
+<h3>Recommendations</h3>
+<div class="rec">Critical: Coverage is below 30%. Start by reporting the most fundamental metrics: Revenue, Total Clients, Total Employees.</div>
+<div class="rec">Priority missing metrics: FP3021 (Revenue from Grants and Donations), FP4761 (Revenue Growth), OD4091 (Social and Environmental Targets), OD8350 (Client Model), OI1075 (Board of Directors: Total)</div>
+<h2 id="sec-metrics">Metric Tracking Dashboard</h2>
+<p style="color:var(--text-secondary);font-size:0.88em;margin-bottom:12px">0 tracked &bull; 44 gaps &bull; 44 total &bull; Click <a href="#sec-missing-metrics" style="color:var(--accent)">Missing Metrics</a> for definitions</p>
+<div class="metric-grid">
+<div class="metric-card gap"><div class="mc-id">OI9101</div><div class="mc-name">Adaptation Needs Assessment</div><div style="font-size:0.72em;color:var(--primary);margin-top:2px">Contribution</div><span class="mc-status gap" style="margin-top:8px;display:inline-block">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">PI1911</div><div class="mc-name">Area of Marine Habitat Protected</div><div style="font-size:0.72em;color:var(--primary);margin-top:2px">Risk</div><span class="mc-status gap" style="margin-top:8px;display:inline-block">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">PI1142</div><div class="mc-name">Area of Seaweed Farm Certified</div><div style="font-size:0.72em;color:var(--primary);margin-top:2px">Contribution</div><span class="mc-status gap" style="margin-top:8px;display:inline-block">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">PI1405</div><div class="mc-name">Average Supplier Agricultural Yield: Smallholder</div><div style="font-size:0.72em;color:var(--primary);margin-top:2px">Who</div><span class="mc-status gap" style="margin-top:8px;display:inline-block">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">OI1075</div><div class="mc-name">Board of Directors: Total</div><div style="font-size:0.72em;color:var(--primary);margin-top:2px">How Much, Who</div><div style="font-size:0.72em;color:var(--text-secondary);margin-top:6px">Unit: Unit Referenced within Metric Definition</div><span class="mc-status gap" style="margin-top:8px;display:inline-block">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">OI5049</div><div class="mc-name">Client Feedback System</div><div style="font-size:0.72em;color:var(--primary);margin-top:2px">Contribution</div><div style="font-size:0.72em;color:var(--text-secondary);margin-top:6px">Unit: Yes/No</div><span class="mc-status gap" style="margin-top:8px;display:inline-block">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">PI4060</div><div class="mc-name">Client Individuals: Total</div><div style="font-size:0.72em;color:var(--primary);margin-top:2px">How Much, Who</div><div style="font-size:0.72em;color:var(--text-secondary);margin-top:6px">Unit: Unit Referenced within Metric Definition</div><span class="mc-status gap" style="margin-top:8px;display:inline-block">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">OD8350</div><div class="mc-name">Client Model</div><div style="font-size:0.72em;color:var(--primary);margin-top:2px">What</div><div style="font-size:0.72em;color:var(--text-secondary);margin-top:6px">Unit: Selection</div><span class="mc-status gap" style="margin-top:8px;display:inline-block">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">OI4753</div><div class="mc-name">Client Protection Policy</div><div style="font-size:0.72em;color:var(--primary);margin-top:2px">Risk</div><div style="font-size:0.72em;color:var(--text-secondary);margin-top:6px">Unit: Yes/No</div><span class="mc-status gap" style="margin-top:8px;display:inline-block">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">OI2340</div><div class="mc-name">Climate Resilient Water Management Practices</div><div style="font-size:0.72em;color:var(--primary);margin-top:2px">What</div><span class="mc-status gap" style="margin-top:8px;display:inline-block">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">PI1002</div><div class="mc-name">Climate Vulnerability Status</div><div style="font-size:0.72em;color:var(--primary);margin-top:2px">Who</div><span class="mc-status gap" style="margin-top:8px;display:inline-block">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">PI2476</div><div class="mc-name">Communities Served</div><div style="font-size:0.72em;color:var(--primary);margin-top:2px">Contribution</div><span class="mc-status gap" style="margin-top:8px;display:inline-block">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">OI4324</div><div class="mc-name">Community Service Policy</div><div style="font-size:0.72em;color:var(--primary);margin-top:2px">Contribution</div><div style="font-size:0.72em;color:var(--text-secondary);margin-top:6px">Unit: Yes/No</div><span class="mc-status gap" style="margin-top:8px;display:inline-block">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">PI5566</div><div class="mc-name">Damage to Infrastructure</div><div style="font-size:0.72em;color:var(--primary);margin-top:2px">How Much</div><span class="mc-status gap" style="margin-top:8px;display:inline-block">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">OI9911</div><div class="mc-name">Flood Resilient Construction Practices</div><div style="font-size:0.72em;color:var(--primary);margin-top:2px">What</div><span class="mc-status gap" style="margin-top:8px;display:inline-block">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">OI0933</div><div class="mc-name">Founder Demographics</div><div style="font-size:0.72em;color:var(--primary);margin-top:2px">Who</div><span class="mc-status gap" style="margin-top:8px;display:inline-block">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">OI6213</div><div class="mc-name">Full-time Employees: Female</div><div style="font-size:0.72em;color:var(--primary);margin-top:2px">How Much, Who</div><div style="font-size:0.72em;color:var(--text-secondary);margin-top:6px">Unit: Unit Referenced within Metric Definition</div><span class="mc-status gap" style="margin-top:8px;display:inline-block">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">OI1571</div><div class="mc-name">Full-time Employees: Female Managers</div><div style="font-size:0.72em;color:var(--primary);margin-top:2px">How Much, Who</div><div style="font-size:0.72em;color:var(--text-secondary);margin-top:6px">Unit: Unit Referenced within Metric Definition</div><span class="mc-status gap" style="margin-top:8px;display:inline-block">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">OI2764</div><div class="mc-name">Greenhouse Gas Emissions Avoided</div><div style="font-size:0.72em;color:var(--primary);margin-top:2px">How Much</div><span class="mc-status gap" style="margin-top:8px;display:inline-block">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">OI5951</div><div class="mc-name">Greenhouse Gas Emissions Mitigated</div><div style="font-size:0.72em;color:var(--primary);margin-top:2px">How Much</div><span class="mc-status gap" style="margin-top:8px;display:inline-block">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">OI4112</div><div class="mc-name">Greenhouse Gas Emissions: Direct (Scope 1)</div><div style="font-size:0.72em;color:var(--primary);margin-top:2px">What</div><div style="font-size:0.72em;color:var(--text-secondary);margin-top:6px">Unit: Number of Metric Tons of CO2 Equivalent</div><span class="mc-status gap" style="margin-top:8px;display:inline-block">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">OI1479</div><div class="mc-name">Greenhouse Gas Emissions: Total</div><div style="font-size:0.72em;color:var(--primary);margin-top:2px">What</div><div style="font-size:0.72em;color:var(--text-secondary);margin-top:6px">Unit: Number of Metric Tons of CO2 Equivalent</div><span class="mc-status gap" style="margin-top:8px;display:inline-block">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">OI0667</div><div class="mc-name">Leadership Demographics</div><div style="font-size:0.72em;color:var(--primary);margin-top:2px">Contribution</div><span class="mc-status gap" style="margin-top:8px;display:inline-block">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">PI0510</div><div class="mc-name">Length of Coastline Protected</div><div style="font-size:0.72em;color:var(--primary);margin-top:2px">Risk</div><span class="mc-status gap" style="margin-top:8px;display:inline-block">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">OI3344</div><div class="mc-name">Level of Flood Risk</div><div style="font-size:0.72em;color:var(--primary);margin-top:2px">What</div><span class="mc-status gap" style="margin-top:8px;display:inline-block">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">OI2799</div><div class="mc-name">Level of Water Stress</div><div style="font-size:0.72em;color:var(--primary);margin-top:2px">Who</div><span class="mc-status gap" style="margin-top:8px;display:inline-block">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">PI3227</div><div class="mc-name">Loss of Marine Habitat</div><div style="font-size:0.72em;color:var(--primary);margin-top:2px">How Much</div><span class="mc-status gap" style="margin-top:8px;display:inline-block">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">PI1899</div><div class="mc-name">Marine Environmental Pressures</div><div style="font-size:0.72em;color:var(--primary);margin-top:2px">Risk</div><span class="mc-status gap" style="margin-top:8px;display:inline-block">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">PI2894</div><div class="mc-name">Marine Livelihoods</div><div style="font-size:0.72em;color:var(--primary);margin-top:2px">How Much</div><span class="mc-status gap" style="margin-top:8px;display:inline-block">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">PD8501</div><div class="mc-name">Meter Type</div><div style="font-size:0.72em;color:var(--primary);margin-top:2px">Risk</div><span class="mc-status gap" style="margin-top:8px;display:inline-block">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">OI4221</div><div class="mc-name">Ownership Demographics</div><div style="font-size:0.72em;color:var(--primary);margin-top:2px">Who</div><span class="mc-status gap" style="margin-top:8px;display:inline-block">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">OI8869</div><div class="mc-name">Permanent Employees: Total</div><div style="font-size:0.72em;color:var(--primary);margin-top:2px">How Much, Who</div><div style="font-size:0.72em;color:var(--text-secondary);margin-top:6px">Unit: Unit Referenced within Metric Definition</div><span class="mc-status gap" style="margin-top:8px;display:inline-block">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">OI3781</div><div class="mc-name">Primary Energy Source</div><div style="font-size:0.72em;color:var(--primary);margin-top:2px">What</div><span class="mc-status gap" style="margin-top:8px;display:inline-block">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">PI1568</div><div class="mc-name">Producer Price Premium</div><div style="font-size:0.72em;color:var(--primary);margin-top:2px">Contribution</div><span class="mc-status gap" style="margin-top:8px;display:inline-block">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">FP4761</div><div class="mc-name">Revenue Growth</div><div style="font-size:0.72em;color:var(--primary);margin-top:2px">How Much</div><div style="font-size:0.72em;color:var(--text-secondary);margin-top:6px">Unit: Decimal</div><span class="mc-status gap" style="margin-top:8px;display:inline-block">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">FP3021</div><div class="mc-name">Revenue from Grants and Donations</div><div style="font-size:0.72em;color:var(--primary);margin-top:2px">How Much</div><div style="font-size:0.72em;color:var(--text-secondary);margin-top:6px">Unit: Reporting Currency (OD5990)</div><span class="mc-status gap" style="margin-top:8px;display:inline-block">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">OI4732</div><div class="mc-name">Social and Environmental Performance Reporting</div><div style="font-size:0.72em;color:var(--primary);margin-top:2px">Contribution</div><div style="font-size:0.72em;color:var(--text-secondary);margin-top:6px">Unit: Yes/No</div><span class="mc-status gap" style="margin-top:8px;display:inline-block">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">OD4091</div><div class="mc-name">Social and Environmental Targets</div><div style="font-size:0.72em;color:var(--primary);margin-top:2px">Contribution</div><div style="font-size:0.72em;color:var(--text-secondary);margin-top:6px">Unit: Text</div><span class="mc-status gap" style="margin-top:8px;display:inline-block">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">PI3419</div><div class="mc-name">Species Recovery</div><div style="font-size:0.72em;color:var(--primary);margin-top:2px">Contribution</div><span class="mc-status gap" style="margin-top:8px;display:inline-block">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">OI9202</div><div class="mc-name">Streamflow Rate</div><div style="font-size:0.72em;color:var(--primary);margin-top:2px">What</div><span class="mc-status gap" style="margin-top:8px;display:inline-block">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">PI1207</div><div class="mc-name">Sustainable Livelihood Opportunities Supported</div><div style="font-size:0.72em;color:var(--primary);margin-top:2px">Contribution</div><span class="mc-status gap" style="margin-top:8px;display:inline-block">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">OI1582</div><div class="mc-name">Wage Equity</div><div style="font-size:0.72em;color:var(--primary);margin-top:2px">What</div><div style="font-size:0.72em;color:var(--text-secondary);margin-top:6px">Unit: Decimal</div><span class="mc-status gap" style="margin-top:8px;display:inline-block">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">OI0386</div><div class="mc-name">Water Discharged</div><div style="font-size:0.72em;color:var(--primary);margin-top:2px">What</div><span class="mc-status gap" style="margin-top:8px;display:inline-block">Gap</span></div>
+<div class="metric-card gap"><div class="mc-id">OI0263</div><div class="mc-name">Water Withdrawn</div><div style="font-size:0.72em;color:var(--primary);margin-top:2px">What</div><span class="mc-status gap" style="margin-top:8px;display:inline-block">Gap</span></div>
+</div>
+
+<h2 id="sec-greenwashing">Greenwashing / Impact-Washing Risk</h2>
+<div class="cards-row">
+<div class="score-card" style="border-left:4px solid #c62828">
+  <div class="value" style="color:#c62828">75.3</div>
+  <div class="label">Risk Score (0-100)</div>
+</div>
+<div class="score-card"><div class="value" style="font-size:1.2em;color:#c62828">High Risk</div><div class="label">Classification</div></div>
+</div>
+<table><tr><th>Sub-Score</th><th>Value</th></tr>
+<tr><td>Claim Metric Gap</td><td>100.0/100</td></tr>
+<tr><td>Adverse Omission</td><td>90.0/100</td></tr>
+<tr><td>Specificity</td><td>39.0/100</td></tr>
+<tr><td>Selectivity</td><td>60.0/100</td></tr>
+<tr><td>Verification</td><td>70.0/100</td></tr>
+</table>
+<h3>Flags</h3>
+<div class="rec" style="border-left-color:#c62828">HIGH_CLAIM_METRIC_GAP: SDG/theme claims lack supporting metric evidence</div>
+<div class="rec" style="border-left-color:#c62828">ADVERSE_OMISSION: Missing negative-impact metrics for sector</div>
+<div class="rec" style="border-left-color:#c62828">NO_VERIFICATION: No evidence of third-party verification or auditing</div>
+<h3>Recommendations</h3>
+<div class="rec">Map each SDG claim to at least one IRIS+ metric with reported data</div>
+<div class="rec">Report adverse-impact metrics appropriate for agriculture sector (e.g., GHG emissions, client protection)</div>
+<div class="rec">Include risk-oriented and negative-impact metrics alongside positive outcomes</div>
+<div class="rec">Obtain third-party verification or implement a recognized measurement framework</div>
+
+<h2 id="sec-benchmark">Sector Benchmark Comparison</h2>
+<p style="color:var(--text-secondary);font-size:0.9em;margin-bottom:12px">Agriculture | Food / agriculture impact funds; n≈58 (GIIN 2022 SOTM)</p>
+<div class="chart-row">
+<div class="chart-box" id="benchmark-chart" role="img" aria-label="Chart comparing this company's dimension scores against sector benchmarks. The same values are listed in the adjacent table."></div>
+<div class="chart-box">
+<table>
+<tr><th>Dimension</th><th>Your Score</th><th>Benchmark</th><th>Delta</th></tr>
+
+<tr style="font-weight:600;background:var(--primary-light)">
+<td>Overall</td><td>1.9</td><td>2.7</td>
+<td class="bm-delta negative">-0.8</td></tr>
+<tr>
+<td>What</td><td>2.3</td><td>3.0</td>
+<td class="bm-delta negative">-0.7</td></tr>
+<tr>
+<td>Who</td><td>2.5</td><td>3.2</td>
+<td class="bm-delta negative">-0.7</td></tr>
+<tr>
+<td>How Much</td><td>1.8</td><td>2.5</td>
+<td class="bm-delta negative">-0.7</td></tr>
+<tr>
+<td>Contribution</td><td>1.8</td><td>2.3</td>
+<td class="bm-delta negative">-0.5</td></tr>
+<tr>
+<td>Risk</td><td>1.3</td><td>2.6</td>
+<td class="bm-delta negative">-1.3</td></tr>
+</table></div></div>
+<script>
+Plotly.newPlot('benchmark-chart', [
+  {type:'bar', name:'Your Score', x:["What","Who","How Much","Contribution","Risk"], y:[2.3,2.5,1.8,1.8,1.3], marker:{color:'#1976d2', cornerradius:3}},
+  {type:'bar', name:'Benchmark', x:["What","Who","How Much","Contribution","Risk"], y:[3.0,3.2,2.5,2.3,2.6], marker:{color:'#b0bec5', cornerradius:3}}
+], {
+  barmode:'group', yaxis:{range:[0,5.5], title:'Score', gridcolor:'#f0f0f0'},
+  height:350, margin:{l:50,r:20,t:20,b:50}, legend:{orientation:'h', y:1.08},
+  paper_bgcolor:'transparent', plot_bgcolor:'transparent',
+  font:{family:'Inter, -apple-system, sans-serif', size:11}
+}, {responsive:true});
+</script>
+<h2 id="sec-pathway">Impact Pathway (Theory of Change)</h2>
+<div class="pathway">
+<div class="pathway-stage"><div class="pathway-box"><h4>Inputs</h4><div class="items">&bull; Sector: agriculture<br>&bull; Geography: Malaysia</div></div>
+<span class="pathway-arrow">&#8594;</span>
+</div>
+<div class="pathway-stage"><div class="pathway-box"><h4>Activities</h4><div class="items">&bull; Kampung Makmur is a 3,000-sow commercial pig farm in Johor, Malaysia, operating an…<br>&bull; sustainable agriculture<br>&bull; waste-to-energy</div></div>
+<span class="pathway-arrow">&#8594;</span>
+</div>
+<div class="pathway-stage"><div class="pathway-box"><h4>Outputs</h4><div class="items">&bull; Metrics to be reported</div></div>
+<span class="pathway-arrow">&#8594;</span>
+</div>
+<div class="pathway-stage"><div class="pathway-box"><h4>Outcomes</h4><div class="items">&bull; SDG 2: Zero Hunger<br>&bull; SDG 13: Climate Action<br>&bull; SDG 6: Clean Water and Sanitation</div></div>
+<span class="pathway-arrow">&#8594;</span>
+</div>
+<div class="pathway-stage"><div class="pathway-box"><h4>Impact</h4><div class="items">&bull; 5D Score: 1.9/5<br>&bull; Grade: C</div></div>
+</div>
+</div>
+<div class="rationale-panel">
+<h3 style="margin-top:0">How this grade was calculated</h3>
+<div class="rationale-headline">
+<div><span class="rationale-overall">1.9<span class="rationale-overall-max">/5</span></span>
+<span class="rationale-grade">C</span></div>
+<div class="rationale-prov" style="color:var(--danger)">Estimated</div>
+</div>
+<p class="rationale-intro">Each dimension is scored on a 0–5 scale. The final score is <strong>max(sector baseline, evidence score)</strong>, capped at 2.5 until you report <strong>≥ 3</strong> IRIS+ metrics in that dimension. The overall grade is the unweighted average of the five dimensions.</p>
+<div class="rationale-table-wrap">
+<table class="rationale-table">
+<colgroup><col class="col-dim"><col class="col-final"><col class="col-baseline"><col class="col-lift"><col class="col-metrics"><col class="col-driver"></colgroup>
+<thead><tr><th>Dimension</th><th>Final</th><th>Baseline</th><th>Lift</th><th>Metrics</th><th>Main driver</th></tr></thead>
+<tbody>
+<tr><td class="r-dim"><strong>What</strong> <span class="prov-badge" style="background:var(--danger)20;color:var(--danger)">Estimated</span></td><td class="r-final" style="font-weight:700;color:var(--warning)">2.3</td><td class="r-baseline" style="color:var(--text-secondary)">1.80</td><td class="r-lift">+0.5</td><td class="r-metrics">0 / 27</td><td class="r-driver">Baseline only (no IRIS+ metrics reported)</td></tr>
+<tr><td class="r-dim"><strong>Who</strong> <span class="prov-badge" style="background:var(--danger)20;color:var(--danger)">Estimated</span></td><td class="r-final" style="font-weight:700;color:var(--warning)">2.5</td><td class="r-baseline" style="color:var(--text-secondary)">2.00</td><td class="r-lift">+0.5 <span class="rationale-cap-tag">cap&nbsp;2.5</span></td><td class="r-metrics">0 / 13</td><td class="r-driver">Baseline only (no IRIS+ metrics reported)</td></tr>
+<tr><td class="r-dim"><strong>How Much</strong> <span class="prov-badge" style="background:var(--danger)20;color:var(--danger)">Estimated</span></td><td class="r-final" style="font-weight:700;color:var(--danger)">1.8</td><td class="r-baseline" style="color:var(--text-secondary)">1.80</td><td class="r-lift">—</td><td class="r-metrics">0 / 15</td><td class="r-driver">Baseline only (no IRIS+ metrics reported)</td></tr>
+<tr><td class="r-dim"><strong>Contribution</strong> <span class="prov-badge" style="background:var(--danger)20;color:var(--danger)">Estimated</span></td><td class="r-final" style="font-weight:700;color:var(--danger)">1.8</td><td class="r-baseline" style="color:var(--text-secondary)">1.80</td><td class="r-lift">—</td><td class="r-metrics">0 / 10</td><td class="r-driver">Baseline only (no IRIS+ metrics reported)</td></tr>
+<tr><td class="r-dim"><strong>Risk</strong> <span class="prov-badge" style="background:var(--danger)20;color:var(--danger)">Estimated</span></td><td class="r-final" style="font-weight:700;color:var(--danger)">1.3</td><td class="r-baseline" style="color:var(--text-secondary)">1.00</td><td class="r-lift">+0.3</td><td class="r-metrics">0 / 4</td><td class="r-driver">Baseline only (no IRIS+ metrics reported)</td></tr>
+</tbody></table></div>
+<div class="rationale-levers">
+<div class="rationale-levers-title">Biggest lever: report any of these <strong>Risk</strong> metrics to move your lowest dimension</div>
+<ul class="rationale-lever-list">
+<li><code>OI4753</code> · Client Protection Policy</li>
+</ul>
+</div>
+<div class="rationale-legend"><div><span class="legend-dot" style="background:var(--danger)"></span><strong>Estimated</strong> — driven by sector baseline, no metrics reported</div><div><span class="legend-dot" style="background:var(--warning)"></span><strong>Partial</strong> — 1–2 metrics reported; capped at 2.5</div><div><span class="legend-dot" style="background:var(--success)"></span><strong>Evidence-Based</strong> — ≥ 3 metrics reported in this dimension</div></div>
+</div>
+<script>(function(){
+var MAP = {"executive-summary": ["lp", "ic", "regulator", "public"], "sec-5d": ["lp", "ic", "regulator", "public"], "sec-sdg": ["lp", "ic", "regulator", "public"], "sec-claims": ["lp", "ic", "regulator", "public"], "sec-pathway": ["lp", "ic", "public"], "sec-opp-risk": ["lp", "ic", "regulator"], "sec-gap": ["ic"], "sec-greenwashing": ["ic", "regulator"], "sec-benchmark": ["lp", "ic"], "sec-metrics": ["lp", "ic", "regulator"], "sec-targets": ["lp", "ic", "public"], "sec-beneficiary": ["lp", "public", "regulator"]};
+var ALL = ['lp','ic','regulator','public'];
+var main = document.getElementById('main-content');
+var bar = document.querySelector('.audience-bar');
+if(!main || !bar) return;
+var groups = [], current = null;
+Array.prototype.forEach.call(main.children, function(el){
+  var id = el.id;
+  var isAnchor = (id && MAP.hasOwnProperty(id)) || (el.tagName === 'H2' && id);
+  if(isAnchor){ current = {aud: MAP[id] || ALL, els:[el]}; groups.push(current); }
+  else if(current){ current.els.push(el); }
+});
+function apply(aud){
+  groups.forEach(function(g){
+    var show = aud === 'full' || g.aud.indexOf(aud) !== -1;
+    g.els.forEach(function(e){ e.style.display = show ? '' : 'none'; });
+  });
+}
+bar.querySelectorAll('.aud-btn').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    bar.querySelectorAll('.aud-btn').forEach(function(b){ b.setAttribute('aria-pressed', b===btn ? 'true':'false'); });
+    apply(btn.dataset.aud);
+  });
+});
+var init = bar.dataset.initial || 'full';
+if(init !== 'full'){ apply(init); }
+})();</script>
+<script>(function(){
+var doc=document.documentElement, body=document.body;
+var prog=document.getElementById('read-progress');
+var toTop=document.querySelector('.util-dock .to-top');
+var themeBtn=document.querySelector('.util-dock .theme-toggle');
+var printBtn=document.querySelector('.util-dock .print-btn');
+var mini=document.querySelector('.mini-header');
+function ivRethemeCharts(){
+  if(typeof Plotly==='undefined') return;
+  var dark=body.classList.contains('theme-dark');
+  var font=dark?'#e6e9ef':'#1f2937';
+  var grid=dark?'rgba(255,255,255,0.14)':'rgba(0,0,0,0.08)';
+  var line=dark?'rgba(255,255,255,0.30)':'rgba(0,0,0,0.18)';
+  ['radar-chart','sdg-chart','benchmark-chart'].forEach(function(id){
+    var el=document.getElementById(id);
+    if(!el||!el.data||!el._fullLayout) return;
+    var up={'font.color':font,'legend.font.color':font};
+    if(el._fullLayout.polar){
+      up['polar.bgcolor']='rgba(0,0,0,0)';
+      up['polar.radialaxis.gridcolor']=grid; up['polar.radialaxis.linecolor']=line; up['polar.radialaxis.tickfont.color']=font;
+      up['polar.angularaxis.gridcolor']=grid; up['polar.angularaxis.linecolor']=line; up['polar.angularaxis.tickfont.color']=font;
+    } else {
+      up['xaxis.gridcolor']=grid; up['xaxis.linecolor']=line; up['xaxis.tickfont.color']=font; up['xaxis.zerolinecolor']=grid;
+      up['yaxis.gridcolor']=grid; up['yaxis.linecolor']=line; up['yaxis.tickfont.color']=font; up['yaxis.zerolinecolor']=grid;
+    }
+    try{ Plotly.relayout(el, up); }catch(e){}
+  });
+}
+window.ivRethemeCharts=ivRethemeCharts;
+window.addEventListener('load', function(){ setTimeout(ivRethemeCharts, 60); });
+setTimeout(ivRethemeCharts, 500);
+function onScroll(){
+  var st=doc.scrollTop||body.scrollTop;
+  var h=doc.scrollHeight-doc.clientHeight;
+  var p=h>0?st/h*100:0;
+  if(prog){ prog.style.width=p.toFixed(1)+'%'; }
+  if(toTop){ toTop.classList.toggle('show', st>400); }
+  if(mini){ mini.classList.toggle('show', st>240); }
+}
+window.addEventListener('scroll', onScroll, {passive:true}); onScroll();
+if(toTop){ toTop.addEventListener('click', function(){ window.scrollTo({top:0, behavior:'smooth'}); }); }
+if(printBtn){ printBtn.addEventListener('click', function(){ window.print(); }); }
+if(themeBtn){
+  try{ if(localStorage.getItem('iv-theme')==='dark'){ body.classList.add('theme-dark'); } }catch(e){}
+  function sync(){ themeBtn.setAttribute('aria-pressed', body.classList.contains('theme-dark')?'true':'false'); }
+  sync(); ivRethemeCharts();
+  themeBtn.addEventListener('click', function(){
+    var dark=body.classList.toggle('theme-dark');
+    try{ localStorage.setItem('iv-theme', dark?'dark':'light'); }catch(e){}
+    sync(); ivRethemeCharts();
+  });
+}
+var links=Array.prototype.slice.call(document.querySelectorAll('.report-toc a'));
+var targets=links.map(function(a){ var id=a.getAttribute('href'); return id?document.querySelector(id):null; });
+if('IntersectionObserver' in window){
+  var seen={};
+  var obs=new IntersectionObserver(function(entries){
+    entries.forEach(function(en){ seen[en.target.id]=en.isIntersecting; });
+    var activeId=null;
+    for(var i=0;i<targets.length;i++){ var t=targets[i]; if(t && seen[t.id]){ activeId=t.id; break; } }
+    links.forEach(function(a){ a.classList.toggle('active', a.getAttribute('href')==='#'+activeId); });
+  }, {rootMargin:'-10% 0px -70% 0px'});
+  targets.forEach(function(t){ if(t) obs.observe(t); });
+}
+var LINK_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>';
+var main2=document.getElementById('main-content');
+if(main2){ Array.prototype.forEach.call(main2.querySelectorAll('h2[id]'), function(h){
+  var b=document.createElement('button');
+  b.type='button'; b.className='h-anchor'; b.innerHTML=LINK_SVG;
+  b.setAttribute('aria-label','Copy link to this section'); b.title='Copy link to this section';
+  b.addEventListener('click', function(){
+    var url=location.href.split('#')[0]+'#'+h.id;
+    try{ history.replaceState(null,'',  '#'+h.id); }catch(e){}
+    var done=function(){ b.classList.add('copied'); setTimeout(function(){ b.classList.remove('copied'); },1200); };
+    if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(url).then(done, done); }
+    else { location.hash=h.id; done(); }
+  });
+  h.appendChild(b);
+}); }
+})();</script>
+<script>(function(){
+var main=document.getElementById('main-content');
+if(!main) return;
+var CARET='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+var heads=Array.prototype.slice.call(main.querySelectorAll('h2[id]'));
+var sections=[];
+heads.forEach(function(h){
+  var body=[]; var n=h.nextElementSibling;
+  while(n && n.tagName !== 'H2'){ body.push(n); n=n.nextElementSibling; }
+  var btn=document.createElement('button');
+  btn.type='button'; btn.className='sec-toggle'; btn.innerHTML=CARET;
+  btn.setAttribute('aria-expanded','true');
+  btn.setAttribute('aria-label','Collapse or expand this section');
+  var sec={head:h, body:body, btn:btn};
+  function set(open){
+    btn.setAttribute('aria-expanded', open?'true':'false');
+    body.forEach(function(e){ e.classList.toggle('sec-collapsed-body', !open); });
+  }
+  sec.set=set;
+  btn.addEventListener('click', function(){ set(btn.getAttribute('aria-expanded')!=='true'); });
+  h.insertBefore(btn, h.firstChild);
+  sections.push(sec);
+});
+if(!sections.length) return;
+var bar=document.createElement('div');
+bar.className='collapse-controls';
+var ca=document.createElement('button'); ca.type='button'; ca.className='collapse-all'; ca.textContent='Collapse all';
+var ea=document.createElement('button'); ea.type='button'; ea.className='expand-all'; ea.textContent='Expand all';
+ca.addEventListener('click', function(){ sections.forEach(function(s){ s.set(false); }); });
+ea.addEventListener('click', function(){ sections.forEach(function(s){ s.set(true); }); });
+bar.appendChild(ca); bar.appendChild(ea);
+var anchor=document.querySelector('.audience-bar') || (sections[0] && sections[0].head);
+if(anchor && anchor.parentNode){ anchor.parentNode.insertBefore(bar, anchor.nextSibling); }
+})();</script>
+
+</main>
+<div class="util-dock" role="group" aria-label="Report controls"><button type="button" class="theme-toggle" aria-pressed="false" aria-label="Toggle dark mode" title="Toggle dark mode"><svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.4 1.4M17.6 17.6L19 19M19 5l-1.4 1.4M6.4 17.6L5 19"/></svg></button><button type="button" class="print-btn" aria-label="Print or save as PDF" title="Print / Save as PDF"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"/></svg></button><button type="button" class="to-top" aria-label="Back to top" title="Back to top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button></div>
+<div class="footer">
+Generated by <a href="#">Impact Vision</a> &mdash; Open-source impact measurement engine &mdash; IRIS+ 5.3c
+</div>
+</body></html>
