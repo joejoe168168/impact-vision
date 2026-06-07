@@ -14,6 +14,7 @@ from openharness.tools.impact.engagement_workspace_tool import EngagementWorkspa
 from openharness.tools.impact.evidence_review_tool import EvidenceReviewTool
 from openharness.tools.impact.exclusion_screening_tool import ExclusionScreeningTool
 from openharness.tools.impact.exit_impact_tool import ExitImpactTool
+from openharness.tools.impact.esg_toolbox_tool import ESGToolboxTool
 from openharness.tools.impact.five_dimension_assess_tool import FiveDimensionAssessTool
 from openharness.tools.impact.framework_tool import FrameworkTool
 from openharness.tools.impact.gap_analysis_tool import GapAnalysisTool
@@ -61,6 +62,7 @@ __all__ = [
     "EvidenceReviewTool",
     "ExclusionScreeningTool",
     "ExitImpactTool",
+    "ESGToolboxTool",
     "FiveDimensionAssessTool",
     "FrameworkTool",
     "GapAnalysisTool",

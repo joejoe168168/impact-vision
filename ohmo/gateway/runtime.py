@@ -9,6 +9,7 @@ import mimetypes
 from pathlib import Path
 import json
 import os
+import re
 import string
 
 from openharness.channels.bus.events import InboundMessage
@@ -53,6 +54,10 @@ _CHANNEL_THINKING_PHRASES_EN = (
 _TEXT_PREVIEW_BYTES = 4096
 _TEXT_PREVIEW_CHARS = 900
 _BINARY_HEAD_BYTES = 32
+_FINAL_REPLY_IMAGE_PATH_RE = re.compile(
+    r"(?P<path>(?:[A-Za-z]:[\\/]|/)[^\r\n`\"'<>|?*\x00]+?\.(?:png|jpe?g|webp|gif|bmp))",
+    re.IGNORECASE,
+)
 
 
 @dataclass(frozen=True)
@@ -62,6 +67,7 @@ class GatewayStreamUpdate:
     kind: str
     text: str
     metadata: dict[str, object]
+    media: list[str] | None = None
 
 
 class OhmoSessionRuntimePool:
@@ -307,6 +313,7 @@ class OhmoSessionRuntimePool:
     ):
         bundle.engine.set_system_prompt(self._runtime_system_prompt(bundle, user_prompt))
         reply_parts: list[str] = []
+        emitted_media: set[str] = set()
         yield GatewayStreamUpdate(
             kind="progress",
             text=_format_channel_progress(
@@ -328,6 +335,7 @@ class OhmoSessionRuntimePool:
                     content=user_prompt,
                     reply_parts=reply_parts,
                 ):
+                    _remember_update_media(emitted_media, update)
                     yield update
         except MaxTurnsExceeded as exc:
             yield GatewayStreamUpdate(
@@ -346,10 +354,15 @@ class OhmoSessionRuntimePool:
                 bundle.session_id,
                 _content_snippet(reply),
             )
+            final_media = _extract_final_reply_media(reply, emitted_media)
+            metadata: dict[str, object] = {"_session_key": session_key}
+            if final_media:
+                metadata.update({"_media": final_media, "_final_media_fallback": True})
             yield GatewayStreamUpdate(
                 kind="final",
                 text=reply,
-                metadata={"_session_key": session_key},
+                metadata=metadata,
+                media=final_media or None,
             )
 
     async def _convert_stream_event(
@@ -445,6 +458,14 @@ class OhmoSessionRuntimePool:
                 bundle.session_id,
                 event.tool_name,
             )
+            media = _extract_tool_media(event)
+            if media:
+                yield GatewayStreamUpdate(
+                    kind="media",
+                    text=_format_tool_media_caption(event, media),
+                    metadata={"_session_key": session_key, "_media": media},
+                    media=media,
+                )
             return
         if isinstance(event, ErrorEvent):
             logger.error(
@@ -770,6 +791,89 @@ def _decode_text_preview(data: bytes) -> str | None:
     if len(normalized) > _TEXT_PREVIEW_CHARS:
         return normalized[: _TEXT_PREVIEW_CHARS - 3] + "..."
     return normalized
+
+
+def _extract_tool_media(event: ToolExecutionCompleted) -> list[str]:
+    """Return local image paths reported by a tool completion event."""
+    raw_candidates: list[object] = []
+    metadata = getattr(event, "metadata", None) or {}
+    for key in ("paths", "path", "file_path", "files", "media"):
+        value = metadata.get(key)
+        if isinstance(value, list):
+            raw_candidates.extend(value)
+        elif value:
+            raw_candidates.append(value)
+    if event.output:
+        for match in _FINAL_REPLY_IMAGE_PATH_RE.finditer(str(event.output)):
+            raw_candidates.append(match.group("path"))
+
+    media: list[str] = []
+    seen: set[str] = set()
+    for raw in raw_candidates:
+        if not isinstance(raw, str) or not raw.strip():
+            continue
+        path = Path(raw.strip(" \t\r\n\"'.,;:，。；：、)]}")).expanduser()
+        if not path.is_absolute():
+            path = path.resolve()
+        resolved = str(path)
+        if resolved in seen:
+            continue
+        if not path.is_file() or not _is_image_attachment(resolved):
+            continue
+        seen.add(resolved)
+        media.append(resolved)
+    return media
+
+
+def _remember_update_media(seen: set[str], update: GatewayStreamUpdate) -> None:
+    """Track media already emitted during this gateway turn."""
+    raw_media = update.media or (update.metadata or {}).get("_media") or []
+    if isinstance(raw_media, str):
+        candidates = [raw_media]
+    elif isinstance(raw_media, list):
+        candidates = [str(item) for item in raw_media if isinstance(item, str) and item.strip()]
+    else:
+        candidates = []
+    for raw in candidates:
+        try:
+            path = Path(raw).expanduser()
+            if not path.is_absolute():
+                path = path.resolve()
+            seen.add(str(path))
+        except Exception:
+            continue
+
+
+def _extract_final_reply_media(reply: str, emitted_media: set[str]) -> list[str]:
+    """Return local image paths mentioned in final text that were not already emitted."""
+    media: list[str] = []
+    seen = set(emitted_media)
+    for match in _FINAL_REPLY_IMAGE_PATH_RE.finditer(reply or ""):
+        raw = match.group("path").strip(" \t\r\n\"'.,;:，。；：、)]}")
+        if not raw:
+            continue
+        path = Path(raw).expanduser()
+        if not path.is_absolute():
+            continue
+        resolved = str(path)
+        if resolved in seen:
+            continue
+        if not path.is_file() or not _is_image_attachment(resolved):
+            continue
+        seen.add(resolved)
+        media.append(resolved)
+    return media
+
+
+def _format_tool_media_caption(event: ToolExecutionCompleted, media: list[str]) -> str:
+    """Return a short caption for media generated by tools."""
+    provider = ""
+    metadata = getattr(event, "metadata", None) or {}
+    if metadata.get("provider"):
+        provider = f" via {metadata['provider']}"
+    if event.tool_name == "image_generation":
+        return f"已生成图片{provider}: {', '.join(Path(path).name for path in media)}"
+    return f"Generated media{provider}: {', '.join(Path(path).name for path in media)}"
 
 
 def _prefers_chinese_progress(content: str) -> bool:

@@ -1,0 +1,57 @@
+{
+  "tool_id": "msci",
+  "url": "https://tool.ohesg.com/msci/",
+  "source_title": "MSCI ESG 评级助手",
+  "source_description": "为 160 个行业企业解读 MSCI ESG 评级关键议题的快捷工具",
+  "source_tags": [
+    "MSCI",
+    "ESG评级"
+  ],
+  "page_title": "ESG评级助手 | ESG实践工具",
+  "meta_description": "ESG评级助手 | ESG实践工具",
+  "headings": [
+    "MSCI ESG评级提升助手"
+  ],
+  "links": [
+    "/msci/css/style.css",
+    "/msci/faq",
+    "./${si.sectorSlug}/${si.subSlug}.html"
+  ],
+  "keywords": [
+    "ESG",
+    "MSCI",
+    "评级助手",
+    "子行业",
+    "实践工具",
+    "GICS",
+    "V5.0",
+    "不构成评级意见或投资建议",
+    "个核心问题",
+    "个行业企业解读",
+    "争议扣分",
+    "全部",
+    "变化等",
+    "同业对标",
+    "完整免责声明",
+    "或直接搜索",
+    "数据来源",
+    "未披露计分",
+    "本工具仅供学习参考",
+    "查看板块详情",
+    "点击板块筛选子行业",
+    "相关名称归其权利人所有",
+    "行业关键议题查询工具",
+    "覆盖",
+    "议题",
+    "评级",
+    "评级关键议题的快捷工具",
+    "评级常见问题",
+    "评级提升助手",
+    "评级更新",
+    "选择板块",
+    "面向中国企业的"
+  ],
+  "embedded_data_keys": [],
+  "embedded_data_summary": {},
+  "as_of": "2026-06-07"
+}

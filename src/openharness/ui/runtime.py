@@ -370,6 +370,9 @@ async def close_runtime(bundle: RuntimeBundle) -> None:
         HookEvent.SESSION_END,
         {"cwd": bundle.cwd, "event": HookEvent.SESSION_END.value},
     )
+    close_api_client = getattr(bundle.api_client, "close", None)
+    if close_api_client is not None:
+        await close_api_client()
 
 
 def _last_user_text(messages: list[ConversationMessage]) -> str:

@@ -70,6 +70,7 @@ mcp_app = typer.Typer(name="mcp", help="Manage MCP servers")
 plugin_app = typer.Typer(name="plugin", help="Manage plugins")
 auth_app = typer.Typer(name="auth", help="Manage authentication")
 provider_app = typer.Typer(name="provider", help="Manage provider profiles")
+config_app = typer.Typer(name="config", help="Show or update settings")
 cron_app = typer.Typer(name="cron", help="Manage cron scheduler and jobs")
 catalog_app = typer.Typer(name="catalog", help="Manage the IRIS+ metric catalog")
 framework_app = typer.Typer(name="framework", help="ESG/sustainability framework tools")
@@ -79,6 +80,7 @@ app.add_typer(mcp_app)
 app.add_typer(plugin_app)
 app.add_typer(auth_app)
 app.add_typer(provider_app)
+app.add_typer(config_app)
 app.add_typer(cron_app)
 app.add_typer(catalog_app)
 app.add_typer(framework_app)
@@ -680,6 +682,7 @@ _PROVIDER_LABELS: dict[str, str] = {
     "vertex": "Google Vertex AI",
     "moonshot": "Moonshot (Kimi)",
     "gemini": "Google Gemini",
+    "naxtclaude": "NaxtClaude",
 }
 
 _AUTH_SOURCE_LABELS: dict[str, str] = {
@@ -693,6 +696,7 @@ _AUTH_SOURCE_LABELS: dict[str, str] = {
     "vertex_api_key": "Vertex credentials",
     "moonshot_api_key": "Moonshot API key",
     "gemini_api_key": "Gemini API key",
+    "naxtclaude_api_key": "NaxtClaude API key",
 }
 
 
@@ -1011,6 +1015,7 @@ def _specialize_setup_target(manager, target: str) -> str:
             [
                 ("openai-compatible", "OpenAI official"),
                 ("openrouter", "OpenRouter"),
+                ("naxtclaude", "NaxtClaude"),
                 ("custom-openai", "Custom endpoint (any OpenAI-compatible API)"),
             ],
             default_value="openai-compatible",
@@ -1021,6 +1026,10 @@ def _specialize_setup_target(manager, target: str) -> str:
             default_url = "https://openrouter.ai/api/v1"
             profile_name = "openrouter"
             profile_label = "OpenRouter"
+        elif choice == "naxtclaude":
+            default_url = "https://api.naxtclaude.com/v1"
+            profile_name = "naxtclaude"
+            profile_label = "NaxtClaude"
         else:
             default_url = ""
             profile_label = _text_prompt("Display name", default="Custom OpenAI").strip() or "Custom OpenAI"
@@ -1035,9 +1044,12 @@ def _specialize_setup_target(manager, target: str) -> str:
             manager,
             name=profile_name,
             label=profile_label,
-            provider="openai",
+            provider="naxtclaude" if choice == "naxtclaude" else "openai",
             api_format="openai",
-            auth_source=default_auth_source_for_provider("openai", "openai"),
+            auth_source=default_auth_source_for_provider(
+                "naxtclaude" if choice == "naxtclaude" else "openai",
+                "openai",
+            ),
             base_url=base_url,
             model=model,
             lock_model=False,
@@ -1143,7 +1155,7 @@ def _login_provider(provider: str) -> None:
         _bind_external_provider(provider)
         return
 
-    if provider in ("anthropic", "openai", "dashscope", "bedrock", "vertex", "moonshot", "gemini"):
+    if provider in ("anthropic", "openai", "dashscope", "bedrock", "vertex", "moonshot", "gemini", "naxtclaude"):
         label = _PROVIDER_LABELS.get(provider, provider)
         flow = ApiKeyFlow(provider=provider, prompt_text=f"Enter your {label} API key")
         try:
@@ -1151,6 +1163,10 @@ def _login_provider(provider: str) -> None:
         except ValueError as exc:
             print(f"Error: {exc}", file=sys.stderr)
             raise typer.Exit(1)
+        if provider == "naxtclaude":
+            manager.store_profile_credential("naxtclaude", "api_key", key)
+            print(f"{label} API key saved.", flush=True)
+            return
         store_credential(provider, "api_key", key)
         try:
             manager.store_credential(provider, "api_key", key)
@@ -1288,7 +1304,8 @@ def auth_login(
     """Interactively authenticate with a provider.
 
     Run without arguments to choose a provider from a menu.
-    Supported providers: anthropic, anthropic_claude, openai, openai_codex, copilot, dashscope, bedrock, vertex, moonshot.
+    Supported providers: anthropic, anthropic_claude, openai, openai_codex,
+    copilot, dashscope, bedrock, vertex, moonshot, gemini, naxtclaude.
     """
     if provider is None:
         print("Select a provider to authenticate:", flush=True)
@@ -1441,6 +1458,73 @@ def auth_copilot_logout() -> None:
 
     clear_github_token()
     print("Copilot authentication cleared.")
+
+
+# ---- config subcommands ----
+
+
+def _config_resolve_target(settings: object, key: str) -> tuple[object, str]:
+    target = settings
+    parts = key.split(".")
+    for part in parts[:-1]:
+        if not hasattr(target, part):
+            raise KeyError(key)
+        target = getattr(target, part)
+    leaf = parts[-1]
+    if not hasattr(target, leaf):
+        raise KeyError(key)
+    return target, leaf
+
+
+def _config_coerce_value(current: object, raw: str) -> object:
+    if isinstance(current, bool):
+        lowered = raw.strip().lower()
+        if lowered in {"1", "true", "yes", "on"}:
+            return True
+        if lowered in {"0", "false", "no", "off"}:
+            return False
+        raise ValueError(f"Invalid boolean value: {raw}")
+    if isinstance(current, int) and not isinstance(current, bool):
+        return int(raw)
+    if isinstance(current, float):
+        return float(raw)
+    if isinstance(current, list):
+        return [entry.strip() for entry in raw.split(",") if entry.strip()]
+    if raw.strip().lower() in {"none", "null"}:
+        return None
+    return raw
+
+
+@config_app.command("show")
+def config_show() -> None:
+    """Print the resolved settings JSON."""
+    from openharness.config.settings import load_settings
+
+    print(load_settings().model_dump_json(indent=2), flush=True)
+
+
+@config_app.command("set")
+def config_set(
+    key: str = typer.Argument(..., help="Setting key, including dotted nested keys"),
+    value: str = typer.Argument(..., help="Value to store"),
+) -> None:
+    """Persist one setting in ~/.openharness/settings.json."""
+    from openharness.config.settings import load_settings, save_settings
+
+    settings = load_settings()
+    try:
+        target, leaf = _config_resolve_target(settings, key)
+    except KeyError:
+        print(f"Unknown config key: {key}", file=sys.stderr)
+        raise typer.Exit(1)
+    try:
+        coerced = _config_coerce_value(getattr(target, leaf), value)
+    except ValueError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        raise typer.Exit(1)
+    setattr(target, leaf, coerced)
+    save_settings(settings)
+    print(f"Updated {key}", flush=True)
 
 
 # ---- provider subcommands ----

@@ -32,22 +32,34 @@ class TestSettings:
         assert s.permission.mode == "default"
         assert s.sandbox.enabled is False
         assert s.sandbox.filesystem.allow_write == ["."]
+        assert s.web.resolution_mode == "auto"
+        assert s.web.synthetic_dns_cidrs == []
 
     def test_resolve_api_key_from_instance(self):
         s = Settings(api_key="sk-test-123")
         assert s.resolve_api_key() == "sk-test-123"
 
     def test_resolve_api_key_from_env(self, monkeypatch):
+        monkeypatch.delenv("OPENHARNESS_ANTHROPIC_API_KEY", raising=False)
         monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-env-456")
         s = Settings()
         assert s.resolve_api_key() == "sk-env-456"
 
+    def test_resolve_api_key_prefers_openharness_env(self, monkeypatch):
+        monkeypatch.setenv("OPENHARNESS_ANTHROPIC_API_KEY", "sk-oh-456")
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-env-456")
+        s = Settings()
+        assert s.resolve_api_key() == "sk-oh-456"
+
     def test_resolve_api_key_instance_takes_precedence(self, monkeypatch):
+        monkeypatch.delenv("OPENHARNESS_ANTHROPIC_API_KEY", raising=False)
         monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-env-456")
         s = Settings(api_key="sk-instance-789")
         assert s.resolve_api_key() == "sk-instance-789"
 
     def test_resolve_api_key_missing_raises(self, monkeypatch):
+        monkeypatch.delenv("OPENHARNESS_ANTHROPIC_API_KEY", raising=False)
+        monkeypatch.delenv("OPENHARNESS_OPENAI_API_KEY", raising=False)
         monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
         monkeypatch.delenv("OPENAI_API_KEY", raising=False)
         s = Settings()
@@ -68,10 +80,22 @@ class TestSettings:
         assert s.model != updated.model
         assert s is not updated
 
+    def test_web_settings_env_overrides(self, monkeypatch):
+        monkeypatch.setenv("OPENHARNESS_WEB_PROXY", "http://proxy.example.com:7890")
+        monkeypatch.setenv("OPENHARNESS_WEB_RESOLUTION_MODE", "synthetic_dns")
+        monkeypatch.setenv("OPENHARNESS_WEB_SYNTHETIC_DNS_CIDRS", "100.64.0.0/10,203.0.113.0/24")
+
+        updated = _apply_env_overrides(Settings())
+
+        assert updated.web.proxy == "http://proxy.example.com:7890"
+        assert updated.web.resolution_mode == "synthetic_dns"
+        assert updated.web.synthetic_dns_cidrs == ["100.64.0.0/10", "203.0.113.0/24"]
+
     def test_resolve_auth_prefers_env_over_flat_api_key_for_openai(self, monkeypatch):
         """When api_format=openai, resolve_auth() should use OPENAI_API_KEY
         from the environment rather than the flat api_key field which may
         contain an Anthropic key from settings.json."""
+        monkeypatch.delenv("OPENHARNESS_OPENAI_API_KEY", raising=False)
         monkeypatch.setenv("OPENAI_API_KEY", "sk-openai-correct")
         monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
         s = Settings(api_key="sk-ant-wrong-provider", api_format="openai")
@@ -80,9 +104,21 @@ class TestSettings:
         assert auth.value == "sk-openai-correct"
         assert "OPENAI" in auth.source
 
+    def test_resolve_auth_prefers_openharness_env_for_openai(self, monkeypatch):
+        monkeypatch.setenv("OPENHARNESS_OPENAI_API_KEY", "sk-oh-openai")
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-openai-native")
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        s = Settings(api_key="sk-ant-wrong-provider", api_format="openai")
+        s = s.sync_active_profile_from_flat_fields()
+        auth = s.resolve_auth()
+        assert auth.value == "sk-oh-openai"
+        assert auth.source == "env:OPENHARNESS_OPENAI_API_KEY"
+
     def test_resolve_auth_falls_back_to_flat_api_key(self, monkeypatch):
         """When no provider-specific env var is set, resolve_auth() should
         still fall back to the flat api_key field."""
+        monkeypatch.delenv("OPENHARNESS_ANTHROPIC_API_KEY", raising=False)
+        monkeypatch.delenv("OPENHARNESS_OPENAI_API_KEY", raising=False)
         monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
         monkeypatch.delenv("OPENAI_API_KEY", raising=False)
         s = Settings(api_key="sk-fallback-key")
@@ -102,6 +138,89 @@ class TestSettings:
         path.write_text(json.dumps({}))
         s = load_settings(path)
         assert s.base_url == "https://relay.example.com/v1"
+
+    def test_openharness_base_url_takes_precedence_over_native_env(self, tmp_path: Path, monkeypatch):
+        monkeypatch.setenv("ANTHROPIC_BASE_URL", "https://anthropic-relay.example.com")
+        monkeypatch.setenv("OPENAI_BASE_URL", "https://openai-relay.example.com/v1")
+        monkeypatch.setenv("OPENHARNESS_BASE_URL", "https://openharness-relay.example.com/v1")
+        path = tmp_path / "settings.json"
+        path.write_text(json.dumps({}))
+
+        s = load_settings(path)
+
+        assert s.base_url == "https://openharness-relay.example.com/v1"
+
+    def test_native_base_url_does_not_override_profile_base_url(self, tmp_path: Path, monkeypatch):
+        monkeypatch.delenv("OPENHARNESS_BASE_URL", raising=False)
+        monkeypatch.setenv("OPENAI_BASE_URL", "https://wrong.example.com/v1")
+        path = tmp_path / "settings.json"
+        path.write_text(
+            Settings(active_profile="moonshot").model_dump_json(),
+            encoding="utf-8",
+        )
+
+        s = load_settings(path)
+
+        assert s.base_url == "https://api.moonshot.cn/v1"
+
+    def test_openharness_model_takes_precedence_over_native_env(self, tmp_path: Path, monkeypatch):
+        monkeypatch.setenv("ANTHROPIC_MODEL", "claude-haiku-4-5")
+        monkeypatch.setenv("OPENHARNESS_MODEL", "claude-opus-4-6")
+        path = tmp_path / "settings.json"
+        path.write_text(json.dumps({}))
+
+        s = load_settings(path)
+
+        assert s.model == "claude-opus-4-6"
+
+    def test_native_model_does_not_override_profile_last_model(self, tmp_path: Path, monkeypatch):
+        monkeypatch.delenv("OPENHARNESS_MODEL", raising=False)
+        monkeypatch.setenv("ANTHROPIC_MODEL", "claude-haiku-4-5")
+        settings = Settings(
+            active_profile="claude-api",
+            profiles={
+                "claude-api": ProviderProfile(
+                    label="Anthropic-Compatible API",
+                    provider="anthropic",
+                    api_format="anthropic",
+                    auth_source="anthropic_api_key",
+                    default_model="claude-sonnet-4-6",
+                    last_model="claude-opus-4-6",
+                )
+            },
+        )
+        path = tmp_path / "settings.json"
+        path.write_text(settings.model_dump_json(), encoding="utf-8")
+
+        s = load_settings(path)
+
+        assert s.model == "claude-opus-4-6"
+
+    def test_load_settings_uses_profile_specific_openharness_env_key(self, tmp_path: Path, monkeypatch):
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-wrong")
+        monkeypatch.setenv("OPENHARNESS_OPENAI_API_KEY", "sk-oh-openai")
+        monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+        path = tmp_path / "settings.json"
+        path.write_text(
+            Settings(active_profile="openai-compatible").model_dump_json(),
+            encoding="utf-8",
+        )
+        s = load_settings(path)
+        assert s.active_profile == "openai-compatible"
+        assert s.api_key == "sk-oh-openai"
+
+    def test_load_settings_ignores_wrong_provider_native_env_key(self, tmp_path: Path, monkeypatch):
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-wrong")
+        monkeypatch.delenv("OPENHARNESS_OPENAI_API_KEY", raising=False)
+        monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+        path = tmp_path / "settings.json"
+        path.write_text(
+            Settings(active_profile="openai-compatible").model_dump_json(),
+            encoding="utf-8",
+        )
+        s = load_settings(path)
+        assert s.active_profile == "openai-compatible"
+        assert s.api_key == ""
 
     def test_env_overrides_pick_up_compact_threshold_settings(self, tmp_path: Path, monkeypatch):
         monkeypatch.setenv("OPENHARNESS_CONTEXT_WINDOW_TOKENS", "123456")
@@ -125,6 +244,8 @@ class TestSettings:
 
 class TestLoadSaveSettings:
     def test_load_missing_file_returns_defaults(self, tmp_path: Path, monkeypatch):
+        monkeypatch.delenv("OPENHARNESS_ANTHROPIC_API_KEY", raising=False)
+        monkeypatch.delenv("OPENHARNESS_OPENAI_API_KEY", raising=False)
         monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
         monkeypatch.delenv("OPENAI_API_KEY", raising=False)
         monkeypatch.delenv("ANTHROPIC_BASE_URL", raising=False)
@@ -137,6 +258,8 @@ class TestLoadSaveSettings:
         assert s == Settings().materialize_active_profile()
 
     def test_load_existing_file(self, tmp_path: Path, monkeypatch):
+        monkeypatch.delenv("OPENHARNESS_ANTHROPIC_API_KEY", raising=False)
+        monkeypatch.delenv("OPENHARNESS_OPENAI_API_KEY", raising=False)
         monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
         monkeypatch.delenv("OPENAI_API_KEY", raising=False)
         monkeypatch.delenv("ANTHROPIC_BASE_URL", raising=False)
@@ -152,6 +275,8 @@ class TestLoadSaveSettings:
         assert s.api_key == ""  # default preserved
 
     def test_save_and_load_roundtrip(self, tmp_path: Path, monkeypatch):
+        monkeypatch.delenv("OPENHARNESS_ANTHROPIC_API_KEY", raising=False)
+        monkeypatch.delenv("OPENHARNESS_OPENAI_API_KEY", raising=False)
         monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
         monkeypatch.delenv("OPENAI_API_KEY", raising=False)
         monkeypatch.delenv("ANTHROPIC_BASE_URL", raising=False)
@@ -305,6 +430,81 @@ class TestLoadSaveSettings:
         assert updated.base_url == "https://relay.example.com/v1"
         assert updated.context_window_tokens == 200000
         assert updated.auto_compact_threshold_tokens == 180000
+
+    def test_merge_cli_active_profile_with_model_keeps_target_profile_auth(self):
+        settings = Settings(
+            active_profile="moonshot",
+            provider="moonshot",
+            api_format="openai",
+            base_url="https://api.moonshot.cn/v1",
+            model="kimi-k2.5",
+            profiles={
+                "moonshot": ProviderProfile(
+                    label="Moonshot",
+                    provider="moonshot",
+                    api_format="openai",
+                    auth_source="moonshot_api_key",
+                    default_model="kimi-k2.5",
+                    last_model="kimi-k2.5",
+                    base_url="https://api.moonshot.cn/v1",
+                ),
+                "codex": ProviderProfile(
+                    label="Codex Subscription",
+                    provider="openai_codex",
+                    api_format="openai",
+                    auth_source="codex_subscription",
+                    default_model="gpt-5.4",
+                    last_model="gpt-5.4",
+                ),
+            },
+        )
+
+        updated = settings.merge_cli_overrides(active_profile="codex", model="gpt-5.5")
+        profile_name, profile = updated.resolve_profile()
+
+        assert profile_name == "codex"
+        assert updated.provider == "openai_codex"
+        assert updated.api_format == "openai"
+        assert updated.base_url is None
+        assert updated.model == "gpt-5.5"
+        assert profile.provider == "openai_codex"
+        assert profile.auth_source == "codex_subscription"
+        assert profile.last_model == "gpt-5.5"
+
+    def test_builtin_naxtclaude_profile_materializes_openai_compatible(self):
+        settings = Settings(active_profile="naxtclaude").materialize_active_profile()
+        profile_name, profile = settings.resolve_profile()
+
+        assert profile_name == "naxtclaude"
+        assert settings.provider == "naxtclaude"
+        assert settings.api_format == "openai"
+        assert settings.base_url == "https://api.naxtclaude.com/v1"
+        assert settings.model == "claude-sonnet-4-6"
+        assert profile.auth_source == "naxtclaude_api_key"
+        assert profile.credential_slot == "naxtclaude"
+
+    def test_resolve_auth_uses_naxtclaude_env_var(self, monkeypatch):
+        monkeypatch.delenv("OPENHARNESS_NAXTCLAUDE_API_KEY", raising=False)
+        monkeypatch.setenv("NAXTCLAUDE_API_KEY", "sk-naxt-test")
+        monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+        settings = Settings(active_profile="naxtclaude")
+
+        resolved = settings.resolve_auth()
+
+        assert resolved.provider == "naxtclaude"
+        assert resolved.value == "sk-naxt-test"
+        assert resolved.source == "env:NAXTCLAUDE_API_KEY"
+
+    def test_naxtclaude_profile_scoped_credential_precedes_env(self, tmp_path: Path, monkeypatch):
+        monkeypatch.setenv("OPENHARNESS_CONFIG_DIR", str(tmp_path))
+        monkeypatch.setenv("NAXTCLAUDE_API_KEY", "sk-naxt-env")
+        store_credential("profile:naxtclaude", "api_key", "sk-naxt-profile", use_keyring=False)
+        settings = Settings(active_profile="naxtclaude")
+
+        resolved = settings.resolve_auth()
+
+        assert resolved.value == "sk-naxt-profile"
+        assert resolved.source == "file:profile:naxtclaude"
 
     def test_claude_profile_materializes_alias_to_concrete_model(self):
         settings = Settings(

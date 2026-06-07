@@ -116,6 +116,22 @@ def test_setup_flow_creates_kimi_profile_with_profile_scoped_key(tmp_path: Path,
     assert load_credential("profile:kimi-anthropic", "api_key") == "sk-kimi-test"
 
 
+def test_auth_login_naxtclaude_stores_profile_scoped_key(tmp_path: Path, monkeypatch):
+    runner = CliRunner()
+    monkeypatch.setenv("OPENHARNESS_CONFIG_DIR", str(tmp_path))
+    monkeypatch.setattr("openharness.auth.flows.ApiKeyFlow.run", lambda self: "sk-naxt-test")
+
+    result = runner.invoke(app, ["auth", "login", "naxtclaude"])
+
+    assert result.exit_code == 0
+    assert "NaxtClaude API key saved." in result.output
+    from openharness.auth.storage import load_credential
+
+    assert load_credential("profile:naxtclaude", "api_key") == "sk-naxt-test"
+    settings = load_settings()
+    assert settings.api_key == ""
+
+
 def test_dangerously_skip_permissions_passes_full_auto_to_run_repl(monkeypatch):
     runner = CliRunner()
     captured = {}

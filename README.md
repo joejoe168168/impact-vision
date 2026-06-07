@@ -206,7 +206,24 @@ impact-vision setup
 
 3. Paste your API key when prompted
 
-#### Option D: Local Ollama (free, runs on your machine, no internet needed)
+#### Option D: NaxtClaude-compatible endpoint
+
+Impact Vision includes a built-in OpenAI-compatible profile for
+`https://api.naxtclaude.com/v1`. Store the key in the profile credential store
+or provide it through `NAXTCLAUDE_API_KEY`; do not commit API keys to the repo.
+
+```bash
+impact-vision provider use naxtclaude
+impact-vision auth login naxtclaude
+```
+
+To choose a different model exposed by that endpoint:
+
+```bash
+impact-vision provider edit naxtclaude --model claude-sonnet-4-6
+```
+
+#### Option E: Local Ollama (free, runs on your machine, no internet needed)
 
 1. Install Ollama from [ollama.com](https://ollama.com/)
 2. Pull a model: `ollama pull llama3.2`
@@ -306,7 +323,7 @@ Opens a web dashboard at http://localhost:8501 with 5 tabs: Assessment, IRIS+ Ca
 | `iv dd categories` | List DD categories |
 | `iv dd analyze "text"` | Check text against DD checklist |
 | `iv ollama-setup` | Configure local LLM |
-| `iv serve-mcp` | Start MCP server for AI agents (45 impact tools + 5 resources) |
+| `iv serve-mcp` | Start MCP server for AI agents (46 impact tools + 5 resources) |
 | `iv serve-web` | Start Web Console + REST API at http://127.0.0.1:8787 |
 | `iv` | Start interactive AI agent |
 
@@ -314,7 +331,7 @@ Opens a web dashboard at http://localhost:8501 with 5 tabs: Assessment, IRIS+ Ca
 
 ## Usage
 
-Impact Vision ships **45 impact agent tools** covering the full investment lifecycle
+Impact Vision ships **46 impact agent tools** covering the full investment lifecycle
 — pre-screen, due diligence, IC memo, portfolio monitoring, LP reporting,
 assurance, and post-exit review. Below are common prompts you can paste
 into the interactive agent (or the Web Console at
@@ -346,6 +363,37 @@ Follow-up prompts that chain the v3/v4 tools on the same deal:
 > Build a completeness scorecard for the data pack and produce coaching cards
 > Run the AI extraction review queue over the claims you flagged as low-confidence
 ```
+
+### ESG Toolbox
+
+Use the unified ESG toolbox when you need practical support across
+disclosure standards, ESG ratings, export compliance, supplier audits,
+sustainable finance, water stewardship, responsible mining, and carbon
+accounting.
+
+Example prompts:
+
+```
+> List the ESG toolbox modules by category
+> Find toolbox modules for battery passport and product carbon footprint readiness
+> Build an EcoVadis preparation checklist for a manufacturing supplier
+> Assess CBAM readiness for CN code 7208 exported to the EU
+> Show the source profile for GRI and summarize the indexed disclosure topics in English
+> Crosswalk OI4112 and OI6697 to the carbon accounting and disclosure modules
+```
+
+The `esg_toolbox` agent tool supports:
+
+| Action | Use it for |
+|--------|------------|
+| `list` | Browse the 33 modules by category |
+| `search` | Find modules from English or framework-specific queries |
+| `get` | Inspect one module's scope, sources, and requirements |
+| `methodology` | Review the public-source-backed logic and methods |
+| `checklist` | Generate an evidence collection checklist |
+| `assess` | Score readiness from company text, metrics, product code, country, and supplier context |
+| `crosswalk` | Map known Impact Vision metric IDs to toolbox/framework evidence uses |
+| `source_profile` | Inspect the reviewed source profile, extracted page keywords, headings, and indexed records |
 
 ### Browsing the IRIS+ Catalog
 
@@ -704,7 +752,7 @@ impact-vision/
 │   │   ├── mcp_server.py              # MCP server (FastMCP)
 │   │   └── sdk.py                     # High-level ImpactVision SDK facade
 │   │
-│   ├── tools/impact/                  # 45 LLM-callable impact agent tools (see "Tools" below)
+│   ├── tools/impact/                  # 46 LLM-callable impact agent tools (see "Tools" below)
 │   ├── api_gateway/router.py          # FastAPI REST API
 │   ├── web/                           # Single-file Web Console + SSE streaming
 │   ├── dashboard/app.py               # Streamlit 5-tab dashboard
@@ -858,7 +906,7 @@ cross-references to IRIS+ metric IDs via the shared
 | | 3-pillar assurance bundle | HMAC-signed evidence graph + audit trail + workspace (v4) |
 | | AI governance (EU AI Act) | Model card + data lineage + human-oversight log + risk classification & obligations |
 
-### Agent Tools (45)
+### Agent Tools (46)
 
 All tools below are exposed through the default OpenHarness tool registry
 and `openharness.tools.impact`, so the interactive agent, Web Console,
@@ -895,11 +943,12 @@ REST API, and MCP server see the same surface.
 | `impact_risk_opportunity` | 14 risk categories on a likelihood × severity matrix |
 | `exclusion_screening` | UNGC, weapons, fossil-fuel exclusion lists |
 
-**Frameworks & reporting (5)**
+**Frameworks & reporting (6)**
 
 | Tool | Description |
 |------|-------------|
 | `framework_assess` | Multi-framework ESG assessment (all frameworks in the table above, incl. VSME, 2X Criteria, TISFD) |
+| `esg_toolbox` | Unified 33-module ESG toolbox for disclosure, ratings, export compliance, supplier ESG, sustainable finance, water stewardship, responsible mining, and carbon accounting; supports `list`, `search`, `get`, `methodology`, `checklist`, `assess`, `crosswalk`, and `source_profile` |
 | `cross_reference` | Cross-framework metric lookup (59 mappings) |
 | `impact_report` | Interactive HTML reports + XLSX/CSV/JSON/text/PDF |
 | `impact_valuation` | IFVI/VBA monetary impact accounting: value factors → net monetary impact, benefit/cost ratio, impact multiple of money |
@@ -982,7 +1031,7 @@ The dashboard has 5 tabs:
 ## Web Console (power-user UI)
 
 For a browser-native surface to every tool — useful when you want the
-full 45-tool set at your fingertips rather than Streamlit's 5 curated
+full 46-tool set at your fingertips rather than Streamlit's 5 curated
 tabs — run the **web console**:
 
 ```bash

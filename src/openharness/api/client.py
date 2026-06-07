@@ -149,6 +149,10 @@ class AnthropicApiClient:
             kwargs["base_url"] = self._base_url
         return AsyncAnthropic(**kwargs)
 
+    async def close(self) -> None:
+        """Close the underlying HTTP client."""
+        await self._client.close()
+
     def _refresh_client_auth(self) -> None:
         if not self._claude_oauth or self._auth_token_resolver is None:
             return

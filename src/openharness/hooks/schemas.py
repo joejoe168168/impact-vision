@@ -15,6 +15,7 @@ class CommandHookDefinition(BaseModel):
     timeout_seconds: int = Field(default=30, ge=1, le=600)
     matcher: str | None = None
     block_on_failure: bool = False
+    priority: int = Field(default=0)
 
 
 class PromptHookDefinition(BaseModel):
@@ -26,6 +27,7 @@ class PromptHookDefinition(BaseModel):
     timeout_seconds: int = Field(default=30, ge=1, le=600)
     matcher: str | None = None
     block_on_failure: bool = True
+    priority: int = Field(default=0)
 
 
 class HttpHookDefinition(BaseModel):
@@ -37,6 +39,7 @@ class HttpHookDefinition(BaseModel):
     timeout_seconds: int = Field(default=30, ge=1, le=600)
     matcher: str | None = None
     block_on_failure: bool = False
+    priority: int = Field(default=0)
 
 
 class AgentHookDefinition(BaseModel):
@@ -48,6 +51,7 @@ class AgentHookDefinition(BaseModel):
     timeout_seconds: int = Field(default=60, ge=1, le=1200)
     matcher: str | None = None
     block_on_failure: bool = True
+    priority: int = Field(default=0)
 
 
 HookDefinition = (

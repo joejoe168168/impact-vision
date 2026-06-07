@@ -84,6 +84,7 @@ def create_default_tool_registry(mcp_manager: McpClientManager | None = None) ->
         ("impact.impact_risk_opportunity_tool", "ImpactRiskOpportunityTool"),
         ("impact.impact_report_tool", "ImpactReportTool"),
         ("impact.impact_valuation_tool", "ImpactValuationTool"),
+        ("impact.esg_toolbox_tool", "ESGToolboxTool"),
         ("impact.framework_tool", "FrameworkTool"),
         ("impact.improvement_advisor_tool", "ImprovementAdvisorTool"),
         ("impact.cross_reference_tool", "CrossReferenceTool"),

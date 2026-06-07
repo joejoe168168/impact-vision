@@ -36,6 +36,7 @@ _KNOWN_PROVIDERS = [
     "vertex",
     "moonshot",
     "gemini",
+    "naxtclaude",
 ]
 
 _AUTH_SOURCES = [
@@ -49,6 +50,7 @@ _AUTH_SOURCES = [
     "vertex_api_key",
     "moonshot_api_key",
     "gemini_api_key",
+    "naxtclaude_api_key",
 ]
 
 _PROFILE_BY_PROVIDER = {
@@ -59,6 +61,7 @@ _PROFILE_BY_PROVIDER = {
     "copilot": "copilot",
     "moonshot": "moonshot",
     "gemini": "gemini",
+    "naxtclaude": "naxtclaude",
 }
 
 
@@ -132,6 +135,15 @@ class AuthManager:
                     state = "configured"
             elif source == "openai_api_key":
                 if os.environ.get("OPENAI_API_KEY"):
+                    configured = True
+                    origin = "env"
+                    state = "configured"
+                elif load_credential(storage_provider, "api_key"):
+                    configured = True
+                    origin = "file"
+                    state = "configured"
+            elif source == "naxtclaude_api_key":
+                if os.environ.get("NAXTCLAUDE_API_KEY"):
                     configured = True
                     origin = "env"
                     state = "configured"
@@ -239,6 +251,17 @@ class AuthManager:
                     configured = True
                     source = "env"
                 elif load_credential("moonshot", "api_key"):
+                    configured = True
+                    source = "file"
+
+            elif provider == "naxtclaude":
+                if os.environ.get("NAXTCLAUDE_API_KEY"):
+                    configured = True
+                    source = "env"
+                elif (
+                    load_credential("profile:naxtclaude", "api_key")
+                    or load_credential("naxtclaude", "api_key")
+                ):
                     configured = True
                     source = "file"
 
@@ -416,7 +439,7 @@ class AuthManager:
             raise ValueError(f"Unknown provider profile: {profile_name!r}")
         storage_provider = credential_storage_provider_name(profile_name, profile)
         store_credential(storage_provider, key, value)
-        if key == "api_key" and profile_name == self.get_active_profile():
+        if key == "api_key" and profile_name == self.get_active_profile() and not profile.credential_slot:
             try:
                 updated = self.settings.model_copy(update={"api_key": value})
                 self._settings = updated.materialize_active_profile()

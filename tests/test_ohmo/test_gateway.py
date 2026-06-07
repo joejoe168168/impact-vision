@@ -1,6 +1,8 @@
 import asyncio
 import contextlib
 import logging
+import os
+import sys
 from types import SimpleNamespace
 from datetime import datetime
 import json
@@ -14,16 +16,30 @@ from openharness.channels.bus.queue import MessageBus
 from openharness.commands import CommandResult
 from openharness.commands.registry import SlashCommand
 from openharness.engine.messages import ConversationMessage, ImageBlock, TextBlock
-from openharness.engine.stream_events import AssistantTextDelta, CompactProgressEvent, ToolExecutionStarted
+from openharness.engine.stream_events import (
+    AssistantTextDelta,
+    CompactProgressEvent,
+    ToolExecutionCompleted,
+    ToolExecutionStarted,
+)
 
 from ohmo.gateway.bridge import OhmoGatewayBridge, _format_gateway_error
 from ohmo.gateway.config import save_gateway_config
 from ohmo.gateway.models import GatewayConfig, GatewayState
 from ohmo.gateway.runtime import OhmoSessionRuntimePool, _build_inbound_user_message, _format_channel_progress
-from ohmo.gateway.service import OhmoGatewayService, gateway_status, stop_gateway_process
+from ohmo.gateway.service import OhmoGatewayService, gateway_status, start_gateway_process, stop_gateway_process
 from ohmo.gateway.router import session_key_for_message
 from ohmo.session_storage import save_session_snapshot
 from ohmo.workspace import get_gateway_restart_notice_path, initialize_workspace
+
+
+@pytest.fixture(autouse=True)
+def restore_cwd_after_test():
+    original_cwd = Path.cwd()
+    try:
+        yield
+    finally:
+        os.chdir(original_cwd)
 
 
 def test_gateway_router_uses_thread_when_present():
@@ -94,6 +110,38 @@ def test_gateway_status_prefers_live_config_over_stale_state(tmp_path):
     assert state.running is False
     assert state.provider_profile == "codex"
     assert state.enabled_channels == ["feishu"]
+
+
+def test_start_gateway_process_uses_child_log_file_handler_without_console_duplication(tmp_path, monkeypatch):
+    workspace = tmp_path / ".ohmo-home"
+    initialize_workspace(workspace)
+    original_cwd = Path.cwd()
+    captured: dict[str, object] = {}
+
+    class FakeProcess:
+        pid = 1234
+
+    def fake_popen(args, **kwargs):
+        captured["args"] = args
+        captured["kwargs"] = kwargs
+        return FakeProcess()
+
+    monkeypatch.setattr("ohmo.gateway.service.subprocess.Popen", fake_popen)
+
+    try:
+        assert start_gateway_process(tmp_path, workspace) == 1234
+    finally:
+        os.chdir(original_cwd)
+
+    args = captured["args"]
+    kwargs = captured["kwargs"]
+    assert isinstance(args, list)
+    assert args[:4] == [sys.executable, "-m", "ohmo", "gateway"]
+    assert "run" in args
+    assert "--no-console-log" in args
+    assert isinstance(kwargs, dict)
+    assert kwargs["stdout"] is kwargs["stderr"]
+    assert getattr(kwargs["stdout"], "name", "").endswith("gateway.log")
 
 
 def test_stop_gateway_process_kills_matching_workspace_processes(tmp_path, monkeypatch):
@@ -199,6 +247,99 @@ async def test_runtime_pool_stream_message_emits_progress_and_tool_hint(tmp_path
     assert "web_fetch" in updates[1].text
     assert updates[-1].kind == "final"
     assert updates[-1].text == "done"
+
+
+@pytest.mark.asyncio
+async def test_runtime_pool_attaches_final_reply_image_path_as_media(tmp_path, monkeypatch):
+    workspace = tmp_path / ".ohmo-home"
+    initialize_workspace(workspace)
+    image_path = tmp_path / "generated.png"
+    image_path.write_bytes(b"png")
+
+    async def fake_build_runtime(**kwargs):
+        class FakeEngine:
+            messages = []
+            total_usage = UsageSnapshot()
+
+            def set_system_prompt(self, prompt):
+                return None
+
+            async def submit_message(self, content):
+                yield AssistantTextDelta(text=f"Generated image:\n```text\n{image_path}\n```")
+
+        return SimpleNamespace(
+            engine=FakeEngine(),
+            session_id="sess123",
+            current_settings=lambda: SimpleNamespace(model="gpt-5.4"),
+            commands=SimpleNamespace(lookup=lambda raw: None),
+        )
+
+    async def fake_start_runtime(bundle):
+        return None
+
+    monkeypatch.setattr("ohmo.gateway.runtime.build_runtime", fake_build_runtime)
+    monkeypatch.setattr("ohmo.gateway.runtime.start_runtime", fake_start_runtime)
+
+    pool = OhmoSessionRuntimePool(cwd=tmp_path, workspace=workspace, provider_profile="codex")
+    message = InboundMessage(channel="feishu", sender_id="u1", chat_id="c1", content="draw")
+    updates = [u async for u in pool.stream_message(message, "feishu:c1")]
+
+    assert updates[-1].kind == "final"
+    assert updates[-1].media == [str(image_path)]
+    assert updates[-1].metadata["_media"] == [str(image_path)]
+    assert updates[-1].metadata["_final_media_fallback"] is True
+
+
+@pytest.mark.asyncio
+async def test_runtime_pool_does_not_duplicate_final_reply_image_media(tmp_path, monkeypatch):
+    workspace = tmp_path / ".ohmo-home"
+    initialize_workspace(workspace)
+    image_path = tmp_path / "generated.png"
+    image_path.write_bytes(b"png")
+
+    async def fake_build_runtime(**kwargs):
+        class FakeEngine:
+            messages = []
+            total_usage = UsageSnapshot()
+
+            def set_system_prompt(self, prompt):
+                return None
+
+            async def submit_message(self, content):
+                event = ToolExecutionCompleted(
+                    tool_name="image_generation",
+                    output=f"Wrote {image_path}",
+                    is_error=False,
+                )
+                object.__setattr__(
+                    event,
+                    "metadata",
+                    {"paths": [str(image_path)], "provider": "codex"},
+                )
+                yield event
+                yield AssistantTextDelta(text=f"Generated image:\n```text\n{image_path}\n```")
+
+        return SimpleNamespace(
+            engine=FakeEngine(),
+            session_id="sess123",
+            current_settings=lambda: SimpleNamespace(model="gpt-5.4"),
+            commands=SimpleNamespace(lookup=lambda raw: None),
+        )
+
+    async def fake_start_runtime(bundle):
+        return None
+
+    monkeypatch.setattr("ohmo.gateway.runtime.build_runtime", fake_build_runtime)
+    monkeypatch.setattr("ohmo.gateway.runtime.start_runtime", fake_start_runtime)
+
+    pool = OhmoSessionRuntimePool(cwd=tmp_path, workspace=workspace, provider_profile="codex")
+    message = InboundMessage(channel="feishu", sender_id="u1", chat_id="c1", content="draw")
+    updates = [u async for u in pool.stream_message(message, "feishu:c1")]
+
+    assert [update.kind for update in updates].count("media") == 1
+    assert updates[-1].kind == "final"
+    assert updates[-1].media is None
+    assert "_final_media_fallback" not in updates[-1].metadata
 
 
 @pytest.mark.asyncio
@@ -407,6 +548,63 @@ async def test_runtime_pool_blocks_local_only_commands_from_remote_messages(tmp_
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "command_text,command_name",
+    [("/provider codex", "provider"), ("/model gpt-5.5", "model")],
+)
+async def test_runtime_pool_rejects_gateway_scoped_command_without_admin_opt_in(
+    tmp_path,
+    monkeypatch,
+    command_text,
+    command_name,
+):
+    workspace = tmp_path / ".ohmo-home"
+    initialize_workspace(workspace)
+    handler_called = False
+
+    async def forbidden_handler(args, context):
+        nonlocal handler_called
+        handler_called = True
+        return CommandResult(message="should not run")
+
+    async def fake_build_runtime(**kwargs):
+        class FakeEngine:
+            messages = []
+            total_usage = UsageSnapshot()
+
+            def set_system_prompt(self, prompt):
+                return None
+
+        command = SlashCommand(
+            command_name,
+            "Gateway-scoped command",
+            forbidden_handler,
+            remote_invocable=False,
+        )
+        command.remote_admin_opt_in = True
+        return SimpleNamespace(
+            engine=FakeEngine(),
+            session_id="sess123",
+            current_settings=lambda: SimpleNamespace(model="gpt-5.4"),
+            commands=SimpleNamespace(lookup=lambda raw: (command, command_text.split(" ", 1)[1])),
+        )
+
+    async def fake_start_runtime(bundle):
+        return None
+
+    monkeypatch.setattr("ohmo.gateway.runtime.build_runtime", fake_build_runtime)
+    monkeypatch.setattr("ohmo.gateway.runtime.start_runtime", fake_start_runtime)
+
+    pool = OhmoSessionRuntimePool(cwd=tmp_path, workspace=workspace, provider_profile="codex")
+    message = InboundMessage(channel="feishu", sender_id="u1", chat_id="c1", content=command_text)
+    updates = [u async for u in pool.stream_message(message, "feishu:c1")]
+
+    assert handler_called is False
+    assert updates[-1].kind == "final"
+    assert updates[-1].text == f"/{command_name} is only available in the local OpenHarness UI."
+
+
+@pytest.mark.asyncio
 async def test_runtime_pool_allows_opted_in_remote_admin_commands(tmp_path, monkeypatch, caplog):
     workspace = tmp_path / ".ohmo-home"
     initialize_workspace(workspace)
@@ -585,6 +783,38 @@ async def test_gateway_bridge_publishes_progress_updates():
     assert second.content.startswith("🛠️ ")
     assert "web_fetch" in second.content
     assert third.content == "Done"
+
+
+@pytest.mark.asyncio
+async def test_gateway_bridge_publishes_final_media_updates():
+    bus = MessageBus()
+
+    class FakeRuntimePool:
+        async def stream_message(self, message, session_key):
+            yield SimpleNamespace(
+                kind="final",
+                text="已生成图片：generated.png",
+                media=["/tmp/generated.png"],
+                metadata={"_session_key": session_key, "_media": ["/tmp/generated.png"]},
+            )
+
+    bridge = OhmoGatewayBridge(bus=bus, runtime_pool=FakeRuntimePool())
+    task = asyncio.create_task(bridge.run())
+    try:
+        await bus.publish_inbound(
+            InboundMessage(channel="feishu", sender_id="u1", chat_id="c1", content="draw")
+        )
+        outbound = await asyncio.wait_for(bus.consume_outbound(), timeout=1.0)
+    finally:
+        bridge.stop()
+        task.cancel()
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
+
+    assert outbound.content == "已生成图片：generated.png"
+    assert outbound.media == ["/tmp/generated.png"]
 
 
 @pytest.mark.asyncio

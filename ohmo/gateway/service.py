@@ -217,6 +217,7 @@ def start_gateway_process(cwd: str | Path | None = None, workspace: str | Path |
                 service._cwd,
                 "--workspace",
                 str(get_workspace_root(workspace)),
+                "--no-console-log",
             ],
             cwd=service._cwd,
             stdout=log_file,

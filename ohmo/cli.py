@@ -25,6 +25,7 @@ from ohmo.runtime import launch_ohmo_react_tui, run_ohmo_backend, run_ohmo_print
 from ohmo.session_storage import OhmoSessionBackend
 from ohmo.workspace import (
     get_gateway_config_path,
+    get_logs_dir,
     get_workspace_root,
     get_soul_path,
     get_state_path,
@@ -376,16 +377,40 @@ def _maybe_restart_gateway(*, cwd: str | Path, workspace: str | Path) -> None:
     print(f"ohmo gateway restarted (pid={pid})")
 
 
-def _configure_gateway_logging(workspace: str | Path | None = None) -> None:
+def _configure_gateway_logging(
+    workspace: str | Path | None = None,
+    *,
+    console: bool = True,
+    log_file: bool = True,
+) -> None:
     """Configure foreground gateway logging."""
     config = load_gateway_config(workspace)
     level_name = str(config.log_level or "INFO").upper()
     level = getattr(logging, level_name, logging.INFO)
+    handlers = _build_gateway_logging_handlers(workspace, console=console, log_file=log_file)
     logging.basicConfig(
         level=level,
         format="%(asctime)s [%(name)s] %(levelname)s %(message)s",
+        handlers=handlers,
         force=True,
     )
+
+
+def _build_gateway_logging_handlers(
+    workspace: str | Path | None = None,
+    *,
+    console: bool,
+    log_file: bool,
+) -> list[logging.Handler]:
+    """Build gateway log handlers for foreground and daemon modes."""
+    handlers: list[logging.Handler] = []
+    if console:
+        handlers.append(logging.StreamHandler())
+    if log_file:
+        log_path = get_logs_dir(workspace) / "gateway.log"
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        handlers.append(logging.FileHandler(log_path, encoding="utf-8", delay=True))
+    return handlers
 
 
 @app.callback(invoke_without_command=True)
@@ -606,9 +631,11 @@ def user_edit_cmd(
 def gateway_run_cmd(
     cwd: str = typer.Option(str(Path.cwd()), "--cwd", help="Project working directory"),
     workspace: str | None = typer.Option(None, "--workspace", help=_WORKSPACE_HELP),
+    console_log: bool = typer.Option(True, "--console-log/--no-console-log", hidden=True),
+    log_file: bool = typer.Option(True, "--log-file/--no-log-file", hidden=True),
 ) -> None:
     """Run the ohmo gateway in the foreground."""
-    _configure_gateway_logging(workspace)
+    _configure_gateway_logging(workspace, console=console_log, log_file=log_file)
     service = OhmoGatewayService(cwd, workspace)
     raise SystemExit(asyncio.run(service.run_foreground()))
 

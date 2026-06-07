@@ -124,6 +124,20 @@ PROVIDERS: tuple[ProviderSpec, ...] = (
         is_local=False,
         is_oauth=False,
     ),
+    # NaxtClaude: OpenAI-compatible Claude gateway.
+    ProviderSpec(
+        name="naxtclaude",
+        keywords=("naxtclaude",),
+        env_key="NAXTCLAUDE_API_KEY",
+        display_name="NaxtClaude",
+        backend_type="openai_compat",
+        default_base_url="https://api.naxtclaude.com/v1",
+        detect_by_key_prefix="",
+        detect_by_base_keyword="naxtclaude",
+        is_gateway=True,
+        is_local=False,
+        is_oauth=False,
+    ),
     # === Standard cloud providers (matched by model-name keyword) ============
     # Anthropic: native SDK for claude-* models
     ProviderSpec(
