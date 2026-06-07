@@ -361,6 +361,7 @@ class ESGToolboxTool(BaseTool):
             country=args.country,
             supplier_profile=args.supplier_profile,
             query=args.query,
+            category=args.category,
             limit=8,
         )
         payload = workflow.model_dump(mode="json")

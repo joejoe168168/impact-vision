@@ -181,6 +181,7 @@ def build_esg_workflow(
     country: str = "",
     supplier_profile: str = "",
     query: str = "",
+    category: str = "all",
     limit: int = 8,
     include_low_score: bool = False,
 ) -> ToolboxWorkflowResult:
@@ -229,7 +230,8 @@ def build_esg_workflow(
     }
 
     scored: list[tuple[int, ToolboxToolSpec, list[str], ToolboxAssessmentResult]] = []
-    for tool in list_toolbox_tools():
+    category_filter = None if category in ("", "all") else category
+    for tool in list_toolbox_tools(category_filter):
         route_terms = _TOOL_ROUTE_TERMS.get(tool.tool_id, [])
         matched_terms = _matched_terms(context, [*route_terms, *tool.tags, *tool.aliases, *tool.source_tags])
         category_score = _category_score(tool.categories, context, reported_metrics or {})

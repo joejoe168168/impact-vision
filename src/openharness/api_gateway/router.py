@@ -54,7 +54,7 @@ except ImportError:
         "Install with: pip install fastapi uvicorn"
     )
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 
 from openharness.impact.database import get_metric_store
 from openharness.impact.five_dimensions import assess_five_dimensions
@@ -755,21 +755,24 @@ async def esg_toolbox_endpoint(req: ESGToolboxRequest):
     from openharness.tools.impact.esg_toolbox_tool import ESGToolboxInput, ESGToolboxTool
 
     tool = ESGToolboxTool()
-    args = ESGToolboxInput(
-        action=req.action,  # type: ignore[arg-type]
-        tool_id=req.tool_id,
-        category=req.category,  # type: ignore[arg-type]
-        query=req.query,
-        sector=req.sector,
-        jurisdiction=req.jurisdiction,
-        company_description=req.company_description,
-        document_text=req.document_text,
-        reported_metrics=req.reported_metrics,
-        product_code=req.product_code,
-        country=req.country,
-        supplier_profile=req.supplier_profile,
-        output_format=req.output_format,  # type: ignore[arg-type]
-    )
+    try:
+        args = ESGToolboxInput(
+            action=req.action,  # type: ignore[arg-type]
+            tool_id=req.tool_id,
+            category=req.category,  # type: ignore[arg-type]
+            query=req.query,
+            sector=req.sector,
+            jurisdiction=req.jurisdiction,
+            company_description=req.company_description,
+            document_text=req.document_text,
+            reported_metrics=req.reported_metrics,
+            product_code=req.product_code,
+            country=req.country,
+            supplier_profile=req.supplier_profile,
+            output_format=req.output_format,  # type: ignore[arg-type]
+        )
+    except ValidationError as exc:
+        raise HTTPException(status_code=400, detail=exc.errors()) from exc
     result = await tool.execute(args, _get_tool_context())
     if result.is_error:
         raise HTTPException(status_code=400, detail=result.output)

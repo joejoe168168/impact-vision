@@ -590,6 +590,29 @@ async def test_esg_toolbox_recommend_uses_plain_english_query() -> None:
     assert result.metadata["ui"]["cards"]
 
 
+@pytest.mark.asyncio
+async def test_esg_toolbox_api_rejects_invalid_action_cleanly() -> None:
+    from fastapi import HTTPException
+
+    from openharness.api_gateway.router import ESGToolboxRequest, esg_toolbox_endpoint
+
+    with pytest.raises(HTTPException) as exc_info:
+        await esg_toolbox_endpoint(ESGToolboxRequest(action="bad-action"))
+
+    assert exc_info.value.status_code == 400
+    assert "action" in str(exc_info.value.detail)
+
+
+@pytest.mark.asyncio
+async def test_esg_toolbox_mcp_rejects_invalid_action_cleanly() -> None:
+    from openharness.impact.mcp_server import esg_toolbox
+
+    output = await esg_toolbox(action="bad-action")
+
+    assert "Invalid ESG toolbox input" in output
+    assert "action" in output
+
+
 def test_ghg_crosswalk_maps_impact_metric_to_framework_uses() -> None:
     mappings = crosswalk_reported_metrics({"OI4112": "1200 tCO2e"}, tool_id="ghg")
 

@@ -804,23 +804,27 @@ async def esg_toolbox(
     recommend, workflow, input_plan.
     """
     from openharness.tools.impact.esg_toolbox_tool import ESGToolboxInput, ESGToolboxTool
+    from pydantic import ValidationError
 
     tool = ESGToolboxTool()
-    args = ESGToolboxInput(
-        action=action,  # type: ignore[arg-type]
-        tool_id=tool_id,
-        category=category,  # type: ignore[arg-type]
-        query=query,
-        sector=sector,
-        jurisdiction=jurisdiction,
-        company_description=company_description,
-        document_text=document_text,
-        reported_metrics=reported_metrics or {},
-        product_code=product_code,
-        country=country,
-        supplier_profile=supplier_profile,
-        output_format=output_format,  # type: ignore[arg-type]
-    )
+    try:
+        args = ESGToolboxInput(
+            action=action,  # type: ignore[arg-type]
+            tool_id=tool_id,
+            category=category,  # type: ignore[arg-type]
+            query=query,
+            sector=sector,
+            jurisdiction=jurisdiction,
+            company_description=company_description,
+            document_text=document_text,
+            reported_metrics=reported_metrics or {},
+            product_code=product_code,
+            country=country,
+            supplier_profile=supplier_profile,
+            output_format=output_format,  # type: ignore[arg-type]
+        )
+    except ValidationError as exc:
+        return f"Invalid ESG toolbox input: {exc.errors()}"
     result = await tool.execute(args, _get_tool_context())
     return result.output
 

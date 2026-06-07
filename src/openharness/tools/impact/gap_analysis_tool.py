@@ -15,6 +15,9 @@ from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 class GapAnalysisInput(BaseModel):
     company_name: str = Field(description="Name of the company")
+    company_description: str = Field(default="", description="Company description for ESG context routing.")
+    sector: str = Field(default="", description="Company sector for ESG context routing.")
+    geography: str = Field(default="", description="Country or region for ESG context routing.")
     reported_metrics: dict[str, str] = Field(
         default_factory=dict,
         description="IRIS+ metric ID -> value (e.g. {'PI4060': '10000', 'OI8869': '150'})",
@@ -49,6 +52,9 @@ class GapAnalysisTool(BaseTool):
         reported_metrics, metric_warnings = normalize_metric_map(args.reported_metrics)
         company = Company(
             name=args.company_name,
+            description=args.company_description,
+            sector=args.sector,
+            geography=args.geography,
             reported_metrics=reported_metrics,
             impact_themes=normalize_str_list(args.impact_themes),
         )
@@ -62,8 +68,14 @@ class GapAnalysisTool(BaseTool):
         esg_crosswalk = crosswalk_reported_metrics(reported_metrics)
         esg_workflow = build_esg_workflow(
             company_name=args.company_name,
+            company_description=args.company_description,
+            sector=args.sector,
+            geography=args.geography,
+            jurisdiction=args.geography,
             impact_themes=company.impact_themes,
             reported_metrics=reported_metrics,
+            document_text=args.company_description,
+            country=args.geography,
             limit=5,
         )
         result["esg_metric_crosswalk"] = esg_crosswalk
