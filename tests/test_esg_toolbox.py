@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 from openharness.impact.toolbox import (
+    build_esg_workflow,
     build_toolbox_input_plan,
     build_toolbox_output_blueprint,
     build_toolbox_workflow_plan,
@@ -37,6 +38,7 @@ def test_toolbox_registry_has_33_ohesg_modules() -> None:
     assert len(tools) == 33
     assert get_toolbox_tool("ghg").title == "GHG Protocol Navigator"
     assert get_toolbox_tool("GHG Protocol").tool_id == "ghg"
+    assert {"workflow", "input_plan", "recommend"} <= set(get_toolbox_tool("ghg").supported_actions)
 
 
 def test_curated_tool_aliases_take_precedence_over_scraped_source_terms() -> None:
@@ -325,6 +327,21 @@ def test_toolbox_workflow_routes_carbon_module_to_existing_impact_tools() -> Non
     assert {"gap_analysis", "evidence_review", "impact_report", "emission_factors", "climate_scenario_risk"} <= impact_tools
     assert plan.input_plan.completion_pct >= 80
     assert "Scope 1/2/3 coverage matrix" in plan.output_blueprint.widgets
+
+
+def test_esg_workflow_can_filter_recommendations_by_category() -> None:
+    workflow = build_esg_workflow(
+        company_description="Battery exporter with supplier audits and EU customer requests.",
+        jurisdiction="EU",
+        product_code="850760",
+        supplier_profile="Tier 1 supplier audit records and CAPA logs.",
+        category="export",
+        limit=10,
+        include_low_score=True,
+    )
+
+    assert workflow.recommended_tools
+    assert all("export" in item.categories for item in workflow.recommended_tools)
 
 
 def test_toolbox_workflow_routes_supplier_export_modules_to_product_and_hrdd_tools() -> None:

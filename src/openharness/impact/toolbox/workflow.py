@@ -147,7 +147,7 @@ _TOOL_ROUTE_TERMS: dict[str, list[str]] = {
 _CATEGORY_INPUTS: dict[str, list[str]] = {
     "disclosure": ["document_text", "reported_metrics", "sector"],
     "rating": ["document_text", "sector", "reported_metrics"],
-    "export": ["product_code", "country", "supplier_profile"],
+    "export": ["country", "supplier_profile"],
     "supplier": ["supplier_profile", "country", "document_text"],
     "carbon": ["reported_metrics", "document_text", "sector"],
 }
