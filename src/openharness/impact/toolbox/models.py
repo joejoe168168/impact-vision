@@ -181,3 +181,61 @@ class ToolboxAssessmentResult(BaseModel):
     source_urls: list[str] = Field(default_factory=list)
     confidence: Literal["low", "medium", "high"] = "medium"
     as_of: str = "2026-06-06"
+
+
+class ToolboxImpactToolRecommendation(BaseModel):
+    """How one ESG toolbox module can strengthen an existing impact tool."""
+
+    impact_tool: str
+    improvement: str
+    handoff: str
+    priority: Literal["high", "medium", "low"] = "medium"
+
+
+class ToolboxInputField(BaseModel):
+    """A field that can be auto-filled or collected with AI assistance."""
+
+    field: str
+    label: str
+    reason: str
+    can_auto_fill: bool = False
+    source_hint: str = ""
+    status: Literal["provided", "inferable", "missing"] = "missing"
+    value_preview: str = ""
+
+
+class ToolboxInputPlan(BaseModel):
+    """Minimal-input plan for running an ESG toolbox module."""
+
+    tool_id: str
+    title: str
+    minimum_fields: list[ToolboxInputField] = Field(default_factory=list)
+    optional_fields: list[ToolboxInputField] = Field(default_factory=list)
+    inferred_context: dict[str, object] = Field(default_factory=dict)
+    next_questions: list[str] = Field(default_factory=list)
+    ai_assist_steps: list[str] = Field(default_factory=list)
+    completion_pct: int = 0
+
+
+class ToolboxOutputBlueprint(BaseModel):
+    """Recommended UX output components for one ESG module."""
+
+    tool_id: str
+    title: str
+    primary_view: str
+    widgets: list[str] = Field(default_factory=list)
+    export_formats: list[str] = Field(default_factory=list)
+    evidence_sections: list[str] = Field(default_factory=list)
+    comparison_views: list[str] = Field(default_factory=list)
+
+
+class ToolboxWorkflowPlan(BaseModel):
+    """Product workflow plan connecting ESG modules to Impact Vision tools."""
+
+    tool_id: str
+    title: str
+    categories: list[ToolboxCategory]
+    improves_impact_tools: list[ToolboxImpactToolRecommendation] = Field(default_factory=list)
+    input_plan: ToolboxInputPlan
+    output_blueprint: ToolboxOutputBlueprint
+    suggested_sequence: list[str] = Field(default_factory=list)

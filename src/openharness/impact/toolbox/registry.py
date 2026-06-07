@@ -2153,6 +2153,11 @@ def _complete_tool_spec(tool: ToolboxToolSpec) -> ToolboxToolSpec:
     )
 
 
+_EXPLICIT_ALIASES_BY_TOOL_ID = {
+    tool.tool_id: [tool.title, *tool.aliases, *tool.tags]
+    for tool in TOOLBOX_TOOLS
+}
+
 TOOLBOX_TOOLS = tuple(_complete_tool_spec(tool) for tool in TOOLBOX_TOOLS)
 
 
@@ -2161,6 +2166,9 @@ _ALIASES: dict[str, str] = {tool.tool_id: tool.tool_id for tool in TOOLBOX_TOOLS
 for _tool in TOOLBOX_TOOLS:
     for _alias in [_tool.title, *_tool.aliases, *_tool.tags]:
         _ALIASES.setdefault(_alias.lower().replace("_", "-"), _tool.tool_id)
+for _tool_id, _aliases in _EXPLICIT_ALIASES_BY_TOOL_ID.items():
+    for _alias in _aliases:
+        _ALIASES[_alias.lower().replace("_", "-")] = _tool_id
 
 
 def list_toolbox_tools(category: ToolboxCategory | str | None = None) -> list[ToolboxToolSpec]:

@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field
 from openharness.impact.greenwashing import assess_greenwashing
 from openharness.impact.models import Company
 from openharness.impact.risk_opportunity import assess_impact_risk_opportunity
+from openharness.impact.toolbox import build_esg_workflow
 from openharness.tools.impact.common import infer_themes, normalize_metric_map, normalize_sdg_goals
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
@@ -58,6 +59,25 @@ class ImpactRiskOpportunityTool(BaseTool):
             "score": gw_result.overall_score,
             "classification": gw_result.classification,
         }
+        esg_workflow = build_esg_workflow(
+            company_name=args.company_name,
+            company_description=args.company_description,
+            sector=args.sector,
+            geography=args.geography,
+            jurisdiction=args.geography,
+            impact_themes=company.impact_themes,
+            reported_metrics=metrics,
+            document_text=args.company_description,
+            country=args.geography,
+            limit=6,
+        )
+        result["esg_toolbox_recommendations"] = [
+            item.model_dump(mode="json") for item in esg_workflow.recommended_tools[:6]
+        ]
+        result["esg_input_suggestions"] = [
+            item.model_dump(mode="json") for item in esg_workflow.input_suggestions
+        ]
+        result["esg_ui"] = esg_workflow.ui
 
         if args.output_format == "json":
             return ToolResult(output=json.dumps(result, indent=2), metadata=result)
@@ -88,6 +108,24 @@ class ImpactRiskOpportunityTool(BaseTool):
             lines.append("Key Opportunities:")
             for o in result["priority_opportunities"]:
                 lines.append(f"  [{o.get('time_horizon', 'mid_term')}] {o['opportunity']}")
+            lines.append("")
+
+        if esg_workflow.recommended_tools:
+            lines.append("ESG Toolbox Recommendations:")
+            for item in esg_workflow.recommended_tools[:6]:
+                missing = f" | missing: {', '.join(item.missing_inputs[:3])}" if item.missing_inputs else ""
+                lines.append(
+                    f"  [{item.score}] {item.tool_id}: {item.title} "
+                    f"({item.readiness_score_pct}% readiness{missing})"
+                )
+                if item.reason:
+                    lines.append(f"    Why: {item.reason}")
+            lines.append("")
+
+        if esg_workflow.next_questions:
+            lines.append("Minimum ESG Follow-up Questions:")
+            for question in esg_workflow.next_questions[:5]:
+                lines.append(f"  - {question}")
             lines.append("")
 
         return ToolResult(output="\n".join(lines), metadata=result)

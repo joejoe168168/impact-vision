@@ -380,6 +380,9 @@ Example prompts:
 > Assess CBAM readiness for CN code 7208 exported to the EU
 > Show the source profile for GRI and summarize the indexed disclosure topics in English
 > Crosswalk OI4112 and OI6697 to the carbon accounting and disclosure modules
+> Recommend ESG modules from our company description, metrics, export market, and supplier profile
+> Build an ESG workflow plan showing which Impact Vision tools can reuse the results
+> Create a minimal-input plan for SBTi readiness from our existing company profile and metrics
 ```
 
 The `esg_toolbox` agent tool supports:
@@ -394,6 +397,24 @@ The `esg_toolbox` agent tool supports:
 | `assess` | Score readiness from company text, metrics, product code, country, and supplier context |
 | `crosswalk` | Map known Impact Vision metric IDs to toolbox/framework evidence uses |
 | `source_profile` | Inspect the reviewed source profile, extracted page keywords, headings, and indexed records |
+| `recommend` | Recommend the best-fit modules from company context, metrics, product/export data, and supplier evidence; returns UI-ready cards and next questions |
+| `workflow` | Show how a module improves existing impact tools such as gap analysis, evidence review, product passports, HRDD, reports, and regulatory calendars |
+| `input_plan` | Minimize user input by identifying provided, inferable, and missing fields before asking follow-up questions |
+
+The toolbox is connected to the existing impact workflow. Carbon modules
+strengthen emissions, climate-risk, and target-setting tools; export modules
+feed product-passport and regulatory-calendar workflows; supplier modules
+support HRDD, investee collection, and verification tasks; rating modules
+improve evidence review and greenwashing checks; disclosure modules enrich
+framework scans, reports, and LP narratives.
+
+For lower-friction data collection, the agent can reuse uploaded documents,
+company profiles, sectors, geographies, reported IRIS+ metrics, product
+codes, and supplier context before asking users for new ESG data. The
+`recommend` action routes a deal to the most relevant modules and produces
+UI-ready evidence cards. The `input_plan` action marks each field as
+`provided`, `inferable`, or `missing`, then asks only the unresolved
+follow-up questions.
 
 ### Browsing the IRIS+ Catalog
 
@@ -948,7 +969,7 @@ REST API, and MCP server see the same surface.
 | Tool | Description |
 |------|-------------|
 | `framework_assess` | Multi-framework ESG assessment (all frameworks in the table above, incl. VSME, 2X Criteria, TISFD) |
-| `esg_toolbox` | Unified 33-module ESG toolbox for disclosure, ratings, export compliance, supplier ESG, sustainable finance, water stewardship, responsible mining, and carbon accounting; supports `list`, `search`, `get`, `methodology`, `checklist`, `assess`, `crosswalk`, and `source_profile` |
+| `esg_toolbox` | Unified 33-module ESG toolbox for disclosure, ratings, export compliance, supplier ESG, sustainable finance, water stewardship, responsible mining, and carbon accounting; supports `list`, `search`, `get`, `methodology`, `checklist`, `assess`, `crosswalk`, `source_profile`, `recommend`, `workflow`, and `input_plan` |
 | `cross_reference` | Cross-framework metric lookup (59 mappings) |
 | `impact_report` | Interactive HTML reports + XLSX/CSV/JSON/text/PDF |
 | `impact_valuation` | IFVI/VBA monetary impact accounting: value factors → net monetary impact, benefit/cost ratio, impact multiple of money |
@@ -1021,12 +1042,13 @@ For a visual alternative to the CLI agent:
 streamlit run src/openharness/dashboard/app.py
 ```
 
-The dashboard has 5 tabs:
+The dashboard has 6 tabs:
 1. **Company Assessment**: Input company data, see 5-Dimension radar chart, SDG bar chart, and gap analysis
 2. **IRIS+ Catalog**: Browse, search, and filter the 787-metric catalog
 3. **DD Checklist**: Browse questions, paste text to check coverage
 4. **Framework Scan**: Run TCFD, SFDR PAI, EDCI, and SASB assessments
-5. **Portfolio**: Upload CSV for batch analysis with aggregated charts
+5. **ESG Toolbox**: Search the 33 ESG modules, assess readiness, see AI input-minimization plans, route outputs to existing impact tools, and preview UX output components
+6. **Portfolio**: Upload CSV for batch analysis with aggregated charts
 
 ## Web Console (power-user UI)
 

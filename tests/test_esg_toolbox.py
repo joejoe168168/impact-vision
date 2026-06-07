@@ -8,6 +8,9 @@ from pathlib import Path
 import pytest
 
 from openharness.impact.toolbox import (
+    build_toolbox_input_plan,
+    build_toolbox_output_blueprint,
+    build_toolbox_workflow_plan,
     build_tool_checklist,
     crosswalk_reported_metrics,
     get_source_profile,
@@ -34,6 +37,11 @@ def test_toolbox_registry_has_33_ohesg_modules() -> None:
     assert len(tools) == 33
     assert get_toolbox_tool("ghg").title == "GHG Protocol Navigator"
     assert get_toolbox_tool("GHG Protocol").tool_id == "ghg"
+
+
+def test_curated_tool_aliases_take_precedence_over_scraped_source_terms() -> None:
+    assert get_toolbox_tool("CMRT").tool_id == "conflict-minerals"
+    assert get_toolbox_tool("EMRT").tool_id == "conflict-minerals"
 
 
 def test_ohesg_snapshot_was_scraped_for_all_33_tools() -> None:
@@ -304,6 +312,66 @@ def test_toolbox_search_supports_english_user_queries() -> None:
             assert result_ids[0] == expected_tool_id, query
 
 
+def test_toolbox_workflow_routes_carbon_module_to_existing_impact_tools() -> None:
+    plan = build_toolbox_workflow_plan(
+        "ghg",
+        company_description="Manufacturer with Scope 1 and Scope 2 data for EU customers.",
+        sector="manufacturing",
+        jurisdiction="EU",
+        reported_metrics={"OI4112": "1200 tCO2e", "OI6697": "2600 MWh"},
+    )
+
+    impact_tools = {rec.impact_tool for rec in plan.improves_impact_tools}
+    assert {"gap_analysis", "evidence_review", "impact_report", "emission_factors", "climate_scenario_risk"} <= impact_tools
+    assert plan.input_plan.completion_pct >= 80
+    assert "Scope 1/2/3 coverage matrix" in plan.output_blueprint.widgets
+
+
+def test_toolbox_workflow_routes_supplier_export_modules_to_product_and_hrdd_tools() -> None:
+    battery_plan = build_toolbox_workflow_plan(
+        "battery",
+        company_description="Battery manufacturer selling products into the EU.",
+        jurisdiction="EU",
+        product_code="850760",
+    )
+    csddd_plan = build_toolbox_workflow_plan(
+        "csddd",
+        company_description="Company has factories, suppliers, worker policies, grievance process, and audit records.",
+        supplier_profile="Tier 1 factories with audit and CAPA records.",
+    )
+
+    assert "product_passport" in {rec.impact_tool for rec in battery_plan.improves_impact_tools}
+    assert "regulatory_calendar" in {rec.impact_tool for rec in battery_plan.improves_impact_tools}
+    assert "hrdd_assess" in {rec.impact_tool for rec in csddd_plan.improves_impact_tools}
+    assert "investee_portal" in {rec.impact_tool for rec in csddd_plan.improves_impact_tools}
+
+
+def test_toolbox_input_plan_minimizes_questions_from_document_context() -> None:
+    plan = build_toolbox_input_plan(
+        "cbam",
+        document_text="Steel exporter to EU with CN code 7208 and embedded emissions data.",
+        reported_metrics={"OI4112": "900 tCO2e"},
+    )
+
+    statuses = {field.field: field.status for field in plan.minimum_fields}
+    assert statuses["company_description"] == "inferable"
+    assert statuses["sector"] == "inferable"
+    assert statuses["jurisdiction"] == "inferable"
+    assert statuses["product_code"] == "inferable"
+    assert plan.completion_pct >= 80
+    assert len(plan.next_questions) <= 1
+
+
+def test_toolbox_output_blueprint_is_category_specific() -> None:
+    disclosure = build_toolbox_output_blueprint("issb")
+    supplier = build_toolbox_output_blueprint("smeta")
+
+    assert disclosure.primary_view == "Disclosure gap and crosswalk workspace"
+    assert "framework crosswalk" in disclosure.widgets
+    assert supplier.primary_view == "Supplier ESG audit workspace"
+    assert "CAPA tracker" in supplier.widgets
+
+
 @pytest.mark.asyncio
 async def test_esg_toolbox_tool_assesses_ghg_readiness() -> None:
     tool = ESGToolboxTool()
@@ -461,6 +529,67 @@ async def test_esg_toolbox_source_profile_exposes_scraped_page_terms() -> None:
     assert "Top source keywords" in result.output
 
 
+@pytest.mark.asyncio
+async def test_esg_toolbox_tool_returns_workflow_plan() -> None:
+    tool = ESGToolboxTool()
+    result = await tool.execute(
+        ESGToolboxInput(
+            action="workflow",
+            tool_id="battery",
+            company_description="Battery manufacturer selling into the EU.",
+            jurisdiction="EU",
+            product_code="850760",
+            output_format="json",
+        ),
+        ToolExecutionContext(cwd=__import__("pathlib").Path.cwd()),
+    )
+
+    assert not result.is_error
+    assert result.metadata["tool_id"] == "battery"
+    impact_tools = {rec["impact_tool"] for rec in result.metadata["improves_impact_tools"]}
+    assert {"product_passport", "regulatory_calendar"} <= impact_tools
+    assert result.metadata["output_blueprint"]["primary_view"] == "Export compliance applicability workspace"
+
+
+@pytest.mark.asyncio
+async def test_esg_toolbox_tool_returns_minimal_input_plan() -> None:
+    tool = ESGToolboxTool()
+    result = await tool.execute(
+        ESGToolboxInput(
+            action="input_plan",
+            tool_id="ghg",
+            company_description="Manufacturing company with GHG inventory.",
+            sector="Manufacturing",
+            jurisdiction="EU",
+            reported_metrics={"OI4112": "1200 tCO2e"},
+            output_format="json",
+        ),
+        ToolExecutionContext(cwd=__import__("pathlib").Path.cwd()),
+    )
+
+    assert not result.is_error
+    assert result.metadata["completion_pct"] >= 75
+    assert any(step.startswith("Parse GHG inventory") for step in result.metadata["ai_assist_steps"])
+
+
+@pytest.mark.asyncio
+async def test_esg_toolbox_recommend_uses_plain_english_query() -> None:
+    tool = ESGToolboxTool()
+    result = await tool.execute(
+        ESGToolboxInput(
+            action="recommend",
+            query="battery passport export carbon footprint",
+            output_format="json",
+        ),
+        ToolExecutionContext(cwd=__import__("pathlib").Path.cwd()),
+    )
+
+    assert not result.is_error
+    tool_ids = [item["tool_id"] for item in result.metadata["recommended_tools"][:5]]
+    assert "battery" in tool_ids
+    assert result.metadata["ui"]["cards"]
+
+
 def test_ghg_crosswalk_maps_impact_metric_to_framework_uses() -> None:
     mappings = crosswalk_reported_metrics({"OI4112": "1200 tCO2e"}, tool_id="ghg")
 
@@ -479,3 +608,21 @@ def test_default_tool_registry_registers_esg_toolbox() -> None:
     registry = create_default_tool_registry()
 
     assert registry.get("esg_toolbox") is not None
+
+
+@pytest.mark.asyncio
+async def test_mcp_esg_toolbox_wrapper_recommends_modules() -> None:
+    from openharness.impact.mcp_server import esg_toolbox
+
+    output = await esg_toolbox(
+        action="recommend",
+        company_description="Battery manufacturer exporting to EU with Scope 1 and Scope 2 data.",
+        sector="battery manufacturing",
+        jurisdiction="EU",
+        country="EU",
+        product_code="850760",
+        reported_metrics={"OI4112": "1200 tCO2e"},
+    )
+
+    assert "Recommended ESG toolbox modules" in output
+    assert "battery" in output or "cbam" in output

@@ -102,6 +102,7 @@ def main():
         "IRIS+ Catalog",
         "DD Checklist",
         "Framework Scan",
+        "ESG Toolbox",
         "Portfolio",
     ])
 
@@ -118,6 +119,9 @@ def main():
         _framework_scan_tab()
 
     with tabs[4]:
+        _esg_toolbox_tab()
+
+    with tabs[5]:
         _portfolio_tab()
 
 
@@ -422,6 +426,153 @@ def _framework_scan_tab():
 
             st.subheader("Theory of Change")
             st.progress(toc["coverage_pct"] / 100, text=f"{toc['coverage_pct']}% ({toc['addressed']}/{toc['total_principles']})")
+
+
+def _esg_toolbox_tab():
+    st.header("ESG Toolbox")
+
+    from openharness.impact.toolbox import (
+        TOOLBOX_CATEGORIES,
+        assess_tool_readiness,
+        build_toolbox_workflow_plan,
+        get_toolbox_tool,
+        list_toolbox_tools,
+        search_toolbox_tools,
+    )
+
+    category_labels = {"all": "All", **{key: key.title() for key in TOOLBOX_CATEGORIES}}
+    filter_col, search_col = st.columns([1, 2])
+    with filter_col:
+        category = st.selectbox("Category", list(category_labels.keys()), format_func=lambda key: category_labels[key])
+    with search_col:
+        query = st.text_input("Search modules", "carbon disclosure")
+
+    category_arg = None if category == "all" else category
+    modules = search_toolbox_tools(query, category_arg) if query else list_toolbox_tools(category_arg)
+    if not modules:
+        st.info("No matching modules.")
+        return
+
+    selected_id = st.selectbox(
+        "Module",
+        [tool.tool_id for tool in modules],
+        format_func=lambda tool_id: get_toolbox_tool(tool_id).title,
+    )
+    selected_tool = get_toolbox_tool(selected_id)
+
+    st.write(selected_tool.description)
+    tag_cols = st.columns(3)
+    tag_cols[0].metric("Requirements", len(selected_tool.requirements))
+    tag_cols[1].metric("Methods", len(selected_tool.methods))
+    tag_cols[2].metric("Indexed Records", len(selected_tool.source_index))
+
+    col_context, col_evidence = st.columns(2)
+    with col_context:
+        company_description = st.text_area(
+            "Company or product context",
+            "Manufacturing exporter with Scope 1 and Scope 2 inventory, EU customers, supplier code of conduct, and audited utility data.",
+            height=120,
+        )
+        sector = st.text_input("Sector", "Manufacturing")
+        jurisdiction = st.text_input("Jurisdiction or market", "EU")
+    with col_evidence:
+        metrics_str = st.text_area("Impact metrics (ID=value, one per line)", "OI4112=1200 tCO2e\nOI6697=2600 MWh", height=90)
+        product_code = st.text_input("Product/CN/HS code", "")
+        supplier_profile = st.text_area("Supplier or site profile", "", height=70)
+
+    reported_metrics = _parse_metric_lines(metrics_str)
+    workflow = build_toolbox_workflow_plan(
+        selected_tool,
+        company_description=company_description,
+        sector=sector,
+        jurisdiction=jurisdiction,
+        document_text=company_description,
+        reported_metrics=reported_metrics,
+        product_code=product_code,
+        country=jurisdiction,
+        supplier_profile=supplier_profile,
+    )
+    readiness = assess_tool_readiness(
+        selected_tool,
+        company_description=f"{company_description} {sector} {jurisdiction}",
+        document_text=company_description,
+        reported_metrics=reported_metrics,
+        product_code=product_code,
+        country=jurisdiction,
+        supplier_profile=supplier_profile,
+    )
+
+    score_cols = st.columns(4)
+    score_cols[0].metric("Readiness", f"{readiness.score_pct}%")
+    score_cols[1].metric("Input Completion", f"{workflow.input_plan.completion_pct}%")
+    score_cols[2].metric("Matched", len(readiness.matched_requirement_ids))
+    score_cols[3].metric("Gaps", len(readiness.gap_requirement_ids))
+
+    fig = go.Figure(data=[go.Bar(
+        x=["Matched", "Missing"],
+        y=[len(readiness.matched_requirement_ids), len(readiness.gap_requirement_ids)],
+        marker_color=["#2e7d32", "#c62828"],
+        text=[len(readiness.matched_requirement_ids), len(readiness.gap_requirement_ids)],
+        textposition="outside",
+    )])
+    fig.update_layout(height=260, margin=dict(l=40, r=20, t=20, b=40), showlegend=False, yaxis_title="Requirements")
+    st.plotly_chart(fig, use_container_width=True)
+
+    workflow_tab, input_tab, output_tab, gaps_tab = st.tabs(["Impact Workflow", "AI Input Plan", "Output Design", "Evidence Gaps"])
+
+    with workflow_tab:
+        rec_df = pd.DataFrame([rec.model_dump(mode="json") for rec in workflow.improves_impact_tools])
+        st.dataframe(rec_df, use_container_width=True, hide_index=True)
+        st.write("**Suggested sequence**")
+        for step in workflow.suggested_sequence:
+            st.write(f"- {step}")
+
+    with input_tab:
+        input_df = pd.DataFrame([field.model_dump(mode="json") for field in workflow.input_plan.minimum_fields])
+        st.dataframe(input_df, use_container_width=True, hide_index=True)
+        if workflow.input_plan.next_questions:
+            st.write("**Next questions**")
+            for question in workflow.input_plan.next_questions:
+                st.write(f"- {question}")
+        st.write("**AI assist steps**")
+        for step in workflow.input_plan.ai_assist_steps:
+            st.write(f"- {step}")
+
+    with output_tab:
+        st.write(f"**Primary view:** {workflow.output_blueprint.primary_view}")
+        out_col1, out_col2 = st.columns(2)
+        with out_col1:
+            st.write("**Widgets**")
+            for widget in workflow.output_blueprint.widgets:
+                st.write(f"- {widget}")
+            st.write("**Evidence sections**")
+            for section in workflow.output_blueprint.evidence_sections:
+                st.write(f"- {section}")
+        with out_col2:
+            st.write("**Comparisons**")
+            for comparison in workflow.output_blueprint.comparison_views:
+                st.write(f"- {comparison}")
+            st.write("**Exports**")
+            for export_format in workflow.output_blueprint.export_formats:
+                st.write(f"- {export_format}")
+
+    with gaps_tab:
+        if readiness.evidence_gaps:
+            for gap in readiness.evidence_gaps:
+                st.write(f"- {gap}")
+        else:
+            st.success("No readiness gaps detected from the provided context.")
+
+
+def _parse_metric_lines(metrics_str: str) -> dict[str, str]:
+    reported: dict[str, str] = {}
+    for line in metrics_str.strip().split("\n"):
+        if "=" in line:
+            key, value = line.split("=", 1)
+            key = key.strip().upper()
+            if key:
+                reported[key] = value.strip()
+    return reported
 
 
 def _portfolio_tab():

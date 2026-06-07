@@ -10,6 +10,9 @@ from pydantic import BaseModel, Field
 from openharness.impact.toolbox import (
     TOOLBOX_CATEGORIES,
     assess_tool_readiness,
+    build_esg_workflow,
+    build_toolbox_input_plan,
+    build_toolbox_workflow_plan,
     build_tool_checklist,
     crosswalk_reported_metrics,
     get_source_profile,
@@ -21,7 +24,19 @@ from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 
 class ESGToolboxInput(BaseModel):
-    action: Literal["list", "get", "search", "assess", "checklist", "methodology", "crosswalk", "source_profile"] = Field(
+    action: Literal[
+        "list",
+        "get",
+        "search",
+        "assess",
+        "checklist",
+        "methodology",
+        "crosswalk",
+        "source_profile",
+        "workflow",
+        "input_plan",
+        "recommend",
+    ] = Field(
         description="Action to run against the ESG toolbox registry."
     )
     tool_id: str = Field(default="", description="Tool ID or alias, e.g. 'cbam', 'gri', 'ecovadis', 'ghg'.")
@@ -71,6 +86,12 @@ class ESGToolboxTool(BaseTool):
                 return self._crosswalk(args)
             if args.action == "source_profile":
                 return self._source_profile(args)
+            if args.action == "workflow":
+                return self._workflow(args)
+            if args.action == "input_plan":
+                return self._input_plan(args)
+            if args.action == "recommend":
+                return self._recommend(args)
         except KeyError as e:
             return ToolResult(output=str(e), is_error=True)
 
@@ -260,6 +281,113 @@ class ESGToolboxTool(BaseTool):
         if profile.headings:
             lines.append("\nPage headings:")
             lines.extend(f"- {heading}" for heading in profile.headings[:12])
+        return ToolResult(output="\n".join(lines), metadata=payload)
+
+    def _workflow(self, args: ESGToolboxInput) -> ToolResult:
+        if not args.tool_id:
+            return ToolResult(output="tool_id is required for action='workflow'.", is_error=True)
+        plan = build_toolbox_workflow_plan(
+            args.tool_id,
+            company_description=args.company_description,
+            sector=args.sector,
+            jurisdiction=args.jurisdiction,
+            document_text=args.document_text,
+            reported_metrics=args.reported_metrics,
+            product_code=args.product_code,
+            country=args.country,
+            supplier_profile=args.supplier_profile,
+        )
+        payload = plan.model_dump(mode="json")
+        if args.output_format == "json":
+            return _json(payload)
+        lines = [
+            f"Workflow plan: {plan.title} ({plan.tool_id})",
+            f"Input completion: {plan.input_plan.completion_pct}%",
+            f"Primary UX view: {plan.output_blueprint.primary_view}",
+            "",
+            "Improves existing Impact Vision tools:",
+        ]
+        for rec in plan.improves_impact_tools:
+            lines.append(f"- [{rec.priority}] {rec.impact_tool}: {rec.improvement}")
+            lines.append(f"  Handoff: {rec.handoff}")
+        lines.append("\nSuggested sequence:")
+        lines.extend(f"- {step}" for step in plan.suggested_sequence)
+        lines.append("\nRecommended output widgets:")
+        lines.extend(f"- {widget}" for widget in plan.output_blueprint.widgets)
+        if plan.input_plan.next_questions:
+            lines.append("\nAsk only these next questions:")
+            lines.extend(f"- {question}" for question in plan.input_plan.next_questions)
+        return ToolResult(output="\n".join(lines), metadata=payload)
+
+    def _input_plan(self, args: ESGToolboxInput) -> ToolResult:
+        if not args.tool_id:
+            return ToolResult(output="tool_id is required for action='input_plan'.", is_error=True)
+        plan = build_toolbox_input_plan(
+            args.tool_id,
+            company_description=args.company_description,
+            sector=args.sector,
+            jurisdiction=args.jurisdiction,
+            document_text=args.document_text,
+            reported_metrics=args.reported_metrics,
+            product_code=args.product_code,
+            country=args.country,
+            supplier_profile=args.supplier_profile,
+        )
+        payload = plan.model_dump(mode="json")
+        if args.output_format == "json":
+            return _json(payload)
+        lines = [f"Minimal input plan: {plan.title} ({plan.tool_id})", f"Completion: {plan.completion_pct}%", ""]
+        lines.append("Minimum fields:")
+        for field in plan.minimum_fields:
+            suffix = f" - {field.value_preview}" if field.value_preview else ""
+            lines.append(f"- [{field.status}] {field.label}: {field.reason}{suffix}")
+        if plan.next_questions:
+            lines.append("\nNext questions:")
+            lines.extend(f"- {question}" for question in plan.next_questions)
+        lines.append("\nAI assist steps:")
+        lines.extend(f"- {step}" for step in plan.ai_assist_steps)
+        return ToolResult(output="\n".join(lines), metadata=payload)
+
+    def _recommend(self, args: ESGToolboxInput) -> ToolResult:
+        workflow = build_esg_workflow(
+            company_description=args.company_description,
+            sector=args.sector,
+            geography=args.country,
+            jurisdiction=args.jurisdiction,
+            impact_themes=[],
+            reported_metrics=args.reported_metrics,
+            document_text=args.document_text,
+            product_code=args.product_code,
+            country=args.country,
+            supplier_profile=args.supplier_profile,
+            query=args.query,
+            limit=8,
+        )
+        payload = workflow.model_dump(mode="json")
+        if args.output_format == "json":
+            return _json(payload)
+
+        lines = ["Recommended ESG toolbox modules:"]
+        if not workflow.recommended_tools:
+            lines.append("- No high-confidence modules found. Add sector, geography, metrics, product, or supplier context.")
+        for item in workflow.recommended_tools:
+            lines.append(f"- {item.tool_id}: {item.title} ({item.readiness_score_pct}% readiness)")
+            lines.append(f"  {item.reason}")
+            if item.missing_inputs:
+                lines.append(f"  Missing inputs: {', '.join(item.missing_inputs)}")
+        if workflow.input_suggestions:
+            lines.append("\nAI-assisted input reduction:")
+            for suggestion in workflow.input_suggestions:
+                value = f" = {suggestion.value}" if suggestion.value else ""
+                lines.append(f"- {suggestion.field}{value}: {suggestion.reason}")
+        if workflow.next_questions:
+            lines.append("\nAsk only these next questions:")
+            lines.extend(f"- {question}" for question in workflow.next_questions)
+        lines.append("\nUI output:")
+        summary = workflow.ui.get("summary", {})
+        lines.append(f"- Recommended cards: {summary.get('recommended_count', 0)}")
+        for card in workflow.ui.get("cards", [])[:6]:
+            lines.append(f"- [{card['priority']}] {card['title']}: {card['status']}")
         return ToolResult(output="\n".join(lines), metadata=payload)
 
 

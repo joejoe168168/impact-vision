@@ -18,6 +18,7 @@ from openharness.impact.gap_analysis import analyze_gaps
 from openharness.impact.greenwashing import assess_greenwashing
 from openharness.impact.models import Company, ImpactClaim, MetricValue
 from openharness.impact.sdg_mapper import generate_sdg_gap_recommendations, map_sdg_alignment
+from openharness.impact.toolbox import build_esg_workflow
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 from openharness.tools.impact.common import (
     infer_themes,
@@ -311,6 +312,19 @@ class ImpactReportTool(BaseTool):
             report_data["gap_analysis"] = gap_result
 
         report_data["impact_analysis"] = _infer_opportunities_and_risks(company)
+        esg_workflow = build_esg_workflow(
+            company_name=company.name,
+            company_description=company.description,
+            sector=company.sector,
+            geography=company.geography,
+            jurisdiction=company.geography,
+            impact_themes=company.impact_themes,
+            reported_metrics=reported_metrics,
+            document_text=company.description,
+            country=company.geography,
+            limit=6,
+        )
+        report_data["esg_toolbox"] = esg_workflow.model_dump(mode="json")
         gw = assess_greenwashing(company)
         gw_dump = gw.model_dump()
         # Build sub_scores dict for report rendering compatibility
@@ -501,6 +515,28 @@ def _to_text(data: dict) -> str:
                 lines.append(f"    - {m['id']}: {m['name']}")
         lines.append("")
 
+    if "esg_toolbox" in data:
+        esg = data["esg_toolbox"]
+        recs = esg.get("recommended_tools", []) if isinstance(esg, dict) else []
+        lines.append("ESG TOOLBOX READINESS")
+        lines.append("-" * 40)
+        if recs:
+            for item in recs[:6]:
+                lines.append(
+                    f"  - {item.get('tool_id')}: {item.get('title')} "
+                    f"({item.get('readiness_score_pct', 0)}% readiness)"
+                )
+                if item.get("missing_inputs"):
+                    lines.append(f"    Missing inputs: {', '.join(item.get('missing_inputs', [])[:3])}")
+        else:
+            lines.append("  No high-confidence ESG toolbox modules were recommended from current context.")
+        next_questions = esg.get("next_questions", []) if isinstance(esg, dict) else []
+        if next_questions:
+            lines.append("  Minimum follow-up:")
+            for question in next_questions[:3]:
+                lines.append(f"    - {question}")
+        lines.append("")
+
     if "impact_claims" in data:
         claims = data["impact_claims"]
         lines.append("IMPACT CLAIMS")
@@ -653,6 +689,60 @@ def _wrap_report_draft(output: str, company_name: str) -> str:
         "╚══════════════════════════════════════════════════════════════════╝"
     )
     return header + output + footer
+
+
+def _esg_toolbox_section(data: dict) -> str:
+    esg = data.get("esg_toolbox")
+    if not isinstance(esg, dict):
+        return ""
+    recs = esg.get("recommended_tools") or []
+    cards = (esg.get("ui") or {}).get("cards") or []
+    next_questions = esg.get("next_questions") or []
+    if not recs and not cards and not next_questions:
+        return ""
+
+    parts = ['<h2 id="sec-esg-toolbox">ESG Toolbox Readiness</h2>']
+    if cards:
+        parts.append('<div class="cards-row">')
+        for card in cards[:6]:
+            score = float(card.get("readiness_score_pct", 0) or 0)
+            color = "var(--success)" if score >= 80 else "var(--warning)" if score >= 45 else "var(--danger)"
+            parts.append(
+                '<div class="score-card" style="min-width:180px;text-align:left">'
+                f'<div class="value" style="font-size:1.7em;color:{color}">{score:.0f}%</div>'
+                f'<div class="label">{_esc(card.get("title", ""))}</div>'
+                f'<div style="margin-top:8px;color:var(--text-secondary);font-size:0.85em">{_esc(card.get("status", ""))} | {_esc(card.get("priority", ""))}</div>'
+                "</div>"
+            )
+        parts.append("</div>")
+    elif recs:
+        parts.append('<div class="cards-row">')
+        for item in recs[:6]:
+            score = float(item.get("readiness_score_pct", 0) or 0)
+            color = "var(--success)" if score >= 80 else "var(--warning)" if score >= 45 else "var(--danger)"
+            parts.append(
+                '<div class="score-card" style="min-width:180px;text-align:left">'
+                f'<div class="value" style="font-size:1.7em;color:{color}">{score:.0f}%</div>'
+                f'<div class="label">{_esc(item.get("title", ""))}</div>'
+                f'<div style="margin-top:8px;color:var(--text-secondary);font-size:0.85em">{_esc(item.get("tool_id", ""))}</div>'
+                "</div>"
+            )
+        parts.append("</div>")
+
+    if recs:
+        parts.append("<h3>Recommended Modules</h3>")
+        for item in recs[:6]:
+            reason = item.get("reason") or "Relevant ESG module for this company context."
+            missing = item.get("missing_inputs") or []
+            detail = f"<br><span style='color:var(--text-secondary)'>Missing inputs: {_esc(', '.join(missing[:3]))}</span>" if missing else ""
+            parts.append(f'<div class="rec"><strong>{_esc(item.get("tool_id", ""))}: {_esc(item.get("title", ""))}</strong><br>{_esc(reason)}{detail}</div>')
+
+    if next_questions:
+        parts.append("<h3>Minimum Follow-up Questions</h3>")
+        for question in next_questions[:5]:
+            parts.append(f'<div class="rec">{_esc(question)}</div>')
+
+    return "\n".join(parts)
 
 
 def _to_csv(data: dict) -> str:
@@ -2475,6 +2565,7 @@ body.theme-dark .mini-header {{ box-shadow:0 2px 8px rgba(0,0,0,0.6); }}
   <a href="#sec-pathway">Impact pathway</a>
   <a href="#sec-opp-risk">Opportunities &amp; risks</a>
   <a href="#sec-gap">Gap analysis</a>
+  <a href="#sec-esg-toolbox">ESG toolbox</a>
   <a href="#sec-greenwashing">Greenwashing</a>
   <a href="#sec-benchmark">Benchmarks</a>
   <a href="#sec-metrics">Metric tracking</a>
@@ -2916,6 +3007,10 @@ Plotly.newPlot('sdg-chart', [{{
             sections.append("<h3>Recommendations</h3>")
             for r in ga["recommendations"]:
                 sections.append(f'<div class="rec">{r}</div>')
+
+    esg_html = _esg_toolbox_section(data)
+    if esg_html:
+        sections.append(esg_html)
 
     dashboard_html = _metric_tracking_dashboard(data)
     if dashboard_html:

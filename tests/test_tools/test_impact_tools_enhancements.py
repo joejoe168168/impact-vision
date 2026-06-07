@@ -1051,6 +1051,59 @@ class TestImpactRiskOpportunityTool:
         tool = ImpactRiskOpportunityTool()
         assert tool.name == "impact_risk_opportunity"
 
+    def test_risk_tool_includes_esg_toolbox_recommendations(self):
+        from openharness.tools.base import ToolExecutionContext
+        from openharness.tools.impact.impact_risk_opportunity_tool import (
+            ImpactRiskOpportunityInput,
+            ImpactRiskOpportunityTool,
+        )
+
+        tool = ImpactRiskOpportunityTool()
+        result = asyncio.run(
+            tool.execute(
+                ImpactRiskOpportunityInput(
+                    company_name="Carbon Export Co",
+                    company_description="Steel manufacturer with Scope 1 and Scope 2 emissions, EU export customers, and supplier audits.",
+                    sector="steel manufacturing",
+                    geography="EU",
+                    reported_metrics={"OI4112": "1200 tCO2e", "OI6697": "2600 MWh"},
+                    output_format="json",
+                ),
+                ToolExecutionContext(cwd=Path(".")),
+            )
+        )
+
+        assert not result.is_error
+        assert "esg_toolbox_recommendations" in result.metadata
+        tool_ids = {item["tool_id"] for item in result.metadata["esg_toolbox_recommendations"]}
+        assert {"ghg", "cbam"} & tool_ids
+        assert "esg_ui" in result.metadata
+
+
+class TestGapAnalysisESGIntegration:
+    def test_gap_analysis_includes_esg_crosswalk_and_recommendations(self):
+        from openharness.tools.base import ToolExecutionContext
+        from openharness.tools.impact.gap_analysis_tool import GapAnalysisInput, GapAnalysisTool
+
+        tool = GapAnalysisTool()
+        result = asyncio.run(
+            tool.execute(
+                GapAnalysisInput(
+                    company_name="Carbon Metrics Co",
+                    reported_metrics={"OI4112": "1200 tCO2e", "OI6697": "2600 MWh"},
+                    impact_themes=["Climate"],
+                ),
+                ToolExecutionContext(cwd=Path(".")),
+            )
+        )
+
+        assert not result.is_error
+        gap = result.metadata["gap_analysis"]
+        assert "OI4112" in gap["esg_metric_crosswalk"]
+        assert gap["esg_toolbox_recommendations"]
+        assert "ESG Framework Crosswalk" in result.output
+        assert "ESG Toolbox Leverage" in result.output
+
 
 class TestMetricRecommenderTool:
     def test_recommender_input_has_geography(self):
@@ -1068,6 +1121,82 @@ class TestMetricRecommenderTool:
         from openharness.tools.impact.metric_recommender_tool import MetricRecommenderTool
         tool = MetricRecommenderTool()
         assert tool.name == "impact_metric_recommender"
+
+    def test_recommender_includes_esg_toolbox_guidance(self):
+        from openharness.tools.base import ToolExecutionContext
+        from openharness.tools.impact.metric_recommender_tool import MetricRecommenderInput, MetricRecommenderTool
+
+        tool = MetricRecommenderTool()
+        result = asyncio.run(
+            tool.execute(
+                MetricRecommenderInput(
+                    company_name="Carbon Export Co",
+                    sector="steel manufacturing",
+                    geography="EU",
+                    description="Steel manufacturer with Scope 1 and Scope 2 emissions and EU export customers.",
+                    impact_themes=["Climate"],
+                    sdg_goals=[13],
+                    reported_metrics={"OI4112": "1200 tCO2e", "OI6697": "2600 MWh"},
+                    output_format="json",
+                ),
+                ToolExecutionContext(cwd=Path(".")),
+            )
+        )
+
+        assert not result.is_error
+        assert "esg_toolbox" in result.metadata
+        tool_ids = {item["tool_id"] for item in result.metadata["esg_toolbox"]["recommended_tools"]}
+        assert {"ghg", "cbam"} & tool_ids
+
+
+class TestImpactReportESGIntegration:
+    def test_report_includes_esg_toolbox_section(self):
+        from openharness.tools.base import ToolExecutionContext
+        from openharness.tools.impact.impact_report_tool import ImpactReportInput, ImpactReportTool
+
+        tool = ImpactReportTool()
+        result = asyncio.run(
+            tool.execute(
+                ImpactReportInput(
+                    company_name="Carbon Report Co",
+                    company_description="Steel manufacturer with Scope 1 and Scope 2 emissions, EU customers, and supplier audits.",
+                    sector="steel manufacturing",
+                    geography="EU",
+                    reported_metrics={"OI4112": "1200 tCO2e", "OI6697": "2600 MWh"},
+                    output_format="text",
+                ),
+                ToolExecutionContext(cwd=Path(".")),
+            )
+        )
+
+        assert not result.is_error
+        report_data = result.metadata["report_data"]
+        assert report_data["esg_toolbox"]["recommended_tools"]
+        assert "ESG TOOLBOX READINESS" in result.output
+
+    def test_html_report_renders_esg_toolbox_cards(self):
+        from openharness.tools.base import ToolExecutionContext
+        from openharness.tools.impact.impact_report_tool import ImpactReportInput, ImpactReportTool
+
+        tool = ImpactReportTool()
+        result = asyncio.run(
+            tool.execute(
+                ImpactReportInput(
+                    company_name="Carbon HTML Co",
+                    company_description="Battery manufacturer exporting to the EU with Scope 1 and Scope 2 data.",
+                    sector="battery manufacturing",
+                    geography="EU",
+                    reported_metrics={"OI4112": "1200 tCO2e"},
+                    output_format="html",
+                ),
+                ToolExecutionContext(cwd=Path(".")),
+            )
+        )
+
+        assert not result.is_error
+        html = result.metadata["html"]
+        assert 'id="sec-esg-toolbox"' in html
+        assert "ESG Toolbox Readiness" in html
 
 
 class TestPortfolioInput:

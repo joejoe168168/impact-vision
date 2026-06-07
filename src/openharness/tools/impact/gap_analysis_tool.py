@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 from openharness.impact.database import ensure_catalog_loaded
 from openharness.impact.gap_analysis import analyze_gaps
 from openharness.impact.models import Company
+from openharness.impact.toolbox import build_esg_workflow, crosswalk_reported_metrics
 from openharness.tools.impact.common import normalize_metric_ids, normalize_metric_map, normalize_str_list
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
@@ -58,6 +59,20 @@ class GapAnalysisTool(BaseTool):
         else:
             core_set = None
         result = analyze_gaps(company, store, core_set=core_set)
+        esg_crosswalk = crosswalk_reported_metrics(reported_metrics)
+        esg_workflow = build_esg_workflow(
+            company_name=args.company_name,
+            impact_themes=company.impact_themes,
+            reported_metrics=reported_metrics,
+            limit=5,
+        )
+        result["esg_metric_crosswalk"] = esg_crosswalk
+        result["esg_toolbox_recommendations"] = [
+            item.model_dump(mode="json") for item in esg_workflow.recommended_tools[:5]
+        ]
+        result["esg_input_suggestions"] = [
+            item.model_dump(mode="json") for item in esg_workflow.input_suggestions
+        ]
 
         lines = [
             f"Gap Analysis: {result['company']}",
@@ -97,6 +112,22 @@ class GapAnalysisTool(BaseTool):
             if len(extras) > len(shown):
                 lines.append(
                     f"  ... and {len(extras) - len(shown)} more (full list in result metadata)"
+                )
+            lines.append("")
+
+        if esg_crosswalk:
+            lines.append("ESG Framework Crosswalk:")
+            for metric_id, refs in esg_crosswalk.items():
+                lines.append(f"  - {metric_id}: {', '.join(refs)}")
+            lines.append("")
+
+        if esg_workflow.recommended_tools:
+            lines.append("ESG Toolbox Leverage:")
+            for item in esg_workflow.recommended_tools[:5]:
+                missing = f" | missing: {', '.join(item.missing_inputs[:3])}" if item.missing_inputs else ""
+                lines.append(
+                    f"  - {item.tool_id}: {item.title} "
+                    f"({item.readiness_score_pct}% readiness{missing})"
                 )
             lines.append("")
 

@@ -10,16 +10,21 @@ from pydantic import BaseModel, Field
 
 from openharness.impact.database import get_metric_store
 from openharness.impact.gap_analysis import CORE_METRIC_SET_IDS
+from openharness.impact.toolbox import build_esg_workflow
 from openharness.tools.impact.common import normalize_sdg_goals, normalize_str_list
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 
 class MetricRecommenderInput(BaseModel):
+    company_name: str = Field(default="", description="Optional company name for workflow context.")
     sector: str = Field(default="", description="Sector/industry context.")
     geography: str = Field(default="", description="Country or region.")
     description: str = Field(default="", description="Company or thesis description.")
+    company_description: str = Field(default="", description="Alias for description used by MCP/API callers.")
     impact_themes: list[str] = Field(default_factory=list, description="Impact themes.")
     sdg_goals: list[int] = Field(default_factory=list, description="Target SDG goals (1-17).")
+    sdg_claims: list[int] = Field(default_factory=list, description="Alias for target SDG goals.")
+    reported_metrics: dict[str, object] = Field(default_factory=dict, description="Existing reported metrics to crosswalk into ESG modules.")
     max_metrics: int = Field(default=20, ge=5, le=100, description="Maximum recommendations to return.")
     include_core_set: bool = Field(default=True, description="Prioritize IRIS+ core metric set entries.")
     output_format: Literal["text", "json"] = Field(default="text")
@@ -47,7 +52,8 @@ class MetricRecommenderTool(BaseTool):
     async def execute(self, arguments: BaseModel, context: ToolExecutionContext) -> ToolResult:
         args = arguments if isinstance(arguments, MetricRecommenderInput) else MetricRecommenderInput.model_validate(arguments)
         themes = normalize_str_list(args.impact_themes)
-        goals, _ = normalize_sdg_goals(args.sdg_goals)
+        goals, _ = normalize_sdg_goals(args.sdg_goals or args.sdg_claims)
+        description = args.description or args.company_description
 
         try:
             store = get_metric_store()
@@ -82,7 +88,7 @@ class MetricRecommenderTool(BaseTool):
                 reasons[metric.id].append(f"sdg:{goal}")
                 metric_map[metric.id] = metric
 
-        text = f"{args.sector} {args.description}".strip()
+        text = f"{args.sector} {description}".strip()
         if text:
             for metric in store.search(text, limit=min(100, args.max_metrics * 4)):
                 metric_scores[metric.id] += 1.5
@@ -116,10 +122,23 @@ class MetricRecommenderTool(BaseTool):
             })
 
         payload = {
-            "inputs": {"sector": args.sector, "themes": themes, "sdg_goals": goals},
+            "inputs": {"company_name": args.company_name, "sector": args.sector, "geography": args.geography, "themes": themes, "sdg_goals": goals},
             "recommendations": recs,
             "count": len(recs),
         }
+        esg_workflow = build_esg_workflow(
+            company_name=args.company_name,
+            company_description=description,
+            sector=args.sector,
+            geography=args.geography,
+            jurisdiction=args.geography,
+            impact_themes=themes,
+            reported_metrics=args.reported_metrics,
+            document_text=description,
+            country=args.geography,
+            limit=5,
+        )
+        payload["esg_toolbox"] = esg_workflow.model_dump(mode="json")
 
         if args.output_format == "json":
             return ToolResult(output=json.dumps(payload, indent=2), metadata=payload)
@@ -140,4 +159,17 @@ class MetricRecommenderTool(BaseTool):
                 lines.append(f"   SDGs: {', '.join(f'SDG {g}' for g in rec['sdg_goals'])}")
             lines.append(f"   Why: {', '.join(rec['reasons'])}")
             lines.append("")
+        if esg_workflow.recommended_tools:
+            lines.append("ESG TOOLBOX MODULES TO PAIR WITH THESE METRICS")
+            lines.append("=" * 50)
+            for item in esg_workflow.recommended_tools[:5]:
+                lines.append(f"- {item.tool_id}: {item.title} ({item.readiness_score_pct}% readiness)")
+                if item.reason:
+                    lines.append(f"  Why: {item.reason}")
+                if item.missing_inputs:
+                    lines.append(f"  Missing inputs: {', '.join(item.missing_inputs[:3])}")
+            if esg_workflow.next_questions:
+                lines.append("")
+                lines.append("Minimum follow-up questions:")
+                lines.extend(f"- {question}" for question in esg_workflow.next_questions[:3])
         return ToolResult(output="\n".join(lines), metadata=payload)

@@ -6,8 +6,6 @@ Usage:
     python -m openharness.impact.mcp_server  # direct invocation
 """
 
-from __future__ import annotations
-
 import json
 import logging
 from pathlib import Path
@@ -54,6 +52,11 @@ IMPACT_VISION_MCP_DESCRIPTION = (
 )
 
 
+from openharness.mcp.compat import patch_fastmcp_func_metadata
+
+patch_fastmcp_func_metadata()
+
+
 def _init_fastmcp() -> FastMCP:
     """Instantiate FastMCP with graceful fallback for older/newer signatures."""
     for kwargs in (
@@ -71,6 +74,24 @@ def _init_fastmcp() -> FastMCP:
 
 
 mcp = _init_fastmcp()
+
+
+def _register_resource(uri: str, *, name: str | None = None, description: str | None = None):
+    """Register MCP resources without failing module import.
+
+    FastMCP/Pydantic compatibility is patched above. Keep this guard so a
+    future upstream decorator failure cannot make all direct wrapper imports
+    unusable.
+    """
+
+    def decorator(func):
+        try:
+            return mcp.resource(uri, name=name, description=description)(func)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Skipping MCP resource registration for %s: %s", uri, exc)
+            return func
+
+    return decorator
 
 
 def _get_tool_context():
@@ -106,7 +127,7 @@ def _first_present(data: dict[str, Any], *keys: str) -> Any:
 # ---------------------------------------------------------------------------
 
 
-@mcp.resource("impact://catalog/stats")
+@_register_resource("impact://catalog/stats")
 def catalog_stats() -> str:
     """IRIS+ catalog statistics — metric count, categories, themes."""
     try:
@@ -134,7 +155,7 @@ def catalog_stats() -> str:
         return json.dumps({"error": str(exc)})
 
 
-@mcp.resource("impact://dd-checklist/categories")
+@_register_resource("impact://dd-checklist/categories")
 def dd_checklist_categories() -> str:
     """DD checklist categories and question counts."""
     try:
@@ -150,7 +171,7 @@ def dd_checklist_categories() -> str:
         return json.dumps({"error": str(exc)})
 
 
-@mcp.resource("impact://frameworks/list")
+@_register_resource("impact://frameworks/list")
 def framework_list() -> str:
     """Available ESG/sustainability frameworks."""
     frameworks = [
@@ -169,7 +190,7 @@ def framework_list() -> str:
     return json.dumps({"frameworks": frameworks}, indent=2)
 
 
-@mcp.resource("impact://cross-reference/{metric_id}")
+@_register_resource("impact://cross-reference/{metric_id}")
 def cross_reference_lookup(metric_id: str) -> str:
     """Cross-reference lookup for a metric ID across all frameworks.
 
@@ -201,7 +222,7 @@ def cross_reference_lookup(metric_id: str) -> str:
         return json.dumps({"error": str(exc)})
 
 
-@mcp.resource("impact://sdg/goals")
+@_register_resource("impact://sdg/goals")
 def sdg_goals_list() -> str:
     """UN SDG 17 goals reference data."""
     try:
@@ -749,11 +770,56 @@ async def impact_metric_recommender(
     tool = MetricRecommenderTool()
     args = MetricRecommenderInput(
         company_name=company_name,
+        description=company_description,
         company_description=company_description,
         sector=sector,
         impact_themes=impact_themes or [],
         reported_metrics=reported_metrics or {},
+        sdg_goals=sdg_claims or [],
         sdg_claims=sdg_claims or [],
+    )
+    result = await tool.execute(args, _get_tool_context())
+    return result.output
+
+
+@mcp.tool()
+async def esg_toolbox(
+    action: str = "recommend",
+    tool_id: str = "",
+    category: str = "all",
+    query: str = "",
+    sector: str = "",
+    jurisdiction: str = "",
+    company_description: str = "",
+    document_text: str = "",
+    reported_metrics: dict[str, Any] | None = None,
+    product_code: str = "",
+    country: str = "",
+    supplier_profile: str = "",
+    output_format: str = "text",
+) -> str:
+    """Use the ESG toolbox for module search, readiness, workflow routing, and minimal-input plans.
+
+    Actions: list, search, get, methodology, checklist, assess, crosswalk, source_profile,
+    recommend, workflow, input_plan.
+    """
+    from openharness.tools.impact.esg_toolbox_tool import ESGToolboxInput, ESGToolboxTool
+
+    tool = ESGToolboxTool()
+    args = ESGToolboxInput(
+        action=action,  # type: ignore[arg-type]
+        tool_id=tool_id,
+        category=category,  # type: ignore[arg-type]
+        query=query,
+        sector=sector,
+        jurisdiction=jurisdiction,
+        company_description=company_description,
+        document_text=document_text,
+        reported_metrics=reported_metrics or {},
+        product_code=product_code,
+        country=country,
+        supplier_profile=supplier_profile,
+        output_format=output_format,  # type: ignore[arg-type]
     )
     result = await tool.execute(args, _get_tool_context())
     return result.output

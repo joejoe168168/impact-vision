@@ -81,8 +81,8 @@ def build_sse_router() -> Any:
 
     router = APIRouter()
 
-    @router.get("/api/v1/stream/echo")
-    async def echo(msg: str = "hello", n: int = 3) -> StreamingResponse:
+    @router.get("/api/v1/stream/echo", response_model=None)
+    async def echo(msg: str = "hello", n: int = 3) -> Any:
         async def agen() -> AsyncIterator[tuple[str, Any]]:
             yield ("progress", {"percent": 0, "message": "starting"})
             for i in range(1, max(1, min(n, 10)) + 1):
@@ -119,12 +119,17 @@ def register_sse_endpoint(
 def _install_handler(router: Any, name: str, handler: Callable) -> None:
     from fastapi.responses import StreamingResponse
 
-    async def endpoint() -> StreamingResponse:
+    async def endpoint() -> Any:
         return StreamingResponse(
             stream_as_sse(handler()),  # type: ignore[misc]
             media_type="text/event-stream",
         )
-    router.add_api_route(f"/api/v1/stream/{name}", endpoint, methods=["GET"])
+    router.add_api_route(
+        f"/api/v1/stream/{name}",
+        endpoint,
+        methods=["GET"],
+        response_model=None,
+    )
 
 
 __all__ = [

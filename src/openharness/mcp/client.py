@@ -13,6 +13,7 @@ from mcp.client.stdio import stdio_client
 from mcp.client.streamable_http import streamable_http_client
 from mcp.types import CallToolResult, ReadResourceResult
 
+from openharness.mcp.compat import patch_fastmcp_func_metadata
 from openharness.mcp.types import (
     McpConnectionStatus,
     McpHttpServerConfig,
@@ -20,6 +21,8 @@ from openharness.mcp.types import (
     McpStdioServerConfig,
     McpToolInfo,
 )
+
+patch_fastmcp_func_metadata()
 
 
 class McpServerNotConnectedError(Exception):

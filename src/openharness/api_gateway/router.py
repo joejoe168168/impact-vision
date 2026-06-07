@@ -26,6 +26,7 @@ Endpoints (v1):
     POST /api/v1/monitoring           - Continuous monitoring
     POST /api/v1/improvement-advisor  - Improvement recommendations
     POST /api/v1/narrative            - Narrative generation
+    POST /api/v1/esg-toolbox          - ESG toolbox recommendation/readiness workflow
     POST /api/v1/batch                - Batch multi-company assessment
     POST /api/v1/webhook              - Register webhook
     GET  /api/v1/webhooks             - List webhooks
@@ -94,6 +95,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+for _middleware in app.user_middleware:
+    if _middleware.cls is CORSMiddleware and not hasattr(_middleware, "kwargs"):
+        _middleware.kwargs = _middleware.options  # type: ignore[attr-defined]
 
 
 # ---------------------------------------------------------------------------
@@ -209,6 +214,25 @@ class NarrativeRequest(BaseModel):
     sector: str = ""
     reported_metrics: dict[str, str] = Field(default_factory=dict)
     audience: str = "investor"
+
+
+class ESGToolboxRequest(BaseModel):
+    action: str = Field(
+        default="recommend",
+        description="recommend, workflow, input_plan, list, search, get, methodology, checklist, assess, crosswalk, source_profile",
+    )
+    tool_id: str = Field(default="", description="Optional toolbox module ID or alias, e.g. ghg, cbam, battery.")
+    category: str = Field(default="all", description="all, disclosure, rating, export, supplier, carbon")
+    query: str = Field(default="", description="Plain-English search query.")
+    sector: str = ""
+    jurisdiction: str = ""
+    company_description: str = ""
+    document_text: str = ""
+    reported_metrics: dict[str, Any] = Field(default_factory=dict)
+    product_code: str = ""
+    country: str = ""
+    supplier_profile: str = ""
+    output_format: str = "json"
 
 
 class BatchRequest(BaseModel):
@@ -724,6 +748,32 @@ async def narrative_endpoint(req: NarrativeRequest):
     )
     result = await tool.execute(args, _get_tool_context())
     return {"result": result.output}
+
+
+@app.post("/api/v1/esg-toolbox", dependencies=[Depends(verify_api_key)])
+async def esg_toolbox_endpoint(req: ESGToolboxRequest):
+    from openharness.tools.impact.esg_toolbox_tool import ESGToolboxInput, ESGToolboxTool
+
+    tool = ESGToolboxTool()
+    args = ESGToolboxInput(
+        action=req.action,  # type: ignore[arg-type]
+        tool_id=req.tool_id,
+        category=req.category,  # type: ignore[arg-type]
+        query=req.query,
+        sector=req.sector,
+        jurisdiction=req.jurisdiction,
+        company_description=req.company_description,
+        document_text=req.document_text,
+        reported_metrics=req.reported_metrics,
+        product_code=req.product_code,
+        country=req.country,
+        supplier_profile=req.supplier_profile,
+        output_format=req.output_format,  # type: ignore[arg-type]
+    )
+    result = await tool.execute(args, _get_tool_context())
+    if result.is_error:
+        raise HTTPException(status_code=400, detail=result.output)
+    return {"result": result.output, "metadata": result.metadata}
 
 
 # ---------------------------------------------------------------------------
