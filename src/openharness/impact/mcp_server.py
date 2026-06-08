@@ -13,6 +13,8 @@ from typing import Any
 
 from mcp.server.fastmcp import FastMCP
 
+from openharness.mcp.compat import patch_fastmcp_func_metadata
+
 logger = logging.getLogger(__name__)
 
 # Newer FastMCP releases dropped the `version` / `description` kwargs from the
@@ -50,9 +52,6 @@ IMPACT_VISION_MCP_DESCRIPTION = (
     "5-Dimension scoring, SDG mapping, greenwashing detection, "
     "pipeline management, and comprehensive impact reporting."
 )
-
-
-from openharness.mcp.compat import patch_fastmcp_func_metadata
 
 patch_fastmcp_func_metadata()
 

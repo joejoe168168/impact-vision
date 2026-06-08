@@ -1104,6 +1104,30 @@ class TestGapAnalysisESGIntegration:
         assert "ESG Framework Crosswalk" in result.output
         assert "ESG Toolbox Leverage" in result.output
 
+    def test_gap_analysis_uses_company_context_for_esg_routing(self):
+        from openharness.tools.base import ToolExecutionContext
+        from openharness.tools.impact.gap_analysis_tool import GapAnalysisInput, GapAnalysisTool
+
+        tool = GapAnalysisTool()
+        result = asyncio.run(
+            tool.execute(
+                GapAnalysisInput(
+                    company_name="EU Steel Export Co",
+                    company_description="Steel manufacturer exporting covered goods to EU customers.",
+                    sector="steel manufacturing",
+                    geography="EU",
+                    reported_metrics={"PI2822": "100"},
+                    impact_themes=["Climate"],
+                ),
+                ToolExecutionContext(cwd=Path(".")),
+            )
+        )
+
+        assert not result.is_error
+        gap = result.metadata["gap_analysis"]
+        tool_ids = {item["tool_id"] for item in gap["esg_toolbox_recommendations"]}
+        assert {"cbam", "cbam-steel"} & tool_ids
+
 
 class TestMetricRecommenderTool:
     def test_recommender_input_has_geography(self):

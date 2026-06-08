@@ -379,6 +379,23 @@ def test_toolbox_input_plan_minimizes_questions_from_document_context() -> None:
     assert len(plan.next_questions) <= 1
 
 
+def test_toolbox_input_plan_only_requests_product_code_for_product_modules() -> None:
+    csddd_plan = build_toolbox_input_plan(
+        "csddd",
+        company_description="EU supplier due diligence with factory audits, worker policies, and grievance process.",
+        jurisdiction="EU",
+        supplier_profile="Tier 1 factories with audit and CAPA records.",
+    )
+    cbam_plan = build_toolbox_input_plan(
+        "cbam",
+        company_description="Steel exporter to EU customers.",
+        jurisdiction="EU",
+    )
+
+    assert "product_code" not in {field.field for field in csddd_plan.minimum_fields}
+    assert "product_code" in {field.field for field in cbam_plan.minimum_fields}
+
+
 def test_toolbox_output_blueprint_is_category_specific() -> None:
     disclosure = build_toolbox_output_blueprint("issb")
     supplier = build_toolbox_output_blueprint("smeta")
@@ -605,6 +622,21 @@ async def test_esg_toolbox_recommend_uses_plain_english_query() -> None:
     tool_ids = [item["tool_id"] for item in result.metadata["recommended_tools"][:5]]
     assert "battery" in tool_ids
     assert result.metadata["ui"]["cards"]
+
+
+def test_toolbox_workflow_does_not_ask_product_code_for_supplier_due_diligence() -> None:
+    workflow = build_esg_workflow(
+        company_description="EU supplier factory audit worker policy human rights grievance process.",
+        geography="EU",
+        jurisdiction="EU",
+        supplier_profile="Tier 1 factory audit and CAPA records.",
+        query="supplier due diligence",
+        limit=3,
+    )
+
+    csddd = next(item for item in workflow.recommended_tools if item.tool_id == "csddd")
+    assert "product_code" not in csddd.missing_inputs
+    assert not any("product/CN/HS code" in question for question in workflow.next_questions)
 
 
 @pytest.mark.asyncio

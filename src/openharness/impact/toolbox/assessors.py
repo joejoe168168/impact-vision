@@ -293,8 +293,7 @@ def build_toolbox_input_plan(
         ),
     ]
 
-    product_specific_carbon_modules = {"battery", "carbon-iso", "espr"}
-    if "export" in categories or spec.tool_id in product_specific_carbon_modules:
+    if _requires_product_code(spec):
         minimum.append(
             _field(
                 "product_code",
@@ -639,6 +638,19 @@ def _special_input_supports_requirement(tool_id: str, req_id: str, product_code:
         if req_id == "technical-data" and product_code:
             return True
     return False
+
+
+def _requires_product_code(spec: ToolboxToolSpec) -> bool:
+    product_applicability_modules = {
+        "battery",
+        "carbon-iso",
+        "cbam",
+        "cbam-export",
+        "cbam-steel",
+        "espr",
+        "eudr",
+    }
+    return spec.tool_id in product_applicability_modules
 
 
 def _dedupe(values: list[str]) -> list[str]:
