@@ -193,7 +193,7 @@ CONSULTANT_CHECKLIST_PHASES: dict[str, ChecklistPhase] = {
                 "title": "Run claim review panel",
                 "description": (
                     "Per claim: approved / caveated / rejected / needs "
-                    "evidence (greenwashing_reviewer)."
+                    "evidence (greenwashing_detect, action='review_claims')."
                 ),
             },
             {

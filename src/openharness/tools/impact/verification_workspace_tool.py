@@ -28,7 +28,10 @@ class VerificationWorkspaceInput(BaseModel):
         "resolve_comment",
         "close",
         "snapshot",
-    ] = Field(description="Action to perform on the verifier workspace.")
+        "readiness_check",
+        "evidence_map",
+        "ifc_alignment",
+    ] = Field(description="Action to perform on the verifier workspace (or pre-verification prep).")
     pack: dict = Field(default_factory=dict, description="AssurancePack payload (for 'open')")
     workspace: dict = Field(default_factory=dict, description="VerificationWorkspace state to mutate")
     permitted_evidence_ids: list[str] = Field(default_factory=list)
@@ -48,14 +51,36 @@ class VerificationWorkspaceInput(BaseModel):
     closer: str = "audit_lead"
     summary: str = ""
 
+    # Pre-verification prep fields (actions 'readiness_check' / 'evidence_map' / 'ifc_alignment')
+    company_name: str = Field(default="", description="Company name (prep actions)")
+    company_description: str = Field(default="", description="Company description (prep actions)")
+    sector: str = ""
+    reported_metrics: dict[str, str] = Field(default_factory=dict)
+    sdg_claims: list[int] = Field(default_factory=list)
+    impact_themes: list[str] = Field(default_factory=list)
+    has_theory_of_change: bool = False
+    has_impact_policy: bool = False
+    has_exclusion_screening: bool = False
+    has_external_audit: bool = False
+    verification_target: str = Field(
+        default="bluemark",
+        description="Target verifier for prep actions: 'bluemark', 'ifc_opim', 'aa1000', 'general'",
+    )
+
+
+_PREP_ACTIONS = {"readiness_check", "evidence_map", "ifc_alignment"}
+
 
 class VerificationWorkspaceTool(BaseTool):
     name = "verification_workspace"
     description = (
-        "Open a third-party verifier workspace, manage findings (open/in_review/resolved/unresolved), "
-        "post comments threaded to evidence nodes, and produce a JSON API payload. "
-        "Actions: 'open', 'submit_finding', 'respond_finding', 'transition_finding', "
-        "'comment', 'resolve_comment', 'close', 'snapshot'."
+        "Verification preparation and third-party verifier workspace in one tool. "
+        "Prep actions: 'readiness_check' (BlueMark / IFC OPIM / AA1000 readiness), "
+        "'evidence_map' (map available evidence to verification requirements), "
+        "'ifc_alignment' (IFC Operating Principles check). "
+        "Workspace actions: 'open', 'submit_finding', 'respond_finding', 'transition_finding', "
+        "'comment', 'resolve_comment', 'close', 'snapshot' — manage findings "
+        "(open/in_review/resolved/unresolved) and comments threaded to evidence nodes."
     )
     input_model = VerificationWorkspaceInput
 
@@ -71,10 +96,29 @@ class VerificationWorkspaceTool(BaseTool):
             )
         except Exception:
             return False
-        return args.action == "snapshot"
+        return args.action == "snapshot" or args.action in _PREP_ACTIONS
 
     async def execute(self, arguments: BaseModel, context: ToolExecutionContext) -> ToolResult:
         args = arguments if isinstance(arguments, VerificationWorkspaceInput) else VerificationWorkspaceInput.model_validate(arguments)
+
+        if args.action in _PREP_ACTIONS:
+            from openharness.tools.impact.verification_prep_tool import VerificationPrepInput, VerificationPrepTool
+
+            prep_input = VerificationPrepInput(
+                action=args.action,
+                company_name=args.company_name,
+                company_description=args.company_description,
+                sector=args.sector,
+                reported_metrics=args.reported_metrics,
+                sdg_claims=args.sdg_claims,
+                impact_themes=args.impact_themes,
+                has_theory_of_change=args.has_theory_of_change,
+                has_impact_policy=args.has_impact_policy,
+                has_exclusion_screening=args.has_exclusion_screening,
+                has_external_audit=args.has_external_audit,
+                verification_target=args.verification_target,
+            )
+            return await VerificationPrepTool().execute(prep_input, context)
 
         if args.action == "open":
             if not args.pack:

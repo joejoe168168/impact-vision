@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from openharness.impact.frameworks.cross_reference import CrossReference, lookup_by_iris
 from openharness.impact.toolbox.models import (
     AssessmentQuestion,
     ToolboxImpactToolRecommendation,
@@ -15,6 +16,9 @@ from openharness.impact.toolbox.models import (
 from openharness.impact.toolbox.registry import get_toolbox_tool
 
 
+# Curated toolbox-specific uses (export/supplier data packs, DPP fields) that the
+# 59-concept cross_reference map cannot express. Framework-level mappings are
+# derived from openharness.impact.frameworks.cross_reference at lookup time.
 METRIC_CROSSWALK: dict[str, dict[str, list[str]]] = {
     "OI4112": {
         "carbon": ["GHG Scope 1/2 emissions evidence", "ESRS E1-6", "ISSB IFRS S2 metrics and targets", "GRI 305"],
@@ -153,7 +157,12 @@ def crosswalk_reported_metrics(
     tool_id: str = "",
     category: str = "",
 ) -> dict[str, list[str]]:
-    """Map known Impact Vision metric IDs to toolbox/framework evidence uses."""
+    """Map known Impact Vision metric IDs to toolbox/framework evidence uses.
+
+    Mappings are derived from the 59-concept cross-framework map in
+    ``openharness.impact.frameworks.cross_reference`` and merged with the
+    curated toolbox-specific uses in ``METRIC_CROSSWALK``.
+    """
     categories: list[str]
     if tool_id:
         categories = list(get_toolbox_tool(tool_id).categories)
@@ -165,13 +174,48 @@ def crosswalk_reported_metrics(
     out: dict[str, list[str]] = {}
     for raw_id in reported_metrics:
         metric_id = str(raw_id).upper()
-        mappings = METRIC_CROSSWALK.get(metric_id, {})
+        curated = METRIC_CROSSWALK.get(metric_id, {})
         refs: list[str] = []
         for cat in categories:
-            refs.extend(mappings.get(cat, []))
+            refs.extend(curated.get(cat, []))
+            for xref in lookup_by_iris(metric_id):
+                refs.extend(_refs_from_cross_reference(xref, cat))
         if refs:
-            out[metric_id] = _dedupe(refs)
+            out[metric_id] = _dedupe(refs)[:16]
     return out
+
+
+def _refs_from_cross_reference(xref: CrossReference, category: str) -> list[str]:
+    """Translate one cross-framework concept into category-scoped evidence uses."""
+    gri = [f"GRI {code}" for code in xref.gri]
+    esrs = [f"ESRS {code}" for code in xref.esrs]
+    issb = [f"ISSB {code}" for code in xref.issb]
+    sasb = [f"SASB {code}" for code in xref.sasb_codes]
+    tcfd = [f"TCFD {code}" for code in xref.tcfd]
+    sfdr = [f"SFDR PAI {num}" for num in xref.sfdr_pai]
+    edci = [f"EDCI {code}" for code in xref.edci]
+
+    if category == "disclosure":
+        return [*gri, *esrs, *issb, *sfdr, *tcfd, *sasb]
+    if category == "carbon":
+        return [
+            *xref.sbti,
+            *xref.cdp,
+            *xref.pcaf,
+            *[ref for ref in esrs if ref.startswith("ESRS E1")],
+            *[ref for ref in gri if ref.startswith(("GRI 302", "GRI 305"))],
+            *[ref for ref in issb if ref.startswith("ISSB S2")],
+        ]
+    if category == "rating":
+        return [*xref.cdp, *edci]
+    if category == "supplier":
+        return [
+            *[ref for ref in gri if ref.startswith(("GRI 308", "GRI 40", "GRI 41"))],
+            *[ref for ref in esrs if ref.startswith(("ESRS S", "ESRS G"))],
+        ]
+    if category == "export":
+        return [f"EU Taxonomy {code}" for code in xref.eu_taxonomy]
+    return []
 
 
 def build_toolbox_workflow_plan(
@@ -491,9 +535,9 @@ def _impact_tool_recommendations(categories: set[str]) -> list[ToolboxImpactTool
                 priority="medium",
             ),
             ToolboxImpactToolRecommendation(
-                impact_tool="greenwashing_reviewer",
+                impact_tool="greenwashing_detect",
                 improvement="Use weak-documentation gaps to identify claims that need substantiation before external rating submissions.",
-                handoff="Flag unsupported claims and stale policy evidence.",
+                handoff="Run action='review_claims' to flag unsupported claims and stale policy evidence.",
                 priority="medium",
             ),
         ])

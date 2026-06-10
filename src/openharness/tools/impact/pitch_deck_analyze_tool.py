@@ -293,6 +293,38 @@ class PitchDeckAnalyzeTool(BaseTool):
             lines.append("  You can now use this data directly with sdg_mapper, five_dimension_assess,")
             lines.append("  or impact_report tools by passing these values.")
 
+        # Section 7: ESG compliance routing (same toolbox workflow as gap_analysis/impact_report)
+        esg_workflow = None
+        if extracted_company:
+            from openharness.impact.toolbox import build_esg_workflow
+
+            esg_workflow = build_esg_workflow(
+                company_name=extracted_company.name,
+                company_description=extracted_company.description,
+                sector=extracted_company.sector,
+                geography=extracted_company.geography,
+                jurisdiction=extracted_company.geography,
+                impact_themes=extracted_company.impact_themes,
+                reported_metrics=dict(extracted_company.reported_metrics),
+                document_text=text[:8000],
+                country=extracted_company.geography,
+                limit=5,
+            )
+            if esg_workflow.recommended_tools:
+                lines.append("")
+                lines.append("ESG COMPLIANCE ROUTING (ESG toolbox)")
+                lines.append("-" * 50)
+                for rec in esg_workflow.recommended_tools:
+                    lines.append(f"  {rec.title} — readiness {rec.readiness_score_pct}%")
+                    if rec.reason:
+                        lines.append(f"    {rec.reason}")
+                    if rec.missing_inputs:
+                        lines.append(f"    Missing inputs: {', '.join(rec.missing_inputs[:4])}")
+                if esg_workflow.next_questions:
+                    lines.append("  Next questions:")
+                    for question in esg_workflow.next_questions[:4]:
+                        lines.append(f"    - {question}")
+
         metadata = {
             "claims": [c.model_dump() for c in claims],
             "detected_themes": detected_themes,
@@ -318,6 +350,8 @@ class PitchDeckAnalyzeTool(BaseTool):
             metadata["extracted_company"] = extracted_company.model_dump()
         if gw_result:
             metadata["greenwashing"] = gw_result.model_dump()
+        if esg_workflow is not None:
+            metadata["esg_toolbox"] = esg_workflow.model_dump(mode="json")
 
         return ToolResult(output="\n".join(lines), metadata=metadata)
 

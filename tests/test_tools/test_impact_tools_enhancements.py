@@ -168,17 +168,21 @@ class TestNewTools:
             "iris_catalog",
             "lp_ddq_export",
             "monitoring",
-            "narrative",
             "pipeline",
             "pitch_deck_analyze",
             "portfolio_analyze",
             "product_passport",
             "sdg_mapper",
             "trend_analysis",
-            "verification_prep",
+            "impact_advisor",
+            "verification_workspace",
         }
 
         assert expected <= registered
+        # Merged tools must no longer be registered standalone.
+        assert "narrative" not in registered
+        assert "verification_prep" not in registered
+        assert "greenwashing_reviewer" not in registered
 
     def test_improvement_advisor_executes_with_sdg_claims(self):
         from openharness.tools.base import ToolExecutionContext

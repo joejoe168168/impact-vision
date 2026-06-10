@@ -14,7 +14,7 @@ from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 
 class FrameworkInput(BaseModel):
-    framework: Literal["sasb", "gri", "tcfd", "sfdr_pai", "edci", "unpri", "toc", "issb_s1", "issb_s2", "esrs", "vsme", "two_x", "tisfd", "opim", "all"] = Field(
+    framework: Literal["sasb", "gri", "tcfd", "sfdr_pai", "edci", "unpri", "toc", "issb_s1", "issb_s2", "esrs", "vsme", "two_x", "tisfd", "opim", "cdp", "all"] = Field(
         description=(
             "Which framework to query. 'all' runs a quick scan across all frameworks."
         )
@@ -64,6 +64,7 @@ class FrameworkTool(BaseTool):
         "Supply Chain/Products/Portfolio + mandatory governance & GBVH minimum requirements)\n"
         "- **tisfd**: TISFD (beta) Inequality & Social-related Financial Disclosures readiness "
         "(4 pillars; pay/labour/freedom-of-association/community/inequality; ISSB/GRI/ESRS crosswalk)\n"
+        "- **CDP**: CDP climate/water/forest questionnaire readiness (evidence checklist + assess)\n"
         "- **all**: Quick scan across all frameworks\n\n"
         "Actions: 'list' (browse), 'match' (find relevant topics), 'assess' (coverage analysis)"
     )
@@ -97,6 +98,7 @@ class FrameworkTool(BaseTool):
             "two_x": self._handle_two_x,
             "tisfd": self._handle_tisfd,
             "opim": self._handle_opim,
+            "cdp": self._handle_cdp,
             "all": self._handle_all_list,
         }
 
@@ -182,9 +184,66 @@ class FrameworkTool(BaseTool):
             else:
                 lines.append("\nNo material topics matched. Provide more sector/description detail.")
 
+            lines.extend(self._gri_index_sections(args, matches))
             return ToolResult(output="\n".join(lines))
 
         return ToolResult(output=f"GRI does not support action: {args.action}", is_error=True)
+
+    @staticmethod
+    def _gri_index_sections(args: FrameworkInput, matches: list) -> list[str]:
+        """Disclosure-level quick reference + sector topics from the ohESG GRI index."""
+        from openharness.impact.toolbox import get_toolbox_tool, search_source_index
+
+        lines: list[str] = []
+        try:
+            spec = get_toolbox_tool("gri")
+        except KeyError:
+            return lines
+        by_code = {
+            record.record_id.rsplit(":", 1)[-1]: record
+            for record in spec.source_index
+            if record.record_type == "disclosure"
+        }
+        detail_lines: list[str] = []
+        for std, _score in matches[:5]:
+            for d in std.disclosures[:5]:
+                record = by_code.get(d.code)
+                if record and record.summary:
+                    detail_lines.append(f"  {d.code} {record.title}: {record.summary}")
+        if detail_lines:
+            lines.append("\nDISCLOSURE QUICK REFERENCE (ohESG GRI index):")
+            lines.extend(detail_lines[:12])
+
+        query = " ".join([args.sector, args.description, *args.themes]).strip()
+        if query:
+            # The ohESG sector-topic index is bilingual but mostly Chinese, so
+            # route English sector terms to the GRI sector standard explicitly.
+            sector_routes = {
+                "11": ("oil", "gas", "petroleum", "upstream", "midstream"),
+                "12": ("coal",),
+                "13": ("agriculture", "farming", "aquaculture", "fishing", "fishery", "crop", "livestock"),
+                "14": ("mining", "mine", "minerals", "smelter", "quarry"),
+            }
+            lowered = query.lower()
+            matched_series = [series for series, terms in sector_routes.items() if any(t in lowered for t in terms)]
+            topics = search_source_index("gri", query, record_types=("topic",), limit=6)
+            if not topics and matched_series:
+                topics = [
+                    record
+                    for record in spec.source_index
+                    if record.record_type == "topic"
+                    and record.record_id.rsplit(":", 1)[-1].split(".")[0] in matched_series
+                ][:8]
+            if topics:
+                sector_names = {"11": "Oil & Gas", "12": "Coal", "13": "Agriculture/Aquaculture/Fishing", "14": "Mining"}
+                label = ", ".join(sector_names[s] for s in matched_series) if matched_series else "matched"
+                lines.append(f"\nGRI SECTOR TOPICS (ohESG index — {label}):")
+                for record in topics:
+                    summary = f" — {record.summary}" if record.summary else ""
+                    lines.append(f"  {record.record_id.rsplit(':', 1)[-1]} {record.title}{summary}")
+                    if record.url:
+                        lines.append(f"    {record.url}")
+        return lines
 
     def _handle_tcfd(self, args: FrameworkInput) -> ToolResult:
         from openharness.impact.frameworks.tcfd import assess_tcfd_alignment, get_tcfd_framework
@@ -772,6 +831,63 @@ class FrameworkTool(BaseTool):
 
         return ToolResult(output=f"OPIM does not support action: {args.action}", is_error=True)
 
+    def _handle_cdp(self, args: FrameworkInput) -> ToolResult:
+        """CDP questionnaire readiness, backed by the ESG toolbox cdp module."""
+        from openharness.impact.toolbox import assess_tool_readiness, build_tool_checklist, get_toolbox_tool
+
+        spec = get_toolbox_tool("cdp")
+
+        if args.action == "list":
+            lines = [f"CDP Questionnaire Readiness ({len(spec.requirements)} evidence areas):\n"]
+            for req in spec.requirements:
+                lines.append(f"  [{req.id}] {req.title}")
+                if req.description:
+                    lines.append(f"    {req.description}")
+                if req.evidence_examples:
+                    lines.append(f"    Evidence: {', '.join(req.evidence_examples[:3])}")
+            lines.append("\nSources:")
+            lines.extend(f"  - {source.title}: {source.url}" for source in spec.sources)
+            return ToolResult(output="\n".join(lines))
+
+        if args.action in ("match", "assess"):
+            result = assess_tool_readiness(
+                spec,
+                company_description=f"{args.sector} {args.description}".strip(),
+                document_text=args.document_text,
+                reported_metrics=args.reported_metrics,
+            )
+            checklist = build_tool_checklist(spec)
+            lines = [
+                "CDP QUESTIONNAIRE READINESS SCREEN",
+                "=" * 50,
+                f"Readiness: {result.score_pct}% ({len(result.matched_requirement_ids)}/{len(spec.requirements)} evidence areas)",
+                f"Confidence: {result.confidence}",
+                "",
+            ]
+            matched = set(result.matched_requirement_ids)
+            for question in checklist:
+                icon = "[OK]" if question.requirement_id in matched else "[GAP]"
+                lines.append(f"  {icon} {question.question}")
+            if result.evidence_gaps:
+                lines.append("\nEvidence gaps:")
+                lines.extend(f"  - {gap}" for gap in result.evidence_gaps[:6])
+            if args.reported_metrics:
+                from openharness.impact.toolbox import crosswalk_reported_metrics
+
+                mappings = crosswalk_reported_metrics(args.reported_metrics, category="carbon")
+                cdp_refs = {
+                    metric: [ref for ref in refs if ref.upper().startswith("CDP")]
+                    for metric, refs in mappings.items()
+                }
+                cdp_refs = {metric: refs for metric, refs in cdp_refs.items() if refs}
+                if cdp_refs:
+                    lines.append("\nReported metrics usable as CDP evidence:")
+                    for metric, refs in cdp_refs.items():
+                        lines.append(f"  {metric} -> {', '.join(refs)}")
+            return ToolResult(output="\n".join(lines), metadata=result.model_dump(mode="json"))
+
+        return ToolResult(output=f"CDP does not support action: {args.action}", is_error=True)
+
     def _handle_all_list(self, args: FrameworkInput) -> ToolResult:
         lines = [
             "Available Sustainability & ESG Frameworks:",
@@ -791,6 +907,7 @@ class FrameworkTool(BaseTool):
         "  two_x     - 2X Criteria gender-lens investing standard (2X Global 2024)",
         "  tisfd     - TISFD Inequality & Social-related Financial Disclosures (beta, 4 pillars)",
         "  opim      - IFC Operating Principles for Impact Management (9 principles)",
+        "  cdp       - CDP climate/water/forest questionnaire readiness (ESG toolbox backed)",
             "",
             "Use framework='<name>' with action='list' to browse, 'match' to find relevant topics,",
             "or 'assess' to check coverage. Use framework='all' with action='assess' to scan all.",

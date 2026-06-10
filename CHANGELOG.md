@@ -13,6 +13,123 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ### Added
 
+- **`impact_advisor` tool router.** New deterministic router for the 44-tool
+  impact surface (`impact.tool_advisor` + `tools/impact/advisor_tool.py`).
+  `action='route'` ranks the most relevant tools for a free-text request via
+  an auditable keyword routing table (no LLM call) and suggests one of nine
+  multi-step playbooks (deal screening, LP reporting, regulatory compliance,
+  verification & assurance, portfolio review, supply-chain HRDD, carbon &
+  climate, data collection, theory of change); `action='playbook'` /
+  `'list_playbooks'` / `'catalog'` expose the plans and the categorised tool
+  catalog. A registry-sync test guarantees every routed tool name exists in
+  `create_default_tool_registry()`.
+
+### Changed
+
+- **ESG toolbox knowledge refresh (all 33 modules audited, June 2026 facts).**
+  Every `impact.toolbox` module was reviewed for content depth and taxonomy
+  pairing; thin and stale modules were enriched with verified current facts:
+  - *CBAM* — replaced the stale transition-period quarterly-reporting
+    requirement with definitive-period obligations per the CBAM Omnibus
+    (Regulation (EU) 2025/2083): 50-tonne annual mass de minimis, authorised
+    declarant, first annual declaration due 30 Sep 2027, certificate sales
+    from 1 Feb 2027, 50% coverage ratio, harmonised €100–500/tCO₂e penalties.
+  - *EUDR* — new application-timeline requirement (30 Dec 2026 for
+    large/medium + timber-sector micro/small, 30 Jun 2027 for other
+    micro/small; one-time simplified declaration per Regulation (EU)
+    2025/2650).
+  - *ESRS/CSRD & CSDDD* — **taxonomy fix**: both modules previously inherited
+    the generic export template (CN/HS customs-code applicability screen),
+    which is the wrong applicability taxonomy for company-size-based laws.
+    Replaced with post-Omnibus scope thresholds (CSRD: >1,000 employees +
+    >€450M turnover, first reports FY2027; CSDDD: >5,000 employees + >€1.5B,
+    application 26 Jul 2029) per Omnibus I Directive (EU) 2026/470, plus a
+    simplified-ESRS datapoint note (~60% datapoint cut expected 2026).
+  - *EU Battery Regulation* — new milestone-timeline requirement (CFP
+    declarations: EV Feb 2025, industrial >2 kWh Feb 2026, LMT Aug 2028;
+    battery passport mandatory 18 Feb 2027; recycled-content minimums from
+    Aug 2031).
+  - *SBTi* — validation requirement now tracks the V1.3/V5.3 → Corporate
+    Net-Zero Standard V2 transition (V2 mandatory for new targets from
+    1 Jan 2028).
+  - *CDP* — questionnaire-scope requirement updated to the 2026 cycle
+    (13-module integrated questionnaire; climate/forests/water scored;
+    plastics/biodiversity/ocean unscored; 7 scored forest commodities).
+  - *MSCI* — new rating-scale requirement (AAA–CCC, industry-adjusted
+    weighted key-issue scores, exposure vs management, controversy drag).
+  - *EcoVadis* — new scoring requirement (21 criteria, 0–100, percentile
+    medals: Platinum 1% / Gold 5% / Silver 15% / Bronze 35%) and filled
+    empty theme descriptions with framework refs.
+  - *SMETA* — SMETA 7.0 facts (Management Systems Assessment, Collaborative
+    Action Required categories, ETI Base Code, 2- vs 4-pillar).
+  - *AWS* — **source fix**: methodology link pointed at the retired V2.0
+    page while content described V3.0; now cites AWS Standard V3.0
+    (launched 18 Mar 2026, transition to 18 Mar 2027).
+  - Filled 10 empty requirement descriptions (materiality matrix,
+    stakeholder inputs, GRI content index, AA1000 assurance scope, CSDDD
+    grievance/remedy, ICMA UoP/KPI framework, Climate Bonds taxonomy
+    eligibility, AWS stewardship plan, EcoVadis themes, conflict-minerals
+    traceability) and added missing `framework_refs` throughout.
+
+- **Tool surface consolidated 46 → 44 (3 merges + 1 router).**
+  - `greenwashing_reviewer` merged into `greenwashing_detect`: the new
+    `action='review_claims'` runs the per-claim explainable reviewer
+    (specificity, evidence gaps, severity, follow-up DD questions,
+    AI-governance metadata) on top of the existing company-level screen.
+  - `verification_prep` merged into `verification_workspace`: prep actions
+    `readiness_check` / `evidence_map` / `ifc_alignment` (BlueMark, IFC OPIM,
+    AA1000) now live alongside the verifier workspace actions, so one tool
+    covers prepare → verify.
+  - `narrative` merged into `impact_report`: `narrative_mode='narrative_prompt'`
+    plus the new `narrative_section` / `narrative_audience` /
+    `narrative_word_limit` fields generate audience-tuned executive-summary,
+    key-findings, impact-narrative, and case-study prompts.
+  - The underlying modules (`greenwashing_reviewer_tool.py`,
+    `verification_prep_tool.py`, `narrative_tool.py`) remain importable for
+    the MCP server, REST API, and Web Console, but are no longer registered
+    as standalone agent tools. Engagement bundles, the reporting studio
+    claim-review checklist, and the ESG-toolbox handoffs now reference the
+    merged tool names.
+
+- **ESG toolbox knowledge integrated into existing tools (consolidation wave).**
+  The 33-module ohESG toolbox now enriches the host tools instead of living
+  only behind the standalone `esg_toolbox` surface:
+  - **Unified metric crosswalk.** `toolbox.crosswalk_reported_metrics` now
+    derives mappings from the 59-concept `frameworks.cross_reference` map
+    (GRI/ESRS/ISSB/SFDR PAI/TCFD/SASB/CDP/SBTi/PCAF/EDCI columns, scoped per
+    toolbox category) and merges the curated export/supplier uses — coverage
+    grows from 7 curated metric IDs to every IRIS+-mapped concept.
+  - **`framework_assess` enrichment.** GRI match/assess now appends a
+    disclosure-level quick reference and GRI 11-14 sector topics from the
+    294-record ohESG GRI index (with English sector routing for oil & gas /
+    coal / agriculture / mining); a new `cdp` framework handler runs CDP
+    questionnaire readiness with a metric→CDP-code crosswalk.
+  - **EU regulatory calendar export-compliance obligations.** The EU
+    jurisdiction profile adds CBAM annual declarations, EUDR due-diligence
+    system review, EU Battery Regulation passport/carbon-footprint readiness,
+    and an ESPR/DPP applicability screen.
+  - **`hrdd_assess` audit-scheme readiness.** When the supplier context
+    matches, HRDD results now include scheme-specific readiness
+    (SMETA/SA8000/amfori BSCI/RBA/conflict minerals/IRMA/CSDDD) with evidence
+    gaps and official sources.
+  - **AA1000 verification target.** `verification_target='aa1000'` (now via
+    `verification_workspace` readiness actions) appends an AccountAbility
+    principles/assurance readiness section.
+  - **`product_passport` regulatory readiness.** The `assess` action now
+    appends EU Battery Regulation (for battery categories) or ESPR readiness
+    from the toolbox requirement sets.
+  - **`pitch_deck_analyze` ESG compliance routing.** The main intake tool now
+    appends the same `build_esg_workflow` routing block as gap_analysis /
+    impact_report, so compliance modules are surfaced from first contact.
+  - **`esg_toolbox` is now a router.** `get` / `checklist` / `assess` outputs
+    include a `host_tool_handoff` pointing to the deeper Impact Vision tool
+    (GRI/ESRS/ISSB/CDP → `framework_assess`, supplier schemes → `hrdd_assess`,
+    battery/ESPR → `product_passport`, AA1000 → `verification_workspace`,
+    CBAM/EUDR/Green Deal deadlines → `regulatory_calendar`, GHG →
+    `emission_factors`), and a new `toolbox.search_source_index()` helper
+    exposes the rich embedded datasets (GRI 294 / SBTi 363 / ISS 344 / CSA 62
+    / AWS 33 records) to any tool.
+
 - **Roadmap v5 — regulatory currency + frontier measurement.** See
   [`docs/roadmap-v5.md`](docs/roadmap-v5.md). Shipped so far:
   - **EU Omnibus I currency (Track A1).** `standards_registry` now cites

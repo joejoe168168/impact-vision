@@ -68,6 +68,7 @@ def create_default_tool_registry(mcp_manager: McpClientManager | None = None) ->
         _register_if_available(registry, module_name, class_name)
 
     impact_tools: tuple[tuple[str, str], ...] = (
+        ("impact.advisor_tool", "ImpactAdvisorTool"),
         ("impact.beneficiary_feedback_tool", "BeneficiaryFeedbackTool"),
         ("impact.iris_catalog_tool", "IrisCatalogTool"),
         ("impact.sdg_mapper_tool", "SdgMapperTool"),
@@ -93,18 +94,18 @@ def create_default_tool_registry(mcp_manager: McpClientManager | None = None) ->
         ("impact.lp_ddq_export_tool", "LpDdqExportTool"),
         ("impact.metric_recommender_tool", "MetricRecommenderTool"),
         ("impact.monitoring_tool", "MonitoringTool"),
-        ("impact.narrative_tool", "NarrativeTool"),
+        # narrative merged into impact_report (narrative_mode + narrative_section)
         ("impact.pipeline_tool", "PipelineTool"),
         ("impact.portfolio_tool", "PortfolioTool"),
         ("impact.product_passport_tool", "ProductPassportTool"),
         ("impact.regulatory_calendar_tool", "RegulatoryCalendarTool"),
         ("impact.trend_analysis_tool", "TrendAnalysisTool"),
-        ("impact.verification_prep_tool", "VerificationPrepTool"),
+        # verification_prep merged into verification_workspace (prep actions)
         # v3 tools (0.15.0): trust infrastructure
         ("impact.emission_factors_tool", "EmissionFactorsTool"),
         ("impact.evidence_review_tool", "EvidenceReviewTool"),
         ("impact.exit_impact_tool", "ExitImpactTool"),
-        ("impact.greenwashing_reviewer_tool", "GreenwashingReviewerTool"),
+        # greenwashing_reviewer merged into greenwashing_detect (action='review_claims')
         ("impact.lp_narrative_tool", "LPNarrativeTool"),
         ("impact.portfolio_query_tool", "PortfolioQueryTool"),
         ("impact.stakeholder_voice_tool", "StakeholderVoiceTool"),

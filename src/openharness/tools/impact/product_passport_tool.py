@@ -217,10 +217,44 @@ class ProductPassportTool(BaseTool):
             for c in missing:
                 lines.append(f"  [GAP] {c}: {DPP_CATEGORIES[c]['description']}")
 
+        metadata: dict[str, Any] = {"completeness_pct": completeness, "present": present, "missing": missing}
+        reg_lines, reg_meta = self._regulatory_readiness(args)
+        if reg_lines:
+            lines.extend(reg_lines)
+            metadata["regulatory_readiness"] = reg_meta
+
         return ToolResult(
             output="\n".join(lines),
-            metadata={"completeness_pct": completeness, "present": present, "missing": missing},
+            metadata=metadata,
         )
+
+    @staticmethod
+    def _regulatory_readiness(args: ProductPassportInput) -> tuple[list[str], dict]:
+        """EU Battery Regulation / ESPR requirement readiness via the ESG toolbox."""
+        from openharness.impact.toolbox import assess_tool_readiness
+
+        module = "battery" if "batter" in args.product_category.lower() else "espr"
+        readiness = assess_tool_readiness(
+            module,
+            company_description=f"{args.company_name} {args.product_category}".strip(),
+            document_text=args.dpp_data,
+        )
+        framework_label = "EU Battery Regulation (2023/1542)" if module == "battery" else "ESPR (2024/1781)"
+        lines = [
+            "",
+            f"REGULATORY READINESS — {framework_label}:",
+            f"  Readiness: {readiness.score_pct}%",
+        ]
+        for gap in readiness.evidence_gaps[:5]:
+            lines.append(f"  [GAP] {gap}")
+        for url in readiness.source_urls[:3]:
+            lines.append(f"  Source: {url}")
+        return lines, {
+            "module": module,
+            "readiness_pct": readiness.score_pct,
+            "evidence_gaps": readiness.evidence_gaps,
+            "sources": readiness.source_urls,
+        }
 
 
 _PRODUCT_CATEGORY_PRIORITIES: dict[str, list[str]] = {

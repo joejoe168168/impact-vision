@@ -175,7 +175,7 @@ REPORT_TEMPLATES: dict[str, ReportTemplate] = {
             "five_dimension_assess",
             "sdg_mapper",
             "impact_risk_opportunity",
-            "greenwashing_reviewer",
+            "greenwashing_detect",
         ],
         evidence_depth="detailed",
     ),

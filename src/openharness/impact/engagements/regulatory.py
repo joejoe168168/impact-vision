@@ -70,7 +70,17 @@ class RegulatoryJurisdictionProfile(BaseModel):
 
 _EU = RegulatoryJurisdictionProfile(
     jurisdiction="EU",
-    frameworks=["SFDR", "CSRD/ESRS", "ISSB IFRS S1", "ISSB IFRS S2", "TCFD"],
+    frameworks=[
+        "SFDR",
+        "CSRD/ESRS",
+        "ISSB IFRS S1",
+        "ISSB IFRS S2",
+        "TCFD",
+        "CBAM",
+        "EUDR",
+        "EU Battery Regulation",
+        "ESPR",
+    ],
     obligations=[
         RegulatoryObligation(
             obligation_id="sfdr_article_classification",
@@ -128,8 +138,63 @@ _EU = RegulatoryJurisdictionProfile(
             summary="Scope 1/2/3, transition plan, climate scenario analysis.",
             recurrence="annual",
         ),
+        RegulatoryObligation(
+            obligation_id="cbam_annual_declaration",
+            framework="CBAM",
+            title="CBAM embedded-emissions declaration",
+            summary=(
+                "Annual CBAM declaration with verified embedded emissions and certificate "
+                "surrender for covered imports (cement, iron/steel, aluminium, fertilisers, "
+                "hydrogen, electricity). Applies to portfolio companies importing covered "
+                "goods into the EU above the de-minimis threshold."
+            ),
+            recurrence="annual",
+            owner_hint="customs / ESG analyst",
+        ),
+        RegulatoryObligation(
+            obligation_id="eudr_due_diligence_statement",
+            framework="EUDR",
+            title="EUDR deforestation due-diligence system review",
+            summary=(
+                "Maintain a due-diligence system (geolocation, country risk, legality "
+                "evidence) and file DDS for each placement of cattle, cocoa, coffee, palm "
+                "oil, rubber, soy, or wood products on the EU market. Annual system review "
+                "plus per-shipment statements."
+            ),
+            recurrence="annual",
+            owner_hint="supply-chain / legal",
+        ),
+        RegulatoryObligation(
+            obligation_id="battery_passport_readiness",
+            framework="EU Battery Regulation",
+            title="Battery passport & carbon-footprint readiness",
+            summary=(
+                "Digital battery passport (EV/LMT/industrial >2 kWh) and phased "
+                "carbon-footprint declarations under Regulation (EU) 2023/1542. Applies to "
+                "portfolio companies placing covered batteries on the EU market."
+            ),
+            recurrence="annual",
+            owner_hint="product compliance",
+        ),
+        RegulatoryObligation(
+            obligation_id="espr_dpp_applicability",
+            framework="ESPR",
+            title="ESPR / Digital Product Passport applicability screen",
+            summary=(
+                "Check delegated acts for covered product groups and prepare Digital "
+                "Product Passport data fields (durability, recycled content, substances of "
+                "concern) under Regulation (EU) 2024/1781."
+            ),
+            recurrence="one_off",
+            owner_hint="product compliance",
+        ),
     ],
-    notes="EU CSRD + SFDR + ISSB baseline.",
+    notes=(
+        "EU CSRD + SFDR + ISSB baseline. Product/export-side obligations (CBAM, EUDR, "
+        "Battery Regulation, ESPR) apply only where portfolio companies place covered "
+        "goods on the EU market — screen applicability with the esg_toolbox or "
+        "product_passport tools."
+    ),
 )
 
 _UK = RegulatoryJurisdictionProfile(

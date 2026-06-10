@@ -49,14 +49,14 @@ class VerificationPrepInput(BaseModel):
     has_external_audit: bool = Field(default=False, description="Whether external audit has been conducted")
     verification_target: str = Field(
         default="bluemark",
-        description="Target verifier: 'bluemark', 'ifc_opim', 'general'",
+        description="Target verifier: 'bluemark', 'ifc_opim', 'aa1000', 'general'",
     )
 
 
 class VerificationPrepTool(BaseTool):
     name = "verification_prep"
     description = (
-        "Prepare for impact verification (BlueMark, IFC OPIM). "
+        "Prepare for impact verification (BlueMark, IFC OPIM, AA1000 assurance). "
         "Organizes evidence, identifies gaps, and generates readiness checklists."
     )
     input_model = VerificationPrepInput
@@ -152,10 +152,41 @@ class VerificationPrepTool(BaseTool):
             for g in gaps:
                 lines.append(f"  → Prepare: {g}")
 
+        metadata: dict = {"readiness_score": score, "readiness": readiness}
+        if args.verification_target.lower().replace("-", "").replace("_", "") == "aa1000":
+            aa1000_lines, aa1000_meta = self._aa1000_section(args, company)
+            lines.extend(aa1000_lines)
+            metadata["aa1000"] = aa1000_meta
+
         return ToolResult(
             output="\n".join(lines),
-            metadata={"readiness_score": score, "readiness": readiness},
+            metadata=metadata,
         )
+
+    @staticmethod
+    def _aa1000_section(args: VerificationPrepInput, company: Company) -> tuple[list[str], dict]:
+        """AA1000 AccountAbility principles/assurance readiness via the ESG toolbox."""
+        from openharness.impact.toolbox import assess_tool_readiness
+
+        readiness = assess_tool_readiness(
+            "aa1000",
+            company_description=f"{company.name} {company.sector} {company.description}".strip(),
+            reported_metrics=dict(company.reported_metrics),
+        )
+        lines = [
+            "",
+            "AA1000 ASSURANCE READINESS (AccountAbility principles):",
+            f"  Readiness: {readiness.score_pct}%",
+        ]
+        for gap in readiness.evidence_gaps[:5]:
+            lines.append(f"  [GAP] {gap}")
+        for url in readiness.source_urls[:3]:
+            lines.append(f"  Source: {url}")
+        return lines, {
+            "readiness_pct": readiness.score_pct,
+            "evidence_gaps": readiness.evidence_gaps,
+            "sources": readiness.source_urls,
+        }
 
     def _evidence_map(self, args: VerificationPrepInput, company: Company) -> ToolResult:
         evidence_categories = [

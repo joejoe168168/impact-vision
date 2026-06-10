@@ -31,6 +31,7 @@ from openharness.impact.toolbox.registry import (
 from openharness.impact.toolbox.source_index import (
     get_source_profile,
     list_source_profiles,
+    search_source_index,
     source_keyword_coverage,
 )
 from openharness.impact.toolbox.workflow import (
@@ -74,6 +75,7 @@ __all__ = [
     "infer_toolbox_inputs",
     "list_toolbox_tools",
     "list_source_profiles",
+    "search_source_index",
     "search_toolbox_tools",
     "source_keyword_coverage",
 ]

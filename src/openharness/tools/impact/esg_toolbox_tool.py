@@ -53,13 +53,113 @@ class ESGToolboxInput(BaseModel):
     output_format: Literal["text", "json"] = "text"
 
 
+# Modules whose deep analysis lives in a dedicated Impact Vision tool. The
+# toolbox stays the discovery/router surface; these handoffs keep one knowledge
+# owner per domain instead of parallel implementations.
+_HOST_TOOL_HANDOFFS: dict[str, dict[str, str]] = {
+    "gri": {
+        "tool": "framework_assess",
+        "call": "framework_assess(framework='gri', action='match', sector=..., description=...)",
+        "why": "Standard-level matching plus the ohESG disclosure index and GRI 11-14 sector topics.",
+    },
+    "esrs": {
+        "tool": "framework_assess",
+        "call": "framework_assess(framework='esrs', action='assess', description=..., document_text=...)",
+        "why": "Full double-materiality screen across the 12 ESRS standards with disclosure coverage.",
+    },
+    "material": {
+        "tool": "framework_assess",
+        "call": "framework_assess(framework='esrs', action='assess', ...)",
+        "why": "Impact + financial materiality screening is implemented in the ESRS handler.",
+    },
+    "issb": {
+        "tool": "framework_assess",
+        "call": "framework_assess(framework='issb_s1' or 'issb_s2', action='assess', ...)",
+        "why": "Pillar-level IFRS S1/S2 readiness scoring.",
+    },
+    "cdp": {
+        "tool": "framework_assess",
+        "call": "framework_assess(framework='cdp', action='assess', description=..., reported_metrics=...)",
+        "why": "CDP questionnaire readiness with metric-to-CDP-code crosswalk.",
+    },
+    "csddd": {
+        "tool": "hrdd_assess",
+        "call": "hrdd_assess(action='assess', sector=..., document_text=...)",
+        "why": "UNGP/OECD 6-step HRDD scoring with CSDDD readiness band and salient-issue ranking.",
+    },
+    "smeta": {
+        "tool": "hrdd_assess",
+        "call": "hrdd_assess(action='assess', document_text=<supplier/audit context>)",
+        "why": "Includes SMETA scheme readiness when the supplier context matches.",
+    },
+    "sa8000": {
+        "tool": "hrdd_assess",
+        "call": "hrdd_assess(action='assess', document_text=<supplier/audit context>)",
+        "why": "Includes SA8000 scheme readiness when the supplier context matches.",
+    },
+    "amfori-bsci": {
+        "tool": "hrdd_assess",
+        "call": "hrdd_assess(action='assess', document_text=<supplier/audit context>)",
+        "why": "Includes amfori BSCI scheme readiness when the supplier context matches.",
+    },
+    "rba": {
+        "tool": "hrdd_assess",
+        "call": "hrdd_assess(action='assess', sector='electronics', document_text=...)",
+        "why": "Includes RBA scheme readiness when the supplier context matches.",
+    },
+    "conflict-minerals": {
+        "tool": "hrdd_assess",
+        "call": "hrdd_assess(action='assess', document_text=<minerals/supply-chain context>)",
+        "why": "Includes conflict-minerals scheme readiness alongside OECD due-diligence scoring.",
+    },
+    "battery": {
+        "tool": "product_passport",
+        "call": "product_passport(action='assess', product_category='batteries', dpp_data=...)",
+        "why": "DPP field completeness plus EU Battery Regulation readiness in one pass.",
+    },
+    "espr": {
+        "tool": "product_passport",
+        "call": "product_passport(action='assess', product_category=..., dpp_data=...)",
+        "why": "DPP field completeness plus ESPR readiness in one pass.",
+    },
+    "aa1000": {
+        "tool": "verification_workspace",
+        "call": "verification_workspace(action='readiness_check', verification_target='aa1000', ...)",
+        "why": "AA1000 assurance readiness alongside the general verification checklist.",
+    },
+    "cbam": {
+        "tool": "regulatory_calendar",
+        "call": "regulatory_calendar(action='schedule', jurisdiction='EU')",
+        "why": "CBAM declaration deadlines now appear in the EU regulatory calendar.",
+    },
+    "eudr": {
+        "tool": "regulatory_calendar",
+        "call": "regulatory_calendar(action='schedule', jurisdiction='EU')",
+        "why": "EUDR due-diligence review deadlines now appear in the EU regulatory calendar.",
+    },
+    "eu-green-deal": {
+        "tool": "regulatory_calendar",
+        "call": "regulatory_calendar(action='schedule', jurisdiction='EU')",
+        "why": "EU obligations (SFDR, CSRD, CBAM, EUDR, Battery, ESPR) with due dates.",
+    },
+    "ghg": {
+        "tool": "emission_factors",
+        "call": "emission_factors(action='list', ...) and climate-accounting helpers",
+        "why": "Versioned emission factors, uncertainty bands, and Scope 1/2 calculation.",
+    },
+}
+
+
 class ESGToolboxTool(BaseTool):
     name = "esg_toolbox"
     description = (
         "Unified ESG/sustainability toolbox covering the 33 ohESG-inspired modules: "
         "disclosure standards, ESG ratings, export compliance, supplier ESG, and carbon accounting. "
         "Use it to list/search modules, inspect methodology and sources, build checklists, run readiness "
-        "assessments, inspect scraped ohESG source profiles, and crosswalk Impact Vision metrics to sustainability frameworks."
+        "assessments, inspect scraped ohESG source profiles, and crosswalk Impact Vision metrics to sustainability frameworks. "
+        "Acts as a router: modules with a dedicated Impact Vision tool (GRI/ESRS/ISSB/CDP -> framework_assess, "
+        "supplier audit schemes -> hrdd_assess, battery/ESPR -> product_passport, AA1000 -> verification_workspace, "
+        "EU deadlines -> regulatory_calendar) include a handoff to the deeper tool."
     )
     input_model = ESGToolboxInput
 
@@ -127,6 +227,9 @@ class ESGToolboxTool(BaseTool):
             return ToolResult(output="tool_id is required for action='get'.", is_error=True)
         tool = get_toolbox_tool(args.tool_id)
         payload = tool.model_dump(mode="json")
+        handoff = _HOST_TOOL_HANDOFFS.get(tool.tool_id)
+        if handoff:
+            payload["host_tool_handoff"] = handoff
         if args.output_format == "json":
             return _json(payload)
         lines = [
@@ -144,6 +247,7 @@ class ESGToolboxTool(BaseTool):
             "Sources:",
         ]
         lines.extend(f"- {source.title}: {source.url}" for source in tool.sources)
+        lines.extend(_handoff_lines(tool.tool_id))
         return ToolResult(output="\n".join(lines), metadata=payload)
 
     def _methodology(self, args: ESGToolboxInput) -> ToolResult:
@@ -186,6 +290,9 @@ class ESGToolboxTool(BaseTool):
         tool = get_toolbox_tool(args.tool_id)
         checklist = build_tool_checklist(tool)
         payload = {"tool": _tool_summary(tool), "questions": [q.model_dump(mode="json") for q in checklist]}
+        handoff = _HOST_TOOL_HANDOFFS.get(tool.tool_id)
+        if handoff:
+            payload["host_tool_handoff"] = handoff
         if args.output_format == "json":
             return _json(payload)
         lines = [f"Checklist: {tool.title}"]
@@ -193,6 +300,7 @@ class ESGToolboxTool(BaseTool):
             lines.append(f"- [{question.requirement_id}] {question.question}")
             if question.evidence_examples:
                 lines.append(f"  Evidence: {', '.join(question.evidence_examples[:3])}")
+        lines.extend(_handoff_lines(tool.tool_id))
         return ToolResult(output="\n".join(lines), metadata=payload)
 
     def _assess(self, args: ESGToolboxInput) -> ToolResult:
@@ -210,6 +318,9 @@ class ESGToolboxTool(BaseTool):
             supplier_profile=args.supplier_profile,
         )
         payload = result.model_dump(mode="json")
+        handoff = _HOST_TOOL_HANDOFFS.get(tool.tool_id)
+        if handoff:
+            payload["host_tool_handoff"] = handoff
         if args.output_format == "json":
             return _json(payload)
         lines = [
@@ -226,6 +337,7 @@ class ESGToolboxTool(BaseTool):
             lines.extend(f"- {rec}" for rec in result.recommendations[:8])
         lines.append("\nSources:")
         lines.extend(f"- {url}" for url in result.source_urls)
+        lines.extend(_handoff_lines(tool.tool_id))
         return ToolResult(output="\n".join(lines), metadata=payload)
 
     def _crosswalk(self, args: ESGToolboxInput) -> ToolResult:
@@ -406,6 +518,18 @@ def _tool_summary(tool: object) -> dict[str, object]:
         "source_index_count": len(getattr(tool, "source_index", [])),
         "as_of": tool.as_of,
     }
+
+
+def _handoff_lines(tool_id: str) -> list[str]:
+    handoff = _HOST_TOOL_HANDOFFS.get(tool_id)
+    if not handoff:
+        return []
+    return [
+        "",
+        f"Deeper analysis: use the `{handoff['tool']}` tool.",
+        f"  Call: {handoff['call']}",
+        f"  Why: {handoff['why']}",
+    ]
 
 
 def _json(payload: dict[str, object]) -> ToolResult:

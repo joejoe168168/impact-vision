@@ -204,6 +204,30 @@ class ImpactReportInput(BaseModel):
             "key findings, and recommendations so the agent can generate polished narratives."
         ),
     )
+    narrative_section: Literal[
+        "report_summary",
+        "executive_summary",
+        "key_findings",
+        "impact_narrative",
+        "case_study",
+        "full_narrative",
+    ] = Field(
+        default="report_summary",
+        description=(
+            "Which narrative prompt to append when narrative_mode='narrative_prompt'. "
+            "'report_summary' (default) appends the report-level summary/findings/recommendations "
+            "prompts; other values generate an audience-tuned section prompt "
+            "(executive_summary, key_findings, impact_narrative, case_study, full_narrative)."
+        ),
+    )
+    narrative_audience: Literal["lp", "board", "public", "internal"] = Field(
+        default="lp",
+        description="Target audience for section-specific narrative prompts.",
+    )
+    narrative_word_limit: int = Field(
+        default=300,
+        description="Approximate word limit for section-specific narrative prompts.",
+    )
     draft_review: bool = Field(
         default=False,
         description="If True, output is wrapped with DRAFT markers for human review.",
@@ -239,7 +263,10 @@ class ImpactReportTool(BaseTool):
         "Generate a comprehensive impact assessment report for a company. "
         "Includes 5-Dimension scoring, SDG alignment mapping, and gap analysis. "
         "Supports HTML, CSV, JSON, and text output formats. "
-        "Optionally saves to a file."
+        "Optionally saves to a file. "
+        "Set narrative_mode='narrative_prompt' (with narrative_section / narrative_audience / "
+        "narrative_word_limit) to append LLM-ready narrative writing prompts: executive summary, "
+        "key findings, impact narrative, or case study."
     )
     input_model = ImpactReportInput
 
@@ -388,7 +415,27 @@ class ImpactReportTool(BaseTool):
             output = _to_text(report_data)
 
         if args.narrative_mode == "narrative_prompt":
-            output += "\n\n" + _generate_report_narrative_prompt(report_data)
+            if args.narrative_section != "report_summary":
+                from openharness.tools.impact.narrative_tool import NarrativeInput, NarrativeTool
+
+                narrative_result = await NarrativeTool().execute(
+                    NarrativeInput(
+                        action=args.narrative_section,
+                        company_name=args.company_name,
+                        company_description=args.company_description,
+                        sector=args.sector,
+                        geography=args.geography,
+                        impact_themes=args.impact_themes,
+                        reported_metrics=args.reported_metrics,
+                        sdg_claims=args.sdg_claims,
+                        audience=args.narrative_audience,
+                        word_limit=args.narrative_word_limit,
+                    ),
+                    context,
+                )
+                output += "\n\n" + narrative_result.output
+            else:
+                output += "\n\n" + _generate_report_narrative_prompt(report_data)
 
         if args.draft_review:
             output = _wrap_report_draft(output, company.name)

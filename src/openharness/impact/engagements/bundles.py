@@ -142,8 +142,7 @@ ENGAGEMENT_BUNDLES: dict[EngagementBundleType, EngagementBundle] = {
             "framework_tool",
             "impact_risk_opportunity",
             "metric_recommender",
-            "greenwashing",
-            "greenwashing_reviewer",
+            "greenwashing_detect",
         ],
         default_deliverables=[
             "DD-Mid memo",
@@ -171,7 +170,7 @@ ENGAGEMENT_BUNDLES: dict[EngagementBundleType, EngagementBundle] = {
             "framework_tool",
             "impact_risk_opportunity",
             "metric_recommender",
-            "greenwashing_reviewer",
+            "greenwashing_detect",
             "beneficiary_feedback",
         ],
         default_deliverables=[
@@ -260,9 +259,8 @@ ENGAGEMENT_BUNDLES: dict[EngagementBundleType, EngagementBundle] = {
         ),
         bundled_tools=[
             "verification_workspace",
-            "verification_prep",
             "evidence_review",
-            "greenwashing_reviewer",
+            "greenwashing_detect",
             "lp_narrative",
         ],
         default_deliverables=[

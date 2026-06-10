@@ -1,5 +1,6 @@
 """Impact-specific tools for IRIS+ metrics, SDG alignment, and impact assessment."""
 
+from openharness.tools.impact.advisor_tool import ImpactAdvisorTool
 from openharness.tools.impact.ai_governance_tool import AIGovernanceTool
 from openharness.tools.impact.beneficiary_feedback_tool import BeneficiaryFeedbackTool
 from openharness.tools.impact.climate_scenario_tool import ClimateScenarioTool
@@ -70,6 +71,7 @@ __all__ = [
     "GreenwashingReviewerTool",
     "GuidedAssessmentTool",
     "HRDDTool",
+    "ImpactAdvisorTool",
     "ImpactQuantifierTool",
     "ImpactRiskOpportunityTool",
     "ImpactReportTool",

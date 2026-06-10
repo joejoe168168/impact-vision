@@ -31,10 +31,11 @@ def test_v3_tools_are_registered() -> None:
         "evidence_review",
         "verification_workspace",
         "lp_narrative",
-        "greenwashing_reviewer",
         "portfolio_query",
         "exit_impact",
     }.issubset(names)
+    # greenwashing_reviewer merged into greenwashing_detect (action='review_claims')
+    assert "greenwashing_reviewer" not in names
 
 
 def test_v3_tool_wrappers_execute_smoke_paths() -> None:
@@ -83,8 +84,9 @@ def test_v3_tool_wrappers_execute_smoke_paths() -> None:
     )
 
     _run_tool(
-        "greenwashing_reviewer",
+        "greenwashing_detect",
         {
+            "action": "review_claims",
             "company_name": "DemoCo",
             "sector": "energy",
             "claims": [

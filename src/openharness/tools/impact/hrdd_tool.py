@@ -95,12 +95,70 @@ class HRDDTool(BaseTool):
             communicates_publicly=args.communicates_publicly,
         ))
         payload = result.model_dump(mode="json")
+        scheme_readiness = _audit_scheme_readiness(args, issues)
+        if scheme_readiness:
+            payload["audit_scheme_readiness"] = scheme_readiness
         if args.output_format == "text":
-            return ToolResult(output=_text(result), metadata=payload)
+            return ToolResult(output=_text(result, scheme_readiness), metadata=payload)
         return _ok(payload)
 
 
-def _text(r) -> str:  # noqa: ANN001
+# Routing terms per supplier audit/certification scheme in the ESG toolbox.
+_AUDIT_SCHEME_TERMS: dict[str, tuple[str, ...]] = {
+    "smeta": ("smeta", "sedex", "social audit", "ethical trade"),
+    "sa8000": ("sa8000", "social accountability", "decent work certification"),
+    "amfori-bsci": ("bsci", "amfori", "supplier code of conduct audit"),
+    "rba": ("rba", "responsible business alliance", "electronics", "vap"),
+    "conflict-minerals": ("conflict minerals", "3tg", "cmrt", "smelter", "cobalt", "mica", "tantalum", "tungsten"),
+    "irma": ("mining", "mine site", "tailings", "responsible mining"),
+    "csddd": ("csddd", "value chain due diligence", "supplier due diligence"),
+}
+
+
+def _audit_scheme_readiness(args: HRDDToolInput, issues: list) -> list[dict]:
+    """Run scheme-specific toolbox readiness for audit schemes matching the context."""
+    from openharness.impact.toolbox import assess_tool_readiness
+
+    context = " ".join([
+        args.sector,
+        args.document_text,
+        " ".join(args.geographies),
+        " ".join(getattr(issue, "name", "") for issue in issues),
+        " ".join(getattr(issue, "category", "") for issue in issues),
+    ]).lower()
+    if not context.strip():
+        return []
+
+    matched_schemes = [
+        scheme for scheme, terms in _AUDIT_SCHEME_TERMS.items()
+        if any(term in context for term in terms)
+    ]
+    # Labour-heavy salient issues warrant the generic workplace schemes even
+    # without an explicit scheme mention.
+    if not matched_schemes and any(
+        term in context for term in ("forced labor", "forced labour", "child labor", "child labour", "worker", "factory")
+    ):
+        matched_schemes = ["smeta", "sa8000"]
+
+    out: list[dict] = []
+    for scheme in matched_schemes[:4]:
+        readiness = assess_tool_readiness(
+            scheme,
+            company_description=f"{args.company_name} {args.sector}".strip(),
+            document_text=args.document_text,
+            supplier_profile=context[:2000],
+        )
+        out.append({
+            "scheme": scheme,
+            "title": readiness.title,
+            "readiness_pct": readiness.score_pct,
+            "evidence_gaps": readiness.evidence_gaps[:4],
+            "sources": readiness.source_urls[:3],
+        })
+    return out
+
+
+def _text(r, scheme_readiness: list[dict] | None = None) -> str:  # noqa: ANN001
     lines = [
         f"HUMAN-RIGHTS DUE DILIGENCE — {r.company_name or 'company'}",
         "=" * 50,
@@ -124,6 +182,13 @@ def _text(r) -> str:  # noqa: ANN001
         lines.append("RECOMMENDATIONS:")
         for rec in r.recommendations:
             lines.append(f"  - {rec}")
+    if scheme_readiness:
+        lines.append("")
+        lines.append("AUDIT SCHEME READINESS (ESG toolbox):")
+        for scheme in scheme_readiness:
+            lines.append(f"  {scheme['title']}: {scheme['readiness_pct']}%")
+            for gap in scheme["evidence_gaps"]:
+                lines.append(f"    [GAP] {gap}")
     return "\n".join(lines)
 
 

@@ -387,8 +387,8 @@ TOOLBOX_TOOLS: tuple[ToolboxToolSpec, ...] = (
         tags=["GRI", "double materiality", "CSRD"],
         aliases=["materiality", "double materiality"],
         requirements=_reqs(COMMON_DISCLOSURE_REQS, [
-            RequirementItem(id="stakeholders", title="Stakeholder inputs", keywords=["stakeholder", "survey", "interview", "consultation"], evidence_examples=["Stakeholder map", "survey results"]),
-            RequirementItem(id="matrix", title="Materiality matrix", keywords=["matrix", "financial materiality", "impact materiality"], evidence_examples=["Materiality scoring workbook"]),
+            RequirementItem(id="stakeholders", title="Stakeholder inputs", description="Affected stakeholders and users of sustainability information are identified and consulted through surveys, interviews, or workshops, and their input is traceable to topic scoring.", keywords=["stakeholder", "survey", "interview", "consultation"], evidence_examples=["Stakeholder map", "survey results"], framework_refs=["ESRS 1", "GRI 3"]),
+            RequirementItem(id="matrix", title="Materiality matrix", description="Impact and financial materiality scores are combined into a prioritized topic matrix with documented thresholds for what counts as material.", keywords=["matrix", "financial materiality", "impact materiality"], evidence_examples=["Materiality scoring workbook"], framework_refs=["ESRS 1", "IFRS S1"]),
         ]),
         sources=[_ohesg("/material/"), _official("EFRAG ESRS Set 1", "https://www.efrag.org/en/sustainability-reporting/esrs-workstreams/sector-agnostic-standards-set-1-esrs", "EFRAG")],
     ),
@@ -412,17 +412,36 @@ TOOLBOX_TOOLS: tuple[ToolboxToolSpec, ...] = (
         tags=["EcoVadis", "supplier ESG", "ESG rating"],
         aliases=["ecovadis"],
         requirements=_reqs(COMMON_RATING_REQS, [
-            RequirementItem(id="environment", title="Environment theme", keywords=["energy", "ghg", "water", "biodiversity", "waste"], evidence_examples=["Environmental KPIs", "ISO 14001 certificate"]),
-            RequirementItem(id="labor-human-rights", title="Labor and human rights theme", keywords=["health and safety", "working conditions", "social dialogue", "human rights"], evidence_examples=["OHS records", "employee handbook"]),
-            RequirementItem(id="ethics", title="Ethics theme", keywords=["anti-corruption", "competition", "information security", "privacy"], evidence_examples=["Anti-corruption policy", "privacy controls"]),
-            RequirementItem(id="sustainable-procurement", title="Sustainable procurement theme", keywords=["supplier", "procurement", "sourcing", "supplier audit"], evidence_examples=["Supplier code", "supplier audit results"]),
+            RequirementItem(id="environment", title="Environment theme", description="Energy, GHG, water, pollution, biodiversity, waste, and product-lifecycle evidence covers the EcoVadis Environment theme for the assessed scope.", keywords=["energy", "ghg", "water", "biodiversity", "waste"], evidence_examples=["Environmental KPIs", "ISO 14001 certificate"], framework_refs=["EcoVadis methodology"]),
+            RequirementItem(id="labor-human-rights", title="Labor and human rights theme", description="Health and safety, working conditions, social dialogue, career management, child/forced labor, and diversity evidence covers the Labor & Human Rights theme.", keywords=["health and safety", "working conditions", "social dialogue", "human rights"], evidence_examples=["OHS records", "employee handbook"], framework_refs=["EcoVadis methodology", "ILO conventions"]),
+            RequirementItem(id="ethics", title="Ethics theme", description="Anti-corruption, anti-competitive practices, responsible information management, and data privacy controls cover the Ethics theme.", keywords=["anti-corruption", "competition", "information security", "privacy"], evidence_examples=["Anti-corruption policy", "privacy controls"], framework_refs=["EcoVadis methodology"]),
+            RequirementItem(id="sustainable-procurement", title="Sustainable procurement theme", description="Supplier environmental and social practices are managed through a supplier code, risk-based selection, contractual clauses, and supplier audits or assessments.", keywords=["supplier", "procurement", "sourcing", "supplier audit"], evidence_examples=["Supplier code", "supplier audit results"], framework_refs=["EcoVadis methodology"]),
         ]),
         sources=[_ohesg("/ecovadis/"), _official("EcoVadis methodology", "https://support.ecovadis.com/hc/en-us/articles/115002531507-What-is-the-EcoVadis-methodology", "EcoVadis", source_type="methodology")],
     ),
     ToolboxToolSpec(tool_id="cdp", title="CDP Rating Assistant", description="CDP questionnaire module and scoring readiness.", url=f"{OHESG_BASE}/cdp/", categories=["rating"], tags=["CDP", "climate disclosure"], aliases=["cdp"], requirements=_reqs(COMMON_RATING_REQS, COMMON_CARBON_REQS), sources=[_ohesg("/cdp/"), _official("CDP guidance", "https://www.cdp.net/en/guidance", "CDP", source_type="guidance")]),
     ToolboxToolSpec(tool_id="csa", title="S&P Global CSA Assistant", description="S&P Global Corporate Sustainability Assessment topic and disclosure readiness.", url=f"{OHESG_BASE}/csa/", categories=["rating"], tags=["CSA", "S&P Global"], aliases=["sp csa", "corporate sustainability assessment"], requirements=COMMON_RATING_REQS, sources=[_ohesg("/csa/"), _official("S&P Global CSA", "https://www.spglobal.com/esg/csa/", "S&P Global", source_type="methodology")]),
-    ToolboxToolSpec(tool_id="gri", title="GRI Standards Quick Reference", description="GRI Universal, Topic, and Sector Standards quick reference with disclosures and topics.", url=f"{OHESG_BASE}/gri/", categories=["disclosure"], tags=["GRI", "disclosure standards"], aliases=["global reporting initiative"], requirements=_reqs(COMMON_DISCLOSURE_REQS, [RequirementItem(id="content-index", title="GRI content index", keywords=["content index", "omission", "gri 1", "gri 2", "gri 3"], evidence_examples=["GRI content index"])]), sources=[_ohesg("/gri/"), _official("GRI Standards", "https://www.globalreporting.org/standards/", "GRI")]),
-    ToolboxToolSpec(tool_id="esrs", title="ESRS Standards Quick Reference", description="EU ESRS disclosure requirements for CSRD preparation.", url=f"{OHESG_BASE}/esrs/", categories=["disclosure", "export"], tags=["ESRS", "CSRD", "EU"], aliases=["csrd", "efrag esrs"], jurisdictions=["EU"], requirements=_reqs(COMMON_DISCLOSURE_REQS, COMMON_EXPORT_REQS), sources=[_ohesg("/esrs/"), _official("EFRAG ESRS Set 1", "https://www.efrag.org/en/sustainability-reporting/esrs-workstreams/sector-agnostic-standards-set-1-esrs", "EFRAG")]),
+    ToolboxToolSpec(tool_id="gri", title="GRI Standards Quick Reference", description="GRI Universal, Topic, and Sector Standards quick reference with disclosures and topics.", url=f"{OHESG_BASE}/gri/", categories=["disclosure"], tags=["GRI", "disclosure standards"], aliases=["global reporting initiative"], requirements=_reqs(COMMON_DISCLOSURE_REQS, [RequirementItem(id="content-index", title="GRI content index", description="A GRI content index lists every reported disclosure with its location, statement of use, applicable GRI 1 basis, and reasons for any omissions.", keywords=["content index", "omission", "gri 1", "gri 2", "gri 3"], evidence_examples=["GRI content index"], framework_refs=["GRI 1"])]), sources=[_ohesg("/gri/"), _official("GRI Standards", "https://www.globalreporting.org/standards/", "GRI")]),
+    ToolboxToolSpec(tool_id="esrs", title="ESRS Standards Quick Reference", description="EU ESRS disclosure requirements for CSRD preparation.", url=f"{OHESG_BASE}/esrs/", categories=["disclosure", "export"], tags=["ESRS", "CSRD", "EU"], aliases=["csrd", "efrag esrs"], jurisdictions=["EU"], requirements=_reqs(COMMON_DISCLOSURE_REQS, [
+        # CSRD applicability is company-size-based, not customs-code-based, so the
+        # generic export template (CN/HS-code screen) is intentionally not used here.
+        RequirementItem(
+            id="csrd-scope-thresholds",
+            title="CSRD scope and threshold screen",
+            description="Post-Omnibus CSRD scope is checked: EU undertakings (or consolidating parents) with more than 1,000 employees and over EUR 450 million net turnover report under ESRS, with first mandatory reporting for financial years beginning on or after 1 January 2027 (Directive (EU) 2026/470).",
+            keywords=["1000 employees", "450 million", "net turnover", "threshold", "omnibus", "scope", "wave"],
+            evidence_examples=["Headcount and turnover memo", "Group consolidation scope", "CSRD wave timeline note"],
+            framework_refs=["CSRD", "Omnibus I Directive (EU) 2026/470"],
+        ),
+        RequirementItem(
+            id="reporting-calendar-owner",
+            title="Reporting calendar and statement owner",
+            description="The sustainability-statement timetable, accountable owner, assurance provider, and ESEF/XBRL tagging plan are defined for the first applicable financial year.",
+            keywords=["deadline", "sustainability statement", "owner", "calendar", "assurance", "tagging"],
+            evidence_examples=["Reporting calendar", "responsibility matrix", "assurance engagement letter"],
+            framework_refs=["CSRD"],
+        ),
+    ]), sources=[_ohesg("/esrs/"), _official("EFRAG ESRS Set 1", "https://www.efrag.org/en/sustainability-reporting/esrs-workstreams/sector-agnostic-standards-set-1-esrs", "EFRAG")]),
     ToolboxToolSpec(tool_id="iss", title="ISS ESG Rating Assistant", description="ISS STOXX corporate rating response preparation.", url=f"{OHESG_BASE}/iss/", categories=["rating"], tags=["ISS", "ESG rating"], aliases=["iss stoxx"], requirements=COMMON_RATING_REQS, sources=[_ohesg("/iss/"), _official("ISS ESG", "https://www.issgovernance.com/esg/", "ISS STOXX", source_type="methodology")]),
     ToolboxToolSpec(tool_id="cbam-export", title="CBAM Goods Export Query", description="CBAM covered-goods lookup and product-code applicability preparation.", url=f"{OHESG_BASE}/cbam-export/", categories=["export", "carbon"], tags=["CBAM", "CN code", "carbon"], aliases=["cbam product query", "cn code"], jurisdictions=["EU"], sectors=["steel", "aluminum", "cement", "fertilizer", "electricity", "hydrogen"], requirements=_reqs(COMMON_EXPORT_REQS, COMMON_CARBON_REQS), sources=[_ohesg("/cbam-export/"), _official("European Commission CBAM guidance", "https://taxation-customs.ec.europa.eu/carbon-border-adjustment-mechanism/cbam-legislation-and-guidance_en", "European Commission", source_type="guidance")]),
     ToolboxToolSpec(tool_id="cbam-steel", title="CBAM Steel and Aluminum Carbon Accounting", description="CBAM embedded-emissions preparation for steel and aluminum product scenarios.", url=f"{OHESG_BASE}/cbam-steel/", categories=["export", "carbon"], tags=["CBAM", "steel", "aluminum"], aliases=["cbam aluminum", "cbam steel"], jurisdictions=["EU"], sectors=["steel", "aluminum"], requirements=_reqs(COMMON_EXPORT_REQS, COMMON_CARBON_REQS), sources=[_ohesg("/cbam-steel/"), _official("European Commission CBAM guidance", "https://taxation-customs.ec.europa.eu/carbon-border-adjustment-mechanism/cbam-legislation-and-guidance_en", "European Commission", source_type="guidance")]),
@@ -569,7 +588,11 @@ TOOLBOX_TOOLS: tuple[ToolboxToolSpec, ...] = (
                 title="Validation, status, and five-year review",
                 description=(
                     "Submission, validation, company status, target update triggers, and mandatory five-year "
-                    "review evidence are owned and calendared."
+                    "review evidence are owned and calendared. The standard-version transition is tracked: new "
+                    "targets may use Near-Term Criteria V5.3 and Corporate Net-Zero Standard V1.3 until "
+                    "31 December 2027; from 1 January 2028 all new targets must use the Corporate Net-Zero "
+                    "Standard V2 (published 2026), while existing validated targets remain valid to the end of "
+                    "their timeframe."
                 ),
                 keywords=[
                     "validation",
@@ -634,17 +657,29 @@ TOOLBOX_TOOLS: tuple[ToolboxToolSpec, ...] = (
     ),
     ToolboxToolSpec(tool_id="smeta", title="SMETA Audit Preparation", description="Sedex SMETA workplace and management-system audit readiness.", url=f"{OHESG_BASE}/smeta/", categories=["rating", "supplier"], tags=["SMETA", "Sedex", "supplier ESG"], aliases=["sedex smeta"], requirements=COMMON_RATING_REQS, sources=[_ohesg("/smeta/"), _official("Sedex SMETA", "https://www.sedex.com/solutions/smeta-audit/", "Sedex", source_type="methodology")]),
     ToolboxToolSpec(tool_id="sa8000", title="SA8000 Assistant", description="SA8000 decent-work standard and certification readiness.", url=f"{OHESG_BASE}/sa8000/", categories=["rating", "supplier"], tags=["SA8000", "labor"], aliases=["social accountability 8000"], requirements=COMMON_RATING_REQS, sources=[_ohesg("/sa8000/"), _official("SA8000 Standard", "https://sa-intl.org/programs/sa8000/", "Social Accountability International", source_type="methodology")]),
-    ToolboxToolSpec(tool_id="aa1000", title="AA1000 Standards Learning", description="AccountAbility sustainability principles and assurance-standard preparation.", url=f"{OHESG_BASE}/aa1000/", categories=["disclosure"], tags=["AA1000", "assurance"], aliases=["accountability aa1000"], requirements=_reqs(COMMON_DISCLOSURE_REQS, [RequirementItem(id="assurance-scope", title="Assurance scope and criteria", keywords=["assurance", "inclusivity", "materiality", "responsiveness", "impact"], evidence_examples=["Assurance plan", "stakeholder engagement record"])]), sources=[_ohesg("/aa1000/"), _official("AccountAbility Standards", "https://www.accountability.org/standards/", "AccountAbility", source_type="methodology")]),
+    ToolboxToolSpec(tool_id="aa1000", title="AA1000 Standards Learning", description="AccountAbility sustainability principles and assurance-standard preparation.", url=f"{OHESG_BASE}/aa1000/", categories=["disclosure"], tags=["AA1000", "assurance"], aliases=["accountability aa1000"], requirements=_reqs(COMMON_DISCLOSURE_REQS, [RequirementItem(id="assurance-scope", title="Assurance scope and criteria", description="The assurance engagement scope, subject matter, and reporting criteria are defined against the four AA1000 AccountAbility principles (inclusivity, materiality, responsiveness, impact).", keywords=["assurance", "inclusivity", "materiality", "responsiveness", "impact"], evidence_examples=["Assurance plan", "stakeholder engagement record"], framework_refs=["AA1000AP", "AA1000AS v3"])]), sources=[_ohesg("/aa1000/"), _official("AccountAbility Standards", "https://www.accountability.org/standards/", "AccountAbility", source_type="methodology")]),
     ToolboxToolSpec(tool_id="eu-green-deal", title="EU Green Deal Regulation Lookup", description="European Green Deal regulation overview, timelines, and export-compliance lookup.", url=f"{OHESG_BASE}/eu-green-deal/", categories=["export"], tags=["EU", "law", "export"], aliases=["european green deal"], jurisdictions=["EU"], requirements=COMMON_EXPORT_REQS, sources=[_ohesg("/eu-green-deal/"), _official("European Green Deal", "https://commission.europa.eu/strategy-and-policy/priorities-2019-2024/european-green-deal_en", "European Commission")]),
     ToolboxToolSpec(tool_id="battery", title="EU Battery Regulation Compliance Toolkit", description="EU Battery Regulation product classification, DPP fields, carbon footprint, checklist, and timeline.", url=f"{OHESG_BASE}/battery/", categories=["export", "carbon"], tags=["EU battery regulation", "DPP", "carbon footprint"], aliases=["battery regulation"], jurisdictions=["EU"], sectors=["batteries"], requirements=_reqs(COMMON_EXPORT_REQS, COMMON_CARBON_REQS), sources=[_ohesg("/battery/"), _official("Regulation (EU) 2023/1542", "https://eur-lex.europa.eu/eli/reg/2023/1542/oj", "EUR-Lex", source_type="legislation")]),
     ToolboxToolSpec(tool_id="eudr", title="EUDR Deforestation Compliance Toolkit", description="EU Deforestation Regulation product, risk, due-diligence, and geolocation preparation.", url=f"{OHESG_BASE}/eudr/", categories=["export"], tags=["EUDR", "deforestation"], aliases=["deforestation regulation"], jurisdictions=["EU"], sectors=["wood", "rubber", "soy", "coffee", "cocoa", "palm oil", "cattle"], requirements=COMMON_EXPORT_REQS, sources=[_ohesg("/eudr/"), _official("EU Deforestation Regulation", "https://environment.ec.europa.eu/topics/forests/deforestation/regulation-deforestation-free-products_en", "European Commission", source_type="guidance")]),
-    ToolboxToolSpec(tool_id="csddd", title="CSDDD Supply Chain Due Diligence Toolkit", description="Human-rights and environmental due-diligence risk identification and supplier self-check preparation.", url=f"{OHESG_BASE}/csddd/", categories=["export", "supplier"], tags=["CSDDD", "HRDD", "supplier ESG"], aliases=["cs3d", "corporate sustainability due diligence"], jurisdictions=["EU"], requirements=_reqs(COMMON_EXPORT_REQS, COMMON_RATING_REQS, [RequirementItem(id="grievance-remedy", title="Grievance and remediation", keywords=["grievance", "remediation", "complaint", "stakeholder"], evidence_examples=["Grievance procedure", "remediation tracker"])]), sources=[_ohesg("/csddd/"), _official("Corporate sustainability due diligence", "https://commission.europa.eu/business-economy-euro/doing-business-eu/sustainability-due-diligence-responsible-business/corporate-sustainability-due-diligence_en", "European Commission", source_type="guidance")]),
+    ToolboxToolSpec(tool_id="csddd", title="CSDDD Supply Chain Due Diligence Toolkit", description="Human-rights and environmental due-diligence risk identification and supplier self-check preparation.", url=f"{OHESG_BASE}/csddd/", categories=["export", "supplier"], tags=["CSDDD", "HRDD", "supplier ESG"], aliases=["cs3d", "corporate sustainability due diligence"], jurisdictions=["EU"], requirements=_reqs(COMMON_RATING_REQS, [
+        # CSDDD applicability is employee/turnover-threshold-based, not customs-code-based,
+        # so the generic export template (CN/HS-code screen) is intentionally not used here.
+        RequirementItem(
+            id="csddd-scope-thresholds",
+            title="CSDDD scope and threshold screen",
+            description="Post-Omnibus CSDDD scope is checked: EU companies with more than 5,000 employees and over EUR 1.5 billion net worldwide turnover (or non-EU companies with over EUR 1.5 billion EU turnover), with member-state transposition by 26 July 2028 and application from 26 July 2029.",
+            keywords=["5000 employees", "1.5 billion", "net turnover", "threshold", "omnibus", "transposition", "scope"],
+            evidence_examples=["Headcount and turnover memo", "Group structure map", "CSDDD applicability note"],
+            framework_refs=["CSDDD", "Omnibus I Directive (EU) 2026/470"],
+        ),
+        RequirementItem(id="grievance-remedy", title="Grievance and remediation", description="A notification and complaints mechanism is accessible to affected stakeholders, and identified harms have remediation plans with tracked outcomes.", keywords=["grievance", "remediation", "complaint", "stakeholder"], evidence_examples=["Grievance procedure", "remediation tracker"], framework_refs=["CSDDD", "UNGPs"]),
+    ]), sources=[_ohesg("/csddd/"), _official("Corporate sustainability due diligence", "https://commission.europa.eu/business-economy-euro/doing-business-eu/sustainability-due-diligence-responsible-business/corporate-sustainability-due-diligence_en", "European Commission", source_type="guidance")]),
     ToolboxToolSpec(tool_id="espr", title="ESPR Ecodesign and Sustainable Product Toolkit", description="EU ESPR product-category, DPP, and ecodesign requirement preparation.", url=f"{OHESG_BASE}/espr/", categories=["export"], tags=["ESPR", "DPP", "ecodesign"], aliases=["ecodesign sustainable products"], jurisdictions=["EU"], requirements=COMMON_EXPORT_REQS, sources=[_ohesg("/espr/"), _official("Ecodesign for Sustainable Products Regulation", "https://commission.europa.eu/energy-climate-change-environment/standards-tools-and-labels/products-labelling-rules-and-requirements/ecodesign-sustainable-products-regulation_en", "European Commission", source_type="guidance")]),
     ToolboxToolSpec(tool_id="amfori-bsci", title="amfori BSCI Rating Assistant", description="amfori BSCI performance-area and audit-readiness assistant.", url=f"{OHESG_BASE}/amfori-bsci/", categories=["rating", "supplier"], tags=["amfori BSCI", "supplier audit"], aliases=["bsci"], requirements=COMMON_RATING_REQS, sources=[_ohesg("/amfori-bsci/"), _official("amfori BSCI", "https://www.amfori.org/en/solutions/social/about-bsci", "amfori", source_type="methodology")]),
     ToolboxToolSpec(tool_id="rba", title="RBA Rating Assistant", description="Responsible Business Alliance Code, VAP score, forced-labor, and minerals due-diligence readiness.", url=f"{OHESG_BASE}/rba/", categories=["rating", "supplier"], tags=["RBA", "VAP", "responsible business"], aliases=["responsible business alliance"], requirements=COMMON_RATING_REQS, sources=[_ohesg("/rba/"), _official("RBA Code of Conduct", "https://www.responsiblebusiness.org/code-of-conduct/", "Responsible Business Alliance", source_type="methodology")]),
-    ToolboxToolSpec(tool_id="icma", title="Sustainable Bond Navigator", description="ICMA GBP/SBP/SBG/SLBP and transition-finance preparation.", url=f"{OHESG_BASE}/icma/", categories=["disclosure"], tags=["ICMA", "sustainable finance", "bond"], aliases=["green bond principles", "sustainability-linked bond principles"], requirements=_reqs(COMMON_DISCLOSURE_REQS, [RequirementItem(id="use-of-proceeds-kpi", title="Use-of-proceeds or KPI framework", keywords=["use of proceeds", "kpi", "spo", "bond", "allocation"], evidence_examples=["Green bond framework", "SPO report", "allocation report"])]), sources=[_ohesg("/icma/"), _official("ICMA Sustainable Finance", "https://www.icmagroup.org/sustainable-finance/", "ICMA", source_type="methodology")]),
+    ToolboxToolSpec(tool_id="icma", title="Sustainable Bond Navigator", description="ICMA GBP/SBP/SBG/SLBP and transition-finance preparation.", url=f"{OHESG_BASE}/icma/", categories=["disclosure"], tags=["ICMA", "sustainable finance", "bond"], aliases=["green bond principles", "sustainability-linked bond principles"], requirements=_reqs(COMMON_DISCLOSURE_REQS, [RequirementItem(id="use-of-proceeds-kpi", title="Use-of-proceeds or KPI framework", description="A bond framework defines either eligible use-of-proceeds categories with allocation tracking (GBP/SBP) or KPIs and sustainability performance targets (SLBP), supported by external review.", keywords=["use of proceeds", "kpi", "spo", "bond", "allocation"], evidence_examples=["Green bond framework", "SPO report", "allocation report"], framework_refs=["ICMA GBP", "ICMA SLBP"])]), sources=[_ohesg("/icma/"), _official("ICMA Sustainable Finance", "https://www.icmagroup.org/sustainable-finance/", "ICMA", source_type="methodology")]),
     ToolboxToolSpec(tool_id="issb", title="Sustainability Disclosure Assistant", description="ISSB IFRS S1 and S2 four-pillar disclosure readiness with interoperability references.", url=f"{OHESG_BASE}/issb/", categories=["disclosure"], tags=["ISSB", "IFRS S1", "IFRS S2"], aliases=["ifrs sustainability"], requirements=COMMON_DISCLOSURE_REQS, sources=[_ohesg("/issb/"), _official("ISSB and IFRS Sustainability Disclosure Standards", "https://www.ifrs.org/sustainability/knowledge-hub/introduction-to-issb-and-ifrs-sustainability-disclosure-standards/", "IFRS Foundation")]),
-    ToolboxToolSpec(tool_id="climate-bonds", title="Climate Bonds Navigator", description="Climate Bonds Standard and taxonomy certification preparation.", url=f"{OHESG_BASE}/climate-bonds/", categories=["disclosure"], tags=["Climate Bonds", "taxonomy", "green bond"], aliases=["cbi", "climate bonds standard"], requirements=_reqs(COMMON_DISCLOSURE_REQS, [RequirementItem(id="taxonomy-eligibility", title="Taxonomy and certification eligibility", keywords=["taxonomy", "certification", "verifier", "sector criteria"], evidence_examples=["Eligible asset list", "verifier scope"])]), sources=[_ohesg("/climate-bonds/"), _official("Climate Bonds Standard", "https://www.climatebonds.net/standard", "Climate Bonds Initiative", source_type="methodology")]),
+    ToolboxToolSpec(tool_id="climate-bonds", title="Climate Bonds Navigator", description="Climate Bonds Standard and taxonomy certification preparation.", url=f"{OHESG_BASE}/climate-bonds/", categories=["disclosure"], tags=["Climate Bonds", "taxonomy", "green bond"], aliases=["cbi", "climate bonds standard"], requirements=_reqs(COMMON_DISCLOSURE_REQS, [RequirementItem(id="taxonomy-eligibility", title="Taxonomy and certification eligibility", description="Financed assets and activities are screened against the Climate Bonds Taxonomy and applicable sector criteria before an approved verifier is engaged for certification.", keywords=["taxonomy", "certification", "verifier", "sector criteria"], evidence_examples=["Eligible asset list", "verifier scope"], framework_refs=["Climate Bonds Standard", "Climate Bonds Taxonomy"])]), sources=[_ohesg("/climate-bonds/"), _official("Climate Bonds Standard", "https://www.climatebonds.net/standard", "Climate Bonds Initiative", source_type="methodology")]),
     ToolboxToolSpec(tool_id="nav", title="ESG Ecosystem Navigator", description="ESG institution, standard-setter, rating, and tool ecosystem lookup.", url=f"{OHESG_BASE}/nav/", categories=["disclosure"], tags=["ESG ecosystem", "institutions"], aliases=["esg navigation"], supported_actions=["get", "search", "methodology"], requirements=COMMON_DISCLOSURE_REQS, sources=[_ohesg("/nav/")]),
     ToolboxToolSpec(
         tool_id="carbon-iso",
@@ -847,9 +882,9 @@ TOOLBOX_TOOLS: tuple[ToolboxToolSpec, ...] = (
             _official("ISO 14091:2021", "https://www.iso.org/standard/68508.html", "ISO", source_type="methodology"),
         ],
     ),
-    ToolboxToolSpec(tool_id="aws", title="Water Stewardship Standard Assistant", description="Alliance for Water Stewardship standard quick reference and certification readiness.", url=f"{OHESG_BASE}/aws/", categories=["disclosure"], tags=["AWS", "water stewardship"], aliases=["alliance for water stewardship"], requirements=_reqs(COMMON_DISCLOSURE_REQS, [RequirementItem(id="water-stewardship-plan", title="Water stewardship plan", keywords=["water", "catchment", "withdrawal", "discharge", "stewardship"], evidence_examples=["Water balance", "catchment risk assessment"])]), sources=[_ohesg("/aws/"), _official("AWS Standard", "https://a4ws.org/the-aws-standard-2-0/", "Alliance for Water Stewardship", source_type="methodology")]),
+    ToolboxToolSpec(tool_id="aws", title="Water Stewardship Standard Assistant", description="Alliance for Water Stewardship standard quick reference and certification readiness.", url=f"{OHESG_BASE}/aws/", categories=["disclosure"], tags=["AWS", "water stewardship"], aliases=["alliance for water stewardship"], requirements=_reqs(COMMON_DISCLOSURE_REQS, [RequirementItem(id="water-stewardship-plan", title="Water stewardship plan", description="A site water-stewardship plan covers water balance, withdrawal and discharge quality, catchment-shared challenges, and commitments with measurable targets.", keywords=["water", "catchment", "withdrawal", "discharge", "stewardship"], evidence_examples=["Water balance", "catchment risk assessment"], framework_refs=["AWS Standard V3.0"])]), sources=[_ohesg("/aws/"), _official("AWS Standard V3.0 (launched 18 March 2026; one-year transition from V2.0 until 18 March 2027)", "https://a4ws.org/aws-standard/", "Alliance for Water Stewardship", source_type="methodology")]),
     ToolboxToolSpec(tool_id="irma", title="IRMA Responsible Mining Assistant", description="IRMA responsible mining standard and chain-of-custody readiness.", url=f"{OHESG_BASE}/irma/", categories=["supplier"], tags=["IRMA", "responsible mining"], aliases=["initiative for responsible mining assurance"], sectors=["mining"], requirements=COMMON_RATING_REQS, sources=[_ohesg("/irma/"), _official("IRMA Standard", "https://responsiblemining.net/what-we-do/standard/", "IRMA", source_type="methodology")]),
-    ToolboxToolSpec(tool_id="conflict-minerals", title="Conflict Minerals Compliance Assistant", description="OECD five-step due diligence, RMI tools, 3TG, cobalt, mica, and conflict-minerals regulations.", url=f"{OHESG_BASE}/conflict-minerals/", categories=["supplier"], tags=["conflict minerals", "OECD", "RMI", "3TG"], aliases=["cmrt", "emrt", "responsible minerals"], sectors=["mining", "electronics", "automotive"], requirements=_reqs(COMMON_RATING_REQS, [RequirementItem(id="minerals-traceability", title="Minerals traceability and smelter review", keywords=["3tg", "cobalt", "mica", "smelter", "cmrt", "emrt", "rmap"], evidence_examples=["CMRT", "EMRT", "smelter list"])]), sources=[_ohesg("/conflict-minerals/"), _official("OECD Due Diligence Guidance for Responsible Mineral Supply Chains", "https://www.oecd.org/corporate/mne/mining.htm", "OECD", source_type="guidance"), _official("Responsible Minerals Initiative tools", "https://www.responsiblemineralsinitiative.org/", "RMI", source_type="guidance")]),
+    ToolboxToolSpec(tool_id="conflict-minerals", title="Conflict Minerals Compliance Assistant", description="OECD five-step due diligence, RMI tools, 3TG, cobalt, mica, and conflict-minerals regulations.", url=f"{OHESG_BASE}/conflict-minerals/", categories=["supplier"], tags=["conflict minerals", "OECD", "RMI", "3TG"], aliases=["cmrt", "emrt", "responsible minerals"], sectors=["mining", "electronics", "automotive"], requirements=_reqs(COMMON_RATING_REQS, [RequirementItem(id="minerals-traceability", title="Minerals traceability and smelter review", description="3TG, cobalt, and mica supply chains are traced to smelters and refiners via CMRT/EMRT templates, and smelter RMAP conformance status is reviewed with follow-up for non-conformant facilities.", keywords=["3tg", "cobalt", "mica", "smelter", "cmrt", "emrt", "rmap"], evidence_examples=["CMRT", "EMRT", "smelter list"], framework_refs=["OECD Due Diligence Guidance", "RMI RMAP"])]), sources=[_ohesg("/conflict-minerals/"), _official("OECD Due Diligence Guidance for Responsible Mineral Supply Chains", "https://www.oecd.org/corporate/mne/mining.htm", "OECD", source_type="guidance"), _official("Responsible Minerals Initiative tools", "https://www.responsiblemineralsinitiative.org/", "RMI", source_type="guidance")]),
     ToolboxToolSpec(tool_id="ghg", title="GHG Protocol Navigator", description="GHG Protocol standards family, Scope 1/2/3 boundaries, calculation tools, and inventory path.", url=f"{OHESG_BASE}/ghg/", categories=["carbon"], tags=["GHG Protocol", "Scope 1", "Scope 2", "Scope 3"], aliases=["greenhouse gas protocol"], requirements=COMMON_CARBON_REQS, sources=[_ohesg("/ghg/"), _official("GHG Protocol Standards and Guidance", "https://ghgprotocol.org/standards-guidance", "GHG Protocol", source_type="guidance")]),
 )
 
@@ -914,6 +949,14 @@ _COMPLETION_REQUIREMENTS: dict[str, list[RequirementItem]] = {
             evidence_examples=["Revenue-by-activity table", "Industry routing note", "Peer set benchmark"],
             framework_refs=["MSCI ESG Ratings"],
         ),
+        RequirementItem(
+            id="rating-scale-model",
+            title="Rating scale and scoring model",
+            description="The MSCI scoring model is understood before responding: key issues across environment, social, and governance pillars are weighted by industry contribution to externalities; exposure and management scores combine into an industry-adjusted weighted-average key-issue score mapped to the AAA-CCC letter scale, with controversies able to drag management scores down.",
+            keywords=["AAA", "CCC", "letter rating", "key issue score", "weighted average", "exposure", "management score", "controversy deduction"],
+            evidence_examples=["Key-issue weight table", "Exposure vs management score memo", "Controversy impact log"],
+            framework_refs=["MSCI ESG Ratings methodology"],
+        ),
     ],
     "ecovadis": [
         RequirementItem(
@@ -932,15 +975,23 @@ _COMPLETION_REQUIREMENTS: dict[str, list[RequirementItem]] = {
             evidence_examples=["Document validity log", "entity scope map", "certificate register"],
             framework_refs=["EcoVadis methodology"],
         ),
+        RequirementItem(
+            id="scoring-and-medals",
+            title="Scoring model and medal thresholds",
+            description="The EcoVadis scoring model is understood: 21 criteria across four themes are weighted by industry, size, and location into a 0-100 score; medals are percentile-based among rated companies (Platinum top 1%, Gold top 5%, Silver top 15%, Bronze top 35%) and require a minimum overall score, so reassessment planning tracks both score and percentile drift.",
+            keywords=["score", "0-100", "medal", "platinum", "gold", "silver", "bronze", "percentile", "weighting"],
+            evidence_examples=["Scorecard review", "Theme weight note", "Medal threshold tracker"],
+            framework_refs=["EcoVadis methodology"],
+        ),
     ],
     "cdp": [
         RequirementItem(
             id="questionnaire-scope",
             title="Questionnaire scope and module routing",
-            description="Climate, water, forest, supply-chain, and sector modules are identified before drafting responses.",
-            keywords=["questionnaire", "module", "climate", "water", "forest", "supply chain", "sector"],
+            description="The 13-module integrated corporate questionnaire is scoped before drafting: climate change, forests, and water security are scored themes; plastics, biodiversity, and ocean (new for 2026) remain unscored; forests scoring covers seven commodities (cattle, palm oil, soy, timber, cocoa, coffee, rubber); module routing depends on sector, size, and opted-in topics.",
+            keywords=["questionnaire", "module", "climate", "water", "forest", "supply chain", "sector", "plastics", "biodiversity", "ocean"],
             evidence_examples=["CDP module map", "question owner matrix", "response calendar"],
-            framework_refs=["CDP questionnaire"],
+            framework_refs=["CDP 2026 corporate questionnaire"],
         ),
         RequirementItem(
             id="environmental-targets",
@@ -1047,10 +1098,10 @@ _COMPLETION_REQUIREMENTS: dict[str, list[RequirementItem]] = {
         RequirementItem(
             id="value-chain-and-datapoints",
             title="Value-chain and datapoint readiness",
-            description="Upstream/downstream datapoints, estimates, phase-ins, and entity boundaries are documented.",
-            keywords=["value chain", "datapoint", "estimate", "phase-in", "boundary", "upstream", "downstream"],
+            description="Upstream/downstream datapoints, estimates, phase-ins, and entity boundaries are documented. The datapoint inventory tracks the revised simplified ESRS (delegated act expected in 2026, cutting mandatory datapoints by roughly 60% and dropping sector-specific standards) so collection effort is prioritized on datapoints that survive the revision.",
+            keywords=["value chain", "datapoint", "estimate", "phase-in", "boundary", "upstream", "downstream", "simplified esrs"],
             evidence_examples=["ESRS datapoint inventory", "value-chain evidence log", "estimate methodology"],
-            framework_refs=["ESRS 1"],
+            framework_refs=["ESRS 1", "Omnibus I Directive (EU) 2026/470"],
         ),
     ],
     "iss": [
@@ -1125,20 +1176,20 @@ _COMPLETION_REQUIREMENTS: dict[str, list[RequirementItem]] = {
     ],
     "cbam": [
         RequirementItem(
-            id="transition-period-reporting",
-            title="CBAM transition-period reporting",
-            description="Quarterly reporting obligations, data templates, and declarant roles are calendared.",
-            keywords=["transition period", "quarterly report", "declarant", "reporting obligation", "template"],
-            evidence_examples=["CBAM reporting calendar", "declarant role memo", "quarterly report template"],
-            framework_refs=["Regulation (EU) 2023/956"],
+            id="definitive-period-obligations",
+            title="CBAM definitive-period obligations",
+            description="Definitive-regime obligations applying from 1 January 2026 are calendared: authorised-declarant status, the 50-tonne annual mass de minimis screen (not applicable to hydrogen and electricity), and the first annual CBAM declaration due 30 September 2027 for 2026 imports.",
+            keywords=["definitive period", "authorised declarant", "50 tonnes", "de minimis", "annual declaration", "declarant", "reporting obligation"],
+            evidence_examples=["CBAM declaration calendar", "declarant authorisation record", "Annual import-mass tracker"],
+            framework_refs=["Regulation (EU) 2023/956", "Regulation (EU) 2025/2083"],
         ),
         RequirementItem(
             id="certificate-cost-prep",
             title="Certificate and carbon-price preparation",
-            description="Post-transition certificate exposure, carbon price assumptions, and paid-carbon-price evidence are prepared.",
-            keywords=["certificate", "carbon price", "paid carbon price", "cost", "ETS", "financial exposure"],
+            description="Certificate exposure is modelled: sales start 1 February 2027 (covering 2026 imports at EU ETS quarterly-average prices), holdings must cover at least 50% of cumulative embedded emissions, and harmonised penalties apply (EUR 100/tCO2e for declarants, EUR 300-500/tCO2e for unauthorised importers).",
+            keywords=["certificate", "carbon price", "paid carbon price", "cost", "ETS", "financial exposure", "coverage ratio", "penalty"],
             evidence_examples=["CBAM cost model", "paid carbon price evidence", "certificate exposure worksheet"],
-            framework_refs=["Regulation (EU) 2023/956"],
+            framework_refs=["Regulation (EU) 2023/956", "Regulation (EU) 2025/2083"],
         ),
     ],
     "glossary": [
@@ -1199,10 +1250,10 @@ _COMPLETION_REQUIREMENTS: dict[str, list[RequirementItem]] = {
         RequirementItem(
             id="smeta-7-framework",
             title="SMETA 7 framework routing",
-            description="Labor standards, health and safety, environment, business ethics, and management-system guide expectations are routed for site self-check.",
-            keywords=["SMETA 7", "sedex", "workplace requirements", "management system", "self-check", "business ethics"],
-            evidence_examples=["SMETA 7 self-check", "Workplace requirement matrix", "Management-system guide evidence"],
-            framework_refs=["SMETA"],
+            description="SMETA 7.0 (released June 2024) expectations are routed for site self-check: explicit Workplace Requirements against the ETI Base Code, the Management Systems Assessment that replaced observations, and the Collaborative Action Required finding for living wages, responsible recruitment, child labor, and discrimination; 2-pillar audits cover labor standards plus health and safety, 4-pillar adds environment and business ethics.",
+            keywords=["SMETA 7", "sedex", "workplace requirements", "management system", "self-check", "business ethics", "collaborative action required", "eti base code"],
+            evidence_examples=["SMETA 7 self-check", "Workplace requirement matrix", "Management Systems Assessment evidence"],
+            framework_refs=["SMETA 7.0", "ETI Base Code"],
         ),
     ],
     "sa8000": [
@@ -1316,6 +1367,14 @@ _COMPLETION_REQUIREMENTS: dict[str, list[RequirementItem]] = {
             evidence_examples=["Battery passport data map", "carbon footprint declaration", "recycled-content evidence"],
             framework_refs=["Regulation (EU) 2023/1542"],
         ),
+        RequirementItem(
+            id="battery-regulatory-timeline",
+            title="Battery Regulation milestone timeline",
+            description="Key milestones are calendared per category: carbon-footprint declarations for EV batteries (18 February 2025, subject to delegated/implementing acts), rechargeable industrial batteries above 2 kWh (18 February 2026), and LMT batteries (18 August 2028); the digital battery passport becomes mandatory 18 February 2027; minimum recycled-content shares (16% cobalt, 85% lead, 6% lithium, 6% nickel) apply from 18 August 2031.",
+            keywords=["timeline", "carbon footprint declaration", "battery passport", "2027", "recycled content", "delegated act", "milestone"],
+            evidence_examples=["Battery compliance calendar", "Delegated-act watchlist", "Category milestone matrix"],
+            framework_refs=["Regulation (EU) 2023/1542"],
+        ),
     ],
     "eudr": [
         RequirementItem(
@@ -1349,6 +1408,14 @@ _COMPLETION_REQUIREMENTS: dict[str, list[RequirementItem]] = {
             keywords=["country risk", "risk classification", "origin", "supplier geography", "simplified due diligence"],
             evidence_examples=["Country risk note", "Origin-country list", "Supplier geography map"],
             framework_refs=["Regulation (EU) 2023/1115"],
+        ),
+        RequirementItem(
+            id="application-timeline",
+            title="EUDR application timeline and operator category",
+            description="The amended application dates are mapped to the operator's size category: 30 December 2026 for large and medium-sized companies (and timber-sector micro/small enterprises), 30 June 2027 for other micro and small enterprises; micro and small primary operators may use the one-time simplified declaration introduced by Regulation (EU) 2025/2650.",
+            keywords=["30 december 2026", "30 june 2027", "application date", "micro", "small", "simplified declaration", "primary operator"],
+            evidence_examples=["Operator size classification memo", "EUDR readiness timeline", "Simplified-declaration eligibility note"],
+            framework_refs=["Regulation (EU) 2023/1115", "Regulation (EU) 2025/2650"],
         ),
     ],
     "csddd": [
@@ -1607,10 +1674,10 @@ _COMPLETION_REQUIREMENTS: dict[str, list[RequirementItem]] = {
         RequirementItem(
             id="certification-level-route",
             title="Core-Gold-Platinum certification route",
-            description="Core, Gold, and Platinum level criteria are mapped to site evidence, scoring, and certification planning.",
-            keywords=["Core", "Gold", "Platinum", "50", "15", "certification level", "criteria"],
-            evidence_examples=["AWS level route", "Core criteria checklist", "Gold/Platinum evidence plan"],
-            framework_refs=["AWS Standard"],
+            description="Core, Gold, and Platinum level criteria are mapped to site evidence, scoring, and certification planning. The standard-version choice is documented: AWS Standard V3.0 launched 18 March 2026 with a one-year transition, after which all initial and recertification audits use V3.0 (V2.0 surveillance audits continue for existing certificates).",
+            keywords=["Core", "Gold", "Platinum", "50", "15", "certification level", "criteria", "V3.0", "transition"],
+            evidence_examples=["AWS level route", "Core criteria checklist", "Gold/Platinum evidence plan", "Standard-version decision note"],
+            framework_refs=["AWS Standard V3.0"],
         ),
     ],
     "irma": [
@@ -1793,7 +1860,7 @@ _COMPLETION_METHODS: dict[str, list[CalculatorMethod]] = {
         _method("institution-router", "ESG institution router", "route = role + jurisdiction + use_case + sector", ["role", "jurisdiction", "use_case", "sector"], ["recommended_sources"], f"{OHESG_BASE}/nav/"),
     ],
     "aws": [
-        _method("aws-five-step-check", "AWS five-step certification check", "readiness = gather + commit + plan + implement + evaluate_communicate", ["site", "catchment", "water_data", "plan"], ["aws_certification_gaps"], "https://a4ws.org/the-aws-standard-2-0/"),
+        _method("aws-five-step-check", "AWS five-step certification check", "readiness = gather + commit + plan + implement + evaluate_communicate", ["site", "catchment", "water_data", "plan"], ["aws_certification_gaps"], "https://a4ws.org/aws-standard/"),
     ],
     "irma": [
         _method("irma-achievement-level", "IRMA achievement-level preparation", "level_readiness = chapter_evidence + stakeholder_evidence + site_controls", ["mine_site", "chapter_evidence", "stakeholder_records"], ["irma_gap_map"], "https://responsiblemining.net/what-we-do/standard/"),
@@ -1817,11 +1884,17 @@ _COMPLETION_SOURCES: dict[str, list[SourceRecord]] = {
     "cdp": [_official("CDP disclosure guidance", "https://www.cdp.net/en/guidance", "CDP", source_type="guidance")],
     "csa": [_official("S&P Global CSA methodology", "https://www.spglobal.com/esg/csa/methodology/", "S&P Global", source_type="methodology")],
     "gri": [_official("GRI Universal Standards", "https://www.globalreporting.org/standards/standards-development/universal-standards/", "GRI", source_type="methodology")],
-    "esrs": [_official("European Commission CSRD", "https://finance.ec.europa.eu/capital-markets-union-and-financial-markets/company-reporting-and-auditing/company-reporting/corporate-sustainability-reporting_en", "European Commission", source_type="guidance")],
+    "esrs": [
+        _official("European Commission CSRD", "https://finance.ec.europa.eu/capital-markets-union-and-financial-markets/company-reporting-and-auditing/company-reporting/corporate-sustainability-reporting_en", "European Commission", source_type="guidance"),
+        _official("Omnibus I Directive (EU) 2026/470 (CSRD/CSDDD simplification)", "https://eur-lex.europa.eu/eli/dir/2026/470/oj", "EUR-Lex", source_type="legislation"),
+    ],
     "iss": [_official("ISS ESG solutions", "https://www.issgovernance.com/esg/", "ISS STOXX", source_type="methodology")],
     "cbam-export": [_official("Regulation (EU) 2023/956", "https://eur-lex.europa.eu/eli/reg/2023/956/oj", "EUR-Lex", source_type="legislation")],
     "cbam-steel": [_official("CBAM implementing regulation", "https://eur-lex.europa.eu/eli/reg_impl/2023/1773/oj", "EUR-Lex", source_type="legislation")],
-    "cbam": [_official("CBAM transitional registry guidance", "https://taxation-customs.ec.europa.eu/carbon-border-adjustment-mechanism_en", "European Commission", source_type="guidance")],
+    "cbam": [
+        _official("CBAM transitional registry guidance", "https://taxation-customs.ec.europa.eu/carbon-border-adjustment-mechanism_en", "European Commission", source_type="guidance"),
+        _official("Regulation (EU) 2025/2083 (CBAM Omnibus simplification)", "https://eur-lex.europa.eu/eli/reg/2025/2083/oj", "EUR-Lex", source_type="legislation"),
+    ],
     "glossary": [
         _official("GRI Standards", "https://www.globalreporting.org/standards/", "GRI", source_type="methodology"),
         _official("SASB Standards", "https://sasb.ifrs.org/standards/", "IFRS Foundation", source_type="methodology"),
@@ -1831,8 +1904,14 @@ _COMPLETION_SOURCES: dict[str, list[SourceRecord]] = {
     "aa1000": [_official("AA1000 Assurance Standard", "https://www.accountability.org/standards/aa1000-assurance-standard/", "AccountAbility", source_type="methodology")],
     "eu-green-deal": [_official("European Commission policy and regulations", "https://commission.europa.eu/strategy-and-policy_en", "European Commission", source_type="guidance")],
     "battery": [_official("European Commission batteries policy", "https://environment.ec.europa.eu/topics/waste-and-recycling/batteries_en", "European Commission", source_type="guidance")],
-    "eudr": [_official("Regulation (EU) 2023/1115", "https://eur-lex.europa.eu/eli/reg/2023/1115/oj", "EUR-Lex", source_type="legislation")],
-    "csddd": [_official("OECD Due Diligence Guidance", "https://www.oecd.org/investment/due-diligence-guidance-for-responsible-business-conduct.htm", "OECD", source_type="guidance")],
+    "eudr": [
+        _official("Regulation (EU) 2023/1115", "https://eur-lex.europa.eu/eli/reg/2023/1115/oj", "EUR-Lex", source_type="legislation"),
+        _official("Regulation (EU) 2025/2650 (EUDR postponement and simplification)", "https://eur-lex.europa.eu/eli/reg/2025/2650/oj", "EUR-Lex", source_type="legislation"),
+    ],
+    "csddd": [
+        _official("OECD Due Diligence Guidance", "https://www.oecd.org/investment/due-diligence-guidance-for-responsible-business-conduct.htm", "OECD", source_type="guidance"),
+        _official("Omnibus I Directive (EU) 2026/470 (CSRD/CSDDD simplification)", "https://eur-lex.europa.eu/eli/dir/2026/470/oj", "EUR-Lex", source_type="legislation"),
+    ],
     "espr": [_official("Regulation (EU) 2024/1781", "https://eur-lex.europa.eu/eli/reg/2024/1781/oj", "EUR-Lex", source_type="legislation")],
     "amfori-bsci": [_official("amfori BSCI platform", "https://www.amfori.org/en/solutions/social/about-bsci", "amfori", source_type="methodology")],
     "rba": [_official("RBA Validated Assessment Program", "https://www.responsiblebusiness.org/tools/vap/", "Responsible Business Alliance", source_type="methodology")],

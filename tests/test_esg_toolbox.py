@@ -226,7 +226,7 @@ def test_remaining_toolbox_modules_have_specific_completion_requirements() -> No
         "iss": {"rating-topic-map", "controversy-response", "issuer-data-review"},
         "cbam-export": {"cn-code-screen", "installation-data-route", "applicability"},
         "cbam-steel": {"steel-aluminum-route", "embedded-emissions-calculation", "technical-data"},
-        "cbam": {"transition-period-reporting", "certificate-cost-prep", "applicability"},
+        "cbam": {"definitive-period-obligations", "certificate-cost-prep", "applicability"},
         "glossary": {"term-normalization", "framework-routing", "industry-topic-context"},
         "smeta": {"labor-standards", "health-safety-site", "audit-capa"},
         "sa8000": {"labor-performance-criteria", "social-performance-team", "certification-audit-readiness"},
@@ -698,3 +698,152 @@ async def test_mcp_esg_toolbox_wrapper_recommends_modules() -> None:
 
     assert "Recommended ESG toolbox modules" in output
     assert "battery" in output or "cbam" in output
+
+
+def test_crosswalk_derives_mappings_from_cross_reference_map() -> None:
+    """Coverage must extend beyond the 7 curated IDs via the 59-concept map."""
+    mappings = crosswalk_reported_metrics({"PI2998": "350 trainees", "OI4324": "12 sites"})
+
+    assert any("GRI 404" in ref for ref in mappings["PI2998"])
+    assert any("GRI 413" in ref for ref in mappings["OI4324"])
+
+
+def test_crosswalk_carbon_category_includes_sbti_and_cdp_codes() -> None:
+    mappings = crosswalk_reported_metrics({"OI4112": "1200 tCO2e"}, category="carbon")
+
+    refs = mappings["OI4112"]
+    assert any(ref.startswith("SBTi") for ref in refs)
+    assert any(ref.startswith("CDP") for ref in refs)
+
+
+def test_search_source_index_finds_gri_disclosures() -> None:
+    from openharness.impact.toolbox import search_source_index
+
+    records = search_source_index("gri", "413-1", limit=3)
+
+    assert records
+    assert any(record.record_id.endswith("413-1") for record in records)
+
+
+@pytest.mark.asyncio
+async def test_esg_toolbox_assess_includes_host_tool_handoff() -> None:
+    tool = ESGToolboxTool()
+    result = await tool.execute(
+        ESGToolboxInput(action="assess", tool_id="gri", company_description="Manufacturer with GRI report"),
+        ToolExecutionContext(cwd="."),
+    )
+
+    assert not result.is_error
+    assert "framework_assess" in result.output
+    assert result.metadata["host_tool_handoff"]["tool"] == "framework_assess"
+
+
+@pytest.mark.asyncio
+async def test_framework_tool_cdp_handler_assesses_readiness() -> None:
+    from openharness.tools.impact.framework_tool import FrameworkInput, FrameworkTool
+
+    tool = FrameworkTool()
+    result = await tool.execute(
+        FrameworkInput(
+            framework="cdp",
+            action="assess",
+            sector="manufacturing",
+            description="GHG inventory with board climate oversight",
+            reported_metrics={"OI4112": "1200 tCO2e"},
+        ),
+        ToolExecutionContext(cwd="."),
+    )
+
+    assert not result.is_error
+    assert "CDP QUESTIONNAIRE READINESS" in result.output
+    assert "CDP-Climate-C6.1" in result.output
+
+
+@pytest.mark.asyncio
+async def test_framework_tool_gri_match_appends_sector_topics() -> None:
+    from openharness.tools.impact.framework_tool import FrameworkInput, FrameworkTool
+
+    tool = FrameworkTool()
+    result = await tool.execute(
+        FrameworkInput(
+            framework="gri",
+            action="match",
+            sector="mining",
+            description="gold mining company with tailings dams and community programs",
+        ),
+        ToolExecutionContext(cwd="."),
+    )
+
+    assert not result.is_error
+    assert "GRI SECTOR TOPICS" in result.output
+    assert "Mining" in result.output
+
+
+def test_eu_regulatory_calendar_includes_export_compliance_obligations() -> None:
+    from openharness.impact.regulatory_calendar import build_regulatory_calendar
+
+    calendar = build_regulatory_calendar(jurisdiction="EU", fiscal_year_end="2026-12-31")
+    frameworks = {item.framework for item in calendar.items}
+
+    assert {"CBAM", "EUDR", "EU Battery Regulation", "ESPR"} <= frameworks
+
+
+@pytest.mark.asyncio
+async def test_hrdd_tool_appends_audit_scheme_readiness() -> None:
+    from openharness.tools.impact.hrdd_tool import HRDDTool, HRDDToolInput
+
+    tool = HRDDTool()
+    result = await tool.execute(
+        HRDDToolInput(
+            action="assess",
+            company_name="Acme Electronics",
+            sector="electronics manufacturing",
+            document_text="RBA code of conduct adopted; conflict minerals CMRT collected from smelters.",
+            output_format="json",
+        ),
+        ToolExecutionContext(cwd="."),
+    )
+
+    assert not result.is_error
+    schemes = {item["scheme"] for item in result.metadata["audit_scheme_readiness"]}
+    assert "rba" in schemes
+    assert "conflict-minerals" in schemes
+
+
+@pytest.mark.asyncio
+async def test_verification_prep_supports_aa1000_target() -> None:
+    from openharness.tools.impact.verification_prep_tool import VerificationPrepInput, VerificationPrepTool
+
+    tool = VerificationPrepTool()
+    result = await tool.execute(
+        VerificationPrepInput(
+            action="readiness_check",
+            company_name="Acme Fund",
+            company_description="Impact fund with stakeholder engagement and materiality process documented.",
+            verification_target="aa1000",
+        ),
+        ToolExecutionContext(cwd="."),
+    )
+
+    assert not result.is_error
+    assert "AA1000 ASSURANCE READINESS" in result.output
+    assert "aa1000" in result.metadata
+
+
+@pytest.mark.asyncio
+async def test_product_passport_assess_appends_battery_regulation_readiness() -> None:
+    from openharness.tools.impact.product_passport_tool import ProductPassportInput, ProductPassportTool
+
+    tool = ProductPassportTool()
+    result = await tool.execute(
+        ProductPassportInput(
+            action="assess",
+            product_category="batteries",
+            dpp_data=json.dumps({"carbon_footprint": "85 kgCO2e/kWh", "recycled_content": "12%"}),
+        ),
+        ToolExecutionContext(cwd="."),
+    )
+
+    assert not result.is_error
+    assert "EU Battery Regulation" in result.output
+    assert result.metadata["regulatory_readiness"]["module"] == "battery"
