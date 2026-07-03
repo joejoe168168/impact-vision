@@ -246,6 +246,23 @@ def get_edci_metrics(
     return metrics
 
 
+def edci_core_iris_metric_ids() -> list[str]:
+    """IRIS+ metric IDs cross-referenced by the core EDCI metric set.
+
+    The EDCI set is the LP-side automation anchor (ILPA guidance), so
+    collection flows that speak IRIS+ can scaffold their questionnaires from
+    these equivalents to serve LP reports, benchmarking, and DDQs at once.
+    """
+    ids: list[str] = []
+    for metric in EDCI_METRICS:
+        if not metric.required:
+            continue
+        for ref in metric.iris_cross_refs:
+            if ref not in ids:
+                ids.append(ref)
+    return ids
+
+
 def _summarize_rows(
     rows: list[EDCICompletenessRow],
     *,

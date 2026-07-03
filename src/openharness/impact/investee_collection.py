@@ -215,8 +215,17 @@ def _field_for_metric(metric_id: str, store: MetricStore) -> QuestionnaireField 
 
 
 def default_metric_ids_for_sector(sector: str) -> list[str]:
-    """Return built-in starter metrics for a sector template."""
+    """Return built-in starter metrics for a sector template.
+
+    ``sector="edci"`` returns the IRIS+ equivalents of the core EDCI metric
+    set — the recommended default scaffold when the questionnaire feeds LP
+    reporting (EDCI is the LP-side automation anchor per ILPA guidance).
+    """
     normalized = normalize_sector(sector).replace(" ", "_")
+    if normalized == "edci":
+        from openharness.impact.frameworks.edci import edci_core_iris_metric_ids
+
+        return edci_core_iris_metric_ids()
     return SECTOR_METRIC_TEMPLATES.get(normalized, [])
 
 

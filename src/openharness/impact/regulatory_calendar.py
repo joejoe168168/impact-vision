@@ -118,6 +118,61 @@ def render_regulatory_calendar_text(calendar: RegulatoryCalendar) -> str:
     return "\n".join(lines)
 
 
+class RegulatoryWatchlistItem(BaseModel):
+    """One market-wide regulatory milestone (not fund-specific)."""
+
+    event_date: str
+    event: str
+    jurisdiction: str = "EU"
+    days_until: int = 0
+    status: Literal["upcoming", "due_soon", "passed"] = "upcoming"
+
+
+# Market-wide milestones verified by web research 2026-07 (see
+# docs/roadmap-updates-2026-07.md). Unlike the per-fund deadline calendar,
+# these are fixed calendar dates that apply regardless of fiscal year end.
+_REGULATORY_WATCHLIST: list[tuple[str, str, str]] = [
+    ("2026-09-27", "ECGT Directive (EU) 2024/825 applies — generic green claims banned", "EU"),
+    ("2026-10-31", "ISSB nature-related disclosures Practice Statement exposure draft (October 2026)", "Global"),
+    ("2026-12-31", "Revised ESRS + VSME delegated acts expected adopted (Q3/Q4 2026)", "EU"),
+    ("2026-11-10", "First California SB 253 Scope 1+2 GHG reports due", "US"),
+    ("2026-12-15", "ISSA 5000 sustainability assurance effective (periods beginning on/after)", "Global"),
+    ("2026-12-30", "EUDR obligations apply (large/medium operators)", "EU"),
+    ("2027-01-01", "Revised ESRS applies (FY2027; early adoption FY2026)", "EU"),
+    ("2027-03-19", "CSRD (as amended by Omnibus I) member-state transposition deadline", "EU"),
+    ("2028-07-26", "CSDDD member-state transposition deadline", "EU"),
+    ("2029-07-26", "CSDDD applies to first wave (>5,000 employees + €1.5B turnover)", "EU"),
+    ("2029-12-31", "SFDR 2.0 expected application (Council: 24-month implementation; trilogue from late 2026)", "EU"),
+]
+
+
+def regulatory_watchlist(
+    *,
+    today: date | None = None,
+    jurisdiction: str = "",
+    include_passed: bool = False,
+) -> list[RegulatoryWatchlistItem]:
+    """Return the market-wide regulatory milestone watch-list, soonest first."""
+    ref = today or date.today()
+    items: list[RegulatoryWatchlistItem] = []
+    for event_date, event, event_jurisdiction in _REGULATORY_WATCHLIST:
+        if jurisdiction and event_jurisdiction.lower() != jurisdiction.strip().lower():
+            continue
+        days = (date.fromisoformat(event_date) - ref).days
+        if days < 0 and not include_passed:
+            continue
+        status = "passed" if days < 0 else "due_soon" if days <= 60 else "upcoming"
+        items.append(RegulatoryWatchlistItem(
+            event_date=event_date,
+            event=event,
+            jurisdiction=event_jurisdiction,
+            days_until=days,
+            status=status,
+        ))
+    items.sort(key=lambda item: item.event_date)
+    return items
+
+
 def jurisdiction_options() -> list[dict[str, object]]:
     """Return lightweight jurisdiction metadata for UIs/tools."""
     return [
@@ -134,8 +189,10 @@ def jurisdiction_options() -> list[dict[str, object]]:
 __all__ = [
     "RegulatoryCalendar",
     "RegulatoryCalendarItem",
+    "RegulatoryWatchlistItem",
     "build_regulatory_calendar",
     "default_fiscal_year_end",
     "jurisdiction_options",
+    "regulatory_watchlist",
     "render_regulatory_calendar_text",
 ]

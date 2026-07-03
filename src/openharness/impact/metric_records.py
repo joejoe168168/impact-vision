@@ -116,7 +116,35 @@ def metric_records_to_reported_metrics(records: list[MetricRecord]) -> dict[str,
     return {record.metric_id: str(record.value).strip() for record in records}
 
 
+def estimate_disclosure_label(record: MetricRecord) -> str:
+    """Return the estimate-disclosure badge for a record, or "" if measured.
+
+    AI-estimated or modelled values must be labelled as estimates with the
+    methodology disclosed wherever they surface (HTML report, XLSX, LP DDQ,
+    LP Q&A) — presenting a modelled number as a measured one is a
+    greenwashing exposure (EDCI / ILPA guidance).
+    """
+    if not record.is_estimate:
+        return ""
+    methodology = record.estimation_methodology.strip()
+    if methodology:
+        return f"ESTIMATE — {methodology}"
+    return "ESTIMATE — methodology not disclosed"
+
+
+def flag_undisclosed_estimates(records: list[MetricRecord]) -> list[str]:
+    """Warn for estimated values whose methodology has not been disclosed."""
+    return [
+        f"{record.metric_id}: estimated value has no estimation_methodology — "
+        "disclose the model/proxy used before LP or regulatory reporting"
+        for record in records
+        if record.is_estimate and not record.estimation_methodology.strip()
+    ]
+
+
 __all__ = [
+    "estimate_disclosure_label",
+    "flag_undisclosed_estimates",
     "metric_record_from_value",
     "metric_records_from_reported_metrics",
     "metric_records_to_reported_metrics",

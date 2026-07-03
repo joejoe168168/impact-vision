@@ -13,6 +13,33 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ### Added
 
+- **July-2026 roadmap-update items shipped** (see
+  `docs/roadmap-updates-2026-07.md`):
+  - *SFDR 2.0 category preview* — `classify_sfdr2_category()` in
+    `frameworks/sfdr_pai.py` previews the proposed Sustainable / Transition /
+    ESG Basics labels (70% strategy-alignment threshold, mandatory-exclusion
+    screen, Art 8/9 migration map) and models the Council-position
+    flexibility (ramp-up phase-in, delayed illiquid-asset divestment) as
+    caveats. Exposed via `framework_assess` with `framework='sfdr2'`;
+    every output carries an explicit "proposed law, ~2029" status note.
+  - *AI-estimate provenance flag* — `MetricRecord` gains
+    `estimation_methodology` plus a serialized `is_estimate` computed field;
+    `estimate_disclosure_label()` / `flag_undisclosed_estimates()` in
+    `metric_records.py` produce the mandatory "ESTIMATE — methodology"
+    badge, which now travels through LP Q&A answers (`lp_narrative`) and 5D
+    evidence chains (`evidence_chain_renderer.MetricLink`).
+  - *EDCI-first collection scaffold* — `bundle_id='edci_core'` on
+    `build_data_request_pack()` scaffolds a data-room request pack from the
+    full EDCI metric set (core fields required, non-core optional, estimate
+    labelling guardrail on every field); `edci_core_iris_metric_ids()` +
+    the `sector='edci'` questionnaire template give collection flows the
+    IRIS+ equivalents of the core EDCI set.
+  - *Regulatory milestone watch-list* — `regulatory_watchlist()` in
+    `regulatory_calendar.py` tracks 11 market-wide milestones verified
+    2026-07 (ECGT, revised ESRS/VSME, ISSB nature ED, California SB 253,
+    ISSA 5000, EUDR, CSRD/CSDDD transposition, SFDR 2.0), surfaced through
+    the `regulatory_calendar` tool's new `watchlist` action.
+
 - **`impact_advisor` tool router.** New deterministic router for the 44-tool
   impact surface (`impact.tool_advisor` + `tools/impact/advisor_tool.py`).
   `action='route'` ranks the most relevant tools for a free-text request via

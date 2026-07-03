@@ -14,7 +14,7 @@ from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 
 class FrameworkInput(BaseModel):
-    framework: Literal["sasb", "gri", "tcfd", "sfdr_pai", "edci", "unpri", "toc", "issb_s1", "issb_s2", "esrs", "vsme", "two_x", "tisfd", "opim", "cdp", "all"] = Field(
+    framework: Literal["sasb", "gri", "tcfd", "sfdr_pai", "sfdr2", "edci", "unpri", "toc", "issb_s1", "issb_s2", "esrs", "vsme", "two_x", "tisfd", "opim", "cdp", "all"] = Field(
         description=(
             "Which framework to query. 'all' runs a quick scan across all frameworks."
         )
@@ -41,6 +41,14 @@ class FrameworkInput(BaseModel):
         default="",
         description="Filter by category within a framework (e.g., 'environment', 'social', 'economic')",
     )
+    sfdr2_inputs: dict = Field(
+        default_factory=dict,
+        description=(
+            "Structured inputs for framework='sfdr2' assess (SFDR2Input fields: "
+            "current_article, pct_strategy_aligned, has_transition_plan, "
+            "invests_in_controversial_weapons, fund_in_ramp_up, ...)"
+        ),
+    )
 
 
 class FrameworkTool(BaseTool):
@@ -51,6 +59,8 @@ class FrameworkTool(BaseTool):
         "- **GRI**: Browse Universal + Topic Standards (200/300/400 series), match to relevant topics\n"
         "- **TCFD / IFRS S2**: Assess climate disclosure across 4 pillars (Governance, Strategy, Risk, Metrics)\n"
         "- **SFDR PAI**: Check coverage of 14 mandatory EU Principal Adverse Impact indicators\n"
+        "- **sfdr2**: SFDR 2.0 category preview (Sustainable / Transition / ESG Basics; "
+        "70% threshold + exclusion screen + Art 8/9 migration map; PROPOSED LAW, ~2029)\n"
         "- **EDCI**: Assess 2026 private-markets KPI fields, including non-core fields\n"
         "- **UNPRI**: Self-assess alignment with the 6 Principles for Responsible Investment\n"
         "- **ToC**: Theory of Change assessment using RS Group's Blended Value principles "
@@ -88,6 +98,7 @@ class FrameworkTool(BaseTool):
             "gri": self._handle_gri,
             "tcfd": self._handle_tcfd,
             "sfdr_pai": self._handle_sfdr,
+            "sfdr2": self._handle_sfdr2,
             "edci": self._handle_edci,
             "unpri": self._handle_unpri,
             "toc": self._handle_toc,
@@ -314,6 +325,55 @@ class FrameworkTool(BaseTool):
             return ToolResult(output="\n".join(lines), metadata=result)
 
         return ToolResult(output=f"SFDR does not support action: {args.action}", is_error=True)
+
+    def _handle_sfdr2(self, args: FrameworkInput) -> ToolResult:
+        from openharness.impact.frameworks.sfdr_pai import (
+            SFDR2_CATEGORY_DESCRIPTIONS,
+            SFDR2_STATUS_NOTE,
+            SFDR2Input,
+            classify_sfdr2_category,
+        )
+
+        if args.action == "list":
+            lines = ["SFDR 2.0 Product Categories (PROPOSED LAW)", "=" * 50, ""]
+            for key, desc in SFDR2_CATEGORY_DESCRIPTIONS.items():
+                lines.append(f"  {key}: {desc}")
+            lines += ["", f"Status: {SFDR2_STATUS_NOTE}"]
+            return ToolResult(output="\n".join(lines))
+
+        if args.action in ("match", "assess"):
+            try:
+                sfdr2_input = SFDR2Input.model_validate({
+                    "description": args.description,
+                    "document_text": args.document_text,
+                    **args.sfdr2_inputs,
+                })
+            except Exception as e:  # noqa: BLE001
+                return ToolResult(output=f"Invalid sfdr2_inputs: {e}", is_error=True)
+            result = classify_sfdr2_category(sfdr2_input)
+            payload = result.model_dump(mode="json")
+            lines = [
+                "SFDR 2.0 CATEGORY PREVIEW (proposed law)",
+                "=" * 50,
+                f"Candidate category: {result.category}",
+                f"  {result.description}",
+            ]
+            if result.threshold_met is not None:
+                lines.append(f"70% strategy-alignment threshold: {'met' if result.threshold_met else 'NOT met'}")
+            for item in result.rationale:
+                lines.append(f"  - {item}")
+            if result.exclusion_flags:
+                lines.append("Mandatory-exclusion flags:")
+                lines += [f"  ! {flag}" for flag in result.exclusion_flags]
+            if result.caveats:
+                lines.append("Caveats:")
+                lines += [f"  - {c}" for c in result.caveats]
+            if result.migration_note:
+                lines.append(f"Migration: {result.migration_note}")
+            lines += ["", f"Status: {result.status}"]
+            return ToolResult(output="\n".join(lines), metadata=payload)
+
+        return ToolResult(output=f"sfdr2 does not support action: {args.action}", is_error=True)
 
     def _handle_edci(self, args: FrameworkInput) -> ToolResult:
         from openharness.impact.frameworks.edci import assess_edci_coverage, get_edci_metrics
@@ -897,6 +957,7 @@ class FrameworkTool(BaseTool):
             "  gri       - GRI Universal + Topic Standards (30+ standards, 120+ disclosures)",
             "  tcfd      - TCFD / IFRS S2 Climate Disclosure (4 pillars, 11 disclosures)",
             "  sfdr_pai  - SFDR PAI Indicators (14 mandatory EU indicators)",
+            "  sfdr2     - SFDR 2.0 category preview (Sustainable/Transition/ESG Basics; proposed law)",
             "  edci      - EDCI 2026 private-markets KPI fields, including non-core fields",
             "  unpri     - UN PRI Self-Assessment (6 principles, 27 actions)",
             "  toc       - Theory of Change (RS Group Blended Value + GIIN ToC Checklist)",

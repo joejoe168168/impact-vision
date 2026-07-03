@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, computed_field, field_validator
 
 
 class DimensionTags(BaseModel):
@@ -149,7 +149,25 @@ class MetricRecord(BaseModel):
         "audited_statement",
     ] = Field(default="manual_entry", description="How the record entered the system")
     evidence_refs: list[str] = Field(default_factory=list, description="Evidence IDs, file paths, or URLs")
+    estimation_methodology: str = Field(
+        default="",
+        description=(
+            "How an estimated/modelled value was derived (model, proxy, emission "
+            "factor set, AI extraction...). Required disclosure practice: estimates "
+            "presented as measurements are a greenwashing exposure."
+        ),
+    )
     notes: str = ""
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def is_estimate(self) -> bool:
+        """True when this value is estimated/modelled rather than measured."""
+        return (
+            self.verification_status == "proxy_estimate"
+            or self.source_type == "proxy_estimate"
+            or bool(self.estimation_methodology.strip())
+        )
 
     @field_validator("metric_id")
     @classmethod

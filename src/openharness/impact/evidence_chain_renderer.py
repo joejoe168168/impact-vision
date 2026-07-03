@@ -30,6 +30,11 @@ class MetricLink(BaseModel):
     evidence_refs: list[str] = Field(default_factory=list)
     verification_status: str = "unverified"
     confidence: float = Field(ge=0.0, le=1.0, default=0.5)
+    is_estimate: bool = False
+    estimate_note: str = Field(
+        default="",
+        description="Estimate-disclosure badge (methodology) when the value is modelled, not measured",
+    )
 
 
 class ClaimLink(BaseModel):
@@ -106,6 +111,8 @@ def _metric_link(metric_id: str, value: Any, store: MetricStore, records: dict[s
     metric = store.get(metric_id)
     record = records.get(metric_id)
     if record is not None:
+        from openharness.impact.metric_records import estimate_disclosure_label
+
         return MetricLink(
             metric_id=metric_id,
             metric_name=metric.name if metric else metric_id,
@@ -115,6 +122,8 @@ def _metric_link(metric_id: str, value: Any, store: MetricStore, records: dict[s
             evidence_refs=record.evidence_refs,
             verification_status=record.verification_status,
             confidence=round(record.quality_score / 100, 2),
+            is_estimate=record.is_estimate,
+            estimate_note=estimate_disclosure_label(record),
         )
     return MetricLink(
         metric_id=metric_id,

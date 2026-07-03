@@ -485,6 +485,197 @@ def classify_sfdr_article(
     )
 
 
+# ---------------------------------------------------------------------------
+# SFDR 2.0 category preview (proposed law — NOT in force)
+#
+# The Commission's 2025-11-20 recast replaces the Article 6/8/9 split with
+# three voluntary product categories, each requiring >=70% of the portfolio to
+# follow the relevant strategy plus mandatory exclusions. The Council's
+# negotiating position (2026-06-24) keeps the categories and adds flexibility
+# the classifier below models as toggles: a phase-in for the 70% threshold
+# while a fund deploys capital, and permitted deviations for delayed
+# divestment from illiquid assets. Trilogue starts late 2026; application is
+# not expected before ~2029. Until then Article 6/8/9 remains the law.
+# ---------------------------------------------------------------------------
+
+SFDR2_STATUS_NOTE = (
+    "SFDR 2.0 is PROPOSED LAW, not in force (Council position 2026-06-24; "
+    "trilogue from late 2026; application expected ~2029 after a 24-month "
+    "implementation period). Classify against Article 6/8/9 for current "
+    "compliance; use this preview to plan label migration."
+)
+
+SFDR2_CATEGORY_DESCRIPTIONS: dict[str, str] = {
+    "sustainable": (
+        "Sustainable (revised Art 9): invests in economic activities that are "
+        "already environmentally or socially sustainable."
+    ),
+    "transition": (
+        "Transition (new Art 7): invests in assets on a credible improvement "
+        "pathway — transition plans, science-based targets, measurable progress."
+    ),
+    "esg_basics": (
+        "ESG Basics (new Art 8): applies binding ESG selection criteria without "
+        "claiming sustainability or transition outcomes."
+    ),
+    "unclassified": (
+        "Unclassified: no category claimed — analogous to today's Article 6 "
+        "(categories are voluntary under the proposal)."
+    ),
+}
+
+_SFDR2_THRESHOLD_PCT = 70.0
+
+
+class SFDR2Input(BaseModel):
+    """Structured inputs for the SFDR 2.0 category preview."""
+
+    description: str = ""
+    document_text: str = ""
+    current_article: int | None = Field(
+        default=None, description="Current SFDR classification (6, 8, or 9) if known"
+    )
+    has_sustainable_objective: bool = False
+    has_transition_plan: bool = Field(
+        default=False,
+        description="Portfolio assets follow credible transition plans / science-based targets",
+    )
+    applies_binding_esg_criteria: bool = False
+    pct_strategy_aligned: float | None = Field(
+        default=None, ge=0, le=100,
+        description="% of portfolio following the category's ESG strategy (>=70% required)",
+    )
+    invests_in_controversial_weapons: bool = False
+    invests_in_tobacco_production: bool = False
+    has_ungc_oecd_violators: bool = False
+    coal_revenue_pct_max: float | None = Field(
+        default=None, ge=0, le=100,
+        description="Highest coal-revenue share among holdings, if known",
+    )
+    fund_in_ramp_up: bool = Field(
+        default=False,
+        description="Fund is still deploying capital (Council phase-in relief candidate)",
+    )
+    illiquid_divestment_pending: bool = Field(
+        default=False,
+        description="Below-threshold due to pending divestment of illiquid assets (Council deviation candidate)",
+    )
+    apply_council_flexibility: bool = Field(
+        default=True,
+        description="Model the Council-position phase-in / illiquid-asset deviations",
+    )
+
+
+class SFDR2Classification(BaseModel):
+    """SFDR 2.0 category preview result."""
+
+    category: Literal["sustainable", "transition", "esg_basics", "unclassified"]
+    description: str = ""
+    status: str = SFDR2_STATUS_NOTE
+    threshold_required_pct: float = _SFDR2_THRESHOLD_PCT
+    threshold_met: bool | None = None
+    exclusion_flags: list[str] = Field(default_factory=list)
+    migration_note: str = ""
+    rationale: list[str] = Field(default_factory=list)
+    caveats: list[str] = Field(default_factory=list)
+
+
+_ARTICLE_TO_SFDR2: dict[int, tuple[str, str]] = {
+    9: ("sustainable", "Art 9 funds are the natural candidates for the Sustainable category, but must re-evidence the 70% threshold and mandatory exclusions."),
+    8: ("esg_basics", "Art 8 funds map to ESG Basics by default; those holding credible transition-plan assets may instead target the Transition category."),
+    6: ("unclassified", "Art 6 funds remain unclassified unless they adopt one of the voluntary categories."),
+}
+
+
+def classify_sfdr2_category(input: SFDR2Input) -> SFDR2Classification:  # noqa: A002
+    """Preview which SFDR 2.0 category a fund could claim (proposed law).
+
+    Deterministic screen: category candidate from objectives / transition
+    plans / binding criteria (falling back to the Art 6/8/9 migration map),
+    the >=70% strategy-alignment threshold, and the mandatory-exclusion flags
+    shared by all three categories. Council-position flexibility (threshold
+    phase-in during ramp-up, delayed divestment of illiquid assets) is
+    modelled as caveats, not as a pass.
+    """
+    text = f"{input.description} {input.document_text}".lower()
+    rationale: list[str] = []
+
+    # --- category candidate -------------------------------------------------
+    transition_signals = input.has_transition_plan or any(
+        term in text for term in ("transition plan", "science-based target", "sbti", "decarbonisation pathway", "decarbonization pathway")
+    )
+    if input.has_sustainable_objective or input.current_article == 9:
+        category = "sustainable"
+        rationale.append("Sustainable-investment objective (or current Art 9 status) → Sustainable candidate.")
+    elif transition_signals:
+        category = "transition"
+        rationale.append("Credible transition-plan / science-based-target signals → Transition candidate.")
+    elif input.applies_binding_esg_criteria or input.current_article == 8:
+        category = "esg_basics"
+        rationale.append("Binding ESG selection criteria (or current Art 8 status) → ESG Basics candidate.")
+    else:
+        category = "unclassified"
+        rationale.append("No category-qualifying strategy found — categories are voluntary; fund stays unclassified.")
+
+    # --- 70% threshold --------------------------------------------------------
+    caveats: list[str] = []
+    threshold_met: bool | None = None
+    if category != "unclassified":
+        if input.pct_strategy_aligned is None:
+            caveats.append(
+                "pct_strategy_aligned not supplied — the >=70% portfolio-alignment "
+                "threshold could not be checked."
+            )
+        else:
+            threshold_met = input.pct_strategy_aligned >= _SFDR2_THRESHOLD_PCT
+            rationale.append(
+                f"Strategy alignment {input.pct_strategy_aligned:.0f}% vs >=70% required → "
+                + ("met." if threshold_met else "NOT met.")
+            )
+            if not threshold_met and input.apply_council_flexibility:
+                if input.fund_in_ramp_up:
+                    caveats.append(
+                        "Council position: the Commission may set phase-in rules for "
+                        "funds still deploying capital — the shortfall may be tolerated "
+                        "during ramp-up (delegated act pending)."
+                    )
+                if input.illiquid_divestment_pending:
+                    caveats.append(
+                        "Council position: limited deviations may be permitted for "
+                        "delayed divestment from illiquid assets (delegated act pending)."
+                    )
+
+    # --- mandatory exclusions -------------------------------------------------
+    exclusion_flags: list[str] = []
+    if input.invests_in_controversial_weapons:
+        exclusion_flags.append("Controversial weapons exposure — excluded in every SFDR 2.0 category.")
+    if input.invests_in_tobacco_production:
+        exclusion_flags.append("Tobacco production exposure — excluded in every SFDR 2.0 category.")
+    if input.has_ungc_oecd_violators:
+        exclusion_flags.append("UNGC / OECD Guidelines violators in portfolio — excluded in every SFDR 2.0 category.")
+    if input.coal_revenue_pct_max is not None and input.coal_revenue_pct_max > 0 and category in ("sustainable", "transition"):
+        exclusion_flags.append(
+            f"Coal revenue exposure up to {input.coal_revenue_pct_max:.0f}% — check the "
+            "category-specific coal-revenue threshold in the final text."
+        )
+    if exclusion_flags and category != "unclassified":
+        rationale.append("Mandatory-exclusion breaches would disqualify the category claim until resolved.")
+
+    migration_note = ""
+    if input.current_article in _ARTICLE_TO_SFDR2:
+        migration_note = _ARTICLE_TO_SFDR2[input.current_article][1]
+
+    return SFDR2Classification(
+        category=category,
+        description=SFDR2_CATEGORY_DESCRIPTIONS[category],
+        threshold_met=threshold_met,
+        exclusion_flags=exclusion_flags,
+        migration_note=migration_note,
+        rationale=rationale,
+        caveats=caveats,
+    )
+
+
 def assess_sfdr_entity_vs_fund(
     entity_description: str = "",
     fund_descriptions: list[dict[str, str]] | None = None,

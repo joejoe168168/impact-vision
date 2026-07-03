@@ -239,10 +239,14 @@ class LPQuestionWorkspace(BaseModel):
         if free_text.strip():
             answer_text_parts.append(free_text.strip())
         if cited_records:
+            from openharness.impact.metric_records import estimate_disclosure_label
+
             for record in cited_records:
+                estimate_note = estimate_disclosure_label(record)
+                suffix = f" [{estimate_note}]" if estimate_note else ""
                 answer_text_parts.append(
                     f"{record.metric_id} = {record.value} {record.unit} "
-                    f"({record.period}, {record.verification_status})"
+                    f"({record.period}, {record.verification_status}){suffix}"
                 )
         answer_text = "\n".join(answer_text_parts)
         citations = sorted({

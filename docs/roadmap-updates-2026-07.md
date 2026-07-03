@@ -7,6 +7,15 @@ early July 2026, plus the knowledge-base corrections already applied to the
 codebase. Feed these into v6 track prioritisation (or a future v7) — this doc
 does not change the v6 plan itself.
 
+**Status (2026-07-03):** the four actionable items below are **shipped**:
+SFDR 2.0 category preview (`classify_sfdr2_category` + `framework_assess`
+`sfdr2`), AI-estimate provenance flag (`MetricRecord.is_estimate` +
+disclosure badge through LP Q&A and evidence chains), EDCI-first collection
+scaffold (`edci_core` data-request pack + `sector='edci'` questionnaire
+template), and the milestone watch-list (`regulatory_calendar` `watchlist`
+action). The ESRS 2.0 datapoint refresh (§1.2) and ISSB nature Practice
+Statement mapping (§1.3) stay deferred until the final texts land.
+
 ---
 
 ## 1. What moved since roadmap-v6 was written
@@ -28,6 +37,8 @@ The Council of the EU settled its negotiating position on the SFDR recast:
 **Roadmap effect:** v6 Track A's Art 8/9 → new-label mapper stays P0, but the
 mapper should model the *Council* variant (phase-in + illiquid-asset
 deviations) as scenario toggles, since final text is ~2027.
+*(Shipped 2026-07-03 as `classify_sfdr2_category` — Council flexibility is
+modelled as caveats, never as a pass.)*
 
 ### 1.2 ESRS 2.0 — draft delegated act consulted, adoption imminent
 
@@ -94,14 +105,17 @@ tool descriptions now reference California SB 253/261 instead of the SEC rule.
 **Roadmap effect:** strongly validates v6 Track F (comparability engine) and
 Track E (governed AI). Two concrete additions worth ticketing:
 
-1. **Estimate provenance flag** — extend `MetricRecord` / copilot provenance
-   so any AI-estimated or modelled value carries an `estimated` badge +
-   methodology note through every report surface (HTML, XLSX, LP DDQ).
-2. **EDCI-first collection default** — make the EDCI metric set the default
-   scaffold in investee collection / data-room request packs, since it now
-   anchors LP-side automation.
+1. **Estimate provenance flag** *(shipped 2026-07-03)* — `MetricRecord`
+   carries `estimation_methodology` + a serialized `is_estimate` flag, and
+   the "ESTIMATE — methodology" badge travels through LP Q&A answers and 5D
+   evidence chains. Extending the badge to the HTML/XLSX report templates is
+   the follow-up.
+2. **EDCI-first collection default** *(shipped 2026-07-03)* — the
+   `edci_core` data-request pack and the `sector='edci'` questionnaire
+   template scaffold collection from the EDCI metric set, with an
+   estimate-labelling guardrail on every field.
 
-### 1.6 Dates to watch (calendar candidates for `regulatory_calendar`)
+### 1.6 Dates to watch *(shipped 2026-07-03 — `regulatory_calendar` `watchlist` action)*
 
 | Date | Event |
 |---|---|

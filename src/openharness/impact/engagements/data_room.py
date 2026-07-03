@@ -246,6 +246,42 @@ _DEFAULT_FIELDS_BY_BUNDLE: dict[str, list[tuple[str, str, str, list[str]]]] = {
 }
 
 
+def edci_request_fields(*, required_only: bool = False) -> list[DataRequestField]:
+    """Build data-request fields from the EDCI metric set.
+
+    EDCI is the LP-side automation anchor (ILPA guidance): collecting against
+    the standardized EDCI fields serves LP reports, benchmarking, and most
+    bespoke DDQs at once. Non-core fields are marked optional.
+    """
+    from openharness.impact.frameworks.edci import get_edci_metrics
+
+    fields: list[DataRequestField] = []
+    for metric in get_edci_metrics(required_only=required_only):
+        frameworks = ["EDCI"]
+        if metric.iris_cross_refs:
+            frameworks.append("IRIS+")
+        if metric.gri_cross_refs:
+            frameworks.append("GRI")
+        if metric.sfdr_cross_refs:
+            frameworks.append("SFDR PAI")
+        fields.append(
+            DataRequestField(
+                metric_id=metric.id,
+                label=metric.name,
+                required=metric.required,
+                unit=metric.unit,
+                definition=metric.description,
+                acceptable_evidence=_default_evidence(metric.id),
+                common_mistakes=[
+                    "Reporting an AI-modelled estimate as a measured value without "
+                    "labelling it as an estimate and disclosing the methodology",
+                ],
+                frameworks=frameworks,
+            )
+        )
+    return fields
+
+
 def build_data_request_pack(
     *,
     engagement_id: str,
@@ -255,22 +291,29 @@ def build_data_request_pack(
     geography: str = "",
     extra_fields: Iterable[DataRequestField] | None = None,
 ) -> DataRequestPack:
-    """Build a smart data-request pack for the given bundle."""
-    defaults = _DEFAULT_FIELDS_BY_BUNDLE.get(bundle_id, [])
+    """Build a smart data-request pack for the given bundle.
+
+    ``bundle_id="edci_core"`` scaffolds the pack from the EDCI metric set
+    (the default LP-reporting collection target) instead of a bundle template.
+    """
     fields: list[DataRequestField] = []
-    for metric_id, label, unit, frameworks in defaults:
-        fields.append(
-            DataRequestField(
-                metric_id=metric_id,
-                label=label,
-                unit=unit,
-                frameworks=list(frameworks),
-                definition=_default_definition(metric_id, label),
-                examples=_default_examples(metric_id),
-                acceptable_evidence=_default_evidence(metric_id),
-                common_mistakes=_default_mistakes(metric_id),
+    if bundle_id == "edci_core":
+        fields.extend(edci_request_fields())
+    else:
+        defaults = _DEFAULT_FIELDS_BY_BUNDLE.get(bundle_id, [])
+        for metric_id, label, unit, frameworks in defaults:
+            fields.append(
+                DataRequestField(
+                    metric_id=metric_id,
+                    label=label,
+                    unit=unit,
+                    frameworks=list(frameworks),
+                    definition=_default_definition(metric_id, label),
+                    examples=_default_examples(metric_id),
+                    acceptable_evidence=_default_evidence(metric_id),
+                    common_mistakes=_default_mistakes(metric_id),
+                )
             )
-        )
     for extra in extra_fields or []:
         fields.append(extra)
     pack_title = title or f"Data request pack: {bundle_id}"
@@ -523,6 +566,7 @@ __all__ = [
     "MultiEntityRollup",
     "build_coaching_cards",
     "build_data_request_pack",
+    "edci_request_fields",
     "rollup_multi_entity",
     "score_completeness",
 ]
