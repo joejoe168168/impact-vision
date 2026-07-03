@@ -53,6 +53,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ### Changed
 
+- **README tidy-up (July 2026).** Trimmed ~140 lines of duplication: merged
+  the small prompt sections into grouped ones (catalog/DD/scoring, ESG
+  frameworks/ToC/compliance, pipeline/monitoring, v3 trust infrastructure),
+  condensed the provider-setup wizard transcripts, removed the CLI
+  quick-reference table (the CLI Reference section is the single source),
+  corrected the tool count (44), replaced the stale "EU Green Claims
+  Directive" row with ECGT (EU) 2024/825, and added SFDR 2.0 preview +
+  roadmap v5/v6/2026-07 pointers.
+
 - **ESG toolbox knowledge refresh (all 33 modules audited, June 2026 facts).**
   Every `impact.toolbox` module was reviewed for content depth and taxonomy
   pairing; thin and stale modules were enriched with verified current facts:

@@ -143,31 +143,10 @@ The AI agent needs a language model. We recommend **OpenRouter** for beginners -
 impact-vision setup
 ```
 
-The wizard will guide you through these prompts:
-
-```
-? Choose a provider workflow:
-  Anthropic-Compatible API  Claude / Kimi / GLM / MiniMax
-> OpenAI-Compatible API  OpenAI / OpenRouter          <-- select this
-  ...
-```
-
-```
-? Choose an OpenAI-compatible provider:
-  OpenAI official
-> OpenRouter                                          <-- select this
-```
-
-```
-? Base URL: https://openrouter.ai/api/v1              <-- press Enter (default)
-? Default model: openai/gpt-oss-120b:free             <-- type a model name
-```
-
-```
-? Enter API key for OpenRouter: sk-or-your-key-here    <-- paste your key
-```
-
-Done! You can now start the agent (Step 4).
+In the wizard pick **OpenAI-Compatible API** → **OpenRouter**, accept the
+default base URL (`https://openrouter.ai/api/v1`), type a model name
+(e.g. `openai/gpt-oss-120b:free`), and paste your key. Done — you can now
+start the agent (Step 4).
 
 > **Free models (verified May 2026):** Browse the live list at
 > [openrouter.ai/models?q=free](https://openrouter.ai/models?q=free).
@@ -185,26 +164,15 @@ Done! You can now start the agent (Step 4).
 
 #### Option B: Anthropic (Claude Sonnet) -- best quality for impact analysis
 
-1. Go to [console.anthropic.com](https://console.anthropic.com/), create an account
-2. Go to **API Keys** and create a key
-3. Run the wizard and choose **Anthropic-Compatible API** > **Claude official**:
-
-```bash
-impact-vision setup
-```
-
-4. Paste your API key when prompted (Claude Sonnet is the default model)
+Create a key at [console.anthropic.com](https://console.anthropic.com/), run
+`impact-vision setup`, choose **Anthropic-Compatible API** → **Claude
+official**, and paste the key (Claude Sonnet is the default model).
 
 #### Option C: OpenAI (GPT-5)
 
-1. Go to [platform.openai.com/api-keys](https://platform.openai.com/api-keys), create a key
-2. Run the wizard and choose **OpenAI-Compatible API** > **OpenAI official**:
-
-```bash
-impact-vision setup
-```
-
-3. Paste your API key when prompted
+Create a key at [platform.openai.com/api-keys](https://platform.openai.com/api-keys),
+run `impact-vision setup`, choose **OpenAI-Compatible API** → **OpenAI
+official**, and paste the key.
 
 #### Option D: NaxtClaude-compatible endpoint
 
@@ -242,10 +210,10 @@ No API key needed -- everything runs locally on your GPU/CPU.
 | OpenAI (GPT-5) | General purpose | Pay-per-use |
 | Ollama (local) | Privacy, offline use | Free (your hardware) |
 
-> **Model quality note:** Impact analysis requires models that support **tool calling** (function calling). Free models vary in quality -- some may not follow the impact expert persona or use the analysis tools correctly. For best results:
-> - **Recommended paid:** Claude Sonnet or GPT-5 for production DD work
-> - **Recommended free:** `openai/gpt-oss-120b:free`, `nvidia/nemotron-3-super-120b-a12b:free`, `z-ai/glm-4.5-air:free`
-> - **May struggle:** Very small models (<9B) or models without tool-calling support
+> **Model quality note:** impact analysis requires **tool calling**. Use
+> Claude Sonnet or GPT-5 for production DD work; the free models in the table
+> above are the best no-cost options. Very small models (<9B) or models
+> without tool-calling support will struggle.
 
 ### 4. Start the AI agent
 
@@ -309,25 +277,9 @@ streamlit run src/openharness/dashboard/app.py
 
 Opens a web dashboard at http://localhost:8501 with 5 tabs: Assessment, IRIS+ Catalog, DD Checklist, Framework Scan, and Portfolio.
 
-### Quick reference
-
-| Command | What it does |
-|---------|-------------|
-| `iv --help` | Show all commands |
-| `iv catalog stats` | Show catalog statistics |
-| `iv catalog search "query"` | Search IRIS+ metrics |
-| `iv framework list` | List all supported ESG / regulatory frameworks |
-| `iv framework scan "text"` | Quick multi-framework scan |
-| `iv framework xref OI4112` | Cross-reference a metric |
-| `iv dd list` | Show all 122 DD questions |
-| `iv dd categories` | List DD categories |
-| `iv dd analyze "text"` | Check text against DD checklist |
-| `iv ollama-setup` | Configure local LLM |
-| `iv serve-mcp` | Start MCP server for AI agents (44 impact tools + 5 resources) |
-| `iv serve-web` | Start Web Console + REST API at http://127.0.0.1:8787 |
-| `iv` | Start interactive AI agent |
-
-(`iv` is a shorthand for `impact-vision`)
+`iv` is a shorthand for `impact-vision` — see the full
+[CLI Reference](#cli-reference) below for every subcommand, including
+`iv serve-mcp` (MCP server) and `iv serve-web` (Web Console + REST API).
 
 ## Usage
 
@@ -363,8 +315,6 @@ Follow-up prompts that chain the v3/v4 tools on the same deal:
 > Run a 5-dimension assessment for BrightPath Finance with the claims you just extracted
 > Draft a Theory of Change for BrightPath and link it to IRIS+ metrics
 > Score greenwashing risk per-claim and show which claims need verification
-> Start an engagement workspace for BrightPath at the "scoping" stage
-> Attach a data pack: these metrics came from the audited FY24 statements
 > Build a completeness scorecard for the data pack and produce coaching cards
 > Run the AI extraction review queue over the claims you flagged as low-confidence
 ```
@@ -383,13 +333,9 @@ Example prompts:
 
 ```
 > List the ESG toolbox modules by category
-> Find toolbox modules for battery passport and product carbon footprint readiness
-> Build an EcoVadis preparation checklist for a manufacturing supplier
 > Assess CBAM readiness for CN code 7208 exported to the EU
-> Show the source profile for GRI and summarize the indexed disclosure topics in English
-> Crosswalk OI4112 and OI6697 to the carbon accounting and disclosure modules
+> Build an EcoVadis preparation checklist for a manufacturing supplier
 > Recommend ESG modules from our company description, metrics, export market, and supplier profile
-> Build an ESG workflow plan showing which Impact Vision tools can reuse the results
 > Create a minimal-input plan for SBTi readiness from our existing company profile and metrics
 ```
 
@@ -414,57 +360,32 @@ router: modules with a dedicated Impact Vision tool hand off to it
 (GRI / ESRS / ISSB / CDP → `framework_assess`, supplier audit schemes →
 `hrdd_assess`, battery / ESPR → `product_passport`, AA1000 →
 `verification_workspace`, EU deadlines incl. CBAM / EUDR / Battery Regulation →
-`regulatory_calendar`, GHG → `emission_factors`). Carbon modules
-strengthen emissions, climate-risk, and target-setting tools; export modules
-feed product-passport and regulatory-calendar workflows; supplier modules
-support HRDD, investee collection, and verification tasks; rating modules
-improve evidence review and greenwashing checks; disclosure modules enrich
-framework scans, reports, and LP narratives.
+`regulatory_calendar`, GHG → `emission_factors`). To minimise data entry it
+reuses uploaded documents, company profiles, metrics, product codes, and
+supplier context before asking for anything new: `recommend` routes a deal to
+the most relevant modules with UI-ready cards, and `input_plan` marks each
+field `provided` / `inferable` / `missing` and asks only the unresolved
+questions.
 
-For lower-friction data collection, the agent can reuse uploaded documents,
-company profiles, sectors, geographies, reported IRIS+ metrics, product
-codes, and supplier context before asking users for new ESG data. The
-`recommend` action routes a deal to the most relevant modules and produces
-UI-ready evidence cards. The `input_plan` action marks each field as
-`provided`, `inferable`, or `missing`, then asks only the unresolved
-follow-up questions.
-
-### Browsing the IRIS+ Catalog
+### Catalog, DD & Scoring
 
 ```
+# IRIS+ catalog
 > Search for IRIS+ metrics related to financial inclusion
 > Show me metrics mapped to SDG 7 (Clean Energy)
-> What metrics are tagged with the "What" dimension?
 > Get details for metric OI1479
-```
 
-### Running a DD Checklist
-
-```
+# DD checklist
 > Show me the full impact DD checklist
-> Which DD questions are about risk assessment?
 > Analyze this document against the DD checklist: /path/to/memo.pdf
-```
 
-### SDG Alignment Scoring
-
-```
+# SDG alignment + 5 Dimensions
 > Map BrightPath Finance to SDG goals. They report metrics PI4060, OI8869, OI6213...
-> Which SDGs does this company align with based on their financial inclusion work?
-```
-
-### 5-Dimension Assessment
-
-```
 > Score this company on the 5 Dimensions of Impact
 > What are the gaps in the "Contribution" dimension?
-```
 
-### Cross-Reference Lookup
-
-```
+# Cross-framework lookup
 > Look up cross-references for IRIS+ metric OI4112
-> Search cross-references for "gender" across all frameworks
 > What's the GRI equivalent of SFDR PAI indicator #1?
 ```
 
@@ -482,110 +403,58 @@ Reports are built for sharing with investment committees, LPs, and regulators: a
 
 ### Improving Scores Through Q&A
 
-Ask the agent to help you improve your impact scores interactively:
-
 ```
 > Help me improve my impact scores for this pig farm
 > Ask me questions to strengthen the assessment
 ```
 
-The agent will:
-1. Identify your weakest scoring dimensions
-2. Ask targeted questions (e.g., "How many direct beneficiaries?", "Do you track emissions?")
-3. Map your answers to IRIS+ metrics
-4. Re-run the assessment and show exactly how your answers improved each dimension
+The agent identifies your weakest dimensions, asks targeted questions
+("How many direct beneficiaries?", "Do you track emissions?"), maps your
+answers to IRIS+ metrics, and re-runs the assessment to show exactly how
+each answer improved the score.
 
-### ESG Framework Assessment
+### ESG Frameworks, Theory of Change & Compliance
 
 ```
+# Multi-framework assessment
 > Scan this company against all ESG frameworks
 > What are the material SASB topics for a fintech company?
-> Assess TCFD alignment for our climate disclosure
-> Check SFDR PAI compliance for the portfolio
-> Show the EDCI 2026 private-markets KPI fields and which we're reporting
-> Run a UNPRI self-assessment for our fund
-> Assess ISSB IFRS S1 general disclosure readiness
-> Check ISSB IFRS S2 climate disclosure for our carbon data
-> Run EU CSRD/ESRS double materiality assessment
+> Assess TCFD / ISSB S1+S2 / EU CSRD-ESRS readiness for our disclosures
 > Classify our fund under SFDR Article 6/8/9
-```
+> Preview our SFDR 2.0 category (Sustainable / Transition / ESG Basics)
 
-### Theory of Change Assessment
-
-```
-> Assess our fund's Theory of Change against RS Group's Blended Value principles
-> Check our ToC against the GIIN IRIS+ checklist
+# Theory of Change
+> Assess our fund's ToC against RS Group's Blended Value principles and the GIIN checklist
 > Help me develop a Theory of Change for our microfinance investment
-> List all RS Group principles and GIIN ToC steps
-```
 
-### Greenwashing & Compliance Checks
-
-```
+# Greenwashing & compliance
 > Run a greenwashing check on this pitch deck
-> Assess EU Green Claims Directive compliance
-> Check UK FCA Anti-Greenwashing Rule alignment
+> Assess EU green-claims (ECGT) and UK FCA Anti-Greenwashing Rule alignment
 > Compute the Green Authenticity Index and Cheap Talk Index for this report
-```
 
-### Impact Verification & Product Passport
-
-```
+# Verification & product passport
 > Check our readiness for IFC OPIM verification
-> Import Digital Product Passport data from this JSON file
-> Map DPP categories to IRIS+ and ESRS metrics
+> Import Digital Product Passport data and map it to IRIS+/ESRS metrics
 ```
 
-### LP DDQ Export
+### LP DDQ Export & Portfolio Batch Analysis
 
 ```
 > Generate an ILPA DDQ response for BrightPath Finance
-> Create a GIIN/IRIS+ impact report template
 > Export EDCI annual survey as XLSX: output_path="edci_survey.xlsx"
-```
-
-### Portfolio Batch Analysis
-
-```
 > Analyze this portfolio CSV file: examples/sample_portfolio.csv
-> Generate aggregated SDG coverage for the portfolio
-> Run portfolio roll-up with fund-level 5D scores
-> Generate an LP report for our fund
+> Run portfolio roll-up with fund-level 5D scores and generate an LP report
 > Show impact attribution by sector and geography
 ```
 
-### Pipeline Management
+### Pipeline, Monitoring & Guided Assessment
 
 ```
 > Add EcoFinance to the pipeline at screening stage
 > Transition EcoFinance to DD in progress with rationale "Strong SDG alignment"
-> Show the pipeline dashboard
-> List all companies at IC review stage
-```
-
-### Continuous Monitoring
-
-```
-> Set quarterly monitoring for EcoFinance
-> Record metric PI4060 = 15000 for EcoFinance
-> Check alerts for our portfolio
-> Run a full re-assessment for EcoFinance
-```
-
-### Guided Assessment
-
-```
-> Start a screening assessment for BrightPath Finance
-> What's the next step in the assessment?
-> Submit company description data for the current step
-```
-
-### Stakeholder Voice & Beneficiary Feedback
-
-```
-> Build a Lean Data survey template for smallholder farmers in Kenya
-> Register GDPR-compliant consent records for 50 beneficiaries
-> Score feedback quality and link responses to our outcome claims
+> Set quarterly monitoring for EcoFinance and record metric PI4060 = 15000
+> Check alerts for our portfolio and run a full re-assessment for EcoFinance
+> Start a screening assessment for BrightPath Finance — what's the next step?
 ```
 
 ### Climate Accounting (Scope 1/2/3 + PCAF)
@@ -597,36 +466,27 @@ The agent will:
 > Check SBTi 1.5 °C alignment
 ```
 
-### AI Extraction Review & Evidence Governance
+### Trust Infrastructure (v3): evidence governance, LP narrative & queries
 
 ```
-> Show the AI extraction review queue for BrightPath
+# Stakeholder voice
+> Build a Lean Data survey template for smallholder farmers in Kenya
+> Register GDPR-compliant consent records and link feedback to outcome claims
+
+# AI extraction review + verification
 > Auto-approve claims above 0.85 confidence that cite audited sources
-> Flag any claim without a source URL for human review
 > Open a verification workspace for the assurer and share only approved evidence
-```
 
-### LP Narrative & Q&A (grounded in verified data)
-
-```
+# LP narrative + Q&A (verified data only)
 > Generate an LP quarterly narrative for the Inclusive Finance fund
 > Answer LP question "what % of beneficiaries are women" using only approved data
-> Export the Q&A transcript with citations for the LPAC meeting
-```
 
-### Portfolio Natural-Language Query
-
-```
+# Portfolio natural-language query
 > What was the average CO2e intensity across the climate portfolio last year?
 > Top 5 companies by beneficiary reach, verified data only
-> Compare SDG 5 coverage between Fund I and Fund II
-```
 
-### Exit Impact Assessment (OPIM Principle 8)
-
-```
-> Score exit-impact durability for Solar Co with acquirer profile "strategic utility"
-> List unmitigated risks and build a 12-month exit impact plan
+# Exit impact (OPIM Principle 8)
+> Score exit-impact durability for Solar Co and build a 12-month exit impact plan
 ```
 
 ### Consultant Engagements (v4 workspace)
@@ -823,15 +683,10 @@ The built-in due diligence checklist includes **122 questions** across **34 cate
 - **AFME / Neotas / OECD** - ESG Due Diligence frameworks
 - **Sector-specific**: 15 sectors including fintech, healthcare, agriculture, energy, education, manufacturing, transport, construction, tourism, retail, mining, media, professional services, waste management, and ICT
 
-Each addressed question is assessed using **NESTA Standards of Evidence** (levels 1-5):
-
-| Level | Description |
-|------:|-------------|
-| 1 | Narrative / anecdotal only (self-reported, no data) |
-| 2 | Output data (quantified activities, e.g. # served) |
-| 3 | Outcome data measured (pre/post, surveys, tracked KPIs) |
-| 4 | Controlled comparison (quasi-experimental, benchmarks) |
-| 5 | Rigorous evaluation (RCT, independent audit, causal attribution) |
+Each addressed question is assessed using **NESTA Standards of Evidence**,
+from level 1 (narrative/anecdotal only) through level 3 (measured outcome
+data) to level 5 (rigorous evaluation — RCT, independent audit, causal
+attribution).
 
 Questions are organized into **34 categories** (18 core + 15 sector-specific + 1 SDG):
 
@@ -911,11 +766,12 @@ cross-references to IRIS+ metric IDs via the shared
 | | 2X Criteria | Gender-lens investing standard (6 dimensions + governance/GBVH minimum requirements) |
 | | TISFD (beta) | Inequality & Social-related Financial Disclosures readiness: 4 pillars, 13 disclosures, GRI/ESRS crosswalk |
 | **Regulatory** | SFDR | 14 mandatory + 9 optional PAI indicators, Article 6/8/9 classification, deadline scheduler |
+| | SFDR 2.0 preview | Sustainable / Transition / ESG Basics category preview (70% threshold + exclusions + Art 8/9 migration; proposed law, ~2029) |
 | | EU Omnibus I scope | CSRD/CSDDD in-scope decision tree (employee + turnover thresholds, FY2025-26 pause, VSME fallback) |
 | | CSDDD / HRDD | UNGP + OECD 6-step value-chain human-rights due diligence (salience ranking, grievance score, remediation tracker, readiness band) |
 | | EU Taxonomy | 6 environmental objectives, DNSH + Minimum Safeguards |
 | | UK FCA Anti-Greenwashing Rule | Fair/clear/not-misleading assessment |
-| | EU Green Claims Directive | Evidence, comparability, third-party verification |
+| | EU green claims (ECGT 2024/825) | Substantiation checks per the Empowering Consumers Directive (applies Sep 2026), plus stricter suspended-GCD best practice |
 | | EU Digital Product Passport (ESPR) | Import + map to IRIS+/ESRS/SDG |
 | | Per-jurisdiction packs | EU-SFDR, EU-CSRD, EU-CSDDD, UK-FCA-SDR, US-SEC-ESG, HK-HKEX-ESG, AU-AASB-S2, ISSB-global |
 | **Climate & nature** | PCAF | Financed-emissions attribution, sector defaults, weighted data quality |
@@ -997,7 +853,7 @@ REST API, and MCP server see the same surface.
 | Tool | Description |
 |------|-------------|
 | `decision_workflow` | Quick screen, IC memo proof bundle, deal comparison, LP readiness, and context-driven impact target setting (`set_targets`) |
-| `regulatory_calendar` | Jurisdiction-specific reporting deadlines for fund and engagement planning |
+| `regulatory_calendar` | Jurisdiction-specific reporting deadlines plus a market-wide milestone watch-list (ECGT, revised ESRS, ISSA 5000, EUDR, CSDDD, SFDR 2.0) |
 
 **Portfolio workflow (5)**
 
@@ -1069,7 +925,7 @@ The dashboard has 6 tabs:
 ## Web Console (power-user UI)
 
 For a browser-native surface to every tool — useful when you want the
-full 46-tool set at your fingertips rather than Streamlit's 5 curated
+full 44-tool set at your fingertips rather than Streamlit's curated
 tabs — run the **web console**:
 
 ```bash
@@ -1080,15 +936,11 @@ impact-vision serve-web
 uvicorn openharness.web.app:app --host 127.0.0.1 --port 8787
 ```
 
-The console is a **single self-contained HTML file** (no build step, no
-JS framework) that sits on top of the existing FastAPI gateway:
-
-- Lists every impact tool in a searchable sidebar (`Ctrl/⌘+K` to focus).
-- Derives typed forms from `/openapi.json` and `POST`s to `/api/v1/*`.
-- Shows JSON results in a syntax-highlighted pane, with copy / save buttons.
-- Persists every run to `localStorage` so you can re-hydrate old invocations.
-- Optional bearer-token box for `IMPACT_VISION_API_KEY`-protected deployments.
-- Links to the live `/docs` (Swagger) and the GitHub repo.
+The console is a **single self-contained HTML file** (no build step, no JS
+framework) on top of the existing FastAPI gateway: a searchable tool sidebar
+(`Ctrl/⌘+K`), typed forms derived from `/openapi.json`, syntax-highlighted
+JSON results with copy/save, run history in `localStorage`, and an optional
+bearer-token box for `IMPACT_VISION_API_KEY`-protected deployments.
 
 ## Development
 
@@ -1188,6 +1040,16 @@ Strategy and engineering plans live in [`docs/`](docs/):
 - [`docs/roadmap-v4.md`](docs/roadmap-v4.md) — Consultant-led engagement
   suite (Tracks 3-10). Backend shipped; frontend + paid-data wiring
   deferred to Wave 5.
+- [`docs/roadmap-v5.md`](docs/roadmap-v5.md) — Legally-current + frontier
+  measurement wave (Omnibus I, IFVI valuation, QALYs, 2X, TISFD, HRDD,
+  NGFS climate scenarios). Shipped.
+- [`docs/roadmap-v6.md`](docs/roadmap-v6.md) — "Comparable, assured &
+  connected" wave (XBRL, ISSA 5000, SFDR 2.0, nature/carbon integrity,
+  regulatory radar). Planning.
+- [`docs/roadmap-updates-2026-07.md`](docs/roadmap-updates-2026-07.md) —
+  July-2026 regulatory/market delta; its four actionable items (SFDR 2.0
+  preview, estimate provenance, EDCI-first collection, milestone
+  watch-list) are shipped.
 - [`ROADMAP.md`](ROADMAP.md) — historical engineering record.
 - [`CHANGELOG.md`](CHANGELOG.md) — release notes.
 
