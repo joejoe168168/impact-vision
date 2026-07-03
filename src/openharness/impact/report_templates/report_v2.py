@@ -323,10 +323,18 @@ def render_hero(
 
     ``meta`` is a list of (label, value) tuples. ``tags`` is a list of
     short strings displayed as pills (impact themes, SDG numbers, …).
+
+    ``title`` / ``subtitle`` / ``eyebrow`` may carry intentional markup, so
+    callers escape those; ``tags`` and ``meta`` are plain user-derived strings
+    (impact themes, company facts) and are escaped here.
     """
-    tag_items = "".join(f'<span class="tag">{t}</span>' for t in tags)
+    from html import escape as _escape
+
+    tag_items = "".join(f'<span class="tag">{_escape(str(t))}</span>' for t in tags)
     tag_row = f'<div class="tag-row">{tag_items}</div>' if tag_items else ""
-    meta_items = "".join(f"<span><b>{k}:</b> {v}</span>" for k, v in meta)
+    meta_items = "".join(
+        f"<span><b>{_escape(str(k))}:</b> {_escape(str(v))}</span>" for k, v in meta
+    )
     meta_row = f'<div class="meta-row">{meta_items}</div>' if meta_items else ""
     subtitle_html = f'<p class="subtitle">{subtitle}</p>' if subtitle else ""
     return (

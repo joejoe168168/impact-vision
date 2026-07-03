@@ -8,6 +8,16 @@ report on both:
      financial position and performance.
 
 Reference: EFRAG Final ESRS Set 1 (July 2023), EU Delegated Regulation (EU) 2023/2772.
+
+Status note (verified 2026-07): Omnibus I (Directive (EU) 2026/470, in force
+2026-03-18) narrowed CSRD scope to >1,000 employees AND >€450M turnover, and a
+revised, simplified ESRS set ("ESRS 2.0", ~60% fewer mandatory datapoints, same
+2 cross-cutting + 10 topical architecture) is being adopted as a delegated act
+in late 2026 with mandatory application for FY2027 (early adoption allowed for
+FY2026). The topical structure below therefore stays valid; individual
+datapoint lists will slim down when the revised delegated act lands. The VSME
+voluntary standard doubles as the value-chain cap for <1,000-employee
+suppliers.
 """
 
 from __future__ import annotations

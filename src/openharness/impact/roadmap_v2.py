@@ -518,7 +518,7 @@ JURISDICTION_PROFILES: dict[str, JurisdictionProfile] = {
     "Japan": JurisdictionProfile(jurisdiction="Japan", frameworks=["ISSB"], notes="SSBJ/ISSB-aligned profile"),
     "Australia": JurisdictionProfile(jurisdiction="Australia", frameworks=["AASB S2", "ISSB"], notes="AASB S2 climate profile"),
     "Canada": JurisdictionProfile(jurisdiction="Canada", frameworks=["ISSB"], notes="CSSB/ISSB-aligned profile"),
-    "US": JurisdictionProfile(jurisdiction="US", frameworks=["SEC climate", "state climate"], notes="SEC and state climate profile"),
+    "US": JurisdictionProfile(jurisdiction="US", frameworks=["California SB 253/261", "state climate"], notes="State-level climate profile (SEC climate rule rescission proposed 2026)"),
 }
 
 

@@ -224,17 +224,40 @@ _UK = RegulatoryJurisdictionProfile(
 
 _US = RegulatoryJurisdictionProfile(
     jurisdiction="US",
-    frameworks=["SEC climate rule", "State climate rules", "ISSB (voluntary)"],
+    frameworks=["California SB 253/261", "State climate rules", "ISSB (voluntary)"],
     obligations=[
         RegulatoryObligation(
-            obligation_id="sec_climate_risk",
-            framework="SEC climate rule",
-            title="Climate-related risks in Form 10-K / 10-Q",
-            summary="Material climate risks, GHG emissions (where applicable), financial impacts.",
+            obligation_id="ca_sb253_ghg_report",
+            framework="California SB 253",
+            title="California SB 253 GHG emissions report",
+            summary=(
+                "Entities doing business in California with >$1B revenue must "
+                "report Scope 1+2 GHG emissions annually (first report due "
+                "2026-11-10 after CARB's deferral); Scope 3 phases in from 2027 "
+                "with escalating assurance."
+            ),
             recurrence="annual",
+            owner_hint="ESG analyst",
+        ),
+        RegulatoryObligation(
+            obligation_id="ca_sb261_climate_risk",
+            framework="California SB 261",
+            title="California SB 261 climate-risk report (enforcement stayed)",
+            summary=(
+                "Entities doing business in California with >$500M revenue: "
+                "biennial TCFD-style climate-risk report. Enforcement is stayed "
+                "by a Ninth Circuit injunction (as of mid-2026) — monitor the appeal."
+            ),
+            recurrence="annual",
+            owner_hint="ESG / legal",
         ),
     ],
-    notes="SEC climate rule + California SB 253/261 for in-scope filers.",
+    notes=(
+        "No federal climate-disclosure mandate: the SEC's 2024 climate rule never "
+        "took effect and the SEC formally proposed its rescission on 2026-05-29. "
+        "California SB 253/261 (plus copycat state bills) are the operative US "
+        "obligations; ISSB remains voluntary."
+    ),
 )
 
 _SG = RegulatoryJurisdictionProfile(

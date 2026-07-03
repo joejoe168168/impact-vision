@@ -441,8 +441,18 @@ def _generate_recommendations(
 
 
 # ---------------------------------------------------------------------------
-# EU Green Claims Directive (Directive on Substantiation of Green Claims)
-# Ref: COM/2023/166 final — adopted 2024, enforcement from 2026.
+# EU green-claims substantiation screen.
+#
+# Status note (verified 2026-07): the proposed Green Claims Directive
+# (COM/2023/166) was NEVER adopted — trilogue collapsed in June 2025 and the
+# proposal is suspended. The binding EU anti-greenwashing instrument is the
+# Empowering Consumers for the Green Transition Directive (EU) 2024/825
+# ("ECGT", amending the UCPD), which applies from 27 September 2026 and bans
+# generic environmental claims ("eco-friendly", "green", "climate neutral")
+# that cannot be substantiated with recognised excellent environmental
+# performance, and offsetting-based neutrality claims. The checks below keep
+# the stricter GCD-style tests (LCA, accredited verification) as best
+# practice on top of the ECGT baseline.
 # ---------------------------------------------------------------------------
 
 _ENVIRONMENTAL_CLAIM_PATTERNS: list[str] = [
@@ -479,9 +489,13 @@ def assess_green_claims_compliance(
     has_lca: bool = False,
     has_independent_verification: bool = False,
 ) -> GreenClaimsResult:
-    """Check company claims against the EU Green Claims Directive.
+    """Check company claims against EU green-claims rules.
 
-    The directive requires:
+    Baseline: ECGT Directive (EU) 2024/825 (applies 27 Sep 2026) — generic
+    environmental claims must be substantiated; offsetting-based carbon/climate
+    neutrality claims are banned outright. Layered on top are the stricter
+    (currently suspended) Green Claims Directive proposals kept as best
+    practice:
     1. Environmental claims are substantiated by scientific evidence.
     2. Claims about overall environmental impact require full life-cycle assessment.
     3. Claims are verified by an accredited independent verifier.
@@ -522,11 +536,14 @@ def assess_green_claims_compliance(
         recs.append("Commission a life-cycle assessment covering full product/service life cycle")
 
     if claims and not has_independent_verification:
-        issues.append("Environmental claims require verification by an accredited independent body (Art. 10)")
-        recs.append("Engage an accredited verifier per EU Green Claims Directive Art. 10")
+        issues.append(
+            "Environmental claims lack independent verification (best practice per "
+            "the proposed Green Claims Directive Art. 10; ECGT still requires substantiation)"
+        )
+        recs.append("Engage an accredited verifier to substantiate environmental claims")
 
     if not claims and not lca_triggers:
-        recs.append("No explicit environmental claims detected — directive may not apply")
+        recs.append("No explicit environmental claims detected — EU green-claims rules may not apply")
 
     compliant = bool(claims) and not issues
 

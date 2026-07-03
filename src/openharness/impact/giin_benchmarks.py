@@ -189,16 +189,20 @@ def _percentile_estimate(value: float, b: KpiBenchmark) -> float:
     if b.direction == "higher_better":
         if value <= b.p25:
             return round(max(1.0, 25.0 * (value / b.p25)) if b.p25 else 1.0, 1)
-        if value >= b.p90:
+        if value > b.p90:
             return 95.0
         for (v0, pct0), (v1, pct1) in zip(markers, markers[1:]):
             if v0 <= value <= v1 and v1 != v0:
                 return round(pct0 + (pct1 - pct0) * (value - v0) / (v1 - v0), 1)
         return 50.0
-    # lower_better: smaller value → higher percentile
+    # lower_better: smaller value → higher percentile. Interpolate below p25 so
+    # the estimate is continuous at the marker (a fixed 90.0 previously jumped
+    # to 75.0 the moment the value crossed p25).
     if value <= b.p25:
-        return 90.0
-    if value >= b.p90:
+        if not b.p25:
+            return 99.0
+        return round(min(99.0, 100.0 - 25.0 * (value / b.p25)), 1)
+    if value > b.p90:
         return 5.0
     for (v0, pct0), (v1, pct1) in zip(markers, markers[1:]):
         if v0 <= value <= v1 and v1 != v0:

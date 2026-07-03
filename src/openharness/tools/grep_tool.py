@@ -168,6 +168,10 @@ async def _rg_grep(
         "--line-number",
         "--color",
         "never",
+        # Emit forward-slash paths on every platform so downstream consumers
+        # (and tests) see stable `dir/file.py:line:text` output on Windows too.
+        "--path-separator",
+        "/",
     ]
     if include_hidden:
         cmd.append("--hidden")
@@ -313,7 +317,7 @@ async def _collect_rg_matches(
             continue
         if not raw:
             break
-        line = raw.decode("utf-8", errors="replace").rstrip("\n")
+        line = raw.decode("utf-8", errors="replace").rstrip("\r\n")
         if line:
             matches.append(line)
 
@@ -335,7 +339,7 @@ async def _collect_rg_file_matches(
             continue
         if not raw:
             break
-        line = raw.decode("utf-8", errors="replace").rstrip("\n")
+        line = raw.decode("utf-8", errors="replace").rstrip("\r\n")
         if not line:
             continue
         matches.append(f"{_format_path(path, display_base)}:{line}")

@@ -86,11 +86,13 @@ async def test_task_and_todo_flow_across_registry(tmp_path: Path, monkeypatch):
     assert "'progress': '25'" in task_detail.output
     assert "'status_note': 'started'" in task_detail.output
 
-    for _ in range(20):
+    # Windows bash login-shell startup can take several seconds, so poll
+    # generously (up to ~20s) rather than the 2s that flaked on CI/Windows.
+    for _ in range(100):
         output = await task_output.execute(task_output.input_model(task_id=task_id), context)
         if "INTEGRATION_TASK_OK" in output.output:
             break
-        await asyncio.sleep(0.1)
+        await asyncio.sleep(0.2)
     else:
         raise AssertionError("task output did not become available in time")
 

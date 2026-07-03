@@ -67,47 +67,6 @@ class ToolboxWorkflowResult(BaseModel):
     next_questions: list[str] = Field(default_factory=list)
 
 
-_FIELD_SUGGESTION_RULES: tuple[tuple[str, tuple[str, ...], tuple[str, ...]], ...] = (
-    (
-        "sector",
-        (
-            "agriculture",
-            "agritech",
-            "food",
-            "solar",
-            "energy",
-            "fintech",
-            "finance",
-            "health",
-            "education",
-            "water",
-            "manufacturing",
-            "mining",
-            "battery",
-            "steel",
-            "cement",
-        ),
-        ("company_description",),
-    ),
-    (
-        "jurisdiction",
-        (
-            "EU",
-            "European Union",
-            "US",
-            "United States",
-            "UK",
-            "Singapore",
-            "Hong Kong",
-            "China",
-            "Africa",
-            "Kenya",
-            "India",
-        ),
-        ("company_description", "geography"),
-    ),
-)
-
 _TOOL_ROUTE_TERMS: dict[str, list[str]] = {
     "ghg": ["scope 1", "scope 2", "ghg", "greenhouse", "emission", "carbon inventory"],
     "carbon-calculator": ["manufacturing", "factory", "electricity", "fuel", "scope 3", "carbon footprint"],
@@ -451,6 +410,12 @@ def _matched_terms(context: str, terms: list[str]) -> list[str]:
     return out
 
 
+def _term_in(context: str, term: str) -> bool:
+    """Word-boundary containment so short terms like 'eu' or 'uk' cannot match
+    inside words such as 'entrepreneur' or 'ukulele'."""
+    return bool(re.search(r"\b" + re.escape(term).replace(r"\ ", r"\s+") + r"\b", context))
+
+
 def _category_score(categories: list[str], context: str, metrics: dict[str, object]) -> int:
     score = 0
     if "carbon" in categories and (
@@ -458,7 +423,7 @@ def _category_score(categories: list[str], context: str, metrics: dict[str, obje
         or {"OI4112", "OI1479", "PD9427", "OI6697"} & {str(k).upper() for k in metrics}
     ):
         score += 22
-    if "export" in categories and any(term in context for term in ("export", "eu", "cbam", "battery", "customs", "deforestation")):
+    if "export" in categories and any(_term_in(context, term) for term in ("export", "eu", "cbam", "battery", "customs", "deforestation")):
         score += 18
     if "supplier" in categories and any(term in context for term in ("supplier", "factory", "audit", "worker", "value chain", "procurement")):
         score += 18
@@ -580,7 +545,7 @@ def _infer_sector(haystack: str) -> str:
         "battery": ("battery", "cell", "module", "ev"),
     }
     for sector, terms in sector_terms.items():
-        if any(term in haystack for term in terms):
+        if any(_term_in(haystack, term) for term in terms):
             return sector
     return ""
 
@@ -595,7 +560,7 @@ def _infer_jurisdiction(haystack: str) -> str:
         "China": ("china", "mainland"),
     }
     for jurisdiction, terms in jurisdiction_terms.items():
-        if any(term in haystack for term in terms):
+        if any(_term_in(haystack, term) for term in terms):
             return jurisdiction
     return ""
 

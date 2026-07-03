@@ -219,7 +219,14 @@ def assess_2x_criteria(input: TwoXInput) -> TwoXResult:
 
 
 # 2X-relevant signals for extracting structured inputs from free text.
-_FOUNDED_BY_WOMAN_HINTS = ("founded by", "co-founded by", "woman founder", "female founder", "women-led")
+# NOTE: hints must be self-evidently gendered — a bare "founded by" would match
+# "founded by two men" and mis-qualify the Entrepreneurship dimension.
+_FOUNDED_BY_WOMAN_HINTS = (
+    "founded by a woman", "founded by women", "co-founded by a woman",
+    "co-founded by women", "woman founder", "female founder", "female founders",
+    "woman-founded", "women-founded", "women-led", "woman-led", "female-led",
+    "female co-founder", "woman co-founder",
+)
 _PRODUCT_BENEFITS_HINTS = ("benefits women", "for women", "serves women", "female customers", "women beneficiaries", "girls")
 _GBVH_HINTS = ("gbvh", "gender-based violence", "harassment policy", "anti-harassment", "safeguarding")
 _GOVERNANCE_HINTS = ("gender policy", "gender strategy", "diversity policy", "gender accountability", "deib")
@@ -237,8 +244,13 @@ def screen_2x_from_text(
     ``women_workforce_pct``, ``women_owned_supplier_pct``, ``portfolio_2x_aligned_pct``.
     Boolean signals are inferred from keyword hints in the text.
     """
+    import re as _re
+
     text = f"{description} {document_text}".lower()
     metrics = reported_metrics or {}
+
+    def word(term: str) -> bool:
+        return bool(_re.search(r"\b" + _re.escape(term) + r"\b", text))
 
     def num(key: str) -> float | None:
         raw = metrics.get(key)
@@ -259,7 +271,13 @@ def screen_2x_from_text(
         women_owned_supplier_pct=num("women_owned_supplier_pct"),
         supports_women_in_supply_chain=("women-owned supplier" in text or "women suppliers" in text),
         product_benefits_women=any(h in text for h in _PRODUCT_BENEFITS_HINTS),
-        is_financial_intermediary=("fund" in text or "loan" in text or "portfolio" in text or "financial institution" in text),
+        # Word-boundary matching: a bare substring "fund" would match "funding"
+        # / "refund" and misclassify operating companies as intermediaries.
+        is_financial_intermediary=(
+            word("fund") or word("funds") or word("lender") or word("microfinance")
+            or word("loan book") or "financial institution" in text
+            or "loan portfolio" in text or "investment portfolio" in text
+        ),
         portfolio_2x_aligned_pct=num("portfolio_2x_aligned_pct"),
         has_gender_governance_accountability=any(h in text for h in _GOVERNANCE_HINTS),
         addresses_gbvh=any(h in text for h in _GBVH_HINTS),

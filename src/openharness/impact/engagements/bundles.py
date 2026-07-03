@@ -293,7 +293,7 @@ ENGAGEMENT_BUNDLES: dict[EngagementBundleType, EngagementBundle] = {
         name="Regulatory Compliance",
         compass_step="regulatory",
         description=(
-            "Jurisdiction-aware SFDR / SDR / SEC climate / CSRD-ESRS / ISSB "
+            "Jurisdiction-aware SFDR / SDR / California SB 253 / CSRD-ESRS / ISSB "
             "wizard (roadmap-v4 Track 9). Wave 1 surfaces it as a bundle "
             "pointing at existing framework modules; a full wizard UI lands "
             "in Wave 5."

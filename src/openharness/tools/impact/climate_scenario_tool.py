@@ -32,10 +32,10 @@ class ClimateScenarioToolInput(BaseModel):
 class ClimateScenarioTool(BaseTool):
     name = "climate_scenario_risk"
     description = (
-        "NGFS-style climate scenario risk screen for a portfolio. Combines NGFS "
-        "scenario families (Orderly: Net Zero 2050 / Below 2°C; Disorderly: Delayed "
-        "Transition / Divergent Net Zero; Hot house: NDCs / Current Policies; Too "
-        "Little Too Late) with sector transition & physical sensitivities to produce "
+        "NGFS-style climate scenario risk screen for a portfolio. Combines the NGFS "
+        "Phase IV/V scenario set (Orderly: Net Zero 2050 / Low Demand / Below 2°C; "
+        "Disorderly: Delayed Transition; Hot house: NDCs / Current Policies; Too "
+        "Little Too Late: Fragmented World) with sector transition & physical sensitivities to produce "
         "portfolio-weighted transition-risk and physical-risk exposure, a combined "
         "score, and an illustrative value-at-risk haircut per scenario, plus the "
         "most-exposed holdings. Actions: 'list_scenarios', 'assess'. Coefficients are "

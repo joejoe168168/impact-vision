@@ -128,7 +128,8 @@ def set_impact_targets(input: TargetSetterInput) -> TargetSetterResult:  # noqa:
     """Derive conservative/base/stretch impact-target ranges from context."""
     theme_key = input.theme.strip().lower().replace(" ", "_").replace("-", "_")
     templates = THEME_TARGET_TEMPLATES.get(theme_key, THEME_TARGET_TEMPLATES["general"])
-    geo_mult = _GEOGRAPHY_REACH_MULTIPLIER.get(input.geography, 1.0)
+    geo_key = input.geography.strip().lower().replace(" ", "_").replace("-", "_")
+    geo_mult = _GEOGRAPHY_REACH_MULTIPLIER.get(geo_key, 1.0)
     millions = input.capital_usd / 1_000_000.0
 
     targets: list[KpiTargetRange] = []

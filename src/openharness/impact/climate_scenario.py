@@ -1,16 +1,17 @@
 """Climate scenario risk — NGFS-style physical & transition exposure.
 
 A lightweight, offline portfolio climate-risk screen structured around the
-**NGFS scenario families** (Network for Greening the Financial System):
+**NGFS scenario framework** (Network for Greening the Financial System,
+Phase IV/V catalogue):
 
-* **Orderly** — Net Zero 2050, Below 2°C (early, smooth policy; high transition
-  effort, low physical risk).
-* **Disorderly** — Delayed Transition, Divergent Net Zero (late/abrupt policy;
-  high transition risk).
+* **Orderly** — Net Zero 2050, Low Demand, Below 2°C (early, smooth policy;
+  high transition effort, low physical risk).
+* **Disorderly** — Delayed Transition (late/abrupt policy; high transition
+  risk). Divergent Net Zero was retired by NGFS in Phase IV.
 * **Hot house world** — Nationally Determined Contributions, Current Policies
   (weak policy; low transition but severe physical risk).
-* **Too little too late** — late and insufficient action (high transition AND
-  high physical risk).
+* **Too little too late** — Fragmented World (late AND divergent action; high
+  transition AND high physical risk).
 
 It combines each scenario's transition/physical severity with **sector
 sensitivities** to produce a portfolio-weighted transition-risk exposure,
@@ -55,16 +56,16 @@ NGFS_SCENARIOS: dict[str, NGFSScenario] = {
         description="Gradual policy tightening; ~1.7°C outcome.",
         transition_severity=0.6, physical_severity=0.3,
         carbon_price_2030_usd=100, temp_outcome_c=1.7),
+    "low_demand": NGFSScenario(
+        key="low_demand", name="Low Demand", category="orderly",
+        description="Behavioural + demand-side shifts lower mitigation costs; ~1.4°C (added in NGFS Phase V).",
+        transition_severity=0.7, physical_severity=0.2,
+        carbon_price_2030_usd=110, temp_outcome_c=1.4),
     "delayed_transition": NGFSScenario(
         key="delayed_transition", name="Delayed Transition", category="disorderly",
         description="Weak action to 2030 then abrupt, divergent policy; high transition shock.",
         transition_severity=0.9, physical_severity=0.4,
         carbon_price_2030_usd=50, temp_outcome_c=1.7),
-    "divergent_net_zero": NGFSScenario(
-        key="divergent_net_zero", name="Divergent Net Zero", category="disorderly",
-        description="Net zero ~2050 but with sectoral divergence and higher costs.",
-        transition_severity=0.85, physical_severity=0.3,
-        carbon_price_2030_usd=140, temp_outcome_c=1.5),
     "ndcs": NGFSScenario(
         key="ndcs", name="Nationally Determined Contributions", category="hot_house",
         description="Only pledged NDCs implemented; ~2.4°C, rising physical risk.",
@@ -75,11 +76,20 @@ NGFS_SCENARIOS: dict[str, NGFSScenario] = {
         description="Only current policies; ~3°C, severe chronic & acute physical risk.",
         transition_severity=0.2, physical_severity=0.9,
         carbon_price_2030_usd=10, temp_outcome_c=3.0),
-    "too_little_too_late": NGFSScenario(
-        key="too_little_too_late", name="Too Little Too Late", category="too_little_too_late",
-        description="Late, insufficient action: high transition shock AND high physical risk.",
+    "fragmented_world": NGFSScenario(
+        key="fragmented_world", name="Fragmented World", category="too_little_too_late",
+        description="Late, divergent, insufficient action: high transition shock AND high physical risk (~2.3°C).",
         transition_severity=0.8, physical_severity=0.8,
-        carbon_price_2030_usd=70, temp_outcome_c=2.5),
+        carbon_price_2030_usd=70, temp_outcome_c=2.3),
+}
+
+# Retired / renamed NGFS keys accepted for backwards compatibility.
+_SCENARIO_KEY_ALIASES: dict[str, str] = {
+    # Divergent Net Zero was retired in NGFS Phase IV; Delayed Transition is
+    # the closest remaining disorderly pathway.
+    "divergent_net_zero": "delayed_transition",
+    # "Too Little Too Late" is the category; Fragmented World is the scenario.
+    "too_little_too_late": "fragmented_world",
 }
 
 
@@ -171,24 +181,31 @@ def assess_climate_scenarios(input: ClimateScenarioInput) -> ClimateScenarioResu
     holdings = input.holdings
     total_value = sum(h.value_usd for h in holdings)
     keys = input.scenario_keys or list(NGFS_SCENARIOS.keys())
-    scenarios = [NGFS_SCENARIOS[k] for k in keys if k in NGFS_SCENARIOS]
+    seen: set[str] = set()
+    scenarios: list[NGFSScenario] = []
+    for k in keys:
+        resolved = _SCENARIO_KEY_ALIASES.get(k, k)
+        if resolved in NGFS_SCENARIOS and resolved not in seen:
+            seen.add(resolved)
+            scenarios.append(NGFS_SCENARIOS[resolved])
 
-    # Value weights (equal-weight if no values supplied).
+    # Per-holding value weights (equal-weight if no values supplied). Computed
+    # positionally so duplicate holding names cannot corrupt the weighting.
     if total_value > 0:
-        weights = {h.name: h.value_usd / total_value for h in holdings}
+        weights = [h.value_usd / total_value for h in holdings]
     else:
         n = len(holdings) or 1
-        weights = {h.name: 1.0 / n for h in holdings}
+        weights = [1.0 / n for _ in holdings]
 
     exposures: list[ScenarioExposure] = []
     for sc in scenarios:
         trans = sum(
-            weights[h.name] * _transition_sensitivity(h.sector) * sc.transition_severity
-            for h in holdings
+            w * _transition_sensitivity(h.sector) * sc.transition_severity
+            for w, h in zip(weights, holdings)
         )
         phys = sum(
-            weights[h.name] * _physical_sensitivity(h.sector) * sc.physical_severity
-            for h in holdings
+            w * _physical_sensitivity(h.sector) * sc.physical_severity
+            for w, h in zip(weights, holdings)
         )
         combined = round((trans + phys) / 2, 4)
         var_pct = round(combined * input.max_var_pct, 2)

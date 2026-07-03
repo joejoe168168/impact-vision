@@ -32,7 +32,7 @@ class RegulatoryCalendarTool(BaseTool):
     name = "regulatory_calendar"
     description = (
         "Build a jurisdiction-specific regulatory deadline calendar for SFDR/CSRD/ISSB, "
-        "UK SDR, SEC climate, and other supported regimes. Flags overdue and due-in-60-day items."
+        "UK SDR, California SB 253/261, and other supported regimes. Flags overdue and due-in-60-day items."
     )
     input_model = RegulatoryCalendarInput
 

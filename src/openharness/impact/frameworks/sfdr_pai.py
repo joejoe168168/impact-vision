@@ -4,6 +4,15 @@ The EU Sustainable Finance Disclosure Regulation (SFDR) requires 14 mandatory
 Principal Adverse Impact indicators for financial market participants.
 
 Reference: EU Delegated Regulation (EU) 2022/1288, Annex I
+
+Status note (verified 2026-07): SFDR 1.0 (Article 6/8/9 + these PAIs) remains
+the law in force. The SFDR 2.0 recast — a three-category product labelling
+regime ("Sustainable" / "Transition" / "ESG Basics") that would repeal
+Delegated Regulation 2022/1288 — is still in the legislative pipeline: the
+Council agreed its negotiating position on 2026-06-24 (proposing a 24-month
+implementation period), trilogue starts late 2026, and application is not
+expected before ~2029. Keep classifying against Article 6/8/9 until the recast
+is adopted.
 """
 
 from __future__ import annotations
