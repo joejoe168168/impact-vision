@@ -1,0 +1,33 @@
+topic_id: climate
+frameworks: {sse_g14: "articles 21-28 and Guide No. 2", issb: "IFRS S2", tcfd: "all pillars"}
+pillars:
+  - pillar: governance
+    items:
+      - {id: clim-gov-01, requirement: Board oversight of climate-related risks and opportunities, bullets: [oversight body, reporting cadence, competence], modality: shall, legal_basis: [SSE G14 art.22, IFRS S2 para 6]}
+      - {id: clim-gov-02, requirement: Management role in climate governance, bullets: [delegated responsibility, controls], modality: shall, legal_basis: [IFRS S2 para 6]}
+      - {id: clim-gov-03, requirement: Climate competence and training, bullets: [skills, training], modality: encouraged, legal_basis: [SSE Guide No. 2]}
+      - {id: clim-gov-04, requirement: Climate-linked remuneration, bullets: [incentive metrics], modality: encouraged, legal_basis: [ESRS E1]}
+      - {id: clim-gov-05, requirement: Internal controls over climate data, bullets: [control owner, assurance], modality: shall, legal_basis: [IFRS S2 para 6]}
+  - pillar: strategy
+    items:
+      - {id: clim-str-01, requirement: Climate risks and opportunities by time horizon, bullets: [short, medium, long term], modality: shall, legal_basis: [TCFD Strategy a]}
+      - {id: clim-str-02, requirement: Effects on business model and value chain, bullets: [upstream, operations, downstream], modality: shall, legal_basis: [IFRS S2]}
+      - {id: clim-str-03, requirement: Transition plan and decarbonisation levers, bullets: [actions, resources], modality: shall, legal_basis: [SSE G14 art.24]}
+      - {id: clim-str-04, requirement: Climate resilience scenario analysis, bullets: [1.5C, higher warming], modality: shall, legal_basis: [TCFD Strategy c]}
+      - {id: clim-str-05, requirement: Current and anticipated financial effects, bullets: [capex, opex, revenue], modality: shall, legal_basis: [IFRS S2]}
+      - {id: clim-str-06, requirement: Adaptation strategy, bullets: [physical resilience], modality: encouraged, legal_basis: [SSE Guide No. 2]}
+  - pillar: iro_management
+    items:
+      - {id: clim-iro-01, requirement: Process to identify climate risks and opportunities, bullets: [method, inputs], modality: shall, legal_basis: [TCFD Risk a]}
+      - {id: clim-iro-02, requirement: Process to assess likelihood and magnitude, bullets: [thresholds, horizons], modality: shall, legal_basis: [IFRS S2]}
+      - {id: clim-iro-03, requirement: Climate risk treatment and controls, bullets: [mitigation, ownership], modality: shall, legal_basis: [TCFD Risk b]}
+      - {id: clim-iro-04, requirement: Integration into enterprise risk management, bullets: [ERM integration], modality: shall, legal_basis: [TCFD Risk c]}
+      - {id: clim-iro-05, requirement: Value-chain climate due diligence, bullets: [supplier screening], modality: encouraged, legal_basis: [SSE G14]}
+  - pillar: metrics_targets
+    items:
+      - {id: clim-met-01, requirement: Gross Scope 1 emissions, bullets: [tCO2e, methodology], modality: shall, legal_basis: [IFRS S2 para 29]}
+      - {id: clim-met-02, requirement: Gross Scope 2 emissions location and market based, bullets: [tCO2e], modality: shall, legal_basis: [IFRS S2 para 29]}
+      - {id: clim-met-03, requirement: Material Scope 3 emissions by category, bullets: [15 categories], modality: shall, legal_basis: [IFRS S2 para 29]}
+      - {id: clim-met-04, requirement: Energy consumption and renewable share, bullets: [MWh, percentage], modality: shall, legal_basis: [SSE G14]}
+      - {id: clim-met-05, requirement: Climate targets baseline and progress, bullets: [base year, target year], modality: shall, legal_basis: [TCFD Metrics c]}
+      - {id: clim-met-06, requirement: Internal carbon price, bullets: [price, use], modality: encouraged, legal_basis: [IFRS S2]}

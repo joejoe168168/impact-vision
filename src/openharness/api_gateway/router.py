@@ -50,8 +50,7 @@ try:
     from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 except ImportError:
     raise ImportError(
-        "FastAPI is required for the REST API gateway. "
-        "Install with: pip install fastapi uvicorn"
+        "FastAPI is required for the REST API gateway. Install with: pip install fastapi uvicorn"
     )
 
 from pydantic import BaseModel, Field, ValidationError
@@ -85,7 +84,7 @@ app = FastAPI(
         "5-Dimension scoring, SDG mapping, greenwashing detection, "
         "pipeline management, and comprehensive impact reporting."
     ),
-    version="0.15.0",
+    version="0.16.0",
 )
 
 app.add_middleware(
@@ -138,8 +137,16 @@ class CompanyRequest(BaseModel):
     sdg_claims: list[int] = Field(default_factory=list)
 
 
+class SurveyWebhookRequest(BaseModel):
+    dispatch: dict[str, Any]
+    consent: dict[str, Any]
+    payload: dict[str, Any]
+
+
 class FrameworkRequest(BaseModel):
-    framework: str = Field(description="Framework ID: gri, sasb, tcfd, sfdr, edci, unpri, issb_s1, issb_s2, esrs, opim, all")
+    framework: str = Field(
+        description="Framework ID: gri, sasb, tcfd, sfdr, edci, unpri, issb_s1, issb_s2, esrs, opim, all"
+    )
     company_name: str = ""
     company_description: str = ""
     sector: str = ""
@@ -158,12 +165,18 @@ class ReportRequest(CompanyRequest):
     impact_targets: dict[str, str] | list[dict[str, Any]] = Field(default_factory=dict)
     metric_history: list[dict[str, Any]] = Field(default_factory=list)
     impact_claims: list[dict[str, Any]] = Field(default_factory=list)
-    output_format: str = Field(default="json", description="Output format: text, html, csv, json, xlsx, pdf")
-    report_type: str = Field(default="full", description="Report type: full, target_progress, lp_ready")
+    output_format: str = Field(
+        default="json", description="Output format: text, html, csv, json, xlsx, pdf"
+    )
+    report_type: str = Field(
+        default="full", description="Report type: full, target_progress, lp_ready"
+    )
 
 
 class DecisionWorkflowRequest(CompanyRequest):
-    action: str = Field(default="quick_screen", description="quick_screen, ic_workflow, deal_compare, lp_readiness")
+    action: str = Field(
+        default="quick_screen", description="quick_screen, ic_workflow, deal_compare, lp_readiness"
+    )
     claims: list[dict[str, Any]] = Field(default_factory=list)
     metric_records: list[dict[str, Any]] = Field(default_factory=list)
     company_a: dict[str, Any] = Field(default_factory=dict)
@@ -185,7 +198,9 @@ class RegulatoryCalendarRequest(BaseModel):
 
 
 class PipelineRequest(BaseModel):
-    action: str = Field(description="Action: add, update, list, get, delete, transition, history, summary")
+    action: str = Field(
+        description="Action: add, update, list, get, delete, transition, history, summary"
+    )
     company_name: str = ""
     stage: str = ""
     sector: str = ""
@@ -195,7 +210,9 @@ class PipelineRequest(BaseModel):
 
 
 class MonitoringRequest(BaseModel):
-    action: str = Field(description="Action: set_schedule, get_schedule, list_due, record_metric, check_alerts, reassess, dashboard")
+    action: str = Field(
+        description="Action: set_schedule, get_schedule, list_due, record_metric, check_alerts, reassess, dashboard"
+    )
     company_name: str = ""
     metric_id: str = ""
     value: float | str | None = None
@@ -208,7 +225,10 @@ class MetricValidationRequest(BaseModel):
 
 
 class NarrativeRequest(BaseModel):
-    section: str = Field(default="executive_summary", description="Section: executive_summary, key_findings, impact_narrative, case_study, full")
+    section: str = Field(
+        default="executive_summary",
+        description="Section: executive_summary, key_findings, impact_narrative, case_study, full",
+    )
     company_name: str = ""
     company_description: str = ""
     sector: str = ""
@@ -221,8 +241,12 @@ class ESGToolboxRequest(BaseModel):
         default="recommend",
         description="recommend, workflow, input_plan, list, search, get, methodology, checklist, assess, crosswalk, source_profile",
     )
-    tool_id: str = Field(default="", description="Optional toolbox module ID or alias, e.g. ghg, cbam, battery.")
-    category: str = Field(default="all", description="all, disclosure, rating, export, supplier, carbon")
+    tool_id: str = Field(
+        default="", description="Optional toolbox module ID or alias, e.g. ghg, cbam, battery."
+    )
+    category: str = Field(
+        default="all", description="all, disclosure, rating, export, supplier, carbon"
+    )
     query: str = Field(default="", description="Plain-English search query.")
     sector: str = ""
     jurisdiction: str = ""
@@ -250,7 +274,9 @@ class WebhookRegistration(BaseModel):
         description="Events: metric_update, score_change, threshold_breach, assessment_complete, alert_fired",
     )
     company_name: str = ""
-    secret: str = Field(default="", description="Optional HMAC secret for webhook signature verification")
+    secret: str = Field(
+        default="", description="Optional HMAC secret for webhook signature verification"
+    )
 
 
 _webhooks: list[dict] = []
@@ -273,6 +299,7 @@ def _build_company(req: CompanyRequest) -> Company:
 
 def _get_tool_context():
     from openharness.tools.base import ToolExecutionContext
+
     return ToolExecutionContext(cwd=Path.cwd())
 
 
@@ -300,7 +327,10 @@ async def _fire_webhooks(event: str, payload: dict) -> None:
         headers: dict[str, str] = {"Content-Type": "application/json"}
         if wh.get("secret"):
             import json as _json
-            sig = hashlib.sha256((wh["secret"] + _json.dumps(body, sort_keys=True)).encode()).hexdigest()
+
+            sig = hashlib.sha256(
+                (wh["secret"] + _json.dumps(body, sort_keys=True)).encode()
+            ).hexdigest()
             headers["X-Webhook-Signature"] = sig
         try:
             async with httpx.AsyncClient(timeout=10) as client:
@@ -382,7 +412,8 @@ async def data_quality(req: CompanyRequest):
     metrics = req.reported_metrics
     unknown_ids = [mid for mid in metrics if store.get(mid) is None]
     placeholder_values = [
-        mid for mid, val in metrics.items()
+        mid
+        for mid, val in metrics.items()
         if str(val).strip().lower() in ("tbd", "n/a", "na", "pending", "")
     ]
 
@@ -454,7 +485,14 @@ async def validate_metrics(req: MetricValidationRequest):
             continue
         val_str = str(val).strip()
         if val_str.lower() in ("tbd", "n/a", "na", "pending", ""):
-            issues.append({"metric_id": mid, "issue": "placeholder_value", "severity": "warning", "value": val_str})
+            issues.append(
+                {
+                    "metric_id": mid,
+                    "issue": "placeholder_value",
+                    "severity": "warning",
+                    "value": val_str,
+                }
+            )
             continue
         try:
             float(val_str.replace(",", "").replace("%", ""))
@@ -463,7 +501,14 @@ async def validate_metrics(req: MetricValidationRequest):
             if len(val_str) < 500:
                 valid_count += 1
             else:
-                issues.append({"metric_id": mid, "issue": "invalid_format", "severity": "warning", "value": val_str[:100]})
+                issues.append(
+                    {
+                        "metric_id": mid,
+                        "issue": "invalid_format",
+                        "severity": "warning",
+                        "value": val_str[:100],
+                    }
+                )
 
     return {
         "total": len(req.metrics),
@@ -499,7 +544,10 @@ async def framework_assess(req: FrameworkRequest):
 
 @app.post("/api/v1/cross-reference", dependencies=[Depends(verify_api_key)])
 async def cross_reference_endpoint(req: CrossReferenceRequest):
-    from openharness.tools.impact.cross_reference_tool import CrossReferenceInput, CrossReferenceTool
+    from openharness.tools.impact.cross_reference_tool import (
+        CrossReferenceInput,
+        CrossReferenceTool,
+    )
 
     tool = CrossReferenceTool()
     normalized_action = req.action
@@ -535,7 +583,10 @@ async def risk_opportunity(req: CompanyRequest):
 
 @app.post("/api/v1/metric-recommend", dependencies=[Depends(verify_api_key)])
 async def metric_recommend(req: CompanyRequest):
-    from openharness.tools.impact.metric_recommender_tool import MetricRecommenderInput, MetricRecommenderTool
+    from openharness.tools.impact.metric_recommender_tool import (
+        MetricRecommenderInput,
+        MetricRecommenderTool,
+    )
 
     tool = MetricRecommenderTool()
     args = MetricRecommenderInput(
@@ -552,7 +603,10 @@ async def metric_recommend(req: CompanyRequest):
 
 @app.post("/api/v1/exclusion-screen", dependencies=[Depends(verify_api_key)])
 async def exclusion_screen(req: CompanyRequest):
-    from openharness.tools.impact.exclusion_screening_tool import ExclusionScreeningInput, ExclusionScreeningTool
+    from openharness.tools.impact.exclusion_screening_tool import (
+        ExclusionScreeningInput,
+        ExclusionScreeningTool,
+    )
 
     tool = ExclusionScreeningTool()
     args = ExclusionScreeningInput(
@@ -586,7 +640,9 @@ async def generate_report(req: ReportRequest):
     )
     result = await tool.execute(args, _get_tool_context())
     payload = {"result": result.output, "format": req.output_format, "report_type": req.report_type}
-    await _fire_webhooks("assessment_complete", {"company": req.company_name, "report_type": req.report_type})
+    await _fire_webhooks(
+        "assessment_complete", {"company": req.company_name, "report_type": req.report_type}
+    )
     return payload
 
 
@@ -647,7 +703,10 @@ async def regulatory_calendar_endpoint(req: RegulatoryCalendarRequest):
 
 @app.post("/api/v1/pitch-deck", dependencies=[Depends(verify_api_key)])
 async def analyze_pitch_deck(req: dict[str, Any]):
-    from openharness.tools.impact.pitch_deck_analyze_tool import PitchDeckAnalyzeInput, PitchDeckAnalyzeTool
+    from openharness.tools.impact.pitch_deck_analyze_tool import (
+        PitchDeckAnalyzeInput,
+        PitchDeckAnalyzeTool,
+    )
 
     tool = PitchDeckAnalyzeTool()
     args = PitchDeckAnalyzeInput(
@@ -709,13 +768,18 @@ async def monitoring_endpoint(req: MonitoringRequest):
     )
     result = await tool.execute(args, _get_tool_context())
     if req.action == "record_metric" and "alert" in result.output.lower():
-        await _fire_webhooks("alert_fired", {"company": req.company_name, "metric_id": req.metric_id})
+        await _fire_webhooks(
+            "alert_fired", {"company": req.company_name, "metric_id": req.metric_id}
+        )
     return {"result": result.output}
 
 
 @app.post("/api/v1/improvement-advisor", dependencies=[Depends(verify_api_key)])
 async def improvement_advisor_endpoint(req: CompanyRequest):
-    from openharness.tools.impact.improvement_advisor_tool import ImprovementAdvisorInput, ImprovementAdvisorTool
+    from openharness.tools.impact.improvement_advisor_tool import (
+        ImprovementAdvisorInput,
+        ImprovementAdvisorTool,
+    )
 
     tool = ImprovementAdvisorTool()
     args = ImprovementAdvisorInput(
@@ -788,7 +852,12 @@ async def esg_toolbox_endpoint(req: ESGToolboxRequest):
 async def batch_assess(req: BatchRequest):
     """Submit multiple companies for assessment. Returns a job ID for async processing."""
     job_id = str(uuid.uuid4())
-    _batch_jobs[job_id] = {"status": "processing", "total": len(req.companies), "completed": 0, "results": []}
+    _batch_jobs[job_id] = {
+        "status": "processing",
+        "total": len(req.companies),
+        "completed": 0,
+        "results": [],
+    }
 
     async def _run_batch():
         for company_req in req.companies:
@@ -810,8 +879,7 @@ async def batch_assess(req: BatchRequest):
                 if "sdg_map" in req.analyses:
                     alignments = map_sdg_alignment(company, store)
                     entry["sdg_map"] = [
-                        {"goal": a.goal, "score": a.score}
-                        for a in alignments if a.score > 0
+                        {"goal": a.goal, "score": a.score} for a in alignments if a.score > 0
                     ]
                 if "greenwashing" in req.analyses:
                     gw = assess_greenwashing(company)
@@ -832,10 +900,13 @@ async def batch_assess(req: BatchRequest):
             _batch_jobs[job_id]["completed"] += 1
 
         _batch_jobs[job_id]["status"] = "complete"
-        await _fire_webhooks("assessment_complete", {
-            "batch_job_id": job_id,
-            "total": len(req.companies),
-        })
+        await _fire_webhooks(
+            "assessment_complete",
+            {
+                "batch_job_id": job_id,
+                "total": len(req.companies),
+            },
+        )
 
     asyncio.create_task(_run_batch())
     return {"job_id": job_id, "status": "processing", "total": len(req.companies)}
@@ -849,6 +920,29 @@ async def batch_status(job_id: str):
     return job
 
 
+@app.post("/api/v1/surveys/webhook/{channel_id}", dependencies=[Depends(verify_api_key)])
+async def survey_delivery_webhook(channel_id: str, request: SurveyWebhookRequest):
+    """Normalize a delivery-provider webhook and ingest it under active consent."""
+    from openharness.impact.audit_trail import AuditTrail
+    from openharness.impact.evidence_graph import EvidenceGraph
+    from openharness.impact.stakeholder_voice import ConsentRecord
+    from openharness.impact.survey_delivery import (
+        SurveyDispatch,
+        build_webhook_payload_parser,
+        ingest_response,
+    )
+
+    if channel_id not in {"whatsapp", "sms", "voice", "web_link"}:
+        raise HTTPException(status_code=404, detail="Unknown survey delivery channel")
+    try:
+        dispatch = SurveyDispatch.model_validate(request.dispatch)
+        consent = ConsentRecord.model_validate(request.consent)
+        parsed = build_webhook_payload_parser(channel_id)(request.payload)
+        return ingest_response(dispatch, parsed, EvidenceGraph(), AuditTrail(), consent)
+    except (ValueError, KeyError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
 # ---------------------------------------------------------------------------
 # Webhook Management (10.3.4)
 # ---------------------------------------------------------------------------
@@ -857,13 +951,15 @@ async def batch_status(job_id: str):
 @app.post("/api/v1/webhook", dependencies=[Depends(verify_api_key)])
 async def register_webhook(reg: WebhookRegistration):
     webhook_id = str(uuid.uuid4())
-    _webhooks.append({
-        "id": webhook_id,
-        "url": reg.url,
-        "events": reg.events,
-        "company_name": reg.company_name,
-        "secret": reg.secret,
-    })
+    _webhooks.append(
+        {
+            "id": webhook_id,
+            "url": reg.url,
+            "events": reg.events,
+            "company_name": reg.company_name,
+            "secret": reg.secret,
+        }
+    )
     return {
         "status": "registered",
         "webhook_id": webhook_id,
@@ -877,7 +973,12 @@ async def register_webhook(reg: WebhookRegistration):
 async def list_webhooks():
     return {
         "webhooks": [
-            {"id": w["id"], "url": w["url"], "events": w["events"], "company_name": w.get("company_name", "")}
+            {
+                "id": w["id"],
+                "url": w["url"],
+                "events": w["events"],
+                "company_name": w.get("company_name", ""),
+            }
             for w in _webhooks
         ]
     }

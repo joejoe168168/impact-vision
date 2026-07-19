@@ -13,6 +13,7 @@ Outputs:
     sector exposure tables, and an unweighted-vs-weighted comparison so the
     reader can see how concentration changes the headline number.
 """
+
 from __future__ import annotations
 
 from collections import defaultdict
@@ -22,6 +23,7 @@ from pydantic import BaseModel, Field
 
 from openharness.impact.fund_thesis import FundThesis, weighted_5d_overall
 from openharness.impact.models import Assessment
+from openharness.impact.models import Company, MetricRecord
 
 
 class PortfolioCompanyEntry(BaseModel):
@@ -83,9 +85,13 @@ def rollup_portfolio(
     sdg_weighted_acc: dict[int, float] = defaultdict(float)
 
     for assessment, capital, ownership in items:
-        weight = (max(0.0, capital) / total_capital)
+        weight = max(0.0, capital) / total_capital
         co_5d = _five_d_overall(assessment)
-        w5d = weighted_5d_overall(assessment.five_dimensions, thesis) if assessment.five_dimensions else 0.0
+        w5d = (
+            weighted_5d_overall(assessment.five_dimensions, thesis)
+            if assessment.five_dimensions
+            else 0.0
+        )
 
         sector = assessment.company.sector or "Uncategorised"
         sector_exposure[sector] += capital
@@ -98,21 +104,25 @@ def rollup_portfolio(
             per_company_sdg[a.goal] = a.score
             sdg_weighted_acc[a.goal] += a.score * weight
 
-        company_rows.append(PortfolioCompanyEntry(
-            company_name=assessment.company.name or "Unnamed",
-            sector=sector,
-            capital_eur_m=capital,
-            ownership_pct=ownership,
-            five_d_overall=round(co_5d, 2),
-            weighted_five_d_overall=round(w5d, 2),
-            sdg_alignments=per_company_sdg,
-        ))
+        company_rows.append(
+            PortfolioCompanyEntry(
+                company_name=assessment.company.name or "Unnamed",
+                sector=sector,
+                capital_eur_m=capital,
+                ownership_pct=ownership,
+                five_d_overall=round(co_5d, 2),
+                weighted_five_d_overall=round(w5d, 2),
+                sdg_alignments=per_company_sdg,
+            )
+        )
 
     notes: list[str] = []
     if total_capital == 1.0 and not any(c > 0 for _, c, _ in items):
         notes.append("All capital_eur_m values are 0 — using equal-weight roll-up.")
     if thesis.is_default:
-        notes.append("Using default equal-weight fund thesis. Provide one for fund-specific weighting.")
+        notes.append(
+            "Using default equal-weight fund thesis. Provide one for fund-specific weighting."
+        )
 
     return PortfolioRollup(
         fund_name=thesis.name,
@@ -125,3 +135,54 @@ def rollup_portfolio(
         companies=company_rows,
         notes=notes,
     )
+
+
+def build_portfolio_report(
+    companies: list[Company], records_by_company: dict[str, list[MetricRecord]], benchmarks=None
+) -> dict:
+    from openharness.impact.concordance import load_concordance
+    from openharness.impact.metric_records import portfolio_comparability_index
+    from openharness.impact.sdg_taxonomy import sdg_need_context
+
+    concordance = load_concordance()
+    comparison = portfolio_comparability_index(records_by_company, concordance)
+    shared = set(comparison["shared_concepts"])
+    table = []
+    for concept in sorted(shared):
+        row = {"concept_id": concept}
+        for company in companies:
+            values = []
+            for record in records_by_company.get(company.name, []):
+                entry = concordance.lookup("iris", record.metric_id)
+                if entry and entry.concept_id == concept:
+                    values.append(
+                        {"value": record.value, "unit": record.unit, "period": record.period}
+                    )
+            row[company.name] = values
+        table.append(row)
+    return {
+        "sections": {
+            "portfolio_kpis": {
+                "company_count": len(companies),
+                "record_count": sum(map(len, records_by_company.values())),
+            },
+            "comparability": comparison,
+            "shared_concept_comparison": table,
+            "company_heatmap": [
+                {"company": c.name, "sdgs": c.sdg_claims, "sector": c.sector} for c in companies
+            ],
+            "sdg_need_context": [
+                {
+                    "company": company.name,
+                    **sdg_need_context(company.geography, company.sdg_claims),
+                }
+                for company in companies
+            ],
+            "benchmarks": benchmarks or {},
+            "gaps": {
+                name: concordance.coverage_report(records, "esrs")["gaps"]
+                for name, records in records_by_company.items()
+            },
+        },
+        "self_contained": True,
+    }

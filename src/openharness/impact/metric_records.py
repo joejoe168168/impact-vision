@@ -9,8 +9,74 @@ from pydantic import ValidationError
 from openharness.impact.models import MetricRecord
 from openharness.tools.impact.common import normalize_metric_map
 
+COMPARABILITY_WEIGHTS = {
+    "unit": 0.25,
+    "period": 0.20,
+    "boundary": 0.15,
+    "taxonomy_id": 0.25,
+    "methodology": 0.15,
+}
 
-def validate_metric_record(data: MetricRecord | dict[str, Any]) -> tuple[MetricRecord | None, list[str]]:
+
+def comparability_score(record: MetricRecord, concordance) -> dict:
+    """Return a transparent 0-100 comparability score and components."""
+    entry = concordance.lookup("iris", record.metric_id)
+    taxonomy = bool(entry and any(ref.taxonomy_uri for ref in entry.refs))
+    components = {
+        "unit": bool(record.unit and record.unit != "unspecified"),
+        "period": bool(record.period),
+        "boundary": bool(record.boundary),
+        "taxonomy_id": taxonomy,
+        "methodology": bool(record.methodology or record.estimation_methodology),
+    }
+    score = 100 * sum(COMPARABILITY_WEIGHTS[key] for key, present in components.items() if present)
+    return {
+        "score": round(score, 2),
+        "components": components,
+        "weights": COMPARABILITY_WEIGHTS.copy(),
+    }
+
+
+def portfolio_comparability_index(
+    records_by_company: dict[str, list[MetricRecord]], concordance
+) -> dict:
+    per_company: dict[str, dict] = {}
+    concepts_by_company: dict[str, set[str]] = {}
+    component_rates: dict[str, list[float]] = {key: [] for key in COMPARABILITY_WEIGHTS}
+    for company, records in records_by_company.items():
+        scores = [comparability_score(record, concordance) for record in records]
+        per_company[company] = {
+            "index": round(sum(row["score"] for row in scores) / len(scores), 2) if scores else 0.0,
+            "records": scores,
+        }
+        concepts_by_company[company] = {
+            entry.concept_id
+            for record in records
+            if (entry := concordance.lookup("iris", record.metric_id)) is not None
+        }
+        for key in component_rates:
+            component_rates[key].append(
+                sum(bool(row["components"][key]) for row in scores) / len(scores) if scores else 0.0
+            )
+    shared = sorted(set.intersection(*concepts_by_company.values())) if concepts_by_company else []
+    index = (
+        sum(row["index"] for row in per_company.values()) / len(per_company) if per_company else 0.0
+    )
+    weakest = sorted(
+        component_rates,
+        key=lambda key: sum(component_rates[key]) / max(len(component_rates[key]), 1),
+    )
+    return {
+        "index": round(index, 2),
+        "per_company": per_company,
+        "weakest_components": weakest,
+        "shared_concepts": shared,
+    }
+
+
+def validate_metric_record(
+    data: MetricRecord | dict[str, Any],
+) -> tuple[MetricRecord | None, list[str]]:
     """Validate one metric record and return ``(record, errors)``.
 
     This helper keeps collection/import flows non-throwing while preserving the
@@ -21,10 +87,7 @@ def validate_metric_record(data: MetricRecord | dict[str, Any]) -> tuple[MetricR
     try:
         return MetricRecord.model_validate(data), []
     except ValidationError as exc:
-        errors = [
-            f"{'.'.join(str(p) for p in err['loc'])}: {err['msg']}"
-            for err in exc.errors()
-        ]
+        errors = [f"{'.'.join(str(p) for p in err['loc'])}: {err['msg']}" for err in exc.errors()]
         return None, errors
 
 
@@ -96,17 +159,19 @@ def metric_records_from_reported_metrics(
     unit_by_metric = {k.strip().upper(): v for k, v in (unit_by_metric or {}).items()}
     rows: list[MetricRecord | dict[str, Any]] = []
     for metric_id, value in normalized.items():
-        rows.append({
-            "metric_id": metric_id,
-            "value": value,
-            "unit": unit_by_metric.get(metric_id, "unspecified"),
-            "period": period,
-            "source": source,
-            "owner": owner,
-            "quality_score": quality_score,
-            "verification_status": verification_status,
-            "source_type": source_type,
-        })
+        rows.append(
+            {
+                "metric_id": metric_id,
+                "value": value,
+                "unit": unit_by_metric.get(metric_id, "unspecified"),
+                "period": period,
+                "source": source,
+                "owner": owner,
+                "quality_score": quality_score,
+                "verification_status": verification_status,
+                "source_type": source_type,
+            }
+        )
     records, errors = validate_metric_records(rows)
     return records, warnings + errors
 
@@ -143,11 +208,14 @@ def flag_undisclosed_estimates(records: list[MetricRecord]) -> list[str]:
 
 
 __all__ = [
+    "COMPARABILITY_WEIGHTS",
+    "comparability_score",
     "estimate_disclosure_label",
     "flag_undisclosed_estimates",
     "metric_record_from_value",
     "metric_records_from_reported_metrics",
     "metric_records_to_reported_metrics",
+    "portfolio_comparability_index",
     "validate_metric_record",
     "validate_metric_records",
 ]

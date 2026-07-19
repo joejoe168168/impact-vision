@@ -1,0 +1,38 @@
+as_of: "2026-07-19"
+jurisdictions:
+  - {jurisdiction: Hong Kong, status: adopted, effective: "2025-08-01", scope: listed issuers, assurance_posture: phased, source: HKEX}
+  - {jurisdiction: Chile, status: adopted, effective: "2026-01-01", scope: listed issuers, assurance_posture: limited, source: CMF}
+  - {jurisdiction: Qatar, status: adopted, effective: "2026-01-01", scope: listed issuers, assurance_posture: phased, source: QFMA}
+  - {jurisdiction: Mexico, status: adopted, effective: "2026-01-01", scope: listed issuers, assurance_posture: phased, source: CNBV}
+  - {jurisdiction: Australia, status: adopted, effective: "2025-01-01", scope: large entities, assurance_posture: phased, source: AASB}
+  - {jurisdiction: Brazil, status: adopted, effective: "2026-01-01", scope: listed issuers, assurance_posture: limited, source: CVM}
+  - {jurisdiction: Canada, status: adopting, effective: "2027-01-01", scope: proposed listed issuers, assurance_posture: proposed, source: CSA}
+  - {jurisdiction: China, status: announced, effective: "2030-01-01", scope: national baseline planned, assurance_posture: developing, source: Ministry of Finance}
+  - {jurisdiction: European Union, status: adopting, effective: "2027-01-01", scope: ESRS interoperability, assurance_posture: limited, source: European Commission}
+  - {jurisdiction: Japan, status: adopting, effective: "2027-04-01", scope: Prime market phased, assurance_posture: phased, source: SSBJ}
+  - {jurisdiction: Malaysia, status: adopted, effective: "2025-01-01", scope: listed issuers phased, assurance_posture: phased, source: Securities Commission Malaysia}
+  - {jurisdiction: New Zealand, status: adopted, effective: "2023-01-01", scope: climate reporting entities, assurance_posture: limited, source: XRB}
+  - {jurisdiction: Nigeria, status: adopting, effective: "2028-01-01", scope: public interest entities, assurance_posture: phased, source: FRC Nigeria}
+  - {jurisdiction: Pakistan, status: adopting, effective: "2025-07-01", scope: listed issuers phased, assurance_posture: developing, source: SECP}
+  - {jurisdiction: Philippines, status: announced, effective: "2027-01-01", scope: listed issuers, assurance_posture: developing, source: SEC Philippines}
+  - {jurisdiction: Singapore, status: adopted, effective: "2025-01-01", scope: listed issuers phased, assurance_posture: limited, source: ACRA SGX}
+  - {jurisdiction: South Africa, status: adopting, effective: "2026-01-01", scope: listed issuers, assurance_posture: developing, source: JSE}
+  - {jurisdiction: South Korea, status: announced, effective: "2026-01-01", scope: listed issuers phased, assurance_posture: developing, source: FSC}
+  - {jurisdiction: Sri Lanka, status: adopting, effective: "2025-01-01", scope: listed issuers phased, assurance_posture: developing, source: CA Sri Lanka}
+  - {jurisdiction: Switzerland, status: adopting, effective: "2026-01-01", scope: large public interest entities, assurance_posture: limited, source: Federal Council}
+  - {jurisdiction: Taiwan, status: adopted, effective: "2026-01-01", scope: listed issuers phased, assurance_posture: phased, source: FSC Taiwan}
+  - {jurisdiction: Thailand, status: announced, effective: "2026-01-01", scope: listed issuers phased, assurance_posture: developing, source: SEC Thailand}
+  - {jurisdiction: Turkey, status: adopted, effective: "2024-01-01", scope: in-scope entities, assurance_posture: limited, source: KGK}
+  - {jurisdiction: United Kingdom, status: adopting, effective: "2027-01-01", scope: economically significant entities, assurance_posture: phased, source: UK government}
+  - {jurisdiction: Bangladesh, status: announced, effective: "2027-01-01", scope: listed issuers, assurance_posture: developing, source: FRC Bangladesh}
+  - {jurisdiction: Colombia, status: announced, effective: "2027-01-01", scope: listed issuers, assurance_posture: developing, source: Superfinanciera}
+  - {jurisdiction: Costa Rica, status: announced, effective: "2027-01-01", scope: regulated entities, assurance_posture: developing, source: CONASSIF}
+  - {jurisdiction: Ghana, status: adopting, effective: "2027-01-01", scope: public interest entities, assurance_posture: developing, source: ICAG}
+  - {jurisdiction: India, status: adopting, effective: "2026-04-01", scope: BRSR interoperability, assurance_posture: phased, source: SEBI}
+  - {jurisdiction: Indonesia, status: announced, effective: "2027-01-01", scope: listed issuers, assurance_posture: developing, source: OJK}
+  - {jurisdiction: Kenya, status: adopting, effective: "2027-01-01", scope: public interest entities, assurance_posture: phased, source: ICPAK}
+  - {jurisdiction: Rwanda, status: announced, effective: "2027-01-01", scope: public interest entities, assurance_posture: developing, source: ICPAR}
+  - {jurisdiction: Saudi Arabia, status: announced, effective: "2027-01-01", scope: listed issuers, assurance_posture: developing, source: SOCPA}
+  - {jurisdiction: United Arab Emirates, status: adopting, effective: "2026-01-01", scope: listed issuers phased, assurance_posture: developing, source: SCA}
+  - {jurisdiction: Zambia, status: announced, effective: "2027-01-01", scope: public interest entities, assurance_posture: developing, source: ZICA}
+  - {jurisdiction: Zimbabwe, status: adopting, effective: "2026-01-01", scope: listed issuers, assurance_posture: developing, source: PAAB}

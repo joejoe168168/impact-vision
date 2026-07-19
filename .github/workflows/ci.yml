@@ -36,6 +36,9 @@ jobs:
         run: pip install -e ".[dev]"
       - name: Run tests
         run: pytest tests/ -q --tb=short
+      - name: Extraction benchmark gate (informational in first v6 wave)
+        continue-on-error: true
+        run: python -m openharness.impact.extraction_eval --gate 0.75
 
   lint:
     name: Lint

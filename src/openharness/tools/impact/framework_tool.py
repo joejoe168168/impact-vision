@@ -14,16 +14,36 @@ from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 
 class FrameworkInput(BaseModel):
-    framework: Literal["sasb", "gri", "tcfd", "sfdr_pai", "sfdr2", "edci", "unpri", "toc", "issb_s1", "issb_s2", "esrs", "vsme", "two_x", "tisfd", "opim", "cdp", "all"] = Field(
-        description=(
-            "Which framework to query. 'all' runs a quick scan across all frameworks."
-        )
+    framework: Literal[
+        "sasb",
+        "gri",
+        "tcfd",
+        "sfdr_pai",
+        "sfdr2",
+        "sfdr_v2",
+        "edci",
+        "unpri",
+        "toc",
+        "issb_s1",
+        "issb_s2",
+        "esrs",
+        "vsme",
+        "two_x",
+        "tisfd",
+        "sbtn",
+        "just_transition",
+        "opim",
+        "cdp",
+        "all",
+    ] = Field(
+        description=("Which framework to query. 'all' runs a quick scan across all frameworks.")
     )
-    action: Literal["list", "match", "assess"] = Field(
+    action: Literal["list", "match", "assess", "classify", "migrate"] = Field(
         description=(
             "'list': Show the framework's standards/indicators. "
             "'match': Match a company to relevant topics (SASB/GRI). "
             "'assess': Assess coverage against a framework given company data."
+            " 'classify'/'migrate': SFDR v2 proposal classification and migration."
         )
     )
     sector: str = Field(default="", description="Company sector/industry")
@@ -49,6 +69,7 @@ class FrameworkInput(BaseModel):
             "invests_in_controversial_weapons, fund_in_ramp_up, ...)"
         ),
     )
+    structured_inputs: dict = Field(default_factory=dict)
 
 
 class FrameworkTool(BaseTool):
@@ -84,7 +105,11 @@ class FrameworkTool(BaseTool):
         return True
 
     async def execute(self, arguments: BaseModel, context: ToolExecutionContext) -> ToolResult:
-        args = arguments if isinstance(arguments, FrameworkInput) else FrameworkInput.model_validate(arguments)
+        args = (
+            arguments
+            if isinstance(arguments, FrameworkInput)
+            else FrameworkInput.model_validate(arguments)
+        )
 
         if args.reported_metrics:
             normalized, _ = normalize_metric_map(args.reported_metrics)
@@ -99,6 +124,7 @@ class FrameworkTool(BaseTool):
             "tcfd": self._handle_tcfd,
             "sfdr_pai": self._handle_sfdr,
             "sfdr2": self._handle_sfdr2,
+            "sfdr_v2": self._handle_sfdr_v2,
             "edci": self._handle_edci,
             "unpri": self._handle_unpri,
             "toc": self._handle_toc,
@@ -108,6 +134,8 @@ class FrameworkTool(BaseTool):
             "vsme": self._handle_vsme,
             "two_x": self._handle_two_x,
             "tisfd": self._handle_tisfd,
+            "sbtn": self._handle_sbtn,
+            "just_transition": self._handle_just_transition,
             "opim": self._handle_opim,
             "cdp": self._handle_cdp,
             "all": self._handle_all_list,
@@ -135,7 +163,9 @@ class FrameworkTool(BaseTool):
         if args.action == "match":
             matches = match_sasb_industry(args.sector, args.description, args.themes)
             if not matches:
-                return ToolResult(output="No SASB industry matches found. Provide more sector/description detail.")
+                return ToolResult(
+                    output="No SASB industry matches found. Provide more sector/description detail."
+                )
             lines = ["SASB Industry Matches:\n"]
             for std, score in matches:
                 lines.append(f"  [{std.sics_code}] {std.industry} (score: {score})")
@@ -170,7 +200,9 @@ class FrameworkTool(BaseTool):
                 lines.append(f"    Disclosures: {len(std.disclosures)}")
                 if std.disclosures:
                     for d in std.disclosures[:3]:
-                        iris = f" (IRIS+: {', '.join(d.iris_cross_refs)})" if d.iris_cross_refs else ""
+                        iris = (
+                            f" (IRIS+: {', '.join(d.iris_cross_refs)})" if d.iris_cross_refs else ""
+                        )
                         lines.append(f"      {d.code}: {d.name}{iris}")
                     if len(std.disclosures) > 3:
                         lines.append(f"      ... and {len(std.disclosures) - 3} more")
@@ -190,10 +222,16 @@ class FrameworkTool(BaseTool):
                 for std, score in matches:
                     lines.append(f"\n  {std.code}: {std.name} (relevance: {score})")
                     for d in std.disclosures[:5]:
-                        iris = f" -> IRIS+: {', '.join(d.iris_cross_refs)}" if d.iris_cross_refs else ""
+                        iris = (
+                            f" -> IRIS+: {', '.join(d.iris_cross_refs)}"
+                            if d.iris_cross_refs
+                            else ""
+                        )
                         lines.append(f"    {d.code}: {d.name}{iris}")
             else:
-                lines.append("\nNo material topics matched. Provide more sector/description detail.")
+                lines.append(
+                    "\nNo material topics matched. Provide more sector/description detail."
+                )
 
             lines.extend(self._gri_index_sections(args, matches))
             return ToolResult(output="\n".join(lines))
@@ -232,11 +270,23 @@ class FrameworkTool(BaseTool):
             sector_routes = {
                 "11": ("oil", "gas", "petroleum", "upstream", "midstream"),
                 "12": ("coal",),
-                "13": ("agriculture", "farming", "aquaculture", "fishing", "fishery", "crop", "livestock"),
+                "13": (
+                    "agriculture",
+                    "farming",
+                    "aquaculture",
+                    "fishing",
+                    "fishery",
+                    "crop",
+                    "livestock",
+                ),
                 "14": ("mining", "mine", "minerals", "smelter", "quarry"),
             }
             lowered = query.lower()
-            matched_series = [series for series, terms in sector_routes.items() if any(t in lowered for t in terms)]
+            matched_series = [
+                series
+                for series, terms in sector_routes.items()
+                if any(t in lowered for t in terms)
+            ]
             topics = search_source_index("gri", query, record_types=("topic",), limit=6)
             if not topics and matched_series:
                 topics = [
@@ -246,8 +296,17 @@ class FrameworkTool(BaseTool):
                     and record.record_id.rsplit(":", 1)[-1].split(".")[0] in matched_series
                 ][:8]
             if topics:
-                sector_names = {"11": "Oil & Gas", "12": "Coal", "13": "Agriculture/Aquaculture/Fishing", "14": "Mining"}
-                label = ", ".join(sector_names[s] for s in matched_series) if matched_series else "matched"
+                sector_names = {
+                    "11": "Oil & Gas",
+                    "12": "Coal",
+                    "13": "Agriculture/Aquaculture/Fishing",
+                    "14": "Mining",
+                }
+                label = (
+                    ", ".join(sector_names[s] for s in matched_series)
+                    if matched_series
+                    else "matched"
+                )
                 lines.append(f"\nGRI SECTOR TOPICS (ohESG index — {label}):")
                 for record in topics:
                     summary = f" — {record.summary}" if record.summary else ""
@@ -272,7 +331,9 @@ class FrameworkTool(BaseTool):
             return ToolResult(output="\n".join(lines))
 
         if args.action in ("match", "assess"):
-            result = assess_tcfd_alignment(args.description, args.reported_metrics, args.document_text)
+            result = assess_tcfd_alignment(
+                args.description, args.reported_metrics, args.document_text
+            )
             lines = [f"TCFD / IFRS S2 Assessment (Overall: {result['overall_coverage']}%)\n"]
             for pillar in result["pillars"]:
                 bar = _bar(pillar["coverage_pct"])
@@ -290,7 +351,10 @@ class FrameworkTool(BaseTool):
         return ToolResult(output=f"TCFD does not support action: {args.action}", is_error=True)
 
     def _handle_sfdr(self, args: FrameworkInput) -> ToolResult:
-        from openharness.impact.frameworks.sfdr_pai import assess_sfdr_compliance, get_pai_indicators
+        from openharness.impact.frameworks.sfdr_pai import (
+            assess_sfdr_compliance,
+            get_pai_indicators,
+        )
 
         if args.action == "list":
             indicators = get_pai_indicators()
@@ -307,8 +371,12 @@ class FrameworkTool(BaseTool):
             return ToolResult(output="\n".join(lines))
 
         if args.action in ("match", "assess"):
-            result = assess_sfdr_compliance(args.reported_metrics, args.description, args.document_text)
-            lines = [f"SFDR PAI Coverage Screen ({result['coverage_pct']}% | {result['addressed']}/{result['total']} reportable)\n"]
+            result = assess_sfdr_compliance(
+                args.reported_metrics, args.description, args.document_text
+            )
+            lines = [
+                f"SFDR PAI Coverage Screen ({result['coverage_pct']}% | {result['addressed']}/{result['total']} reportable)\n"
+            ]
             for ind in result["indicators"]:
                 status = {
                     "available": "[DATA]",
@@ -343,11 +411,13 @@ class FrameworkTool(BaseTool):
 
         if args.action in ("match", "assess"):
             try:
-                sfdr2_input = SFDR2Input.model_validate({
-                    "description": args.description,
-                    "document_text": args.document_text,
-                    **args.sfdr2_inputs,
-                })
+                sfdr2_input = SFDR2Input.model_validate(
+                    {
+                        "description": args.description,
+                        "document_text": args.document_text,
+                        **args.sfdr2_inputs,
+                    }
+                )
             except Exception as e:  # noqa: BLE001
                 return ToolResult(output=f"Invalid sfdr2_inputs: {e}", is_error=True)
             result = classify_sfdr2_category(sfdr2_input)
@@ -359,7 +429,9 @@ class FrameworkTool(BaseTool):
                 f"  {result.description}",
             ]
             if result.threshold_met is not None:
-                lines.append(f"70% strategy-alignment threshold: {'met' if result.threshold_met else 'NOT met'}")
+                lines.append(
+                    f"70% strategy-alignment threshold: {'met' if result.threshold_met else 'NOT met'}"
+                )
             for item in result.rationale:
                 lines.append(f"  - {item}")
             if result.exclusion_flags:
@@ -374,6 +446,57 @@ class FrameworkTool(BaseTool):
             return ToolResult(output="\n".join(lines), metadata=payload)
 
         return ToolResult(output=f"sfdr2 does not support action: {args.action}", is_error=True)
+
+    def _handle_sfdr_v2(self, args: FrameworkInput) -> ToolResult:
+        from openharness.impact.frameworks.sfdr_v2 import (
+            MANDATORY_EXCLUSIONS,
+            PortfolioHolding,
+            SFDRv2Category,
+            classify_sfdr_v2,
+            migrate_from_v1,
+        )
+
+        if args.action == "list":
+            payload = {
+                "categories": [item.value for item in SFDRv2Category],
+                "threshold": 0.70,
+                "mandatory_exclusions": {
+                    category.value: sorted(flags)
+                    for category, flags in MANDATORY_EXCLUSIONS.items()
+                },
+                "legal_status": "proposal",
+                "as_of": "2025-11-20",
+            }
+            return ToolResult(output=str(payload), metadata=payload)
+
+        try:
+            holdings = [
+                PortfolioHolding.model_validate(item)
+                for item in args.structured_inputs.get("holdings", [])
+            ]
+            if args.action in {"classify", "assess", "match"}:
+                category = SFDRv2Category(
+                    args.structured_inputs.get("target_category", "uncategorised")
+                )
+                result = classify_sfdr_v2(
+                    holdings,
+                    category,
+                    float(args.structured_inputs.get("threshold", 0.70)),
+                )
+                payload = result.model_dump(mode="json")
+            elif args.action == "migrate":
+                payload = migrate_from_v1(str(args.structured_inputs.get("article", "")), holdings)
+                result = payload.get("result")
+                if isinstance(result, BaseModel):
+                    payload["result"] = result.model_dump(mode="json")
+            else:
+                return ToolResult(
+                    output=f"sfdr_v2 does not support action: {args.action}",
+                    is_error=True,
+                )
+        except (TypeError, ValueError) as exc:
+            return ToolResult(output=f"Invalid sfdr_v2 inputs: {exc}", is_error=True)
+        return ToolResult(output=str(payload), metadata=payload)
 
     def _handle_edci(self, args: FrameworkInput) -> ToolResult:
         from openharness.impact.frameworks.edci import assess_edci_coverage, get_edci_metrics
@@ -395,14 +518,18 @@ class FrameworkTool(BaseTool):
             return ToolResult(output="\n".join(lines))
 
         if args.action in ("match", "assess"):
-            result = assess_edci_coverage(args.reported_metrics, args.description, args.document_text)
+            result = assess_edci_coverage(
+                args.reported_metrics, args.description, args.document_text
+            )
             lines = [
                 f"EDCI Coverage Screen ({result['coverage_pct']}% | {result['addressed']}/{result['total']})",
                 f"Core coverage: {result['required_coverage_pct']}% ({result['required_addressed']}/{result['required_total']})",
                 "",
             ]
             for cat_name, cat_data in result["by_category"].items():
-                lines.append(f"  {cat_name.upper()}: {cat_data['coverage_pct']}% ({cat_data['addressed']}/{cat_data['total']})")
+                lines.append(
+                    f"  {cat_name.upper()}: {cat_data['coverage_pct']}% ({cat_data['addressed']}/{cat_data['total']})"
+                )
             lines.append("")
             for m in result["metrics"]:
                 status = {
@@ -444,7 +571,9 @@ class FrameworkTool(BaseTool):
 
         if args.action in ("match", "assess"):
             result = assess_unpri_alignment(args.description, args.themes, args.document_text)
-            lines = [f"UNPRI Alignment ({result['overall_coverage']}% | {result['addressed_actions']}/{result['total_actions']})\n"]
+            lines = [
+                f"UNPRI Alignment ({result['overall_coverage']}% | {result['addressed_actions']}/{result['total_actions']})\n"
+            ]
             for p in result["principles"]:
                 bar = _bar(p["coverage_pct"])
                 lines.append(f"  P{p['number']}: {p['name']}")
@@ -462,8 +591,10 @@ class FrameworkTool(BaseTool):
 
     def _handle_toc(self, args: FrameworkInput) -> ToolResult:
         from openharness.impact.frameworks.theory_of_change import (
-            assess_toc_alignment, assess_toc_completeness,
-            get_giin_toc_checklist, get_rs_group_principles,
+            assess_toc_alignment,
+            assess_toc_completeness,
+            get_giin_toc_checklist,
+            get_rs_group_principles,
         )
 
         if args.action == "list":
@@ -492,7 +623,9 @@ class FrameworkTool(BaseTool):
         if args.action in ("match", "assess"):
             text = f"{args.description} {args.document_text}"
             if not text.strip():
-                return ToolResult(output="Provide description or document_text for ToC assessment", is_error=True)
+                return ToolResult(
+                    output="Provide description or document_text for ToC assessment", is_error=True
+                )
 
             toc_result = assess_toc_alignment(args.description, args.document_text)
             completeness = assess_toc_completeness(document_text=text)
@@ -512,7 +645,9 @@ class FrameworkTool(BaseTool):
                 if not p["addressed"]:
                     lines.append(f"    Ask: {p['question']}")
 
-            lines.append(f"\nGIIN ToC Checklist: {completeness['coverage_pct']}% ({completeness['addressed']}/8)")
+            lines.append(
+                f"\nGIIN ToC Checklist: {completeness['coverage_pct']}% ({completeness['addressed']}/8)"
+            )
             lines.append("-" * 40)
             for step in completeness["steps"]:
                 status = "[OK]" if step["addressed"] else "[GAP]"
@@ -525,19 +660,27 @@ class FrameworkTool(BaseTool):
                 for r in toc_result["recommendations"][:5]:
                     lines.append(f"  - {r}")
 
-            return ToolResult(output="\n".join(lines), metadata={
-                "rs_group": toc_result,
-                "giin_checklist": completeness,
-            })
+            return ToolResult(
+                output="\n".join(lines),
+                metadata={
+                    "rs_group": toc_result,
+                    "giin_checklist": completeness,
+                },
+            )
 
         return ToolResult(output=f"ToC does not support action: {args.action}", is_error=True)
 
     def _handle_issb_s1(self, args: FrameworkInput) -> ToolResult:
-        from openharness.impact.frameworks.issb_ifrs_s1 import get_ifrs_s1_framework, assess_ifrs_s1_readiness
+        from openharness.impact.frameworks.issb_ifrs_s1 import (
+            get_ifrs_s1_framework,
+            assess_ifrs_s1_readiness,
+        )
 
         if args.action == "list":
             fw = get_ifrs_s1_framework()
-            lines = [f"IFRS S1 — General Sustainability Disclosure ({sum(len(p.disclosures) for p in fw.pillars)} disclosures)\n"]
+            lines = [
+                f"IFRS S1 — General Sustainability Disclosure ({sum(len(p.disclosures) for p in fw.pillars)} disclosures)\n"
+            ]
             for pillar in fw.pillars:
                 lines.append(f"\n{pillar.name} ({len(pillar.disclosures)} disclosures)")
                 lines.append(f"  {pillar.description}")
@@ -550,12 +693,17 @@ class FrameworkTool(BaseTool):
         if args.action in ("match", "assess"):
             text = f"{args.description} {args.document_text}"
             if not text.strip():
-                return ToolResult(output="Provide description or document_text for ISSB S1 assessment", is_error=True)
+                return ToolResult(
+                    output="Provide description or document_text for ISSB S1 assessment",
+                    is_error=True,
+                )
 
             result = assess_ifrs_s1_readiness(
                 description=text,
                 reported_metrics=args.reported_metrics,
-                targets_set=any(w in text.lower() for w in ("target", "targets", "goal", "baseline")),
+                targets_set=any(
+                    w in text.lower() for w in ("target", "targets", "goal", "baseline")
+                ),
             )
 
             lines = [
@@ -567,7 +715,9 @@ class FrameworkTool(BaseTool):
             ]
             for pillar_name, info in result["pillar_scores"].items():
                 status_icon = "[OK]" if info["score"] >= 50 else "[GAP]"
-                lines.append(f"  {status_icon} {pillar_name.replace('_', ' ').title()}: {info['score']}%")
+                lines.append(
+                    f"  {status_icon} {pillar_name.replace('_', ' ').title()}: {info['score']}%"
+                )
 
             if result["recommendations"]:
                 lines.append(f"\nRecommendations ({len(result['recommendations'])}):")
@@ -579,11 +729,16 @@ class FrameworkTool(BaseTool):
         return ToolResult(output=f"ISSB S1 does not support action: {args.action}", is_error=True)
 
     def _handle_issb_s2(self, args: FrameworkInput) -> ToolResult:
-        from openharness.impact.frameworks.issb_ifrs_s2 import get_ifrs_s2_framework, assess_ifrs_s2_readiness
+        from openharness.impact.frameworks.issb_ifrs_s2 import (
+            get_ifrs_s2_framework,
+            assess_ifrs_s2_readiness,
+        )
 
         if args.action == "list":
             fw = get_ifrs_s2_framework()
-            lines = [f"IFRS S2 — Climate-related Disclosures ({sum(len(p.disclosures) for p in fw.pillars)} disclosures)\n"]
+            lines = [
+                f"IFRS S2 — Climate-related Disclosures ({sum(len(p.disclosures) for p in fw.pillars)} disclosures)\n"
+            ]
             for pillar in fw.pillars:
                 lines.append(f"\n{pillar.name} ({len(pillar.disclosures)} disclosures)")
                 lines.append(f"  {pillar.description}")
@@ -597,14 +752,20 @@ class FrameworkTool(BaseTool):
         if args.action in ("match", "assess"):
             text = f"{args.description} {args.document_text}"
             if not text.strip():
-                return ToolResult(output="Provide description or document_text for ISSB S2 assessment", is_error=True)
+                return ToolResult(
+                    output="Provide description or document_text for ISSB S2 assessment",
+                    is_error=True,
+                )
 
             result = assess_ifrs_s2_readiness(
                 description=text,
                 reported_metrics=args.reported_metrics,
                 has_scenario_analysis="scenario" in text.lower(),
                 has_transition_plan="transition plan" in text.lower(),
-                targets_set=any(w in text.lower() for w in ("target", "targets", "science-based", "science based")),
+                targets_set=any(
+                    w in text.lower()
+                    for w in ("target", "targets", "science-based", "science based")
+                ),
             )
 
             lines = [
@@ -630,12 +791,18 @@ class FrameworkTool(BaseTool):
         return ToolResult(output=f"ISSB S2 does not support action: {args.action}", is_error=True)
 
     def _handle_esrs(self, args: FrameworkInput) -> ToolResult:
-        from openharness.impact.frameworks.esrs import assess_double_materiality, get_esrs_standards, get_total_data_points
+        from openharness.impact.frameworks.esrs import (
+            assess_double_materiality,
+            get_esrs_standards,
+            get_total_data_points,
+        )
 
         if args.action == "list":
             standards = get_esrs_standards()
             total = get_total_data_points()
-            lines = [f"EU CSRD / ESRS Standards ({len(standards)} standards, {total} disclosures)\n"]
+            lines = [
+                f"EU CSRD / ESRS Standards ({len(standards)} standards, {total} disclosures)\n"
+            ]
             current_pillar = ""
             for s in standards:
                 if s.pillar != current_pillar:
@@ -678,11 +845,15 @@ class FrameworkTool(BaseTool):
                 mat_tag = f" [{' + '.join(flags)}]" if flags else ""
                 icon = "[OK]" if flags else "[--]"
                 lines.append(f"  {icon} {t['topic_code']}: {t['topic_name']}{mat_tag}")
-                lines.append(f"    Disclosures: {t['disclosures_addressed']}/{t['disclosures_total']} ({t['coverage_pct']}%)")
+                lines.append(
+                    f"    Disclosures: {t['disclosures_addressed']}/{t['disclosures_total']} ({t['coverage_pct']}%)"
+                )
                 if t["impact_evidence"]:
                     lines.append(f"    Impact evidence: {', '.join(t['impact_evidence'][:4])}")
                 if t["financial_evidence"]:
-                    lines.append(f"    Financial evidence: {', '.join(t['financial_evidence'][:3])}")
+                    lines.append(
+                        f"    Financial evidence: {', '.join(t['financial_evidence'][:3])}"
+                    )
                 if t["gaps"]:
                     lines.append(f"    Top gaps: {'; '.join(t['gaps'][:2])}")
             return ToolResult(output="\n".join(lines), metadata=result)
@@ -730,8 +901,11 @@ class FrameworkTool(BaseTool):
                 f"({result.basic_addressed + result.comprehensive_addressed}/"
                 f"{result.basic_total + result.comprehensive_total})",
                 f"Basic: {result.basic_addressed}/{result.basic_total}"
-                + (f"  |  Comprehensive: {result.comprehensive_addressed}/{result.comprehensive_total}"
-                   if result.comprehensive_total else ""),
+                + (
+                    f"  |  Comprehensive: {result.comprehensive_addressed}/{result.comprehensive_total}"
+                    if result.comprehensive_total
+                    else ""
+                ),
                 "",
             ]
             for d in result.disclosures:
@@ -800,7 +974,9 @@ class FrameworkTool(BaseTool):
 
     def _handle_tisfd(self, args: FrameworkInput) -> ToolResult:
         from openharness.impact.frameworks.tisfd import (
-            FRAMEWORK_STATUS, assess_tisfd_readiness, get_tisfd_disclosures,
+            FRAMEWORK_STATUS,
+            assess_tisfd_readiness,
+            get_tisfd_disclosures,
         )
 
         if args.action == "list":
@@ -839,7 +1015,9 @@ class FrameworkTool(BaseTool):
             ]
             for ps in result.pillar_scores:
                 icon = "[OK]" if ps.coverage_pct >= 50 else "[GAP]"
-                lines.append(f"  {icon} {ps.pillar.replace('_', ' ').title()}: {ps.coverage_pct}% ({ps.addressed}/{ps.total})")
+                lines.append(
+                    f"  {icon} {ps.pillar.replace('_', ' ').title()}: {ps.coverage_pct}% ({ps.addressed}/{ps.total})"
+                )
             if result.recommendations:
                 lines.append("")
                 lines.append("Recommendations:")
@@ -850,6 +1028,49 @@ class FrameworkTool(BaseTool):
             return ToolResult(output="\n".join(lines), metadata=result.model_dump())
 
         return ToolResult(output=f"TISFD does not support action: {args.action}", is_error=True)
+
+    def _handle_sbtn(self, args: FrameworkInput) -> ToolResult:
+        import json
+        from openharness.impact.frameworks.sbtn import nature_target_ranges, sbtn_readiness
+        from openharness.impact.models import Company
+
+        if args.action == "list":
+            return ToolResult(
+                output="SBTN five steps: Assess, Prioritise, Measure, Act, Track (v2 methods beta)."
+            )
+        company = Company(
+            name=args.structured_inputs.get("company_name", "Company"),
+            description=args.description,
+            sector=args.sector,
+            geography=args.structured_inputs.get("geography", ""),
+        )
+        payload = sbtn_readiness(company, args.structured_inputs.get("answers", {}))
+        if args.structured_inputs.get("pressure"):
+            payload["target_range"] = nature_target_ranges(
+                args.structured_inputs["pressure"], args.sector
+            )
+        return ToolResult(output=json.dumps(payload, default=str), metadata=payload)
+
+    def _handle_just_transition(self, args: FrameworkInput) -> ToolResult:
+        import json
+        from openharness.impact.just_transition import JT_METRICS, assess_just_transition
+        from openharness.impact.models import Company, MetricRecord
+
+        if args.action == "list":
+            return ToolResult(output=json.dumps(JT_METRICS), metadata={"metrics": JT_METRICS})
+        company = Company(
+            name=args.structured_inputs.get("company_name", "Company"),
+            description=args.description,
+            sector=args.sector,
+            geography=args.structured_inputs.get("geography", ""),
+        )
+        records = [
+            MetricRecord.model_validate(row) for row in args.structured_inputs.get("records", [])
+        ]
+        payload = assess_just_transition(
+            company, records, args.structured_inputs.get("transition_plan")
+        )
+        return ToolResult(output=json.dumps(payload, default=str), metadata=payload)
 
     def _handle_opim(self, args: FrameworkInput) -> ToolResult:
         from openharness.impact.frameworks.ifc_opim import assess_opim_alignment, get_opim_framework
@@ -893,7 +1114,11 @@ class FrameworkTool(BaseTool):
 
     def _handle_cdp(self, args: FrameworkInput) -> ToolResult:
         """CDP questionnaire readiness, backed by the ESG toolbox cdp module."""
-        from openharness.impact.toolbox import assess_tool_readiness, build_tool_checklist, get_toolbox_tool
+        from openharness.impact.toolbox import (
+            assess_tool_readiness,
+            build_tool_checklist,
+            get_toolbox_tool,
+        )
 
         spec = get_toolbox_tool("cdp")
 
@@ -965,10 +1190,12 @@ class FrameworkTool(BaseTool):
             "  issb_s2   - IFRS S2 Climate-related Disclosures (4 pillars, 13 disclosures, subsumes TCFD)",
             "  esrs      - EU CSRD/ESRS Double Materiality (12 standards)",
             "  vsme      - EFRAG Voluntary SME Standard (Basic B1-B11 + Comprehensive C1-C9)",
-        "  two_x     - 2X Criteria gender-lens investing standard (2X Global 2024)",
-        "  tisfd     - TISFD Inequality & Social-related Financial Disclosures (beta, 4 pillars)",
-        "  opim      - IFC Operating Principles for Impact Management (9 principles)",
-        "  cdp       - CDP climate/water/forest questionnaire readiness (ESG toolbox backed)",
+            "  two_x     - 2X Criteria gender-lens investing standard (2X Global 2024)",
+            "  tisfd     - TISFD Inequality & Social-related Financial Disclosures (beta, 4 pillars)",
+            "  sbtn      - Science Based Targets Network five-step nature readiness (beta)",
+            "  just_transition - 19-metric Just Transition assessment",
+            "  opim      - IFC Operating Principles for Impact Management (9 principles)",
+            "  cdp       - CDP climate/water/forest questionnaire readiness (ESG toolbox backed)",
             "",
             "Use framework='<name>' with action='list' to browse, 'match' to find relevant topics,",
             "or 'assess' to check coverage. Use framework='all' with action='assess' to scan all.",
@@ -998,45 +1225,70 @@ class FrameworkTool(BaseTool):
         sasb_matches = match_sasb_industry(args.sector, args.description, args.themes)
         if sasb_matches:
             top = sasb_matches[0]
-            lines.append(f"SASB: Best match = {top[0].industry} ({top[0].sector}), {len(top[0].topics)} material topics")
+            lines.append(
+                f"SASB: Best match = {top[0].industry} ({top[0].sector}), {len(top[0].topics)} material topics"
+            )
         else:
             lines.append("SASB: No industry match (provide more sector detail)")
 
         # TCFD
         tcfd = assess_tcfd_alignment(args.description, args.reported_metrics, args.document_text)
-        lines.append(f"TCFD/IFRS S2: {tcfd['overall_coverage']}% coverage ({tcfd['addressed_disclosures']}/{tcfd['total_disclosures']} disclosures)")
+        lines.append(
+            f"TCFD/IFRS S2: {tcfd['overall_coverage']}% coverage ({tcfd['addressed_disclosures']}/{tcfd['total_disclosures']} disclosures)"
+        )
 
         # SFDR
         sfdr = assess_sfdr_compliance(args.reported_metrics, args.description, args.document_text)
-        lines.append(f"SFDR PAI: {sfdr['coverage_pct']}% coverage ({sfdr['addressed']}/{sfdr['total']} indicators)")
+        lines.append(
+            f"SFDR PAI: {sfdr['coverage_pct']}% coverage ({sfdr['addressed']}/{sfdr['total']} indicators)"
+        )
 
         # EDCI
         edci = assess_edci_coverage(args.reported_metrics, args.description, args.document_text)
-        lines.append(f"EDCI: {edci['coverage_pct']}% coverage ({edci['addressed']}/{edci['total']} metrics)")
+        lines.append(
+            f"EDCI: {edci['coverage_pct']}% coverage ({edci['addressed']}/{edci['total']} metrics)"
+        )
 
         # UNPRI
         unpri = assess_unpri_alignment(args.description, args.themes, args.document_text)
-        lines.append(f"UNPRI: {unpri['overall_coverage']}% alignment ({unpri['addressed_actions']}/{unpri['total_actions']} actions)")
+        lines.append(
+            f"UNPRI: {unpri['overall_coverage']}% alignment ({unpri['addressed_actions']}/{unpri['total_actions']} actions)"
+        )
 
         # Theory of Change
         toc = assess_toc_alignment(args.description, args.document_text)
-        lines.append(f"ToC (RS Group): {toc['coverage_pct']}% alignment ({toc['addressed']}/{toc['total_principles']} principles)")
+        lines.append(
+            f"ToC (RS Group): {toc['coverage_pct']}% alignment ({toc['addressed']}/{toc['total_principles']} principles)"
+        )
 
         issb = assess_ifrs_s1_readiness(
-            description=args.description, reported_metrics=args.reported_metrics,
-            targets_set=any(w in args.description.lower() for w in ("target", "targets", "goal", "baseline")),
+            description=args.description,
+            reported_metrics=args.reported_metrics,
+            targets_set=any(
+                w in args.description.lower() for w in ("target", "targets", "goal", "baseline")
+            ),
         )
-        lines.append(f"ISSB IFRS S1: {issb['overall_readiness']}% readiness ({issb['total_disclosures']} disclosures)")
+        lines.append(
+            f"ISSB IFRS S1: {issb['overall_readiness']}% readiness ({issb['total_disclosures']} disclosures)"
+        )
 
         issb_s2 = assess_ifrs_s2_readiness(
-            description=args.description, reported_metrics=args.reported_metrics,
+            description=args.description,
+            reported_metrics=args.reported_metrics,
             has_scenario_analysis="scenario" in args.description.lower(),
             has_transition_plan="transition plan" in args.description.lower(),
-            targets_set=any(w in args.description.lower() for w in ("target", "targets", "science-based", "science based")),
+            targets_set=any(
+                w in args.description.lower()
+                for w in ("target", "targets", "science-based", "science based")
+            ),
         )
-        lines.append(f"ISSB IFRS S2 (Climate): {issb_s2['overall_readiness']}% readiness (subsumes TCFD)")
+        lines.append(
+            f"ISSB IFRS S2 (Climate): {issb_s2['overall_readiness']}% readiness (subsumes TCFD)"
+        )
 
-        esrs = assess_double_materiality(args.description, args.document_text, args.sector, args.reported_metrics)
+        esrs = assess_double_materiality(
+            args.description, args.document_text, args.sector, args.reported_metrics
+        )
         lines.append(
             f"ESRS (CSRD): {esrs['material_topics']}/{esrs['total_topics']} standards with potential materiality signals, "
             f"{esrs['overall_coverage_pct']}% disclosure coverage"
@@ -1049,16 +1301,21 @@ class FrameworkTool(BaseTool):
         full_text = " ".join([args.description or "", args.document_text or ""]).lower()
         opim = assess_opim_alignment(
             has_impact_thesis=any(
-                kw in full_text
-                for kw in ("impact thesis", "theory of change", "impact strategy")
+                kw in full_text for kw in ("impact thesis", "theory of change", "impact strategy")
             ),
             has_theory_of_change="theory of change" in full_text or "tor" in full_text,
             has_impact_policy=any(
-                kw in full_text for kw in ("impact policy", "esg policy", "responsible investment policy")
+                kw in full_text
+                for kw in ("impact policy", "esg policy", "responsible investment policy")
             ),
             has_external_audit=any(
                 kw in full_text
-                for kw in ("external audit", "third-party verification", "bluemark", "independent verification")
+                for kw in (
+                    "external audit",
+                    "third-party verification",
+                    "bluemark",
+                    "independent verification",
+                )
             ),
             metrics_count=len(args.reported_metrics or {}),
             sdg_count=sum(1 for k in (args.themes or []) if "sdg" in str(k).lower()),

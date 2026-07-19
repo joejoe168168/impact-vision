@@ -7,6 +7,7 @@ by InVEST and ARIES. Swap in a real InVEST run by implementing the
 drawn from published meta-analyses so demos give plausible numbers
 offline.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -44,7 +45,10 @@ class EcosystemValuation(BaseModel):
 @runtime_checkable
 class EcosystemProvider(Protocol):
     id: str
-    def value(self, asset: EcosystemAsset, service: EcosystemServiceType) -> EcosystemValuation | None:  # pragma: no cover
+
+    def value(
+        self, asset: EcosystemAsset, service: EcosystemServiceType
+    ) -> EcosystemValuation | None:  # pragma: no cover
         ...
 
 
@@ -124,6 +128,32 @@ def get_ecosystem_provider(provider_id: str = "offline-unit-values") -> Ecosyste
 register_ecosystem_provider(UnitValueProvider())
 
 
+BIODIVERSITY_CREDIT_PRINCIPLES = [
+    {
+        "id": f"BCP-{i:02d}",
+        "pillar": ("outcomes" if i <= 7 else "equity" if i <= 14 else "governance"),
+        "principle": f"High-integrity biodiversity credit principle {i}",
+        "assessment_question": f"Is principle {i} evidenced?",
+        "scoring_guidance": "0 absent; 1 partial; 2 evidenced",
+        "source": "IAPB/BCA/WEF High-Level Principles",
+    }
+    for i in range(1, 22)
+]
+
+
+def screen_biodiversity_credit(answers: dict[str, int]) -> dict:
+    pillars = {}
+    gaps = []
+    for pillar in ("outcomes", "equity", "governance"):
+        relevant = [item for item in BIODIVERSITY_CREDIT_PRINCIPLES if item["pillar"] == pillar]
+        score = sum(max(0, min(2, int(answers.get(item["id"], 0)))) for item in relevant)
+        pillars[pillar] = round(100 * score / (2 * len(relevant)), 1)
+        gaps.extend(item["id"] for item in relevant if item["id"] not in answers)
+    overall = sum(pillars.values()) / len(pillars)
+    band = "high" if overall >= 80 and not gaps else "medium" if overall >= 50 else "low"
+    return {"score": round(overall, 1), "per_pillar": pillars, "quality_band": band, "gaps": gaps}
+
+
 __all__ = [
     "EcosystemAsset",
     "EcosystemServiceType",
@@ -132,4 +162,6 @@ __all__ = [
     "UnitValueProvider",
     "register_ecosystem_provider",
     "get_ecosystem_provider",
+    "BIODIVERSITY_CREDIT_PRINCIPLES",
+    "screen_biodiversity_credit",
 ]

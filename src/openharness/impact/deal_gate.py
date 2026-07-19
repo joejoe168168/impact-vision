@@ -9,6 +9,7 @@ two points in the workflow:
 Gates are read from `FundThesis.ic_gate` so each fund manager can tune
 thresholds without touching code.
 """
+
 from __future__ import annotations
 
 from typing import Literal
@@ -17,6 +18,41 @@ from pydantic import BaseModel, Field
 
 from openharness.impact.fund_thesis import FundThesis
 from openharness.impact.models import Assessment
+
+
+class TargetCondition(BaseModel):
+    target_id: str
+    metric_id: str
+    baseline: float | None = None
+    target_value: float
+    by_period: str
+    condition_kind: Literal["condition_precedent", "covenant", "aspiration"]
+    linked_incentive: str | None = None
+
+
+def gate_with_targets(deal, targets: list[TargetCondition]) -> dict:
+    """Block a positive deal gate unless at least one binding impact target exists."""
+    binding = [
+        target for target in targets if target.condition_kind in {"condition_precedent", "covenant"}
+    ]
+    return {
+        "deal": deal.model_dump(mode="json") if isinstance(deal, BaseModel) else deal,
+        "verdict": "pass" if binding else "block",
+        "targets_set_at_investment": bool(binding),
+        "warning": "Aspiration-only or missing impact targets cannot satisfy the gate"
+        if not binding
+        else "",
+        "monitoring_schedule": [
+            {
+                "target_id": target.target_id,
+                "metric_id": target.metric_id.upper(),
+                "due": target.by_period,
+                "cadence": "quarterly",
+            }
+            for target in binding
+        ],
+        "evidence_graph_targets": [target.model_dump(mode="json") for target in targets],
+    }
 
 
 class GateCheck(BaseModel):
@@ -37,7 +73,9 @@ class DealScorecard(BaseModel):
     recommendation: str = ""
 
 
-def _grade_status(value: float, threshold: float, *, higher_is_better: bool) -> Literal["pass", "fail", "warn"]:
+def _grade_status(
+    value: float, threshold: float, *, higher_is_better: bool
+) -> Literal["pass", "fail", "warn"]:
     if higher_is_better:
         if value >= threshold:
             return "pass"
@@ -73,81 +111,104 @@ def evaluate_deal(
     if assessment.five_dimensions is not None:
         actual = float(assessment.five_dimensions.overall_score)
         st = _grade_status(actual, gate.min_5d_overall, higher_is_better=True)
-        checks.append(GateCheck(
-            name="5D overall score",
-            status=st,
-            actual=actual,
-            threshold=gate.min_5d_overall,
-            message=f"5D overall {actual} vs. min {gate.min_5d_overall}",
-        ))
+        checks.append(
+            GateCheck(
+                name="5D overall score",
+                status=st,
+                actual=actual,
+                threshold=gate.min_5d_overall,
+                message=f"5D overall {actual} vs. min {gate.min_5d_overall}",
+            )
+        )
 
     # Top SDG score
     if assessment.sdg_alignments:
         top = max(assessment.sdg_alignments, key=lambda a: a.score)
         st = _grade_status(top.score, gate.min_top_sdg_score, higher_is_better=True)
-        checks.append(GateCheck(
-            name="Top SDG score",
-            status=st,
-            actual=top.score,
-            threshold=gate.min_top_sdg_score,
-            message=f"SDG {top.goal} ({top.goal_name}): {top.score} vs. min {gate.min_top_sdg_score}",
-        ))
+        checks.append(
+            GateCheck(
+                name="Top SDG score",
+                status=st,
+                actual=top.score,
+                threshold=gate.min_top_sdg_score,
+                message=f"SDG {top.goal} ({top.goal_name}): {top.score} vs. min {gate.min_top_sdg_score}",
+            )
+        )
 
     # DD coverage
     if dd_coverage_pct is not None:
         st = _grade_status(dd_coverage_pct, gate.min_dd_coverage_pct, higher_is_better=True)
-        checks.append(GateCheck(
-            name="DD checklist coverage",
-            status=st,
-            actual=dd_coverage_pct,
-            threshold=gate.min_dd_coverage_pct,
-            message=f"{dd_coverage_pct:.1f}% covered vs. min {gate.min_dd_coverage_pct}%",
-        ))
+        checks.append(
+            GateCheck(
+                name="DD checklist coverage",
+                status=st,
+                actual=dd_coverage_pct,
+                threshold=gate.min_dd_coverage_pct,
+                message=f"{dd_coverage_pct:.1f}% covered vs. min {gate.min_dd_coverage_pct}%",
+            )
+        )
 
     # Greenwashing
     if greenwashing_score is not None:
         st = _grade_status(greenwashing_score, gate.max_greenwashing_score, higher_is_better=False)
-        checks.append(GateCheck(
-            name="Greenwashing risk",
-            status=st,
-            actual=greenwashing_score,
-            threshold=gate.max_greenwashing_score,
-            message=f"Risk {greenwashing_score:.1f} vs. max {gate.max_greenwashing_score}",
-        ))
+        checks.append(
+            GateCheck(
+                name="Greenwashing risk",
+                status=st,
+                actual=greenwashing_score,
+                threshold=gate.max_greenwashing_score,
+                message=f"Risk {greenwashing_score:.1f} vs. max {gate.max_greenwashing_score}",
+            )
+        )
 
     # Exclusion screen
     if exclusion_pass is not None and gate.exclusion_must_pass:
-        checks.append(GateCheck(
-            name="Exclusion screening",
-            status="pass" if exclusion_pass else "fail",
-            actual="pass" if exclusion_pass else "fail",
-            threshold="must pass",
-            message=("All exclusions cleared" if exclusion_pass
-                     else "One or more exclusion criteria triggered"),
-        ))
+        checks.append(
+            GateCheck(
+                name="Exclusion screening",
+                status="pass" if exclusion_pass else "fail",
+                actual="pass" if exclusion_pass else "fail",
+                threshold="must pass",
+                message=(
+                    "All exclusions cleared"
+                    if exclusion_pass
+                    else "One or more exclusion criteria triggered"
+                ),
+            )
+        )
 
     # Sector forbidden / required
     sector = (assessment.company.sector or "").lower()
     if gate.forbidden_sectors:
         is_forbidden = any(f.lower() in sector for f in gate.forbidden_sectors)
-        checks.append(GateCheck(
-            name="Forbidden sector check",
-            status="fail" if is_forbidden else "pass",
-            actual=sector,
-            threshold=", ".join(gate.forbidden_sectors),
-            message=("Sector matches the fund's forbidden list" if is_forbidden
-                     else "Sector not on the forbidden list"),
-        ))
+        checks.append(
+            GateCheck(
+                name="Forbidden sector check",
+                status="fail" if is_forbidden else "pass",
+                actual=sector,
+                threshold=", ".join(gate.forbidden_sectors),
+                message=(
+                    "Sector matches the fund's forbidden list"
+                    if is_forbidden
+                    else "Sector not on the forbidden list"
+                ),
+            )
+        )
     if gate.required_sectors:
         is_required = any(r.lower() in sector for r in gate.required_sectors)
-        checks.append(GateCheck(
-            name="Required sector check",
-            status="pass" if is_required else "fail",
-            actual=sector,
-            threshold=", ".join(gate.required_sectors),
-            message=("Sector matches a required focus area" if is_required
-                     else "Sector outside fund's required focus areas"),
-        ))
+        checks.append(
+            GateCheck(
+                name="Required sector check",
+                status="pass" if is_required else "fail",
+                actual=sector,
+                threshold=", ".join(gate.required_sectors),
+                message=(
+                    "Sector matches a required focus area"
+                    if is_required
+                    else "Sector outside fund's required focus areas"
+                ),
+            )
+        )
 
     fails = [c.message for c in checks if c.status == "fail"]
     warns = [c.message for c in checks if c.status == "warn"]
@@ -183,10 +244,7 @@ def render_scorecard_text(scorecard: DealScorecard) -> str:
         "-" * 72,
     ]
     for c in scorecard.checks:
-        lines.append(
-            f"{c.name:<32} {c.status:<6} "
-            f"{str(c.actual):<12} {str(c.threshold):<12}"
-        )
+        lines.append(f"{c.name:<32} {c.status:<6} {str(c.actual):<12} {str(c.threshold):<12}")
     lines.append("")
     lines.append("Recommendation: " + scorecard.recommendation)
     return "\n".join(lines)

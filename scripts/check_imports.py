@@ -117,6 +117,7 @@ def smoke_test_imports() -> bool:
 def test_registry() -> bool:
     try:
         from openharness.tools import create_default_tool_registry
+        from openharness.tools.impact import __all__ as impact_exports
 
         registry = create_default_tool_registry()
         tools = registry.list_tools()
@@ -127,6 +128,16 @@ def test_registry() -> bool:
         missing = essential - set(names)
         if missing:
             print(f"WARNING: essential tools missing from registry: {missing}")
+            return False
+        impact_tools = [
+            tool for tool in tools if type(tool).__module__.startswith("openharness.tools.impact.")
+        ]
+        if len(impact_exports) != len(impact_tools):
+            print(
+                "IMPACT TOOL COUNT MISMATCH: "
+                f"openharness.tools.impact.__all__ has {len(impact_exports)} entries; "
+                f"the registry has {len(impact_tools)} impact tools"
+            )
             return False
         return True
     except Exception as exc:

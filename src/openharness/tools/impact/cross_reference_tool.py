@@ -10,7 +10,7 @@ from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 
 class CrossReferenceInput(BaseModel):
-    action: Literal["lookup", "search", "list"] = Field(
+    action: Literal["lookup", "search", "list", "translate", "coverage"] = Field(
         description=(
             "'lookup': Find equivalents for a specific metric ID. "
             "'search': Search cross-references by concept name. "
@@ -29,6 +29,8 @@ class CrossReferenceInput(BaseModel):
         default="",
         description="Concept name to search for (e.g., 'GHG emissions', 'gender', 'energy').",
     )
+    records: list[dict] = Field(default_factory=list)
+    to_framework: Literal["iris", "issb", "esrs", "gri", "edci", "sfdr_pai", "sasb", "tcfd"] = "gri"
 
 
 class CrossReferenceTool(BaseTool):
@@ -47,7 +49,39 @@ class CrossReferenceTool(BaseTool):
         return True
 
     async def execute(self, arguments: BaseModel, context: ToolExecutionContext) -> ToolResult:
-        args = arguments if isinstance(arguments, CrossReferenceInput) else CrossReferenceInput.model_validate(arguments)
+        args = (
+            arguments
+            if isinstance(arguments, CrossReferenceInput)
+            else CrossReferenceInput.model_validate(arguments)
+        )
+
+        if args.action in {"translate", "coverage"}:
+            import json
+            from openharness.impact.concordance import load_concordance
+            from openharness.impact.models import MetricRecord
+
+            try:
+                records = [MetricRecord.model_validate(row) for row in args.records]
+                concordance = load_concordance()
+                if args.action == "coverage":
+                    payload = concordance.coverage_report(records, args.to_framework)
+                else:
+                    payload = [
+                        {
+                            "source": record.model_dump(mode="json"),
+                            "translations": [
+                                ref.model_dump(mode="json")
+                                for ref, _ in concordance.translate(record, args.to_framework)
+                            ],
+                        }
+                        for record in records
+                    ]
+                return ToolResult(
+                    output=json.dumps(payload, default=str),
+                    metadata=payload if isinstance(payload, dict) else {"translations": payload},
+                )
+            except Exception as exc:
+                return ToolResult(output=f"Concordance {args.action} failed: {exc}", is_error=True)
 
         from openharness.impact.frameworks.cross_reference import (
             format_cross_reference,

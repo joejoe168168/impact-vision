@@ -1,0 +1,8 @@
+countries:
+  Kenya: {1: high, 2: high, 3: medium, 4: high, 5: medium, 6: high, 7: high, 8: medium, 9: medium, 10: high, 11: high, 12: medium, 13: high, 14: medium, 15: high, 16: medium, 17: medium}
+  India: {1: high, 2: medium, 3: medium, 4: medium, 5: high, 6: high, 7: medium, 8: medium, 9: medium, 10: high, 11: high, 12: high, 13: high, 14: medium, 15: high, 16: medium, 17: medium}
+  China: {1: low, 2: low, 3: medium, 4: low, 5: medium, 6: medium, 7: low, 8: low, 9: low, 10: medium, 11: medium, 12: high, 13: high, 14: high, 15: high, 16: medium, 17: low}
+  Hong Kong: {1: low, 2: low, 3: low, 4: low, 5: medium, 6: low, 7: low, 8: low, 9: low, 10: high, 11: medium, 12: high, 13: high, 14: high, 15: medium, 16: low, 17: low}
+  Nigeria: {1: high, 2: high, 3: high, 4: high, 5: high, 6: high, 7: high, 8: high, 9: high, 10: high, 11: high, 12: medium, 13: high, 14: medium, 15: high, 16: high, 17: high}
+source: UN Sustainable Development Report country profiles; indicative bands
+as_of: "2026-06"

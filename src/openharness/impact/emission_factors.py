@@ -30,6 +30,47 @@ from openharness.impact.climate_accounting import (
     calculate_ghg_inventory,
 )
 
+AR6_GWP = {"CO2": 1.0, "CH4": 28.0, "N2O": 273.0, "SF6": 23500.0}
+AR6_GWP_PROVENANCE = {
+    "id": "ipcc-ar6-gwp100",
+    "revision": "AR6-2021",
+    "source": "IPCC Sixth Assessment Report",
+}
+GBT_2589_NCV_KJ_PER_KG = {
+    "raw_coal": 20934,
+    "cleaned_coal": 26377,
+    "coke": 28470,
+    "crude_oil": 41868,
+    "fuel_oil": 41868,
+    "gasoline": 43124,
+    "kerosene": 43124,
+    "diesel": 42705,
+    "lpg": 50179,
+    "natural_gas": 38931,
+    "coal_gas": 16747,
+    "biomass": 14654,
+    "electricity": 3600,
+    "steam": 2676,
+    "heat": 1000,
+    "anthracite": 25120,
+    "bituminous_coal": 23030,
+    "lignite": 14650,
+    "refinery_gas": 46055,
+    "coke_oven_gas": 17981,
+    "blast_furnace_gas": 3768,
+    "producer_gas": 5234,
+    "methanol": 19930,
+    "ethanol": 26800,
+    "hydrogen": 120000,
+}
+GBT_2589_PROVENANCE = {"id": "gbt-2589-ncv", "revision": "2020", "source": "GB/T 2589-2020"}
+PURCHASED_HEAT_FACTOR = {
+    "id": "purchased-heat",
+    "revision": "2026-default",
+    "value": 0.11,
+    "unit": "tCO2e/GJ",
+    "source": "MEE/industry default; replace with supplier factor",
+}
 
 Publisher = Literal["EPA", "DEFRA", "IEA", "IPCC", "OFFLINE_DEMO"]
 
@@ -56,13 +97,9 @@ class EmissionFactorRevision(BaseModel):
 
     def model_post_init(self, __context: object) -> None:
         if self.low_kg_co2e_per_unit > self.factor.kg_co2e_per_unit:
-            raise ValueError(
-                "low_kg_co2e_per_unit must be <= factor.kg_co2e_per_unit"
-            )
+            raise ValueError("low_kg_co2e_per_unit must be <= factor.kg_co2e_per_unit")
         if self.high_kg_co2e_per_unit < self.factor.kg_co2e_per_unit:
-            raise ValueError(
-                "high_kg_co2e_per_unit must be >= factor.kg_co2e_per_unit"
-            )
+            raise ValueError("high_kg_co2e_per_unit must be >= factor.kg_co2e_per_unit")
 
 
 class EmissionFactorCatalogV2(BaseModel):
@@ -122,12 +159,14 @@ def _r(
     payload = base.model_dump()
     if factor_kwargs:
         payload.update(factor_kwargs)
-    factor = EmissionFactor.model_validate({
-        **payload,
-        "factor_id": f"{base.factor_id}::{catalog_version}",
-        "version": catalog_version,
-        "source": f"{publisher} {catalog_version} offline snapshot",
-    })
+    factor = EmissionFactor.model_validate(
+        {
+            **payload,
+            "factor_id": f"{base.factor_id}::{catalog_version}",
+            "version": catalog_version,
+            "source": f"{publisher} {catalog_version} offline snapshot",
+        }
+    )
     band = factor.kg_co2e_per_unit * band_pct / 100.0
     return EmissionFactorRevision(
         revision_id=revision_id,
@@ -143,74 +182,76 @@ def _r(
 
 def default_factor_catalog() -> EmissionFactorCatalogV2:
     """Return the offline EPA/DEFRA/IEA-style catalog used for demos and tests."""
-    return EmissionFactorCatalogV2(revisions=[
-        _r(
-            "defra-2025-natural-gas",
-            "DEFRA",
-            "defra-2025",
-            "fuel:natural_gas:kwh:global:2025",
-            band_pct=8.0,
-            source_url="https://www.gov.uk/government/collections/government-conversion-factors-for-company-reporting",
-        ),
-        _r(
-            "defra-2025-diesel",
-            "DEFRA",
-            "defra-2025",
-            "fuel:diesel:litre:global:2025",
-            band_pct=10.0,
-            source_url="https://www.gov.uk/government/collections/government-conversion-factors-for-company-reporting",
-        ),
-        _r(
-            "epa-2025-natural-gas",
-            "EPA",
-            "epa-2025",
-            "fuel:natural_gas:kwh:global:2025",
-            factor_kwargs={"kg_co2e_per_unit": 0.181},
-            band_pct=12.0,
-            source_url="https://www.epa.gov/climateleadership/ghg-emission-factors-hub",
-        ),
-        _r(
-            "ipcc-ar6-r410a",
-            "IPCC",
-            "ipcc-ar6",
-            "refrigerant:r410a:kg:global:2025",
-            factor_kwargs={"kg_co2e_per_unit": 1923.0},
-            band_pct=15.0,
-            source_url="https://www.ipcc.ch/assessment-report/ar6/",
-        ),
-        _r(
-            "iea-2025-grid-global",
-            "IEA",
-            "iea-2025",
-            "electricity:grid:kwh:global:2025",
-            band_pct=10.0,
-            source_url="https://www.iea.org/data-and-statistics",
-        ),
-        _r(
-            "iea-2024-grid-global",
-            "IEA",
-            "iea-2024",
-            "electricity:grid:kwh:global:2025",
-            factor_kwargs={"kg_co2e_per_unit": 0.45, "source_year": 2024},
-            band_pct=12.0,
-            source_url="https://www.iea.org/data-and-statistics",
-        ),
-        _r(
-            "iea-2025-renewable-market",
-            "IEA",
-            "iea-2025",
-            "electricity:renewable:kwh:global:2025",
-            band_pct=5.0,
-            source_url="https://www.iea.org/data-and-statistics",
-        ),
-        _r(
-            "offline-demo-2026-natural-gas",
-            "OFFLINE_DEMO",
-            "offline-demo-2026",
-            "fuel:natural_gas:kwh:global:2025",
-            band_pct=20.0,
-        ),
-    ])
+    return EmissionFactorCatalogV2(
+        revisions=[
+            _r(
+                "defra-2025-natural-gas",
+                "DEFRA",
+                "defra-2025",
+                "fuel:natural_gas:kwh:global:2025",
+                band_pct=8.0,
+                source_url="https://www.gov.uk/government/collections/government-conversion-factors-for-company-reporting",
+            ),
+            _r(
+                "defra-2025-diesel",
+                "DEFRA",
+                "defra-2025",
+                "fuel:diesel:litre:global:2025",
+                band_pct=10.0,
+                source_url="https://www.gov.uk/government/collections/government-conversion-factors-for-company-reporting",
+            ),
+            _r(
+                "epa-2025-natural-gas",
+                "EPA",
+                "epa-2025",
+                "fuel:natural_gas:kwh:global:2025",
+                factor_kwargs={"kg_co2e_per_unit": 0.181},
+                band_pct=12.0,
+                source_url="https://www.epa.gov/climateleadership/ghg-emission-factors-hub",
+            ),
+            _r(
+                "ipcc-ar6-r410a",
+                "IPCC",
+                "ipcc-ar6",
+                "refrigerant:r410a:kg:global:2025",
+                factor_kwargs={"kg_co2e_per_unit": 1923.0},
+                band_pct=15.0,
+                source_url="https://www.ipcc.ch/assessment-report/ar6/",
+            ),
+            _r(
+                "iea-2025-grid-global",
+                "IEA",
+                "iea-2025",
+                "electricity:grid:kwh:global:2025",
+                band_pct=10.0,
+                source_url="https://www.iea.org/data-and-statistics",
+            ),
+            _r(
+                "iea-2024-grid-global",
+                "IEA",
+                "iea-2024",
+                "electricity:grid:kwh:global:2025",
+                factor_kwargs={"kg_co2e_per_unit": 0.45, "source_year": 2024},
+                band_pct=12.0,
+                source_url="https://www.iea.org/data-and-statistics",
+            ),
+            _r(
+                "iea-2025-renewable-market",
+                "IEA",
+                "iea-2025",
+                "electricity:renewable:kwh:global:2025",
+                band_pct=5.0,
+                source_url="https://www.iea.org/data-and-statistics",
+            ),
+            _r(
+                "offline-demo-2026-natural-gas",
+                "OFFLINE_DEMO",
+                "offline-demo-2026",
+                "fuel:natural_gas:kwh:global:2025",
+                band_pct=20.0,
+            ),
+        ]
+    )
 
 
 # ---------------------------------------------------------------------------

@@ -343,18 +343,12 @@ def score_completeness(
         # value is non-empty; empty strings still leave the required metric
         # unsatisfied (but will surface as a per-response 'missing'
         # exception below rather than as a metric-level gap).
-        responses_by_metric = {
-            r.metric_id.upper(): r for r in submission.responses
-        }
+        responses_by_metric = {r.metric_id.upper(): r for r in submission.responses}
         non_empty_metrics = {
-            metric_id
-            for metric_id, r in responses_by_metric.items()
-            if r.value.strip()
+            metric_id for metric_id, r in responses_by_metric.items() if r.value.strip()
         }
         missing = [
-            metric_id
-            for metric_id in required_metric_ids
-            if metric_id not in non_empty_metrics
+            metric_id for metric_id in required_metric_ids if metric_id not in non_empty_metrics
         ]
         submitted = len(required_metric_ids) - len(missing)
         coverage = submitted / len(required_metric_ids) if required_metric_ids else 1.0
@@ -447,8 +441,7 @@ def rollup_multi_entity(
         for metric_id, count in per_metric_counts.items()
     }
     metrics_missing = sorted(
-        metric_id for metric_id in required_metric_ids
-        if per_metric_counts.get(metric_id, 0) == 0
+        metric_id for metric_id in required_metric_ids if per_metric_counts.get(metric_id, 0) == 0
     )
     return MultiEntityRollup(
         engagement_id=pack.engagement_id,
@@ -477,9 +470,7 @@ def build_coaching_cards(
     """
     cards: list[CoachingCard] = []
     field_index = {f.field_id: f for f in pack.fields}
-    submission_index = {
-        s.submission_id: s.entity_name for s in (submissions or [])
-    }
+    submission_index = {s.submission_id: s.entity_name for s in (submissions or [])}
     for exc in report.exceptions:
         field = field_index.get(exc.field_id)
         entity_name = submission_index.get(exc.submission_id, "")
@@ -491,12 +482,8 @@ def build_coaching_cards(
             entity_name = row.entity_name if row else "Unknown"
         message_parts = [exc.details or f"{exc.kind} exception for {exc.metric_id}"]
         if field and field.common_mistakes:
-            message_parts.append(
-                "Common mistakes: " + "; ".join(field.common_mistakes)
-            )
-        suggested = exc.suggested_action or (
-            f"Refer to the guidance card for {exc.metric_id}."
-        )
+            message_parts.append("Common mistakes: " + "; ".join(field.common_mistakes))
+        suggested = exc.suggested_action or (f"Refer to the guidance card for {exc.metric_id}.")
         if field and field.acceptable_evidence:
             suggested += " Acceptable evidence: " + "; ".join(field.acceptable_evidence)
         cards.append(
@@ -553,7 +540,168 @@ def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def dedupe_requests(packs: list[dict]) -> dict:
+    from openharness.impact.concordance import load_concordance
+
+    concordance = load_concordance()
+    routing = {}
+    consolidated = []
+    aliases = {
+        "scope 1": "ghg_scope1_emissions",
+        "scope1": "ghg_scope1_emissions",
+        "direct ghg": "ghg_scope1_emissions",
+    }
+    for pack in packs:
+        pack_id = str(pack.get("pack_id", pack.get("id", "pack")))
+        for field in pack.get("fields", []):
+            field_id = str(field.get("field_id", field.get("id", "field")))
+            framework = str(field.get("framework", "iris"))
+            datapoint = str(field.get("datapoint_id", field.get("metric_id", field_id)))
+            entry = concordance.lookup(framework, datapoint)
+            label = str(field.get("label", field.get("name", field_id))).lower()
+            concept = (
+                entry.concept_id
+                if entry
+                else next(
+                    (value for key, value in aliases.items() if key in label),
+                    f"unmapped:{pack_id}:{field_id}",
+                )
+            )
+            if concept not in routing:
+                consolidated.append(
+                    {
+                        "concept_id": concept,
+                        "label": field.get("label", field.get("name", field_id)),
+                        "unmapped": concept.startswith("unmapped:"),
+                    }
+                )
+            routing.setdefault(concept, []).append(
+                (pack_id, field_id, field.get("format", "value"))
+            )
+    return {"consolidated": consolidated, "routing": routing}
+
+
+def answer_fanout(consolidated_answers: dict, routing: dict) -> dict[str, dict]:
+    packs = {}
+    for concept, routes in routing.items():
+        if concept not in consolidated_answers:
+            continue
+        record = consolidated_answers[concept]
+        value = record.model_dump(mode="json") if hasattr(record, "model_dump") else record
+        for pack_id, field_id, fmt in routes:
+            packs.setdefault(pack_id, {})[field_id] = {
+                "value": value,
+                "format": fmt,
+                "period_alignment": "as reported; not silently re-based",
+            }
+    return packs
+
+
+def burden_report(packs: list[dict], consolidated) -> dict:
+    before = sum(len(pack.get("fields", [])) for pack in packs)
+    after = len(consolidated.get("consolidated", consolidated))
+    return {
+        "fields_before": before,
+        "fields_after": after,
+        "estimated_hours_saved": round(max(0, before - after) * 5 / 60, 2),
+        "assumption": "5 minutes per field; UpMetrics portfolio data-collection benchmark",
+    }
+
+
+def build_lp_dataroom(fund, companies, records) -> dict:
+    """Build an in-memory, signed LP data-room artifact bundle."""
+    import csv
+    import hashlib
+    import io
+    import json
+    from openpyxl import Workbook
+    from openharness.impact.cids_export import export_cids
+    from openharness.impact.concordance import load_concordance
+    from openharness.impact.metric_records import portfolio_comparability_index
+    from openharness.impact.signed_feed import HMACSigner
+    from openharness.impact.xbrl_export import render_xbrl_json, tag_records
+
+    fund_name = (
+        fund.get("name", "Fund") if isinstance(fund, dict) else getattr(fund, "name", "Fund")
+    )
+    by_company = (
+        records if isinstance(records, dict) else {company.name: [] for company in companies}
+    )
+    flat = [record for rows in by_company.values() for record in rows]
+    concordance = load_concordance()
+    tags, untaggable = tag_records(flat, "esrs_set1", concordance)
+    artifacts: dict[str, bytes] = {}
+    artifacts["portfolio.xbrl.json"] = json.dumps(
+        render_xbrl_json(tags, fund_name, "current"), default=str, indent=2
+    ).encode()
+    csv_out = io.StringIO()
+    writer = csv.DictWriter(
+        csv_out, fieldnames=list(flat[0].model_dump(mode="json").keys()) if flat else ["metric_id"]
+    )
+    writer.writeheader()
+    [writer.writerow(record.model_dump(mode="json")) for record in flat]
+    artifacts["metrics.csv"] = csv_out.getvalue().encode()
+    coverage = {
+        framework: {
+            name: concordance.coverage_report(rows, framework) for name, rows in by_company.items()
+        }
+        for framework in ("issb", "esrs", "gri")
+    }
+    coverage["untaggable"] = untaggable
+    artifacts["concordance_coverage.json"] = json.dumps(coverage, default=str, indent=2).encode()
+    comparability = portfolio_comparability_index(by_company, concordance)
+    artifacts["comparability.json"] = json.dumps(comparability, default=str, indent=2).encode()
+    wb = Workbook()
+    ws = wb.active
+    ws.append(["Question", "Draft answer", "Review status"])
+    ws.append(
+        [
+            "Evidence-bound DDQ responses",
+            "Run ddq_responder and replace this reviewed artifact",
+            "pending",
+        ]
+    )
+    stream = io.BytesIO()
+    wb.save(stream)
+    artifacts["ddq_answers.xlsx"] = stream.getvalue()
+    cids_docs = [
+        export_cids(company, None, by_company.get(company.name, []), company.impact_targets)
+        for company in companies
+    ]
+    artifacts["portfolio.cids.json"] = json.dumps(
+        {"portfolio": cids_docs}, default=str, indent=2
+    ).encode()
+    hashes = {name: hashlib.sha256(blob).hexdigest() for name, blob in artifacts.items()}
+    signer = HMACSigner(key=b"impact-vision-lp-dataroom")
+    signature = signer.sign(json.dumps(hashes, sort_keys=True).encode())
+    manifest = {"fund": fund_name, "files": hashes, "signature": signature, "signer_id": signer.id}
+    artifacts["manifest.json"] = json.dumps(manifest, indent=2).encode()
+    return {"manifest": manifest, "artifacts": artifacts}
+
+
+def write_lp_dataroom_bundle(target_dir, fund, companies, records) -> dict:
+    """Assemble the LP data-room bundle as actual files in ``target_dir``."""
+    from pathlib import Path
+
+    target = Path(target_dir).resolve()
+    target.mkdir(parents=True, exist_ok=True)
+    bundle = build_lp_dataroom(fund, companies, records)
+    written = []
+    for name, blob in bundle["artifacts"].items():
+        if Path(name).name != name:
+            raise ValueError(f"unsafe artifact name: {name}")
+        artifact_path = target / name
+        artifact_path.write_bytes(blob)
+        written.append(str(artifact_path))
+    return {"target_dir": str(target), "files": written, "manifest": bundle["manifest"]}
+
+
 __all__ = [
+    "answer_fanout",
+    "burden_report",
+    "dedupe_requests",
+    "build_lp_dataroom",
+    "write_lp_dataroom_bundle",
     "CoachingCard",
     "CompletenessReport",
     "CompletenessRow",

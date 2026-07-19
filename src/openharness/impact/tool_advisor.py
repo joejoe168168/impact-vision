@@ -55,12 +55,69 @@ class Playbook(BaseModel):
 # ---------------------------------------------------------------------------
 
 TOOL_ROUTES: list[ToolRoute] = [
+    ToolRoute(
+        tool="contribution_tracker",
+        category="verification",
+        summary="Register and monitor investor-contribution claims; flag attribution inflation.",
+        keywords=[
+            "investor contribution",
+            "attribution",
+            "additionality monitoring",
+            "opim principle 3",
+        ],
+    ),
+    ToolRoute(
+        tool="carbon_credit_integrity",
+        category="dd",
+        summary="Screen carbon and biodiversity credit integrity.",
+        keywords=["carbon credit", "ccp", "vcmi", "biodiversity credit"],
+    ),
+    ToolRoute(
+        tool="impact_linked_finance",
+        category="portfolio",
+        summary="Structure and simulate impact-linked loans, carry, PbR, and SAFI.",
+        keywords=["impact linked", "safi", "carry", "payment by results", "sustainability linked"],
+    ),
+    ToolRoute(
+        tool="regulatory_radar",
+        category="compliance",
+        summary="Detect official-source regulatory changes and portfolio impact.",
+        keywords=["regulatory change", "radar", "what changed", "standards update"],
+    ),
+    ToolRoute(
+        tool="dmrv_evidence",
+        category="verification",
+        summary="Hash, anchor, summarise, and verify digital MRV evidence.",
+        keywords=["dmrv", "remote sensing", "sensor evidence", "anchor claim"],
+    ),
+    ToolRoute(
+        tool="survey_delivery",
+        category="verification",
+        summary="Consent-gated WhatsApp, SMS, voice, and web survey delivery.",
+        keywords=["whatsapp survey", "sms survey", "voice survey", "survey delivery", "webhook"],
+    ),
+    ToolRoute(
+        tool="ddq_responder",
+        category="reporting",
+        summary="Draft ILPA/PRI DDQ answers from approved data only.",
+        keywords=["ddq responder", "ilpa ddq 2", "pri 2026", "climate module"],
+    ),
     # --- Intake & screening -------------------------------------------------
     ToolRoute(
         tool="pitch_deck_analyze",
         category="intake",
         summary="Analyze a pitch deck / investment memo PDF end-to-end: claims, SDGs, DD gaps, company extraction.",
-        keywords=["pitch deck", "deck", "memo", "pdf", "upload", "new deal", "intake", "analyze document", "investment memo"],
+        keywords=[
+            "pitch deck",
+            "deck",
+            "memo",
+            "pdf",
+            "upload",
+            "new deal",
+            "intake",
+            "analyze document",
+            "investment memo",
+        ],
         example="pitch_deck_analyze(file_path='deck.pdf')",
     ),
     ToolRoute(
@@ -73,26 +130,55 @@ TOOL_ROUTES: list[ToolRoute] = [
         tool="exclusion_screening",
         category="intake",
         summary="Screen a company against exclusion lists (weapons, tobacco, coal, etc.).",
-        keywords=["exclusion", "excluded", "negative screen", "blacklist", "prohibited", "screening"],
+        keywords=[
+            "exclusion",
+            "excluded",
+            "negative screen",
+            "blacklist",
+            "prohibited",
+            "screening",
+        ],
     ),
     ToolRoute(
         tool="guided_assessment",
         category="intake",
         summary="Interactive step-by-step impact assessment when no documents are available.",
-        keywords=["guided", "step by step", "interview", "questionnaire", "no documents", "manual assessment"],
+        keywords=[
+            "guided",
+            "step by step",
+            "interview",
+            "questionnaire",
+            "no documents",
+            "manual assessment",
+        ],
     ),
     # --- Core scoring -------------------------------------------------------
     ToolRoute(
         tool="five_dimension_assess",
         category="scoring",
         summary="IMP 5-Dimension impact scoring (What/Who/How Much/Contribution/Risk) + additionality.",
-        keywords=["five dimension", "5 dimension", "5d", "imp", "additionality", "impact score", "dimension"],
+        keywords=[
+            "five dimension",
+            "5 dimension",
+            "5d",
+            "imp",
+            "additionality",
+            "impact score",
+            "dimension",
+        ],
     ),
     ToolRoute(
         tool="sdg_mapper",
         category="scoring",
         summary="Map a company to UN SDG goals and targets with alignment scores.",
-        keywords=["sdg", "sustainable development goal", "goal 7", "un goals", "sdg alignment", "targets"],
+        keywords=[
+            "sdg",
+            "sustainable development goal",
+            "goal 7",
+            "un goals",
+            "sdg alignment",
+            "targets",
+        ],
     ),
     ToolRoute(
         tool="gap_analysis",
@@ -104,25 +190,53 @@ TOOL_ROUTES: list[ToolRoute] = [
         tool="iris_catalog",
         category="scoring",
         summary="Search and browse the IRIS+ metric catalog.",
-        keywords=["iris", "iris+", "metric catalog", "search metric", "oi4112", "pi", "metric definition"],
+        keywords=[
+            "iris",
+            "iris+",
+            "metric catalog",
+            "search metric",
+            "oi4112",
+            "pi",
+            "metric definition",
+        ],
     ),
     ToolRoute(
         tool="impact_metric_recommender",
         category="scoring",
         summary="Recommend IRIS+ metrics for a company's sector and themes.",
-        keywords=["recommend metric", "which metrics", "kpi suggestion", "metric recommendation", "suggest kpi"],
+        keywords=[
+            "recommend metric",
+            "which metrics",
+            "kpi suggestion",
+            "metric recommendation",
+            "suggest kpi",
+        ],
     ),
     ToolRoute(
         tool="impact_quantifier",
         category="scoring",
         summary="Quantify impact in physical units (people reached, tCO2e avoided) from raw data.",
-        keywords=["quantify", "how much impact", "people reached", "units", "impact quantification"],
+        keywords=[
+            "quantify",
+            "how much impact",
+            "people reached",
+            "units",
+            "impact quantification",
+        ],
     ),
     ToolRoute(
         tool="impact_valuation",
         category="scoring",
         summary="Monetize impact (SROI, impact-weighted accounts, IMM-style valuation).",
-        keywords=["sroi", "monetize", "valuation", "impact multiple", "imm", "dollar value", "impact-weighted"],
+        keywords=[
+            "sroi",
+            "monetize",
+            "valuation",
+            "impact multiple",
+            "imm",
+            "dollar value",
+            "impact-weighted",
+        ],
     ),
     ToolRoute(
         tool="impact_data_quality",
@@ -135,57 +249,143 @@ TOOL_ROUTES: list[ToolRoute] = [
         tool="dd_checklist",
         category="dd",
         summary="122-question due-diligence checklist (GIIN/PCV/Seraf/IMP) with NESTA evidence levels.",
-        keywords=["due diligence", "dd", "checklist", "dd questions", "diligence questions", "nesta"],
+        keywords=[
+            "due diligence",
+            "dd",
+            "checklist",
+            "dd questions",
+            "diligence questions",
+            "nesta",
+        ],
     ),
     ToolRoute(
         tool="greenwashing_detect",
         category="dd",
         summary="Greenwashing risk score (0-100) plus per-claim explainable review (action='review_claims').",
-        keywords=["greenwash", "greenwashing", "impact washing", "claims review", "unsubstantiated", "exaggerated claims", "vague claims"],
+        keywords=[
+            "greenwash",
+            "greenwashing",
+            "impact washing",
+            "claims review",
+            "unsubstantiated",
+            "exaggerated claims",
+            "vague claims",
+        ],
         example="greenwashing_detect(action='review_claims', claims=[...])",
     ),
     ToolRoute(
         tool="impact_risk_opportunity",
         category="dd",
         summary="Impact risk/opportunity register with likelihood x severity matrix (14 risk categories).",
-        keywords=["impact risk", "risk register", "opportunity", "likelihood", "severity", "risk matrix"],
+        keywords=[
+            "impact risk",
+            "risk register",
+            "opportunity",
+            "likelihood",
+            "severity",
+            "risk matrix",
+        ],
     ),
     ToolRoute(
         tool="hrdd_assess",
         category="dd",
         summary="Human-rights & value-chain due diligence incl. SMETA/SA8000/RBA/BSCI audit-scheme readiness.",
-        keywords=["human rights", "hrdd", "labor", "labour", "supply chain audit", "smeta", "sa8000", "rba", "bsci", "conflict minerals", "csddd", "forced labor"],
+        keywords=[
+            "human rights",
+            "hrdd",
+            "labor",
+            "labour",
+            "supply chain audit",
+            "smeta",
+            "sa8000",
+            "rba",
+            "bsci",
+            "conflict minerals",
+            "csddd",
+            "forced labor",
+        ],
     ),
     ToolRoute(
         tool="climate_scenario_risk",
         category="dd",
         summary="Climate scenario analysis (physical + transition risk) for TCFD/ISSB disclosure.",
-        keywords=["climate scenario", "physical risk", "transition risk", "warming", "1.5c", "2c", "ngfs"],
+        keywords=[
+            "climate scenario",
+            "physical risk",
+            "transition risk",
+            "warming",
+            "1.5c",
+            "2c",
+            "ngfs",
+        ],
     ),
     # --- Frameworks & compliance --------------------------------------------
     ToolRoute(
         tool="framework_assess",
         category="compliance",
         summary="Multi-framework assessment: SASB, GRI, TCFD, SFDR PAI, EDCI, UNPRI, ISSB S1/S2, ESRS, OPIM, CDP.",
-        keywords=["sasb", "gri", "tcfd", "sfdr", "edci", "unpri", "issb", "esrs", "csrd", "cdp", "framework", "disclosure standard", "materiality"],
+        keywords=[
+            "sasb",
+            "gri",
+            "tcfd",
+            "sfdr",
+            "edci",
+            "unpri",
+            "issb",
+            "esrs",
+            "csrd",
+            "cdp",
+            "framework",
+            "disclosure standard",
+            "materiality",
+        ],
     ),
     ToolRoute(
         tool="cross_reference",
         category="compliance",
         summary="Translate a metric/concept across 10+ frameworks (59-concept map).",
-        keywords=["cross reference", "crosswalk", "equivalent", "map metric", "correspond", "translate metric"],
+        keywords=[
+            "cross reference",
+            "crosswalk",
+            "equivalent",
+            "map metric",
+            "correspond",
+            "translate metric",
+        ],
     ),
     ToolRoute(
         tool="esg_toolbox",
         category="compliance",
         summary="33-module ESG toolbox router: ratings (MSCI/EcoVadis/CSA), export compliance (CBAM/EUDR/battery), supplier ESG, carbon schemes.",
-        keywords=["esg toolbox", "ecovadis", "msci rating", "csa", "iss", "cbam", "eudr", "battery regulation", "espr", "export compliance", "supplier esg", "sbti", "carbon scheme"],
+        keywords=[
+            "esg toolbox",
+            "ecovadis",
+            "msci rating",
+            "csa",
+            "iss",
+            "cbam",
+            "eudr",
+            "battery regulation",
+            "espr",
+            "export compliance",
+            "supplier esg",
+            "sbti",
+            "carbon scheme",
+        ],
     ),
     ToolRoute(
         tool="regulatory_calendar",
         category="compliance",
         summary="Jurisdiction regulatory deadline calendar (EU/UK/US/SG/CH/CA/JP/AU) incl. SFDR, CSRD, CBAM, EUDR.",
-        keywords=["regulatory", "deadline", "calendar", "compliance dates", "jurisdiction", "when due", "filing"],
+        keywords=[
+            "regulatory",
+            "deadline",
+            "calendar",
+            "compliance dates",
+            "jurisdiction",
+            "when due",
+            "filing",
+        ],
     ),
     ToolRoute(
         tool="product_passport",
@@ -197,7 +397,16 @@ TOOL_ROUTES: list[ToolRoute] = [
         tool="emission_factors",
         category="compliance",
         summary="Versioned emission-factor catalog with uncertainty bands and sensitivity analysis.",
-        keywords=["emission factor", "ghg", "scope 1", "scope 2", "carbon accounting", "co2", "tco2e", "carbon footprint"],
+        keywords=[
+            "emission factor",
+            "ghg",
+            "scope 1",
+            "scope 2",
+            "carbon accounting",
+            "co2",
+            "tco2e",
+            "carbon footprint",
+        ],
     ),
     ToolRoute(
         tool="ai_governance",
@@ -216,14 +425,32 @@ TOOL_ROUTES: list[ToolRoute] = [
         tool="verification_workspace",
         category="verification",
         summary="Verification prep (BlueMark/IFC OPIM/AA1000 readiness, evidence map) + third-party verifier workspace with findings and comments.",
-        keywords=["verification", "verify", "assurance", "bluemark", "ifc opim", "aa1000", "auditor", "verifier", "readiness check", "findings"],
+        keywords=[
+            "verification",
+            "verify",
+            "assurance",
+            "bluemark",
+            "ifc opim",
+            "aa1000",
+            "auditor",
+            "verifier",
+            "readiness check",
+            "findings",
+        ],
         example="verification_workspace(action='readiness_check', verification_target='bluemark', ...)",
     ),
     ToolRoute(
         tool="stakeholder_voice",
         category="verification",
         summary="Lean Data surveys, consent records, beneficiary feedback quality scoring, feedback-claim links.",
-        keywords=["stakeholder", "survey", "lean data", "consent", "voice", "interview beneficiaries"],
+        keywords=[
+            "stakeholder",
+            "survey",
+            "lean data",
+            "consent",
+            "voice",
+            "interview beneficiaries",
+        ],
     ),
     ToolRoute(
         tool="beneficiary_feedback",
@@ -236,7 +463,16 @@ TOOL_ROUTES: list[ToolRoute] = [
         tool="impact_report",
         category="reporting",
         summary="Full impact assessment report (HTML/XLSX/CSV/JSON/PDF) + LLM narrative prompts (exec summary, key findings, case study).",
-        keywords=["report", "generate report", "html report", "executive summary", "narrative", "case study", "write up", "summary report"],
+        keywords=[
+            "report",
+            "generate report",
+            "html report",
+            "executive summary",
+            "narrative",
+            "case study",
+            "write up",
+            "summary report",
+        ],
         example="impact_report(company_name=..., narrative_mode='narrative_prompt', narrative_section='executive_summary')",
     ),
     ToolRoute(
@@ -311,19 +547,41 @@ TOOL_ROUTES: list[ToolRoute] = [
         tool="engagement_suite",
         category="engagement",
         summary="Consolidated consultant suite (46 actions): data room, value creation, reporting studio, training, regulatory, verification bundle.",
-        keywords=["data room", "value creation", "reporting studio", "training", "workshop", "coaching", "microsite", "benchmark"],
+        keywords=[
+            "data room",
+            "value creation",
+            "reporting studio",
+            "training",
+            "workshop",
+            "coaching",
+            "microsite",
+            "benchmark",
+        ],
     ),
     ToolRoute(
         tool="toc_builder",
         category="engagement",
         summary="Theory of Change canvas + 11-rule logic validator + multi-framework KPI generator.",
-        keywords=["theory of change", "toc", "logic model", "outcomes chain", "kpi framework", "causal chain"],
+        keywords=[
+            "theory of change",
+            "toc",
+            "logic model",
+            "outcomes chain",
+            "kpi framework",
+            "causal chain",
+        ],
     ),
     ToolRoute(
         tool="investee_portal",
         category="engagement",
         summary="Investee-facing data collection portal: questionnaires, submissions, reminders.",
-        keywords=["investee", "portal", "data collection", "questionnaire submission", "request data"],
+        keywords=[
+            "investee",
+            "portal",
+            "data collection",
+            "questionnaire submission",
+            "request data",
+        ],
     ),
 ]
 
@@ -337,37 +595,94 @@ PLAYBOOKS: list[Playbook] = [
         playbook_id="deal_screening",
         name="New deal screening & impact DD",
         when_to_use="A new pitch deck or investment memo arrives and you need a full impact DD pass.",
-        keywords=["new deal", "pitch deck", "screen", "due diligence", "dd", "evaluate company", "assess startup"],
+        keywords=[
+            "new deal",
+            "pitch deck",
+            "screen",
+            "due diligence",
+            "dd",
+            "evaluate company",
+            "assess startup",
+        ],
         steps=[
-            PlaybookStep(tool="pitch_deck_analyze", purpose="Extract text, claims, SDGs, company model; run DD checklist."),
-            PlaybookStep(tool="exclusion_screening", purpose="Confirm no exclusion-list conflicts."),
-            PlaybookStep(tool="five_dimension_assess", purpose="Score the 5 IMP dimensions + additionality."),
+            PlaybookStep(
+                tool="pitch_deck_analyze",
+                purpose="Extract text, claims, SDGs, company model; run DD checklist.",
+            ),
+            PlaybookStep(
+                tool="exclusion_screening", purpose="Confirm no exclusion-list conflicts."
+            ),
+            PlaybookStep(
+                tool="five_dimension_assess", purpose="Score the 5 IMP dimensions + additionality."
+            ),
             PlaybookStep(tool="sdg_mapper", purpose="Score SDG goal/target alignment."),
-            PlaybookStep(tool="gap_analysis", purpose="Find missing core metrics vs sector benchmark."),
-            PlaybookStep(tool="greenwashing_detect", purpose="Risk-score claims; action='review_claims' for per-claim review."),
-            PlaybookStep(tool="impact_report", purpose="Generate the assessment report (+ narrative prompts)."),
+            PlaybookStep(
+                tool="gap_analysis", purpose="Find missing core metrics vs sector benchmark."
+            ),
+            PlaybookStep(
+                tool="greenwashing_detect",
+                purpose="Risk-score claims; action='review_claims' for per-claim review.",
+            ),
+            PlaybookStep(
+                tool="impact_report",
+                purpose="Generate the assessment report (+ narrative prompts).",
+            ),
         ],
     ),
     Playbook(
         playbook_id="lp_reporting",
         name="LP reporting & DDQ",
         when_to_use="Quarterly/annual LP reporting, LP letters, or answering an LP due-diligence questionnaire.",
-        keywords=["lp report", "lp letter", "quarterly report", "annual report", "ddq", "limited partner", "investor update"],
+        keywords=[
+            "lp report",
+            "lp letter",
+            "quarterly report",
+            "annual report",
+            "ddq",
+            "limited partner",
+            "investor update",
+        ],
         steps=[
-            PlaybookStep(tool="impact_report", purpose="Generate company/fund assessment (report_type='lp_ready')."),
-            PlaybookStep(tool="lp_narrative", purpose="Produce audit-friendly LP narrative bound to verified data."),
-            PlaybookStep(tool="lp_ddq_export", purpose="Export ILPA/GIIN/EDCI/SFDR DDQ answers to XLSX."),
+            PlaybookStep(
+                tool="impact_report",
+                purpose="Generate company/fund assessment (report_type='lp_ready').",
+            ),
+            PlaybookStep(
+                tool="lp_narrative",
+                purpose="Produce audit-friendly LP narrative bound to verified data.",
+            ),
+            PlaybookStep(
+                tool="lp_ddq_export", purpose="Export ILPA/GIIN/EDCI/SFDR DDQ answers to XLSX."
+            ),
         ],
     ),
     Playbook(
         playbook_id="regulatory_compliance",
         name="Regulatory & disclosure compliance",
         when_to_use="You need to know which regulations apply, deadlines, and disclosure readiness (SFDR, CSRD, CBAM, EUDR...).",
-        keywords=["regulation", "compliance", "sfdr", "csrd", "deadline", "disclosure", "cbam", "eudr", "filing"],
+        keywords=[
+            "regulation",
+            "compliance",
+            "sfdr",
+            "csrd",
+            "deadline",
+            "disclosure",
+            "cbam",
+            "eudr",
+            "filing",
+        ],
         steps=[
-            PlaybookStep(tool="regulatory_calendar", purpose="Build the jurisdiction deadline calendar."),
-            PlaybookStep(tool="framework_assess", purpose="Assess readiness per framework (ESRS, SFDR, ISSB, CDP...)."),
-            PlaybookStep(tool="esg_toolbox", purpose="Drill into specific schemes (CBAM, EUDR, battery, ratings)."),
+            PlaybookStep(
+                tool="regulatory_calendar", purpose="Build the jurisdiction deadline calendar."
+            ),
+            PlaybookStep(
+                tool="framework_assess",
+                purpose="Assess readiness per framework (ESRS, SFDR, ISSB, CDP...).",
+            ),
+            PlaybookStep(
+                tool="esg_toolbox",
+                purpose="Drill into specific schemes (CBAM, EUDR, battery, ratings).",
+            ),
         ],
     ),
     Playbook(
@@ -376,9 +691,15 @@ PLAYBOOKS: list[Playbook] = [
         when_to_use="Preparing for third-party verification (BlueMark, IFC OPIM, AA1000) or running a verifier engagement.",
         keywords=["verification", "assurance", "bluemark", "audit", "verifier", "aa1000", "opim"],
         steps=[
-            PlaybookStep(tool="verification_workspace", purpose="action='readiness_check' then 'evidence_map' to find gaps."),
+            PlaybookStep(
+                tool="verification_workspace",
+                purpose="action='readiness_check' then 'evidence_map' to find gaps.",
+            ),
             PlaybookStep(tool="evidence_review", purpose="Clear the AI-extraction review queue."),
-            PlaybookStep(tool="verification_workspace", purpose="action='open' to run the verifier workspace with findings."),
+            PlaybookStep(
+                tool="verification_workspace",
+                purpose="action='open' to run the verifier workspace with findings.",
+            ),
         ],
     ),
     Playbook(
@@ -387,9 +708,13 @@ PLAYBOOKS: list[Playbook] = [
         when_to_use="Fund-level portfolio analysis, trends, and ongoing monitoring.",
         keywords=["portfolio", "fund level", "trends", "monitor", "aggregate", "all companies"],
         steps=[
-            PlaybookStep(tool="portfolio_analyze", purpose="Batch-score all companies; scenario modeling."),
+            PlaybookStep(
+                tool="portfolio_analyze", purpose="Batch-score all companies; scenario modeling."
+            ),
             PlaybookStep(tool="trend_analysis", purpose="Trajectories vs targets per metric."),
-            PlaybookStep(tool="portfolio_query", purpose="Ad-hoc natural-language questions with citations."),
+            PlaybookStep(
+                tool="portfolio_query", purpose="Ad-hoc natural-language questions with citations."
+            ),
             PlaybookStep(tool="monitoring", purpose="Set alerts for off-track metrics."),
         ],
     ),
@@ -397,21 +722,53 @@ PLAYBOOKS: list[Playbook] = [
         playbook_id="supply_chain_hrdd",
         name="Supply chain & human rights DD",
         when_to_use="Supplier/labor/human-rights risk, audit schemes (SMETA, SA8000, RBA), export compliance.",
-        keywords=["supply chain", "human rights", "supplier", "labor", "smeta", "sa8000", "conflict minerals", "csddd"],
+        keywords=[
+            "supply chain",
+            "human rights",
+            "supplier",
+            "labor",
+            "smeta",
+            "sa8000",
+            "conflict minerals",
+            "csddd",
+        ],
         steps=[
-            PlaybookStep(tool="hrdd_assess", purpose="OECD due-diligence scoring + audit-scheme readiness."),
-            PlaybookStep(tool="esg_toolbox", purpose="Scheme deep-dives (BSCI, RBA, conflict minerals, EUDR)."),
-            PlaybookStep(tool="product_passport", purpose="If physical products: DPP / battery / ESPR readiness."),
+            PlaybookStep(
+                tool="hrdd_assess", purpose="OECD due-diligence scoring + audit-scheme readiness."
+            ),
+            PlaybookStep(
+                tool="esg_toolbox",
+                purpose="Scheme deep-dives (BSCI, RBA, conflict minerals, EUDR).",
+            ),
+            PlaybookStep(
+                tool="product_passport",
+                purpose="If physical products: DPP / battery / ESPR readiness.",
+            ),
         ],
     ),
     Playbook(
         playbook_id="carbon_climate",
         name="Carbon accounting & climate risk",
         when_to_use="GHG inventory, emission factors, climate scenarios, TCFD/ISSB climate disclosure.",
-        keywords=["carbon", "ghg", "emissions", "climate", "tcfd", "scope 1", "scope 2", "net zero", "sbti"],
+        keywords=[
+            "carbon",
+            "ghg",
+            "emissions",
+            "climate",
+            "tcfd",
+            "scope 1",
+            "scope 2",
+            "net zero",
+            "sbti",
+        ],
         steps=[
-            PlaybookStep(tool="emission_factors", purpose="Price the inventory with versioned factors + sensitivity."),
-            PlaybookStep(tool="climate_scenario_risk", purpose="Physical + transition scenario analysis."),
+            PlaybookStep(
+                tool="emission_factors",
+                purpose="Price the inventory with versioned factors + sensitivity.",
+            ),
+            PlaybookStep(
+                tool="climate_scenario_risk", purpose="Physical + transition scenario analysis."
+            ),
             PlaybookStep(tool="framework_assess", purpose="TCFD / ISSB S2 disclosure readiness."),
             PlaybookStep(tool="esg_toolbox", purpose="SBTi target validation and carbon schemes."),
         ],
@@ -420,11 +777,24 @@ PLAYBOOKS: list[Playbook] = [
         playbook_id="data_collection",
         name="Investee data collection & quality",
         when_to_use="Collecting metrics and stakeholder evidence from portfolio companies.",
-        keywords=["collect data", "investee data", "survey", "stakeholder", "data quality", "questionnaire"],
+        keywords=[
+            "collect data",
+            "investee data",
+            "survey",
+            "stakeholder",
+            "data quality",
+            "questionnaire",
+        ],
         steps=[
-            PlaybookStep(tool="investee_portal", purpose="Issue questionnaires and track submissions."),
-            PlaybookStep(tool="stakeholder_voice", purpose="Lean Data surveys + consent + feedback quality."),
-            PlaybookStep(tool="beneficiary_feedback", purpose="Import and analyze feedback datasets."),
+            PlaybookStep(
+                tool="investee_portal", purpose="Issue questionnaires and track submissions."
+            ),
+            PlaybookStep(
+                tool="stakeholder_voice", purpose="Lean Data surveys + consent + feedback quality."
+            ),
+            PlaybookStep(
+                tool="beneficiary_feedback", purpose="Import and analyze feedback datasets."
+            ),
             PlaybookStep(tool="impact_data_quality", purpose="Score the collected data's quality."),
         ],
     ),
@@ -434,9 +804,15 @@ PLAYBOOKS: list[Playbook] = [
         when_to_use="Designing or validating a ToC and selecting a KPI framework for a company or fund.",
         keywords=["theory of change", "toc", "logic model", "kpi", "outcomes", "design metrics"],
         steps=[
-            PlaybookStep(tool="toc_builder", purpose="Build the ToC canvas; run the 11-rule logic validator."),
-            PlaybookStep(tool="impact_metric_recommender", purpose="Recommend IRIS+ metrics per outcome."),
-            PlaybookStep(tool="cross_reference", purpose="Map chosen KPIs across reporting frameworks."),
+            PlaybookStep(
+                tool="toc_builder", purpose="Build the ToC canvas; run the 11-rule logic validator."
+            ),
+            PlaybookStep(
+                tool="impact_metric_recommender", purpose="Recommend IRIS+ metrics per outcome."
+            ),
+            PlaybookStep(
+                tool="cross_reference", purpose="Map chosen KPIs across reporting frameworks."
+            ),
         ],
     ),
 ]
@@ -465,7 +841,9 @@ def _phrase_in(phrase: str, query_lower: str, query_tokens: set[str]) -> bool:
     return phrase in query_tokens
 
 
-def _score_keywords(keywords: list[str], query_lower: str, query_tokens: set[str]) -> tuple[float, list[str]]:
+def _score_keywords(
+    keywords: list[str], query_lower: str, query_tokens: set[str]
+) -> tuple[float, list[str]]:
     score = 0.0
     matched: list[str] = []
     for kw in keywords:

@@ -120,6 +120,14 @@ def create_default_tool_registry(mcp_manager: McpClientManager | None = None) ->
         ("impact.climate_scenario_tool", "ClimateScenarioTool"),
         ("impact.ai_governance_tool", "AIGovernanceTool"),
         ("impact.investee_portal_tool", "InvesteePortalTool"),
+        # v6 tools: comparable, assured, connected
+        ("impact.carbon_credit_tool", "CarbonCreditIntegrityTool"),
+        ("impact.contribution_tool", "ContributionTrackerTool"),
+        ("impact.ddq_responder_tool", "DDQResponderTool"),
+        ("impact.dmrv_tool", "DMRVEvidenceTool"),
+        ("impact.impact_linked_finance_tool", "ImpactLinkedFinanceTool"),
+        ("impact.regulatory_radar_tool", "RegulatoryRadarTool"),
+        ("impact.survey_delivery_tool", "SurveyDeliveryTool"),
     )
     for module_name, class_name in impact_tools:
         _register_if_available(registry, module_name, class_name)

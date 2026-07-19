@@ -1,0 +1,12 @@
+standard_id: SSE_G14
+as_of: "2026-01"
+source: SSE Self-Regulatory Guideline No. 14; original summaries, not regulation text
+article_count: 63
+modality_counts: {shall: 49, encouraged: 7, neutral: 7}
+chapter_ranges:
+  - {chapter: General provisions, start: 1, end: 8}
+  - {chapter: Governance and strategy, start: 9, end: 20}
+  - {chapter: Environmental topics, start: 21, end: 33}
+  - {chapter: Social topics, start: 34, end: 45}
+  - {chapter: Governance topics, start: 46, end: 56}
+  - {chapter: Publication and supervision, start: 57, end: 63}

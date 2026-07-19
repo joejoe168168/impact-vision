@@ -1,0 +1,8 @@
+standards:
+  - {standard_id: SFDR, watch_urls: ["https://finance.ec.europa.eu/sustainable-finance/disclosures_en"]}
+  - {standard_id: ESRS_SIMPLIFIED_2026, watch_urls: ["https://www.efrag.org/en/sustainability-reporting"]}
+  - {standard_id: FCA_SDR, watch_urls: ["https://www.fca.org.uk/firms/climate-change-and-sustainable-finance/sustainability-disclosure-requirements-sdr-regime"]}
+  - {standard_id: ISSB, watch_urls: ["https://www.ifrs.org/sustainability/knowledge-hub/global-use/replace-this-placeholder/"]}
+  - {standard_id: CA_SB253, watch_urls: ["https://ww2.arb.ca.gov/our-work/programs/california-corporate-greenhouse-gas-reporting"]}
+  - {standard_id: SSE_G14, watch_urls: ["https://www.sse.com.cn/lawandrules/sselawsrules/stocks/mainipo/c/c_20240430_10757230.shtml"]}
+  - {standard_id: IRIS_PLUS, watch_urls: ["https://iris.thegiin.org/"]}

@@ -12,6 +12,7 @@ These are intended as *guidance defaults*. The legal advisor on a deal
 should always double-check current wording — regulators update their
 technical standards roughly annually.
 """
+
 from __future__ import annotations
 
 from typing import Literal
@@ -20,9 +21,15 @@ from pydantic import BaseModel, Field
 
 
 Jurisdiction = Literal[
-    "EU-SFDR", "EU-CSRD", "EU-CSDDD", "UK-FCA-SDR",
-    "US-SEC-ESG", "HK-HKEX-ESG", "AU-AASB-S2",
+    "EU-SFDR",
+    "EU-CSRD",
+    "EU-CSDDD",
+    "UK-FCA-SDR",
+    "US-SEC-ESG",
+    "HK-HKEX-ESG",
+    "AU-AASB-S2",
     "GLOBAL-ISSB",
+    "US-CA-CLIMATE",
 ]
 
 
@@ -42,10 +49,42 @@ class RegulatoryPack(BaseModel):
     required_metrics: list[str] = Field(default_factory=list)
     notes: str = ""
     as_of: str = Field(default="", description="Date the pack was last verified, YYYY-MM-DD")
-    legal_basis: str = Field(default="", description="Primary legal citation, e.g. Directive (EU) 2026/470")
+    legal_basis: str = Field(
+        default="", description="Primary legal citation, e.g. Directive (EU) 2026/470"
+    )
 
 
 _PACKS: dict[str, RegulatoryPack] = {
+    "US-CA-CLIMATE": RegulatoryPack(
+        jurisdiction="US-CA-CLIMATE",
+        issuer="California Air Resources Board",
+        as_of="2026-02-26",
+        legal_basis="California SB 253 and SB 261; CARB initial regulations 2026-02-26",
+        in_scope_summary="US entities doing business in California: SB 253 above $1B revenue; SB 261 above $500M.",
+        filings=[
+            RegulatoryFiling(
+                name="SB 253 Scope 1 and 2 emissions",
+                cadence="annual",
+                format="GHG Protocol",
+                deadline_days_after_period=314,
+            ),
+            RegulatoryFiling(
+                name="SB 261 climate financial risk report",
+                cadence="semi-annual",
+                format="TCFD / IFRS S2 mapping",
+            ),
+        ],
+        required_metrics=[
+            "TCFD-GOV",
+            "TCFD-STR",
+            "TCFD-RM",
+            "TCFD-MET",
+            "scope1_ghg",
+            "scope2_ghg",
+            "scope3_ghg",
+        ],
+        notes="SB 261 enforcement is stayed pending Ninth Circuit proceedings; obtain current legal advice.",
+    ),
     "EU-SFDR": RegulatoryPack(
         jurisdiction="EU-SFDR",
         issuer="ESAs (EBA/EIOPA/ESMA)",
@@ -54,17 +93,27 @@ _PACKS: dict[str, RegulatoryPack] = {
             "distributing products in the EU."
         ),
         filings=[
-            RegulatoryFiling(name="Principal Adverse Impacts (PAI) statement",
-                             cadence="annual", format="RTS Annex I template",
-                             deadline_days_after_period=180),
-            RegulatoryFiling(name="Article 8/9 periodic report",
-                             cadence="annual", format="RTS Annex IV/V template",
-                             deadline_days_after_period=120),
+            RegulatoryFiling(
+                name="Principal Adverse Impacts (PAI) statement",
+                cadence="annual",
+                format="RTS Annex I template",
+                deadline_days_after_period=180,
+            ),
+            RegulatoryFiling(
+                name="Article 8/9 periodic report",
+                cadence="annual",
+                format="RTS Annex IV/V template",
+                deadline_days_after_period=120,
+            ),
         ],
         required_metrics=[
-            "scope1_2_tco2e", "scope3_tco2e", "carbon_footprint",
-            "gross_energy_consumption_per_meur", "violations_ungc_oecd",
-            "board_gender_ratio", "unadjusted_gender_pay_gap",
+            "scope1_2_tco2e",
+            "scope3_tco2e",
+            "carbon_footprint",
+            "gross_energy_consumption_per_meur",
+            "violations_ungc_oecd",
+            "board_gender_ratio",
+            "unadjusted_gender_pay_gap",
         ],
     ),
     "EU-CSRD": RegulatoryPack(
@@ -80,13 +129,19 @@ _PACKS: dict[str, RegulatoryPack] = {
             "former Wave 1 reporters below the thresholds may pause FY2025-FY2026."
         ),
         filings=[
-            RegulatoryFiling(name="ESRS sustainability statement in mgmt report",
-                             cadence="annual", format="XBRL digital tagging",
-                             deadline_days_after_period=120),
+            RegulatoryFiling(
+                name="ESRS sustainability statement in mgmt report",
+                cadence="annual",
+                format="XBRL digital tagging",
+                deadline_days_after_period=120,
+            ),
         ],
         required_metrics=[
-            "ESRS E1 climate", "ESRS E2 pollution", "ESRS E3 water",
-            "ESRS S1 own-workforce", "ESRS G1 business-conduct",
+            "ESRS E1 climate",
+            "ESRS E2 pollution",
+            "ESRS E3 water",
+            "ESRS S1 own-workforce",
+            "ESRS G1 business-conduct",
         ],
         notes=(
             "Member States transpose Omnibus I by 2027-03-19; new scope applies "
@@ -109,12 +164,16 @@ _PACKS: dict[str, RegulatoryPack] = {
         filings=[
             RegulatoryFiling(
                 name="Human-rights & environmental due-diligence statement",
-                cadence="annual", format="narrative + value-chain risk register",
-                deadline_days_after_period=120),
+                cadence="annual",
+                format="narrative + value-chain risk register",
+                deadline_days_after_period=120,
+            ),
         ],
         required_metrics=[
-            "salient_human_rights_issues", "value_chain_risk_register",
-            "grievance_mechanism", "remediation_actions",
+            "salient_human_rights_issues",
+            "value_chain_risk_register",
+            "grievance_mechanism",
+            "remediation_actions",
         ],
         notes=(
             "Climate transition-plan ADOPTION obligation removed by Omnibus I; "
@@ -129,13 +188,12 @@ _PACKS: dict[str, RegulatoryPack] = {
         issuer="UK FCA",
         in_scope_summary="UK-authorised asset managers with AUM > £5bn.",
         filings=[
-            RegulatoryFiling(name="Sustainability Product Label disclosure",
-                             cadence="annual"),
-            RegulatoryFiling(name="Entity-level sustainability report",
-                             cadence="annual"),
+            RegulatoryFiling(name="Sustainability Product Label disclosure", cadence="annual"),
+            RegulatoryFiling(name="Entity-level sustainability report", cadence="annual"),
         ],
         required_metrics=[
-            "outcome_metric_per_product", "naming_and_marketing_evidence",
+            "outcome_metric_per_product",
+            "naming_and_marketing_evidence",
         ],
     ),
     "US-SEC-ESG": RegulatoryPack(
@@ -146,10 +204,8 @@ _PACKS: dict[str, RegulatoryPack] = {
             "rule currently in litigation, other ESG naming rules in force."
         ),
         filings=[
-            RegulatoryFiling(name="Form N-CSR ESG sections",
-                             cadence="semi-annual"),
-            RegulatoryFiling(name="Climate-related disclosures in 10-K",
-                             cadence="annual"),
+            RegulatoryFiling(name="Form N-CSR ESG sections", cadence="semi-annual"),
+            RegulatoryFiling(name="Climate-related disclosures in 10-K", cadence="annual"),
         ],
         required_metrics=["ghg_scope1_2", "climate_related_financial_impacts"],
     ),
@@ -158,13 +214,18 @@ _PACKS: dict[str, RegulatoryPack] = {
         issuer="Hong Kong Exchanges and Clearing (HKEX)",
         in_scope_summary="All HKEX-listed issuers; full ISSB alignment from 2025.",
         filings=[
-            RegulatoryFiling(name="Environmental, Social and Governance Report",
-                             cadence="annual",
-                             format="ISSB-aligned from FY2025"),
+            RegulatoryFiling(
+                name="Environmental, Social and Governance Report",
+                cadence="annual",
+                format="ISSB-aligned from FY2025",
+            ),
         ],
         required_metrics=[
-            "scope1_ghg", "scope2_ghg", "scope3_ghg",
-            "climate-transition-plan", "internal-carbon-price",
+            "scope1_ghg",
+            "scope2_ghg",
+            "scope3_ghg",
+            "climate-transition-plan",
+            "internal-carbon-price",
         ],
     ),
     "AU-AASB-S2": RegulatoryPack(
@@ -175,8 +236,11 @@ _PACKS: dict[str, RegulatoryPack] = {
             "climate-related standard (based on IFRS S2)."
         ),
         filings=[
-            RegulatoryFiling(name="AASB S2 climate-related disclosures",
-                             cadence="annual", format="AASB S2 structured data"),
+            RegulatoryFiling(
+                name="AASB S2 climate-related disclosures",
+                cadence="annual",
+                format="AASB S2 structured data",
+            ),
         ],
         required_metrics=["scope1_ghg", "scope2_ghg", "scope3_ghg", "physical_risk"],
     ),
@@ -200,10 +264,40 @@ def list_packs() -> list[RegulatoryPack]:
 def get_pack(jurisdiction: str) -> RegulatoryPack:
     key = jurisdiction.upper()
     if key not in _PACKS:
-        raise KeyError(
-            f"Unknown jurisdiction '{jurisdiction}'. Known: {sorted(_PACKS)}"
-        )
+        raise KeyError(f"Unknown jurisdiction '{jurisdiction}'. Known: {sorted(_PACKS)}")
     return _PACKS[key]
 
 
-__all__ = ["Jurisdiction", "RegulatoryFiling", "RegulatoryPack", "list_packs", "get_pack"]
+def ca_climate_scope(revenue_usd: float, does_business_in_ca: bool) -> dict:
+    sb253 = bool(does_business_in_ca and revenue_usd > 1_000_000_000)
+    sb261 = bool(does_business_in_ca and revenue_usd > 500_000_000)
+    return {
+        "sb253": sb253,
+        "sb261": sb261,
+        "deadlines": [
+            {"law": "SB 253", "scope": "Scope 1 and 2", "due": "2026-11-10"},
+            {"law": "SB 253", "scope": "Scope 3", "due": "2027"},
+            {"law": "SB 261", "scope": "Biennial climate-risk report", "due": "stayed"},
+        ]
+        if sb253 or sb261
+        else [],
+        "assurance": "limited assurance for Scope 1/2, phasing toward reasonable assurance",
+        "enforcement_notes": "SB 261 enforcement stayed pending Ninth Circuit appeal",
+        "disclosure_mapping": ["TCFD-GOV", "TCFD-STR", "TCFD-RM", "TCFD-MET"],
+        "as_of": "2026-02-26",
+        "citations": [
+            "California SB 253",
+            "California SB 261",
+            "CARB initial regulations 2026-02-26",
+        ],
+    }
+
+
+__all__ = [
+    "Jurisdiction",
+    "RegulatoryFiling",
+    "RegulatoryPack",
+    "ca_climate_scope",
+    "list_packs",
+    "get_pack",
+]

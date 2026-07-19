@@ -1,0 +1,44 @@
+as_of: "2026-01"
+currency: USD
+benchmarks:
+  Hong Kong: 27000
+  China tier 1: 12500
+  China tier 2: 9500
+  China tier 3: 7500
+  Singapore: 26000
+  Malaysia: 8500
+  Indonesia: 5200
+  Philippines: 6200
+  Thailand: 7200
+  Vietnam: 5400
+  Cambodia: 4200
+  Laos: 3900
+  Myanmar: 3600
+  India urban: 5600
+  India rural: 3900
+  Bangladesh: 3500
+  Pakistan: 4000
+  Sri Lanka: 4300
+  Nepal: 3600
+  Kenya: 4800
+  Uganda: 3600
+  Tanzania: 3900
+  Rwanda: 4200
+  Ghana: 5000
+  Nigeria: 4500
+  South Africa: 7200
+  Ethiopia: 3000
+  Senegal: 4600
+  Zambia: 4200
+  Zimbabwe: 4000
+  Egypt: 3900
+  Morocco: 6000
+  Mexico: 10000
+  Brazil: 9600
+  Colombia: 8000
+  Peru: 7200
+  Chile: 15000
+  United States: 42000
+  United Kingdom: 36000
+  Australia: 41000
+source: Anker methodology and WageIndicator benchmark synthesis; indicative only

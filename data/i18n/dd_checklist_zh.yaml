@@ -63,3 +63,10 @@ questions:
     category: negative_impact
     question: "公司是否识别了潜在的负面影响并制定了缓解计划？"
     nesta_level: 2
+# v6 China sustainability-reporting surface
+cn_disclosure:
+  mandatory: "强制披露"
+  voluntary: "自愿披露"
+  annual_deadline: "年度可持续发展报告应于次年4月30日前披露"
+  content_index: "披露要求索引"
+  materiality: "双重重要性评估"

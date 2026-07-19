@@ -154,7 +154,10 @@ def _infer_opportunities_and_risks(company: Company) -> dict[str, list[str]]:
     if not risks:
         risks = ["Further analysis needed to identify specific impact risks"]
 
-    return {"opportunities": list(dict.fromkeys(opportunities)), "risks": list(dict.fromkeys(risks))}
+    return {
+        "opportunities": list(dict.fromkeys(opportunities)),
+        "risks": list(dict.fromkeys(risks)),
+    }
 
 
 class ImpactReportInput(BaseModel):
@@ -177,10 +180,17 @@ class ImpactReportInput(BaseModel):
         default_factory=list,
         description="Impact claims extracted from pitch decks or memos for report evidence sections.",
     )
-    output_format: Literal["html", "csv", "json", "text", "xlsx", "pdf"] = Field(
+    output_format: Literal[
+        "html", "csv", "json", "text", "xlsx", "pdf", "ixbrl", "xbrl-json", "cids"
+    ] = Field(
         default="text",
-        description="Output format for the report ('xlsx' for Excel, 'pdf' for print-ready)"
+        description="Output format for the report ('xlsx' for Excel, 'pdf' for print-ready)",
     )
+    metric_records: list[dict] = Field(
+        default_factory=list, description="Canonical MetricRecord rows for machine-readable exports"
+    )
+    portfolio_companies: list[dict] = Field(default_factory=list)
+    records_by_company: dict[str, list[dict]] = Field(default_factory=dict)
     output_path: str = Field(
         default="",
         description="File path to save the report (optional; if empty, returns as text)",
@@ -188,7 +198,7 @@ class ImpactReportInput(BaseModel):
     include_gap_analysis: bool = Field(default=True)
     include_sdg_mapping: bool = Field(default=True)
     include_five_dimensions: bool = Field(default=True)
-    report_type: Literal["full", "target_progress", "lp_ready"] = Field(
+    report_type: Literal["full", "target_progress", "lp_ready", "portfolio"] = Field(
         default="full",
         description=(
             "'full': Complete assessment report. "
@@ -271,11 +281,19 @@ class ImpactReportTool(BaseTool):
     input_model = ImpactReportInput
 
     def is_read_only(self, arguments: BaseModel) -> bool:
-        args = arguments if isinstance(arguments, ImpactReportInput) else ImpactReportInput.model_validate(arguments)
+        args = (
+            arguments
+            if isinstance(arguments, ImpactReportInput)
+            else ImpactReportInput.model_validate(arguments)
+        )
         return not args.output_path
 
     async def execute(self, arguments: BaseModel, context: ToolExecutionContext) -> ToolResult:
-        args = arguments if isinstance(arguments, ImpactReportInput) else ImpactReportInput.model_validate(arguments)
+        args = (
+            arguments
+            if isinstance(arguments, ImpactReportInput)
+            else ImpactReportInput.model_validate(arguments)
+        )
 
         try:
             store = ensure_catalog_loaded()
@@ -303,7 +321,9 @@ class ImpactReportTool(BaseTool):
             description=args.company_description,
             sector=normalize_sector(args.sector),
             geography=args.geography,
-            impact_themes=infer_themes(f"{args.company_description} {args.sector}", args.impact_themes),
+            impact_themes=infer_themes(
+                f"{args.company_description} {args.sector}", args.impact_themes
+            ),
             reported_metrics=reported_metrics,
             sdg_claims=sdg_claims,
             impact_targets=impact_targets,
@@ -366,6 +386,7 @@ class ImpactReportTool(BaseTool):
 
         if company.impact_targets:
             from openharness.impact.trend_analysis import assess_target_progress
+
             report_data["target_tracking"] = assess_target_progress(company)
 
         if company.beneficiary_feedback:
@@ -374,6 +395,7 @@ class ImpactReportTool(BaseTool):
         _attach_tracked_metrics_to_five_dimensions(report_data)
 
         from openharness.impact.benchmarks import compare_to_benchmark
+
         if "five_dimensions" in report_data and company.sector:
             fd = report_data["five_dimensions"]
             five_d_scores = {
@@ -393,7 +415,25 @@ class ImpactReportTool(BaseTool):
                 args.compare_assessment_id, report_data
             )
 
-        if args.output_format == "xlsx":
+        if args.report_type == "portfolio":
+            from openharness.impact.models import MetricRecord
+            from openharness.impact.portfolio_rollup import build_portfolio_report
+            from openharness.impact.report_templates.portfolio_report import render_portfolio_report
+
+            portfolio_payload = build_portfolio_report(
+                [Company.model_validate(row) for row in args.portfolio_companies],
+                {
+                    name: [MetricRecord.model_validate(row) for row in rows]
+                    for name, rows in args.records_by_company.items()
+                },
+            )
+            report_data = portfolio_payload
+            output = (
+                render_portfolio_report(portfolio_payload)
+                if args.output_format in {"html", "ixbrl"}
+                else json.dumps(portfolio_payload, indent=2, default=str)
+            )
+        elif args.output_format == "xlsx":
             return _to_xlsx(report_data, args.output_path, context)
         elif args.output_format == "json":
             output = json.dumps(report_data, indent=2, default=str)
@@ -404,9 +444,46 @@ class ImpactReportTool(BaseTool):
             if args.branding:
                 try:
                     from openharness.impact.branding import inject_branding_css, load_branding
+
                     output = inject_branding_css(output, load_branding(raw=args.branding))
                 except Exception:  # noqa: BLE001 — branding must never break the report
                     pass
+        elif args.output_format in {"ixbrl", "xbrl-json"}:
+            from openharness.impact.concordance import load_concordance
+            from openharness.impact.models import MetricRecord
+            from openharness.impact.xbrl_export import render_ixbrl, render_xbrl_json, tag_records
+
+            records = [MetricRecord.model_validate(row) for row in args.metric_records]
+            tags, untaggable = tag_records(records, "esrs_set1", load_concordance())
+            report_data["xbrl_untaggable"] = untaggable
+            output = (
+                render_ixbrl(
+                    _to_html(report_data), tags, company.name, company.reporting_period or "FY2026"
+                )
+                if args.output_format == "ixbrl"
+                else json.dumps(
+                    render_xbrl_json(tags, company.name, company.reporting_period or "FY2026"),
+                    indent=2,
+                )
+            )
+        elif args.output_format == "cids":
+            from openharness.impact.cids_export import export_cids
+            from openharness.impact.models import ImpactTarget, MetricRecord
+
+            records = [MetricRecord.model_validate(row) for row in args.metric_records]
+            output = json.dumps(
+                export_cids(
+                    company,
+                    None,
+                    records,
+                    [
+                        ImpactTarget.model_validate(row)
+                        for row in normalize_impact_targets(args.impact_targets)
+                    ],
+                ),
+                indent=2,
+                default=str,
+            )
         elif args.report_type == "target_progress":
             output = _to_target_progress_text(report_data)
         elif args.report_type == "lp_ready":
@@ -548,14 +625,18 @@ def _to_text(data: dict) -> str:
         lines.append("-" * 40)
         for a in data["sdg_alignments"]:
             if a["score"] > 0:
-                lines.append(f"  SDG {a['goal']} ({a['goal_name']}): {a['score']}/100 [{a['confidence']}]")
+                lines.append(
+                    f"  SDG {a['goal']} ({a['goal_name']}): {a['score']}/100 [{a['confidence']}]"
+                )
         lines.append("")
 
     if "gap_analysis" in data:
         ga = data["gap_analysis"]
         lines.append("GAP ANALYSIS")
         lines.append("-" * 40)
-        lines.append(f"  Coverage: {ga['coverage_percentage']}% ({ga['metrics_reported']}/{ga['core_metric_set_size']})")
+        lines.append(
+            f"  Coverage: {ga['coverage_percentage']}% ({ga['metrics_reported']}/{ga['core_metric_set_size']})"
+        )
         if ga.get("missing"):
             lines.append("  Missing:")
             for m in ga["missing"][:10]:
@@ -574,9 +655,13 @@ def _to_text(data: dict) -> str:
                     f"({item.get('readiness_score_pct', 0)}% readiness)"
                 )
                 if item.get("missing_inputs"):
-                    lines.append(f"    Missing inputs: {', '.join(item.get('missing_inputs', [])[:3])}")
+                    lines.append(
+                        f"    Missing inputs: {', '.join(item.get('missing_inputs', [])[:3])}"
+                    )
         else:
-            lines.append("  No high-confidence ESG toolbox modules were recommended from current context.")
+            lines.append(
+                "  No high-confidence ESG toolbox modules were recommended from current context."
+            )
         next_questions = esg.get("next_questions", []) if isinstance(esg, dict) else []
         if next_questions:
             lines.append("  Minimum follow-up:")
@@ -619,7 +704,9 @@ def _to_text(data: dict) -> str:
         gw = data["greenwashing"]
         lines.append("GREENWASHING / IMPACT-WASHING RISK")
         lines.append("-" * 40)
-        lines.append(f"  Risk Score: {gw.get('overall_score', 0)}/100 — {gw.get('classification', 'Unknown')}")
+        lines.append(
+            f"  Risk Score: {gw.get('overall_score', 0)}/100 — {gw.get('classification', 'Unknown')}"
+        )
         for sname, sval in gw.get("sub_scores", {}).items():
             lines.append(f"    {sname.replace('_', ' ').title()}: {sval}/100")
         for flag in gw.get("flags", []):
@@ -635,12 +722,18 @@ def _to_text(data: dict) -> str:
         lines.append(f"  Sector: {bm['sector']} ({bm['sample_note']})")
         ov = bm["overall"]
         arrow = "^" if ov["delta"] > 0 else ("v" if ov["delta"] < 0 else "=")
-        lines.append(f"  Overall: {ov['actual']:.1f} vs {ov['benchmark']:.1f} benchmark ({arrow} {ov['delta']:+.1f})")
+        lines.append(
+            f"  Overall: {ov['actual']:.1f} vs {ov['benchmark']:.1f} benchmark ({arrow} {ov['delta']:+.1f})"
+        )
         for dim, vals in bm["dimensions"].items():
             arrow = "^" if vals["delta"] > 0 else ("v" if vals["delta"] < 0 else "=")
-            lines.append(f"    {dim}: {vals['actual']:.1f} vs {vals['benchmark']:.1f} ({arrow} {vals['delta']:+.1f})")
+            lines.append(
+                f"    {dim}: {vals['actual']:.1f} vs {vals['benchmark']:.1f} ({arrow} {vals['delta']:+.1f})"
+            )
         cov = bm["coverage"]
-        lines.append(f"  Coverage: {cov['actual']:.0f}% vs {cov['benchmark']:.0f}% benchmark ({cov['delta']:+.1f}%)")
+        lines.append(
+            f"  Coverage: {cov['actual']:.0f}% vs {cov['benchmark']:.0f}% benchmark ({cov['delta']:+.1f}%)"
+        )
         lines.append("")
 
     return "\n".join(lines)
@@ -658,14 +751,18 @@ def _generate_report_narrative_prompt(data: dict) -> str:
 
     sections.append("=== NARRATIVE GENERATION PROMPTS ===\n")
     sections.append("The following prompts provide structured context for the agent to generate")
-    sections.append("investor-quality narratives. Each section includes data points and writing instructions.\n")
+    sections.append(
+        "investor-quality narratives. Each section includes data points and writing instructions.\n"
+    )
 
     # Executive Summary prompt
     exec_data = [f"Company: {company.get('name', 'Unknown')} ({company.get('sector', 'N/A')})"]
     if company.get("geography"):
         exec_data.append(f"Geography: {company['geography']}")
     if fd:
-        exec_data.append(f"5D Score: {fd.get('overall_score', 'N/A')}/5 (Grade: {fd.get('overall_grade', 'N/A')})")
+        exec_data.append(
+            f"5D Score: {fd.get('overall_score', 'N/A')}/5 (Grade: {fd.get('overall_grade', 'N/A')})"
+        )
     top_sdgs = sorted(sdg, key=lambda s: s.get("score", 0), reverse=True)[:3]
     if top_sdgs:
         sdg_str = ", ".join(f"SDG {s['goal']} ({s.get('score', 0):.0f}/100)" for s in top_sdgs)
@@ -673,14 +770,20 @@ def _generate_report_narrative_prompt(data: dict) -> str:
     if gaps:
         exec_data.append(f"Core Metric Coverage: {gaps.get('coverage_percentage', 0)}%")
     if isinstance(gw, dict):
-        exec_data.append(f"Greenwashing Risk: {gw.get('overall_score', 'N/A')}/100 ({gw.get('classification', 'N/A')})")
+        exec_data.append(
+            f"Greenwashing Risk: {gw.get('overall_score', 'N/A')}/100 ({gw.get('classification', 'N/A')})"
+        )
 
     sections.append("--- EXECUTIVE SUMMARY ---")
     sections.append("Data points:")
     for d_item in exec_data:
         sections.append(f"  - {d_item}")
-    sections.append("Instructions: Write a 200-word executive summary covering the company's impact profile,")
-    sections.append("key strengths, primary risks, and recommended next steps. Use formal investor language.\n")
+    sections.append(
+        "Instructions: Write a 200-word executive summary covering the company's impact profile,"
+    )
+    sections.append(
+        "key strengths, primary risks, and recommended next steps. Use formal investor language.\n"
+    )
 
     # Key Findings prompt
     findings_data = []
@@ -690,9 +793,13 @@ def _generate_report_narrative_prompt(data: dict) -> str:
             for dim_name in ("what", "who", "how_much", "contribution", "risk"):
                 dim = fd.get(dim_name, {})
                 if isinstance(dim, dict) and "score" in dim:
-                    findings_data.append(f"{dim_name}: {dim['score']}/5 [{dim.get('provenance', 'N/A')}]")
+                    findings_data.append(
+                        f"{dim_name}: {dim['score']}/5 [{dim.get('provenance', 'N/A')}]"
+                    )
     if gaps:
-        findings_data.append(f"Metrics reported: {gaps.get('metrics_reported', 0)}/{gaps.get('metrics_reported', 0) + gaps.get('metrics_missing', 0)}")
+        findings_data.append(
+            f"Metrics reported: {gaps.get('metrics_reported', 0)}/{gaps.get('metrics_reported', 0) + gaps.get('metrics_missing', 0)}"
+        )
         recs = gaps.get("recommendations", [])[:3]
         for r in recs:
             findings_data.append(f"Gap recommendation: {r}")
@@ -701,13 +808,21 @@ def _generate_report_narrative_prompt(data: dict) -> str:
     sections.append("Data points:")
     for f_item in findings_data:
         sections.append(f"  - {f_item}")
-    sections.append("Instructions: Summarize 3-5 key findings about the company's impact measurement maturity,")
-    sections.append("data quality, and alignment with international standards. Be specific and data-driven.\n")
+    sections.append(
+        "Instructions: Summarize 3-5 key findings about the company's impact measurement maturity,"
+    )
+    sections.append(
+        "data quality, and alignment with international standards. Be specific and data-driven.\n"
+    )
 
     # Recommendations prompt
     sections.append("--- RECOMMENDATIONS ---")
-    sections.append("Instructions: Based on the full report data above, write 3-5 prioritized recommendations")
-    sections.append("for improving the company's impact measurement and reporting. Each recommendation should:")
+    sections.append(
+        "Instructions: Based on the full report data above, write 3-5 prioritized recommendations"
+    )
+    sections.append(
+        "for improving the company's impact measurement and reporting. Each recommendation should:"
+    )
     sections.append("  1. Identify the specific gap or weakness")
     sections.append("  2. Propose a concrete action")
     sections.append("  3. Reference the relevant framework or standard (IRIS+, SDG, SASB, etc.)")
@@ -753,7 +868,13 @@ def _esg_toolbox_section(data: dict) -> str:
         parts.append('<div class="cards-row">')
         for card in cards[:6]:
             score = float(card.get("readiness_score_pct", 0) or 0)
-            color = "var(--success)" if score >= 80 else "var(--warning)" if score >= 45 else "var(--danger)"
+            color = (
+                "var(--success)"
+                if score >= 80
+                else "var(--warning)"
+                if score >= 45
+                else "var(--danger)"
+            )
             parts.append(
                 '<div class="score-card" style="min-width:180px;text-align:left">'
                 f'<div class="value" style="font-size:1.7em;color:{color}">{score:.0f}%</div>'
@@ -766,7 +887,13 @@ def _esg_toolbox_section(data: dict) -> str:
         parts.append('<div class="cards-row">')
         for item in recs[:6]:
             score = float(item.get("readiness_score_pct", 0) or 0)
-            color = "var(--success)" if score >= 80 else "var(--warning)" if score >= 45 else "var(--danger)"
+            color = (
+                "var(--success)"
+                if score >= 80
+                else "var(--warning)"
+                if score >= 45
+                else "var(--danger)"
+            )
             parts.append(
                 '<div class="score-card" style="min-width:180px;text-align:left">'
                 f'<div class="value" style="font-size:1.7em;color:{color}">{score:.0f}%</div>'
@@ -781,8 +908,14 @@ def _esg_toolbox_section(data: dict) -> str:
         for item in recs[:6]:
             reason = item.get("reason") or "Relevant ESG module for this company context."
             missing = item.get("missing_inputs") or []
-            detail = f"<br><span style='color:var(--text-secondary)'>Missing inputs: {_esc(', '.join(missing[:3]))}</span>" if missing else ""
-            parts.append(f'<div class="rec"><strong>{_esc(item.get("tool_id", ""))}: {_esc(item.get("title", ""))}</strong><br>{_esc(reason)}{detail}</div>')
+            detail = (
+                f"<br><span style='color:var(--text-secondary)'>Missing inputs: {_esc(', '.join(missing[:3]))}</span>"
+                if missing
+                else ""
+            )
+            parts.append(
+                f'<div class="rec"><strong>{_esc(item.get("tool_id", ""))}: {_esc(item.get("title", ""))}</strong><br>{_esc(reason)}{detail}</div>'
+            )
 
     if next_questions:
         parts.append("<h3>Minimum Follow-up Questions</h3>")
@@ -810,10 +943,14 @@ def _to_csv(data: dict) -> str:
     if "sdg_alignments" in data:
         for a in data["sdg_alignments"]:
             if a["score"] > 0:
-                writer.writerow([
-                    "SDG", f"SDG {a['goal']}", f"{a['score']}/100",
-                    f"{a['confidence']} | metrics: {','.join(a.get('matched_metrics', [])[:3])}"
-                ])
+                writer.writerow(
+                    [
+                        "SDG",
+                        f"SDG {a['goal']}",
+                        f"{a['score']}/100",
+                        f"{a['confidence']} | metrics: {','.join(a.get('matched_metrics', [])[:3])}",
+                    ]
+                )
 
     if "gap_analysis" in data:
         ga = data["gap_analysis"]
@@ -825,12 +962,14 @@ def _to_csv(data: dict) -> str:
 
     if "impact_claims" in data:
         for claim in data["impact_claims"]:
-            writer.writerow([
-                "Claim",
-                claim.get("category", "intent"),
-                claim.get("text", ""),
-                "metrics: " + ",".join(str(m) for m in claim.get("mapped_metrics", [])),
-            ])
+            writer.writerow(
+                [
+                    "Claim",
+                    claim.get("category", "intent"),
+                    claim.get("text", ""),
+                    "metrics: " + ",".join(str(m) for m in claim.get("mapped_metrics", [])),
+                ]
+            )
 
     return buf.getvalue()
 
@@ -847,42 +986,91 @@ def _interactive_scoring_section(fd: dict, sdg_alignments: list, company_name: s
     overall = fd["overall_score"]
 
     items = [
-        {"id": "beneficiaries", "label": "We track the number of direct beneficiaries served",
-         "dims": {"who": 0.6, "how_much": 0.3}, "sdgs": [1, 2, 3]},
-        {"id": "outcomes", "label": "We measure outcomes (not just outputs) for beneficiaries",
-         "dims": {"what": 0.7, "how_much": 0.4}, "sdgs": []},
-        {"id": "ghg", "label": "We track greenhouse gas emissions or have reduction targets",
-         "dims": {"risk": 0.5, "what": 0.3}, "sdgs": [13, 7]},
-        {"id": "water", "label": "We measure water usage or have water stewardship practices",
-         "dims": {"risk": 0.4, "what": 0.3}, "sdgs": [6, 14]},
-        {"id": "gender", "label": "We track gender diversity in our workforce/beneficiaries",
-         "dims": {"who": 0.5, "contribution": 0.2}, "sdgs": [5, 10]},
-        {"id": "local_hiring", "label": "We prioritize hiring from local/underserved communities",
-         "dims": {"contribution": 0.6, "who": 0.3}, "sdgs": [8, 10, 1]},
-        {"id": "supply_chain", "label": "We have responsible supply chain policies",
-         "dims": {"risk": 0.5, "contribution": 0.3}, "sdgs": [12, 8]},
-        {"id": "baseline", "label": "We have baseline data from before our intervention started",
-         "dims": {"contribution": 0.7, "how_much": 0.3}, "sdgs": []},
-        {"id": "third_party", "label": "We have third-party verification or independent audits",
-         "dims": {"risk": 0.8, "contribution": 0.4}, "sdgs": []},
-        {"id": "theory_of_change", "label": "We have a documented Theory of Change",
-         "dims": {"what": 0.5, "contribution": 0.4}, "sdgs": []},
-        {"id": "stakeholder", "label": "We regularly collect feedback from beneficiaries/stakeholders",
-         "dims": {"who": 0.4, "how_much": 0.3, "risk": 0.2}, "sdgs": []},
-        {"id": "negative_screen", "label": "We assess and mitigate negative/unintended impacts",
-         "dims": {"risk": 0.7}, "sdgs": []},
+        {
+            "id": "beneficiaries",
+            "label": "We track the number of direct beneficiaries served",
+            "dims": {"who": 0.6, "how_much": 0.3},
+            "sdgs": [1, 2, 3],
+        },
+        {
+            "id": "outcomes",
+            "label": "We measure outcomes (not just outputs) for beneficiaries",
+            "dims": {"what": 0.7, "how_much": 0.4},
+            "sdgs": [],
+        },
+        {
+            "id": "ghg",
+            "label": "We track greenhouse gas emissions or have reduction targets",
+            "dims": {"risk": 0.5, "what": 0.3},
+            "sdgs": [13, 7],
+        },
+        {
+            "id": "water",
+            "label": "We measure water usage or have water stewardship practices",
+            "dims": {"risk": 0.4, "what": 0.3},
+            "sdgs": [6, 14],
+        },
+        {
+            "id": "gender",
+            "label": "We track gender diversity in our workforce/beneficiaries",
+            "dims": {"who": 0.5, "contribution": 0.2},
+            "sdgs": [5, 10],
+        },
+        {
+            "id": "local_hiring",
+            "label": "We prioritize hiring from local/underserved communities",
+            "dims": {"contribution": 0.6, "who": 0.3},
+            "sdgs": [8, 10, 1],
+        },
+        {
+            "id": "supply_chain",
+            "label": "We have responsible supply chain policies",
+            "dims": {"risk": 0.5, "contribution": 0.3},
+            "sdgs": [12, 8],
+        },
+        {
+            "id": "baseline",
+            "label": "We have baseline data from before our intervention started",
+            "dims": {"contribution": 0.7, "how_much": 0.3},
+            "sdgs": [],
+        },
+        {
+            "id": "third_party",
+            "label": "We have third-party verification or independent audits",
+            "dims": {"risk": 0.8, "contribution": 0.4},
+            "sdgs": [],
+        },
+        {
+            "id": "theory_of_change",
+            "label": "We have a documented Theory of Change",
+            "dims": {"what": 0.5, "contribution": 0.4},
+            "sdgs": [],
+        },
+        {
+            "id": "stakeholder",
+            "label": "We regularly collect feedback from beneficiaries/stakeholders",
+            "dims": {"who": 0.4, "how_much": 0.3, "risk": 0.2},
+            "sdgs": [],
+        },
+        {
+            "id": "negative_screen",
+            "label": "We assess and mitigate negative/unintended impacts",
+            "dims": {"risk": 0.7},
+            "sdgs": [],
+        },
     ]
 
     import hashlib as _hashlib
     import json as _json
     import re as _re
+
     items_json = _json.dumps(items)
     base_json = _json.dumps(base_scores)
     # The slug alone collides for visually similar names ("BrightPath, Inc."
     # vs "BrightPath Inc"). Mix in a short hash of the original name so two
     # different companies never overwrite each other's local state.
-    name_slug = _re.sub(r'[^a-zA-Z0-9]', '-', company_name or '').lower().strip('-') or 'default'
-    name_hash = _hashlib.sha1((company_name or '').encode('utf-8')).hexdigest()[:8]
+    name_slug = _re.sub(r"[^a-zA-Z0-9]", "-", company_name or "").lower().strip("-") or "default"
+    name_hash = _hashlib.sha1((company_name or "").encode("utf-8")).hexdigest()[:8]
     company_name_safe = f"{name_slug}-{name_hash}"
 
     return f"""
@@ -1060,7 +1248,7 @@ def _generate_executive_summary(data: dict, company: dict) -> str:
             f'<div class="kpi-value"><span class="{grade_cls}">{fd["overall_score"]:.1f}<span '
             f'style="font-size:0.55em;color:var(--text-muted)">/5</span></span></div>'
             f'<div class="kpi-sub">Grade {grade} · {prov}</div>'
-            f'</div>',
+            f"</div>",
         )
 
     top_sdgs = sorted(sdg, key=lambda s: s.get("score", 0), reverse=True)
@@ -1074,7 +1262,7 @@ def _generate_executive_summary(data: dict, company: dict) -> str:
             f'<div class="kpi-label">Top SDG</div>'
             f'<div class="kpi-value">SDG {t["goal"]}</div>'
             f'<div class="kpi-sub">{t.get("goal_name", "")} · {s_score:.0f}/100</div>'
-            f'</div>',
+            f"</div>",
         )
 
     if gap and gap.get("coverage_percentage") is not None:
@@ -1085,13 +1273,18 @@ def _generate_executive_summary(data: dict, company: dict) -> str:
             f'<div class="kpi-label">Core-metric coverage</div>'
             f'<div class="kpi-value">{cov:.0f}%</div>'
             f'<div class="kpi-sub">IRIS+ core set addressed</div>'
-            f'</div>',
+            f"</div>",
         )
 
     if gw:
-        score = gw.get("overall_score", 0) if isinstance(gw, dict) else getattr(gw, "overall_score", 0)
-        classification = (gw.get("classification", "")
-                          if isinstance(gw, dict) else getattr(gw, "classification", ""))
+        score = (
+            gw.get("overall_score", 0) if isinstance(gw, dict) else getattr(gw, "overall_score", 0)
+        )
+        classification = (
+            gw.get("classification", "")
+            if isinstance(gw, dict)
+            else getattr(gw, "classification", "")
+        )
         if score >= 70:
             gw_kind = "fail"
         elif score >= 40:
@@ -1104,7 +1297,7 @@ def _generate_executive_summary(data: dict, company: dict) -> str:
             f'<div class="kpi-value">{score:.0f}<span '
             f'style="font-size:0.55em;color:var(--text-muted)">/100</span></div>'
             f'<div class="kpi-sub">{classification or "classification pending"}</div>'
-            f'</div>',
+            f"</div>",
         )
 
     kpi_strip = f'<div class="kpi-strip">{"".join(kpis)}</div>' if kpis else ""
@@ -1127,13 +1320,17 @@ def _generate_executive_summary(data: dict, company: dict) -> str:
         if best and best[1] >= 3.5:
             strengths.append(f"Strong <b>{best[0]}</b> dimension ({best[1]:.1f}/5).")
         if worst and worst[1] <= 2.5:
-            watch.append(f"Weakest dimension is <b>{worst[0]}</b> ({worst[1]:.1f}/5) — prioritise evidence here.")
+            watch.append(
+                f"Weakest dimension is <b>{worst[0]}</b> ({worst[1]:.1f}/5) — prioritise evidence here."
+            )
 
     if len(top_pos) >= 1 and top_pos[0].get("score", 0) >= 60:
         goals = ", ".join(f"SDG {s['goal']}" for s in top_pos[:3])
         strengths.append(f"Credible alignment with {goals}.")
     elif top_pos:
-        watch.append("No SDG scored ≥ 60/100 — consider deepening the metric coverage on the top goal.")
+        watch.append(
+            "No SDG scored ≥ 60/100 — consider deepening the metric coverage on the top goal."
+        )
 
     if gap and gap.get("coverage_percentage", 0) < 50:
         watch.append(
@@ -1142,7 +1339,9 @@ def _generate_executive_summary(data: dict, company: dict) -> str:
         )
 
     if gw:
-        gw_score = gw.get("overall_score", 0) if isinstance(gw, dict) else getattr(gw, "overall_score", 0)
+        gw_score = (
+            gw.get("overall_score", 0) if isinstance(gw, dict) else getattr(gw, "overall_score", 0)
+        )
         if gw_score >= 40:
             watch.append(
                 f"Greenwashing composite is {gw_score:.0f}/100 — review claim-metric gaps and "
@@ -1150,13 +1349,19 @@ def _generate_executive_summary(data: dict, company: dict) -> str:
             )
 
     if fd and fd.get("overall_provenance") != "evidence-based":
-        next_steps.append("Obtain outcome-level data (pre/post or independent surveys) to move from estimated to evidence-based scoring.")
+        next_steps.append(
+            "Obtain outcome-level data (pre/post or independent surveys) to move from estimated to evidence-based scoring."
+        )
     if top_pos and top_pos[0].get("score", 0) < 60:
-        next_steps.append(f"Add 3–5 IRIS+ metrics aligned to SDG {top_pos[0]['goal']} in the next reporting cycle.")
+        next_steps.append(
+            f"Add 3–5 IRIS+ metrics aligned to SDG {top_pos[0]['goal']} in the next reporting cycle."
+        )
     if gap.get("suggested_metrics"):
         first_sug = gap["suggested_metrics"][0] if gap["suggested_metrics"] else None
         if isinstance(first_sug, dict) and first_sug.get("iris_id"):
-            next_steps.append(f"Start tracking <code>{first_sug['iris_id']}</code> ({first_sug.get('name', '')}).")
+            next_steps.append(
+                f"Start tracking <code>{first_sug['iris_id']}</code> ({first_sug.get('name', '')})."
+            )
 
     def _list_html(items: list[str], cls: str, label: str) -> str:
         if not items:
@@ -1178,14 +1383,17 @@ def _generate_executive_summary(data: dict, company: dict) -> str:
             f"Score confidence is rated as <em>{fd.get('overall_provenance', 'estimated')}</em>.</p>",
         )
     if top_pos:
-        sdg_list = ", ".join(
-            f"SDG {s['goal']} ({s.get('goal_name', '')})" for s in top_pos[:3]
-        )
+        sdg_list = ", ".join(f"SDG {s['goal']} ({s.get('goal_name', '')})" for s in top_pos[:3])
         narrative_parts.append(f"<p>Strongest SDG alignments: {sdg_list}.</p>")
     if gw:
-        score = gw.get("overall_score", 0) if isinstance(gw, dict) else getattr(gw, "overall_score", 0)
-        classification = (gw.get("classification", "")
-                          if isinstance(gw, dict) else getattr(gw, "classification", ""))
+        score = (
+            gw.get("overall_score", 0) if isinstance(gw, dict) else getattr(gw, "overall_score", 0)
+        )
+        classification = (
+            gw.get("classification", "")
+            if isinstance(gw, dict)
+            else getattr(gw, "classification", "")
+        )
         if score:
             narrative_parts.append(
                 f"<p>Greenwashing risk assessment: <strong>{classification}</strong> "
@@ -1204,7 +1412,7 @@ def _generate_executive_summary(data: dict, company: dict) -> str:
     body = (
         '<div class="section" id="executive-summary"><h2>Executive Summary</h2>'
         '<div class="content">'
-        f'{kpi_strip}'
+        f"{kpi_strip}"
         + "".join(narrative_parts)
         + strengths_html
         + watch_html
@@ -1245,11 +1453,23 @@ def _metric_tracking_dashboard(data: dict) -> str:
         dim_label = dim.get("dimension", dim_name)
         for mt in dim.get("metrics_tracked", []):
             mid = mt if isinstance(mt, str) else str(mt)
-            tracked[mid] = {"id": mid, "name": mid, "dimension": dim_label, "status": "tracked", "unit": ""}
+            tracked[mid] = {
+                "id": mid,
+                "name": mid,
+                "dimension": dim_label,
+                "status": "tracked",
+                "unit": "",
+            }
         for g in dim.get("gaps", []):
             gid = g.split(" (")[0] if isinstance(g, str) else str(g)
             if gid not in tracked:
-                gaps[gid] = {"id": gid, "name": gid, "dimension": dim_label, "status": "gap", "unit": ""}
+                gaps[gid] = {
+                    "id": gid,
+                    "name": gid,
+                    "dimension": dim_label,
+                    "status": "gap",
+                    "unit": "",
+                }
 
     # gap_analysis entries are now rich (id + name + unit + dimension_groups)
     # so use them in preference to the 5D-only entries.
@@ -1261,7 +1481,9 @@ def _metric_tracking_dashboard(data: dict) -> str:
         tracked[mid] = {
             "id": mid,
             "name": m.get("name", mid),
-            "dimension": ", ".join(dim_groups) if dim_groups else tracked.get(mid, {}).get("dimension", ""),
+            "dimension": ", ".join(dim_groups)
+            if dim_groups
+            else tracked.get(mid, {}).get("dimension", ""),
             "status": "tracked",
             "unit": m.get("unit", "") or m.get("reporting_format", ""),
         }
@@ -1273,7 +1495,9 @@ def _metric_tracking_dashboard(data: dict) -> str:
         gaps[mid] = {
             "id": mid,
             "name": m.get("name", mid),
-            "dimension": ", ".join(dim_groups) if dim_groups else gaps.get(mid, {}).get("dimension", ""),
+            "dimension": ", ".join(dim_groups)
+            if dim_groups
+            else gaps.get(mid, {}).get("dimension", ""),
             "status": "gap",
             "unit": m.get("unit", "") or m.get("reporting_format", ""),
         }
@@ -1285,6 +1509,7 @@ def _metric_tracking_dashboard(data: dict) -> str:
     if _unresolved:
         try:
             from openharness.impact.database import get_metric_store
+
             _store = get_metric_store()
             for _m in _unresolved:
                 _rec = _store.get(_m["id"])
@@ -1302,23 +1527,31 @@ def _metric_tracking_dashboard(data: dict) -> str:
     parts = [
         '<h2 id="sec-metrics">Metric Tracking Dashboard</h2>',
         f'<p style="color:var(--text-secondary);font-size:0.88em;margin-bottom:12px">'
-        f'{len(tracked)} tracked &bull; {len(gaps)} gaps &bull; {len(all_metrics)} total'
+        f"{len(tracked)} tracked &bull; {len(gaps)} gaps &bull; {len(all_metrics)} total"
         f' &bull; Click <a href="#sec-missing-metrics" style="color:var(--accent)">Missing Metrics</a> for definitions</p>',
         '<div class="metric-grid">',
     ]
     for m in sorted(all_metrics, key=lambda x: (x["status"] != "tracked", x["name"])):
         status = m["status"]
         status_label = "Tracked" if status == "tracked" else "Gap"
-        unit_html = f'<div style="font-size:0.72em;color:var(--text-secondary);margin-top:6px">Unit: {m["unit"]}</div>' if m.get("unit") else ''
-        dim_html = f'<div style="font-size:0.72em;color:var(--primary);margin-top:2px">{m["dimension"]}</div>' if m.get("dimension") else ''
+        unit_html = (
+            f'<div style="font-size:0.72em;color:var(--text-secondary);margin-top:6px">Unit: {m["unit"]}</div>'
+            if m.get("unit")
+            else ""
+        )
+        dim_html = (
+            f'<div style="font-size:0.72em;color:var(--primary);margin-top:2px">{m["dimension"]}</div>'
+            if m.get("dimension")
+            else ""
+        )
         parts.append(
             f'<div class="metric-card {status}">'
             f'<div class="mc-id">{m["id"]}</div>'
             f'<div class="mc-name">{m["name"]}</div>'
-            f'{dim_html}'
-            f'{unit_html}'
+            f"{dim_html}"
+            f"{unit_html}"
             f'<span class="mc-status {status}" style="margin-top:8px;display:inline-block">{status_label}</span>'
-            f'</div>'
+            f"</div>"
         )
     parts.append("</div>")
     return "\n".join(parts)
@@ -1332,7 +1565,7 @@ def _impact_claims_section(data: dict) -> str:
 
     parts = [
         f'<h2 id="sec-claims">Impact Claims <span style="font-size:0.65em;color:var(--text-secondary);font-weight:400">'
-        f'({len(claims)} claims)</span></h2>',
+        f"({len(claims)} claims)</span></h2>",
     ]
 
     visible = min(5, len(claims))
@@ -1351,36 +1584,58 @@ def _impact_claims_section(data: dict) -> str:
         conf_color = "#2e7d32" if conf >= 0.7 else "#f57c00" if conf >= 0.4 else "#c62828"
 
         parts.append(f'<div class="claim-card" data-claim-idx="{i}"{hidden}>')
-        parts.append('<div class="claim-header" role="button" tabindex="0" aria-expanded="false" onclick="var b=this.parentElement.querySelector(\'.claim-body\');var o=b.classList.toggle(\'active\');this.setAttribute(\'aria-expanded\',o?\'true\':\'false\')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();this.click()}">')
+        parts.append(
+            "<div class=\"claim-header\" role=\"button\" tabindex=\"0\" aria-expanded=\"false\" onclick=\"var b=this.parentElement.querySelector('.claim-body');var o=b.classList.toggle('active');this.setAttribute('aria-expanded',o?'true':'false')\" onkeydown=\"if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}\">"
+        )
         parts.append(f'<span class="claim-badge {safe_cat}">{safe_cat}</span>')
-        parts.append(f'<span class="claim-text">{safe_text[:120]}{"..." if len(text) > 120 else ""}</span>')
+        parts.append(
+            f'<span class="claim-text">{safe_text[:120]}{"..." if len(text) > 120 else ""}</span>'
+        )
         parts.append('<span class="claim-toggle" aria-hidden="true">&#9660;</span>')
         parts.append("</div>")
         parts.append('<div class="claim-body">')
 
         if negated:
-            parts.append('<div style="color:var(--danger);font-size:0.85em;margin-bottom:6px">&#9888; Negation detected in this claim</div>')
+            parts.append(
+                '<div style="color:var(--danger);font-size:0.85em;margin-bottom:6px">&#9888; Negation detected in this claim</div>'
+            )
 
-        parts.append('<div style="margin-bottom:8px"><strong style="font-size:0.82em">Confidence:</strong> ')
-        parts.append(f'<div class="confidence-bar"><div class="confidence-fill" style="width:{conf_pct}%;background:{conf_color}"></div></div>')
+        parts.append(
+            '<div style="margin-bottom:8px"><strong style="font-size:0.82em">Confidence:</strong> '
+        )
+        parts.append(
+            f'<div class="confidence-bar"><div class="confidence-fill" style="width:{conf_pct}%;background:{conf_color}"></div></div>'
+        )
         parts.append(f' <span style="font-size:0.82em;color:{conf_color}">{conf_pct}%</span></div>')
 
-        parts.append('<div style="margin-bottom:8px"><strong style="font-size:0.82em">Evidence Level:</strong> ')
+        parts.append(
+            '<div style="margin-bottom:8px"><strong style="font-size:0.82em">Evidence Level:</strong> '
+        )
         stars = "&#9733;" * evidence + "&#9734;" * (5 - evidence)
         parts.append(f'<span style="color:#f9a825;font-size:0.95em">{stars}</span>')
-        parts.append(f' <span style="font-size:0.78em;color:var(--text-secondary)">NESTA Level {evidence}</span></div>')
+        parts.append(
+            f' <span style="font-size:0.78em;color:var(--text-secondary)">NESTA Level {evidence}</span></div>'
+        )
 
         if metrics:
-            parts.append('<div style="margin-bottom:8px"><strong style="font-size:0.82em">Mapped Metrics:</strong> ')
-            parts.append(" ".join(f'<span class="chip">{html.escape(str(m))}</span>' for m in metrics[:8]))
+            parts.append(
+                '<div style="margin-bottom:8px"><strong style="font-size:0.82em">Mapped Metrics:</strong> '
+            )
+            parts.append(
+                " ".join(f'<span class="chip">{html.escape(str(m))}</span>' for m in metrics[:8])
+            )
             parts.append("</div>")
         if sdg_targets:
-            parts.append('<div style="margin-bottom:8px"><strong style="font-size:0.82em">SDG Targets:</strong> ')
-            parts.append(" ".join(
-                f'<span class="chip" style="background:#fff3e0;color:#e65100">'
-                f'{html.escape(str(t))}</span>'
-                for t in sdg_targets[:8]
-            ))
+            parts.append(
+                '<div style="margin-bottom:8px"><strong style="font-size:0.82em">SDG Targets:</strong> '
+            )
+            parts.append(
+                " ".join(
+                    f'<span class="chip" style="background:#fff3e0;color:#e65100">'
+                    f"{html.escape(str(t))}</span>"
+                    for t in sdg_targets[:8]
+                )
+            )
             parts.append("</div>")
 
         parts.append("</div></div>")
@@ -1391,13 +1646,13 @@ def _impact_claims_section(data: dict) -> str:
             f'<button id="show-more-claims" '
             f'style="display:block;margin:12px auto;padding:8px 24px;background:var(--primary-light);color:var(--primary);'
             f'border:1px solid var(--primary);border-radius:var(--radius-sm);cursor:pointer;font-size:0.88em">'
-            f'Show {remaining} more claims</button>'
-            '<script>'
+            f"Show {remaining} more claims</button>"
+            "<script>"
             'document.getElementById("show-more-claims").addEventListener("click",function(){'
             'document.querySelectorAll(".claim-card").forEach(function(c){c.style.display=""});'
             'this.style.display="none"'
-            '});'
-            '</script>'
+            "});"
+            "</script>"
         )
 
     return "\n".join(parts)
@@ -1425,10 +1680,10 @@ def _render_missing_metrics_section(ga: dict) -> str:
 
     parts: list[str] = [
         '<h3 id="sec-missing-metrics">Missing Metrics <span style="font-size:0.7em;color:var(--text-secondary);font-weight:400">'
-        f'({len(missing)} gaps grouped into {len(grouped)} categories)</span></h3>',
+        f"({len(missing)} gaps grouped into {len(grouped)} categories)</span></h3>",
         '<p style="color:var(--text-secondary);font-size:0.88em;margin-bottom:12px">'
-        'Click any group to see what the metric means, the expected unit, how to measure it, and '
-        'which 5D dimensions or SDGs it supports. Reporting any of these will move your scores '
+        "Click any group to see what the metric means, the expected unit, how to measure it, and "
+        "which 5D dimensions or SDGs it supports. Reporting any of these will move your scores "
         'out of the "Estimated" confidence band.</p>',
     ]
 
@@ -1441,26 +1696,33 @@ def _render_missing_metrics_section(ga: dict) -> str:
         parts.append(
             f'<details class="missing-metrics-group"{open_attr}>'
             f'<summary>{category} <span style="font-weight:400;color:var(--text-secondary);font-size:0.85em">'
-            f'&nbsp;{n} metric{"s" if n != 1 else ""} missing</span></summary>'
+            f"&nbsp;{n} metric{'s' if n != 1 else ''} missing</span></summary>"
         )
         for m in metrics:
             mid = m.get("id", "")
             name = m.get("name", mid)
             defn = (m.get("definition") or "").strip()
             how = (m.get("how_to_measure") or m.get("usage_guidance") or "").strip()
-            how_src = "Calculation" if m.get("calculation") else "Usage guidance" if m.get("usage_guidance") else ""
+            how_src = (
+                "Calculation"
+                if m.get("calculation")
+                else "Usage guidance"
+                if m.get("usage_guidance")
+                else ""
+            )
             unit = (m.get("unit") or m.get("reporting_format") or "").strip()
             dims = m.get("dimension_groups") or []
             sdgs = m.get("sdg_goals") or []
 
-            dim_chips = " ".join(
-                f'<span class="mm-chip dim">{d}</span>' for d in dims
-            ) or '<span class="mm-chip dim" style="opacity:0.55">Not tagged</span>'
-            sdg_chips = " ".join(
-                f'<span class="mm-chip sdg">SDG {g}</span>' for g in sdgs[:8]
+            dim_chips = (
+                " ".join(f'<span class="mm-chip dim">{d}</span>' for d in dims)
+                or '<span class="mm-chip dim" style="opacity:0.55">Not tagged</span>'
             )
+            sdg_chips = " ".join(f'<span class="mm-chip sdg">SDG {g}</span>' for g in sdgs[:8])
             if len(sdgs) > 8:
-                sdg_chips += f'<span class="mm-chip sdg" style="opacity:0.7">+{len(sdgs)-8}</span>'
+                sdg_chips += (
+                    f'<span class="mm-chip sdg" style="opacity:0.7">+{len(sdgs) - 8}</span>'
+                )
             if not sdg_chips:
                 sdg_chips = '<span class="mm-chip sdg" style="opacity:0.55">No mapped SDGs</span>'
 
@@ -1470,7 +1732,7 @@ def _render_missing_metrics_section(ga: dict) -> str:
                 f'<div class="mm-head">'
                 f'<div><span class="mm-name">{name}</span></div>'
                 f'<span class="mm-id">{mid}</span>'
-                f'</div>'
+                f"</div>"
             )
             if defn:
                 parts.append(f'<div class="mm-def">{defn}</div>')
@@ -1479,19 +1741,18 @@ def _render_missing_metrics_section(ga: dict) -> str:
                 parts.append(
                     f'<div class="mm-def"><strong style="color:var(--text)">{label}</strong>{_truncate(how, 260)}</div>'
                 )
-            parts.append('</div>')
+            parts.append("</div>")
             parts.append('<div class="mm-side"><dl>')
             if unit:
                 parts.append(
-                    f'<dt>Expected unit</dt>'
-                    f'<dd><span class="mm-chip unit">{unit}</span></dd>'
+                    f'<dt>Expected unit</dt><dd><span class="mm-chip unit">{unit}</span></dd>'
                 )
-            parts.append(f'<dt>Supports 5D</dt><dd>{dim_chips}</dd>')
-            parts.append(f'<dt>Maps to SDGs</dt><dd>{sdg_chips}</dd>')
-            parts.append('</dl></div>')
-            parts.append('</div>')
+            parts.append(f"<dt>Supports 5D</dt><dd>{dim_chips}</dd>")
+            parts.append(f"<dt>Maps to SDGs</dt><dd>{sdg_chips}</dd>")
+            parts.append("</dl></div>")
+            parts.append("</div>")
 
-        parts.append('</details>')
+        parts.append("</details>")
 
     return "\n".join(parts)
 
@@ -1535,7 +1796,9 @@ def _impact_pathway_section(data: dict) -> str:
     top_sdgs = sorted(sdg, key=lambda s: s.get("score", 0), reverse=True)[:3]
     for s in top_sdgs:
         if s.get("score", 0) > 0:
-            outcomes.append(f"SDG {_esc(s.get('goal'))}: {_esc(_truncate(s.get('goal_name', ''), 40))}")
+            outcomes.append(
+                f"SDG {_esc(s.get('goal'))}: {_esc(_truncate(s.get('goal_name', ''), 40))}"
+            )
     if not outcomes:
         outcomes.append("SDG alignment pending")
 
@@ -1615,9 +1878,11 @@ def _scoring_rationale_section(data: dict) -> str:
     overall = fd.get("overall_score", 0)
     grade = fd.get("overall_grade", "N/A")
     overall_prov = fd.get("overall_provenance", "estimated")
-    prov_label = {"evidence-based": "Evidence-Based", "partial": "Partial", "estimated": "Estimated"}.get(
-        overall_prov, overall_prov.title() if overall_prov else "Estimated"
-    )
+    prov_label = {
+        "evidence-based": "Evidence-Based",
+        "partial": "Partial",
+        "estimated": "Estimated",
+    }.get(overall_prov, overall_prov.title() if overall_prov else "Estimated")
     prov_color = {
         "evidence-based": "var(--success)",
         "partial": "var(--warning)",
@@ -1639,7 +1904,9 @@ def _scoring_rationale_section(data: dict) -> str:
         if reported == 0:
             driver = "Baseline only (no IRIS+ metrics reported)"
         elif capped:
-            driver = f"Capped at 2.5 — need ≥ {MIN_METRICS_FOR_ABOVE_BASELINE} metrics in this dimension"
+            driver = (
+                f"Capped at 2.5 — need ≥ {MIN_METRICS_FOR_ABOVE_BASELINE} metrics in this dimension"
+            )
         else:
             driver = f"Evidence from {reported} reported metric{'s' if reported != 1 else ''}"
         if dim_name == "risk":
@@ -1648,21 +1915,26 @@ def _scoring_rationale_section(data: dict) -> str:
             if exclusion_penalty > 0:
                 driver += f" · −{exclusion_penalty:.1f} exclusion penalty"
         display_name = {
-            "what": "What", "who": "Who", "how_much": "How Much",
-            "contribution": "Contribution", "risk": "Risk",
+            "what": "What",
+            "who": "Who",
+            "how_much": "How Much",
+            "contribution": "Contribution",
+            "risk": "Risk",
         }[dim_name]
         evidence_component = max(0.0, score - bl)
-        rows.append({
-            "name": display_name,
-            "score": score,
-            "baseline": round(bl, 2),
-            "evidence": round(evidence_component, 2),
-            "reported": reported,
-            "available": available,
-            "driver": driver,
-            "provenance": prov,
-            "capped": capped,
-        })
+        rows.append(
+            {
+                "name": display_name,
+                "score": score,
+                "baseline": round(bl, 2),
+                "evidence": round(evidence_component, 2),
+                "reported": reported,
+                "available": available,
+                "driver": driver,
+                "provenance": prov,
+                "capped": capped,
+            }
+        )
 
     # Build next-step levers — the highest-ROI thing the company could
     # report to move the lowest dimension.
@@ -1679,35 +1951,37 @@ def _scoring_rationale_section(data: dict) -> str:
         f'<div><span class="rationale-overall">{overall:.1f}<span class="rationale-overall-max">/5</span></span>',
         f'<span class="rationale-grade">{grade}</span></div>',
         f'<div class="rationale-prov" style="color:{prov_color}">{prov_label}</div>',
-        '</div>',
+        "</div>",
         '<p class="rationale-intro">'
-        'Each dimension is scored on a 0–5 scale. The final score is '
-        '<strong>max(sector baseline, evidence score)</strong>, capped at 2.5 until you report '
-        f'<strong>≥ {MIN_METRICS_FOR_ABOVE_BASELINE}</strong> IRIS+ metrics in that dimension. '
-        'The overall grade is the unweighted average of the five dimensions.</p>',
+        "Each dimension is scored on a 0–5 scale. The final score is "
+        "<strong>max(sector baseline, evidence score)</strong>, capped at 2.5 until you report "
+        f"<strong>≥ {MIN_METRICS_FOR_ABOVE_BASELINE}</strong> IRIS+ metrics in that dimension. "
+        "The overall grade is the unweighted average of the five dimensions.</p>",
         '<div class="rationale-table-wrap">',
         '<table class="rationale-table">',
-        '<colgroup>'
+        "<colgroup>"
         '<col class="col-dim"><col class="col-final"><col class="col-baseline">'
         '<col class="col-lift"><col class="col-metrics"><col class="col-driver">'
-        '</colgroup>',
-        '<thead><tr>'
-        '<th>Dimension</th>'
-        '<th>Final</th>'
-        '<th>Baseline</th>'
-        '<th>Lift</th>'
-        '<th>Metrics</th>'
-        '<th>Main driver</th>'
-        '</tr></thead>',
-        '<tbody>',
+        "</colgroup>",
+        "<thead><tr>"
+        "<th>Dimension</th>"
+        "<th>Final</th>"
+        "<th>Baseline</th>"
+        "<th>Lift</th>"
+        "<th>Metrics</th>"
+        "<th>Main driver</th>"
+        "</tr></thead>",
+        "<tbody>",
     ]
     for r in rows:
         score_color = (
-            "var(--success)" if r["score"] >= 3.0
-            else "var(--warning)" if r["score"] >= 2.0
+            "var(--success)"
+            if r["score"] >= 3.0
+            else "var(--warning)"
+            if r["score"] >= 2.0
             else "var(--danger)"
         )
-        lift_html = f'+{r["evidence"]:.1f}' if r["evidence"] > 0 else '—'
+        lift_html = f"+{r['evidence']:.1f}" if r["evidence"] > 0 else "—"
         if r["capped"]:
             lift_html += ' <span class="rationale-cap-tag">cap&nbsp;2.5</span>'
         prov_dim_color = {
@@ -1717,54 +1991,55 @@ def _scoring_rationale_section(data: dict) -> str:
         }.get(r["provenance"], "var(--text-secondary)")
         prov_badge = f'<span class="prov-badge" style="background:{prov_dim_color}20;color:{prov_dim_color}">{r["provenance"].replace("-", " ").title()}</span>'
         html.append(
-            f'<tr>'
+            f"<tr>"
             f'<td class="r-dim"><strong>{r["name"]}</strong> {prov_badge}</td>'
             f'<td class="r-final" style="font-weight:700;color:{score_color}">{r["score"]:.1f}</td>'
             f'<td class="r-baseline" style="color:var(--text-secondary)">{r["baseline"]:.2f}</td>'
             f'<td class="r-lift">{lift_html}</td>'
             f'<td class="r-metrics">{r["reported"]} / {r["available"]}</td>'
             f'<td class="r-driver">{r["driver"]}</td>'
-            f'</tr>'
+            f"</tr>"
         )
-    html.append('</tbody></table></div>')
+    html.append("</tbody></table></div>")
 
     if levers:
         html.append('<div class="rationale-levers">')
         html.append(
             f'<div class="rationale-levers-title">'
-            f'Biggest lever: report any of these <strong>{low_dim["name"]}</strong> metrics '
-            f'to move your lowest dimension</div>'
+            f"Biggest lever: report any of these <strong>{low_dim['name']}</strong> metrics "
+            f"to move your lowest dimension</div>"
         )
         lever_names = []
         # Fetch names for lever IDs if possible
         try:
             from openharness.impact.database import get_metric_store
+
             store = get_metric_store()
             for mid in levers:
                 m = store.get(mid)
                 if m and m.name:
-                    lever_names.append(f'<code>{mid}</code> · {m.name}')
+                    lever_names.append(f"<code>{mid}</code> · {m.name}")
                 else:
-                    lever_names.append(f'<code>{mid}</code>')
+                    lever_names.append(f"<code>{mid}</code>")
         except Exception:
-            lever_names = [f'<code>{mid}</code>' for mid in levers]
+            lever_names = [f"<code>{mid}</code>" for mid in levers]
         html.append('<ul class="rationale-lever-list">')
         for lv in lever_names:
-            html.append(f'<li>{lv}</li>')
-        html.append('</ul>')
-        html.append('</div>')
+            html.append(f"<li>{lv}</li>")
+        html.append("</ul>")
+        html.append("</div>")
 
     html.append(
         '<div class="rationale-legend">'
         '<div><span class="legend-dot" style="background:var(--danger)"></span>'
-        '<strong>Estimated</strong> — driven by sector baseline, no metrics reported</div>'
+        "<strong>Estimated</strong> — driven by sector baseline, no metrics reported</div>"
         '<div><span class="legend-dot" style="background:var(--warning)"></span>'
-        '<strong>Partial</strong> — 1–2 metrics reported; capped at 2.5</div>'
+        "<strong>Partial</strong> — 1–2 metrics reported; capped at 2.5</div>"
         '<div><span class="legend-dot" style="background:var(--success)"></span>'
-        f'<strong>Evidence-Based</strong> — ≥ {MIN_METRICS_FOR_ABOVE_BASELINE} metrics reported in this dimension</div>'
-        '</div>'
+        f"<strong>Evidence-Based</strong> — ≥ {MIN_METRICS_FOR_ABOVE_BASELINE} metrics reported in this dimension</div>"
+        "</div>"
     )
-    html.append('</div>')
+    html.append("</div>")
     return "\n".join(html)
 
 
@@ -1815,7 +2090,7 @@ def _render_audience_toolbar(data: dict) -> str:
         parts.append(
             f'<button type="button" class="aud-btn" data-aud="{key}" aria-pressed="{pressed}">{label}</button>'
         )
-    parts.append('</div>')
+    parts.append("</div>")
     return "".join(parts)
 
 
@@ -1838,10 +2113,10 @@ def _render_uncertainty_block(score: float, provenance: str) -> str:
         f'aria-label="Confidence band {lo:.1f} to {hi:.1f} out of 5 around a score of {score:.1f}; {prov_label}">'
         f'<div class="ci-band" style="left:{left:.1f}%;width:{width:.1f}%"></div>'
         f'<div class="ci-point" style="left:{point:.1f}%"></div>'
-        '</div>'
+        "</div>"
         f'<div class="ci-note">Score {score:.1f}/5 &middot; indicative range {lo:.1f}&ndash;{hi:.1f} '
-        f'({prov_label}). Bands are illustrative, derived from evidence provenance.</div>'
-        '</div>'
+        f"({prov_label}). Bands are illustrative, derived from evidence provenance.</div>"
+        "</div>"
     )
 
 
@@ -1861,24 +2136,43 @@ def _render_tear_sheet(data: dict) -> str:
 
     sdgs = sorted(
         [a for a in data.get("sdg_alignments", []) if a.get("score", 0) > 0],
-        key=lambda a: a.get("score", 0), reverse=True,
+        key=lambda a: a.get("score", 0),
+        reverse=True,
     )[:3]
     if sdgs:
         sdg_str = ", ".join(f"SDG {a['goal']}" for a in sdgs)
-        stats.append(f'<div class="tear-stat"><div class="v" style="font-size:1.05em">{_esc(sdg_str)}</div><div class="l">Top SDG alignment</div></div>')
+        stats.append(
+            f'<div class="tear-stat"><div class="v" style="font-size:1.05em">{_esc(sdg_str)}</div><div class="l">Top SDG alignment</div></div>'
+        )
 
     gw = data.get("greenwashing", {})
     if gw:
-        risk = gw.get("risk_level") or gw.get("overall_risk") or ("Low" if gw.get("overall_score", 0) < 30 else "Medium" if gw.get("overall_score", 0) < 60 else "High")
-        stats.append(f'<div class="tear-stat"><div class="v" style="font-size:1.2em">{_esc(str(risk))}</div><div class="l">Greenwashing risk</div></div>')
+        risk = (
+            gw.get("risk_level")
+            or gw.get("overall_risk")
+            or (
+                "Low"
+                if gw.get("overall_score", 0) < 30
+                else "Medium"
+                if gw.get("overall_score", 0) < 60
+                else "High"
+            )
+        )
+        stats.append(
+            f'<div class="tear-stat"><div class="v" style="font-size:1.2em">{_esc(str(risk))}</div><div class="l">Greenwashing risk</div></div>'
+        )
 
     bm = data.get("benchmark_comparison", {})
     if bm.get("benchmark_available") and bm.get("percentile") is not None:
-        stats.append(f'<div class="tear-stat"><div class="v">{_esc(bm["percentile"])}<span style="font-size:0.5em">pct</span></div><div class="l">Sector percentile</div></div>')
+        stats.append(
+            f'<div class="tear-stat"><div class="v">{_esc(bm["percentile"])}<span style="font-size:0.5em">pct</span></div><div class="l">Sector percentile</div></div>'
+        )
 
     claims = data.get("impact_claims", [])
     if claims:
-        stats.append(f'<div class="tear-stat"><div class="v">{len(claims)}</div><div class="l">Impact claims</div></div>')
+        stats.append(
+            f'<div class="tear-stat"><div class="v">{len(claims)}</div><div class="l">Impact claims</div></div>'
+        )
 
     name = _esc(company.get("name", ""))
     sector = _esc(company.get("sector", ""))
@@ -1886,17 +2180,18 @@ def _render_tear_sheet(data: dict) -> str:
     uncertainty = _render_uncertainty_block(score, provenance) if fd else ""
     return (
         '<section class="tear-sheet" id="tear-sheet" aria-label="Executive summary at a glance">'
-        f'<h2>At a glance</h2>'
+        f"<h2>At a glance</h2>"
         f'<p style="color:var(--text-secondary);margin:0">{sub}</p>'
         f'<div class="tear-grid">{"".join(stats)}</div>'
-        f'{uncertainty}'
-        '</section>'
+        f"{uncertainty}"
+        "</section>"
     )
 
 
 def _audience_filter_script() -> str:
     """JS that filters report sections by audience (Track D4)."""
     import json as _json
+
     audience_map = _json.dumps(_AUDIENCE_SECTION_MAP)
     return (
         "<script>(function(){\n"
@@ -1979,7 +2274,8 @@ def _render_print_cover(data: dict) -> str:
             score = fd.get("overall_score")
             score_html = (
                 f'<span style="font-size:0.4em;color:var(--text-secondary);font-weight:600"> {score:.1f}/5</span>'
-                if score is not None else ""
+                if score is not None
+                else ""
             )
             parts.append(f'<div class="pc-grade {grade_class}">{_esc(grade)}{score_html}</div>')
     meta_bits = []
@@ -1991,9 +2287,9 @@ def _render_print_cover(data: dict) -> str:
     parts.append(" &middot; ".join(meta_bits))
     parts.append(
         '<div class="pc-confidential">Confidential &mdash; prepared for internal investment '
-        'and LP use. Not for public distribution.</div>'
+        "and LP use. Not for public distribution.</div>"
     )
-    parts.append('</div></section>')
+    parts.append("</div></section>")
     return "".join(parts)
 
 
@@ -2022,7 +2318,7 @@ def _render_sticky_header(data: dict) -> str:
         score = fd.get("overall_score")
         if score is not None:
             parts.append(f'<span class="mh-score">{score:.1f}/5</span>')
-    parts.append('</div>')
+    parts.append("</div>")
     return "".join(parts)
 
 
@@ -2036,7 +2332,7 @@ def _render_utility_dock() -> str:
         f'title="Print / Save as PDF">{_ICON_PRINT}</button>'
         f'<button type="button" class="to-top" aria-label="Back to top" '
         f'title="Back to top">{_ICON_TOP}</button>'
-        '</div>'
+        "</div>"
     )
 
 
@@ -2107,7 +2403,7 @@ def _report_ux_script() -> str:
         "  }, {rootMargin:'-10% 0px -70% 0px'});\n"
         "  targets.forEach(function(t){ if(t) obs.observe(t); });\n"
         "}\n"
-        "var LINK_SVG='<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1\"/><path d=\"M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1\"/></svg>';\n"
+        'var LINK_SVG=\'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>\';\n'
         "var main2=document.getElementById('main-content');\n"
         "if(main2){ Array.prototype.forEach.call(main2.querySelectorAll('h2[id]'), function(h){\n"
         "  var b=document.createElement('button');\n"
@@ -2132,7 +2428,7 @@ def _collapsible_sections_script() -> str:
         "<script>(function(){\n"
         "var main=document.getElementById('main-content');\n"
         "if(!main) return;\n"
-        "var CARET='<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M6 9l6 6 6-6\"/></svg>';\n"
+        'var CARET=\'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>\';\n'
         "var heads=Array.prototype.slice.call(main.querySelectorAll('h2[id]'));\n"
         "var sections=[];\n"
         "heads.forEach(function(h){\n"
@@ -2171,10 +2467,23 @@ def _to_html(data: dict) -> str:
     sections: list[str] = []
     body_class = ' class="theme-dark"' if str(data.get("theme", "")).lower() == "dark" else ""
     sdg_colors_map = {
-        1: "#E5243B", 2: "#DDA63A", 3: "#4C9F38", 4: "#C5192D", 5: "#FF3A21",
-        6: "#26BDE2", 7: "#FCC30B", 8: "#A21942", 9: "#FD6925", 10: "#DD1367",
-        11: "#FD9D24", 12: "#BF8B2E", 13: "#3F7E44", 14: "#0A97D9", 15: "#56C02B",
-        16: "#00689D", 17: "#19486A",
+        1: "#E5243B",
+        2: "#DDA63A",
+        3: "#4C9F38",
+        4: "#C5192D",
+        5: "#FF3A21",
+        6: "#26BDE2",
+        7: "#FCC30B",
+        8: "#A21942",
+        9: "#FD6925",
+        10: "#DD1367",
+        11: "#FD9D24",
+        12: "#BF8B2E",
+        13: "#3F7E44",
+        14: "#0A97D9",
+        15: "#56C02B",
+        16: "#00689D",
+        17: "#19486A",
     }
 
     sections.append(f"""<!DOCTYPE html>
@@ -2182,7 +2491,7 @@ def _to_html(data: dict) -> str:
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Impact Report: {_esc(company.get('name', ''))}</title>
+<title>Impact Report: {_esc(company.get("name", ""))}</title>
 <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 <style>
 :root {{
@@ -2622,10 +2931,10 @@ body.theme-dark .mini-header {{ box-shadow:0 2px 8px rgba(0,0,0,0.6); }}
 {_render_print_cover(data)}
 <div class="report-header">
 <h1>Impact Assessment Report</h1>
-<p class="subtitle">{_esc(company.get('name', ''))}{' | ' + _esc(company.get('sector', '')) if company.get('sector') else ''}</p>
+<p class="subtitle">{_esc(company.get("name", ""))}{" | " + _esc(company.get("sector", "")) if company.get("sector") else ""}</p>
 <div class="meta-row">
-  <span>Generated: {_esc(data.get('generated_at', '')[:10])}</span>
-  <span>Standard: {_esc(data.get('catalog_version', ''))}</span>
+  <span>Generated: {_esc(data.get("generated_at", "")[:10])}</span>
+  <span>Standard: {_esc(data.get("catalog_version", ""))}</span>
 </div>""")
 
     if company.get("impact_themes") or company.get("sdg_claims"):
@@ -2639,8 +2948,8 @@ body.theme-dark .mini-header {{ box-shadow:0 2px 8px rgba(0,0,0,0.6); }}
                 continue
             if 1 <= goal <= 17:
                 sections.append(f'<span class="tag">SDG {goal}</span>')
-        sections.append('</div>')
-    sections.append('</div>')
+        sections.append("</div>")
+    sections.append("</div>")
 
     sections.append(_render_audience_toolbar(data))
     sections.append(_render_tear_sheet(data))
@@ -2658,9 +2967,9 @@ body.theme-dark .mini-header {{ box-shadow:0 2px 8px rgba(0,0,0,0.6); }}
         sections.append(f"""
 <h2 id="sec-5d">5 Dimensions of Impact</h2>
 <div class="cards-row">
-<div class="score-card"><div class="value {grade_class}" id="main-grade">{fd['overall_grade']}</div><div class="label">Overall Grade</div></div>
-<div class="score-card"><div class="value" id="main-overall">{fd['overall_score']:.1f}<span style="font-size:0.5em;color:var(--text-secondary)">/5</span></div><div class="label">Overall Score</div></div>
-<div class="score-card"><div class="value" style="font-size:0.9em;color:{'var(--success)' if fd.get('overall_provenance') == 'evidence-based' else 'var(--warning)' if fd.get('overall_provenance') == 'partial' else 'var(--danger)'}">{'Evidence-Based' if fd.get('overall_provenance') == 'evidence-based' else 'Partial' if fd.get('overall_provenance') == 'partial' else 'Estimated'}</div><div class="label">Confidence</div></div>
+<div class="score-card"><div class="value {grade_class}" id="main-grade">{fd["overall_grade"]}</div><div class="label">Overall Grade</div></div>
+<div class="score-card"><div class="value" id="main-overall">{fd["overall_score"]:.1f}<span style="font-size:0.5em;color:var(--text-secondary)">/5</span></div><div class="label">Overall Score</div></div>
+<div class="score-card"><div class="value" style="font-size:0.9em;color:{"var(--success)" if fd.get("overall_provenance") == "evidence-based" else "var(--warning)" if fd.get("overall_provenance") == "partial" else "var(--danger)"}">{"Evidence-Based" if fd.get("overall_provenance") == "evidence-based" else "Partial" if fd.get("overall_provenance") == "partial" else "Estimated"}</div><div class="label">Confidence</div></div>
 <div class="score-card" id="delta-card" style="display:none"><div class="value" id="main-delta" style="font-size:1.4em;color:var(--text-secondary)">+0.0</div><div class="label">Improvement</div></div>
 </div>
 <div class="five-d-grid dim-stack">
@@ -2681,47 +2990,65 @@ body.theme-dark .mini-header {{ box-shadow:0 2px 8px rgba(0,0,0,0.6); }}
             reported = dim.get("metrics_reported", 0)
             available = dim.get("metrics_available", 0)
             metric_pct = int(reported / available * 100) if available > 0 else 0
-            metric_color = "var(--success)" if metric_pct >= 50 else "var(--warning)" if metric_pct > 0 else "var(--danger)"
+            metric_color = (
+                "var(--success)"
+                if metric_pct >= 50
+                else "var(--warning)"
+                if metric_pct > 0
+                else "var(--danger)"
+            )
             gaps_preview = ", ".join(g.split(" (")[0] for g in dim.get("gaps", [])[:3])
             gaps_tooltip = f' title="{gaps_preview}"' if gaps_preview else ""
             prov = dim.get("provenance", "estimated")
-            prov_badge = {"evidence-based": "verified", "partial": "estimated", "estimated": "estimated"}.get(prov, "unverified")
+            prov_badge = {
+                "evidence-based": "verified",
+                "partial": "estimated",
+                "estimated": "estimated",
+            }.get(prov, "unverified")
             prov_label = prov.replace("-", " ").title() if prov else "Estimated"
             sections.append(f"""<tr class="dim-clickable" data-dim="{dim_name}" tabindex="0" role="button" aria-expanded="false" aria-controls="overlay-{dim_name}">
-<td><strong>{dim['dimension']}</strong> <span style="font-size:0.7em;color:var(--text-secondary)" aria-hidden="true">&#9660;</span></td>
-<td style="font-weight:600" id="dim-score-{dim_name}">{dim['score']}/5</td>
+<td><strong>{dim["dimension"]}</strong> <span style="font-size:0.7em;color:var(--text-secondary)" aria-hidden="true">&#9660;</span></td>
+<td style="font-weight:600" id="dim-score-{dim_name}">{dim["score"]}/5</td>
 <td><div class="bar-track"><div class="bar-fill {bar_color}" id="dim-bar-{dim_name}" style="width:{pct}%"></div></div></td>
 <td><span class="evidence-badge {prov_badge}" title="Score provenance: {prov_label}">{prov_label}</span></td>
 <td class="metrics-cell" style="font-size:0.85em"><span style="color:{metric_color};font-weight:600">{reported}/{available}</span>
-<span style="color:var(--text-secondary)"{gaps_tooltip}>{' tracked' if reported > 0 else ' not tracked'}</span></td>
-<td class="notes">{dim['notes']}</td>
+<span style="color:var(--text-secondary)"{gaps_tooltip}>{" tracked" if reported > 0 else " not tracked"}</span></td>
+<td class="notes">{dim["notes"]}</td>
 </tr>""")
 
             tracked_metrics = dim.get("metrics_tracked", [])
             gap_metrics = dim.get("gaps", [])
             recs = dim.get("recommendations", fd.get("recommendations", []))[:3]
-            sections.append(f'<tr class="dim-overlay" id="overlay-{dim_name}"><td colspan="6"><div class="dim-overlay-content">')
+            sections.append(
+                f'<tr class="dim-overlay" id="overlay-{dim_name}"><td colspan="6"><div class="dim-overlay-content">'
+            )
             sections.append('<div class="dim-overlay-col"><h4>Tracked Metrics</h4>')
             if tracked_metrics:
                 for tm in tracked_metrics[:6]:
                     label = tm if isinstance(tm, str) else str(tm)
                     sections.append(f'<span class="metric-pill tracked">{label}</span>')
             else:
-                sections.append(f'<span style="font-size:0.82em;color:var(--text-secondary)">No metrics tracked ({available} available)</span>')
+                sections.append(
+                    f'<span style="font-size:0.82em;color:var(--text-secondary)">No metrics tracked ({available} available)</span>'
+                )
             sections.append('</div><div class="dim-overlay-col"><h4>Gaps</h4>')
             if gap_metrics:
                 for gm in gap_metrics[:6]:
                     label = gm.split(" (")[0] if isinstance(gm, str) else str(gm)
                     sections.append(f'<span class="metric-pill gap">{label}</span>')
             else:
-                sections.append('<span style="font-size:0.82em;color:var(--success)">No gaps identified</span>')
+                sections.append(
+                    '<span style="font-size:0.82em;color:var(--success)">No gaps identified</span>'
+                )
             sections.append('</div><div class="dim-overlay-col"><h4>Suggestions</h4>')
             if recs:
                 for rc in recs[:3]:
                     sections.append(f'<div class="dim-suggestion">{rc}</div>')
             else:
-                sections.append('<span style="font-size:0.82em;color:var(--text-secondary)">Report more metrics to receive suggestions</span>')
-            sections.append('</div></div></td></tr>')
+                sections.append(
+                    '<span style="font-size:0.82em;color:var(--text-secondary)">Report more metrics to receive suggestions</span>'
+                )
+            sections.append("</div></div></td></tr>")
 
         sections.append("</table></div>")
         sections.append(
@@ -2729,7 +3056,7 @@ body.theme-dark .mini-header {{ box-shadow:0 2px 8px rgba(0,0,0,0.6); }}
             '<span class="evidence-badge verified" title="Backed by reported IRIS+ metrics / verified evidence">Evidence Based</span>'
             '<span class="evidence-badge estimated" title="Partial evidence or keyword/sector heuristic">Partial / Estimated</span>'
             '<span class="evidence-badge unverified" title="No supporting metrics reported">Unverified</span>'
-            '</div>'
+            "</div>"
         )
         sections.append("""<script>
 document.querySelectorAll('.dim-clickable').forEach(function(row) {
@@ -2753,35 +3080,56 @@ document.querySelectorAll('.dim-clickable').forEach(function(row) {
 
         overall_prov = fd.get("overall_provenance", "estimated")
         if overall_prov in ("estimated", "partial"):
-            disclaimer_color = "var(--warning-light)" if overall_prov == "partial" else "var(--danger-light)"
+            disclaimer_color = (
+                "var(--warning-light)" if overall_prov == "partial" else "var(--danger-light)"
+            )
             disclaimer_border = "var(--warning)" if overall_prov == "partial" else "var(--danger)"
             disclaimer_text = (
-                "Scores are primarily <strong>estimated</strong> from keywords and sector heuristics. "
-                "Report at least 3 IRIS+ metrics per dimension for evidence-based scores."
-            ) if overall_prov == "estimated" else (
-                "Some scores are based on <strong>partial evidence</strong>. "
-                "Additional reported metrics will strengthen the assessment."
+                (
+                    "Scores are primarily <strong>estimated</strong> from keywords and sector heuristics. "
+                    "Report at least 3 IRIS+ metrics per dimension for evidence-based scores."
+                )
+                if overall_prov == "estimated"
+                else (
+                    "Some scores are based on <strong>partial evidence</strong>. "
+                    "Additional reported metrics will strengthen the assessment."
+                )
             )
             sections.append(f"""
 <div style="margin:12px 0;padding:12px 16px;background:{disclaimer_color};border-left:4px solid {disclaimer_border};border-radius:var(--radius-sm);font-size:0.85em">
 {disclaimer_text}
 </div>""")
 
-        total_reported = sum(fd[d].get("metrics_reported", 0) for d in ["what", "who", "how_much", "contribution", "risk"])
-        total_available = sum(fd[d].get("metrics_available", 0) for d in ["what", "who", "how_much", "contribution", "risk"])
+        total_reported = sum(
+            fd[d].get("metrics_reported", 0)
+            for d in ["what", "who", "how_much", "contribution", "risk"]
+        )
+        total_available = sum(
+            fd[d].get("metrics_available", 0)
+            for d in ["what", "who", "how_much", "contribution", "risk"]
+        )
         if total_available > 0:
+            gap_names = [
+                gap.split(" (")[0]
+                for gap in fd["what"].get("gaps", [])[:3] + fd["who"].get("gaps", [])[:2]
+            ]
+            gap_summary = (
+                f"Top gaps: {', '.join(gap_names)}"
+                if total_reported < total_available
+                else "Full coverage achieved!"
+            )
             sections.append(f"""
 <div style="margin-top:12px;padding:12px 16px;background:var(--primary-light);border-radius:var(--radius-sm);font-size:0.85em">
 <strong>Metric Tracking:</strong> {total_reported} of {total_available} available IRIS+ metrics reported
 ({int(total_reported / total_available * 100)}% coverage).
-{f'Top gaps: {", ".join(g.split(" (")[0] for g in fd["what"].get("gaps", [])[:3] + fd["who"].get("gaps", [])[:2])}' if total_reported < total_available else 'Full coverage achieved!'}
+{gap_summary}
 </div>""")
         sections.append("</div></div>")
 
         sections.append(f"""<script>
 Plotly.newPlot('radar-chart', [{{
-  type: 'scatterpolar', r: [{','.join(scores_js)},{scores_js[0]}],
-  theta: [{','.join(dims_js)},{dims_js[0]}],
+  type: 'scatterpolar', r: [{",".join(scores_js)},{scores_js[0]}],
+  theta: [{",".join(dims_js)},{dims_js[0]}],
   fill: 'toself', fillcolor: 'rgba(25,118,210,0.12)',
   line: {{color: '#1976d2', width: 2.5}}, marker: {{size: 7, color: '#1976d2'}},
   name: 'Current'
@@ -2794,7 +3142,11 @@ Plotly.newPlot('radar-chart', [{{
 }}, {{responsive: true}});
 </script>""")
 
-        sections.append(_interactive_scoring_section(fd, data.get("sdg_alignments", []), company.get("name", "")))
+        sections.append(
+            _interactive_scoring_section(
+                fd, data.get("sdg_alignments", []), company.get("name", "")
+            )
+        )
 
         if fd.get("recommendations"):
             sections.append("<h3>Recommendations</h3>")
@@ -2806,14 +3158,22 @@ Plotly.newPlot('radar-chart', [{{
         targets = tt.get("targets", [])
         if targets:
             sections.append('<h2 id="sec-targets">Impact Target Tracking</h2>')
-            sections.append("<table><tr><th>Metric</th><th>Target</th><th>Current</th><th>Progress</th><th>Status</th></tr>")
+            sections.append(
+                "<table><tr><th>Metric</th><th>Target</th><th>Current</th><th>Progress</th><th>Status</th></tr>"
+            )
             status_colors = {
-                "exceeded": "var(--success)", "on_track": "var(--success)",
-                "behind": "var(--warning)", "at_risk": "var(--danger)", "no_data": "var(--text-secondary)",
+                "exceeded": "var(--success)",
+                "on_track": "var(--success)",
+                "behind": "var(--warning)",
+                "at_risk": "var(--danger)",
+                "no_data": "var(--text-secondary)",
             }
             status_icons = {
-                "exceeded": "🟢", "on_track": "🟢",
-                "behind": "🟡", "at_risk": "🔴", "no_data": "⚪",
+                "exceeded": "🟢",
+                "on_track": "🟢",
+                "behind": "🟡",
+                "at_risk": "🔴",
+                "no_data": "⚪",
             }
             for t in targets:
                 color = status_colors.get(t["status"], "var(--text-secondary)")
@@ -2821,17 +3181,17 @@ Plotly.newPlot('radar-chart', [{{
                 pct = t.get("progress_pct", 0)
                 pct_display = f"{pct:.0f}%" if pct else "N/A"
                 sections.append(f"""<tr>
-<td>{t['metric_id']}</td>
-<td>{t.get('target_description') or t.get('target', 'N/A')}</td>
-<td>{t.get('current_value', 'N/A')}</td>
+<td>{t["metric_id"]}</td>
+<td>{t.get("target_description") or t.get("target", "N/A")}</td>
+<td>{t.get("current_value", "N/A")}</td>
 <td><div class="bar-track"><div class="bar-fill" style="width:{min(pct, 100):.0f}%;background:{color}"></div></div> {pct_display}</td>
-<td style="color:{color};font-weight:600">{icon} {t['status'].replace('_', ' ').title()}</td>
+<td style="color:{color};font-weight:600">{icon} {t["status"].replace("_", " ").title()}</td>
 </tr>""")
             sections.append("</table>")
             summary = tt.get("summary", {})
             if summary:
                 sections.append(f"""<div style="margin-top:12px;padding:12px 16px;background:var(--primary-light);border-radius:var(--radius-sm);font-size:0.85em">
-<strong>Target Summary:</strong> {summary.get('on_track', 0)} on track, {summary.get('behind', 0)} behind, {summary.get('exceeded', 0)} exceeded, {summary.get('at_risk', 0)} at risk
+<strong>Target Summary:</strong> {summary.get("on_track", 0)} on track, {summary.get("behind", 0)} behind, {summary.get("exceeded", 0)} exceeded, {summary.get("at_risk", 0)} at risk
 </div>""")
 
     if "beneficiary_feedback" in data:
@@ -2840,37 +3200,65 @@ Plotly.newPlot('radar-chart', [{{
         sections.append('<div class="chart-row">')
         if bf.get("satisfaction_score") is not None:
             sat = bf["satisfaction_score"]
-            sat_color = "var(--success)" if sat >= 4 else "var(--warning)" if sat >= 3 else "var(--danger)"
-            sections.append(f'<div class="score-card"><div class="value" style="color:{sat_color}">{sat}/5</div><div class="label">Satisfaction</div></div>')
+            sat_color = (
+                "var(--success)" if sat >= 4 else "var(--warning)" if sat >= 3 else "var(--danger)"
+            )
+            sections.append(
+                f'<div class="score-card"><div class="value" style="color:{sat_color}">{sat}/5</div><div class="label">Satisfaction</div></div>'
+            )
         if bf.get("nps") is not None:
             nps = bf["nps"]
-            nps_color = "var(--success)" if nps >= 50 else "var(--warning)" if nps >= 0 else "var(--danger)"
-            sections.append(f'<div class="score-card"><div class="value" style="color:{nps_color}">{nps}</div><div class="label">NPS</div></div>')
+            nps_color = (
+                "var(--success)" if nps >= 50 else "var(--warning)" if nps >= 0 else "var(--danger)"
+            )
+            sections.append(
+                f'<div class="score-card"><div class="value" style="color:{nps_color}">{nps}</div><div class="label">NPS</div></div>'
+            )
         if bf.get("sample_size"):
-            sections.append(f'<div class="score-card"><div class="value">{bf["sample_size"]}</div><div class="label">Sample Size</div></div>')
+            sections.append(
+                f'<div class="score-card"><div class="value">{bf["sample_size"]}</div><div class="label">Sample Size</div></div>'
+            )
         if bf.get("quality_of_life_improvement") is not None:
-            sections.append(f'<div class="score-card"><div class="value" style="color:var(--success)">{bf["quality_of_life_improvement"]}%</div><div class="label">QoL Improvement</div></div>')
+            sections.append(
+                f'<div class="score-card"><div class="value" style="color:var(--success)">{bf["quality_of_life_improvement"]}%</div><div class="label">QoL Improvement</div></div>'
+            )
         if bf.get("would_recommend") is not None:
-            sections.append(f'<div class="score-card"><div class="value">{bf["would_recommend"]}%</div><div class="label">Would Recommend</div></div>')
-        sections.append('</div>')
+            sections.append(
+                f'<div class="score-card"><div class="value">{bf["would_recommend"]}%</div><div class="label">Would Recommend</div></div>'
+            )
+        sections.append("</div>")
         if bf.get("methodology"):
-            sections.append(f'<p style="font-size:0.85em;color:var(--text-secondary)">Methodology: {bf["methodology"]}')
+            sections.append(
+                f'<p style="font-size:0.85em;color:var(--text-secondary)">Methodology: {bf["methodology"]}'
+            )
             if bf.get("survey_date"):
-                sections[-1] += f' | Survey date: {bf["survey_date"]}'
-            sections[-1] += '</p>'
+                sections[-1] += f" | Survey date: {bf['survey_date']}"
+            sections[-1] += "</p>"
         if bf.get("themes"):
             sections.append('<div style="margin-top:8px"><strong>Positive Themes:</strong> ')
-            sections.append(', '.join(f'<span style="background:var(--primary-light);padding:2px 8px;border-radius:12px;font-size:0.85em">{t}</span>' for t in bf["themes"][:5]))
-            sections.append('</div>')
+            sections.append(
+                ", ".join(
+                    f'<span style="background:var(--primary-light);padding:2px 8px;border-radius:12px;font-size:0.85em">{t}</span>'
+                    for t in bf["themes"][:5]
+                )
+            )
+            sections.append("</div>")
         if bf.get("challenges"):
             sections.append('<div style="margin-top:8px"><strong>Challenges:</strong> ')
-            sections.append(', '.join(f'<span style="background:#fff3e0;padding:2px 8px;border-radius:12px;font-size:0.85em">{c}</span>' for c in bf["challenges"][:5]))
-            sections.append('</div>')
+            sections.append(
+                ", ".join(
+                    f'<span style="background:#fff3e0;padding:2px 8px;border-radius:12px;font-size:0.85em">{c}</span>'
+                    for c in bf["challenges"][:5]
+                )
+            )
+            sections.append("</div>")
         if bf.get("quotes"):
             sections.append('<div style="margin-top:12px">')
             for q in bf["quotes"][:3]:
-                sections.append(f'<blockquote style="border-left:3px solid var(--primary);padding:8px 16px;margin:8px 0;font-style:italic;color:var(--text-secondary)">&ldquo;{q}&rdquo;</blockquote>')
-            sections.append('</div>')
+                sections.append(
+                    f'<blockquote style="border-left:3px solid var(--primary);padding:8px 16px;margin:8px 0;font-style:italic;color:var(--text-secondary)">&ldquo;{q}&rdquo;</blockquote>'
+                )
+            sections.append("</div>")
 
     if "sdg_alignments" in data:
         aligned = [a for a in data["sdg_alignments"] if a["score"] > 0]
@@ -2906,21 +3294,25 @@ Plotly.newPlot('radar-chart', [{{
                 "low": "color:var(--danger);font-weight:600",
             }.get(a["confidence"], "")
             collapse_cls = " sdg-collapsed" if a["goal"] in collapsed_ids else ""
-            sections.append(f"""<tr class="sdg-clickable{collapse_cls}" data-sdg="{a['goal']}" tabindex="0" role="button" aria-expanded="false" aria-controls="sdg-detail-{a['goal']}">
-<td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:{sdg_color};margin-right:6px;vertical-align:middle" aria-hidden="true"></span>SDG {a['goal']} <span style="font-size:0.7em;color:var(--text-secondary)" aria-hidden="true">&#9660;</span></td>
-<td>{a.get('goal_name', '')}</td>
-<td style="font-weight:600">{a['score']}</td><td style="{conf_style}">{a['confidence']}</td><td style="font-size:0.85em">{metrics_str}</td>
+            sections.append(f"""<tr class="sdg-clickable{collapse_cls}" data-sdg="{a["goal"]}" tabindex="0" role="button" aria-expanded="false" aria-controls="sdg-detail-{a["goal"]}">
+<td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:{sdg_color};margin-right:6px;vertical-align:middle" aria-hidden="true"></span>SDG {a["goal"]} <span style="font-size:0.7em;color:var(--text-secondary)" aria-hidden="true">&#9660;</span></td>
+<td>{a.get("goal_name", "")}</td>
+<td style="font-weight:600">{a["score"]}</td><td style="{conf_style}">{a["confidence"]}</td><td style="font-size:0.85em">{metrics_str}</td>
 </tr>""")
 
             sections.append(f'<tr class="sdg-detail" id="sdg-detail-{a["goal"]}"><td colspan="5">')
             targets = a.get("matched_targets", [])
             if targets:
-                sections.append('<div style="margin-bottom:8px"><strong style="font-size:0.82em">Targets:</strong> ')
+                sections.append(
+                    '<div style="margin-bottom:8px"><strong style="font-size:0.82em">Targets:</strong> '
+                )
                 sections.append(" ".join(f'<span class="chip">{t}</span>' for t in targets))
                 sections.append("</div>")
             chains = a.get("evidence_chain", [])
             if chains:
-                sections.append('<div style="margin-bottom:8px"><strong style="font-size:0.82em">Evidence Chains:</strong>')
+                sections.append(
+                    '<div style="margin-bottom:8px"><strong style="font-size:0.82em">Evidence Chains:</strong>'
+                )
                 for ch in chains[:5]:
                     claim_text = str(ch.get("claim_text", ""))[:60]
                     metric = ch.get("metric_id", "")
@@ -2929,12 +3321,20 @@ Plotly.newPlot('radar-chart', [{{
                     conf = ch.get("confidence", 0)
                     sections.append('<div class="evidence-chain">')
                     if claim_text:
-                        sections.append(f'<span class="chain-node">{claim_text}</span><span class="chain-arrow">&#8594;</span>')
+                        sections.append(
+                            f'<span class="chain-node">{claim_text}</span><span class="chain-arrow">&#8594;</span>'
+                        )
                     if metric:
-                        sections.append(f'<span class="chain-node">{metric}</span><span class="chain-arrow">&#8594;</span>')
-                    sections.append(f'<span class="chain-node">{ev_type}</span><span class="chain-arrow">&#8594;</span>')
-                    sections.append(f'<span class="chain-node">{sdg_tgt}<br><span class="chain-confidence">{conf:.0%} conf.</span></span>')
-                    sections.append('</div>')
+                        sections.append(
+                            f'<span class="chain-node">{metric}</span><span class="chain-arrow">&#8594;</span>'
+                        )
+                    sections.append(
+                        f'<span class="chain-node">{ev_type}</span><span class="chain-arrow">&#8594;</span>'
+                    )
+                    sections.append(
+                        f'<span class="chain-node">{sdg_tgt}<br><span class="chain-confidence">{conf:.0%} conf.</span></span>'
+                    )
+                    sections.append("</div>")
                 sections.append("</div>")
             sdg_recs = a.get("recommendations", [])
             if sdg_recs:
@@ -2943,7 +3343,9 @@ Plotly.newPlot('radar-chart', [{{
                     sections.append(f'<div class="sdg-rec">{sr}</div>')
                 sections.append("</div>")
             if not targets and not chains and not sdg_recs:
-                sections.append(f'<span style="font-size:0.85em;color:var(--text-secondary)">Provenance: {a.get("provenance", "estimated")}. Report more metrics to build evidence chain.</span>')
+                sections.append(
+                    f'<span style="font-size:0.85em;color:var(--text-secondary)">Provenance: {a.get("provenance", "estimated")}. Report more metrics to build evidence chain.</span>'
+                )
             sections.append("</td></tr>")
 
         sections.append("</table>")
@@ -2951,8 +3353,8 @@ Plotly.newPlot('radar-chart', [{{
             sections.append(
                 f'<button type="button" class="sdg-toggle" id="sdg-toggle-btn" '
                 f'data-hidden="{hidden_count}">'
-                f'Show all {len(aligned)} goals ({hidden_count} with low alignment)'
-                f'</button>'
+                f"Show all {len(aligned)} goals ({hidden_count} with low alignment)"
+                f"</button>"
             )
         sections.append("</div></div>")
         sections.append("""<script>
@@ -2999,9 +3401,9 @@ document.querySelectorAll('.sdg-clickable').forEach(function(row) {
             y_max = max(40.0, min(110.0, peak * 1.3 + 5.0))
             sections.append(f"""<script>
 Plotly.newPlot('sdg-chart', [{{
-  type: 'bar', x: [{','.join(sdg_labels)}], y: [{','.join(sdg_scores)}],
-  marker: {{color: [{','.join(sdg_colors)}], line: {{width: 0}}, cornerradius: 4}},
-  text: [{','.join(sdg_scores)}], textposition: 'outside', textfont: {{size: 11, family: 'Inter, sans-serif'}}
+  type: 'bar', x: [{",".join(sdg_labels)}], y: [{",".join(sdg_scores)}],
+  marker: {{color: [{",".join(sdg_colors)}], line: {{width: 0}}, cornerradius: 4}},
+  text: [{",".join(sdg_scores)}], textposition: 'outside', textfont: {{size: 11, family: 'Inter, sans-serif'}}
 }}], {{
   yaxis: {{range: [0, {y_max:.1f}], title: 'Alignment Score', gridcolor: '#f0f0f0', titlefont: {{size: 12}}}},
   xaxis: {{tickangle: -30, tickfont: {{size: 10}}}},
@@ -3023,26 +3425,32 @@ Plotly.newPlot('sdg-chart', [{{
 <div class="chart-box">
 <h3 style="color:var(--success)">Opportunities</h3>""")
         for o in ia.get("opportunities", []):
-            sections.append(f'<div class="rec" style="border-left-color:var(--success);background:var(--success-light)">+ {o}</div>')
+            sections.append(
+                f'<div class="rec" style="border-left-color:var(--success);background:var(--success-light)">+ {o}</div>'
+            )
         sections.append("""</div>
 <div class="chart-box">
 <h3 style="color:var(--danger)">Risks</h3>""")
         for r in ia.get("risks", []):
-            sections.append(f'<div class="rec" style="border-left-color:var(--danger);background:var(--danger-light)">! {r}</div>')
+            sections.append(
+                f'<div class="rec" style="border-left-color:var(--danger);background:var(--danger-light)">! {r}</div>'
+            )
         sections.append("</div></div>")
 
     if "gap_analysis" in data:
         ga = data["gap_analysis"]
         pct = ga["coverage_percentage"]
-        pct_color = "var(--success)" if pct >= 60 else "var(--warning)" if pct >= 30 else "var(--danger)"
+        pct_color = (
+            "var(--success)" if pct >= 60 else "var(--warning)" if pct >= 30 else "var(--danger)"
+        )
         bar_cls = "green" if pct >= 60 else "orange" if pct >= 30 else "red"
         sections.append(f"""
 <h2 id="sec-gap">Gap Analysis</h2>
 <div class="coverage-hero">
-  <div class="pct" style="color:{pct_color}">{ga['coverage_percentage']}%</div>
+  <div class="pct" style="color:{pct_color}">{ga["coverage_percentage"]}%</div>
   <div class="detail">
     <div style="font-weight:600;font-size:1.1em">Core Metric Set Coverage</div>
-    <div style="color:var(--text-secondary);font-size:0.9em">{ga['metrics_reported']} of {ga['core_metric_set_size']} metrics reported | {ga['metrics_missing']} missing</div>
+    <div style="color:var(--text-secondary);font-size:0.9em">{ga["metrics_reported"]} of {ga["core_metric_set_size"]} metrics reported | {ga["metrics_missing"]} missing</div>
     <div class="bar-track"><div class="bar-fill {bar_cls}" style="width:{int(pct)}%"></div></div>
   </div>
 </div>
@@ -3079,17 +3487,19 @@ Plotly.newPlot('sdg-chart', [{{
 </div>""")
         sub = gw.get("sub_scores", {})
         if sub:
-            sections.append('<table><tr><th>Sub-Score</th><th>Value</th></tr>')
+            sections.append("<table><tr><th>Sub-Score</th><th>Value</th></tr>")
             for sname, sval in sub.items():
                 display = sname.replace("_", " ").title()
-                sections.append(f'<tr><td>{display}</td><td>{sval}/100</td></tr>')
-            sections.append('</table>')
+                sections.append(f"<tr><td>{display}</td><td>{sval}/100</td></tr>")
+            sections.append("</table>")
         if gw.get("flags"):
-            sections.append('<h3>Flags</h3>')
+            sections.append("<h3>Flags</h3>")
             for flag in gw["flags"]:
-                sections.append(f'<div class="rec" style="border-left-color:{gw_color}">{flag}</div>')
+                sections.append(
+                    f'<div class="rec" style="border-left-color:{gw_color}">{flag}</div>'
+                )
         if gw.get("recommendations"):
-            sections.append('<h3>Recommendations</h3>')
+            sections.append("<h3>Recommendations</h3>")
             for rec in gw["recommendations"]:
                 sections.append(f'<div class="rec">{rec}</div>')
 
@@ -3097,7 +3507,7 @@ Plotly.newPlot('sdg-chart', [{{
         bm = data["benchmark_comparison"]
         sections.append(f"""
 <h2 id="sec-benchmark">Sector Benchmark Comparison</h2>
-<p style="color:var(--text-secondary);font-size:0.9em;margin-bottom:12px">{bm['sector']} | {bm.get('sample_note', '')}</p>
+<p style="color:var(--text-secondary);font-size:0.9em;margin-bottom:12px">{bm["sector"]} | {bm.get("sample_note", "")}</p>
 <div class="chart-row">
 <div class="chart-box" id="benchmark-chart" role="img" aria-label="Chart comparing this company's dimension scores against sector benchmarks. The same values are listed in the adjacent table."></div>
 <div class="chart-box">
@@ -3105,32 +3515,38 @@ Plotly.newPlot('sdg-chart', [{{
 <tr><th>Dimension</th><th>Your Score</th><th>Benchmark</th><th>Delta</th></tr>
 """)
         ov = bm["overall"]
-        delta_class = "positive" if ov["delta"] > 0 else ("negative" if ov["delta"] < 0 else "neutral")
+        delta_class = (
+            "positive" if ov["delta"] > 0 else ("negative" if ov["delta"] < 0 else "neutral")
+        )
         delta_arrow = "+" if ov["delta"] > 0 else ""
         sections.append(f"""<tr style="font-weight:600;background:var(--primary-light)">
-<td>Overall</td><td>{ov['actual']:.1f}</td><td>{ov['benchmark']:.1f}</td>
-<td class="bm-delta {delta_class}">{delta_arrow}{ov['delta']:.1f}</td></tr>""")
+<td>Overall</td><td>{ov["actual"]:.1f}</td><td>{ov["benchmark"]:.1f}</td>
+<td class="bm-delta {delta_class}">{delta_arrow}{ov["delta"]:.1f}</td></tr>""")
 
         bm_dim_labels = []
         bm_actual_vals = []
         bm_benchmark_vals = []
         for dim, vals in bm["dimensions"].items():
-            delta_class = "positive" if vals["delta"] > 0 else ("negative" if vals["delta"] < 0 else "neutral")
+            delta_class = (
+                "positive"
+                if vals["delta"] > 0
+                else ("negative" if vals["delta"] < 0 else "neutral")
+            )
             delta_arrow = "+" if vals["delta"] > 0 else ""
-            display_name = dim.replace('_', ' ').title()
+            display_name = dim.replace("_", " ").title()
             bm_dim_labels.append(f'"{display_name}"')
             bm_actual_vals.append(str(vals["actual"]))
             bm_benchmark_vals.append(str(vals["benchmark"]))
             sections.append(f"""<tr>
-<td>{display_name}</td><td>{vals['actual']:.1f}</td><td>{vals['benchmark']:.1f}</td>
-<td class="bm-delta {delta_class}">{delta_arrow}{vals['delta']:.1f}</td></tr>""")
+<td>{display_name}</td><td>{vals["actual"]:.1f}</td><td>{vals["benchmark"]:.1f}</td>
+<td class="bm-delta {delta_class}">{delta_arrow}{vals["delta"]:.1f}</td></tr>""")
         sections.append("</table></div></div>")
 
         if bm_dim_labels:
             sections.append(f"""<script>
 Plotly.newPlot('benchmark-chart', [
-  {{type:'bar', name:'Your Score', x:[{','.join(bm_dim_labels)}], y:[{','.join(bm_actual_vals)}], marker:{{color:'#1976d2', cornerradius:3}}}},
-  {{type:'bar', name:'Benchmark', x:[{','.join(bm_dim_labels)}], y:[{','.join(bm_benchmark_vals)}], marker:{{color:'#b0bec5', cornerradius:3}}}}
+  {{type:'bar', name:'Your Score', x:[{",".join(bm_dim_labels)}], y:[{",".join(bm_actual_vals)}], marker:{{color:'#1976d2', cornerradius:3}}}},
+  {{type:'bar', name:'Benchmark', x:[{",".join(bm_dim_labels)}], y:[{",".join(bm_benchmark_vals)}], marker:{{color:'#b0bec5', cornerradius:3}}}}
 ], {{
   barmode:'group', yaxis:{{range:[0,5.5], title:'Score', gridcolor:'#f0f0f0'}},
   height:350, margin:{{l:50,r:20,t:20,b:50}}, legend:{{orientation:'h', y:1.08}},
@@ -3170,6 +3586,7 @@ def _to_pdf(html: str, output_path: str, context) -> ToolResult:
 
     try:
         import weasyprint  # type: ignore[import-untyped]
+
         # Emit a tagged, accessible PDF/UA-1 document with heading bookmarks when
         # the installed WeasyPrint supports it (>= 57); fall back gracefully.
         document = weasyprint.HTML(string=html)
@@ -3206,6 +3623,7 @@ def _load_comparison_data(assessment_id: str, current: dict) -> dict:
     """Load a previous assessment and compute deltas against the current report."""
     try:
         from openharness.impact.storage import AssessmentStore
+
         store = AssessmentStore()
         prev = store.get_assessment(assessment_id)
     except Exception:
@@ -3224,7 +3642,8 @@ def _load_comparison_data(assessment_id: str, current: dict) -> dict:
             cur_score = cur_fd.get(dim_name, {}).get("score", 0)
             prev_score = prev_fd.get(dim_name, {}).get("score", 0)
             comparison["dimensions"][dim_name] = {
-                "current": cur_score, "previous": prev_score,
+                "current": cur_score,
+                "previous": prev_score,
                 "delta": round(cur_score - prev_score, 2),
             }
         comparison["overall"] = {
@@ -3252,47 +3671,53 @@ def _comparison_section(data: dict) -> str:
 
     parts = [
         f'<h2>Assessment Comparison <span style="font-size:0.65em;color:var(--text-secondary);font-weight:400">'
-        f'vs. {comp.get("previous_id", "previous")}</span></h2>',
+        f"vs. {comp.get('previous_id', 'previous')}</span></h2>",
     ]
 
     if comp.get("overall"):
         ov = comp["overall"]
-        delta_cls = "delta-up" if ov["delta"] > 0 else "delta-down" if ov["delta"] < 0 else "delta-same"
+        delta_cls = (
+            "delta-up" if ov["delta"] > 0 else "delta-down" if ov["delta"] < 0 else "delta-same"
+        )
         parts.append(
             f'<div class="cards-row">'
             f'<div class="score-card"><div class="value">{ov["current"]:.1f}</div><div class="label">Current</div></div>'
             f'<div class="score-card"><div class="value" style="color:var(--text-secondary)">{ov["previous"]:.1f}</div><div class="label">Previous</div></div>'
-            f'<div class="score-card"><div class="value {delta_cls}">{"+" if ov["delta"]>0 else ""}{ov["delta"]:.1f}</div><div class="label">Change</div></div>'
-            f'</div>'
+            f'<div class="score-card"><div class="value {delta_cls}">{"+" if ov["delta"] > 0 else ""}{ov["delta"]:.1f}</div><div class="label">Change</div></div>'
+            f"</div>"
         )
 
     dims = comp.get("dimensions", {})
     if dims:
-        parts.append('<table class="comparison-table"><tr><th>Dimension</th><th>Previous</th><th>Current</th><th>Change</th></tr>')
+        parts.append(
+            '<table class="comparison-table"><tr><th>Dimension</th><th>Previous</th><th>Current</th><th>Change</th></tr>'
+        )
         for dim, vals in dims.items():
             display = dim.replace("_", " ").title()
             delta = vals["delta"]
             cls = "delta-up" if delta > 0 else "delta-down" if delta < 0 else "delta-same"
             arrow = "&#9650;" if delta > 0 else "&#9660;" if delta < 0 else "&#8212;"
             parts.append(
-                f'<tr><td><strong>{display}</strong></td>'
-                f'<td>{vals["previous"]:.1f}</td><td>{vals["current"]:.1f}</td>'
-                f'<td class="{cls}">{arrow} {"+" if delta>0 else ""}{delta:.1f}</td></tr>'
+                f"<tr><td><strong>{display}</strong></td>"
+                f"<td>{vals['previous']:.1f}</td><td>{vals['current']:.1f}</td>"
+                f'<td class="{cls}">{arrow} {"+" if delta > 0 else ""}{delta:.1f}</td></tr>'
             )
         parts.append("</table>")
 
     sdg_comp = comp.get("sdg", {})
     if sdg_comp:
-        parts.append('<h3>SDG Score Changes</h3>')
-        parts.append('<table class="comparison-table"><tr><th>SDG</th><th>Previous</th><th>Current</th><th>Change</th></tr>')
+        parts.append("<h3>SDG Score Changes</h3>")
+        parts.append(
+            '<table class="comparison-table"><tr><th>SDG</th><th>Previous</th><th>Current</th><th>Change</th></tr>'
+        )
         for goal, vals in sorted(sdg_comp.items()):
             delta = vals["delta"]
             cls = "delta-up" if delta > 0 else "delta-down" if delta < 0 else "delta-same"
             arrow = "&#9650;" if delta > 0 else "&#9660;" if delta < 0 else "&#8212;"
             parts.append(
-                f'<tr><td>SDG {goal}</td>'
-                f'<td>{vals["previous"]:.0f}</td><td>{vals["current"]:.0f}</td>'
-                f'<td class="{cls}">{arrow} {"+" if delta>0 else ""}{delta:.0f}</td></tr>'
+                f"<tr><td>SDG {goal}</td>"
+                f"<td>{vals['previous']:.0f}</td><td>{vals['current']:.0f}</td>"
+                f'<td class="{cls}">{arrow} {"+" if delta > 0 else ""}{delta:.0f}</td></tr>'
             )
         parts.append("</table>")
 
@@ -3306,7 +3731,8 @@ def _to_target_progress_text(data: dict) -> str:
         "=" * 60,
         f"TARGET PROGRESS REPORT: {company.get('name', 'Unknown')}",
         f"Generated: {data.get('generated_at', '')}",
-        "=" * 60, "",
+        "=" * 60,
+        "",
     ]
     tt = data.get("target_tracking", {})
     targets = tt.get("targets", [])
@@ -3343,7 +3769,9 @@ def _to_target_progress_text(data: dict) -> str:
         if pct > 0 and pct < 100:
             remaining = 100 - pct
             if remaining > 50:
-                lines.append(f"    Trajectory: At risk — {remaining:.0f}% remaining, consider intervention")
+                lines.append(
+                    f"    Trajectory: At risk — {remaining:.0f}% remaining, consider intervention"
+                )
             elif remaining > 20:
                 lines.append(f"    Trajectory: On track — {remaining:.0f}% remaining")
             else:
@@ -3352,7 +3780,9 @@ def _to_target_progress_text(data: dict) -> str:
 
     if data.get("five_dimensions"):
         fd = data["five_dimensions"]
-        lines.append(f"5D Score Context: {fd.get('overall_score', 0):.1f}/5 (Grade: {fd.get('overall_grade', 'N/A')})")
+        lines.append(
+            f"5D Score Context: {fd.get('overall_score', 0):.1f}/5 (Grade: {fd.get('overall_grade', 'N/A')})"
+        )
 
     return "\n".join(lines)
 
@@ -3374,32 +3804,47 @@ def _to_lp_ready_text(data: dict) -> str:
         f"Geography: {company.get('geography', 'N/A')}",
         f"Assessment Date: {data.get('generated_at', '')[:10]}",
         f"Standard: {data.get('catalog_version', 'IRIS+ 5.3c')}",
-        "", "─" * 70, "",
+        "",
+        "─" * 70,
+        "",
         "EXECUTIVE SUMMARY",
         "─" * 40,
     ]
 
     if fd:
-        lines.append(f"Overall Impact Score: {fd.get('overall_score', 0):.1f}/5.0 (Grade: {fd.get('overall_grade', 'N/A')})")
-        lines.append(f"Assessment Confidence: {fd.get('overall_provenance', 'estimated').replace('-', ' ').title()}")
+        lines.append(
+            f"Overall Impact Score: {fd.get('overall_score', 0):.1f}/5.0 (Grade: {fd.get('overall_grade', 'N/A')})"
+        )
+        lines.append(
+            f"Assessment Confidence: {fd.get('overall_provenance', 'estimated').replace('-', ' ').title()}"
+        )
 
     top_sdgs = sorted(sdg, key=lambda s: s.get("score", 0), reverse=True)[:3]
     if top_sdgs:
-        lines.append("Top SDG Alignments: " + ", ".join(
-            f"SDG {s['goal']} ({s.get('score', 0):.0f}%)" for s in top_sdgs if s.get("score", 0) > 0
-        ))
+        lines.append(
+            "Top SDG Alignments: "
+            + ", ".join(
+                f"SDG {s['goal']} ({s.get('score', 0):.0f}%)"
+                for s in top_sdgs
+                if s.get("score", 0) > 0
+            )
+        )
 
     if ga:
         lines.append(f"Core Metric Coverage: {ga.get('coverage_percentage', 0)}%")
 
     if isinstance(gw, dict) and gw.get("classification"):
-        lines.append(f"Greenwashing Risk: {gw.get('classification', 'N/A')} ({gw.get('overall_score', 0)}/100)")
+        lines.append(
+            f"Greenwashing Risk: {gw.get('classification', 'N/A')} ({gw.get('overall_score', 0)}/100)"
+        )
 
     lines.extend(["", "─" * 70, "", "IMPACT DIMENSIONS", "─" * 40])
     if fd:
         for dim_name in ("what", "who", "how_much", "contribution", "risk"):
             dim = fd.get(dim_name, {})
-            lines.append(f"  {dim.get('dimension', dim_name)}: {dim.get('score', 0)}/5 | {dim.get('notes', '')}")
+            lines.append(
+                f"  {dim.get('dimension', dim_name)}: {dim.get('score', 0)}/5 | {dim.get('notes', '')}"
+            )
 
     lines.extend(["", "KEY RISKS AND RECOMMENDATIONS", "─" * 40])
     if fd and fd.get("recommendations"):
@@ -3411,13 +3856,16 @@ def _to_lp_ready_text(data: dict) -> str:
         for r in ia["risks"][:3]:
             lines.append(f"  ⚠ {r}")
 
-    lines.extend([
-        "", "─" * 70,
-        "This assessment was generated by Impact Vision using IRIS+ metrics,",
-        "5 Dimensions of Impact scoring, and multi-framework ESG analysis.",
-        "All scores should be validated with additional evidence and due diligence.",
-        "─" * 70,
-    ])
+    lines.extend(
+        [
+            "",
+            "─" * 70,
+            "This assessment was generated by Impact Vision using IRIS+ metrics,",
+            "5 Dimensions of Impact scoring, and multi-framework ESG analysis.",
+            "All scores should be validated with additional evidence and due diligence.",
+            "─" * 70,
+        ]
+    )
     return "\n".join(lines)
 
 
@@ -3427,7 +3875,9 @@ def _to_xlsx(data: dict, output_path: str, context) -> ToolResult:
         from openpyxl import Workbook
         from openpyxl.styles import Font, PatternFill
     except ImportError:
-        return ToolResult(output="openpyxl required for XLSX. Install: pip install openpyxl", is_error=True)
+        return ToolResult(
+            output="openpyxl required for XLSX. Install: pip install openpyxl", is_error=True
+        )
 
     if not output_path:
         return ToolResult(output="output_path is required for xlsx format", is_error=True)
@@ -3459,7 +3909,15 @@ def _to_xlsx(data: dict, output_path: str, context) -> ToolResult:
             cell.fill = header_fill
         for dim_name in ["what", "who", "how_much", "contribution", "risk"]:
             dim = fd[dim_name]
-            ws.append([dim["dimension"], dim["score"], dim["metrics_reported"], dim["metrics_available"], dim["notes"]])
+            ws.append(
+                [
+                    dim["dimension"],
+                    dim["score"],
+                    dim["metrics_reported"],
+                    dim["metrics_available"],
+                    dim["notes"],
+                ]
+            )
         ws.append(["Overall", fd["overall_score"], "", "", fd["overall_grade"]])
         ws.append([])
 
@@ -3474,11 +3932,16 @@ def _to_xlsx(data: dict, output_path: str, context) -> ToolResult:
             cell.fill = header_fill
         for a in data["sdg_alignments"]:
             if a["score"] > 0:
-                ws2.append([
-                    f"SDG {a['goal']}", a.get("goal_name", ""), a["score"],
-                    a["confidence"], ", ".join(a.get("matched_metrics", [])[:5]),
-                    ", ".join(a.get("matched_targets", [])[:5]),
-                ])
+                ws2.append(
+                    [
+                        f"SDG {a['goal']}",
+                        a.get("goal_name", ""),
+                        a["score"],
+                        a["confidence"],
+                        ", ".join(a.get("matched_metrics", [])[:5]),
+                        ", ".join(a.get("matched_targets", [])[:5]),
+                    ]
+                )
 
     # Sheet 3: Gap Analysis
     if "gap_analysis" in data:

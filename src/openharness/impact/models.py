@@ -82,7 +82,9 @@ class ImpactTarget(BaseModel):
     """A structured impact target for tracking progress."""
 
     metric_id: str = Field(description="IRIS+ metric ID (e.g. OI4112)")
-    target_value: float | None = Field(default=None, description="Numeric target value (None for qualitative targets)")
+    target_value: float | None = Field(
+        default=None, description="Numeric target value (None for qualitative targets)"
+    )
     target_unit: str = Field(default="", description="Unit (e.g. 'tCO2e', 'count')")
     target_date: str = Field(default="", description="Target achievement date (e.g. '2027')")
     baseline_value: float | None = Field(default=None, description="Baseline value at start")
@@ -93,6 +95,7 @@ class ImpactTarget(BaseModel):
     @classmethod
     def validate_metric_id(cls, v: str) -> str:
         import re
+
         v = v.strip().upper()
         if v and not re.match(r"^(PI|OI|OD|FP|PD)\d{4}$", v):
             raise ValueError(f"Invalid IRIS+ metric ID format: {v}")
@@ -105,9 +108,15 @@ class MetricValue(BaseModel):
     metric_id: str = Field(description="IRIS+ metric ID (e.g. OI4112)")
     value: Any = Field(description="Reported value (numeric, string, or structured)")
     unit: str = Field(default="", description="Unit of measurement (e.g. 'tCO2e', 'count', 'USD')")
-    period: str = Field(default="", description="Reporting period (e.g. 'FY2025', 'Q1 2026', '2025-H1')")
-    timestamp: str = Field(default="", description="ISO date when value was reported (e.g. '2026-04-16')")
-    source: str = Field(default="", description="Source of data (e.g. 'pitch_deck', 'self_reported', 'audited')")
+    period: str = Field(
+        default="", description="Reporting period (e.g. 'FY2025', 'Q1 2026', '2025-H1')"
+    )
+    timestamp: str = Field(
+        default="", description="ISO date when value was reported (e.g. '2026-04-16')"
+    )
+    source: str = Field(
+        default="", description="Source of data (e.g. 'pitch_deck', 'self_reported', 'audited')"
+    )
     verified: bool = Field(default=False, description="Whether value has been third-party verified")
     verification_status: Literal[
         "self_reported", "management_verified", "third_party_verified", "audited"
@@ -127,10 +136,16 @@ class MetricRecord(BaseModel):
 
     metric_id: str = Field(description="IRIS+ metric ID, normalized uppercase")
     value: Any = Field(description="Reported value; must not be empty")
-    unit: str = Field(min_length=1, description="Unit or explicit value type, e.g. tCO2e, USD, count, qualitative")
+    unit: str = Field(
+        min_length=1, description="Unit or explicit value type, e.g. tCO2e, USD, count, qualitative"
+    )
     period: str = Field(min_length=1, description="Reporting period, e.g. FY2025, Q1 2026, current")
-    source: str = Field(min_length=1, description="Source reference, filename, URL, system name, or evidence ID")
-    owner: str = Field(min_length=1, description="Responsible person, role, investee contact, or system")
+    source: str = Field(
+        min_length=1, description="Source reference, filename, URL, system name, or evidence ID"
+    )
+    owner: str = Field(
+        min_length=1, description="Responsible person, role, investee contact, or system"
+    )
     quality_score: int = Field(ge=0, le=100, description="0-100 data-quality score")
     verification_status: Literal[
         "unverified",
@@ -148,7 +163,9 @@ class MetricRecord(BaseModel):
         "proxy_estimate",
         "audited_statement",
     ] = Field(default="manual_entry", description="How the record entered the system")
-    evidence_refs: list[str] = Field(default_factory=list, description="Evidence IDs, file paths, or URLs")
+    evidence_refs: list[str] = Field(
+        default_factory=list, description="Evidence IDs, file paths, or URLs"
+    )
     estimation_methodology: str = Field(
         default="",
         description=(
@@ -158,6 +175,11 @@ class MetricRecord(BaseModel):
         ),
     )
     notes: str = ""
+    boundary: str | None = Field(
+        default=None,
+        description="Organisational or operational boundary used for comparability",
+    )
+    methodology: str | None = Field(default=None, description="Measurement methodology")
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -242,19 +264,29 @@ class AuditTrailEntry(BaseModel):
 class BeneficiaryFeedback(BaseModel):
     """Structured beneficiary feedback data (e.g. 60 Decibels Lean Data)."""
 
-    satisfaction_score: float | None = Field(default=None, description="Overall satisfaction (1-5 scale)")
+    satisfaction_score: float | None = Field(
+        default=None, description="Overall satisfaction (1-5 scale)"
+    )
     nps: float | None = Field(default=None, description="Net Promoter Score (-100 to 100)")
     sample_size: int = Field(default=0, description="Number of beneficiaries surveyed")
     survey_date: str = Field(default="", description="Date of survey (e.g. '2026-Q1')")
-    methodology: str = Field(default="", description="Survey methodology (e.g. '60 Decibels Lean Data', 'in-person')")
+    methodology: str = Field(
+        default="", description="Survey methodology (e.g. '60 Decibels Lean Data', 'in-person')"
+    )
     quality_of_life_improvement: float | None = Field(
-        default=None, description="% reporting quality of life improvement",
+        default=None,
+        description="% reporting quality of life improvement",
     )
     would_recommend: float | None = Field(
-        default=None, description="% who would recommend the product/service",
+        default=None,
+        description="% who would recommend the product/service",
     )
-    themes: list[str] = Field(default_factory=list, description="Qualitative themes from open-ended responses")
-    challenges: list[str] = Field(default_factory=list, description="Reported challenges or negative feedback")
+    themes: list[str] = Field(
+        default_factory=list, description="Qualitative themes from open-ended responses"
+    )
+    challenges: list[str] = Field(
+        default_factory=list, description="Reported challenges or negative feedback"
+    )
     quotes: list[str] = Field(default_factory=list, description="Representative beneficiary quotes")
     segments: dict[str, Any] = Field(
         default_factory=dict,
@@ -290,7 +322,9 @@ class Company(BaseModel):
             "metric rules pick the right configuration."
         ),
     )
-    geography: str = Field(default="", description="Country or region (e.g. 'Kenya', 'Southeast Asia')")
+    geography: str = Field(
+        default="", description="Country or region (e.g. 'Kenya', 'Southeast Asia')"
+    )
     stage: Literal["", "pre-seed", "seed", "series-a", "series-b", "growth", "mature"] = Field(
         default="", description="Investment stage"
     )
@@ -309,7 +343,9 @@ class Company(BaseModel):
         default_factory=list,
         description="Structured impact targets for metric tracking",
     )
-    reporting_period: str = Field(default="", description="Reporting period (e.g. 'FY2025', 'Q1 2026')")
+    reporting_period: str = Field(
+        default="", description="Reporting period (e.g. 'FY2025', 'Q1 2026')"
+    )
     exclusion_flags: list[str] = Field(
         default_factory=list,
         description="Norms-based exclusion flags (e.g. 'fossil_fuel', 'controversial_weapons')",
@@ -413,8 +449,12 @@ class MonitoringAlert(BaseModel):
 
     company_name: str
     alert_type: Literal[
-        "metric_deviation", "target_at_risk", "evidence_expired",
-        "review_due", "score_change", "risk_increase",
+        "metric_deviation",
+        "target_at_risk",
+        "evidence_expired",
+        "review_due",
+        "score_change",
+        "risk_increase",
     ]
     severity: Literal["info", "warning", "critical"] = "warning"
     message: str = ""
@@ -533,8 +573,14 @@ class ImpactClaim(BaseModel):
         and whether the claim text contains quantitative data.
         """
         import re
+
         has_metric = len(self.mapped_metrics) > 0
-        has_quant = bool(re.search(r"\d+[%,.\d]*\s*(?:people|beneficiar|tCO2|MWh|USD|EUR|households|farmers|clients)?", self.text))
+        has_quant = bool(
+            re.search(
+                r"\d+[%,.\d]*\s*(?:people|beneficiar|tCO2|MWh|USD|EUR|households|farmers|clients)?",
+                self.text,
+            )
+        )
         self.confidence = self.calibrated_confidence(
             keyword_hits=len(self.mapped_metrics) + len(self.mapped_sdg_targets),
             has_metric=has_metric,
@@ -554,6 +600,7 @@ class ImpactClaim(BaseModel):
         Uses a logarithmic curve for keywords with bonuses for metrics and evidence.
         """
         import math
+
         base = 0.15 + 0.25 * math.log1p(keyword_hits)
         if has_metric:
             base += 0.15

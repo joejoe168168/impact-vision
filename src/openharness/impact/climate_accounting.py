@@ -141,7 +141,9 @@ def _factor_index(factors: list[EmissionFactor] | None = None) -> dict[str, Emis
     return {factor.factor_id: factor for factor in (factors or DEFAULT_EMISSION_FACTORS)}
 
 
-def _find_factor(activity: ActivityData, factors: list[EmissionFactor] | None = None) -> EmissionFactor:
+def _find_factor(
+    activity: ActivityData, factors: list[EmissionFactor] | None = None
+) -> EmissionFactor:
     by_id = _factor_index(factors)
     if activity.factor_id:
         factor = by_id.get(activity.factor_id)
@@ -150,7 +152,8 @@ def _find_factor(activity: ActivityData, factors: list[EmissionFactor] | None = 
         return factor
 
     candidates = [
-        factor for factor in (factors or DEFAULT_EMISSION_FACTORS)
+        factor
+        for factor in (factors or DEFAULT_EMISSION_FACTORS)
         if factor.scope == activity.scope
         and factor.activity_type == activity.activity_type
         and factor.unit == activity.unit
@@ -161,7 +164,9 @@ def _find_factor(activity: ActivityData, factors: list[EmissionFactor] | None = 
         raise ValueError(
             f"No emission factor for {activity.scope}/{activity.activity_type}/{activity.unit}"
         )
-    candidates.sort(key=lambda factor: (factor.region == activity.region, factor.source_year), reverse=True)
+    candidates.sort(
+        key=lambda factor: (factor.region == activity.region, factor.source_year), reverse=True
+    )
     return candidates[0]
 
 
@@ -214,14 +219,12 @@ def calculate_ghg_inventory(
     """Calculate a Scope 1/2 GHG inventory from activity rows."""
     results = [calculate_activity_emissions(activity, factors=factors) for activity in activities]
     scope1 = round(sum(r.tco2e for r in results if r.scope == "scope1"), 4)
-    scope2_location = round(sum(
-        r.tco2e for r in results
-        if r.scope == "scope2" and r.method == "location_based"
-    ), 4)
-    scope2_market = round(sum(
-        r.tco2e for r in results
-        if r.scope == "scope2" and r.method == "market_based"
-    ), 4)
+    scope2_location = round(
+        sum(r.tco2e for r in results if r.scope == "scope2" and r.method == "location_based"), 4
+    )
+    scope2_market = round(
+        sum(r.tco2e for r in results if r.scope == "scope2" and r.method == "market_based"), 4
+    )
     total_tco2e = sum(r.tco2e for r in results)
     weighted_dqs = 0.0
     if total_tco2e > 0:
@@ -243,6 +246,123 @@ def calculate_ghg_inventory(
     )
 
 
+def scope1_mass_balance(inputs: list[dict], outputs: list[dict], gwp: str = "AR6") -> dict:
+    from openharness.impact.emission_factors import AR6_GWP, AR6_GWP_PROVENANCE
+
+    if gwp != "AR6":
+        raise ValueError("Only the version-pinned AR6 GWP set is supported")
+
+    def carbon(rows):
+        return sum(float(row.get("mass", 0)) * float(row.get("carbon_content", 0)) for row in rows)
+
+    net_carbon = carbon(inputs) - carbon(outputs)
+    gas = str(inputs[0].get("gas", "CO2")).upper() if inputs else "CO2"
+    emissions = net_carbon * 44 / 12 * AR6_GWP.get(gas, 1)
+    return {
+        "emissions_tco2e": round(emissions, 6),
+        "net_carbon_mass": net_carbon,
+        "formula": "(sum(M_in*CC_in)-sum(M_out*CC_out))*44/12*GWP",
+        "streams": {"inputs": inputs, "outputs": outputs},
+        "factors_used": [AR6_GWP_PROVENANCE],
+        "sources": [AR6_GWP_PROVENANCE["source"]],
+    }
+
+
+def scope3_estimate(categories: dict[int, dict]) -> dict:
+    invalid = sorted(set(categories) - set(range(1, 16)))
+    if invalid:
+        raise ValueError(f"Scope 3 categories must be 1..15: {invalid}")
+    rows = []
+    for category in range(1, 16):
+        item = categories.get(category, {})
+        value = float(item.get("activity", 0)) * float(item.get("factor", 0))
+        rows.append(
+            {
+                "category": category,
+                "tco2e": round(value, 6),
+                "method": item.get("method", "activity_factor"),
+                "reported": category in categories,
+            }
+        )
+    return {
+        "categories": rows,
+        "total_tco2e": round(sum(row["tco2e"] for row in rows), 6),
+        "formula": "activity * emission factor by GHG Protocol Scope 3 category",
+        "category_count": 15,
+        "factors_used": [item.get("factor_id", "caller-supplied") for item in categories.values()],
+        "sources": ["GHG Protocol Scope 3 Standard"],
+    }
+
+
+def energy_to_tce(energy_lines: list[dict]) -> dict:
+    from openharness.impact.emission_factors import GBT_2589_NCV_KJ_PER_KG, GBT_2589_PROVENANCE
+
+    rows = []
+    total = clean = 0.0
+    for item in energy_lines:
+        fuel = item["fuel"]
+        ncv = float(item.get("ncv_kj_per_kg", GBT_2589_NCV_KJ_PER_KG[fuel]))
+        tce = float(item.get("quantity_kg", item.get("quantity", 0))) * ncv / 29307.6 / 1000
+        total += tce
+        clean += tce if item.get("clean_energy", False) else 0
+        rows.append({"fuel": fuel, "tce": round(tce, 6), "ncv": ncv})
+    denominator = float(
+        next(
+            (
+                item.get("revenue", item.get("output", 0))
+                for item in energy_lines
+                if item.get("revenue") or item.get("output")
+            ),
+            0,
+        )
+    )
+    return {
+        "lines": rows,
+        "total_tce": round(total, 6),
+        "clean_energy_share_pct": round(100 * clean / total, 2) if total else 0,
+        "intensity": round(total / denominator, 6) if denominator else None,
+        "formula": "quantity_kg * NCV / 29307.6 / 1000",
+        "factors_used": [GBT_2589_PROVENANCE],
+        "sources": [GBT_2589_PROVENANCE["source"]],
+    }
+
+
+def water_balance(withdrawals: list[dict], discharge: float) -> dict:
+    total = sum(float(item.get("volume", 0)) for item in withdrawals)
+    consumption = total - float(discharge)
+    if consumption < 0:
+        raise ValueError("discharge cannot exceed withdrawals")
+    non_conventional_types = {"reclaimed", "rain", "desalinated", "mine"}
+    non_conventional = sum(
+        float(item.get("volume", 0))
+        for item in withdrawals
+        if item.get("source_type") in non_conventional_types
+    )
+    reused = sum(float(item.get("volume", 0)) for item in withdrawals if item.get("reused"))
+    denominator = float(
+        next(
+            (
+                item.get("revenue", item.get("output", 0))
+                for item in withdrawals
+                if item.get("revenue") or item.get("output")
+            ),
+            0,
+        )
+    )
+    return {
+        "withdrawal": total,
+        "discharge": float(discharge),
+        "consumption": consumption,
+        "conventional": total - non_conventional,
+        "non_conventional": non_conventional,
+        "reuse_rate_pct": round(100 * reused / total, 2) if total else 0,
+        "intensity": round(total / denominator, 6) if denominator else None,
+        "formula": "consumption = sum(withdrawals) - discharge",
+        "factors_used": [],
+        "sources": ["GRI 303 water balance"],
+    }
+
+
 __all__ = [
     "ActivityData",
     "DEFAULT_EMISSION_FACTORS",
@@ -251,4 +371,8 @@ __all__ = [
     "GHGInventory",
     "calculate_activity_emissions",
     "calculate_ghg_inventory",
+    "scope1_mass_balance",
+    "scope3_estimate",
+    "energy_to_tce",
+    "water_balance",
 ]

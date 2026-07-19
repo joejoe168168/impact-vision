@@ -100,8 +100,6 @@ Install the package:
 pip install -e ".[dev]"
 ```
 
-After this, you'll have two commands available: `impact-vision` and `iv` (shorthand).
-
 > **`'impact-vision' is not recognized`?** Run the auto-fix script:
 >
 > ```bash
@@ -275,24 +273,14 @@ impact-vision catalog stats   # Verify metric count
 streamlit run src/openharness/dashboard/app.py
 ```
 
-Opens a web dashboard at http://localhost:8501 with 5 tabs: Assessment, IRIS+ Catalog, DD Checklist, Framework Scan, and Portfolio.
-
-`iv` is a shorthand for `impact-vision` — see the full
-[CLI Reference](#cli-reference) below for every subcommand, including
-`iv serve-mcp` (MCP server) and `iv serve-web` (Web Console + REST API).
+Opens the six-tab dashboard at http://localhost:8501. `iv` is shorthand for
+`impact-vision`; see the [CLI Reference](#cli-reference) for all subcommands.
 
 ## Usage
 
-Impact Vision ships **44 impact agent tools** covering the full investment lifecycle
-— pre-screen, due diligence, IC memo, portfolio monitoring, LP reporting,
-assurance, and post-exit review. Below are common prompts you can paste
-into the interactive agent (or the Web Console at
-`http://127.0.0.1:8787`). The agent will pick the right tools for you —
-and when you're unsure where to start, the `impact_advisor` router tool
-maps a plain-English request to ranked tool recommendations and multi-step
-playbooks (deal screening, LP reporting, regulatory compliance,
-verification, portfolio review, supply-chain HRDD, carbon & climate, data
-collection, theory of change).
+Impact Vision ships **51 impact agent tools** covering screening, diligence,
+monitoring, reporting, assurance, and exit. Paste the examples below into the
+agent or Web Console; `impact_advisor` routes unfamiliar requests.
 
 ### Analyzing a Pitch Deck
 
@@ -646,7 +634,7 @@ impact-vision/
 │   │   ├── mcp_server.py              # MCP server (FastMCP)
 │   │   └── sdk.py                     # High-level ImpactVision SDK facade
 │   │
-│   ├── tools/impact/                  # 44 LLM-callable impact agent tools (see "Tools" below)
+│   ├── tools/impact/                  # 51 LLM-callable impact agent tools (see "Tools" below)
 │   ├── api_gateway/router.py          # FastAPI REST API
 │   ├── web/                           # Single-file Web Console + SSE streaming
 │   ├── dashboard/app.py               # Streamlit 5-tab dashboard
@@ -796,7 +784,7 @@ cross-references to IRIS+ metric IDs via the shared
 | | 3-pillar assurance bundle | HMAC-signed evidence graph + audit trail + workspace (v4) |
 | | AI governance (EU AI Act) | Model card + data lineage + human-oversight log + risk classification & obligations |
 
-### Agent Tools (44)
+### Agent Tools (51)
 
 All tools below are exposed through the default OpenHarness tool registry
 and `openharness.tools.impact`, so the interactive agent, Web Console,
@@ -906,26 +894,33 @@ REST API, and MCP server see the same surface.
 | `ai_governance` | AI governance artifact (EU AI Act-aware): model card, data lineage, human-oversight log from the copilot review queue, risk classification + obligations |
 | `investee_portal` | Generate a self-contained offline HTML data-collection portal (guided questionnaire, SFDR PAI plain language, validation, "why we ask", JSON export) |
 
+**Comparable, assured & connected — v6 (7)**
+
+| Tool | Description |
+|------|-------------|
+| `contribution_tracker` | Pre-register and monitor contribution claims, evidence, staleness, and attribution inflation |
+| `carbon_credit_integrity` | ICVCM/VCMI carbon-credit and biodiversity-credit integrity screens |
+| `impact_linked_finance` | KPI credibility, payment-by-results verification, and carry/SAFI simulations |
+| `regulatory_radar` | Review-gated official-source change detection and portfolio applicability |
+| `dmrv_evidence` | Hash, anchor, summarise, and verify digital MRV evidence |
+| `survey_delivery` | Consent-gated WhatsApp, SMS, voice, and web survey delivery |
+| `ddq_responder` | ILPA DDQ 2.0 / PRI 2026 answer drafting from approved evidence only |
+
 ## Streamlit Dashboard
 
-For a visual alternative to the CLI agent:
+For a curated visual workflow, run:
 
 ```bash
 streamlit run src/openharness/dashboard/app.py
 ```
 
-The dashboard has 6 tabs:
-1. **Company Assessment**: Input company data, see 5-Dimension radar chart, SDG bar chart, and gap analysis
-2. **IRIS+ Catalog**: Browse, search, and filter the 787-metric catalog
-3. **DD Checklist**: Browse questions, paste text to check coverage
-4. **Framework Scan**: Run TCFD, SFDR PAI, EDCI, and SASB assessments
-5. **ESG Toolbox**: Search the 33 ESG modules, assess readiness, see AI input-minimization plans, route outputs to existing impact tools, and preview UX output components
-6. **Portfolio**: Upload CSV for batch analysis with aggregated charts
+The six tabs cover company assessment, IRIS+, DD, framework scans, the ESG
+toolbox, and portfolio analysis.
 
 ## Web Console (power-user UI)
 
 For a browser-native surface to every tool — useful when you want the
-full 44-tool set at your fingertips rather than Streamlit's curated
+full 51-tool set at your fingertips rather than Streamlit's curated
 tabs — run the **web console**:
 
 ```bash

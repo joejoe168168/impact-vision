@@ -61,13 +61,17 @@ class TwoXInput(BaseModel):
     portfolio_2x_aligned_pct: float | None = Field(default=None, ge=0, le=100)
     # Minimum requirements (mandatory in 2024 criteria)
     has_gender_governance_accountability: bool = Field(
-        default=False, description="Board/management accountability for gender commitments",
+        default=False,
+        description="Board/management accountability for gender commitments",
     )
     addresses_gbvh: bool = Field(
-        default=False, description="Policy/process to prevent gender-based violence & harassment",
+        default=False,
+        description="Policy/process to prevent gender-based violence & harassment",
     )
     # Optional sector override for employment threshold
     employment_threshold_override: float | None = Field(default=None, ge=0, le=100)
+    living_wage_geography: str = ""
+    wages: list[dict] = Field(default_factory=list)
 
 
 class TwoXDimensionResult(BaseModel):
@@ -89,6 +93,7 @@ class TwoXResult(BaseModel):
     recommendations: list[str] = Field(default_factory=list)
     summary: str = ""
     limitations: list[str] = Field(default_factory=list)
+    living_wage_gap: dict | None = None
 
 
 def assess_2x_criteria(input: TwoXInput) -> TwoXResult:
@@ -97,16 +102,24 @@ def assess_2x_criteria(input: TwoXInput) -> TwoXResult:
 
     # 1. Entrepreneurship
     own = input.women_ownership_pct
-    ent_met = bool(input.founded_by_woman) or (own is not None and own >= DEFAULT_OWNERSHIP_THRESHOLD)
-    dims.append(TwoXDimensionResult(
-        dimension="Entrepreneurship", met=ent_met,
-        threshold=DEFAULT_OWNERSHIP_THRESHOLD, value=own,
-        rationale=(
-            "Woman-founded" if input.founded_by_woman
-            else f"Women ownership {own}% vs ≥{DEFAULT_OWNERSHIP_THRESHOLD}%"
-            if own is not None else "No ownership data"
-        ),
-    ))
+    ent_met = bool(input.founded_by_woman) or (
+        own is not None and own >= DEFAULT_OWNERSHIP_THRESHOLD
+    )
+    dims.append(
+        TwoXDimensionResult(
+            dimension="Entrepreneurship",
+            met=ent_met,
+            threshold=DEFAULT_OWNERSHIP_THRESHOLD,
+            value=own,
+            rationale=(
+                "Woman-founded"
+                if input.founded_by_woman
+                else f"Women ownership {own}% vs ≥{DEFAULT_OWNERSHIP_THRESHOLD}%"
+                if own is not None
+                else "No ownership data"
+            ),
+        )
+    )
 
     # 2. Leadership
     lead_val = max(
@@ -114,65 +127,94 @@ def assess_2x_criteria(input: TwoXInput) -> TwoXResult:
         default=None,
     )
     lead_met = lead_val is not None and lead_val >= DEFAULT_LEADERSHIP_THRESHOLD
-    dims.append(TwoXDimensionResult(
-        dimension="Leadership", met=lead_met,
-        threshold=DEFAULT_LEADERSHIP_THRESHOLD, value=lead_val,
-        rationale=(
-            f"Women in senior mgmt/board {lead_val}% vs ≥{DEFAULT_LEADERSHIP_THRESHOLD}%"
-            if lead_val is not None else "No leadership data"
-        ),
-    ))
+    dims.append(
+        TwoXDimensionResult(
+            dimension="Leadership",
+            met=lead_met,
+            threshold=DEFAULT_LEADERSHIP_THRESHOLD,
+            value=lead_val,
+            rationale=(
+                f"Women in senior mgmt/board {lead_val}% vs ≥{DEFAULT_LEADERSHIP_THRESHOLD}%"
+                if lead_val is not None
+                else "No leadership data"
+            ),
+        )
+    )
 
     # 3. Employment
     emp_threshold = input.employment_threshold_override or DEFAULT_EMPLOYMENT_THRESHOLD
     wf = input.women_workforce_pct
-    emp_met = (
-        wf is not None and wf >= emp_threshold and input.has_quality_employment_indicator
+    emp_met = wf is not None and wf >= emp_threshold and input.has_quality_employment_indicator
+    dims.append(
+        TwoXDimensionResult(
+            dimension="Employment",
+            met=emp_met,
+            threshold=emp_threshold,
+            value=wf,
+            rationale=(
+                f"Women workforce {wf}% vs ≥{emp_threshold}% "
+                + (
+                    "+ quality indicator"
+                    if input.has_quality_employment_indicator
+                    else "(quality indicator MISSING)"
+                )
+                if wf is not None
+                else "No workforce data"
+            ),
+        )
     )
-    dims.append(TwoXDimensionResult(
-        dimension="Employment", met=emp_met,
-        threshold=emp_threshold, value=wf,
-        rationale=(
-            f"Women workforce {wf}% vs ≥{emp_threshold}% "
-            + ("+ quality indicator" if input.has_quality_employment_indicator else "(quality indicator MISSING)")
-            if wf is not None else "No workforce data"
-        ),
-    ))
 
     # 4. Supply chain
     sc = input.women_owned_supplier_pct
-    sc_met = bool(input.supports_women_in_supply_chain) or (sc is not None and sc >= DEFAULT_SUPPLY_CHAIN_THRESHOLD)
-    dims.append(TwoXDimensionResult(
-        dimension="Supply Chain", met=sc_met,
-        threshold=DEFAULT_SUPPLY_CHAIN_THRESHOLD, value=sc,
-        rationale=(
-            "Supports women in supply chain" if input.supports_women_in_supply_chain
-            else f"Women-owned supplier spend {sc}% vs ≥{DEFAULT_SUPPLY_CHAIN_THRESHOLD}%"
-            if sc is not None else "No supply-chain data"
-        ),
-    ))
+    sc_met = bool(input.supports_women_in_supply_chain) or (
+        sc is not None and sc >= DEFAULT_SUPPLY_CHAIN_THRESHOLD
+    )
+    dims.append(
+        TwoXDimensionResult(
+            dimension="Supply Chain",
+            met=sc_met,
+            threshold=DEFAULT_SUPPLY_CHAIN_THRESHOLD,
+            value=sc,
+            rationale=(
+                "Supports women in supply chain"
+                if input.supports_women_in_supply_chain
+                else f"Women-owned supplier spend {sc}% vs ≥{DEFAULT_SUPPLY_CHAIN_THRESHOLD}%"
+                if sc is not None
+                else "No supply-chain data"
+            ),
+        )
+    )
 
     # 5. Products & services
-    dims.append(TwoXDimensionResult(
-        dimension="Products & Services", met=bool(input.product_benefits_women),
-        rationale=(
-            "Product/service disproportionately benefits women"
-            if input.product_benefits_women else "Not indicated"
-        ),
-    ))
+    dims.append(
+        TwoXDimensionResult(
+            dimension="Products & Services",
+            met=bool(input.product_benefits_women),
+            rationale=(
+                "Product/service disproportionately benefits women"
+                if input.product_benefits_women
+                else "Not indicated"
+            ),
+        )
+    )
 
     # 6. Portfolio (FIs only)
     if input.is_financial_intermediary:
         pf = input.portfolio_2x_aligned_pct
         pf_met = pf is not None and pf >= DEFAULT_PORTFOLIO_THRESHOLD
-        dims.append(TwoXDimensionResult(
-            dimension="Portfolio", met=pf_met,
-            threshold=DEFAULT_PORTFOLIO_THRESHOLD, value=pf,
-            rationale=(
-                f"2X-aligned portfolio {pf}% vs ≥{DEFAULT_PORTFOLIO_THRESHOLD}%"
-                if pf is not None else "No portfolio data"
-            ),
-        ))
+        dims.append(
+            TwoXDimensionResult(
+                dimension="Portfolio",
+                met=pf_met,
+                threshold=DEFAULT_PORTFOLIO_THRESHOLD,
+                value=pf,
+                rationale=(
+                    f"2X-aligned portfolio {pf}% vs ≥{DEFAULT_PORTFOLIO_THRESHOLD}%"
+                    if pf is not None
+                    else "No portfolio data"
+                ),
+            )
+        )
 
     dimensions_met = sum(1 for d in dims if d.met)
 
@@ -188,13 +230,21 @@ def assess_2x_criteria(input: TwoXInput) -> TwoXResult:
 
     recs: list[str] = []
     if dimensions_met == 0:
-        recs.append("No 2X dimension threshold met — collect women ownership/leadership/workforce data.")
+        recs.append(
+            "No 2X dimension threshold met — collect women ownership/leadership/workforce data."
+        )
     if not min_met:
-        recs.append("Address the 2X minimum requirements (governance accountability + GBVH prevention) — these are mandatory to qualify.")
+        recs.append(
+            "Address the 2X minimum requirements (governance accountability + GBVH prevention) — these are mandatory to qualify."
+        )
     if dimensions_met >= 1 and not qualifies:
-        recs.append("Dimension threshold met but minimum requirements unmet — fix those to qualify as 2X.")
+        recs.append(
+            "Dimension threshold met but minimum requirements unmet — fix those to qualify as 2X."
+        )
     if not recs:
-        recs.append("2X-qualified — document the evidence and consider committing to a 2X improvement target.")
+        recs.append(
+            "2X-qualified — document the evidence and consider committing to a 2X improvement target."
+        )
 
     summary = (
         f"{'2X-QUALIFIED' if qualifies else 'NOT 2X-qualified'}: "
@@ -202,6 +252,11 @@ def assess_2x_criteria(input: TwoXInput) -> TwoXResult:
         f"minimum requirements {'met' if min_met else 'NOT met'}."
     )
 
+    living_wage = None
+    if input.wages:
+        from openharness.impact.living_wage import living_wage_gap
+
+        living_wage = living_wage_gap(input.living_wage_geography, input.wages)
     return TwoXResult(
         qualifies_2x=qualifies,
         dimensions_met=dimensions_met,
@@ -210,6 +265,7 @@ def assess_2x_criteria(input: TwoXInput) -> TwoXResult:
         minimum_requirement_gaps=min_gaps,
         recommendations=recs,
         summary=summary,
+        living_wage_gap=living_wage,
         limitations=[
             "Employment thresholds are sector-specific in the official 2X Criteria; "
             "this screen uses a configurable default (30%).",
@@ -222,14 +278,43 @@ def assess_2x_criteria(input: TwoXInput) -> TwoXResult:
 # NOTE: hints must be self-evidently gendered — a bare "founded by" would match
 # "founded by two men" and mis-qualify the Entrepreneurship dimension.
 _FOUNDED_BY_WOMAN_HINTS = (
-    "founded by a woman", "founded by women", "co-founded by a woman",
-    "co-founded by women", "woman founder", "female founder", "female founders",
-    "woman-founded", "women-founded", "women-led", "woman-led", "female-led",
-    "female co-founder", "woman co-founder",
+    "founded by a woman",
+    "founded by women",
+    "co-founded by a woman",
+    "co-founded by women",
+    "woman founder",
+    "female founder",
+    "female founders",
+    "woman-founded",
+    "women-founded",
+    "women-led",
+    "woman-led",
+    "female-led",
+    "female co-founder",
+    "woman co-founder",
 )
-_PRODUCT_BENEFITS_HINTS = ("benefits women", "for women", "serves women", "female customers", "women beneficiaries", "girls")
-_GBVH_HINTS = ("gbvh", "gender-based violence", "harassment policy", "anti-harassment", "safeguarding")
-_GOVERNANCE_HINTS = ("gender policy", "gender strategy", "diversity policy", "gender accountability", "deib")
+_PRODUCT_BENEFITS_HINTS = (
+    "benefits women",
+    "for women",
+    "serves women",
+    "female customers",
+    "women beneficiaries",
+    "girls",
+)
+_GBVH_HINTS = (
+    "gbvh",
+    "gender-based violence",
+    "harassment policy",
+    "anti-harassment",
+    "safeguarding",
+)
+_GOVERNANCE_HINTS = (
+    "gender policy",
+    "gender strategy",
+    "diversity policy",
+    "gender accountability",
+    "deib",
+)
 
 
 def screen_2x_from_text(
@@ -267,16 +352,25 @@ def screen_2x_from_text(
         women_senior_management_pct=num("women_senior_management_pct"),
         women_board_pct=num("women_board_pct"),
         women_workforce_pct=num("women_workforce_pct"),
-        has_quality_employment_indicator=("training" in text or "parental leave" in text or "equal pay" in text),
+        has_quality_employment_indicator=(
+            "training" in text or "parental leave" in text or "equal pay" in text
+        ),
         women_owned_supplier_pct=num("women_owned_supplier_pct"),
-        supports_women_in_supply_chain=("women-owned supplier" in text or "women suppliers" in text),
+        supports_women_in_supply_chain=(
+            "women-owned supplier" in text or "women suppliers" in text
+        ),
         product_benefits_women=any(h in text for h in _PRODUCT_BENEFITS_HINTS),
         # Word-boundary matching: a bare substring "fund" would match "funding"
         # / "refund" and misclassify operating companies as intermediaries.
         is_financial_intermediary=(
-            word("fund") or word("funds") or word("lender") or word("microfinance")
-            or word("loan book") or "financial institution" in text
-            or "loan portfolio" in text or "investment portfolio" in text
+            word("fund")
+            or word("funds")
+            or word("lender")
+            or word("microfinance")
+            or word("loan book")
+            or "financial institution" in text
+            or "loan portfolio" in text
+            or "investment portfolio" in text
         ),
         portfolio_2x_aligned_pct=num("portfolio_2x_aligned_pct"),
         has_gender_governance_accountability=any(h in text for h in _GOVERNANCE_HINTS),

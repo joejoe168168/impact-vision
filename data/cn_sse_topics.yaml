@@ -1,0 +1,23 @@
+topics:
+  - {topic_id: climate, name_zh: 应对气候变化, name_en: Climate change, dimension: E, articles: [21, 22, 23, 24, 25, 26, 27, 28], mandatory: true, preparation_guide: 2}
+  - {topic_id: pollution, name_zh: 污染防治, name_en: Pollution prevention, dimension: E, articles: [29], mandatory: true, preparation_guide: 2}
+  - {topic_id: water, name_zh: 水资源, name_en: Water resources, dimension: E, articles: [30], mandatory: true, preparation_guide: 2}
+  - {topic_id: waste, name_zh: 废弃物, name_en: Waste and circularity, dimension: E, articles: [31], mandatory: true, preparation_guide: 2}
+  - {topic_id: ecosystems, name_zh: 生态系统, name_en: Ecosystems and biodiversity, dimension: E, articles: [32], mandatory: true, preparation_guide: null}
+  - {topic_id: environmental_compliance, name_zh: 环境合规, name_en: Environmental compliance, dimension: E, articles: [33], mandatory: true, preparation_guide: null}
+  - {topic_id: rural_revitalisation, name_zh: 乡村振兴, name_en: Rural revitalisation, dimension: S, articles: [34], mandatory: false, preparation_guide: null}
+  - {topic_id: social_contribution, name_zh: 社会贡献, name_en: Social contribution, dimension: S, articles: [35], mandatory: false, preparation_guide: null}
+  - {topic_id: innovation, name_zh: 创新驱动, name_en: Innovation-driven development, dimension: S, articles: [36], mandatory: true, preparation_guide: null}
+  - {topic_id: ethics, name_zh: 科技伦理, name_en: Science and technology ethics, dimension: S, articles: [37], mandatory: true, preparation_guide: null}
+  - {topic_id: supply_chain, name_zh: 供应链安全, name_en: Supply-chain security, dimension: S, articles: [38], mandatory: true, preparation_guide: null}
+  - {topic_id: smes, name_zh: 中小企业, name_en: SME development, dimension: S, articles: [39], mandatory: false, preparation_guide: null}
+  - {topic_id: employees, name_zh: 职工权益, name_en: Employee rights, dimension: S, articles: [40, 41], mandatory: true, preparation_guide: null}
+  - {topic_id: consumers, name_zh: 消费者权益, name_en: Consumer rights, dimension: S, articles: [42], mandatory: true, preparation_guide: null}
+  - {topic_id: data_security, name_zh: 数据安全, name_en: Data security and privacy, dimension: S, articles: [43], mandatory: true, preparation_guide: null}
+  - {topic_id: community, name_zh: 社区关系, name_en: Community relations, dimension: S, articles: [44], mandatory: false, preparation_guide: null}
+  - {topic_id: stakeholders, name_zh: 利益相关方, name_en: Stakeholder engagement, dimension: G, articles: [45], mandatory: true, preparation_guide: 1}
+  - {topic_id: anti_corruption, name_zh: 反商业贿赂, name_en: Anti-corruption, dimension: G, articles: [46], mandatory: true, preparation_guide: 1}
+  - {topic_id: competition, name_zh: 反不正当竞争, name_en: Fair competition, dimension: G, articles: [47], mandatory: true, preparation_guide: 1}
+  - {topic_id: governance, name_zh: 公司治理, name_en: Corporate governance, dimension: G, articles: [48], mandatory: true, preparation_guide: 1}
+  - {topic_id: risk_management, name_zh: 风险管理, name_en: Sustainability risk management, dimension: G, articles: [49], mandatory: true, preparation_guide: 1}
+source: SSE/SZSE sustainability reporting guidelines; own summaries

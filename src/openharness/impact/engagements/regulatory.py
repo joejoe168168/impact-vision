@@ -20,9 +20,11 @@ from __future__ import annotations
 
 import secrets
 from datetime import date, timedelta
+from pathlib import Path
 from typing import Iterable, Literal
 
 from pydantic import BaseModel, Field, computed_field
+import yaml
 
 
 Jurisdiction = Literal[
@@ -34,10 +36,16 @@ Jurisdiction = Literal[
     "Canada",
     "Japan",
     "Australia",
+    "CN",
 ]
 
 FundLabelEU = Literal["article_6", "article_8", "article_9"]
-FundLabelUK = Literal["sustainability_focus", "sustainability_improvers", "sustainability_impact", "sustainability_mixed_goals"]
+FundLabelUK = Literal[
+    "sustainability_focus",
+    "sustainability_improvers",
+    "sustainability_impact",
+    "sustainability_mixed_goals",
+]
 
 DeadlineStatus = Literal["upcoming", "due_soon", "overdue", "met"]
 
@@ -330,6 +338,26 @@ _AU = RegulatoryJurisdictionProfile(
     ],
 )
 
+_CN = RegulatoryJurisdictionProfile(
+    jurisdiction="CN",
+    frameworks=[
+        "SSE Guideline No. 14",
+        "SZSE Sustainability Reporting Guidelines",
+        "Preparation Guides No. 1-3",
+    ],
+    obligations=[
+        RegulatoryObligation(
+            obligation_id="cn_sustainability_report",
+            framework="SSE/SZSE",
+            title="Annual sustainability report",
+            summary="Mandatory issuers publish the prior-FY report by 30 April; Article 7 permits referenced disclosure with a clear index.",
+            recurrence="annual",
+            owner_hint="board secretary / ESG lead",
+        )
+    ],
+    notes="Guideline No. 14 effective 2024-05-01; preparation guides revised January 2026.",
+)
+
 
 JURISDICTION_PROFILES: dict[Jurisdiction, RegulatoryJurisdictionProfile] = {
     "EU": _EU,
@@ -340,7 +368,37 @@ JURISDICTION_PROFILES: dict[Jurisdiction, RegulatoryJurisdictionProfile] = {
     "Canada": _CA,
     "Japan": _JP,
     "Australia": _AU,
+    "CN": _CN,
 }
+
+
+def load_cn_topics() -> list[dict]:
+    path = Path(__file__).resolve().parents[4] / "data" / "cn_sse_topics.yaml"
+    return (yaml.safe_load(path.read_text(encoding="utf-8")) or {}).get("topics", [])
+
+
+def classify_cn_disclosure(
+    listing_venue: Literal["sse_main", "star", "szse_main", "chinext", "bse"],
+    index_membership: list[str],
+    dual_listed_overseas: bool,
+) -> dict:
+    mandatory_indices = {"sse180", "star50", "szse100", "chinext_index"}
+    mandatory = bool(
+        mandatory_indices.intersection({value.lower() for value in index_membership})
+        or dual_listed_overseas
+    )
+    return {
+        "listing_venue": listing_venue,
+        "classification": "mandatory" if mandatory else "voluntary",
+        "mandatory": mandatory,
+        "deadline": "April 30 following the fiscal year",
+        "article_7_note": "A referenced disclosure must identify its location; unexplained omission is not permitted for mandatory matters.",
+        "as_of": "2026-01",
+        "citations": [
+            "SSE Self-Regulatory Guideline No. 14",
+            "SZSE Sustainability Reporting Guidelines",
+        ],
+    }
 
 
 def list_jurisdictions() -> list[RegulatoryJurisdictionProfile]:
@@ -352,9 +410,7 @@ def get_jurisdiction_profile(jurisdiction: str) -> RegulatoryJurisdictionProfile
         return JURISDICTION_PROFILES[jurisdiction]  # type: ignore[index]
     except KeyError as exc:
         known = ", ".join(sorted(JURISDICTION_PROFILES))
-        raise KeyError(
-            f"Unknown jurisdiction {jurisdiction!r}. Known: {known}"
-        ) from exc
+        raise KeyError(f"Unknown jurisdiction {jurisdiction!r}. Known: {known}") from exc
 
 
 # --------------------------------------------------- SFDR Article classification
@@ -384,15 +440,11 @@ def classify_sfdr(input: SFDRClassificationInput) -> SFDRClassificationResult:
                 "Article 9 requires Do-No-Significant-Harm analysis for every "
                 "sustainable investment."
             )
-        rationale.append(
-            "Fund declares a sustainable investment objective — Article 9 candidate."
-        )
+        rationale.append("Fund declares a sustainable investment objective — Article 9 candidate.")
         article: FundLabelEU = "article_9"
         requires_pai = True
     elif input.promotes_environmental_social:
-        rationale.append(
-            "Fund promotes environmental / social characteristics — Article 8."
-        )
+        rationale.append("Fund promotes environmental / social characteristics — Article 8.")
         article = "article_8"
         requires_pai = input.pai_consideration
         if not input.pai_consideration:
@@ -460,9 +512,7 @@ def classify_uk_sdr(input: UKSDRLabelInput) -> UKSDRLabelResult:
             "real-world impact (theory of change + KPIs)."
         )
     if not input.anti_greenwashing_reviewed:
-        caveats.append(
-            "All SDR-labelled funds must pass an anti-greenwashing review."
-        )
+        caveats.append("All SDR-labelled funds must pass an anti-greenwashing review.")
     can_use = bool(input.anti_greenwashing_reviewed) and (
         input.primary_objective != "impact" or input.evidence_of_impact
     )
@@ -527,8 +577,7 @@ def assess_eu_omnibus_scope(input: EUOmnibusScopeInput) -> EUOmnibusScopeResult:
     turnover_label = "net turnover" if input.is_eu_undertaking else "EU net turnover"
 
     csrd_in_scope = (
-        input.employees > _CSRD_EMPLOYEE_THRESHOLD
-        and turnover > _CSRD_TURNOVER_THRESHOLD_EUR_M
+        input.employees > _CSRD_EMPLOYEE_THRESHOLD and turnover > _CSRD_TURNOVER_THRESHOLD_EUR_M
     )
     if csrd_in_scope:
         rationale.append(
@@ -542,13 +591,10 @@ def assess_eu_omnibus_scope(input: EUOmnibusScopeInput) -> EUOmnibusScopeResult:
             f"(have {input.employees} employees / €{turnover:.0f}M)."
         )
         if input.is_listed:
-            rationale.append(
-                "Listed SMEs were removed from mandatory CSRD scope by Omnibus I."
-            )
+            rationale.append("Listed SMEs were removed from mandatory CSRD scope by Omnibus I.")
 
     csddd_in_scope = (
-        input.employees > _CSDDD_EMPLOYEE_THRESHOLD
-        and turnover > _CSDDD_TURNOVER_THRESHOLD_EUR_M
+        input.employees > _CSDDD_EMPLOYEE_THRESHOLD and turnover > _CSDDD_TURNOVER_THRESHOLD_EUR_M
     )
     rationale.append(
         ("In CSDDD scope" if csddd_in_scope else "Out of CSDDD scope")
@@ -638,7 +684,12 @@ def schedule_deadlines(
         offset_days = {"annual": 90, "semi_annual": 60, "quarterly": 45, "one_off": 30}[
             obligation.recurrence
         ]
-        due = fiscal_year_end + timedelta(days=offset_days)
+        if jurisdiction == "CN" and obligation.recurrence == "annual":
+            # SSE/SZSE sustainability reports are filed with the annual report
+            # by the fixed 30 April deadline, irrespective of a 90-day offset.
+            due = date(fiscal_year_end.year + 1, 4, 30)
+        else:
+            due = fiscal_year_end + timedelta(days=offset_days)
         status = _status_from_due(due)
         deadlines.append(
             RegulatoryDeadline(
@@ -744,7 +795,9 @@ __all__ = [
     "build_regulator_narrative",
     "classify_sfdr",
     "classify_uk_sdr",
+    "classify_cn_disclosure",
     "get_jurisdiction_profile",
     "list_jurisdictions",
+    "load_cn_topics",
     "schedule_deadlines",
 ]

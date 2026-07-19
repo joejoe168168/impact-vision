@@ -594,6 +594,9 @@ class KPIFramework(BaseModel):
         return dict(counts)
 
 
+_KPI_FRAMEWORKS: dict[str, KPIFramework] = {}
+
+
 def generate_kpi_framework(
     *,
     canvas: ToCCanvas,
@@ -634,9 +637,7 @@ def generate_kpi_framework(
         # Outcome-level explicit picks from the canvas take priority — they
         # represent consultant-curated choices.
         for metric_id in outcome.iris_metrics[:per_outcome_limit]:
-            chosen.append(
-                (metric_id, metric_id, 4.0, ["canvas:explicit"], [])
-            )
+            chosen.append((metric_id, metric_id, 4.0, ["canvas:explicit"], []))
 
         if catalog_store is not None and len(chosen) < per_outcome_limit:
             recs = _rank_metrics(
@@ -702,12 +703,54 @@ def generate_kpi_framework(
                 )
             )
 
+    _KPI_FRAMEWORKS[framework.framework_id] = framework
     return framework
 
 
 def lock_kpi_framework(framework: KPIFramework) -> KPIFramework:
     """Return a copy of the framework with ``locked=True`` and a bumped version."""
-    return framework.model_copy(update={"locked": True, "version": framework.version + 1})
+    locked = framework.model_copy(update={"locked": True, "version": framework.version + 1})
+    _KPI_FRAMEWORKS[locked.framework_id] = locked
+    return locked
+
+
+def promote_kpis_to_conditions(
+    framework_id: str | KPIFramework,
+    *,
+    by_period: str | None = None,
+    condition_kind: str = "covenant",
+) -> list:
+    """Promote a locked KPI framework into investment target conditions.
+
+    ``framework_id`` accepts the identifier used by consultant workflows or a
+    framework object for stateless SDK callers. Promotion is deliberately
+    blocked until the consultant locks the KPI framework.
+    """
+    from openharness.impact.deal_gate import TargetCondition
+
+    framework = (
+        framework_id
+        if isinstance(framework_id, KPIFramework)
+        else _KPI_FRAMEWORKS.get(framework_id)
+    )
+    if framework is None:
+        raise KeyError(f"KPI framework not found: {framework_id}")
+    if not framework.locked:
+        raise ValueError("KPI framework must be locked before promotion")
+    if condition_kind not in {"condition_precedent", "covenant", "aspiration"}:
+        raise ValueError("invalid condition_kind")
+    period = by_period or str(datetime.now(timezone.utc).year + 1)
+    return [
+        TargetCondition(
+            target_id=f"target_{entry.kpi_id}",
+            metric_id=entry.iris_metric_id,
+            baseline=None,
+            target_value=1.0,
+            by_period=period,
+            condition_kind=condition_kind,
+        )
+        for entry in framework.entries
+    ]
 
 
 def _try_load_metric_store():  # type: ignore[no-untyped-def]
@@ -782,6 +825,7 @@ __all__ = [
     "draft_toc_from_intake",
     "generate_kpi_framework",
     "lock_kpi_framework",
+    "promote_kpis_to_conditions",
     "render_canvas_markdown",
     "render_canvas_mermaid",
     "to_graph",

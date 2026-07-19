@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.16.0] - 2026-07-19
+
+### Added
+
+- Implemented the v6 Comparable, Assured & Connected wave: regulatory currency, canonical concordance, digital tagging, ISSA 5000 readiness, and portfolio comparability.
+- Added contribution and target gates, impact-linked economics, integrity screens, nature/social-frontier methods, dMRV, burden reduction, CIDS, and governed regulatory/evaluation workflows.
+- Added the China SSE/SZSE reporting suite, climate calculators, mandatory-article scans, and approved-data-only ILPA/PRI DDQ drafting.
+- Registered seven v6 agent tools and reconciled the registry, public exports, advisor routing, and generated tool-list check at 51 tools.
+
 All notable changes to Impact Vision are recorded here. **This is the
 single source of truth for release history** — please do not duplicate
 version banners, "What's new" blocks, phase status tables, or

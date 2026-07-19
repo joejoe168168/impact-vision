@@ -99,6 +99,7 @@ class Report(BaseModel):
     audience: Audience = "lp"
     sections: list[ReportSection] = Field(default_factory=list)
     claim_reviews: list[ClaimReview] = Field(default_factory=list)
+    qa_findings: list[dict] = Field(default_factory=list)
     approval_state: ApprovalState = "draft"
     approval_history: list[ReportApprovalEvent] = Field(default_factory=list)
     created_at: str = Field(default_factory=lambda: _now())
@@ -123,9 +124,7 @@ class Report(BaseModel):
         """Fraction of claims that are 'approved' or 'caveated'."""
         if not self.claim_reviews:
             return 0.0
-        ready = sum(
-            1 for c in self.claim_reviews if c.status in {"approved", "caveated"}
-        )
+        ready = sum(1 for c in self.claim_reviews if c.status in {"approved", "caveated"})
         return round(ready / len(self.claim_reviews), 3)
 
 
@@ -144,6 +143,14 @@ class ReportTemplate(BaseModel):
 
 
 REPORT_TEMPLATES: dict[str, ReportTemplate] = {
+    "tisfd_beta": ReportTemplate(
+        template_id="tisfd_beta",
+        name="TISFD Disclosure (beta)",
+        audience="board",
+        section_titles=["Governance", "Strategy", "Risk & Impact Management", "Metrics & Targets"],
+        tool_refs=["framework_assess", "cross_reference", "greenwashing_detect"],
+        evidence_depth="detailed",
+    ),
     "imm_baseline": ReportTemplate(
         template_id="imm_baseline",
         name="IMM Baseline",
@@ -244,9 +251,7 @@ def get_report_template(template_id: str) -> ReportTemplate:
         return REPORT_TEMPLATES[template_id]
     except KeyError as exc:
         known = ", ".join(sorted(REPORT_TEMPLATES))
-        raise KeyError(
-            f"Unknown report template {template_id!r}. Known: {known}"
-        ) from exc
+        raise KeyError(f"Unknown report template {template_id!r}. Known: {known}") from exc
 
 
 # ---------------------------------------------------------------- report builder
@@ -268,9 +273,7 @@ def build_report_from_template(
     expected to fill in.
     """
     template = get_report_template(template_id)
-    supplied_by_title = {
-        s.title.lower().strip(): s for s in (sections or [])
-    }
+    supplied_by_title = {s.title.lower().strip(): s for s in (sections or [])}
     built_sections: list[ReportSection] = []
     for title_ in template.section_titles:
         existing = supplied_by_title.pop(title_.lower().strip(), None)
@@ -314,10 +317,12 @@ def transition_report(
         "published": {"superseded"},
         "superseded": set(),
     }
+    if next_state == "approved" and any(
+        item.get("priority") == "blocker" for item in report.qa_findings
+    ):
+        raise ValueError("Pre-publication QA blockers must be resolved before approval")
     if next_state not in allowed[report.approval_state]:
-        raise ValueError(
-            f"Invalid report transition {report.approval_state} -> {next_state}"
-        )
+        raise ValueError(f"Invalid report transition {report.approval_state} -> {next_state}")
     event = ReportApprovalEvent(
         actor=actor,
         from_state=report.approval_state,
@@ -359,20 +364,16 @@ def decide_claim(
 
 AUDIENCE_HINTS: dict[Audience, str] = {
     "founder": (
-        "Direct, operational. Emphasise execution actions and founder asks. "
-        "Avoid financial jargon."
+        "Direct, operational. Emphasise execution actions and founder asks. Avoid financial jargon."
     ),
     "ic": (
-        "Structured, decision-oriented. Lead with recommendation, evidence, "
-        "risks, and mitigants."
+        "Structured, decision-oriented. Lead with recommendation, evidence, risks, and mitigants."
     ),
     "lp": (
-        "LP-friendly narrative. Reference OPIM / IRIS+ / EDCI. Cite evidence "
-        "behind every claim."
+        "LP-friendly narrative. Reference OPIM / IRIS+ / EDCI. Cite evidence behind every claim."
     ),
     "board": (
-        "Strategic, governance-focused. Highlight fiduciary implications "
-        "and oversight actions."
+        "Strategic, governance-focused. Highlight fiduciary implications and oversight actions."
     ),
     "public": (
         "Accessible and inclusive. Avoid acronyms without explanation; "
@@ -410,9 +411,7 @@ def rewrite_for_audiences(
     variants: dict[str, str] = {}
     for audience in audiences:
         hint = AUDIENCE_HINTS.get(audience, "")
-        variants[audience] = (
-            f"[For {audience}] {hint}\n\n{base_text.strip()}"
-        )
+        variants[audience] = f"[For {audience}] {hint}\n\n{base_text.strip()}"
     return MultiAudienceRewrite(base_text=base_text, variants=variants)
 
 
@@ -512,12 +511,9 @@ def build_public_microsite(report: Report) -> PublicMicrositeBundle:
             title=report.title,
             summary=report.sections[0].body[:240] if report.sections else "",
             body_markdown="\n\n".join(
-                f"## {section.title}\n\n{section.body}"
-                for section in report.sections[:5]
+                f"## {section.title}\n\n{section.body}" for section in report.sections[:5]
             ),
-            hero_claim=(
-                report.claim_reviews[0].text if report.claim_reviews else ""
-            ),
+            hero_claim=(report.claim_reviews[0].text if report.claim_reviews else ""),
         ),
     ]
     for section in report.sections[1:]:
@@ -545,6 +541,139 @@ def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def _content_index_universe(framework: str) -> list[dict]:
+    if framework == "sse_g14":
+        from openharness.impact.engagements.regulatory import load_cn_topics
+
+        return [
+            {
+                "topic": row["topic_id"],
+                "requirement_ref": ",".join(map(str, row["articles"])),
+                "mandatory": row["mandatory"],
+            }
+            for row in load_cn_topics()
+        ]
+    if framework == "gri":
+        from openharness.impact.frameworks.gri import GRI_STANDARDS
+
+        return [
+            {"topic": disclosure.code, "requirement_ref": disclosure.code, "mandatory": True}
+            for standard in GRI_STANDARDS
+            for disclosure in standard.disclosures
+        ]
+    if framework == "esrs":
+        from openharness.impact.frameworks.esrs import load_simplified_datapoints
+
+        return [
+            {
+                "topic": row.datapoint_id,
+                "requirement_ref": row.datapoint_id,
+                "mandatory": row.mandatory,
+            }
+            for row in load_simplified_datapoints()
+        ]
+    if framework == "issb":
+        from openharness.impact.frameworks.issb_ifrs_s1 import IFRS_S1
+
+        return [
+            {
+                "topic": disclosure.code,
+                "requirement_ref": disclosure.paragraph_ref or disclosure.code,
+                "mandatory": True,
+            }
+            for pillar in IFRS_S1.pillars
+            for disclosure in pillar.disclosures
+        ]
+    raise KeyError(f"Unknown content-index framework: {framework}")
+
+
+def build_content_index(
+    framework: Literal["sse_g14", "gri", "esrs", "issb"], covered: dict[str, str]
+) -> dict:
+    rows = []
+    for item in _content_index_universe(framework):
+        supplied = covered.get(item["topic"])
+        if isinstance(supplied, dict):
+            chapter = supplied.get("chapter", "")
+            status = supplied.get("status", "disclosed")
+            reason = supplied.get("reason", "")
+        elif supplied:
+            chapter = str(supplied)
+            status = "disclosed"
+            reason = ""
+        else:
+            chapter = ""
+            status = "omitted"
+            reason = ""
+        if status == "omitted" and supplied and not reason:
+            raise ValueError(f"Omission for {item['topic']} requires a reason")
+        rows.append(
+            {**item, "chapter": chapter, "status": status, "reason": reason, "also_satisfies": []}
+        )
+    return {"framework": framework, "rows": rows}
+
+
+def completeness_check(framework: str, covered: dict) -> dict:
+    index = build_content_index(framework, covered)
+    complete = sum(row["status"] == "disclosed" for row in index["rows"])
+    return {
+        "framework": framework,
+        "complete_pct": round(100 * complete / len(index["rows"]), 1) if index["rows"] else 100,
+        "mandatory_gaps": [
+            row for row in index["rows"] if row["mandatory"] and row["status"] != "disclosed"
+        ],
+        "encouraged_gaps": [
+            row for row in index["rows"] if not row["mandatory"] and row["status"] != "disclosed"
+        ],
+    }
+
+
+def prepublication_qa(report_sections: dict) -> list[dict]:
+    checks = []
+
+    def add(condition, item, basis, priority):
+        if not condition:
+            checks.append({"item": item, "basis": basis, "priority": priority})
+
+    add(
+        report_sections.get("mandatory_topics_covered", False),
+        "Cover all mandatory topics",
+        "applicable disclosure standard",
+        "blocker",
+    )
+    add(
+        report_sections.get("quantitative_claims_have_records", False),
+        "Link every quantitative claim to a MetricRecord",
+        "evidence graph",
+        "blocker",
+    )
+    add(
+        report_sections.get("claims_greenwashing_reviewed", False),
+        "Complete greenwashing review for every claim",
+        "claim review policy",
+        "blocker",
+    )
+    add(
+        report_sections.get("comparative_period_present", False),
+        "Include comparative period",
+        "reporting standard",
+        "high",
+    )
+    add(
+        report_sections.get("methodology_stated", False),
+        "State measurement methodology",
+        "assurance readiness",
+        "high",
+    )
+    add(
+        report_sections.get("content_index_present", False),
+        "Include content index",
+        "SSE art.57 / GRI / ESRS indexing",
+        "advisory",
+    )
+    return checks
+
+
 __all__ = [
     "AUDIENCE_HINTS",
     "Audience",
@@ -570,4 +699,7 @@ __all__ = [
     "list_report_templates",
     "rewrite_for_audiences",
     "transition_report",
+    "build_content_index",
+    "completeness_check",
+    "prepublication_qa",
 ]

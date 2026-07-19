@@ -43,7 +43,9 @@ class DdChecklistInput(BaseModel):
         ),
     )
     max_questions: int = Field(
-        default=15, ge=1, le=50,
+        default=15,
+        ge=1,
+        le=50,
         description="Max questions to return (for 'suggest')",
     )
     priority: Literal["", "high", "medium", "low"] = Field(
@@ -57,6 +59,8 @@ class DdChecklistInput(BaseModel):
             "to auto-fill stakeholder voice questions (SV01-SV03)"
         ),
     )
+    checklist_kind: Literal["due_diligence", "disclosure"] = "due_diligence"
+    topic_id: str = "climate"
 
 
 class DdChecklistTool(BaseTool):
@@ -77,11 +81,34 @@ class DdChecklistTool(BaseTool):
         return True
 
     async def execute(self, arguments: BaseModel, context: ToolExecutionContext) -> ToolResult:
-        args = arguments if isinstance(arguments, DdChecklistInput) else DdChecklistInput.model_validate(arguments)
+        args = (
+            arguments
+            if isinstance(arguments, DdChecklistInput)
+            else DdChecklistInput.model_validate(arguments)
+        )
 
         text = args.document_text
         if not text and args.file_path:
             text = _extract_text(args.file_path, context)
+
+        if args.checklist_kind == "disclosure":
+            import json
+            from openharness.impact.disclosure_checklist import (
+                analyze_disclosure,
+                checklist_gap_report,
+                load_checklist as load_disclosure_checklist,
+            )
+
+            try:
+                if args.action == "list":
+                    payload = load_disclosure_checklist(args.topic_id).model_dump(mode="json")
+                elif args.action == "analyze":
+                    payload = analyze_disclosure(args.topic_id, text)
+                else:
+                    payload = checklist_gap_report(args.topic_id, [])
+                return ToolResult(output=json.dumps(payload, default=str), metadata=payload)
+            except Exception as exc:
+                return ToolResult(output=f"Disclosure checklist failed: {exc}", is_error=True)
 
         if args.action == "list":
             return self._handle_list(args)
@@ -127,11 +154,13 @@ class DdChecklistTool(BaseTool):
         return ToolResult(output="\n".join(lines))
 
     def _handle_analyze(self, text: str, args: DdChecklistInput) -> ToolResult:
-        result = analyze_document_coverage(
-            text, categories=args.categories or None
-        )
+        result = analyze_document_coverage(text, categories=args.categories or None)
 
-        ev_str = f" | Avg Evidence Level: {result.avg_evidence_level:.1f}/5" if result.avg_evidence_level else ""
+        ev_str = (
+            f" | Avg Evidence Level: {result.avg_evidence_level:.1f}/5"
+            if result.avg_evidence_level
+            else ""
+        )
         lines = [
             "DD Checklist Coverage Analysis",
             "=" * 50,
@@ -148,11 +177,13 @@ class DdChecklistTool(BaseTool):
                 q = match.question
                 ev_badge = f"[Ev.{match.evidence_level}]" if match.evidence_level else ""
                 lines.append(f"  {q.id}: {q.question} {ev_badge}")
-                lines.append(f"    Confidence: {match.confidence:.0%} | Keywords: {', '.join(match.matched_keywords[:5])}")
+                lines.append(
+                    f"    Confidence: {match.confidence:.0%} | Keywords: {', '.join(match.matched_keywords[:5])}"
+                )
                 if match.evidence_label:
                     lines.append(f"    Evidence level: {match.evidence_label}")
                 if match.relevant_text_snippets:
-                    lines.append(f"    Excerpt: \"{match.relevant_text_snippets[0][:150]}...\"")
+                    lines.append(f'    Excerpt: "{match.relevant_text_snippets[0][:150]}..."')
                 lines.append("")
 
         if result.high_priority_gaps:
@@ -188,7 +219,9 @@ class DdChecklistTool(BaseTool):
             sv_addressed = [m for m in result.addressed if m.question.id.startswith("SV")]
             sv_gaps = [q for q in result.unanswered if q.id.startswith("SV")]
             if sv_gaps:
-                lines.append(f"\n  Stakeholder voice questions addressed by feedback: {len(sv_addressed)}")
+                lines.append(
+                    f"\n  Stakeholder voice questions addressed by feedback: {len(sv_addressed)}"
+                )
                 lines.append(f"  Remaining SV gaps: {len(sv_gaps)}")
                 for q in sv_gaps:
                     lines.append(f"    - {q.id}: {q.question}")
@@ -252,6 +285,7 @@ def _extract_text(file_path: str, context: ToolExecutionContext) -> str:
     if path.suffix.lower() == ".pdf":
         try:
             import pymupdf
+
             doc = pymupdf.open(str(path))
             text = "\n".join(page.get_text() for page in doc)
             doc.close()
@@ -262,6 +296,7 @@ def _extract_text(file_path: str, context: ToolExecutionContext) -> str:
         return path.read_text(encoding="utf-8", errors="replace")
     elif path.suffix.lower() in (".yaml", ".yml"):
         import yaml
+
         data = yaml.safe_load(path.read_text(encoding="utf-8", errors="replace"))
         if isinstance(data, dict):
             return "\n".join(f"{k}: {v}" for k, v in data.items())
@@ -270,6 +305,7 @@ def _extract_text(file_path: str, context: ToolExecutionContext) -> str:
         return str(data)
     elif path.suffix.lower() == ".json":
         import json
+
         data = json.loads(path.read_text(encoding="utf-8", errors="replace"))
         if isinstance(data, dict):
             return "\n".join(f"{k}: {v}" for k, v in data.items())

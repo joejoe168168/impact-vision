@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "impact-vision"
-version = "0.15.0"
+version = "0.16.0"
 description = "Open-source LLM-powered impact measurement and SDG alignment agent for VC/impact funds, built on OpenHarness"
 readme = "README.md"
 license = "MIT"

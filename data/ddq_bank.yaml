@@ -1,0 +1,7 @@
+version: "2026-07"
+framework_counts: {ilpa_ddq2: 25, pri_2026: 40, ilpa_climate_module: 15}
+sources:
+  ilpa_ddq2: ILPA DDQ 2.0 ESG section (question intents paraphrased)
+  pri_2026: PRI 2026 reporting framework mandatory indicators (intents paraphrased)
+  ilpa_climate_module: PRI/ILPA/iCI Climate Module 2025 (intents paraphrased)
+metric_concepts: [ghg_scope1_emissions, total_employees, water_consumption, renewable_energy_share]

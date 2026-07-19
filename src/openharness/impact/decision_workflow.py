@@ -13,7 +13,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field
 
 from openharness.impact.database import MetricStore
-from openharness.impact.deal_gate import DealScorecard, evaluate_deal
+from openharness.impact.deal_gate import DealScorecard, TargetCondition, evaluate_deal
 from openharness.impact.evidence_chain_renderer import EvidenceChainNode, EvidenceChainRenderer
 from openharness.impact.evidence_graph import build_evidence_graph, graph_warnings
 from openharness.impact.five_dimensions import assess_five_dimensions
@@ -112,7 +112,9 @@ def _metric_records(records: list[MetricRecord | dict[str, Any]] | None) -> list
     out: list[MetricRecord] = []
     for item in records or []:
         try:
-            out.append(item if isinstance(item, MetricRecord) else MetricRecord.model_validate(item))
+            out.append(
+                item if isinstance(item, MetricRecord) else MetricRecord.model_validate(item)
+            )
         except Exception:
             continue
     return out
@@ -188,9 +190,13 @@ def build_proof_appendix(
 
     assumptions: list[str] = []
     if assessment.five_dimensions:
-        for node in (assessment.five_dimensions.what, assessment.five_dimensions.who,
-                     assessment.five_dimensions.how_much, assessment.five_dimensions.contribution,
-                     assessment.five_dimensions.risk):
+        for node in (
+            assessment.five_dimensions.what,
+            assessment.five_dimensions.who,
+            assessment.five_dimensions.how_much,
+            assessment.five_dimensions.contribution,
+            assessment.five_dimensions.risk,
+        ):
             if node.provenance != "evidence-based":
                 assumptions.append(f"{node.dimension}: {node.notes}")
 
@@ -220,9 +226,12 @@ def build_ic_workflow_summary(
     dd_coverage_pct: float | None = None,
     exclusion_pass: bool | None = None,
     memo_format: Literal["markdown", "html"] = "markdown",
+    target_conditions: list[TargetCondition] | None = None,
 ) -> ICWorkflowSummary:
     assessment = build_assessment(company, store)
-    greenwashing = assess_greenwashing(company, [c.model_dump(mode="json") for c in _claim_objects(claims)])
+    greenwashing = assess_greenwashing(
+        company, [c.model_dump(mode="json") for c in _claim_objects(claims)]
+    )
     verdict = build_verdict_card(company, greenwashing)
     scorecard = evaluate_deal(
         assessment,
@@ -247,6 +256,7 @@ def build_ic_workflow_summary(
         dd_coverage_pct=dd_coverage_pct,
         verdict_card=verdict,
         proof_appendix=proof,
+        target_conditions=target_conditions,
     )
     return ICWorkflowSummary(
         company_name=company.name,
@@ -280,7 +290,10 @@ def quick_screen(
         classification: QuickScreenClassification = "red_flag"
     elif summary.scorecard.overall_status == "warn" or summary.verdict_card.verdict == "caution":
         classification = "misaligned_but_improvable"
-    elif summary.assessment.five_dimensions and summary.assessment.five_dimensions.overall_provenance != "evidence-based":
+    elif (
+        summary.assessment.five_dimensions
+        and summary.assessment.five_dimensions.overall_provenance != "evidence-based"
+    ):
         classification = "misaligned_but_improvable"
     else:
         classification = "aligned_and_credible"
@@ -369,7 +382,9 @@ def assess_lp_readiness(summary: ICWorkflowSummary) -> LPReadinessResult:
         verdict=summary.verdict_card.verdict,
         blockers=blockers,
         warnings=warnings,
-        badge_label={"lp_ready": "LP-Ready", "needs_work": "LP Review", "blocked": "Not LP-Ready"}[status],
+        badge_label={"lp_ready": "LP-Ready", "needs_work": "LP Review", "blocked": "Not LP-Ready"}[
+            status
+        ],
     )
 
 

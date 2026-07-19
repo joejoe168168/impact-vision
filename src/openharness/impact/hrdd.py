@@ -29,14 +29,28 @@ from pydantic import BaseModel, Field, computed_field
 
 
 ValueChainTier = Literal[
-    "own_operations", "tier_1_suppliers", "tier_2plus_suppliers", "downstream",
+    "own_operations",
+    "tier_1_suppliers",
+    "tier_2plus_suppliers",
+    "downstream",
 ]
 
 IssueCategory = Literal[
-    "forced_labour", "child_labour", "freedom_of_association", "living_wage",
-    "health_and_safety", "discrimination", "working_hours", "land_rights",
-    "indigenous_rights", "community_impact", "water_access", "privacy",
-    "vulnerable_groups", "modern_slavery", "other",
+    "forced_labour",
+    "child_labour",
+    "freedom_of_association",
+    "living_wage",
+    "health_and_safety",
+    "discrimination",
+    "working_hours",
+    "land_rights",
+    "indigenous_rights",
+    "community_impact",
+    "water_access",
+    "privacy",
+    "vulnerable_groups",
+    "modern_slavery",
+    "other",
 ]
 
 Severity = Literal["low", "medium", "high", "critical"]
@@ -114,7 +128,9 @@ class RemediationCase(BaseModel):
     """A remediation case tracked through a small state machine."""
 
     issue: str
-    status: Literal["identified", "plan_agreed", "in_progress", "remediated", "closed_no_action"] = "identified"
+    status: Literal[
+        "identified", "plan_agreed", "in_progress", "remediated", "closed_no_action"
+    ] = "identified"
     affected_count: int = 0
     note: str = ""
 
@@ -128,11 +144,19 @@ class HRDDInput(BaseModel):
     salient_issues: list[SalientIssue] = Field(default_factory=list)
     grievance: GrievanceMechanism = Field(default_factory=GrievanceMechanism)
     remediation_cases: list[RemediationCase] = Field(default_factory=list)
+    living_wage_geography: str = ""
+    wages: list[dict] = Field(default_factory=list)
     # OECD 6-step cycle self-attestation
-    has_rbc_policy: bool = Field(default=False, description="Step 1: embed RBC in policy/management")
-    has_impact_identification: bool = Field(default=False, description="Step 2: identify & assess impacts")
+    has_rbc_policy: bool = Field(
+        default=False, description="Step 1: embed RBC in policy/management"
+    )
+    has_impact_identification: bool = Field(
+        default=False, description="Step 2: identify & assess impacts"
+    )
     has_mitigation_plan: bool = Field(default=False, description="Step 3: cease/prevent/mitigate")
-    tracks_effectiveness: bool = Field(default=False, description="Step 4: track implementation & results")
+    tracks_effectiveness: bool = Field(
+        default=False, description="Step 4: track implementation & results"
+    )
     communicates_publicly: bool = Field(default=False, description="Step 5: communicate")
     # Step 6 is derived from grievance + remediation
 
@@ -162,6 +186,7 @@ class HRDDResult(BaseModel):
     findings: list[str] = Field(default_factory=list)
     recommendations: list[str] = Field(default_factory=list)
     limitations: list[str] = Field(default_factory=list)
+    living_wage_gap: dict | None = None
 
 
 def assess_hrdd(input: HRDDInput) -> HRDDResult:  # noqa: A002
@@ -174,7 +199,8 @@ def assess_hrdd(input: HRDDInput) -> HRDDResult:  # noqa: A002
         coverage[i.value_chain_tier] = coverage.get(i.value_chain_tier, 0) + 1
 
     open_cases = sum(
-        1 for c in input.remediation_cases
+        1
+        for c in input.remediation_cases
         if c.status in ("identified", "plan_agreed", "in_progress")
     )
     remediated = sum(
@@ -203,15 +229,21 @@ def assess_hrdd(input: HRDDInput) -> HRDDResult:  # noqa: A002
             f"{len(gross)} gross human-rights risk(s) flagged (forced/child labour, "
             "modern slavery) — these require immediate action regardless of likelihood."
         )
-        recs.append("Escalate gross human-rights risks to senior management and trigger an enhanced due-diligence review.")
+        recs.append(
+            "Escalate gross human-rights risks to senior management and trigger an enhanced due-diligence review."
+        )
 
     critical = [i for i in ranked if i.priority == "critical"]
     if critical:
         findings.append(f"{len(critical)} critical-priority salient issue(s) identified.")
 
     if "tier_2plus_suppliers" not in coverage and input.salient_issues:
-        findings.append("No salient issues mapped beyond tier-1 — deeper value-chain visibility is likely incomplete.")
-        recs.append("Extend impact identification to tier-2+ suppliers (CSDDD expects a risk-based value-chain view).")
+        findings.append(
+            "No salient issues mapped beyond tier-1 — deeper value-chain visibility is likely incomplete."
+        )
+        recs.append(
+            "Extend impact identification to tier-2+ suppliers (CSDDD expects a risk-based value-chain view)."
+        )
 
     g = input.grievance.effectiveness_score_pct
     if g < 50:
@@ -239,8 +271,18 @@ def assess_hrdd(input: HRDDInput) -> HRDDResult:  # noqa: A002
         maturity = "Initial"
 
     if not recs:
-        recs.append("HRDD process is robust — maintain monitoring cadence and refresh the salience assessment annually.")
+        recs.append(
+            "HRDD process is robust — maintain monitoring cadence and refresh the salience assessment annually."
+        )
 
+    living_wage = None
+    if input.wages:
+        from openharness.impact.living_wage import living_wage_gap
+
+        living_wage = living_wage_gap(
+            input.living_wage_geography or (input.geographies[0] if input.geographies else ""),
+            input.wages,
+        )
     return HRDDResult(
         company_name=input.company_name,
         salient_issues_ranked=ranked,
@@ -255,6 +297,7 @@ def assess_hrdd(input: HRDDInput) -> HRDDResult:  # noqa: A002
         overall_maturity=maturity,
         findings=findings,
         recommendations=recs,
+        living_wage_gap=living_wage,
         limitations=[
             "Severity/likelihood inputs are self-reported; a salient-issue assessment "
             "should be validated with affected-stakeholder consultation.",
@@ -285,21 +328,25 @@ _CATEGORY_HINTS: dict[IssueCategory, tuple[str, ...]] = {
 }
 
 
-def seed_salient_issues_from_text(text: str, *, default_tier: ValueChainTier = "tier_1_suppliers") -> list[SalientIssue]:
+def seed_salient_issues_from_text(
+    text: str, *, default_tier: ValueChainTier = "tier_1_suppliers"
+) -> list[SalientIssue]:
     """Heuristically seed salient issues from free text for a first-pass screen."""
     low = text.lower()
     issues: list[SalientIssue] = []
     for category, hints in _CATEGORY_HINTS.items():
         if any(h in low for h in hints):
             sev: Severity = "critical" if category in _GROSS_CATEGORIES else "high"
-            issues.append(SalientIssue(
-                name=category.replace("_", " ").title(),
-                category=category,
-                value_chain_tier=default_tier,
-                severity=sev,
-                likelihood="medium",
-                evidence="Keyword signal in supplied text (validate with stakeholder consultation).",
-            ))
+            issues.append(
+                SalientIssue(
+                    name=category.replace("_", " ").title(),
+                    category=category,
+                    value_chain_tier=default_tier,
+                    severity=sev,
+                    likelihood="medium",
+                    evidence="Keyword signal in supplied text (validate with stakeholder consultation).",
+                )
+            )
     return issues
 
 

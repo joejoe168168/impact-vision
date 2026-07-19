@@ -112,3 +112,13 @@ same YAML and auto-injected into every HTML surface.
   ToC builder, data room, reporting studio, 3-pillar verification bundle.
 - [`CLAUDE.md`](../CLAUDE.md) — codebase map for developers.
 - [`CHANGELOG.md`](../CHANGELOG.md) — release history.
+## Survey delivery channels (v6)
+
+`survey_delivery` renders WhatsApp, SMS, voice, or self-contained web content
+without coupling the engine to a vendor SDK. Deployments configure Twilio/Meta
+or another provider to forward signed inbound payloads to
+`POST /api/v1/surveys/webhook/{channel_id}`. Each dispatch and response must
+carry an active `ConsentRecord`; respondent references should be pseudonymous,
+PII stays in the delivery provider, and `STOP`/`退订` immediately opts out the
+dispatch. Keep the API bearer-authenticated and validate provider signatures at
+the reverse proxy before forwarding the normalized payload.

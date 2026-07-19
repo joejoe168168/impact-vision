@@ -1,0 +1,16 @@
+version: "2026-07"
+source_note: "Canonical extensions to the legacy 59-concept cross-reference map."
+entries:
+  - concept_id: ghg_scope1_emissions
+    match_quality: exact
+    refs:
+      - {framework: iris, datapoint_id: OI4112, label: Direct Scope 1 GHG emissions, unit_hint: tCO2e}
+      - {framework: gri, datapoint_id: "305-1", label: Direct GHG emissions, unit_hint: tCO2e, taxonomy_uri: "gri:DirectGHGEmissionsScope1"}
+      - {framework: esrs, datapoint_id: E1-6, label: Gross Scope 1 emissions, unit_hint: tCO2e, taxonomy_uri: "esrs:GrossScope1GHGEmissions"}
+      - {framework: issb, datapoint_id: S2-MT-1, label: Scope 1 emissions, unit_hint: tCO2e, taxonomy_uri: "issb:AbsoluteGrossScope1GreenhouseGasEmissions"}
+  - concept_id: total_employees
+    match_quality: exact
+    refs:
+      - {framework: iris, datapoint_id: OI8869, label: Permanent employees, unit_hint: count}
+      - {framework: gri, datapoint_id: "2-7", label: Employees, unit_hint: count, taxonomy_uri: "gri:Employees"}
+      - {framework: esrs, datapoint_id: S1-6, label: Characteristics of employees, unit_hint: count, taxonomy_uri: "esrs:NumberOfEmployees"}

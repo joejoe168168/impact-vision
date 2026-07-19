@@ -26,14 +26,28 @@ from openharness.impact.fund_analytics import (
 from openharness.impact.gap_analysis import analyze_gaps
 from openharness.impact.models import Company
 from openharness.impact.sdg_mapper import map_sdg_alignment
-from openharness.tools.impact.common import infer_themes, normalize_impact_targets, normalize_metric_map, normalize_sdg_goals, normalize_sector
+from openharness.tools.impact.common import (
+    infer_themes,
+    normalize_impact_targets,
+    normalize_metric_map,
+    normalize_sdg_goals,
+    normalize_sector,
+)
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 
 class PortfolioInput(BaseModel):
     action: Literal[
-        "analyze_file", "analyze_companies", "aggregate", "what_if",
-        "rollup", "benchmark", "lp_report", "attribution",
+        "analyze_file",
+        "analyze_companies",
+        "aggregate",
+        "what_if",
+        "rollup",
+        "benchmark",
+        "lp_report",
+        "attribution",
+        "comparability",
+        "portfolio_report",
     ] = Field(
         description=(
             "'analyze_file': Analyze a portfolio CSV/YAML file. "
@@ -71,6 +85,7 @@ class PortfolioInput(BaseModel):
         default_factory=list,
         description="Company names to remove in 'what_if' mode",
     )
+    records_by_company: dict[str, list[dict]] = Field(default_factory=dict)
 
 
 class PortfolioTool(BaseTool):
@@ -87,7 +102,29 @@ class PortfolioTool(BaseTool):
         return True
 
     async def execute(self, arguments: BaseModel, context: ToolExecutionContext) -> ToolResult:
-        args = arguments if isinstance(arguments, PortfolioInput) else PortfolioInput.model_validate(arguments)
+        args = (
+            arguments
+            if isinstance(arguments, PortfolioInput)
+            else PortfolioInput.model_validate(arguments)
+        )
+
+        if args.action in {"comparability", "portfolio_report"}:
+            from openharness.impact.concordance import load_concordance
+            from openharness.impact.metric_records import portfolio_comparability_index
+            from openharness.impact.models import MetricRecord
+
+            records = {
+                name: [MetricRecord.model_validate(row) for row in rows]
+                for name, rows in args.records_by_company.items()
+            }
+            payload = portfolio_comparability_index(records, load_concordance())
+            if args.action == "portfolio_report":
+                from openharness.impact.portfolio_rollup import build_portfolio_report
+
+                payload = build_portfolio_report(
+                    [_dict_to_company(row) for row in args.companies], records
+                )
+            return ToolResult(output=json.dumps(payload, indent=2, default=str), metadata=payload)
 
         try:
             store = ensure_catalog_loaded()
@@ -137,11 +174,17 @@ class PortfolioTool(BaseTool):
         aggregate = _aggregate_results(results)
 
         if args.output_format == "json":
-            return ToolResult(output=json.dumps({
-                "portfolio_size": len(companies),
-                "companies": results,
-                "aggregate": aggregate,
-            }, indent=2, default=str))
+            return ToolResult(
+                output=json.dumps(
+                    {
+                        "portfolio_size": len(companies),
+                        "companies": results,
+                        "aggregate": aggregate,
+                    },
+                    indent=2,
+                    default=str,
+                )
+            )
 
         if args.output_format == "csv":
             return ToolResult(output=_to_csv(results, aggregate))
@@ -170,7 +213,9 @@ class PortfolioTool(BaseTool):
         if args.remove_companies:
             lines.append(f"  Removed: {', '.join(args.remove_companies)}")
         if args.add_companies:
-            lines.append(f"  Added: {', '.join(d.get('name', 'Unknown') for d in args.add_companies)}")
+            lines.append(
+                f"  Added: {', '.join(d.get('name', 'Unknown') for d in args.add_companies)}"
+            )
         lines.append("")
 
         comparisons = [
@@ -185,14 +230,22 @@ class PortfolioTool(BaseTool):
             base_val = base_aggregate.get(key, 0)
             scen_val = scenario_aggregate.get(key, 0)
             delta = round(scen_val - base_val, 2) if isinstance(base_val, (int, float)) else "N/A"
-            arrow = "↑" if isinstance(delta, (int, float)) and delta > 0 else "↓" if isinstance(delta, (int, float)) and delta < 0 else "="
+            arrow = (
+                "↑"
+                if isinstance(delta, (int, float)) and delta > 0
+                else "↓"
+                if isinstance(delta, (int, float)) and delta < 0
+                else "="
+            )
             lines.append(f"{label:<30} {base_val:>10} {scen_val:>10} {f'{delta:+}':>8} {arrow}")
 
         lines.append("")
         additionality_base = base_aggregate.get("additionality", {})
         additionality_scen = scenario_aggregate.get("additionality", {})
         if additionality_base and additionality_scen:
-            lines.append(f"Additionality: {additionality_base.get('additionality_score', 0)} → {additionality_scen.get('additionality_score', 0)}")
+            lines.append(
+                f"Additionality: {additionality_base.get('additionality_score', 0)} → {additionality_scen.get('additionality_score', 0)}"
+            )
 
         return ToolResult(
             output="\n".join(lines),
@@ -231,15 +284,23 @@ def _load_portfolio_file(file_path: str, context: ToolExecutionContext) -> list[
                     normalized_key = key.strip().upper()
                     if normalized_key.startswith(("PI", "OI", "OD", "FP", "PD")) and val:
                         metrics[normalized_key] = val.strip()
-                companies.append(Company(
-                    name=row.get("name", row.get("company", "")),
-                    sector=row.get("sector", ""),
-                    description=row.get("description", ""),
-                    geography=row.get("geography", ""),
-                    impact_themes=[t.strip() for t in row.get("impact_themes", "").split(",") if t.strip()],
-                    reported_metrics=metrics,
-                    sdg_claims=[int(x.strip()) for x in row.get("sdg_claims", "").split(",") if x.strip().isdigit()],
-                ))
+                companies.append(
+                    Company(
+                        name=row.get("name", row.get("company", "")),
+                        sector=row.get("sector", ""),
+                        description=row.get("description", ""),
+                        geography=row.get("geography", ""),
+                        impact_themes=[
+                            t.strip() for t in row.get("impact_themes", "").split(",") if t.strip()
+                        ],
+                        reported_metrics=metrics,
+                        sdg_claims=[
+                            int(x.strip())
+                            for x in row.get("sdg_claims", "").split(",")
+                            if x.strip().isdigit()
+                        ],
+                    )
+                )
             return companies
 
     if path.suffix.lower() == ".json":
@@ -263,7 +324,9 @@ def _dict_to_company(d: dict) -> Company:
         sector=normalize_sector(d.get("sector", "")),
         description=d.get("description", ""),
         geography=d.get("geography", ""),
-        impact_themes=infer_themes(f"{d.get('description', '')} {d.get('sector', '')}", d.get("impact_themes", [])),
+        impact_themes=infer_themes(
+            f"{d.get('description', '')} {d.get('sector', '')}", d.get("impact_themes", [])
+        ),
         reported_metrics=metrics,
         sdg_claims=sdg_claims,
         impact_targets=impact_targets,
@@ -410,18 +473,24 @@ def _to_text(results: list[dict], aggregate: dict) -> str:
     for r in results:
         sdg_str = ", ".join(f"SDG {s['goal']}" for s in r["top_sdgs"][:3])
         lines.append(f"  {r['name']} ({r['sector']})")
-        lines.append(f"    5D Score: {r['five_dim_score']}/5 ({r['five_dim_grade']}) | Core Metrics: {r['gap_coverage']}%")
+        lines.append(
+            f"    5D Score: {r['five_dim_score']}/5 ({r['five_dim_grade']}) | Core Metrics: {r['gap_coverage']}%"
+        )
         lines.append(f"    SDGs: {sdg_str or 'None'} | Metrics: {r['metrics_reported']}")
         lines.append("")
 
     lines.append("FUND-LEVEL ANALYTICS")
     lines.append("-" * 40)
-    lines.append(f"  5D Score: avg {aggregate.get('avg_five_dim_score', 0)}/5 | "
-                 f"min {aggregate.get('min_five_dim_score', 0)} | "
-                 f"max {aggregate.get('max_five_dim_score', 0)} | "
-                 f"median {aggregate.get('median_five_dim_score', 0)}")
-    lines.append(f"  Core Metric Coverage: avg {aggregate.get('avg_gap_coverage', 0)}% "
-                 f"(reporting quality: {aggregate.get('reporting_quality', 'unknown')})")
+    lines.append(
+        f"  5D Score: avg {aggregate.get('avg_five_dim_score', 0)}/5 | "
+        f"min {aggregate.get('min_five_dim_score', 0)} | "
+        f"max {aggregate.get('max_five_dim_score', 0)} | "
+        f"median {aggregate.get('median_five_dim_score', 0)}"
+    )
+    lines.append(
+        f"  Core Metric Coverage: avg {aggregate.get('avg_gap_coverage', 0)}% "
+        f"(reporting quality: {aggregate.get('reporting_quality', 'unknown')})"
+    )
     lines.append(f"  Total IRIS+ Metrics Reported: {aggregate.get('total_metrics_reported', 0)}")
     lines.append(f"  SDG Coverage: {aggregate.get('sdg_coverage', 0)}/17 goals")
 
@@ -430,8 +499,12 @@ def _to_text(results: list[dict], aggregate: dict) -> str:
         lines.append("  Dimension Averages:")
         for dim, avg in dim_avgs.items():
             lines.append(f"    {dim.replace('_', ' ').title()}: {avg}/5")
-        lines.append(f"  Strongest: {aggregate.get('strongest_dimension', '').replace('_', ' ').title()}")
-        lines.append(f"  Weakest:   {aggregate.get('weakest_dimension', '').replace('_', ' ').title()}")
+        lines.append(
+            f"  Strongest: {aggregate.get('strongest_dimension', '').replace('_', ' ').title()}"
+        )
+        lines.append(
+            f"  Weakest:   {aggregate.get('weakest_dimension', '').replace('_', ' ').title()}"
+        )
 
     sector_dist = aggregate.get("sector_distribution", {})
     if sector_dist:
@@ -453,7 +526,9 @@ def _to_text(results: list[dict], aggregate: dict) -> str:
 
     grade_dist = aggregate.get("grade_distribution", {})
     if grade_dist:
-        lines.append(f"  Grade Distribution: {', '.join(f'{g}: {c}' for g, c in sorted(grade_dist.items()))}")
+        lines.append(
+            f"  Grade Distribution: {', '.join(f'{g}: {c}' for g, c in sorted(grade_dist.items()))}"
+        )
 
     weighted_sdg = aggregate.get("weighted_sdg_contribution", {})
     if weighted_sdg:
@@ -468,8 +543,10 @@ def _to_text(results: list[dict], aggregate: dict) -> str:
         lines.append("")
         lines.append("PORTFOLIO ADDITIONALITY ASSESSMENT")
         lines.append("-" * 40)
-        lines.append(f"  Score: {additionality.get('additionality_score', 0)}/100 "
-                     f"({additionality.get('classification', 'N/A')})")
+        lines.append(
+            f"  Score: {additionality.get('additionality_score', 0)}/100 "
+            f"({additionality.get('classification', 'N/A')})"
+        )
         for signal in additionality.get("signals", []):
             lines.append(f"  + {signal}")
         if additionality.get("recommendation"):
@@ -492,14 +569,39 @@ def _to_csv(results: list[dict], aggregate: dict) -> str:
     output = io.StringIO()
     writer = csv.writer(output)
 
-    writer.writerow(["Company", "Sector", "5D Score", "Grade", "What", "Who", "How Much",
-                      "Contribution", "Risk", "SDG Count", "Gap Coverage %", "Metrics Reported"])
+    writer.writerow(
+        [
+            "Company",
+            "Sector",
+            "5D Score",
+            "Grade",
+            "What",
+            "Who",
+            "How Much",
+            "Contribution",
+            "Risk",
+            "SDG Count",
+            "Gap Coverage %",
+            "Metrics Reported",
+        ]
+    )
     for r in results:
-        writer.writerow([
-            r["name"], r["sector"], r["five_dim_score"], r["five_dim_grade"],
-            r["what"], r["who"], r["how_much"], r["contribution"], r["risk"],
-            r["sdg_count"], r["gap_coverage"], r["metrics_reported"],
-        ])
+        writer.writerow(
+            [
+                r["name"],
+                r["sector"],
+                r["five_dim_score"],
+                r["five_dim_grade"],
+                r["what"],
+                r["who"],
+                r["how_much"],
+                r["contribution"],
+                r["risk"],
+                r["sdg_count"],
+                r["gap_coverage"],
+                r["metrics_reported"],
+            ]
+        )
 
     writer.writerow([])
     writer.writerow(["PORTFOLIO AGGREGATE"])
@@ -544,7 +646,9 @@ def _portfolio_rollup(results: list[dict], aggregate: dict, companies: list) -> 
 
     grade_dist = aggregate.get("grade_distribution", {})
     if grade_dist:
-        lines.append(f"  Grade Distribution: {', '.join(f'{g}:{c}' for g, c in sorted(grade_dist.items()))}")
+        lines.append(
+            f"  Grade Distribution: {', '.join(f'{g}:{c}' for g, c in sorted(grade_dist.items()))}"
+        )
 
     return "\n".join(lines)
 
@@ -553,14 +657,17 @@ def _cross_company_benchmark(results: list[dict]) -> str:
     """Rank portfolio companies on key metrics."""
     lines = [
         "CROSS-COMPANY BENCHMARKING",
-        "=" * 60, "",
+        "=" * 60,
+        "",
     ]
 
     by_5d = sorted(results, key=lambda r: r["five_dim_score"], reverse=True)
     lines.append("By 5D Score (ranked):")
     for i, r in enumerate(by_5d, 1):
         marker = " ★" if i <= 3 else " ▼" if i >= len(by_5d) - 1 else ""
-        lines.append(f"  {i:2d}. {r['name']:30s} {r['five_dim_score']}/5 ({r['five_dim_grade']}){marker}")
+        lines.append(
+            f"  {i:2d}. {r['name']:30s} {r['five_dim_score']}/5 ({r['five_dim_grade']}){marker}"
+        )
 
     lines.append("")
     by_coverage = sorted(results, key=lambda r: r["gap_coverage"], reverse=True)
@@ -588,7 +695,8 @@ def _fund_lp_report(results: list[dict], aggregate: dict) -> str:
     lines = [
         "=" * 70,
         "FUND IMPACT REPORT — FOR LP DISTRIBUTION",
-        "=" * 70, "",
+        "=" * 70,
+        "",
         "FUND OVERVIEW",
         "-" * 40,
         f"Portfolio Size: {aggregate.get('portfolio_size', 0)} companies",
@@ -603,7 +711,9 @@ def _fund_lp_report(results: list[dict], aggregate: dict) -> str:
     if additionality:
         lines.append("ADDITIONALITY ASSESSMENT")
         lines.append("-" * 40)
-        lines.append(f"  Score: {additionality.get('additionality_score', 0)}/100 ({additionality.get('classification', 'N/A')})")
+        lines.append(
+            f"  Score: {additionality.get('additionality_score', 0)}/100 ({additionality.get('classification', 'N/A')})"
+        )
         lines.append("")
 
     lines.append("PORTFOLIO COMPANIES")
@@ -611,8 +721,12 @@ def _fund_lp_report(results: list[dict], aggregate: dict) -> str:
     for r in results:
         sdg_str = ", ".join(f"SDG {s['goal']}" for s in r.get("top_sdgs", [])[:3])
         lines.append(f"  {r['name']}")
-        lines.append(f"    Sector: {r.get('sector', 'N/A')} | Geography: {r.get('geography', 'N/A')}")
-        lines.append(f"    5D: {r['five_dim_score']}/5 ({r['five_dim_grade']}) | Coverage: {r['gap_coverage']}% | SDGs: {sdg_str}")
+        lines.append(
+            f"    Sector: {r.get('sector', 'N/A')} | Geography: {r.get('geography', 'N/A')}"
+        )
+        lines.append(
+            f"    5D: {r['five_dim_score']}/5 ({r['five_dim_grade']}) | Coverage: {r['gap_coverage']}% | SDGs: {sdg_str}"
+        )
         lines.append("")
 
     dim_avgs = aggregate.get("dimension_averages", {})
@@ -623,12 +737,15 @@ def _fund_lp_report(results: list[dict], aggregate: dict) -> str:
             bar = "█" * int(avg) + "░" * (5 - int(avg))
             lines.append(f"  {dim.replace('_', ' ').title():15s} {bar} {avg}/5")
 
-    lines.extend([
-        "", "─" * 70,
-        "Generated by Impact Vision. This report follows ILPA/GIIN format guidelines.",
-        "All scores should be validated through independent verification.",
-        "─" * 70,
-    ])
+    lines.extend(
+        [
+            "",
+            "─" * 70,
+            "Generated by Impact Vision. This report follows ILPA/GIIN format guidelines.",
+            "All scores should be validated through independent verification.",
+            "─" * 70,
+        ]
+    )
     return "\n".join(lines)
 
 
@@ -636,7 +753,8 @@ def _impact_attribution(results: list[dict], aggregate: dict) -> str:
     """Break down portfolio impact by company, sector, geography, and SDG."""
     lines = [
         "IMPACT ATTRIBUTION ANALYSIS",
-        "=" * 60, "",
+        "=" * 60,
+        "",
     ]
 
     total_score = sum(r["five_dim_score"] for r in results)
@@ -653,7 +771,9 @@ def _impact_attribution(results: list[dict], aggregate: dict) -> str:
         sector_scores.setdefault(s, []).append(r["five_dim_score"])
     lines.append("BY SECTOR")
     lines.append("-" * 40)
-    for sect, scores in sorted(sector_scores.items(), key=lambda x: sum(x[1]) / len(x[1]), reverse=True):
+    for sect, scores in sorted(
+        sector_scores.items(), key=lambda x: sum(x[1]) / len(x[1]), reverse=True
+    ):
         avg = round(sum(scores) / len(scores), 2)
         lines.append(f"  {sect:20s} {len(scores)} companies | Avg 5D: {avg}/5")
     lines.append("")
@@ -665,7 +785,9 @@ def _impact_attribution(results: list[dict], aggregate: dict) -> str:
     if geo_scores and not (len(geo_scores) == 1 and "Not specified" in geo_scores):
         lines.append("BY GEOGRAPHY")
         lines.append("-" * 40)
-        for geo, scores in sorted(geo_scores.items(), key=lambda x: sum(x[1]) / len(x[1]), reverse=True):
+        for geo, scores in sorted(
+            geo_scores.items(), key=lambda x: sum(x[1]) / len(x[1]), reverse=True
+        ):
             avg = round(sum(scores) / len(scores), 2)
             lines.append(f"  {geo:20s} {len(scores)} companies | Avg 5D: {avg}/5")
         lines.append("")

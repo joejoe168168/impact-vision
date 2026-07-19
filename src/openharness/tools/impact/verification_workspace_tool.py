@@ -8,7 +8,6 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 from openharness.impact.assurance import AssurancePack
-from openharness.impact.evidence_graph import EvidenceGraph
 from openharness.impact.verification_workspace import (
     FindingSeverity,
     FindingStatus,
@@ -31,9 +30,12 @@ class VerificationWorkspaceInput(BaseModel):
         "readiness_check",
         "evidence_map",
         "ifc_alignment",
+        "issa5000_pack",
     ] = Field(description="Action to perform on the verifier workspace (or pre-verification prep).")
     pack: dict = Field(default_factory=dict, description="AssurancePack payload (for 'open')")
-    workspace: dict = Field(default_factory=dict, description="VerificationWorkspace state to mutate")
+    workspace: dict = Field(
+        default_factory=dict, description="VerificationWorkspace state to mutate"
+    )
     permitted_evidence_ids: list[str] = Field(default_factory=list)
     evidence_graph: dict = Field(default_factory=dict)
     observation: str = ""
@@ -66,9 +68,11 @@ class VerificationWorkspaceInput(BaseModel):
         default="bluemark",
         description="Target verifier for prep actions: 'bluemark', 'ifc_opim', 'aa1000', 'general'",
     )
+    assertions: list[dict] = Field(default_factory=list)
+    assurance_level: Literal["limited", "reasonable"] = "limited"
 
 
-_PREP_ACTIONS = {"readiness_check", "evidence_map", "ifc_alignment"}
+_PREP_ACTIONS = {"readiness_check", "evidence_map", "ifc_alignment", "issa5000_pack"}
 
 
 class VerificationWorkspaceTool(BaseTool):
@@ -99,10 +103,33 @@ class VerificationWorkspaceTool(BaseTool):
         return args.action == "snapshot" or args.action in _PREP_ACTIONS
 
     async def execute(self, arguments: BaseModel, context: ToolExecutionContext) -> ToolResult:
-        args = arguments if isinstance(arguments, VerificationWorkspaceInput) else VerificationWorkspaceInput.model_validate(arguments)
+        args = (
+            arguments
+            if isinstance(arguments, VerificationWorkspaceInput)
+            else VerificationWorkspaceInput.model_validate(arguments)
+        )
 
         if args.action in _PREP_ACTIONS:
-            from openharness.tools.impact.verification_prep_tool import VerificationPrepInput, VerificationPrepTool
+            if args.action == "issa5000_pack":
+                import json
+                from openharness.impact.assurance import build_issa5000_pack
+                from openharness.impact.audit_trail import AuditTrail
+                from openharness.impact.evidence_graph import EvidenceGraph
+
+                try:
+                    payload = build_issa5000_pack(
+                        {"assertions": args.assertions},
+                        EvidenceGraph.model_validate(args.evidence_graph or {}),
+                        AuditTrail(),
+                        args.assurance_level,
+                    )
+                    return ToolResult(output=json.dumps(payload, default=str), metadata=payload)
+                except Exception as exc:
+                    return ToolResult(output=f"ISSA 5000 pack failed: {exc}", is_error=True)
+            from openharness.tools.impact.verification_prep_tool import (
+                VerificationPrepInput,
+                VerificationPrepTool,
+            )
 
             prep_input = VerificationPrepInput(
                 action=args.action,
@@ -125,7 +152,11 @@ class VerificationWorkspaceTool(BaseTool):
                 return ToolResult(output="pack is required for 'open'", is_error=True)
             try:
                 pack = AssurancePack.model_validate(args.pack)
-                graph = EvidenceGraph.model_validate(args.evidence_graph) if args.evidence_graph else None
+                graph = (
+                    EvidenceGraph.model_validate(args.evidence_graph)
+                    if args.evidence_graph
+                    else None
+                )
                 workspace = open_workspace(
                     pack=pack,
                     evidence_graph=graph,

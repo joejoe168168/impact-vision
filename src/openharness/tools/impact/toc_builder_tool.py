@@ -41,6 +41,7 @@ ToCAction = Literal[
     "mark_node_reviewed",
     "generate_kpi",
     "lock_kpi",
+    "promote_kpis",
     "get_kpi",
     "render_markdown",
     "render_mermaid",
@@ -82,6 +83,8 @@ class ToCBuilderInput(BaseModel):
     sdg_goals: list[int] = Field(default_factory=list)
     per_outcome_limit: int = 3
     include_core_set: bool = True
+    target_by_period: str = ""
+    target_condition_kind: Literal["condition_precedent", "covenant", "aspiration"] = "covenant"
 
     # shared
     actor: str = ""
@@ -103,14 +106,17 @@ class ToCBuilderTool(BaseTool):
     input_model = ToCBuilderInput
 
     def is_read_only(self, arguments: BaseModel) -> bool:
-        args = arguments if isinstance(arguments, ToCBuilderInput) else (
-            ToCBuilderInput.model_validate(arguments)
+        args = (
+            arguments
+            if isinstance(arguments, ToCBuilderInput)
+            else (ToCBuilderInput.model_validate(arguments))
         )
         return args.action in {
             "draft_canvas",
             "get_canvas",
             "validate",
             "get_kpi",
+            "promote_kpis",
             "render_markdown",
             "render_mermaid",
         }
@@ -220,6 +226,15 @@ class ToCBuilderTool(BaseTool):
         if args.action == "get_kpi":
             framework = workspace.get_kpi_framework(args.engagement_id)
             return {"framework": framework.model_dump(mode="json")}
+
+        if args.action == "promote_kpis":
+            framework = workspace.get_kpi_framework(args.engagement_id)
+            targets = _toc.promote_kpis_to_conditions(
+                framework,
+                by_period=args.target_by_period or None,
+                condition_kind=args.target_condition_kind,
+            )
+            return {"target_conditions": [item.model_dump(mode="json") for item in targets]}
 
         if args.action == "render_mermaid":
             canvas = (

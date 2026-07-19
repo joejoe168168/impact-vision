@@ -18,17 +18,41 @@ from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 
 class EmissionFactorsInput(BaseModel):
-    action: Literal["list", "get", "sensitivity", "apply_catalog", "summary"] = Field(
+    action: Literal[
+        "list",
+        "get",
+        "sensitivity",
+        "apply_catalog",
+        "summary",
+        "scope1_mass_balance",
+        "scope3",
+        "energy_tce",
+        "water",
+    ] = Field(
         description="Action: list publishers/versions, get one revision, run a single sensitivity, recompute an inventory against a catalog version, or summarise activity sensitivities."
     )
     revision_id: str = Field(default="", description="Revision ID for 'get' or 'sensitivity'")
     catalog_version: str = Field(default="", description="Catalog version for 'apply_catalog'")
-    activity: dict = Field(default_factory=dict, description="ActivityData payload for 'sensitivity'")
-    activities: list[dict] = Field(default_factory=list, description="Activity payloads for 'apply_catalog'/'summary'")
-    revision_ids: list[str] = Field(default_factory=list, description="Revision IDs aligned with activities for 'summary'")
+    activity: dict = Field(
+        default_factory=dict, description="ActivityData payload for 'sensitivity'"
+    )
+    activities: list[dict] = Field(
+        default_factory=list, description="Activity payloads for 'apply_catalog'/'summary'"
+    )
+    revision_ids: list[str] = Field(
+        default_factory=list, description="Revision IDs aligned with activities for 'summary'"
+    )
     company_name: str = Field(default="Demo Co", description="Company name for 'apply_catalog'")
-    reporting_period: str = Field(default="FY2026", description="Reporting period for 'apply_catalog'")
+    reporting_period: str = Field(
+        default="FY2026", description="Reporting period for 'apply_catalog'"
+    )
     output_format: Literal["json", "text"] = "json"
+    inputs: list[dict] = Field(default_factory=list)
+    outputs: list[dict] = Field(default_factory=list)
+    categories: dict[int, dict] = Field(default_factory=dict)
+    energy_lines: list[dict] = Field(default_factory=list)
+    withdrawals: list[dict] = Field(default_factory=list)
+    discharge: float = 0.0
 
 
 class EmissionFactorsTool(BaseTool):
@@ -45,8 +69,34 @@ class EmissionFactorsTool(BaseTool):
         return True
 
     async def execute(self, arguments: BaseModel, context: ToolExecutionContext) -> ToolResult:
-        args = arguments if isinstance(arguments, EmissionFactorsInput) else EmissionFactorsInput.model_validate(arguments)
+        args = (
+            arguments
+            if isinstance(arguments, EmissionFactorsInput)
+            else EmissionFactorsInput.model_validate(arguments)
+        )
         catalog = default_factor_catalog()
+
+        if args.action in {"scope1_mass_balance", "scope3", "energy_tce", "water"}:
+            from openharness.impact.climate_accounting import (
+                energy_to_tce,
+                scope1_mass_balance,
+                scope3_estimate,
+                water_balance,
+            )
+
+            try:
+                payload = (
+                    scope1_mass_balance(args.inputs, args.outputs)
+                    if args.action == "scope1_mass_balance"
+                    else scope3_estimate(args.categories)
+                    if args.action == "scope3"
+                    else energy_to_tce(args.energy_lines)
+                    if args.action == "energy_tce"
+                    else water_balance(args.withdrawals, args.discharge)
+                )
+                return _format(payload, args.output_format)
+            except Exception as exc:
+                return ToolResult(output=f"Climate calculator failed: {exc}", is_error=True)
 
         if args.action == "list":
             payload = {

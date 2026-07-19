@@ -1,0 +1,5 @@
+{"doc_id":"gold-1","source_text":"The company reports 1,200 tCO2e Scope 1 and supports SDG 13.","expected_claims":["reports Scope 1 emissions"],"expected_metrics":["OI4112"],"expected_sdgs":[13]}
+{"doc_id":"gold-2","source_text":"500 low-income customers gained access to finance, aligned with SDG 1.","expected_claims":["customers gained access to finance"],"expected_metrics":["PI4060"],"expected_sdgs":[1]}
+{"doc_id":"gold-3","source_text":"Women represent 55% of permanent employees and the company supports SDG 5.","expected_claims":["women represent 55% of employees"],"expected_metrics":["OI6213"],"expected_sdgs":[5]}
+{"doc_id":"gold-4","source_text":"The programme created 80 permanent jobs under SDG 8.","expected_claims":["created permanent jobs"],"expected_metrics":["OI8869"],"expected_sdgs":[8]}
+{"doc_id":"gold-5","source_text":"Water consumption decreased by 12%, contributing to SDG 6.","expected_claims":["water consumption decreased"],"expected_metrics":["OI1697"],"expected_sdgs":[6]}

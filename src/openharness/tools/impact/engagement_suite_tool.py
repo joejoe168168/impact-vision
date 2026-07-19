@@ -176,6 +176,21 @@ SuiteAction = Literal[
     "readiness_badge",
     "issue_verifier_token",
     "list_verifier_marketplace",
+    # v6 extensions
+    "dedupe_requests",
+    "answer_fanout",
+    "burden_report",
+    "contribution_scorecard",
+    "materiality_assess",
+    "materiality_matrix",
+    "materiality_config",
+    "sfdr_v2_migrate",
+    "classify_cn",
+    "cn_topics",
+    "content_index",
+    "completeness",
+    "prepublication_qa",
+    "build_lp_dataroom",
 ]
 
 
@@ -233,11 +248,26 @@ class EngagementSuiteTool(BaseTool):
         "regulator_narrative",
         "verify_assurance_bundle",
         "list_verifier_marketplace",
+        "dedupe_requests",
+        "answer_fanout",
+        "burden_report",
+        "contribution_scorecard",
+        "materiality_assess",
+        "materiality_matrix",
+        "materiality_config",
+        "sfdr_v2_migrate",
+        "classify_cn",
+        "cn_topics",
+        "content_index",
+        "completeness",
+        "prepublication_qa",
     }
 
     def is_read_only(self, arguments: BaseModel) -> bool:
-        args = arguments if isinstance(arguments, EngagementSuiteInput) else (
-            EngagementSuiteInput.model_validate(arguments)
+        args = (
+            arguments
+            if isinstance(arguments, EngagementSuiteInput)
+            else (EngagementSuiteInput.model_validate(arguments))
         )
         return args.action in self._READONLY_ACTIONS
 
@@ -265,6 +295,111 @@ class EngagementSuiteTool(BaseTool):
         p = args.payload
         action = args.action
 
+        # ------------- v6 integration actions
+        if action in {"dedupe_requests", "answer_fanout", "burden_report"}:
+            from openharness.impact.engagements.data_room import (
+                answer_fanout,
+                burden_report,
+                dedupe_requests,
+            )
+
+            if action == "dedupe_requests":
+                return dedupe_requests(p.get("packs", []))
+            if action == "answer_fanout":
+                return {"packs": answer_fanout(p.get("answers", {}), p.get("routing", {}))}
+            return burden_report(p.get("packs", []), p.get("consolidated", {}))
+        if action == "build_lp_dataroom":
+            from openharness.impact.engagements.data_room import (
+                build_lp_dataroom,
+                write_lp_dataroom_bundle,
+            )
+            from openharness.impact.models import Company, MetricRecord
+
+            companies = [Company.model_validate(item) for item in p.get("companies", [])]
+            records = {
+                name: [MetricRecord.model_validate(item) for item in rows]
+                for name, rows in p.get("records_by_company", {}).items()
+            }
+            if p.get("target_dir"):
+                return write_lp_dataroom_bundle(
+                    p["target_dir"], p.get("fund", {}), companies, records
+                )
+            bundle = build_lp_dataroom(p.get("fund", {}), companies, records)
+            return {
+                "manifest": bundle["manifest"],
+                "artifacts": sorted(bundle["artifacts"]),
+            }
+        if action == "contribution_scorecard":
+            from openharness.impact.contribution import (
+                ContributionClaim,
+                ContributionEvidence,
+                contribution_scorecard,
+            )
+            from openharness.impact.models import MetricRecord
+
+            return contribution_scorecard(
+                [ContributionClaim.model_validate(x) for x in p.get("claims", [])],
+                [ContributionEvidence.model_validate(x) for x in p.get("evidence", [])],
+                [MetricRecord.model_validate(x) for x in p.get("records", [])],
+            )
+        if action in {"materiality_assess", "materiality_matrix", "materiality_config"}:
+            from openharness.impact.engagements.materiality import (
+                MaterialityConfig,
+                assess_materiality,
+                materiality_matrix_payload,
+            )
+
+            if action == "materiality_config":
+                return MaterialityConfig(**p).model_dump(mode="json")
+            if action == "materiality_matrix":
+                return materiality_matrix_payload(p.get("results", []))
+            return {
+                "results": [
+                    row.model_dump(mode="json")
+                    for row in assess_materiality(
+                        p.get("topics", []),
+                        p.get("impact_scores", []),
+                        p.get("financial_inputs", []),
+                        MaterialityConfig.model_validate(p.get("config", {})),
+                    )
+                ]
+            }
+        if action == "sfdr_v2_migrate":
+            from openharness.impact.frameworks.sfdr_v2 import PortfolioHolding, migrate_from_v1
+
+            result = migrate_from_v1(
+                str(p.get("article", "8")),
+                [PortfolioHolding.model_validate(x) for x in p.get("holdings", [])],
+            )
+            return json.loads(json.dumps(result, default=str))
+        if action in {"classify_cn", "cn_topics"}:
+            from openharness.impact.engagements.regulatory import (
+                classify_cn_disclosure,
+                load_cn_topics,
+            )
+
+            return (
+                {"topics": load_cn_topics()}
+                if action == "cn_topics"
+                else classify_cn_disclosure(
+                    p["listing_venue"],
+                    p.get("index_membership", []),
+                    bool(p.get("dual_listed_overseas", False)),
+                )
+            )
+        if action in {"content_index", "completeness", "prepublication_qa"}:
+            from openharness.impact.engagements.reporting_studio import (
+                build_content_index,
+                completeness_check,
+                prepublication_qa,
+            )
+
+            if action == "content_index":
+                return build_content_index(p["framework"], p.get("covered", {}))
+            if action == "completeness":
+                return completeness_check(p["framework"], p.get("covered", {}))
+            return {"findings": prepublication_qa(p.get("report_sections", p))}
+
         # ------------- Track 3
         if action == "build_request_pack":
             pack = build_data_request_pack(
@@ -280,9 +415,7 @@ class EngagementSuiteTool(BaseTool):
             from openharness.impact.engagements import DataRequestPack
 
             pack = DataRequestPack.model_validate(p["pack"])
-            submissions = [
-                DataRoomSubmission.model_validate(s) for s in p.get("submissions", [])
-            ]
+            submissions = [DataRoomSubmission.model_validate(s) for s in p.get("submissions", [])]
             report = score_completeness(pack, submissions)
             return {"report": report.model_dump(mode="json")}
 
@@ -290,9 +423,7 @@ class EngagementSuiteTool(BaseTool):
             from openharness.impact.engagements import DataRequestPack
 
             pack = DataRequestPack.model_validate(p["pack"])
-            submissions = [
-                DataRoomSubmission.model_validate(s) for s in p.get("submissions", [])
-            ]
+            submissions = [DataRoomSubmission.model_validate(s) for s in p.get("submissions", [])]
             rollup = rollup_multi_entity(pack, submissions)
             return {"rollup": rollup.model_dump(mode="json")}
 
@@ -315,9 +446,7 @@ class EngagementSuiteTool(BaseTool):
                 else get_default_benchmark_provider()
             )
             queries = [BenchmarkQuery.model_validate(q) for q in p.get("queries", [])]
-            dashboard = build_peer_dashboard(
-                provider, queries, engagement_id=args.engagement_id
-            )
+            dashboard = build_peer_dashboard(provider, queries, engagement_id=args.engagement_id)
             return {"dashboard": dashboard.model_dump(mode="json")}
 
         if action == "list_giin_benchmarks":
@@ -346,10 +475,7 @@ class EngagementSuiteTool(BaseTool):
             return {"rating": rating.model_dump(mode="json")}
 
         if action == "value_plan":
-            extra = [
-                ValueCreationAction.model_validate(a)
-                for a in p.get("extra_actions", [])
-            ]
+            extra = [ValueCreationAction.model_validate(a) for a in p.get("extra_actions", [])]
             plan = build_value_creation_plan(
                 engagement_id=args.engagement_id,
                 kpi_gaps=p.get("kpi_gaps", []),
@@ -366,9 +492,7 @@ class EngagementSuiteTool(BaseTool):
             # ``TypeError``. Strip conflicting keys and let the explicit
             # ``args.engagement_id`` win.
             payload_kwargs = {k: v for k, v in p.items() if k != "engagement_id"}
-            case = build_business_case(
-                engagement_id=args.engagement_id, **payload_kwargs
-            )
+            case = build_business_case(engagement_id=args.engagement_id, **payload_kwargs)
             return {"case": case.model_dump(mode="json")}
 
         if action == "run_scenario":
@@ -387,9 +511,7 @@ class EngagementSuiteTool(BaseTool):
 
         # ------------- Track 5
         if action == "list_report_templates":
-            return {
-                "templates": [t.model_dump(mode="json") for t in list_report_templates()]
-            }
+            return {"templates": [t.model_dump(mode="json") for t in list_report_templates()]}
 
         if action == "build_report":
             sections = [ReportSection.model_validate(s) for s in p.get("sections", [])]
@@ -501,9 +623,7 @@ class EngagementSuiteTool(BaseTool):
 
         # ------------- Track 7
         if action == "diagnostic_questions":
-            return {
-                "questions": [q.model_dump(mode="json") for q in list_diagnostic_questions()]
-            }
+            return {"questions": [q.model_dump(mode="json") for q in list_diagnostic_questions()]}
 
         if action == "score_diagnostic":
             answers = [DiagnosticAnswer.model_validate(a) for a in p.get("answers", [])]
@@ -661,8 +781,7 @@ class EngagementSuiteTool(BaseTool):
         if action == "list_verifier_marketplace":
             return {
                 "listings": [
-                    listing.model_dump(mode="json")
-                    for listing in list_verifier_marketplace()
+                    listing.model_dump(mode="json") for listing in list_verifier_marketplace()
                 ]
             }
 

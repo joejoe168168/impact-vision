@@ -89,6 +89,7 @@ app.add_typer(dd_app)
 
 # ---- serve-mcp command (Impact Vision MCP server) ----
 
+
 @app.command("serve-mcp")
 def serve_mcp(
     transport: str = typer.Option("stdio", help="Transport: stdio or sse"),
@@ -111,8 +112,7 @@ def serve_mcp(
     from openharness.impact.mcp_server import mcp as mcp_server  # noqa: F811
 
     print(
-        f"impact-vision serve-mcp: exposing {_resolve_tool_count()} impact tools "
-        f"over {transport}",
+        f"impact-vision serve-mcp: exposing {_resolve_tool_count()} impact tools over {transport}",
         file=sys.stderr,
     )
     if transport == "sse":
@@ -122,6 +122,7 @@ def serve_mcp(
 
 
 # ---- serve-web command (Web console + REST gateway) ----
+
 
 @app.command("serve-web")
 def serve_web(
@@ -159,6 +160,7 @@ def serve_web(
 
 
 # ---- mcp subcommands ----
+
 
 @mcp_app.command("list")
 def mcp_list() -> None:
@@ -217,6 +219,7 @@ def mcp_remove(
 
 # ---- plugin subcommands ----
 
+
 @plugin_app.command("list")
 def plugin_list() -> None:
     """List installed plugins."""
@@ -256,6 +259,7 @@ def plugin_uninstall(
 
 
 # ---- cron subcommands ----
+
 
 @cron_app.command("start")
 def cron_start() -> None:
@@ -374,7 +378,9 @@ def cron_logs_cmd(
 @catalog_app.command("load")
 def catalog_load(
     excel_path: str | None = typer.Argument(None, help="Path to IRIS+ 5.3c Excel file"),
-    force: bool = typer.Option(False, "--force", "-f", help="Force reload from Excel even if JSON cache exists"),
+    force: bool = typer.Option(
+        False, "--force", "-f", help="Force reload from Excel even if JSON cache exists"
+    ),
 ) -> None:
     """Load the IRIS+ 5.3c catalog from Excel into the processed JSON cache."""
     from openharness.impact.catalog import (
@@ -506,12 +512,16 @@ def framework_scan_cmd(
     sasb = match_sasb_industry(sector, description)
     if sasb:
         top = sasb[0]
-        print(f"SASB: Best match = {top[0].industry} ({top[0].sector}), {len(top[0].topics)} topics")
+        print(
+            f"SASB: Best match = {top[0].industry} ({top[0].sector}), {len(top[0].topics)} topics"
+        )
     else:
         print("SASB: No industry match")
 
     tcfd = assess_tcfd_alignment(description)
-    print(f"TCFD: {tcfd['overall_coverage']}% coverage ({tcfd['addressed_disclosures']}/{tcfd['total_disclosures']})")
+    print(
+        f"TCFD: {tcfd['overall_coverage']}% coverage ({tcfd['addressed_disclosures']}/{tcfd['total_disclosures']})"
+    )
 
     sfdr = assess_sfdr_compliance(company_description=description)
     print(f"SFDR PAI: {sfdr['coverage_pct']}% coverage ({sfdr['addressed']}/{sfdr['total']})")
@@ -520,7 +530,9 @@ def framework_scan_cmd(
     print(f"EDCI: {edci['coverage_pct']}% coverage ({edci['addressed']}/{edci['total']})")
 
     unpri = assess_unpri_alignment(description)
-    print(f"UNPRI: {unpri['overall_coverage']}% alignment ({unpri['addressed_actions']}/{unpri['total_actions']})")
+    print(
+        f"UNPRI: {unpri['overall_coverage']}% alignment ({unpri['addressed_actions']}/{unpri['total_actions']})"
+    )
 
     toc = assess_toc_alignment(description)
     print(f"ToC: {toc['coverage_pct']}% alignment ({toc['addressed']}/{toc['total_principles']})")
@@ -568,7 +580,9 @@ def framework_xref_cmd(
 @dd_app.command("list")
 def dd_list_cmd(
     category: str | None = typer.Option(None, "--category", "-c", help="Filter by category"),
-    priority: str | None = typer.Option(None, "--priority", "-p", help="Filter by priority (high/medium/low)"),
+    priority: str | None = typer.Option(
+        None, "--priority", "-p", help="Filter by priority (high/medium/low)"
+    ),
 ) -> None:
     """List DD checklist questions."""
     from openharness.impact.dd_checklist import load_checklist
@@ -628,7 +642,9 @@ def dd_analyze_cmd(
 
 @app.command("ollama-setup")
 def ollama_setup_cmd(
-    base_url: str = typer.Option("http://localhost:11434/v1", "--base-url", help="Ollama API base URL"),
+    base_url: str = typer.Option(
+        "http://localhost:11434/v1", "--base-url", help="Ollama API base URL"
+    ),
     model: str = typer.Option("llama3.2", "--model", "-m", help="Model name available in Ollama"),
 ) -> None:
     """Configure Impact Vision to use Ollama (or any local OpenAI-compatible LLM).
@@ -795,14 +811,25 @@ def _prompt_model_for_profile(profile) -> str:
         if len(profile.allowed_models) == 1:
             return profile.allowed_models[0]
         options = [(value, value) for value in profile.allowed_models]
-        return _select_from_menu("Choose a model setting:", options, default_value=current if current in profile.allowed_models else profile.allowed_models[0])
+        return _select_from_menu(
+            "Choose a model setting:",
+            options,
+            default_value=current
+            if current in profile.allowed_models
+            else profile.allowed_models[0],
+        )
     if is_claude_family_provider(profile.provider):
-        options = [(value, f"{label} - {description}") for value, label, description in CLAUDE_MODEL_ALIAS_OPTIONS]
+        options = [
+            (value, f"{label} - {description}")
+            for value, label, description in CLAUDE_MODEL_ALIAS_OPTIONS
+        ]
         options.append(("__custom__", "Custom model ID"))
         selection = _select_from_menu(
             "Choose a model setting:",
             options,
-            default_value=current if any(value == current for value, _, _ in CLAUDE_MODEL_ALIAS_OPTIONS) else "__custom__",
+            default_value=current
+            if any(value == current for value, _, _ in CLAUDE_MODEL_ALIAS_OPTIONS)
+            else "__custom__",
         )
         if selection != "__custom__":
             return selection
@@ -863,9 +890,13 @@ def _select_setup_workflow(
                         ("", "  "),
                         (suffix_style, suffix.strip()),
                     ]
-            choices.append(questionary.Choice(title=title, value=name, checked=(name == default_value)))
+            choices.append(
+                questionary.Choice(title=title, value=name, checked=(name == default_value))
+            )
 
-        result = questionary.select("Choose a provider workflow:", choices=choices, default=default_value).ask()
+        result = questionary.select(
+            "Choose a provider workflow:", choices=choices, default=default_value
+        ).ask()
         if result is None:
             raise typer.Abort()
         return str(result)
@@ -986,7 +1017,11 @@ def _specialize_setup_target(manager, target: str) -> str:
         if choice == "claude-api":
             return choice
         defaults = {
-            "kimi-anthropic": ("Kimi (Anthropic-compatible)", "https://api.moonshot.cn/anthropic", "kimi-k2.5"),
+            "kimi-anthropic": (
+                "Kimi (Anthropic-compatible)",
+                "https://api.moonshot.cn/anthropic",
+                "kimi-k2.5",
+            ),
             "glm-anthropic": ("GLM (Anthropic-compatible)", "", "glm-4.5"),
             "minimax-anthropic": ("MiniMax (Anthropic-compatible)", "", "minimax-m1"),
         }
@@ -1032,7 +1067,9 @@ def _specialize_setup_target(manager, target: str) -> str:
             profile_label = "NaxtClaude"
         else:
             default_url = ""
-            profile_label = _text_prompt("Display name", default="Custom OpenAI").strip() or "Custom OpenAI"
+            profile_label = (
+                _text_prompt("Display name", default="Custom OpenAI").strip() or "Custom OpenAI"
+            )
             profile_name = profile_label.lower().replace(" ", "-")
         base_url = _text_prompt("Base URL", default=default_url).strip()
         if not base_url:
@@ -1155,7 +1192,16 @@ def _login_provider(provider: str) -> None:
         _bind_external_provider(provider)
         return
 
-    if provider in ("anthropic", "openai", "dashscope", "bedrock", "vertex", "moonshot", "gemini", "naxtclaude"):
+    if provider in (
+        "anthropic",
+        "openai",
+        "dashscope",
+        "bedrock",
+        "vertex",
+        "moonshot",
+        "gemini",
+        "naxtclaude",
+    ):
         label = _PROVIDER_LABELS.get(provider, provider)
         flow = ApiKeyFlow(provider=provider, prompt_text=f"Enter your {label} API key")
         try:
@@ -1198,7 +1244,11 @@ def _test_api_connection(manager, profile_name: str, model: str) -> None:
     base_url = profile.base_url or ""
     if profile.provider == "anthropic" or profile.api_format == "anthropic":
         url = (base_url.rstrip("/") if base_url else "https://api.anthropic.com") + "/v1/messages"
-        headers = {"x-api-key": cred, "anthropic-version": "2023-06-01", "content-type": "application/json"}
+        headers = {
+            "x-api-key": cred,
+            "anthropic-version": "2023-06-01",
+            "content-type": "application/json",
+        }
         body = {"model": model, "max_tokens": 10, "messages": [{"role": "user", "content": "Hi"}]}
     else:
         if base_url:
@@ -1299,7 +1349,9 @@ def setup_cmd(
 
 @auth_app.command("login")
 def auth_login(
-    provider: Optional[str] = typer.Argument(None, help="Provider name (anthropic, openai, copilot, …)"),
+    provider: Optional[str] = typer.Argument(
+        None, help="Provider name (anthropic, openai, copilot, …)"
+    ),
 ) -> None:
     """Interactively authenticate with a provider.
 
@@ -1353,12 +1405,16 @@ def auth_status_cmd() -> None:
     for name, info in profiles.items():
         status_str = "ready" if info["configured"] else info.get("auth_state", "missing auth")
         active_str = "<-- active" if info["active"] else ""
-        print(f"{name:<20} {info['provider']:<18} {info['auth_source']:<22} {status_str:<12} {active_str}")
+        print(
+            f"{name:<20} {info['provider']:<18} {info['auth_source']:<22} {status_str:<12} {active_str}"
+        )
 
 
 @auth_app.command("logout")
 def auth_logout(
-    provider: Optional[str] = typer.Argument(None, help="Provider to log out (default: active provider)"),
+    provider: Optional[str] = typer.Argument(
+        None, help="Provider to log out (default: active provider)"
+    ),
 ) -> None:
     """Clear stored authentication for a provider."""
     from openharness.auth.manager import AuthManager
@@ -1569,10 +1625,20 @@ def provider_add(
     auth_source: str = typer.Option(..., "--auth-source", help="Auth source name"),
     model: str = typer.Option(..., "--model", help="Default model"),
     base_url: str | None = typer.Option(None, "--base-url", help="Optional base URL"),
-    credential_slot: str | None = typer.Option(None, "--credential-slot", help="Optional profile-specific credential slot"),
-    allowed_models: list[str] | None = typer.Option(None, "--allowed-model", help="Allowed model values for this profile"),
-    context_window_tokens: int | None = typer.Option(None, "--context-window-tokens", help="Optional context window override for auto-compact"),
-    auto_compact_threshold_tokens: int | None = typer.Option(None, "--auto-compact-threshold-tokens", help="Optional explicit auto-compact threshold override"),
+    credential_slot: str | None = typer.Option(
+        None, "--credential-slot", help="Optional profile-specific credential slot"
+    ),
+    allowed_models: list[str] | None = typer.Option(
+        None, "--allowed-model", help="Allowed model values for this profile"
+    ),
+    context_window_tokens: int | None = typer.Option(
+        None, "--context-window-tokens", help="Optional context window override for auto-compact"
+    ),
+    auto_compact_threshold_tokens: int | None = typer.Option(
+        None,
+        "--auto-compact-threshold-tokens",
+        help="Optional explicit auto-compact threshold override",
+    ),
 ) -> None:
     """Create a provider profile."""
     from openharness.auth.manager import AuthManager
@@ -1589,8 +1655,14 @@ def provider_add(
             default_model=model,
             last_model=model,
             base_url=base_url,
-            credential_slot=credential_slot or _default_credential_slot_for_profile(name, auth_source),
-            allowed_models=allowed_models or ([model] if credential_slot or _default_credential_slot_for_profile(name, auth_source) else []),
+            credential_slot=credential_slot
+            or _default_credential_slot_for_profile(name, auth_source),
+            allowed_models=allowed_models
+            or (
+                [model]
+                if credential_slot or _default_credential_slot_for_profile(name, auth_source)
+                else []
+            ),
             context_window_tokens=context_window_tokens,
             auto_compact_threshold_tokens=auto_compact_threshold_tokens,
         ),
@@ -1607,10 +1679,20 @@ def provider_edit(
     auth_source: str | None = typer.Option(None, "--auth-source", help="Auth source name"),
     model: str | None = typer.Option(None, "--model", help="Default model"),
     base_url: str | None = typer.Option(None, "--base-url", help="Optional base URL"),
-    credential_slot: str | None = typer.Option(None, "--credential-slot", help="Optional profile-specific credential slot"),
-    allowed_models: list[str] | None = typer.Option(None, "--allowed-model", help="Allowed model values for this profile"),
-    context_window_tokens: int | None = typer.Option(None, "--context-window-tokens", help="Optional context window override for auto-compact"),
-    auto_compact_threshold_tokens: int | None = typer.Option(None, "--auto-compact-threshold-tokens", help="Optional explicit auto-compact threshold override"),
+    credential_slot: str | None = typer.Option(
+        None, "--credential-slot", help="Optional profile-specific credential slot"
+    ),
+    allowed_models: list[str] | None = typer.Option(
+        None, "--allowed-model", help="Allowed model values for this profile"
+    ),
+    context_window_tokens: int | None = typer.Option(
+        None, "--context-window-tokens", help="Optional context window override for auto-compact"
+    ),
+    auto_compact_threshold_tokens: int | None = typer.Option(
+        None,
+        "--auto-compact-threshold-tokens",
+        help="Optional explicit auto-compact threshold override",
+    ),
 ) -> None:
     """Edit a provider profile."""
     from openharness.auth.manager import AuthManager
@@ -1652,9 +1734,11 @@ def provider_remove(
         raise typer.Exit(1)
     print(f"Removed provider profile: {name}", flush=True)
 
+
 # ---------------------------------------------------------------------------
 # Main command
 # ---------------------------------------------------------------------------
+
 
 @app.callback(invoke_without_command=True)
 def main(
@@ -1854,7 +1938,9 @@ def main(
         logging.getLogger("openharness").setLevel(logging.DEBUG)
     elif os.environ.get("OPENHARNESS_LOG_LEVEL"):
         lvl = getattr(logging, os.environ["OPENHARNESS_LOG_LEVEL"].upper(), logging.WARNING)
-        logging.basicConfig(level=lvl, format="%(asctime)s [%(name)s] %(levelname)s %(message)s", stream=sys.stderr)
+        logging.basicConfig(
+            level=lvl, format="%(asctime)s [%(name)s] %(levelname)s %(message)s", stream=sys.stderr
+        )
 
     if dangerously_skip_permissions:
         permission_mode = "full_auto"
@@ -1892,7 +1978,9 @@ def main(
                 raise typer.Exit(1)
             print("Saved sessions:")
             for i, s in enumerate(sessions, 1):
-                print(f"  {i}. [{s['session_id']}] {s.get('summary', '?')[:50]} ({s['message_count']} msgs)")
+                print(
+                    f"  {i}. [{s['session_id']}] {s.get('summary', '?')[:50]} ({s['message_count']} msgs)"
+                )
             choice = typer.prompt("Enter session number or ID")
             try:
                 idx = int(choice) - 1
@@ -1933,7 +2021,9 @@ def main(
     if print_mode is not None:
         prompt = print_mode.strip()
         if not prompt:
-            print("Error: -p/--print requires a prompt value, e.g. -p 'your prompt'", file=sys.stderr)
+            print(
+                "Error: -p/--print requires a prompt value, e.g. -p 'your prompt'", file=sys.stderr
+            )
             raise typer.Exit(1)
         asyncio.run(
             run_print_mode(
@@ -1981,3 +2071,60 @@ def main(
             permission_mode=permission_mode,
         )
     )
+
+
+@framework_app.command("sfdr2")
+def framework_sfdr2_cmd(
+    article: str = typer.Option("8", help="Current SFDR article: 6, 8, or 9"),
+    holdings: Path = typer.Option(
+        ..., exists=True, readable=True, help="JSON array of portfolio holdings"
+    ),
+    threshold: float = typer.Option(0.70, min=0.0, max=1.0),
+) -> None:
+    """Preview migration to the proposed SFDR 2.0 categories."""
+    from openharness.impact.frameworks.sfdr_v2 import PortfolioHolding, migrate_from_v1
+
+    rows = [
+        PortfolioHolding.model_validate(row)
+        for row in json.loads(holdings.read_text(encoding="utf-8"))
+    ]
+    result = migrate_from_v1(article, rows)
+    if threshold != 0.70:
+        from openharness.impact.frameworks.sfdr_v2 import classify_sfdr_v2
+
+        result["result"] = classify_sfdr_v2(rows, result["result"].category, threshold)
+    print(json.dumps(result, indent=2, default=str))
+
+
+@framework_app.command("cn-disclosure")
+def framework_cn_disclosure_cmd(
+    listing_venue: str = typer.Option("sse_main"),
+    index: list[str] = typer.Option([], "--index"),
+    dual_listed_overseas: bool = typer.Option(False),
+) -> None:
+    """Determine SSE/SZSE sustainability-reporting obligation."""
+    from openharness.impact.engagements.regulatory import classify_cn_disclosure
+
+    print(json.dumps(classify_cn_disclosure(listing_venue, index, dual_listed_overseas), indent=2))
+
+
+@framework_app.command("mandatory-gaps")
+def framework_mandatory_gaps_cmd(
+    standard: str = typer.Option("sse_g14"),
+    covered: list[str] = typer.Option([], "--covered"),
+) -> None:
+    """Scan uncovered binding articles in a registered standard."""
+    from openharness.impact.standards_registry import mandatory_gap_scan
+
+    print(json.dumps(mandatory_gap_scan(standard, covered), indent=2))
+
+
+@dd_app.command("disclosure")
+def dd_disclosure_cmd(
+    topic: str = typer.Argument("climate"),
+    report: Path = typer.Option(..., exists=True, readable=True),
+) -> None:
+    """Analyze a report against a four-pillar disclosure checklist."""
+    from openharness.impact.disclosure_checklist import analyze_disclosure
+
+    print(json.dumps(analyze_disclosure(topic, report.read_text(encoding="utf-8")), indent=2))

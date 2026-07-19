@@ -81,12 +81,14 @@ def _check_auth() -> bool:
 @st.cache_resource
 def _load_store():
     from openharness.impact.database import get_metric_store
+
     return get_metric_store()
 
 
 @st.cache_resource
 def _load_dd_checklist():
     from openharness.impact.dd_checklist import load_checklist
+
     return load_checklist()
 
 
@@ -97,14 +99,16 @@ def main():
     st.title("Impact Vision Dashboard")
     st.caption("Open-source impact measurement and SDG alignment")
 
-    tabs = st.tabs([
-        "Company Assessment",
-        "IRIS+ Catalog",
-        "DD Checklist",
-        "Framework Scan",
-        "ESG Toolbox",
-        "Portfolio",
-    ])
+    tabs = st.tabs(
+        [
+            "Company Assessment",
+            "IRIS+ Catalog",
+            "DD Checklist",
+            "Framework Scan",
+            "ESG Toolbox",
+            "Portfolio",
+        ]
+    )
 
     with tabs[0]:
         _company_assessment_tab()
@@ -132,12 +136,17 @@ def _company_assessment_tab():
     with col1:
         name = st.text_input("Company Name", "BrightPath Finance")
         sector = st.text_input("Sector", "Financial Services")
-        description = st.text_area("Description", "Digital microfinance platform for smallholder farmers and women-led micro-enterprises in Sub-Saharan Africa.")
+        description = st.text_area(
+            "Description",
+            "Digital microfinance platform for smallholder farmers and women-led micro-enterprises in Sub-Saharan Africa.",
+        )
     with col2:
         themes = st.text_input("Impact Themes (comma-separated)", "Financial Inclusion")
         sdg_claims_str = st.text_input("Claimed SDGs (comma-separated numbers)", "1,5,8,10")
-        metrics_str = st.text_area("Reported Metrics (ID=value, one per line)",
-                                    "PI4060=45000\nOI8869=180\nOI6213=85\nOI1571=12\nOI1479=120\nOI4112=80")
+        metrics_str = st.text_area(
+            "Reported Metrics (ID=value, one per line)",
+            "PI4060=45000\nOI8869=180\nOI6213=85\nOI1571=12\nOI1479=120\nOI4112=80",
+        )
 
     if st.button("Run Assessment", type="primary"):
         from openharness.impact.models import Company
@@ -156,8 +165,12 @@ def _company_assessment_tab():
                 reported[k.strip()] = v.strip()
 
         company = Company(
-            name=name, sector=sector, description=description,
-            impact_themes=theme_list, sdg_claims=sdg_list, reported_metrics=reported,
+            name=name,
+            sector=sector,
+            description=description,
+            impact_themes=theme_list,
+            sdg_claims=sdg_list,
+            reported_metrics=reported,
         )
 
         col_a, col_b = st.columns(2)
@@ -167,20 +180,30 @@ def _company_assessment_tab():
             fd = assess_five_dimensions(company, store)
 
             dims = ["What", "Who", "How Much", "Contribution", "Risk"]
-            scores = [fd.what.score, fd.who.score, fd.how_much.score, fd.contribution.score, fd.risk.score]
+            scores = [
+                fd.what.score,
+                fd.who.score,
+                fd.how_much.score,
+                fd.contribution.score,
+                fd.risk.score,
+            ]
 
-            fig = go.Figure(data=go.Scatterpolar(
-                r=scores + [scores[0]],
-                theta=dims + [dims[0]],
-                fill='toself',
-                fillcolor='rgba(25,118,210,0.12)',
-                line=dict(color='#1976d2', width=2.5),
-                marker=dict(size=7, color='#1976d2'),
-                name='Score',
-            ))
+            fig = go.Figure(
+                data=go.Scatterpolar(
+                    r=scores + [scores[0]],
+                    theta=dims + [dims[0]],
+                    fill="toself",
+                    fillcolor="rgba(25,118,210,0.12)",
+                    line=dict(color="#1976d2", width=2.5),
+                    marker=dict(size=7, color="#1976d2"),
+                    name="Score",
+                )
+            )
             fig.update_layout(
                 polar=dict(radialaxis=dict(visible=True, range=[0, 5])),
-                showlegend=False, height=380, margin=dict(l=60, r=60, t=30, b=30),
+                showlegend=False,
+                height=380,
+                margin=dict(l=60, r=60, t=30, b=30),
             )
             st.plotly_chart(fig, use_container_width=True)
 
@@ -192,22 +215,50 @@ def _company_assessment_tab():
             top = [a for a in alignments if a.score > 0]
 
             sdg_colors_map = {
-                1: "#E5243B", 2: "#DDA63A", 3: "#4C9F38", 4: "#C5192D", 5: "#FF3A21",
-                6: "#26BDE2", 7: "#FCC30B", 8: "#A21942", 9: "#FD6925", 10: "#DD1367",
-                11: "#FD9D24", 12: "#BF8B2E", 13: "#3F7E44", 14: "#0A97D9", 15: "#56C02B",
-                16: "#00689D", 17: "#19486A",
+                1: "#E5243B",
+                2: "#DDA63A",
+                3: "#4C9F38",
+                4: "#C5192D",
+                5: "#FF3A21",
+                6: "#26BDE2",
+                7: "#FCC30B",
+                8: "#A21942",
+                9: "#FD6925",
+                10: "#DD1367",
+                11: "#FD9D24",
+                12: "#BF8B2E",
+                13: "#3F7E44",
+                14: "#0A97D9",
+                15: "#56C02B",
+                16: "#00689D",
+                17: "#19486A",
             }
 
             if top:
-                sdg_df = pd.DataFrame([{
-                    "SDG": f"SDG {a.goal}", "Score": a.score, "Confidence": a.confidence,
-                    "Color": sdg_colors_map.get(a.goal, "#1976d2"),
-                } for a in top])
-                fig2 = px.bar(sdg_df, x="SDG", y="Score",
-                              color_discrete_sequence=[sdg_colors_map.get(a.goal, "#1976d2") for a in top],
-                              range_y=[0, 100])
-                fig2.update_traces(marker_color=[sdg_colors_map.get(a.goal, "#1976d2") for a in top])
-                fig2.update_layout(height=380, margin=dict(l=50, r=20, t=20, b=50), showlegend=False)
+                sdg_df = pd.DataFrame(
+                    [
+                        {
+                            "SDG": f"SDG {a.goal}",
+                            "Score": a.score,
+                            "Confidence": a.confidence,
+                            "Color": sdg_colors_map.get(a.goal, "#1976d2"),
+                        }
+                        for a in top
+                    ]
+                )
+                fig2 = px.bar(
+                    sdg_df,
+                    x="SDG",
+                    y="Score",
+                    color_discrete_sequence=[sdg_colors_map.get(a.goal, "#1976d2") for a in top],
+                    range_y=[0, 100],
+                )
+                fig2.update_traces(
+                    marker_color=[sdg_colors_map.get(a.goal, "#1976d2") for a in top]
+                )
+                fig2.update_layout(
+                    height=380, margin=dict(l=50, r=20, t=20, b=50), showlegend=False
+                )
                 st.plotly_chart(fig2, use_container_width=True)
             else:
                 st.info("No SDG alignments detected. Report more IRIS+ metrics.")
@@ -231,15 +282,20 @@ def _company_assessment_tab():
             from openharness.tools.impact.common import normalize_sector
 
             five_d_scores = {
-                "what": fd.what.score, "who": fd.who.score,
-                "how_much": fd.how_much.score, "contribution": fd.contribution.score,
+                "what": fd.what.score,
+                "who": fd.who.score,
+                "how_much": fd.how_much.score,
+                "contribution": fd.contribution.score,
                 "risk": fd.risk.score,
             }
             # Normalise sector here too — the sector variable may carry
             # user-friendly labels like "Financial Services" that the
             # benchmark store keys via canonical short keys ("fintech").
             bm = compare_to_benchmark(
-                normalize_sector(sector), five_d_scores, fd.overall_score, gaps["coverage_percentage"]
+                normalize_sector(sector),
+                five_d_scores,
+                fd.overall_score,
+                gaps["coverage_percentage"],
             )
             if bm.get("benchmark_available"):
                 st.subheader("Sector Benchmark Comparison")
@@ -250,18 +306,57 @@ def _company_assessment_tab():
                 bm_bench = [bm["dimensions"][d]["benchmark"] for d in bm_dims]
                 bm_labels = [d.replace("_", " ").title() for d in bm_dims]
 
-                fig3 = go.Figure(data=[
-                    go.Bar(name="Your Score", x=bm_labels, y=bm_actual, marker_color="#1976d2"),
-                    go.Bar(name="Benchmark", x=bm_labels, y=bm_bench, marker_color="#b0bec5"),
-                ])
-                fig3.update_layout(barmode="group", yaxis_range=[0, 5.5], height=320,
-                                   margin=dict(l=40, r=20, t=20, b=40), legend=dict(orientation="h", y=1.08))
+                fig3 = go.Figure(
+                    data=[
+                        go.Bar(name="Your Score", x=bm_labels, y=bm_actual, marker_color="#1976d2"),
+                        go.Bar(name="Benchmark", x=bm_labels, y=bm_bench, marker_color="#b0bec5"),
+                    ]
+                )
+                fig3.update_layout(
+                    barmode="group",
+                    yaxis_range=[0, 5.5],
+                    height=320,
+                    margin=dict(l=40, r=20, t=20, b=40),
+                    legend=dict(orientation="h", y=1.08),
+                )
                 st.plotly_chart(fig3, use_container_width=True)
 
                 ov = bm["overall"]
                 delta = ov["delta"]
                 delta_str = f"+{delta:.1f}" if delta > 0 else f"{delta:.1f}"
-                st.metric("Overall vs Benchmark", f"{ov['actual']:.1f} vs {ov['benchmark']:.1f}", delta_str)
+                st.metric(
+                    "Overall vs Benchmark",
+                    f"{ov['actual']:.1f} vs {ov['benchmark']:.1f}",
+                    delta_str,
+                )
+
+    with st.expander("Double-materiality matrix (v6)"):
+        from openharness.impact.engagements.materiality import (
+            ImpactMaterialityScore,
+            MaterialityConfig,
+            assess_materiality,
+            materiality_matrix_payload,
+        )
+
+        topic = st.text_input("Materiality topic ID", "climate")
+        m1, m2, m3, m4 = st.columns(4)
+        scale = m1.slider("Scale", 0, 5, 4)
+        scope = m2.slider("Scope", 0, 5, 4)
+        irremediability = m3.slider("Irremediability", 0, 5, 4)
+        likelihood = m4.slider("Likelihood", 0, 5, 5)
+        scored = ImpactMaterialityScore(
+            topic_id=topic,
+            scale=scale,
+            scope=scope,
+            irremediability=irremediability,
+            likelihood=likelihood,
+        )
+        materiality = assess_materiality([topic], [scored], [], MaterialityConfig())
+        matrix = materiality_matrix_payload(materiality)
+        st.plotly_chart(go.Figure(matrix), use_container_width=True)
+        st.caption(
+            f"Quadrant: {materiality[0].quadrant}; consequence: {materiality[0].disclosure_consequence}"
+        )
 
 
 def _iris_catalog_tab():
@@ -272,7 +367,11 @@ def _iris_catalog_tab():
     with search_col:
         query = st.text_input("Search metrics", "financial inclusion")
     with filter_col:
-        sdg_filter = st.selectbox("Filter by SDG", [None] + list(range(1, 18)), format_func=lambda x: f"SDG {x}" if x else "All")
+        sdg_filter = st.selectbox(
+            "Filter by SDG",
+            [None] + list(range(1, 18)),
+            format_func=lambda x: f"SDG {x}" if x else "All",
+        )
 
     if query:
         results = store.search(query, limit=20)
@@ -314,6 +413,7 @@ def _dd_checklist_tab():
 
     if doc_text:
         from openharness.impact.dd_checklist import analyze_document_coverage
+
         cats_filter = selected_cats if selected_cats else None
         result = analyze_document_coverage(doc_text, categories=cats_filter)
         st.progress(result.coverage_pct / 100, text=f"Coverage: {result.coverage_pct}%")
@@ -328,15 +428,25 @@ def _dd_checklist_tab():
         if result.addressed:
             with st.expander(f"Addressed Questions ({len(result.addressed)})", expanded=False):
                 for match in sorted(result.addressed, key=lambda m: -m.confidence):
-                    ev_icon = {1: "1\uFE0F\u20E3", 2: "2\uFE0F\u20E3", 3: "3\uFE0F\u20E3", 4: "4\uFE0F\u20E3", 5: "5\uFE0F\u20E3"}.get(match.evidence_level, "")
+                    ev_icon = {
+                        1: "1\ufe0f\u20e3",
+                        2: "2\ufe0f\u20e3",
+                        3: "3\ufe0f\u20e3",
+                        4: "4\ufe0f\u20e3",
+                        5: "5\ufe0f\u20e3",
+                    }.get(match.evidence_level, "")
                     st.write(f"**{match.question.id}**: {match.question.question}")
-                    st.write(f"Confidence: {match.confidence:.0%} | Evidence Level: {ev_icon} {match.evidence_label}")
+                    st.write(
+                        f"Confidence: {match.confidence:.0%} | Evidence Level: {ev_icon} {match.evidence_label}"
+                    )
                     if match.relevant_text_snippets:
                         st.caption(f'"{match.relevant_text_snippets[0][:150]}..."')
                     st.divider()
 
         if result.high_priority_gaps:
-            with st.expander(f"High-Priority Gaps ({len(result.high_priority_gaps)})", expanded=True):
+            with st.expander(
+                f"High-Priority Gaps ({len(result.high_priority_gaps)})", expanded=True
+            ):
                 for q in result.high_priority_gaps:
                     st.write(f"**{q.id}**: {q.question}")
                     if q.follow_up:
@@ -346,7 +456,9 @@ def _dd_checklist_tab():
         color = {"high": "🔴", "medium": "🟡", "low": "🟢"}.get(q.priority, "⚪")
         dim_tag = f" [{q.dimension}]" if q.dimension else ""
         with st.expander(f"{color} {q.id}: {q.question}{dim_tag}"):
-            st.write(f"**Category:** {q.category} | **Phase:** {q.phase} | **Priority:** {q.priority}")
+            st.write(
+                f"**Category:** {q.category} | **Phase:** {q.phase} | **Priority:** {q.priority}"
+            )
             if q.follow_up:
                 st.write(f"**Follow-up:** {q.follow_up}")
             if q.keywords:
@@ -356,9 +468,11 @@ def _dd_checklist_tab():
 def _framework_scan_tab():
     st.header("Multi-Framework ESG Scan")
 
-    description = st.text_area("Company description for framework assessment",
-                                "We track Scope 1 and Scope 2 emissions and have renewable energy targets. "
-                                "We report employee diversity metrics and have board ESG oversight.")
+    description = st.text_area(
+        "Company description for framework assessment",
+        "We track Scope 1 and Scope 2 emissions and have renewable energy targets. "
+        "We report employee diversity metrics and have board ESG oversight.",
+    )
     sector = st.text_input("Sector (for SASB matching)", "Technology", key="fw_sector")
 
     if st.button("Run Framework Scan", type="primary"):
@@ -376,19 +490,29 @@ def _framework_scan_tab():
         unpri = assess_unpri_alignment(fund_description=description)
         toc = assess_toc_alignment(description=description)
         fw_pcts = [
-            tcfd["overall_coverage"], sfdr["coverage_pct"], edci["coverage_pct"],
-            unpri["overall_coverage"], toc["coverage_pct"],
+            tcfd["overall_coverage"],
+            sfdr["coverage_pct"],
+            edci["coverage_pct"],
+            unpri["overall_coverage"],
+            toc["coverage_pct"],
         ]
         fw_colors = ["#1976d2", "#7b1fa2", "#2e7d32", "#f57c00", "#00838f"]
 
-        fig_overview = go.Figure(data=[go.Bar(
-            x=fw_names, y=fw_pcts,
-            marker_color=fw_colors,
-            text=[f"{p}%" for p in fw_pcts], textposition="outside",
-        )])
+        fig_overview = go.Figure(
+            data=[
+                go.Bar(
+                    x=fw_names,
+                    y=fw_pcts,
+                    marker_color=fw_colors,
+                    text=[f"{p}%" for p in fw_pcts],
+                    textposition="outside",
+                )
+            ]
+        )
         fig_overview.update_layout(
             yaxis=dict(range=[0, 110], title="Coverage %"),
-            height=320, margin=dict(l=50, r=20, t=20, b=50),
+            height=320,
+            margin=dict(l=50, r=20, t=20, b=50),
             showlegend=False,
         )
         st.plotly_chart(fig_overview, use_container_width=True)
@@ -397,19 +521,31 @@ def _framework_scan_tab():
 
         with col1:
             st.subheader("TCFD / IFRS S2")
-            st.progress(tcfd["overall_coverage"] / 100, text=f"{tcfd['overall_coverage']}% coverage")
+            st.progress(
+                tcfd["overall_coverage"] / 100, text=f"{tcfd['overall_coverage']}% coverage"
+            )
             for p in tcfd["pillars"]:
-                st.write(f"**{p['name']}**: {p['coverage_pct']}% ({len(p['addressed'])}/{p['total_disclosures']})")
+                st.write(
+                    f"**{p['name']}**: {p['coverage_pct']}% ({len(p['addressed'])}/{p['total_disclosures']})"
+                )
 
             st.subheader("SFDR PAI")
-            st.progress(sfdr["coverage_pct"] / 100, text=f"{sfdr['coverage_pct']}% ({sfdr['addressed']}/14)")
+            st.progress(
+                sfdr["coverage_pct"] / 100, text=f"{sfdr['coverage_pct']}% ({sfdr['addressed']}/14)"
+            )
 
             st.subheader("UNPRI")
-            st.progress(unpri["overall_coverage"] / 100, text=f"{unpri['overall_coverage']}% ({unpri['addressed_actions']}/{unpri['total_actions']})")
+            st.progress(
+                unpri["overall_coverage"] / 100,
+                text=f"{unpri['overall_coverage']}% ({unpri['addressed_actions']}/{unpri['total_actions']})",
+            )
 
         with col2:
             st.subheader("EDCI")
-            st.progress(edci["coverage_pct"] / 100, text=f"{edci['coverage_pct']}% ({edci['addressed']}/{edci['total']})")
+            st.progress(
+                edci["coverage_pct"] / 100,
+                text=f"{edci['coverage_pct']}% ({edci['addressed']}/{edci['total']})",
+            )
             for cat, data in edci["by_category"].items():
                 st.write(f"  {cat}: {data['coverage_pct']}%")
 
@@ -425,7 +561,10 @@ def _framework_scan_tab():
                 st.info("No SASB match found")
 
             st.subheader("Theory of Change")
-            st.progress(toc["coverage_pct"] / 100, text=f"{toc['coverage_pct']}% ({toc['addressed']}/{toc['total_principles']})")
+            st.progress(
+                toc["coverage_pct"] / 100,
+                text=f"{toc['coverage_pct']}% ({toc['addressed']}/{toc['total_principles']})",
+            )
 
 
 def _esg_toolbox_tab():
@@ -443,12 +582,16 @@ def _esg_toolbox_tab():
     category_labels = {"all": "All", **{key: key.title() for key in TOOLBOX_CATEGORIES}}
     filter_col, search_col = st.columns([1, 2])
     with filter_col:
-        category = st.selectbox("Category", list(category_labels.keys()), format_func=lambda key: category_labels[key])
+        category = st.selectbox(
+            "Category", list(category_labels.keys()), format_func=lambda key: category_labels[key]
+        )
     with search_col:
         query = st.text_input("Search modules", "carbon disclosure")
 
     category_arg = None if category == "all" else category
-    modules = search_toolbox_tools(query, category_arg) if query else list_toolbox_tools(category_arg)
+    modules = (
+        search_toolbox_tools(query, category_arg) if query else list_toolbox_tools(category_arg)
+    )
     if not modules:
         st.info("No matching modules.")
         return
@@ -476,7 +619,11 @@ def _esg_toolbox_tab():
         sector = st.text_input("Sector", "Manufacturing")
         jurisdiction = st.text_input("Jurisdiction or market", "EU")
     with col_evidence:
-        metrics_str = st.text_area("Impact metrics (ID=value, one per line)", "OI4112=1200 tCO2e\nOI6697=2600 MWh", height=90)
+        metrics_str = st.text_area(
+            "Impact metrics (ID=value, one per line)",
+            "OI4112=1200 tCO2e\nOI6697=2600 MWh",
+            height=90,
+        )
         product_code = st.text_input("Product/CN/HS code", "")
         supplier_profile = st.text_area("Supplier or site profile", "", height=70)
 
@@ -508,27 +655,42 @@ def _esg_toolbox_tab():
     score_cols[2].metric("Matched", len(readiness.matched_requirement_ids))
     score_cols[3].metric("Gaps", len(readiness.gap_requirement_ids))
 
-    fig = go.Figure(data=[go.Bar(
-        x=["Matched", "Missing"],
-        y=[len(readiness.matched_requirement_ids), len(readiness.gap_requirement_ids)],
-        marker_color=["#2e7d32", "#c62828"],
-        text=[len(readiness.matched_requirement_ids), len(readiness.gap_requirement_ids)],
-        textposition="outside",
-    )])
-    fig.update_layout(height=260, margin=dict(l=40, r=20, t=20, b=40), showlegend=False, yaxis_title="Requirements")
+    fig = go.Figure(
+        data=[
+            go.Bar(
+                x=["Matched", "Missing"],
+                y=[len(readiness.matched_requirement_ids), len(readiness.gap_requirement_ids)],
+                marker_color=["#2e7d32", "#c62828"],
+                text=[len(readiness.matched_requirement_ids), len(readiness.gap_requirement_ids)],
+                textposition="outside",
+            )
+        ]
+    )
+    fig.update_layout(
+        height=260,
+        margin=dict(l=40, r=20, t=20, b=40),
+        showlegend=False,
+        yaxis_title="Requirements",
+    )
     st.plotly_chart(fig, use_container_width=True)
 
-    workflow_tab, input_tab, output_tab, gaps_tab = st.tabs(["Impact Workflow", "AI Input Plan", "Output Design", "Evidence Gaps"])
+    workflow_tab, input_tab, output_tab, gaps_tab = st.tabs(
+        ["Impact Workflow", "AI Input Plan", "Output Design", "Evidence Gaps"]
+    )
 
     with workflow_tab:
-        rec_df = pd.DataFrame([rec.model_dump(mode="json") for rec in workflow.improves_impact_tools])
+        rec_df = pd.DataFrame(
+            [rec.model_dump(mode="json") for rec in workflow.improves_impact_tools]
+        )
         st.dataframe(rec_df, use_container_width=True, hide_index=True)
         st.write("**Suggested sequence**")
         for step in workflow.suggested_sequence:
             st.write(f"- {step}")
 
     with input_tab:
-        input_df = pd.DataFrame([field.model_dump(mode="json") for field in workflow.input_plan.minimum_fields])
+        input_df = pd.DataFrame(
+            [field.model_dump(mode="json") for field in workflow.input_plan.minimum_fields]
+        )
         st.dataframe(input_df, use_container_width=True, hide_index=True)
         if workflow.input_plan.next_questions:
             st.write("**Next questions**")
@@ -577,7 +739,9 @@ def _parse_metric_lines(metrics_str: str) -> dict[str, str]:
 
 def _portfolio_tab():
     st.header("Portfolio Batch Analysis")
-    st.info("Upload a CSV file with columns: name, sector, geography, description, impact_themes, sdg_claims, and any IRIS+ metric IDs as columns.")
+    st.info(
+        "Upload a CSV file with columns: name, sector, geography, description, impact_themes, sdg_claims, and any IRIS+ metric IDs as columns."
+    )
 
     uploaded = st.file_uploader("Upload portfolio CSV", type=["csv"])
     if uploaded:
@@ -594,15 +758,23 @@ def _portfolio_tab():
             for key, val in row.items():
                 if key.startswith(("PI", "OI", "OD", "FP", "PD")) and val:
                     metrics[key] = val
-            companies.append(Company(
-                name=row.get("name", row.get("company_name", row.get("company", ""))),
-                sector=row.get("sector", ""),
-                geography=row.get("geography", ""),
-                description=row.get("description", ""),
-                impact_themes=[t.strip() for t in row.get("impact_themes", "").split(",") if t.strip()],
-                reported_metrics=metrics,
-                sdg_claims=[int(x.strip()) for x in row.get("sdg_claims", "").split(",") if x.strip().isdigit()],
-            ))
+            companies.append(
+                Company(
+                    name=row.get("name", row.get("company_name", row.get("company", ""))),
+                    sector=row.get("sector", ""),
+                    geography=row.get("geography", ""),
+                    description=row.get("description", ""),
+                    impact_themes=[
+                        t.strip() for t in row.get("impact_themes", "").split(",") if t.strip()
+                    ],
+                    reported_metrics=metrics,
+                    sdg_claims=[
+                        int(x.strip())
+                        for x in row.get("sdg_claims", "").split(",")
+                        if x.strip().isdigit()
+                    ],
+                )
+            )
 
         st.write(f"Loaded {len(companies)} companies")
 
@@ -637,7 +809,10 @@ def _portfolio_tab():
                 }
                 results.append(result)
                 company_details[c.name] = {
-                    "fd": fd, "gaps": gaps, "sdg": sdg, "company": c,
+                    "fd": fd,
+                    "gaps": gaps,
+                    "sdg": sdg,
+                    "company": c,
                 }
 
             df = pd.DataFrame(results)
@@ -654,15 +829,19 @@ def _portfolio_tab():
             kpi_cols[3].metric("Total Metrics", total_metrics)
             kpi_cols[4].metric("SDG Coverage", f"{total_sdgs} alignments")
 
-            giin_comparison = compare_to_giin_survey(avg_5d, avg_coverage, len(set().union(*[set(c.sdg_claims) for c in companies])))
+            giin_comparison = compare_to_giin_survey(
+                avg_5d, avg_coverage, len(set().union(*[set(c.sdg_claims) for c in companies]))
+            )
             if giin_comparison:
                 st.subheader("GIIN Survey Benchmark Comparison")
                 giin_cols = st.columns(3)
-                for i, (key, label) in enumerate([
-                    ("five_d_score", "5D Score"),
-                    ("core_metric_coverage", "Metric Coverage"),
-                    ("sdg_count", "SDG Count"),
-                ]):
+                for i, (key, label) in enumerate(
+                    [
+                        ("five_d_score", "5D Score"),
+                        ("core_metric_coverage", "Metric Coverage"),
+                        ("sdg_count", "SDG Count"),
+                    ]
+                ):
                     comp = giin_comparison["comparisons"].get(key, {})
                     if comp:
                         delta = comp.get("delta", 0)
@@ -676,18 +855,45 @@ def _portfolio_tab():
             st.subheader("Company Comparison")
             st.dataframe(df, use_container_width=True)
 
+            from openharness.impact.portfolio_rollup import build_portfolio_report
+            from openharness.impact.report_templates.portfolio_report import render_portfolio_report
+
+            portfolio_html = render_portfolio_report(
+                build_portfolio_report(companies, {c.name: [] for c in companies})
+            )
+            st.download_button(
+                "Download v6 portfolio report",
+                portfolio_html,
+                file_name="portfolio-impact-report.html",
+                mime="text/html",
+            )
+
             col_chart1, col_chart2 = st.columns(2)
             with col_chart1:
-                fig = px.bar(df, x="Company", y="5D Score", color="Grade",
-                             title="5-Dimension Scores by Company")
+                fig = px.bar(
+                    df,
+                    x="Company",
+                    y="5D Score",
+                    color="Grade",
+                    title="5-Dimension Scores by Company",
+                )
                 st.plotly_chart(fig, use_container_width=True)
 
             with col_chart2:
                 if "Sector" in df.columns:
-                    sector_df = df.groupby("Sector").agg({"5D Score": "mean", "Company": "count"}).reset_index()
+                    sector_df = (
+                        df.groupby("Sector")
+                        .agg({"5D Score": "mean", "Company": "count"})
+                        .reset_index()
+                    )
                     sector_df.columns = ["Sector", "Avg 5D Score", "Count"]
-                    fig2 = px.bar(sector_df, x="Sector", y="Avg 5D Score", text="Count",
-                                  title="Average Score by Sector")
+                    fig2 = px.bar(
+                        sector_df,
+                        x="Sector",
+                        y="Avg 5D Score",
+                        text="Count",
+                        title="Average Score by Sector",
+                    )
                     st.plotly_chart(fig2, use_container_width=True)
 
             st.subheader("Company Drill-Down")
@@ -710,24 +916,39 @@ def _portfolio_tab():
 
                 with dc2:
                     dims = ["What", "Who", "How Much", "Contribution", "Risk"]
-                    scores = [fd.what.score, fd.who.score, fd.how_much.score, fd.contribution.score, fd.risk.score]
-                    fig_radar = go.Figure(data=go.Scatterpolar(
-                        r=scores + [scores[0]], theta=dims + [dims[0]],
-                        fill='toself', fillcolor='rgba(25,118,210,0.12)',
-                        line=dict(color='#1976d2', width=2.5),
-                    ))
+                    scores = [
+                        fd.what.score,
+                        fd.who.score,
+                        fd.how_much.score,
+                        fd.contribution.score,
+                        fd.risk.score,
+                    ]
+                    fig_radar = go.Figure(
+                        data=go.Scatterpolar(
+                            r=scores + [scores[0]],
+                            theta=dims + [dims[0]],
+                            fill="toself",
+                            fillcolor="rgba(25,118,210,0.12)",
+                            line=dict(color="#1976d2", width=2.5),
+                        )
+                    )
                     fig_radar.update_layout(
                         polar=dict(radialaxis=dict(visible=True, range=[0, 5])),
-                        height=300, margin=dict(l=60, r=60, t=30, b=30),
+                        height=300,
+                        margin=dict(l=60, r=60, t=30, b=30),
                         showlegend=False,
                     )
                     st.plotly_chart(fig_radar, use_container_width=True)
 
-                top_sdgs = sorted([a for a in sdg_list if a.score > 0], key=lambda a: a.score, reverse=True)[:5]
+                top_sdgs = sorted(
+                    [a for a in sdg_list if a.score > 0], key=lambda a: a.score, reverse=True
+                )[:5]
                 if top_sdgs:
                     st.write("**Top SDG Alignments:**")
                     for a in top_sdgs:
-                        st.write(f"  SDG {a.goal} ({a.goal_name}): {a.score:.0f}/100 [{a.confidence}]")
+                        st.write(
+                            f"  SDG {a.goal} ({a.goal_name}): {a.score:.0f}/100 [{a.confidence}]"
+                        )
 
 
 if __name__ == "__main__":

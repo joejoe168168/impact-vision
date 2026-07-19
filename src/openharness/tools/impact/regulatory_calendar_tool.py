@@ -11,6 +11,8 @@ from openharness.impact.engagements.regulatory import Jurisdiction
 from openharness.impact.regulatory_calendar import (
     build_regulatory_calendar,
     jurisdiction_options,
+    issb_status,
+    issb_summary,
     regulatory_watchlist,
     render_regulatory_calendar_text,
 )
@@ -18,7 +20,9 @@ from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 
 class RegulatoryCalendarInput(BaseModel):
-    action: Literal["schedule", "list_jurisdictions", "watchlist"] = "schedule"
+    action: Literal[
+        "schedule", "list_jurisdictions", "watchlist", "issb_status", "issb_summary"
+    ] = "schedule"
     jurisdiction: Jurisdiction = Field(default="EU")
     fiscal_year_end: str = Field(
         default="",
@@ -27,6 +31,7 @@ class RegulatoryCalendarInput(BaseModel):
     engagement_id: str = ""
     owner: str = ""
     output_format: Literal["json", "text"] = "text"
+    query: str = ""
 
 
 class RegulatoryCalendarTool(BaseTool):
@@ -43,7 +48,19 @@ class RegulatoryCalendarTool(BaseTool):
         return True
 
     async def execute(self, arguments: BaseModel, context: ToolExecutionContext) -> ToolResult:
-        args = arguments if isinstance(arguments, RegulatoryCalendarInput) else RegulatoryCalendarInput.model_validate(arguments)
+        args = (
+            arguments
+            if isinstance(arguments, RegulatoryCalendarInput)
+            else RegulatoryCalendarInput.model_validate(arguments)
+        )
+
+        if args.action in {"issb_status", "issb_summary"}:
+            payload = (
+                {"jurisdictions": issb_summary()}
+                if args.action == "issb_summary"
+                else issb_status(args.query or str(args.jurisdiction))
+            )
+            return ToolResult(output=json.dumps(payload, indent=2), metadata=payload)
 
         if args.action == "watchlist":
             # The watch-list is market-wide; the jurisdiction field only scopes

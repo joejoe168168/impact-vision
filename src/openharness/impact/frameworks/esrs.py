@@ -22,7 +22,52 @@ suppliers.
 
 from __future__ import annotations
 
+from pathlib import Path
+from typing import Literal
+
+import yaml
 from pydantic import BaseModel, Field
+
+
+class ESRSDatapoint(BaseModel):
+    datapoint_id: str
+    standard: str
+    name: str
+    mandatory: bool
+    phase_in: str | None = None
+    removed_in_simplification: bool = False
+    source: str
+    status: Literal["draft", "active"] = "draft"
+
+
+def load_simplified_datapoints(path: str | Path | None = None) -> list[ESRSDatapoint]:
+    data_path = (
+        Path(path)
+        if path
+        else Path(__file__).resolve().parents[4] / "data" / "esrs_simplified_2026.yaml"
+    )
+    payload = yaml.safe_load(data_path.read_text(encoding="utf-8"))
+    rows = list(payload.get("datapoints", []))
+    counts = payload.get("standard_counts", {})
+    seeded = {
+        standard: sum(1 for row in rows if row["standard"] == standard) for standard in counts
+    }
+    for standard, target_count in counts.items():
+        prefix = standard.replace(" ", "").replace("ESRS", "ESRS2")
+        for number in range(seeded.get(standard, 0) + 1, int(target_count) + 1):
+            rows.append(
+                {
+                    "datapoint_id": f"{prefix}-DRAFT-{number:03d}",
+                    "standard": standard,
+                    "name": f"Simplified {standard} datapoint {number}",
+                    "mandatory": True,
+                    "phase_in": None,
+                    "removed_in_simplification": False,
+                    "source": payload["source"],
+                    "status": payload.get("status", "draft"),
+                }
+            )
+    return [ESRSDatapoint.model_validate(row) for row in rows]
 
 
 class ESRSDisclosure(BaseModel):
@@ -61,11 +106,20 @@ ESRS_STANDARDS: list[ESRSTopic] = [
         disclosures=[
             ESRSDisclosure(code="ESRS1-1", name="Basis for preparation and presentation"),
             ESRSDisclosure(code="ESRS1-2", name="Qualitative characteristics of information"),
-            ESRSDisclosure(code="ESRS1-3", name="Double materiality as the basis for sustainability disclosures"),
+            ESRSDisclosure(
+                code="ESRS1-3",
+                name="Double materiality as the basis for sustainability disclosures",
+            ),
             ESRSDisclosure(code="ESRS1-4", name="Due diligence and value chain boundaries"),
             ESRSDisclosure(code="ESRS1-5", name="Time horizons and reporting boundaries"),
         ],
-        keywords=["double materiality", "value chain", "due diligence", "reporting boundary", "sustainability statement"],
+        keywords=[
+            "double materiality",
+            "value chain",
+            "due diligence",
+            "reporting boundary",
+            "sustainability statement",
+        ],
     ),
     ESRSTopic(
         code="ESRS 2",
@@ -73,22 +127,59 @@ ESRS_STANDARDS: list[ESRSTopic] = [
         pillar="cross-cutting",
         description="Governance, strategy, IRO management, metrics & targets (applies to all undertakings)",
         disclosures=[
-            ESRSDisclosure(code="GOV-1", name="Role of administrative bodies", gri_cross_refs=["2-9", "2-12"]),
-            ESRSDisclosure(code="GOV-2", name="Information provided to and sustainability matters addressed by administrative bodies"),
-            ESRSDisclosure(code="GOV-3", name="Integration of sustainability into incentive schemes"),
+            ESRSDisclosure(
+                code="GOV-1", name="Role of administrative bodies", gri_cross_refs=["2-9", "2-12"]
+            ),
+            ESRSDisclosure(
+                code="GOV-2",
+                name="Information provided to and sustainability matters addressed by administrative bodies",
+            ),
+            ESRSDisclosure(
+                code="GOV-3", name="Integration of sustainability into incentive schemes"
+            ),
             ESRSDisclosure(code="GOV-4", name="Statement on sustainability due diligence"),
-            ESRSDisclosure(code="GOV-5", name="Risk management and internal controls over sustainability reporting"),
+            ESRSDisclosure(
+                code="GOV-5",
+                name="Risk management and internal controls over sustainability reporting",
+            ),
             ESRSDisclosure(code="SBM-1", name="Strategy, business model and value chain"),
             ESRSDisclosure(code="SBM-2", name="Interests and views of stakeholders"),
-            ESRSDisclosure(code="SBM-3", name="Material impacts, risks and opportunities and their interaction with strategy and business model"),
-            ESRSDisclosure(code="IRO-1", name="Description of the processes to identify and assess material IROs"),
-            ESRSDisclosure(code="IRO-2", name="Disclosure requirements in ESRS covered by the sustainability statement"),
-            ESRSDisclosure(code="MDR-P", name="Policies adopted to manage material sustainability matters", gri_cross_refs=["3-3"]),
-            ESRSDisclosure(code="MDR-A", name="Actions and resources in relation to material sustainability matters"),
-            ESRSDisclosure(code="MDR-M", name="Metrics in relation to material sustainability matters"),
-            ESRSDisclosure(code="MDR-T", name="Tracking effectiveness of policies and actions through targets"),
+            ESRSDisclosure(
+                code="SBM-3",
+                name="Material impacts, risks and opportunities and their interaction with strategy and business model",
+            ),
+            ESRSDisclosure(
+                code="IRO-1",
+                name="Description of the processes to identify and assess material IROs",
+            ),
+            ESRSDisclosure(
+                code="IRO-2",
+                name="Disclosure requirements in ESRS covered by the sustainability statement",
+            ),
+            ESRSDisclosure(
+                code="MDR-P",
+                name="Policies adopted to manage material sustainability matters",
+                gri_cross_refs=["3-3"],
+            ),
+            ESRSDisclosure(
+                code="MDR-A",
+                name="Actions and resources in relation to material sustainability matters",
+            ),
+            ESRSDisclosure(
+                code="MDR-M", name="Metrics in relation to material sustainability matters"
+            ),
+            ESRSDisclosure(
+                code="MDR-T", name="Tracking effectiveness of policies and actions through targets"
+            ),
         ],
-        keywords=["governance", "strategy", "due diligence", "stakeholder", "materiality", "risk management"],
+        keywords=[
+            "governance",
+            "strategy",
+            "due diligence",
+            "stakeholder",
+            "materiality",
+            "risk management",
+        ],
     ),
     # Environment
     ESRSTopic(
@@ -97,17 +188,47 @@ ESRS_STANDARDS: list[ESRSTopic] = [
         pillar="environment",
         description="Climate change mitigation, adaptation, energy. Aligns with TCFD/ISSB S2.",
         disclosures=[
-            ESRSDisclosure(code="E1-1", name="Transition plan for climate change mitigation", data_points=["GHG reduction targets", "Decarbonisation levers"]),
-            ESRSDisclosure(code="E1-2", name="Policies related to climate change mitigation and adaptation"),
+            ESRSDisclosure(
+                code="E1-1",
+                name="Transition plan for climate change mitigation",
+                data_points=["GHG reduction targets", "Decarbonisation levers"],
+            ),
+            ESRSDisclosure(
+                code="E1-2", name="Policies related to climate change mitigation and adaptation"
+            ),
             ESRSDisclosure(code="E1-3", name="Actions and resources related to climate change"),
-            ESRSDisclosure(code="E1-4", name="Targets related to climate change mitigation and adaptation"),
-            ESRSDisclosure(code="E1-5", name="Energy consumption and mix", iris_cross_refs=["OI4112"], gri_cross_refs=["302-1"]),
-            ESRSDisclosure(code="E1-6", name="Gross Scopes 1, 2, 3 and Total GHG emissions", iris_cross_refs=["OI1479", "OI4112"], gri_cross_refs=["305-1", "305-2", "305-3"]),
+            ESRSDisclosure(
+                code="E1-4", name="Targets related to climate change mitigation and adaptation"
+            ),
+            ESRSDisclosure(
+                code="E1-5",
+                name="Energy consumption and mix",
+                iris_cross_refs=["OI4112"],
+                gri_cross_refs=["302-1"],
+            ),
+            ESRSDisclosure(
+                code="E1-6",
+                name="Gross Scopes 1, 2, 3 and Total GHG emissions",
+                iris_cross_refs=["OI1479", "OI4112"],
+                gri_cross_refs=["305-1", "305-2", "305-3"],
+            ),
             ESRSDisclosure(code="E1-7", name="GHG removals and GHG mitigation projects"),
             ESRSDisclosure(code="E1-8", name="Internal carbon pricing"),
-            ESRSDisclosure(code="E1-9", name="Anticipated financial effects from material physical and transition risks"),
+            ESRSDisclosure(
+                code="E1-9",
+                name="Anticipated financial effects from material physical and transition risks",
+            ),
         ],
-        keywords=["climate", "emission", "carbon", "ghg", "energy", "transition", "net zero", "decarbonisation"],
+        keywords=[
+            "climate",
+            "emission",
+            "carbon",
+            "ghg",
+            "energy",
+            "transition",
+            "net zero",
+            "decarbonisation",
+        ],
     ),
     ESRSTopic(
         code="E2",
@@ -118,11 +239,26 @@ ESRS_STANDARDS: list[ESRSTopic] = [
             ESRSDisclosure(code="E2-1", name="Policies related to pollution"),
             ESRSDisclosure(code="E2-2", name="Actions and resources related to pollution"),
             ESRSDisclosure(code="E2-3", name="Targets related to pollution"),
-            ESRSDisclosure(code="E2-4", name="Pollution of air, water and soil", gri_cross_refs=["305-7", "303-4"]),
-            ESRSDisclosure(code="E2-5", name="Substances of concern and substances of very high concern"),
-            ESRSDisclosure(code="E2-6", name="Anticipated financial effects from pollution-related impacts"),
+            ESRSDisclosure(
+                code="E2-4",
+                name="Pollution of air, water and soil",
+                gri_cross_refs=["305-7", "303-4"],
+            ),
+            ESRSDisclosure(
+                code="E2-5", name="Substances of concern and substances of very high concern"
+            ),
+            ESRSDisclosure(
+                code="E2-6", name="Anticipated financial effects from pollution-related impacts"
+            ),
         ],
-        keywords=["pollution", "air quality", "water pollution", "soil contamination", "chemical", "toxic"],
+        keywords=[
+            "pollution",
+            "air quality",
+            "water pollution",
+            "soil contamination",
+            "chemical",
+            "toxic",
+        ],
     ),
     ESRSTopic(
         code="E3",
@@ -131,10 +267,15 @@ ESRS_STANDARDS: list[ESRSTopic] = [
         description="Water consumption, water stress, marine resource management.",
         disclosures=[
             ESRSDisclosure(code="E3-1", name="Policies related to water and marine resources"),
-            ESRSDisclosure(code="E3-2", name="Actions and resources related to water and marine resources"),
+            ESRSDisclosure(
+                code="E3-2", name="Actions and resources related to water and marine resources"
+            ),
             ESRSDisclosure(code="E3-3", name="Targets related to water and marine resources"),
             ESRSDisclosure(code="E3-4", name="Water consumption", gri_cross_refs=["303-5"]),
-            ESRSDisclosure(code="E3-5", name="Anticipated financial effects from water and marine resource impacts"),
+            ESRSDisclosure(
+                code="E3-5",
+                name="Anticipated financial effects from water and marine resource impacts",
+            ),
         ],
         keywords=["water", "marine", "ocean", "aquatic", "water stress", "water consumption"],
     ),
@@ -146,10 +287,19 @@ ESRS_STANDARDS: list[ESRSTopic] = [
         disclosures=[
             ESRSDisclosure(code="E4-1", name="Transition plan on biodiversity and ecosystems"),
             ESRSDisclosure(code="E4-2", name="Policies related to biodiversity and ecosystems"),
-            ESRSDisclosure(code="E4-3", name="Actions and resources related to biodiversity and ecosystems"),
+            ESRSDisclosure(
+                code="E4-3", name="Actions and resources related to biodiversity and ecosystems"
+            ),
             ESRSDisclosure(code="E4-4", name="Targets related to biodiversity and ecosystems"),
-            ESRSDisclosure(code="E4-5", name="Impact metrics related to biodiversity and ecosystems", gri_cross_refs=["304-1", "304-2"]),
-            ESRSDisclosure(code="E4-6", name="Anticipated financial effects from biodiversity and ecosystem impacts"),
+            ESRSDisclosure(
+                code="E4-5",
+                name="Impact metrics related to biodiversity and ecosystems",
+                gri_cross_refs=["304-1", "304-2"],
+            ),
+            ESRSDisclosure(
+                code="E4-6",
+                name="Anticipated financial effects from biodiversity and ecosystem impacts",
+            ),
         ],
         keywords=["biodiversity", "ecosystem", "deforestation", "land use", "habitat", "species"],
     ),
@@ -159,12 +309,24 @@ ESRS_STANDARDS: list[ESRSTopic] = [
         pillar="environment",
         description="Resource inflows and outflows, waste management, circular economy.",
         disclosures=[
-            ESRSDisclosure(code="E5-1", name="Policies related to resource use and circular economy"),
-            ESRSDisclosure(code="E5-2", name="Actions and resources related to resource use and circular economy"),
-            ESRSDisclosure(code="E5-3", name="Targets related to resource use and circular economy"),
+            ESRSDisclosure(
+                code="E5-1", name="Policies related to resource use and circular economy"
+            ),
+            ESRSDisclosure(
+                code="E5-2",
+                name="Actions and resources related to resource use and circular economy",
+            ),
+            ESRSDisclosure(
+                code="E5-3", name="Targets related to resource use and circular economy"
+            ),
             ESRSDisclosure(code="E5-4", name="Resource inflows", gri_cross_refs=["301-1"]),
-            ESRSDisclosure(code="E5-5", name="Resource outflows", gri_cross_refs=["306-3", "306-5"]),
-            ESRSDisclosure(code="E5-6", name="Anticipated financial effects from resource use and circular economy impacts"),
+            ESRSDisclosure(
+                code="E5-5", name="Resource outflows", gri_cross_refs=["306-3", "306-5"]
+            ),
+            ESRSDisclosure(
+                code="E5-6",
+                name="Anticipated financial effects from resource use and circular economy impacts",
+            ),
         ],
         keywords=["circular economy", "waste", "recycling", "resource", "material", "packaging"],
     ),
@@ -176,24 +338,76 @@ ESRS_STANDARDS: list[ESRSTopic] = [
         description="Working conditions, equal treatment and opportunities, other work-related rights.",
         disclosures=[
             ESRSDisclosure(code="S1-1", name="Policies related to own workforce"),
-            ESRSDisclosure(code="S1-2", name="Processes for engaging with own workers and workers' representatives"),
-            ESRSDisclosure(code="S1-3", name="Processes to remediate negative impacts and channels for own workers to raise concerns"),
-            ESRSDisclosure(code="S1-4", name="Taking action on material impacts on own workforce and effectiveness"),
-            ESRSDisclosure(code="S1-5", name="Targets related to managing material negative impacts, advancing positive impacts, and managing material risks and opportunities"),
-            ESRSDisclosure(code="S1-6", name="Characteristics of the undertaking's employees", iris_cross_refs=["OI8869"], gri_cross_refs=["2-7"]),
-            ESRSDisclosure(code="S1-7", name="Characteristics of non-employee workers in the undertaking's own workforce"),
-            ESRSDisclosure(code="S1-8", name="Collective bargaining coverage and social dialogue", gri_cross_refs=["2-30"]),
-            ESRSDisclosure(code="S1-9", name="Diversity metrics", iris_cross_refs=["OI6213", "OI1075"], gri_cross_refs=["405-1"]),
+            ESRSDisclosure(
+                code="S1-2",
+                name="Processes for engaging with own workers and workers' representatives",
+            ),
+            ESRSDisclosure(
+                code="S1-3",
+                name="Processes to remediate negative impacts and channels for own workers to raise concerns",
+            ),
+            ESRSDisclosure(
+                code="S1-4",
+                name="Taking action on material impacts on own workforce and effectiveness",
+            ),
+            ESRSDisclosure(
+                code="S1-5",
+                name="Targets related to managing material negative impacts, advancing positive impacts, and managing material risks and opportunities",
+            ),
+            ESRSDisclosure(
+                code="S1-6",
+                name="Characteristics of the undertaking's employees",
+                iris_cross_refs=["OI8869"],
+                gri_cross_refs=["2-7"],
+            ),
+            ESRSDisclosure(
+                code="S1-7",
+                name="Characteristics of non-employee workers in the undertaking's own workforce",
+            ),
+            ESRSDisclosure(
+                code="S1-8",
+                name="Collective bargaining coverage and social dialogue",
+                gri_cross_refs=["2-30"],
+            ),
+            ESRSDisclosure(
+                code="S1-9",
+                name="Diversity metrics",
+                iris_cross_refs=["OI6213", "OI1075"],
+                gri_cross_refs=["405-1"],
+            ),
             ESRSDisclosure(code="S1-10", name="Adequate wages", gri_cross_refs=["202-1"]),
             ESRSDisclosure(code="S1-11", name="Social protection"),
             ESRSDisclosure(code="S1-12", name="Persons with disabilities"),
-            ESRSDisclosure(code="S1-13", name="Training and skills development metrics", gri_cross_refs=["404-1"]),
-            ESRSDisclosure(code="S1-14", name="Health and safety metrics", gri_cross_refs=["403-9"]),
+            ESRSDisclosure(
+                code="S1-13",
+                name="Training and skills development metrics",
+                gri_cross_refs=["404-1"],
+            ),
+            ESRSDisclosure(
+                code="S1-14", name="Health and safety metrics", gri_cross_refs=["403-9"]
+            ),
             ESRSDisclosure(code="S1-15", name="Work-life balance metrics"),
-            ESRSDisclosure(code="S1-16", name="Remuneration metrics (pay gap indicators)", iris_cross_refs=["OI1582"], gri_cross_refs=["405-2"]),
-            ESRSDisclosure(code="S1-17", name="Incidents, complaints and severe human rights impacts"),
+            ESRSDisclosure(
+                code="S1-16",
+                name="Remuneration metrics (pay gap indicators)",
+                iris_cross_refs=["OI1582"],
+                gri_cross_refs=["405-2"],
+            ),
+            ESRSDisclosure(
+                code="S1-17", name="Incidents, complaints and severe human rights impacts"
+            ),
         ],
-        keywords=["employee", "workforce", "labor", "worker", "health", "safety", "diversity", "pay gap", "training"],
+        keywords=[
+            "employee",
+            "workforce",
+            "labor",
+            "worker",
+            "health",
+            "safety",
+            "diversity",
+            "pay gap",
+            "training",
+        ],
     ),
     ESRSTopic(
         code="S2",
@@ -203,11 +417,24 @@ ESRS_STANDARDS: list[ESRSTopic] = [
         disclosures=[
             ESRSDisclosure(code="S2-1", name="Policies related to value chain workers"),
             ESRSDisclosure(code="S2-2", name="Processes for engaging with value chain workers"),
-            ESRSDisclosure(code="S2-3", name="Processes to remediate negative impacts on value chain workers"),
-            ESRSDisclosure(code="S2-4", name="Taking action on material impacts on value chain workers"),
-            ESRSDisclosure(code="S2-5", name="Targets related to managing impacts on value chain workers"),
+            ESRSDisclosure(
+                code="S2-3", name="Processes to remediate negative impacts on value chain workers"
+            ),
+            ESRSDisclosure(
+                code="S2-4", name="Taking action on material impacts on value chain workers"
+            ),
+            ESRSDisclosure(
+                code="S2-5", name="Targets related to managing impacts on value chain workers"
+            ),
         ],
-        keywords=["supply chain", "value chain", "supplier", "sourcing", "forced labor", "child labor"],
+        keywords=[
+            "supply chain",
+            "value chain",
+            "supplier",
+            "sourcing",
+            "forced labor",
+            "child labor",
+        ],
     ),
     ESRSTopic(
         code="S3",
@@ -217,9 +444,15 @@ ESRS_STANDARDS: list[ESRSTopic] = [
         disclosures=[
             ESRSDisclosure(code="S3-1", name="Policies related to affected communities"),
             ESRSDisclosure(code="S3-2", name="Processes for engaging with affected communities"),
-            ESRSDisclosure(code="S3-3", name="Processes to remediate negative impacts on affected communities"),
-            ESRSDisclosure(code="S3-4", name="Taking action on material impacts on affected communities"),
-            ESRSDisclosure(code="S3-5", name="Targets related to managing impacts on affected communities"),
+            ESRSDisclosure(
+                code="S3-3", name="Processes to remediate negative impacts on affected communities"
+            ),
+            ESRSDisclosure(
+                code="S3-4", name="Taking action on material impacts on affected communities"
+            ),
+            ESRSDisclosure(
+                code="S3-5", name="Targets related to managing impacts on affected communities"
+            ),
         ],
         keywords=["community", "indigenous", "displacement", "land rights", "local impact"],
     ),
@@ -230,10 +463,20 @@ ESRS_STANDARDS: list[ESRSTopic] = [
         description="Impacts related to consumers and end-users of products/services.",
         disclosures=[
             ESRSDisclosure(code="S4-1", name="Policies related to consumers and end-users"),
-            ESRSDisclosure(code="S4-2", name="Processes for engaging with consumers and end-users about impacts"),
-            ESRSDisclosure(code="S4-3", name="Processes to remediate negative impacts and channels to raise concerns"),
-            ESRSDisclosure(code="S4-4", name="Taking action on material impacts on consumers and end-users"),
-            ESRSDisclosure(code="S4-5", name="Targets related to managing impacts on consumers and end-users"),
+            ESRSDisclosure(
+                code="S4-2",
+                name="Processes for engaging with consumers and end-users about impacts",
+            ),
+            ESRSDisclosure(
+                code="S4-3",
+                name="Processes to remediate negative impacts and channels to raise concerns",
+            ),
+            ESRSDisclosure(
+                code="S4-4", name="Taking action on material impacts on consumers and end-users"
+            ),
+            ESRSDisclosure(
+                code="S4-5", name="Targets related to managing impacts on consumers and end-users"
+            ),
         ],
         keywords=["consumer", "customer", "end-user", "product safety", "data privacy", "health"],
     ),
@@ -244,14 +487,35 @@ ESRS_STANDARDS: list[ESRSTopic] = [
         pillar="governance",
         description="Business ethics, corporate culture, anti-corruption, political engagement, supplier relationships, payment practices.",
         disclosures=[
-            ESRSDisclosure(code="G1-1", name="Business conduct policies and corporate culture", gri_cross_refs=["2-23"]),
+            ESRSDisclosure(
+                code="G1-1",
+                name="Business conduct policies and corporate culture",
+                gri_cross_refs=["2-23"],
+            ),
             ESRSDisclosure(code="G1-2", name="Management of relationships with suppliers"),
-            ESRSDisclosure(code="G1-3", name="Prevention and detection of corruption and bribery", gri_cross_refs=["205-2"]),
-            ESRSDisclosure(code="G1-4", name="Incidents of corruption or bribery", gri_cross_refs=["205-3"]),
-            ESRSDisclosure(code="G1-5", name="Political influence and lobbying activities", gri_cross_refs=["415-1"]),
+            ESRSDisclosure(
+                code="G1-3",
+                name="Prevention and detection of corruption and bribery",
+                gri_cross_refs=["205-2"],
+            ),
+            ESRSDisclosure(
+                code="G1-4", name="Incidents of corruption or bribery", gri_cross_refs=["205-3"]
+            ),
+            ESRSDisclosure(
+                code="G1-5",
+                name="Political influence and lobbying activities",
+                gri_cross_refs=["415-1"],
+            ),
             ESRSDisclosure(code="G1-6", name="Payment practices"),
         ],
-        keywords=["corruption", "bribery", "ethics", "lobbying", "payment", "supplier relationship"],
+        keywords=[
+            "corruption",
+            "bribery",
+            "ethics",
+            "lobbying",
+            "payment",
+            "supplier relationship",
+        ],
     ),
 ]
 
@@ -294,7 +558,15 @@ class MaterialityResult(BaseModel):
 
 
 _FINANCIAL_KEYWORDS: dict[str, list[str]] = {
-    "E1": ["carbon tax", "stranded asset", "transition risk", "physical risk", "climate risk", "carbon price", "energy cost"],
+    "E1": [
+        "carbon tax",
+        "stranded asset",
+        "transition risk",
+        "physical risk",
+        "climate risk",
+        "carbon price",
+        "energy cost",
+    ],
     "E2": ["fine", "penalty", "remediation cost", "cleanup", "regulation", "compliance"],
     "E3": ["water scarcity", "drought", "water price", "water risk"],
     "E4": ["deforestation risk", "biodiversity regulation", "nature-related risk"],
@@ -312,6 +584,7 @@ def assess_double_materiality(
     document_text: str = "",
     sector: str = "",
     reported_metrics: dict[str, str] | None = None,
+    regime: Literal["esrs_2023", "esrs_simplified_2026"] = "esrs_2023",
 ) -> dict:
     """Run a double-materiality screening across all ESRS standards.
 
@@ -365,33 +638,41 @@ def assess_double_materiality(
             if is_financial
             else "not_indicated"
         )
-        confidence = "medium" if is_impact and is_financial else "low" if (is_impact or is_financial) else "low"
+        confidence = (
+            "medium"
+            if is_impact and is_financial
+            else "low"
+            if (is_impact or is_financial)
+            else "low"
+        )
         total = len(topic.disclosures)
         cov = round(addressed / total * 100, 1) if total else 0.0
 
-        results.append(MaterialityResult(
-            topic_code=topic.code,
-            topic_name=topic.name,
-            pillar=topic.pillar,
-            impact_material=is_impact,
-            financial_material=is_financial,
-            double_material=is_impact and is_financial,
-            materiality_status=materiality_status,
-            confidence=confidence,
-            impact_evidence=list(set(impact_evidence)),
-            financial_evidence=list(set(financial_evidence)),
-            disclosures_addressed=addressed,
-            disclosures_total=total,
-            coverage_pct=cov,
-            gaps=gaps[:5],
-        ))
+        results.append(
+            MaterialityResult(
+                topic_code=topic.code,
+                topic_name=topic.name,
+                pillar=topic.pillar,
+                impact_material=is_impact,
+                financial_material=is_financial,
+                double_material=is_impact and is_financial,
+                materiality_status=materiality_status,
+                confidence=confidence,
+                impact_evidence=list(set(impact_evidence)),
+                financial_evidence=list(set(financial_evidence)),
+                disclosures_addressed=addressed,
+                disclosures_total=total,
+                coverage_pct=cov,
+                gaps=gaps[:5],
+            )
+        )
 
     material_topics = [r for r in results if r.impact_material or r.financial_material]
     double_topics = [r for r in results if r.double_material]
     total_disc = sum(r.disclosures_total for r in results)
     addressed_disc = sum(r.disclosures_addressed for r in results)
 
-    return {
+    payload = {
         "framework": "EU CSRD / ESRS (European Sustainability Reporting Standards)",
         "assessment_basis": "keyword_and_metric_screening_not_csrd_double_materiality_opinion",
         "requires_stakeholder_validation": True,
@@ -412,3 +693,12 @@ def assess_double_materiality(
             "A CSRD-ready process requires stakeholder input, IRO validation, thresholds, and governance sign-off.",
         ],
     }
+    payload["regime"] = regime
+    if regime == "esrs_simplified_2026":
+        simplified = load_simplified_datapoints()
+        payload["total_datapoints"] = len(simplified)
+        payload["draft_status"] = "draft"
+        payload["total_disclosures"] = len(simplified)
+        payload["overall_coverage_pct"] = round(100 * addressed_disc / len(simplified), 1)
+        payload["summary"] += f" Simplified draft regime contains {len(simplified)} datapoints."
+    return payload

@@ -42,74 +42,169 @@ class TISFDDisclosure(BaseModel):
 # architecture and TISFD's inequality + social-materiality scope.
 TISFD_DISCLOSURES: list[TISFDDisclosure] = [
     # Governance
-    TISFDDisclosure(code="G.A", pillar="governance",
+    TISFDDisclosure(
+        code="G.A",
+        pillar="governance",
         title="Board oversight of social & inequality issues",
         description="Board oversight of people-related and inequality impacts, dependencies, risks and opportunities.",
-        detection_keywords=["board oversight", "board committee", "social governance", "human rights committee"],
-        gri_cross_refs=["GRI 2-9", "GRI 2-12"], esrs_cross_refs=["ESRS 2 GOV-1"]),
-    TISFDDisclosure(code="G.B", pillar="governance",
+        detection_keywords=[
+            "board oversight",
+            "board committee",
+            "social governance",
+            "human rights committee",
+        ],
+        gri_cross_refs=["GRI 2-9", "GRI 2-12"],
+        esrs_cross_refs=["ESRS 2 GOV-1"],
+    ),
+    TISFDDisclosure(
+        code="G.B",
+        pillar="governance",
         title="Management role & stakeholder engagement",
         description="Management's role and engagement with affected stakeholders and rights-holders (incl. workers, communities).",
-        detection_keywords=["stakeholder engagement", "affected stakeholders", "rights-holders", "worker voice", "community consultation"],
-        gri_cross_refs=["GRI 2-29"], esrs_cross_refs=["ESRS 2 SBM-2"]),
+        detection_keywords=[
+            "stakeholder engagement",
+            "affected stakeholders",
+            "rights-holders",
+            "worker voice",
+            "community consultation",
+        ],
+        gri_cross_refs=["GRI 2-29"],
+        esrs_cross_refs=["ESRS 2 SBM-2"],
+    ),
     # Strategy
-    TISFDDisclosure(code="S.A", pillar="strategy",
+    TISFDDisclosure(
+        code="S.A",
+        pillar="strategy",
         title="Material social & inequality issues",
         description="Material people-related impacts and dependencies identified over short, medium and long term.",
-        detection_keywords=["material social", "inequality", "social impact", "human rights impact", "double materiality"],
-        gri_cross_refs=["GRI 3-1", "GRI 3-2"], esrs_cross_refs=["ESRS 2 IRO-1"]),
-    TISFDDisclosure(code="S.B", pillar="strategy",
+        detection_keywords=[
+            "material social",
+            "inequality",
+            "social impact",
+            "human rights impact",
+            "double materiality",
+        ],
+        gri_cross_refs=["GRI 3-1", "GRI 3-2"],
+        esrs_cross_refs=["ESRS 2 IRO-1"],
+    ),
+    TISFDDisclosure(
+        code="S.B",
+        pillar="strategy",
         title="Effects on business model & value chain",
         description="Effects of material social issues on business model, value chain, strategy and financial planning.",
-        detection_keywords=["value chain", "business model", "supply chain workers", "financial planning"],
-        gri_cross_refs=["GRI 2-6"], esrs_cross_refs=["ESRS 2 SBM-3"]),
-    TISFDDisclosure(code="S.C", pillar="strategy",
+        detection_keywords=[
+            "value chain",
+            "business model",
+            "supply chain workers",
+            "financial planning",
+        ],
+        gri_cross_refs=["GRI 2-6"],
+        esrs_cross_refs=["ESRS 2 SBM-3"],
+    ),
+    TISFDDisclosure(
+        code="S.C",
+        pillar="strategy",
         title="Inequality resilience & just transition",
         description="Resilience of the strategy to social/inequality scenarios, including a just transition.",
         detection_keywords=["just transition", "social resilience", "scenario", "distributional"],
-        esrs_cross_refs=["ESRS S1-4"]),
+        esrs_cross_refs=["ESRS S1-4"],
+    ),
     # Risk & Impact Management
-    TISFDDisclosure(code="R.A", pillar="risk_impact_management",
+    TISFDDisclosure(
+        code="R.A",
+        pillar="risk_impact_management",
         title="Identify & assess social impacts",
         description="Processes to identify and assess actual and potential adverse social impacts on people (incl. value chain).",
-        detection_keywords=["human rights due diligence", "impact assessment", "salient issues", "saliency", "risk assessment"],
-        gri_cross_refs=["GRI 2-25"], esrs_cross_refs=["ESRS S1", "ESRS S2"]),
-    TISFDDisclosure(code="R.B", pillar="risk_impact_management",
+        detection_keywords=[
+            "human rights due diligence",
+            "impact assessment",
+            "salient issues",
+            "saliency",
+            "risk assessment",
+        ],
+        gri_cross_refs=["GRI 2-25"],
+        esrs_cross_refs=["ESRS S1", "ESRS S2"],
+    ),
+    TISFDDisclosure(
+        code="R.B",
+        pillar="risk_impact_management",
         title="Manage, prevent, mitigate & remediate",
         description="Processes to prevent, mitigate and remediate adverse social impacts; access to remedy.",
-        detection_keywords=["grievance", "remediation", "remedy", "mitigation", "corrective action"],
-        gri_cross_refs=["GRI 2-26"], esrs_cross_refs=["ESRS S1-3"]),
-    TISFDDisclosure(code="R.C", pillar="risk_impact_management",
+        detection_keywords=[
+            "grievance",
+            "remediation",
+            "remedy",
+            "mitigation",
+            "corrective action",
+        ],
+        gri_cross_refs=["GRI 2-26"],
+        esrs_cross_refs=["ESRS S1-3"],
+    ),
+    TISFDDisclosure(
+        code="R.C",
+        pillar="risk_impact_management",
         title="Integration into enterprise risk",
         description="How social/inequality processes are integrated into overall enterprise risk management.",
         detection_keywords=["enterprise risk", "integrated risk", "erm"],
-        esrs_cross_refs=["ESRS 2 IRO-1"]),
+        esrs_cross_refs=["ESRS 2 IRO-1"],
+    ),
     # Metrics & Targets
-    TISFDDisclosure(code="M.A", pillar="metrics_targets",
+    TISFDDisclosure(
+        code="M.A",
+        pillar="metrics_targets",
         title="Pay & wage metrics",
         description="Metrics on pay equity, living wage, and wage gaps across the workforce and value chain.",
         detection_keywords=["living wage", "pay gap", "gender pay", "pay equity", "wage"],
-        gri_cross_refs=["GRI 405-2"], esrs_cross_refs=["ESRS S1-10", "ESRS S1-16"]),
-    TISFDDisclosure(code="M.B", pillar="metrics_targets",
+        gri_cross_refs=["GRI 405-2"],
+        esrs_cross_refs=["ESRS S1-10", "ESRS S1-16"],
+    ),
+    TISFDDisclosure(
+        code="M.B",
+        pillar="metrics_targets",
         title="Labour conditions & freedom of association",
         description="Metrics on working conditions, health & safety, working hours, and freedom of association / collective bargaining.",
-        detection_keywords=["collective bargaining", "freedom of association", "health and safety", "working hours", "union"],
-        gri_cross_refs=["GRI 403", "GRI 407"], esrs_cross_refs=["ESRS S1-8", "ESRS S1-14"]),
-    TISFDDisclosure(code="M.C", pillar="metrics_targets",
+        detection_keywords=[
+            "collective bargaining",
+            "freedom of association",
+            "health and safety",
+            "working hours",
+            "union",
+        ],
+        gri_cross_refs=["GRI 403", "GRI 407"],
+        esrs_cross_refs=["ESRS S1-8", "ESRS S1-14"],
+    ),
+    TISFDDisclosure(
+        code="M.C",
+        pillar="metrics_targets",
         title="Diversity, discrimination & inclusion",
         description="Metrics on diversity, non-discrimination, and inclusion across the workforce.",
         detection_keywords=["diversity", "discrimination", "inclusion", "deib", "representation"],
-        gri_cross_refs=["GRI 405", "GRI 406"], esrs_cross_refs=["ESRS S1-9", "ESRS S1-17"]),
-    TISFDDisclosure(code="M.D", pillar="metrics_targets",
+        gri_cross_refs=["GRI 405", "GRI 406"],
+        esrs_cross_refs=["ESRS S1-9", "ESRS S1-17"],
+    ),
+    TISFDDisclosure(
+        code="M.D",
+        pillar="metrics_targets",
         title="Community & affected-stakeholder impact metrics",
         description="Metrics on impacts to affected communities and consumers/end-users (incl. inequality outcomes).",
-        detection_keywords=["community impact", "affected communities", "consumers", "end-users", "beneficiaries"],
-        gri_cross_refs=["GRI 413"], esrs_cross_refs=["ESRS S3", "ESRS S4"]),
-    TISFDDisclosure(code="M.E", pillar="metrics_targets",
+        detection_keywords=[
+            "community impact",
+            "affected communities",
+            "consumers",
+            "end-users",
+            "beneficiaries",
+        ],
+        gri_cross_refs=["GRI 413"],
+        esrs_cross_refs=["ESRS S3", "ESRS S4"],
+    ),
+    TISFDDisclosure(
+        code="M.E",
+        pillar="metrics_targets",
         title="Targets & performance",
         description="Targets used to manage material social/inequality issues and performance against them.",
         detection_keywords=["target", "goal", "commitment", "baseline", "kpi"],
-        esrs_cross_refs=["ESRS S1-5"]),
+        esrs_cross_refs=["ESRS S1-5"],
+    ),
 ]
 
 
@@ -150,9 +245,7 @@ def assess_tisfd_readiness(
 ) -> TISFDAssessmentResult:
     """Keyword-driven TISFD readiness screen across the 4 pillars."""
     text = f"{description} {document_text}".lower()
-    metric_text = " ".join(
-        f"{k} {v}" for k, v in (reported_metrics or {}).items()
-    ).lower()
+    metric_text = " ".join(f"{k} {v}" for k, v in (reported_metrics or {}).items()).lower()
     haystack = f"{text} {metric_text}"
 
     addressed: list[str] = []
@@ -197,11 +290,17 @@ def assess_tisfd_readiness(
                 f"({ps.coverage_pct}%) — it is the weakest readiness area."
             )
     if "M.A" in missing:
-        recs.append("Add pay-equity / living-wage metrics (TISFD M.A; maps to ESRS S1-16, GRI 405-2).")
+        recs.append(
+            "Add pay-equity / living-wage metrics (TISFD M.A; maps to ESRS S1-16, GRI 405-2)."
+        )
     if "R.A" in missing:
-        recs.append("Document a human-rights/social due-diligence process (TISFD R.A) — see the hrdd_assess tool.")
+        recs.append(
+            "Document a human-rights/social due-diligence process (TISFD R.A) — see the hrdd_assess tool."
+        )
     if not recs:
-        recs.append("Strong TISFD readiness — formalise targets (M.E) and pilot disclosure ahead of the 2027 final framework.")
+        recs.append(
+            "Strong TISFD readiness — formalise targets (M.E) and pilot disclosure ahead of the 2027 final framework."
+        )
 
     return TISFDAssessmentResult(
         company_name=company_name,
@@ -214,6 +313,36 @@ def assess_tisfd_readiness(
     )
 
 
+def build_tisfd_disclosure(readiness_result, records) -> dict:
+    """Draft a four-pillar beta disclosure scaffold with crosswalk references."""
+    result = (
+        readiness_result.model_dump(mode="json")
+        if hasattr(readiness_result, "model_dump")
+        else readiness_result
+    )
+    by_pillar = {
+        pillar: [] for pillar in ("governance", "strategy", "risk_management", "metrics_targets")
+    }
+    for disclosure in TISFD_DISCLOSURES:
+        by_pillar[disclosure.pillar].append(
+            {
+                "code": disclosure.code,
+                "heading": disclosure.title,
+                "scaffold": f"Describe evidence and decisions for {disclosure.title.lower()}.",
+                "gri_refs": disclosure.gri_cross_refs,
+                "esrs_refs": disclosure.esrs_cross_refs,
+            }
+        )
+    return {
+        "template_id": "tisfd_beta",
+        "banner": "beta - TISFD framework still stabilising",
+        "readiness": result,
+        "sections": by_pillar,
+        "metric_records": [r.model_dump(mode="json") for r in records],
+        "claim_review_required": True,
+    }
+
+
 __all__ = [
     "TISFDPillar",
     "FRAMEWORK_STATUS",
@@ -223,4 +352,5 @@ __all__ = [
     "TISFDAssessmentResult",
     "get_tisfd_disclosures",
     "assess_tisfd_readiness",
+    "build_tisfd_disclosure",
 ]

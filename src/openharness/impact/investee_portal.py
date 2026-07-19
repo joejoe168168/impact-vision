@@ -58,29 +58,64 @@ def default_portal_sections(include_pai: bool = True) -> list[PortalSection]:
             title="Company basics",
             description="A few facts so we can tailor the right impact metrics to your business.",
             questions=[
-                PortalQuestion(id="company_name", label="Company name", field_type="text", required=True,
-                               why_we_need_this="Identifies your submission and links it to our records."),
-                PortalQuestion(id="sector", label="Primary sector", field_type="text", required=True,
-                               why_we_need_this="Determines which IRIS+ metrics and benchmarks apply to you."),
-                PortalQuestion(id="geography", label="Main country/region of operation", field_type="text",
-                               why_we_need_this="Lets us contextualise impact against local need and regulation."),
-                PortalQuestion(id="employees", label="Total employees (FTE)", field_type="number", unit="people", min=0,
-                               why_we_need_this="Used for per-capita intensity metrics and CSRD/VSME scope checks."),
+                PortalQuestion(
+                    id="company_name",
+                    label="Company name",
+                    field_type="text",
+                    required=True,
+                    why_we_need_this="Identifies your submission and links it to our records.",
+                ),
+                PortalQuestion(
+                    id="sector",
+                    label="Primary sector",
+                    field_type="text",
+                    required=True,
+                    why_we_need_this="Determines which IRIS+ metrics and benchmarks apply to you.",
+                ),
+                PortalQuestion(
+                    id="geography",
+                    label="Main country/region of operation",
+                    field_type="text",
+                    why_we_need_this="Lets us contextualise impact against local need and regulation.",
+                ),
+                PortalQuestion(
+                    id="employees",
+                    label="Total employees (FTE)",
+                    field_type="number",
+                    unit="people",
+                    min=0,
+                    why_we_need_this="Used for per-capita intensity metrics and CSRD/VSME scope checks.",
+                ),
             ],
         ),
         PortalSection(
             title="Impact thesis & outcomes",
             description="Your intended impact and the outcomes you can already evidence.",
             questions=[
-                PortalQuestion(id="impact_thesis", label="What change are you trying to create?", field_type="longtext",
-                               required=True,
-                               why_we_need_this="The basis of your theory of change — we map it to SDGs and IRIS+ outcomes."),
-                PortalQuestion(id="beneficiaries", label="People meaningfully reached (last 12 months)", field_type="number",
-                               unit="people", min=0,
-                               why_we_need_this="Breadth of impact — feeds the welfare (QALY) quantifier and SDG-need context."),
-                PortalQuestion(id="underserved_share", label="Share of beneficiaries who are underserved", field_type="percent",
-                               unit="%", min=0, max=100,
-                               why_we_need_this="Depth/additionality — underserved reach scores higher on the 5 Dimensions."),
+                PortalQuestion(
+                    id="impact_thesis",
+                    label="What change are you trying to create?",
+                    field_type="longtext",
+                    required=True,
+                    why_we_need_this="The basis of your theory of change — we map it to SDGs and IRIS+ outcomes.",
+                ),
+                PortalQuestion(
+                    id="beneficiaries",
+                    label="People meaningfully reached (last 12 months)",
+                    field_type="number",
+                    unit="people",
+                    min=0,
+                    why_we_need_this="Breadth of impact — feeds the welfare (QALY) quantifier and SDG-need context.",
+                ),
+                PortalQuestion(
+                    id="underserved_share",
+                    label="Share of beneficiaries who are underserved",
+                    field_type="percent",
+                    unit="%",
+                    min=0,
+                    max=100,
+                    why_we_need_this="Depth/additionality — underserved reach scores higher on the 5 Dimensions.",
+                ),
             ],
         ),
     ]
@@ -94,17 +129,43 @@ def _pai_section() -> PortalSection:
     questions: list[PortalQuestion] = []
     try:
         from openharness.impact.frameworks.sfdr_pai import get_pai_indicators
+
         indicators = get_pai_indicators()
     except Exception:  # noqa: BLE001
         indicators = []
 
     # Plain-language rewrites for the headline mandatory PAI indicators.
     plain: dict[int, tuple[str, str, FieldType, str]] = {
-        1: ("Your total greenhouse-gas emissions", "tCO2e", "number", "Scope 1+2 (and 3 if known) GHG emissions."),
-        3: ("How carbon-intensive your revenue is", "tCO2e/€M", "number", "GHG emissions per €M revenue."),
-        4: ("Do you operate in fossil fuels?", "", "boolean", "Any revenue from the fossil-fuel sector."),
-        5: ("Share of energy from non-renewable sources", "%", "percent", "Non-renewable energy consumption/production share."),
-        10: ("Any breaches of UN Global Compact / OECD Guidelines?", "", "boolean", "Violations of responsible-business principles."),
+        1: (
+            "Your total greenhouse-gas emissions",
+            "tCO2e",
+            "number",
+            "Scope 1+2 (and 3 if known) GHG emissions.",
+        ),
+        3: (
+            "How carbon-intensive your revenue is",
+            "tCO2e/€M",
+            "number",
+            "GHG emissions per €M revenue.",
+        ),
+        4: (
+            "Do you operate in fossil fuels?",
+            "",
+            "boolean",
+            "Any revenue from the fossil-fuel sector.",
+        ),
+        5: (
+            "Share of energy from non-renewable sources",
+            "%",
+            "percent",
+            "Non-renewable energy consumption/production share.",
+        ),
+        10: (
+            "Any breaches of UN Global Compact / OECD Guidelines?",
+            "",
+            "boolean",
+            "Violations of responsible-business principles.",
+        ),
         13: ("Share of women on your board", "%", "percent", "Board gender diversity."),
     }
     for ind in indicators:
@@ -112,26 +173,42 @@ def _pai_section() -> PortalSection:
         if num not in plain:
             continue
         label, unit, ftype, why = plain[num]
-        questions.append(PortalQuestion(
-            id=f"pai_{num}",
-            label=label,
-            plain_language=f"SFDR PAI {num}: {getattr(ind, 'name', '')}",
-            why_we_need_this=why + " Required by EU SFDR if we market this fund as Article 8/9.",
-            field_type=ftype,
-            unit=unit,
-            min=0 if ftype in ("number", "percent") else None,
-            max=100 if ftype == "percent" else None,
-            pai_ref=str(num),
-        ))
+        questions.append(
+            PortalQuestion(
+                id=f"pai_{num}",
+                label=label,
+                plain_language=f"SFDR PAI {num}: {getattr(ind, 'name', '')}",
+                why_we_need_this=why
+                + " Required by EU SFDR if we market this fund as Article 8/9.",
+                field_type=ftype,
+                unit=unit,
+                min=0 if ftype in ("number", "percent") else None,
+                max=100 if ftype == "percent" else None,
+                pai_ref=str(num),
+            )
+        )
     # Fallback if the PAI catalogue wasn't importable.
     if not questions:
         questions = [
-            PortalQuestion(id="pai_1", label="Your total greenhouse-gas emissions", field_type="number",
-                           unit="tCO2e", min=0, pai_ref="1",
-                           why_we_need_this="Scope 1+2 GHG emissions — required for SFDR PAI 1."),
-            PortalQuestion(id="pai_13", label="Share of women on your board", field_type="percent",
-                           unit="%", min=0, max=100, pai_ref="13",
-                           why_we_need_this="Board gender diversity — SFDR PAI 13."),
+            PortalQuestion(
+                id="pai_1",
+                label="Your total greenhouse-gas emissions",
+                field_type="number",
+                unit="tCO2e",
+                min=0,
+                pai_ref="1",
+                why_we_need_this="Scope 1+2 GHG emissions — required for SFDR PAI 1.",
+            ),
+            PortalQuestion(
+                id="pai_13",
+                label="Share of women on your board",
+                field_type="percent",
+                unit="%",
+                min=0,
+                max=100,
+                pai_ref="13",
+                why_we_need_this="Board gender diversity — SFDR PAI 13.",
+            ),
         ]
     return PortalSection(
         title="SFDR Principal Adverse Impacts (plain language)",
@@ -177,8 +254,12 @@ def _q_html(q: PortalQuestion) -> str:
     req_attr = ' aria-required="true" required' if q.required else ""
     unit = f'<span class="unit">{html.escape(q.unit)}</span>' if q.unit else ""
     plain = f'<div class="plain">{html.escape(q.plain_language)}</div>' if q.plain_language else ""
-    why = f'<div class="why" id="{qid}-why">Why we ask: {html.escape(q.why_we_need_this)}</div>' if q.why_we_need_this else ""
-    describedby = f'{qid}-why' if q.why_we_need_this else ""
+    why = (
+        f'<div class="why" id="{qid}-why">Why we ask: {html.escape(q.why_we_need_this)}</div>'
+        if q.why_we_need_this
+        else ""
+    )
+    describedby = f"{qid}-why" if q.why_we_need_this else ""
     aria_db = f' aria-describedby="{describedby}"' if describedby else ""
 
     if q.field_type in ("number", "percent"):
@@ -187,14 +268,18 @@ def _q_html(q: PortalQuestion) -> str:
             rng += f' min="{q.min}"'
         if q.max is not None:
             rng += f' max="{q.max}"'
-        control = f'<input type="number" step="any" id="{qid}" name="{qid}"{rng}{req_attr}{aria_db}>'
+        control = (
+            f'<input type="number" step="any" id="{qid}" name="{qid}"{rng}{req_attr}{aria_db}>'
+        )
     elif q.field_type == "boolean":
         control = (
             f'<select id="{qid}" name="{qid}"{req_attr}{aria_db}>'
             '<option value="">—</option><option value="yes">Yes</option><option value="no">No</option></select>'
         )
     elif q.field_type == "select":
-        opts = "".join(f'<option value="{html.escape(o)}">{html.escape(o)}</option>' for o in q.options)
+        opts = "".join(
+            f'<option value="{html.escape(o)}">{html.escape(o)}</option>' for o in q.options
+        )
         control = f'<select id="{qid}" name="{qid}"{req_attr}{aria_db}><option value="">—</option>{opts}</select>'
     elif q.field_type == "longtext":
         control = f'<textarea id="{qid}" name="{qid}"{req_attr}{aria_db}></textarea>'
@@ -205,9 +290,9 @@ def _q_html(q: PortalQuestion) -> str:
         f'<div class="portal-q" data-qid="{qid}" data-required="{str(q.required).lower()}" '
         f'data-type="{q.field_type}">'
         f'<label for="{qid}">{label}{req}{unit}</label>'
-        f'{plain}{control}'
+        f"{plain}{control}"
         f'<div class="field-error" id="{qid}-error" role="alert">This field is required.</div>'
-        f'{why}</div>'
+        f"{why}</div>"
     )
 
 
@@ -274,16 +359,51 @@ def build_investee_portal(
     fund_name: str = "",
     company_name: str = "",
     sections: list[PortalSection] | None = None,
+    consolidated_request: dict | None = None,
+    routing: dict | None = None,
     theme: str = "",
 ) -> str:
     """Render the guided investee data-collection portal as a single HTML file."""
-    secs = sections if sections is not None else default_portal_sections()
+    if routing:
+        rows = (consolidated_request or {}).get("consolidated", [])
+        if not rows:
+            rows = [
+                {"concept_id": concept, "label": concept.replace("_", " ").title()}
+                for concept in routing
+            ]
+        secs = [
+            PortalSection(
+                title="Consolidated investor data request",
+                description=(
+                    "Answer each concept once. The routing table fans the answer out "
+                    "to every investor request without silently changing its period."
+                ),
+                questions=[
+                    PortalQuestion(
+                        id=str(row["concept_id"]),
+                        label=str(row.get("label", row["concept_id"])),
+                        why_we_need_this=(
+                            f"One answer satisfies {len(routing.get(row['concept_id'], []))} "
+                            "mapped investor field(s)."
+                        ),
+                        framework_ref="concordance",
+                    )
+                    for row in rows
+                ],
+            )
+        ]
+    else:
+        secs = sections if sections is not None else default_portal_sections()
     fund = html.escape(fund_name or "your investor")
-    title = f"Impact data request — {html.escape(company_name)}" if company_name else "Impact data request"
+    title = (
+        f"Impact data request — {html.escape(company_name)}"
+        if company_name
+        else "Impact data request"
+    )
 
     body_parts: list[str] = [
         '<div class="report-hero"><h1>Impact &amp; ESG data request</h1>'
-        f'<p>Prepared for {html.escape(company_name) or "your company"} by {fund}.</p></div>',
+        f"<p>Prepared for {html.escape(company_name) or 'your company'} by {fund}.</p></div>",
         '<div class="portal-intro">'
         "<strong>Why this matters:</strong> consistent, comparable impact data is what lets your "
         "investor tell your story credibly to their own LPs and regulators. Every question explains "
@@ -296,19 +416,19 @@ def build_investee_portal(
     ]
     for s in secs:
         body_parts.append('<fieldset class="portal-section">')
-        body_parts.append(f'<legend>{html.escape(s.title)}</legend>')
+        body_parts.append(f"<legend>{html.escape(s.title)}</legend>")
         if s.description:
             body_parts.append(f'<p class="why">{html.escape(s.description)}</p>')
         for q in s.questions:
             body_parts.append(_q_html(q))
-        body_parts.append('</fieldset>')
+        body_parts.append("</fieldset>")
     body_parts.append(
         '<div class="portal-actions">'
         '<button type="button" id="portal-export" class="portal-btn">Save &amp; export my answers</button>'
         '<span class="why">No data is uploaded — export creates a JSON file you send back.</span>'
-        '</div>'
+        "</div>"
     )
-    body_parts.append('</form>')
+    body_parts.append("</form>")
 
     extra_head = f"<style>{_PORTAL_CSS}</style><script defer>{_PORTAL_JS}</script>"
     return wrap_document(
