@@ -71,6 +71,14 @@ PURCHASED_HEAT_FACTOR = {
     "unit": "tCO2e/GJ",
     "source": "MEE/industry default; replace with supplier factor",
 }
+TD_LOSS_PROVENANCE = {
+    "id": "world-bank-td-loss-rate",
+    "revision": "2026-default",
+    "value": 0.03,
+    "unit": "ratio",
+    "source": "World Bank electric power transmission and distribution loss data; replace with regional data",
+}
+DEFAULT_TD_LOSS_RATE = float(TD_LOSS_PROVENANCE["value"])
 
 Publisher = Literal["EPA", "DEFRA", "IEA", "IPCC", "OFFLINE_DEMO"]
 
@@ -362,11 +370,13 @@ def summarise_sensitivity(
 
 
 __all__ = [
+    "DEFAULT_TD_LOSS_RATE",
     "EmissionFactorCatalogV2",
     "EmissionFactorRevision",
     "FactorSensitivityResult",
     "Publisher",
     "SensitivityCoverage",
+    "TD_LOSS_PROVENANCE",
     "apply_catalog_to_inventory",
     "default_factor_catalog",
     "factor_sensitivity",

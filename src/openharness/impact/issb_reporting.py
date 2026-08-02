@@ -13,9 +13,11 @@ the structured inline disclosure formats used by most filers.
 """
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Literal
 
 from pydantic import BaseModel, Field
+import yaml
 
 
 S2RiskType = Literal["transition", "physical-acute", "physical-chronic"]
@@ -75,6 +77,18 @@ class IFRSS2Pack(BaseModel):
     science_based_target: MetricTarget | None = None
 
 
+class IFRSS2Amendment(BaseModel):
+    """One issued IFRS S2 targeted amendment and its implementation status."""
+
+    amendment_id: str
+    title: str
+    summary: str
+    status: Literal["proposed", "issued", "effective"] = "issued"
+    effective_date: str
+    early_application: bool = False
+    source_url: str
+
+
 class ISSBPack(BaseModel):
     """Combined S1 + S2 pack."""
     s1: IFRSS1Pack
@@ -89,6 +103,42 @@ def build_issb_pack(
     return ISSBPack(s1=s1, s2=s2)
 
 
+def load_s2_amendments(path: str | Path | None = None) -> list[IFRSS2Amendment]:
+    """Load the maintained IFRS S2 targeted-amendment register.
+
+    The register is deliberately separate from the S2 disclosure model: a
+    filing pack can remain S2-2023 while a jurisdiction transitions to the
+    amendments effective from 2027.
+    """
+    data_path = (
+        Path(path)
+        if path
+        else Path(__file__).resolve().parents[3] / "data" / "issb_s2_amendments.yaml"
+    )
+    payload = yaml.safe_load(data_path.read_text(encoding="utf-8")) or {}
+    rows = payload.get("amendments", [])
+    return [IFRSS2Amendment.model_validate(row) for row in rows]
+
+
+def s2_amendment_summary(path: str | Path | None = None) -> dict:
+    """Return amendments plus the register-level effective-date metadata."""
+    data_path = (
+        Path(path)
+        if path
+        else Path(__file__).resolve().parents[3] / "data" / "issb_s2_amendments.yaml"
+    )
+    payload = yaml.safe_load(data_path.read_text(encoding="utf-8")) or {}
+    return {
+        "framework": payload.get("framework", "IFRS S2"),
+        "as_of": payload.get("as_of", ""),
+        "effective_date": payload.get("effective_date", "2027-01-01"),
+        "early_application": bool(payload.get("early_application", False)),
+        "source_url": payload.get("source_url", ""),
+        "source_note": payload.get("source_note", ""),
+        "amendments": [row.model_dump(mode="json") for row in load_s2_amendments(data_path)],
+    }
+
+
 __all__ = [
     "Governance",
     "StrategyItem",
@@ -96,6 +146,9 @@ __all__ = [
     "MetricTarget",
     "IFRSS1Pack",
     "IFRSS2Pack",
+    "IFRSS2Amendment",
     "ISSBPack",
     "build_issb_pack",
+    "load_s2_amendments",
+    "s2_amendment_summary",
 ]

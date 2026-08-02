@@ -21,6 +21,7 @@ from openharness.impact.engagements.regulatory import (
     list_jurisdictions,
     schedule_deadlines,
 )
+from openharness.impact.issb_reporting import s2_amendment_summary
 
 
 class RegulatoryCalendarItem(BaseModel):
@@ -140,7 +141,11 @@ _REGULATORY_WATCHLIST: list[tuple[str, str, str]] = [
         "ISSB nature-related disclosures Practice Statement exposure draft (October 2026)",
         "Global",
     ),
-    ("2026-12-31", "Revised ESRS + VSME delegated acts expected adopted (Q3/Q4 2026)", "EU"),
+    (
+        "2026-12-31",
+        "Revised ESRS delegated acts targeted for FY2027 use; legal effect still depends on Official Journal publication",
+        "EU",
+    ),
     ("2026-11-10", "First California SB 253 Scope 1+2 GHG reports due", "US"),
     ("2027-12-31", "California SB 253 Scope 3 reporting phase begins", "US"),
     (
@@ -149,6 +154,7 @@ _REGULATORY_WATCHLIST: list[tuple[str, str, str]] = [
         "Global",
     ),
     ("2026-12-30", "EUDR obligations apply (large/medium operators)", "EU"),
+    ("2027-06-30", "EUDR obligations apply to other micro and small operators", "EU"),
     ("2027-01-01", "Revised ESRS applies (FY2027; early adoption FY2026)", "EU"),
     ("2027-03-19", "CSRD (as amended by Omnibus I) member-state transposition deadline", "EU"),
     ("2028-07-26", "CSDDD member-state transposition deadline", "EU"),
@@ -214,7 +220,17 @@ def issb_summary(path: str | Path | None = None) -> list[dict]:
         missing = required - set(row)
         if missing:
             raise ValueError(f"ISSB adoption row {index} missing {sorted(missing)}")
-    return rows
+    # The bundled index is a tracking aid, not a substitute for the IFRS
+    # jurisdictional profiles.  Most rows intentionally contain an authority
+    # name rather than a deep link; expose that provenance state to callers so
+    # a legal workflow cannot mistake an editorial row for verified law.
+    normalized: list[dict] = []
+    for row in rows:
+        item = dict(row)
+        item.setdefault("source_url", "")
+        item.setdefault("source_quality", "authority_name_only")
+        normalized.append(item)
+    return normalized
 
 
 def issb_status(jurisdiction: str) -> dict:
@@ -234,6 +250,11 @@ def issb_status(jurisdiction: str) -> dict:
     }
 
 
+def issb_s2_amendments(path: str | Path | None = None) -> dict:
+    """Return the issued IFRS S2 targeted-amendment register."""
+    return s2_amendment_summary(path)
+
+
 __all__ = [
     "RegulatoryCalendar",
     "RegulatoryCalendarItem",
@@ -242,6 +263,7 @@ __all__ = [
     "default_fiscal_year_end",
     "jurisdiction_options",
     "issb_status",
+    "issb_s2_amendments",
     "issb_summary",
     "regulatory_watchlist",
     "render_regulatory_calendar_text",

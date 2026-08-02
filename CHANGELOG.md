@@ -22,6 +22,35 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ### Added
 
+- **Lifecycle assessment surface.** Added `impact.lca` and the
+  `lca_assessment` tool for transparent ISO 14040/14044-style goal/scope,
+  caller-supplied LCI/LCIA factors, hotspots, sensitivity, lifecycle cost and
+  social indicators, readiness scoring, and life-cycle-management actions.
+  The engine intentionally does not bundle licensed databases such as
+  ecoinvent; every characterization factor remains caller-provenanced.
+
+- **v6 data-quality and regulatory currency review.** The simplified-ESRS
+  loader now exposes Commission adoption status, FY2027 effective timing,
+  official provenance, and an explicit `synthetic` flag for generated
+  screening rows. Added the issued IFRS S2 targeted-amendment register
+  (effective 2027-01-01, early application permitted) and a
+  `regulatory_calendar` `s2_amendments` action. The watch-list now includes
+  the EUDR micro/small-operator deadline (2027-06-30), and SFDR v2 outputs
+  label the proposal's `ESG collection` category while retaining the
+  backwards-compatible `esg_basics` code.
+
+### Fixed
+
+- **Concordance enrichment.** Canonical YAML entries now merge with the
+  legacy 59-concept map instead of replacing its cross-framework references;
+  the canonical Scope 1 concept ID is aligned so EDCI/SFDR/SASB/TCFD links are
+  retained. Article fixtures and ISSB adoption rows now disclose whether they
+  are generated summaries or authority-name-only tracking records.
+
+- **Regulatory status wording.** Updated the July roadmap intelligence and
+  standards registry to distinguish Commission adoption from Official Journal
+  entry into force for revised ESRS.
+
 - **July-2026 roadmap-update items shipped** (see
   `docs/roadmap-updates-2026-07.md`):
   - *SFDR 2.0 category preview* — `classify_sfdr2_category()` in

@@ -9,6 +9,11 @@ from openharness.impact.climate_accounting import (
     EmissionFactor,
     calculate_activity_emissions,
     calculate_ghg_inventory,
+    energy_to_tce,
+    scope3_estimate,
+    three_year_comparison,
+    water_balance,
+    scope1_mass_balance,
 )
 
 
@@ -130,3 +135,101 @@ def test_missing_factor_raises_clear_error() -> None:
             "unit": "tonne",
             "scope": "scope1",
         })
+
+
+def test_ohesg_style_inventory_adds_certificates_scope3_intensity_and_categories() -> None:
+    inventory = calculate_ghg_inventory(
+        company_name="ManufacturingCo",
+        reporting_period="FY2025",
+        annual_revenue_million_cny=100,
+        activities=[
+            {
+                "activity_type": "diesel",
+                "activity_category": "mobile_combustion",
+                "value": 1000,
+                "unit": "litre",
+                "scope": "scope1",
+            },
+            {
+                "activity_type": "electricity",
+                "activity_category": "purchased_electricity",
+                "value": 2000,
+                "unit": "kwh",
+                "scope": "scope2",
+                "method": "location_based",
+            },
+        ],
+        certificates=[
+            {
+                "certificate_type": "i-rec",
+                "quantity_mwh": 1,
+                "verification_status": "valid",
+            }
+        ],
+        scope3_categories={
+            1: {"spend": 100_000, "factor": 0.0001, "factor_id": "eeio-1"},
+            4: {"rows": [{"weight_tonnes": 2, "distance_km": 100, "factor": 0.001}]},
+            5: {"rows": [{"quantity_tonnes": 3, "factor": 0.05}]},
+            9: {"rows": [{"weight_tonnes": 1, "distance_km": 50, "factor": 0.001}]},
+        },
+    )
+
+    assert inventory.scope1_by_category == {"mobile_combustion": 2.68}
+    assert inventory.valid_certificate_coverage_mwh == pytest.approx(1)
+    assert inventory.scope2_location_based_tco2e == pytest.approx(0.84)
+    assert inventory.scope2_market_based_tco2e == pytest.approx(0.42)
+    assert inventory.scope3_by_category["1"] == pytest.approx(10)
+    assert inventory.scope3_by_category["3"] == pytest.approx(0.0252)
+    assert inventory.scope3_tco2e == pytest.approx(10.4252)
+    assert inventory.total_carbon_footprint_market_based_tco2e == pytest.approx(13.5252)
+    assert inventory.carbon_intensity_market_based_tco2e_per_million_cny == pytest.approx(0.1353)
+
+
+def test_scope3_manufacturing_rows_and_auto_td_loss_are_provenanced() -> None:
+    result = scope3_estimate(
+        {
+            1: {"spend": 10_000, "factor": 0.001},
+            4: {"rows": [{"weight_tonnes": 4, "distance_km": 25, "factor": 0.002}]},
+            5: {"rows": [{"quantity_tonnes": 2, "factor": 0.1}]},
+        },
+        scope2_electricity_mwh=100,
+        grid_emission_factor_tco2e_per_mwh=0.5,
+    )
+
+    assert result["category_count"] == 15
+    assert result["categories"][0]["method"] == "eeio_spend"
+    assert result["categories"][2]["tco2e"] == pytest.approx(1.5)
+    assert "world-bank-td-loss-rate" in result["factors_used"]
+    assert any("World Bank" in source for source in result["sources"])
+
+
+def test_three_year_comparison_calculates_totals_and_yoy_change() -> None:
+    result = three_year_comparison(
+        [
+            {"year": 2023, "scope1": 10, "scope2": 20, "scope3": 30},
+            {"year": 2024, "scope1": 20, "scope2": 20, "scope3": 20},
+            {"year": 2025, "scope1": 10, "scope2": 15, "scope3": 15},
+        ]
+    )
+
+    assert result["current_year"] == 2025
+    assert result["years"][0]["total_tco2e"] == 40
+    assert result["years"][0]["yoy_change_pct"] == pytest.approx(-33.33)
+    assert result["years"][2]["yoy_change_pct"] is None
+
+
+def test_mass_balance_supports_mixed_gases_and_rejects_unknown_gases() -> None:
+    result = scope1_mass_balance(
+        [{"mass": 12, "carbon_content": 1, "gas": "CO2"}, {"mass": 1, "carbon_content": 1, "gas": "CH4"}],
+        [],
+    )
+    assert result["net_carbon_mass_by_gas"] == {"CH4": 1.0, "CO2": 12.0}
+    with pytest.raises(ValueError, match="Unsupported AR6 gas"):
+        scope1_mass_balance([{"mass": 1, "carbon_content": 1, "gas": "HFC"}], [])
+
+
+def test_calculator_input_validation_is_explicit() -> None:
+    with pytest.raises(ValueError, match="Unknown GB/T 2589 fuel"):
+        energy_to_tce([{"fuel": "unknown", "quantity_kg": 1}])
+    with pytest.raises(ValueError, match="Withdrawal volumes"):
+        water_balance([{"source_type": "rain", "volume": -1}], 0)

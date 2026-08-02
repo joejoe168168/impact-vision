@@ -1,10 +1,17 @@
 regime: esrs_simplified_2026
-status: draft
-as_of: "2026-07-19"
-source: EFRAG simplified ESRS exposure material; final delegated act pending
+status: adopted_pending_oj_scrutiny
+as_of: "2026-07-03"
+effective_from: "2027-01-01"
+early_adoption: true
+mandatory_datapoint_reduction: ">60%"
+total_datapoint_reduction: ">70%"
+expected_cost_reduction: ">30%"
+source: European Commission revised ESRS delegated acts adopted 2026-07-03; not in force until Official Journal publication
+source_url: https://finance.ec.europa.eu/news/commission-adopts-revised-sustainability-reporting-standards-2026-07-03_en
+source_note: This repository keeps a screening fixture until the final delegated-act taxonomy is published; generated rows are marked synthetic=true by the loader.
 standard_counts: {ESRS 2: 80, E1: 55, E2: 30, E3: 30, E4: 30, E5: 30, S1: 55, S2: 30, S3: 30, S4: 30, G1: 30}
 datapoints:
-  - {datapoint_id: ESRS2-GOV-1, standard: ESRS 2, name: Governance roles, mandatory: true, phase_in: null, removed_in_simplification: false, source: EFRAG draft}
-  - {datapoint_id: E1-6-S1, standard: E1, name: Gross Scope 1 GHG emissions, mandatory: true, phase_in: null, removed_in_simplification: false, source: EFRAG draft}
-  - {datapoint_id: E1-6-S2, standard: E1, name: Gross Scope 2 GHG emissions, mandatory: true, phase_in: null, removed_in_simplification: false, source: EFRAG draft}
-  - {datapoint_id: E1-6-S3, standard: E1, name: Gross Scope 3 GHG emissions, mandatory: true, phase_in: first-year relief, removed_in_simplification: false, source: EFRAG draft}
+  - {datapoint_id: ESRS2-GOV-1, standard: ESRS 2, name: Governance roles, mandatory: true, phase_in: null, removed_in_simplification: false, source: Commission adopted revised ESRS, source_url: https://finance.ec.europa.eu/news/commission-adopts-revised-sustainability-reporting-standards-2026-07-03_en}
+  - {datapoint_id: E1-6-S1, standard: E1, name: Gross Scope 1 GHG emissions, mandatory: true, phase_in: null, removed_in_simplification: false, source: Commission adopted revised ESRS, source_url: https://finance.ec.europa.eu/news/commission-adopts-revised-sustainability-reporting-standards-2026-07-03_en}
+  - {datapoint_id: E1-6-S2, standard: E1, name: Gross Scope 2 GHG emissions, mandatory: true, phase_in: null, removed_in_simplification: false, source: Commission adopted revised ESRS, source_url: https://finance.ec.europa.eu/news/commission-adopts-revised-sustainability-reporting-standards-2026-07-03_en}
+  - {datapoint_id: E1-6-S3, standard: E1, name: Gross Scope 3 GHG emissions, mandatory: true, phase_in: first-year relief, removed_in_simplification: false, source: Commission adopted revised ESRS, source_url: https://finance.ec.europa.eu/news/commission-adopts-revised-sustainability-reporting-standards-2026-07-03_en}

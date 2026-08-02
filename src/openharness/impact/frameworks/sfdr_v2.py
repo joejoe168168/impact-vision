@@ -18,6 +18,17 @@ class SFDRv2Category(str, Enum):
     UNCATEGORISED = "uncategorised"
 
 
+SFDR_V2_CATEGORY_LABELS: dict[str, str] = {
+    "sustainable": "Sustainable",
+    "transition": "Transition",
+    # ``esg_basics`` is retained as a stable API value from the preview
+    # release; the Commission's review materials call this proposal category
+    # "ESG collection".
+    "esg_basics": "ESG collection",
+    "uncategorised": "Unclassified",
+}
+
+
 class ExclusionBreach(BaseModel):
     exclusion_id: str
     category: SFDRv2Category
@@ -42,6 +53,7 @@ class SFDRv2Result(BaseModel):
     gaps: list[str] = Field(default_factory=list)
     legal_status: str = "proposal"
     as_of: str = "2025-11-20"
+    category_label: str = ""
     citations: list[str] = Field(
         default_factory=lambda: [
             "European Commission SFDR review proposal, COM proposal 2025-11-20",
@@ -100,6 +112,9 @@ def classify_sfdr_v2(
         threshold=threshold,
         exclusion_breaches=breaches,
         gaps=gaps,
+        category_label=SFDR_V2_CATEGORY_LABELS[
+            (target_category if eligible else SFDRv2Category.UNCATEGORISED).value
+        ],
     )
 
 
@@ -133,6 +148,7 @@ __all__ = [
     "PortfolioHolding",
     "SFDRv2Category",
     "SFDRv2Result",
+    "SFDR_V2_CATEGORY_LABELS",
     "classify_sfdr_v2",
     "migrate_from_v1",
 ]

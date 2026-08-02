@@ -24,6 +24,8 @@ class EmissionFactorsInput(BaseModel):
         "sensitivity",
         "apply_catalog",
         "summary",
+        "inventory",
+        "trend",
         "scope1_mass_balance",
         "scope3",
         "energy_tce",
@@ -37,7 +39,7 @@ class EmissionFactorsInput(BaseModel):
         default_factory=dict, description="ActivityData payload for 'sensitivity'"
     )
     activities: list[dict] = Field(
-        default_factory=list, description="Activity payloads for 'apply_catalog'/'summary'"
+        default_factory=list, description="Activity payloads for 'apply_catalog'/'summary'/'inventory'"
     )
     revision_ids: list[str] = Field(
         default_factory=list, description="Revision IDs aligned with activities for 'summary'"
@@ -47,6 +49,28 @@ class EmissionFactorsInput(BaseModel):
         default="FY2026", description="Reporting period for 'apply_catalog'"
     )
     output_format: Literal["json", "text"] = "json"
+    annual_revenue_million_cny: float | None = Field(
+        default=None, ge=0, description="Entity annual revenue in million CNY for intensity outputs"
+    )
+    certificates: list[dict] = Field(
+        default_factory=list, description="Renewable certificate rows for certificate-adjusted market Scope 2"
+    )
+    scope3_categories: dict[int, dict] | None = Field(
+        default=None,
+        description="Scope 3 category payload; supports spend, T&D, tonne-km, waste, or activity-factor rows",
+    )
+    historical_years: list[dict] = Field(
+        default_factory=list, description="Prior-year Scope 1/2/3 rows for comparable trend output"
+    )
+    scope2_electricity_mwh: float | None = Field(
+        default=None, ge=0, description="Electricity consumption for automatic Scope 3 category 3 T&D"
+    )
+    td_loss_rate: float | None = Field(
+        default=None, ge=0, le=1, description="Regional T&D loss rate; defaults to the versioned offline assumption"
+    )
+    grid_emission_factor_tco2e_per_mwh: float | None = Field(
+        default=None, ge=0, description="Grid factor used for automatic Scope 3 category 3 T&D"
+    )
     inputs: list[dict] = Field(default_factory=list)
     outputs: list[dict] = Field(default_factory=list)
     categories: dict[int, dict] = Field(default_factory=dict)
@@ -61,6 +85,7 @@ class EmissionFactorsTool(BaseTool):
         "Versioned emission-factor catalog (EPA / DEFRA / IEA / IPCC offline snapshots). "
         "Actions: 'list' / 'get' revisions, 'sensitivity' for one activity, "
         "'apply_catalog' to recompute an inventory against a named catalog version, "
+        "'inventory' for an OHESG-style entity/Scope 1/2/selected Scope 3 carbon footprint, "
         "and 'summary' for payload-level sensitivity coverage."
     )
     input_model = EmissionFactorsInput
@@ -76,6 +101,32 @@ class EmissionFactorsTool(BaseTool):
         )
         catalog = default_factor_catalog()
 
+        if args.action == "inventory":
+            from openharness.impact.climate_accounting import calculate_ghg_inventory
+
+            try:
+                inventory = calculate_ghg_inventory(
+                    company_name=args.company_name,
+                    reporting_period=args.reporting_period,
+                    activities=args.activities,
+                    certificates=args.certificates,
+                    annual_revenue_million_cny=args.annual_revenue_million_cny,
+                    scope3_categories=args.scope3_categories,
+                    historical_years=args.historical_years or None,
+                )
+            except (ValueError, KeyError) as exc:
+                return ToolResult(output=f"Carbon inventory failed: {exc}", is_error=True)
+            return _format(inventory.model_dump(mode="json"), args.output_format)
+
+        if args.action == "trend":
+            from openharness.impact.climate_accounting import three_year_comparison
+
+            try:
+                payload = three_year_comparison(args.historical_years)
+            except (ValueError, KeyError, TypeError) as exc:
+                return ToolResult(output=f"Trend comparison failed: {exc}", is_error=True)
+            return _format(payload, args.output_format)
+
         if args.action in {"scope1_mass_balance", "scope3", "energy_tce", "water"}:
             from openharness.impact.climate_accounting import (
                 energy_to_tce,
@@ -88,7 +139,12 @@ class EmissionFactorsTool(BaseTool):
                 payload = (
                     scope1_mass_balance(args.inputs, args.outputs)
                     if args.action == "scope1_mass_balance"
-                    else scope3_estimate(args.categories)
+                    else scope3_estimate(
+                        args.categories,
+                        scope2_electricity_mwh=args.scope2_electricity_mwh,
+                        td_loss_rate=args.td_loss_rate,
+                        grid_emission_factor_tco2e_per_mwh=args.grid_emission_factor_tco2e_per_mwh,
+                    )
                     if args.action == "scope3"
                     else energy_to_tce(args.energy_lines)
                     if args.action == "energy_tce"

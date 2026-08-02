@@ -13,8 +13,10 @@ SFDR 2.0 category preview (`classify_sfdr2_category` + `framework_assess`
 disclosure badge through LP Q&A and evidence chains), EDCI-first collection
 scaffold (`edci_core` data-request pack + `sector='edci'` questionnaire
 template), and the milestone watch-list (`regulatory_calendar` `watchlist`
-action). The ESRS 2.0 datapoint refresh (§1.2) and ISSB nature Practice
-Statement mapping (§1.3) stay deferred until the final texts land.
+action). The ESRS 2.0 datapoint fixture now carries the Commission's adopted-
+but-not-yet-in-force status and explicit synthetic-row provenance; the final
+taxonomy remains deferred until Official Journal publication. ISSB nature
+Practice Statement mapping (§1.3) stays deferred until the final text lands.
 
 ---
 
@@ -40,12 +42,13 @@ deviations) as scenario toggles, since final text is ~2027.
 *(Shipped 2026-07-03 as `classify_sfdr2_category` — Council flexibility is
 modelled as caveats, never as a pass.)*
 
-### 1.2 ESRS 2.0 — draft delegated act consulted, adoption imminent
+### 1.2 ESRS 2.0 — delegated acts adopted, legal effect pending publication
 
-- Public feedback on the **revised (simplified) ESRS** and the **new VSME
-  standard** ran 2026-05-06 → 2026-06-03; formal adoption expected
-  **Q3/Q4 2026**, mandatory from **FY2027** with voluntary early adoption for
-  FY2026.
+- The European Commission adopted the **revised (simplified) ESRS** and the
+  **new VSME standard** delegated acts on **2026-07-03**. They are not in force
+  until European Parliament/Council scrutiny is complete and the acts are
+  published in the Official Journal; application is from **FY2027** with
+  voluntary early adoption for FY2026.
 - Mandatory datapoints cut ~60% (total ~70%); the 2 cross-cutting +
   10 topical architecture is retained (our `frameworks/esrs.py` topic
   structure stays valid; datapoint lists will slim).
@@ -56,15 +59,17 @@ modelled as caveats, never as a pass.)*
 - CSRD amendments must be transposed by member states by **2027-03-19**;
   CSDDD transposition remains **2028-07-26**, application **2029-07-26**.
 
-**Roadmap effect:** schedule the `esrs.py` + `csrd_wizard.py` refresh for
-right after the delegated act is published (late 2026) rather than now — the
-final datapoint list is what matters.
+**Roadmap effect:** the loader and registry now expose the adopted-pending-
+scrutiny status and mark generated datapoint rows as screening placeholders.
+Schedule the final `esrs.py` + `csrd_wizard.py` taxonomy refresh immediately
+after Official Journal publication — the final datapoint list is what matters.
 
 ### 1.3 ISSB — IFRS S2 targeted amendments + nature guidance pipeline
 
-- The ISSB issued **targeted amendments to IFRS S2** easing Scope 3 /
-  financed-emissions requirements (GICS relief, optionality on certain
-  categories).
+- The ISSB issued **targeted amendments to IFRS S2** (effective for periods
+  beginning **2027-01-01**, early application permitted): financed-emissions
+  relief for Scope 3 Category 15, alternative classification systems beyond
+  GICS, and jurisdictional relief for GHG Protocol and IPCC GWP requirements.
 - **Nature-related disclosure guidance** is coming as an **IFRS Practice
   Statement** — exposure draft due **October 2026**. It layers guidance on
   S1/S2 rather than creating a new standard, and will likely draw on
@@ -121,10 +126,11 @@ Track E (governed AI). Two concrete additions worth ticketing:
 |---|---|
 | 2026-09-27 | ECGT Directive (EU) 2024/825 applies — generic green claims banned |
 | 2026-10 | ISSB nature Practice Statement exposure draft |
-| ~2026 Q4 | Revised ESRS + VSME delegated acts adopted |
+| 2026-07-03 | Revised ESRS + VSME delegated acts adopted; OJ publication still pending |
 | 2026-11-10 | First California SB 253 Scope 1+2 reports due |
 | 2026-12-15 | ISSA 5000 effective (periods beginning on/after) |
 | 2026-12-30 | EUDR obligations apply (large/medium operators) |
+| 2027-06-30 | EUDR obligations apply to other micro/small operators |
 | 2027-01-01 | Revised ESRS applies (FY2027, early adoption FY2026) |
 | 2027-03-19 | CSRD (as amended) member-state transposition deadline |
 | 2028-07-26 | CSDDD member-state transposition deadline |

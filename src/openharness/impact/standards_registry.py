@@ -19,6 +19,8 @@ class StandardArticle(BaseModel):
     text_summary: str
     modality: Literal["shall", "encouraged", "neutral"]
     topics: list[str] = Field(default_factory=list)
+    content_status: Literal["source_text", "curated_summary", "generated_summary"] = "generated_summary"
+    source_url: str = ""
 
 
 def load_articles(standard_id: str) -> list[StandardArticle]:
@@ -44,6 +46,8 @@ def load_articles(standard_id: str) -> list[StandardArticle]:
                 text_summary=f"Article {number} establishes a {chapter.lower()} reporting or governance requirement.",
                 modality=modalities[number - 1],
                 topics=[],
+                content_status=payload.get("content_status", "generated_summary"),
+                source_url=payload.get("source_url", ""),
             )
         )
     return rows
@@ -220,6 +224,27 @@ def default_standards_registry() -> StandardsRegistry:
                 notes="IFRS S1 and S2 were issued in June 2023 and are effective for annual reporting periods beginning on or after 2024-01-01.",
             ),
             StandardVersion(
+                standard_id="ISSB_S2_AMENDMENTS",
+                name="IFRS S2 targeted amendments",
+                version="2025-issued",
+                status="under_revision",
+                effective_date="2027-01-01",
+                source_url="https://www.ifrs.org/news-and-events/news/2025/12/issb-issues-targeted-amendments-ifrs-s2/",
+                aliases=["IFRS S2 amendments", "ISSB S2 2025 amendments"],
+                scope=["financed emissions", "Scope 3 Category 15", "classification systems", "GHG Protocol relief"],
+                requirement_ids=[
+                    "S2-2025-01",
+                    "S2-2025-02",
+                    "S2-2025-03",
+                    "S2-2025-04",
+                ],
+                notes=(
+                    "Issued December 2025; effective for periods beginning on or after "
+                    "2027-01-01, with early application permitted. Jurisdictional "
+                    "adoption profiles still control local filing dates."
+                ),
+            ),
+            StandardVersion(
                 standard_id="ESRS",
                 name="European Sustainability Reporting Standards",
                 version="2023-delegated-act",
@@ -275,9 +300,11 @@ def default_standards_registry() -> StandardsRegistry:
                     "AND >EUR 450M net turnover (cumulative); listed-SME and most former "
                     "Wave 2/3 entities out of scope; sector-specific ESRS removed. "
                     "Member States transpose by 2027-03-19, applying from FY2027. A "
-                    "SIMPLIFIED ESRS delegated act is targeted for 2026-09 (FY2027 use); "
-                    "until adopted, the 2023-delegated-act ESRS remain the substantive "
-                    "rule set for in-scope reporters."
+                    "The European Commission adopted revised ESRS delegated acts on "
+                    "2026-07-03, but they are not in force until Official Journal "
+                    "publication and completion of scrutiny. Until then, the "
+                    "2023-delegated-act ESRS remain the substantive rule set for "
+                    "in-scope reporters."
                 ),
             ),
             StandardVersion(
@@ -309,13 +336,19 @@ def default_standards_registry() -> StandardsRegistry:
             ),
             StandardVersion(
                 standard_id="ESRS_SIMPLIFIED_2026",
-                name="Simplified European Sustainability Reporting Standards",
+                name="Simplified European Sustainability Reporting Standards (adopted, pending scrutiny)",
                 version="2026-draft",
-                status="draft",
+                status="under_revision",
                 effective_date="2027-01-01",
-                source_url="https://www.efrag.org/en/sustainability-reporting/esrs-workstreams/amended-esrs",
+                source_url="https://finance.ec.europa.eu/news/commission-adopts-revised-sustainability-reporting-standards-2026-07-03_en",
                 scope=["CSRD", "double materiality", "simplified datapoints"],
-                notes="Draft exposure set as of 2026-07; final delegated act pending.",
+                notes=(
+                    "Commission adopted the revised delegated acts on 2026-07-03. "
+                    "They remain under European Parliament/Council scrutiny and do "
+                    "not enter into force until Official Journal publication. "
+                    "Application is from FY2027, with early adoption permitted for FY2026; "
+                    "the bundled datapoint rows are screening placeholders, not the final taxonomy."
+                ),
             ),
             StandardVersion(
                 standard_id="SFDR",

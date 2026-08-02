@@ -409,6 +409,25 @@ TOOL_ROUTES: list[ToolRoute] = [
         ],
     ),
     ToolRoute(
+        tool="lca_assessment",
+        category="compliance",
+        summary="ISO-aligned lifecycle assessment and life-cycle-management planning with LCI, LCIA, LCC/S-LCA, hotspots, and sensitivity.",
+        keywords=[
+            "lca",
+            "life cycle assessment",
+            "lifecycle assessment",
+            "life cycle management",
+            "lifecycle management",
+            "lcsa",
+            "lcc",
+            "social lca",
+            "lcia",
+            "life cycle inventory",
+            "functional unit",
+        ],
+        example="lca_assessment(action='assess', study={...}, flows=[...])",
+    ),
+    ToolRoute(
         tool="ai_governance",
         category="compliance",
         summary="AI governance review for AI-assisted impact analysis (EU AI Act aware).",
@@ -771,6 +790,38 @@ PLAYBOOKS: list[Playbook] = [
             ),
             PlaybookStep(tool="framework_assess", purpose="TCFD / ISSB S2 disclosure readiness."),
             PlaybookStep(tool="esg_toolbox", purpose="SBTi target validation and carbon schemes."),
+        ],
+    ),
+    Playbook(
+        playbook_id="lifecycle_assessment",
+        name="Lifecycle assessment & management",
+        when_to_use="Comparing products or processes across the lifecycle, preparing LCA/LCSA evidence, or turning hotspots into an improvement plan.",
+        keywords=[
+            "lca",
+            "life cycle assessment",
+            "lifecycle assessment",
+            "lifecycle management",
+            "lcsa",
+            "product carbon footprint",
+            "functional unit",
+        ],
+        steps=[
+            PlaybookStep(
+                tool="lca_assessment",
+                purpose="Run goal/scope, LCI, LCIA, data-quality, hotspot, and interpretation checks.",
+            ),
+            PlaybookStep(
+                tool="lca_assessment",
+                purpose="Run explicit sensitivity scenarios and test conclusion robustness.",
+            ),
+            PlaybookStep(
+                tool="lca_assessment",
+                purpose="Convert hotspots into an owner-assigned life-cycle-management backlog.",
+            ),
+            PlaybookStep(
+                tool="emission_factors",
+                purpose="Pin or sensitivity-test climate factors when the LCA includes GHG flows.",
+            ),
         ],
     ),
     Playbook(

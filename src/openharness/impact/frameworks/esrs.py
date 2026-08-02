@@ -9,15 +9,16 @@ report on both:
 
 Reference: EFRAG Final ESRS Set 1 (July 2023), EU Delegated Regulation (EU) 2023/2772.
 
-Status note (verified 2026-07): Omnibus I (Directive (EU) 2026/470, in force
-2026-03-18) narrowed CSRD scope to >1,000 employees AND >€450M turnover, and a
-revised, simplified ESRS set ("ESRS 2.0", ~60% fewer mandatory datapoints, same
-2 cross-cutting + 10 topical architecture) is being adopted as a delegated act
-in late 2026 with mandatory application for FY2027 (early adoption allowed for
-FY2026). The topical structure below therefore stays valid; individual
-datapoint lists will slim down when the revised delegated act lands. The VSME
-voluntary standard doubles as the value-chain cap for <1,000-employee
-suppliers.
+Status note (verified 2026-08): Omnibus I (Directive (EU) 2026/470, in force
+2026-03-18) narrowed CSRD scope to >1,000 employees AND >€450M turnover. The
+European Commission adopted revised ESRS delegated acts on 2026-07-03; they
+remain subject to European Parliament/Council scrutiny and Official Journal
+publication, with application from FY2027 and early adoption for FY2026. The
+revised set removes more than 60% of mandatory datapoints. The topical
+structure below therefore stays useful for screening, while the simplified
+datapoint loader marks generated rows explicitly until the final taxonomy is
+published. The VSME voluntary standard doubles as the value-chain cap for
+<1,000-employee suppliers.
 """
 
 from __future__ import annotations
@@ -37,7 +38,38 @@ class ESRSDatapoint(BaseModel):
     phase_in: str | None = None
     removed_in_simplification: bool = False
     source: str
-    status: Literal["draft", "active"] = "draft"
+    status: Literal["draft", "active", "adopted_pending_oj_scrutiny", "superseded"] = "draft"
+    synthetic: bool = False
+    source_url: str | None = None
+
+
+def simplified_esrs_metadata(path: str | Path | None = None) -> dict:
+    """Return legal-status and provenance metadata for the simplified ESRS set.
+
+    The bundled datapoint rows intentionally remain a screening fixture until
+    the Commission's delegated act is published in the Official Journal. This
+    helper prevents callers from mistaking generated rows for a final legal
+    taxonomy.
+    """
+    data_path = (
+        Path(path)
+        if path
+        else Path(__file__).resolve().parents[4] / "data" / "esrs_simplified_2026.yaml"
+    )
+    payload = yaml.safe_load(data_path.read_text(encoding="utf-8")) or {}
+    return {
+        "regime": payload.get("regime", "esrs_simplified_2026"),
+        "status": payload.get("status", "draft"),
+        "as_of": payload.get("as_of", ""),
+        "effective_from": payload.get("effective_from", ""),
+        "early_adoption": bool(payload.get("early_adoption", False)),
+        "source": payload.get("source", ""),
+        "source_url": payload.get("source_url", ""),
+        "source_note": payload.get("source_note", ""),
+        "mandatory_datapoint_reduction": payload.get("mandatory_datapoint_reduction", ""),
+        "total_datapoint_reduction": payload.get("total_datapoint_reduction", ""),
+        "expected_cost_reduction": payload.get("expected_cost_reduction", ""),
+    }
 
 
 def load_simplified_datapoints(path: str | Path | None = None) -> list[ESRSDatapoint]:
@@ -65,6 +97,8 @@ def load_simplified_datapoints(path: str | Path | None = None) -> list[ESRSDatap
                     "removed_in_simplification": False,
                     "source": payload["source"],
                     "status": payload.get("status", "draft"),
+                    "synthetic": True,
+                    "source_url": payload.get("source_url"),
                 }
             )
     return [ESRSDatapoint.model_validate(row) for row in rows]
@@ -696,9 +730,18 @@ def assess_double_materiality(
     payload["regime"] = regime
     if regime == "esrs_simplified_2026":
         simplified = load_simplified_datapoints()
+        metadata = simplified_esrs_metadata()
         payload["total_datapoints"] = len(simplified)
-        payload["draft_status"] = "draft"
+        payload["draft_status"] = metadata["status"]  # compatibility key
+        payload["simplified_status"] = metadata["status"]
+        payload["effective_from"] = metadata["effective_from"]
+        payload["early_adoption"] = metadata["early_adoption"]
+        payload["source_url"] = metadata["source_url"]
+        payload["source_note"] = metadata["source_note"]
         payload["total_disclosures"] = len(simplified)
         payload["overall_coverage_pct"] = round(100 * addressed_disc / len(simplified), 1)
-        payload["summary"] += f" Simplified draft regime contains {len(simplified)} datapoints."
+        payload["summary"] += (
+            f" Simplified regime ({metadata['status']}) contains {len(simplified)} datapoints; "
+            "generated rows are screening placeholders pending final taxonomy publication."
+        )
     return payload

@@ -12,6 +12,7 @@ from openharness.impact.regulatory_calendar import (
     build_regulatory_calendar,
     jurisdiction_options,
     issb_status,
+    issb_s2_amendments,
     issb_summary,
     regulatory_watchlist,
     render_regulatory_calendar_text,
@@ -21,7 +22,12 @@ from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 class RegulatoryCalendarInput(BaseModel):
     action: Literal[
-        "schedule", "list_jurisdictions", "watchlist", "issb_status", "issb_summary"
+        "schedule",
+        "list_jurisdictions",
+        "watchlist",
+        "issb_status",
+        "issb_summary",
+        "s2_amendments",
     ] = "schedule"
     jurisdiction: Jurisdiction = Field(default="EU")
     fiscal_year_end: str = Field(
@@ -40,7 +46,8 @@ class RegulatoryCalendarTool(BaseTool):
         "Build a jurisdiction-specific regulatory deadline calendar for SFDR/CSRD/ISSB, "
         "UK SDR, California SB 253/261, and other supported regimes. Flags overdue and due-in-60-day items. "
         "Action 'watchlist' returns the market-wide milestone watch-list (ECGT, revised ESRS, ISSA 5000, "
-        "EUDR, CSDDD, SFDR 2.0...) independent of fiscal year."
+        "EUDR, CSDDD, SFDR 2.0...) independent of fiscal year. Action 's2_amendments' "
+        "returns the issued IFRS S2 targeted-amendment register (effective 2027, early application allowed)."
     )
     input_model = RegulatoryCalendarInput
 
@@ -60,6 +67,10 @@ class RegulatoryCalendarTool(BaseTool):
                 if args.action == "issb_summary"
                 else issb_status(args.query or str(args.jurisdiction))
             )
+            return ToolResult(output=json.dumps(payload, indent=2), metadata=payload)
+
+        if args.action == "s2_amendments":
+            payload = issb_s2_amendments()
             return ToolResult(output=json.dumps(payload, indent=2), metadata=payload)
 
         if args.action == "watchlist":

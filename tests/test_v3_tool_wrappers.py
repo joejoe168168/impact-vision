@@ -40,6 +40,35 @@ def test_v3_tools_are_registered() -> None:
 
 def test_v3_tool_wrappers_execute_smoke_paths() -> None:
     _run_tool("emission_factors", {"action": "list"})
+    _run_tool(
+        "emission_factors",
+        {
+            "action": "inventory",
+            "company_name": "DemoCo",
+            "reporting_period": "FY2025",
+            "annual_revenue_million_cny": 10,
+            "activities": [
+                {
+                    "activity_type": "electricity",
+                    "value": 1000,
+                    "unit": "kwh",
+                    "scope": "scope2",
+                    "method": "location_based",
+                }
+            ],
+            "scope3_categories": {},
+        },
+    )
+    _run_tool(
+        "emission_factors",
+        {
+            "action": "trend",
+            "historical_years": [
+                {"year": 2024, "scope1": 10, "scope2": 20, "scope3": 30},
+                {"year": 2025, "scope1": 12, "scope2": 20, "scope3": 28},
+            ],
+        },
+    )
     _run_tool("stakeholder_voice", {"action": "build_survey", "sector": "energy"})
     _run_tool(
         "evidence_review",

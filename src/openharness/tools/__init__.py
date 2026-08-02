@@ -103,6 +103,7 @@ def create_default_tool_registry(mcp_manager: McpClientManager | None = None) ->
         # verification_prep merged into verification_workspace (prep actions)
         # v3 tools (0.15.0): trust infrastructure
         ("impact.emission_factors_tool", "EmissionFactorsTool"),
+        ("impact.lca_tool", "LCAAssessmentTool"),
         ("impact.evidence_review_tool", "EvidenceReviewTool"),
         ("impact.exit_impact_tool", "ExitImpactTool"),
         # greenwashing_reviewer merged into greenwashing_detect (action='review_claims')

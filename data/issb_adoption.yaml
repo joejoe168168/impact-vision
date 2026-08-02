@@ -1,4 +1,7 @@
 as_of: "2026-07-19"
+# Editorial tracking index. ``source`` values are authority names; callers
+# should verify the applicable IFRS jurisdictional profile before legal use.
+source_note: https://www.ifrs.org/ifrs-sustainability-disclosure-standards-around-the-world/use-by-jurisdiction/
 jurisdictions:
   - {jurisdiction: Hong Kong, status: adopted, effective: "2025-08-01", scope: listed issuers, assurance_posture: phased, source: HKEX}
   - {jurisdiction: Chile, status: adopted, effective: "2026-01-01", scope: listed issuers, assurance_posture: limited, source: CMF}

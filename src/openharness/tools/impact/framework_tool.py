@@ -80,7 +80,7 @@ class FrameworkTool(BaseTool):
         "- **GRI**: Browse Universal + Topic Standards (200/300/400 series), match to relevant topics\n"
         "- **TCFD / IFRS S2**: Assess climate disclosure across 4 pillars (Governance, Strategy, Risk, Metrics)\n"
         "- **SFDR PAI**: Check coverage of 14 mandatory EU Principal Adverse Impact indicators\n"
-        "- **sfdr2**: SFDR 2.0 category preview (Sustainable / Transition / ESG Basics; "
+        "- **sfdr2**: SFDR 2.0 category preview (Sustainable / Transition / ESG collection; "
         "70% threshold + exclusion screen + Art 8/9 migration map; PROPOSED LAW, ~2029)\n"
         "- **EDCI**: Assess 2026 private-markets KPI fields, including non-core fields\n"
         "- **UNPRI**: Self-assess alignment with the 6 Principles for Responsible Investment\n"
@@ -451,6 +451,7 @@ class FrameworkTool(BaseTool):
         from openharness.impact.frameworks.sfdr_v2 import (
             MANDATORY_EXCLUSIONS,
             PortfolioHolding,
+            SFDR_V2_CATEGORY_LABELS,
             SFDRv2Category,
             classify_sfdr_v2,
             migrate_from_v1,
@@ -459,6 +460,7 @@ class FrameworkTool(BaseTool):
         if args.action == "list":
             payload = {
                 "categories": [item.value for item in SFDRv2Category],
+                "category_labels": SFDR_V2_CATEGORY_LABELS,
                 "threshold": 0.70,
                 "mandatory_exclusions": {
                     category.value: sorted(flags)
@@ -1182,7 +1184,7 @@ class FrameworkTool(BaseTool):
             "  gri       - GRI Universal + Topic Standards (30+ standards, 120+ disclosures)",
             "  tcfd      - TCFD / IFRS S2 Climate Disclosure (4 pillars, 11 disclosures)",
             "  sfdr_pai  - SFDR PAI Indicators (14 mandatory EU indicators)",
-            "  sfdr2     - SFDR 2.0 category preview (Sustainable/Transition/ESG Basics; proposed law)",
+            "  sfdr2     - SFDR 2.0 category preview (Sustainable/Transition/ESG collection; proposed law)",
             "  edci      - EDCI 2026 private-markets KPI fields, including non-core fields",
             "  unpri     - UN PRI Self-Assessment (6 principles, 27 actions)",
             "  toc       - Theory of Change (RS Group Blended Value + GIIN ToC Checklist)",

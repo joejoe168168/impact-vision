@@ -1,0 +1,35 @@
+framework: IFRS S2
+as_of: "2025-12"
+effective_date: "2027-01-01"
+early_application: true
+source_url: https://www.ifrs.org/news-and-events/news/2025/12/issb-issues-targeted-amendments-ifrs-s2/
+source_note: Issued targeted amendments; check the jurisdictional adoption profile before relying on an effective date for a filing.
+amendments:
+  - amendment_id: S2-2025-01
+    title: Financed-emissions relief for Scope 3 Category 15
+    summary: A reporting entity may limit Scope 3 Category 15 disclosure to financed emissions where the category is relevant to its activities.
+    status: issued
+    effective_date: "2027-01-01"
+    early_application: true
+    source_url: https://www.ifrs.org/news-and-events/news/2025/12/issb-issues-targeted-amendments-ifrs-s2/
+  - amendment_id: S2-2025-02
+    title: Alternative classification systems
+    summary: An entity may use a classification system other than GICS when a jurisdiction or industry uses an alternative system, with transparent explanation.
+    status: issued
+    effective_date: "2027-01-01"
+    early_application: true
+    source_url: https://www.ifrs.org/news-and-events/news/2025/12/issb-issues-targeted-amendments-ifrs-s2/
+  - amendment_id: S2-2025-03
+    title: Jurisdictional relief from GHG Protocol requirements
+    summary: Jurisdictional requirements may provide relief from specified GHG Protocol measurement requirements when the entity explains the basis used.
+    status: issued
+    effective_date: "2027-01-01"
+    early_application: true
+    source_url: https://www.ifrs.org/news-and-events/news/2025/12/issb-issues-targeted-amendments-ifrs-s2/
+  - amendment_id: S2-2025-04
+    title: Jurisdictional relief from IPCC global-warming potentials
+    summary: Jurisdictional requirements may permit alternative IPCC global-warming-potential values, with the selected values and their effect disclosed.
+    status: issued
+    effective_date: "2027-01-01"
+    early_application: true
+    source_url: https://www.ifrs.org/news-and-events/news/2025/12/issb-issues-targeted-amendments-ifrs-s2/

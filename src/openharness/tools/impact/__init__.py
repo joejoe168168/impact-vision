@@ -39,6 +39,7 @@ from openharness.tools.impact.investee_portal_tool import InvesteePortalTool
 from openharness.tools.impact.iris_catalog_tool import IrisCatalogTool
 from openharness.tools.impact.lp_ddq_export_tool import LpDdqExportTool
 from openharness.tools.impact.lp_narrative_tool import LPNarrativeTool
+from openharness.tools.impact.lca_tool import LCAAssessmentTool
 from openharness.tools.impact.metric_recommender_tool import MetricRecommenderTool
 from openharness.tools.impact.monitoring_tool import MonitoringTool
 from openharness.tools.impact.narrative_tool import NarrativeTool as NarrativeTool
@@ -95,6 +96,7 @@ __all__ = [
     "InvesteePortalTool",
     "IrisCatalogTool",
     "LPNarrativeTool",
+    "LCAAssessmentTool",
     "LpDdqExportTool",
     "MetricRecommenderTool",
     "MonitoringTool",

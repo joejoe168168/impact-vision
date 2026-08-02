@@ -2,7 +2,7 @@
 
 Open-source AI-powered impact measurement and SDG alignment agent for VC and impact investment funds.
 
-Built on [OpenHarness](https://github.com/HKUDS/OpenHarness), Impact Vision ships a conversational AI agent, a **CLI**, a **REST API**, an **MCP server**, a **Streamlit dashboard**, and a **single-file Web Console** — all backed by the same engine with deep expertise in GIIN's IRIS+ framework, UN SDGs, the 5 Dimensions of Impact, and 10+ ESG / regulatory frameworks (ISSB, ESRS, SFDR, TCFD, SASB, GRI, PCAF, SBTi, EU Taxonomy, TNFD, CDP).
+Built on [OpenHarness](https://github.com/HKUDS/OpenHarness), Impact Vision ships a conversational AI agent, a **CLI**, a **REST API**, an **MCP server**, a **Streamlit dashboard**, and a **single-file Web Console** — all backed by the same engine with deep expertise in GIIN's IRIS+ framework, UN SDGs, the 5 Dimensions of Impact, and 20+ ESG / regulatory frameworks (ISSB, ESRS, SFDR, TCFD, SASB, GRI, PCAF, SBTi, EU Taxonomy, TNFD, CDP, TISFD, VSME, 2X, and SBTN).
 
 Release history lives in [CHANGELOG.md](CHANGELOG.md). Strategy and engineering plans live in [`docs/`](docs/).
 
@@ -125,93 +125,31 @@ pip install -e ".[dev]"
 
 ### 3. Set up an LLM provider
 
-The AI agent needs a language model. We recommend **OpenRouter** for beginners -- it's free to start and gives you access to many models.
-
-#### Option A: OpenRouter (recommended -- free models available)
-
-**Step 1.** Create an OpenRouter account:
-
-1. Go to [openrouter.ai](https://openrouter.ai/) and click **Sign Up** (Google or GitHub login works)
-2. Go to [openrouter.ai/keys](https://openrouter.ai/keys) and click **Create Key**
-3. Copy the key (starts with `sk-or-...`)
-
-**Step 2.** Run the interactive setup wizard:
+The AI agent needs a tool-calling language model. Run the setup wizard and
+choose a provider; credentials are stored locally and must never be committed.
 
 ```bash
 impact-vision setup
 ```
 
-In the wizard pick **OpenAI-Compatible API** → **OpenRouter**, accept the
-default base URL (`https://openrouter.ai/api/v1`), type a model name
-(e.g. `openai/gpt-oss-120b:free`), and paste your key. Done — you can now
-start the agent (Step 4).
+| Provider | Setup choice | Best for |
+|----------|--------------|----------|
+| OpenRouter | OpenAI-Compatible API | Trying multiple hosted models, including free tiers |
+| Anthropic | Anthropic-Compatible API | Highest-quality production impact analysis |
+| OpenAI | OpenAI-Compatible API | General-purpose hosted analysis |
+| NaxtClaude | `impact-vision provider use naxtclaude` | OpenAI-compatible Claude endpoint |
+| Ollama | `impact-vision ollama-setup --model llama3.2` | Local, private, offline analysis |
 
-> **Free models (verified May 2026):** Browse the live list at
-> [openrouter.ai/models?q=free](https://openrouter.ai/models?q=free).
-> Impact analysis needs **tool calling**, so stick with these:
->
-> | Model | Context | Why we recommend it |
-> |-------|--------:|---------------------|
-> | `openai/gpt-oss-120b:free` | 131K | OpenAI open-weight MoE, native tool use, strong reasoning |
-> | `nvidia/nemotron-3-super-120b-a12b:free` | 1M | 1M-token window for long decks, strong multi-step reasoning |
-> | `z-ai/glm-4.5-air:free` | 131K | Hybrid-thinking MoE, cheap + fast, tool-calling |
-> | `google/gemma-4-31b-it:free` | 262K | Native function calling, multimodal, Apache 2.0 |
->
-> OpenRouter rotates free endpoints monthly — if a model 404s, re-run
-> `impact-vision setup` and pick another from the live list.
+For hosted providers, select a model with reliable function/tool calling and
+enough context for the documents you analyze. Local Ollama needs no API key;
+the other providers require a credential from their service.
 
-#### Option B: Anthropic (Claude Sonnet) -- best quality for impact analysis
-
-Create a key at [console.anthropic.com](https://console.anthropic.com/), run
-`impact-vision setup`, choose **Anthropic-Compatible API** → **Claude
-official**, and paste the key (Claude Sonnet is the default model).
-
-#### Option C: OpenAI (GPT-5)
-
-Create a key at [platform.openai.com/api-keys](https://platform.openai.com/api-keys),
-run `impact-vision setup`, choose **OpenAI-Compatible API** → **OpenAI
-official**, and paste the key.
-
-#### Option D: NaxtClaude-compatible endpoint
-
-Impact Vision includes a built-in OpenAI-compatible profile for
-`https://api.naxtclaude.com/v1`. Store the key in the profile credential store
-or provide it through `NAXTCLAUDE_API_KEY`; do not commit API keys to the repo.
+To configure the NaxtClaude profile explicitly:
 
 ```bash
-impact-vision provider use naxtclaude
 impact-vision auth login naxtclaude
-```
-
-To choose a different model exposed by that endpoint:
-
-```bash
 impact-vision provider edit naxtclaude --model claude-sonnet-4-6
 ```
-
-#### Option E: Local Ollama (free, runs on your machine, no internet needed)
-
-1. Install Ollama from [ollama.com](https://ollama.com/)
-2. Pull a model: `ollama pull llama3.2`
-3. Run setup:
-
-```bash
-impact-vision ollama-setup --model llama3.2
-```
-
-No API key needed -- everything runs locally on your GPU/CPU.
-
-| Provider | Best for | Cost |
-|----------|----------|------|
-| [OpenRouter](https://openrouter.ai/models?q=free) | Trying multiple models, free tier | Free + pay-per-use |
-| Anthropic (Claude Sonnet) | Best impact analysis quality | Pay-per-use |
-| OpenAI (GPT-5) | General purpose | Pay-per-use |
-| Ollama (local) | Privacy, offline use | Free (your hardware) |
-
-> **Model quality note:** impact analysis requires **tool calling**. Use
-> Claude Sonnet or GPT-5 for production DD work; the free models in the table
-> above are the best no-cost options. Very small models (<9B) or models
-> without tool-calling support will struggle.
 
 ### 4. Start the AI agent
 
@@ -278,7 +216,7 @@ Opens the six-tab dashboard at http://localhost:8501. `iv` is shorthand for
 
 ## Usage
 
-Impact Vision ships **51 impact agent tools** covering screening, diligence,
+Impact Vision ships **52 impact agent tools** covering screening, diligence,
 monitoring, reporting, assurance, and exit. Paste the examples below into the
 agent or Web Console; `impact_advisor` routes unfamiliar requests.
 
@@ -317,43 +255,17 @@ accounting. Module knowledge tracks current regulatory milestones
 post-Omnibus CSRD/CSDDD thresholds, EU Battery Regulation timeline,
 SBTi V2 transition, CDP 2026 cycle, SMETA 7.0, AWS Standard V3.0).
 
-Example prompts:
+The `esg_toolbox` agent tool supports `list`, `search`, `get`, `methodology`,
+`checklist`, `assess`, `crosswalk`, `source_profile`, `recommend`, `workflow`,
+and `input_plan` actions. These cover module discovery, evidence planning,
+readiness scoring, framework crosswalks, source inspection, and next-question
+generation.
 
-```
-> List the ESG toolbox modules by category
-> Assess CBAM readiness for CN code 7208 exported to the EU
-> Build an EcoVadis preparation checklist for a manufacturing supplier
-> Recommend ESG modules from our company description, metrics, export market, and supplier profile
-> Create a minimal-input plan for SBTi readiness from our existing company profile and metrics
-```
-
-The `esg_toolbox` agent tool supports:
-
-| Action | Use it for |
-|--------|------------|
-| `list` | Browse the 33 modules by category |
-| `search` | Find modules from English or framework-specific queries |
-| `get` | Inspect one module's scope, sources, and requirements |
-| `methodology` | Review the public-source-backed logic and methods |
-| `checklist` | Generate an evidence collection checklist |
-| `assess` | Score readiness from company text, metrics, product code, country, and supplier context |
-| `crosswalk` | Map known Impact Vision metric IDs to toolbox/framework evidence uses |
-| `source_profile` | Inspect the reviewed source profile, extracted page keywords, headings, and indexed records |
-| `recommend` | Recommend the best-fit modules from company context, metrics, product/export data, and supplier evidence; returns UI-ready cards and next questions |
-| `workflow` | Show how a module improves existing impact tools such as gap analysis, evidence review, product passports, HRDD, reports, and regulatory calendars |
-| `input_plan` | Minimize user input by identifying provided, inferable, and missing fields before asking follow-up questions |
-
-The toolbox is connected to the existing impact workflow and acts as a
-router: modules with a dedicated Impact Vision tool hand off to it
-(GRI / ESRS / ISSB / CDP → `framework_assess`, supplier audit schemes →
-`hrdd_assess`, battery / ESPR → `product_passport`, AA1000 →
-`verification_workspace`, EU deadlines incl. CBAM / EUDR / Battery Regulation →
-`regulatory_calendar`, GHG → `emission_factors`). To minimise data entry it
-reuses uploaded documents, company profiles, metrics, product codes, and
-supplier context before asking for anything new: `recommend` routes a deal to
-the most relevant modules with UI-ready cards, and `input_plan` marks each
-field `provided` / `inferable` / `missing` and asks only the unresolved
-questions.
+The toolbox routes to existing tools where a dedicated implementation exists
+(frameworks, HRDD, product passports, verification, regulatory calendars, and
+emission factors). It reuses uploaded documents, company profiles, metrics,
+product codes, and supplier context; `recommend` selects the best-fit modules
+and `input_plan` asks only for unresolved fields.
 
 ### Catalog, DD & Scoring
 
@@ -447,11 +359,38 @@ each answer improved the score.
 
 ### Climate Accounting (Scope 1/2/3 + PCAF)
 
+The carbon calculator supports an entity workflow with revenue-based
+intensity, Scope 2 certificate adjustments, manufacturing Scope 3 activity
+methods, and three-year comparable emissions. Results retain factor
+provenance and verification metadata in the Impact Vision output.
+
 ```
 > Calculate a Scope 1/2 GHG inventory from this fuel + electricity data
+> Run the entity carbon calculator with revenue intensity and valid I-REC coverage
+> Estimate Scope 3 from purchased-goods spend, T&D losses, freight tonne-km, and waste
+> Compare Scope 1/2/3 totals across the last three reporting years
 > Apply emission factor catalog v2 with uncertainty bands
 > Run PCAF financed-emissions attribution for the loan book
 > Check SBTi 1.5 °C alignment
+```
+
+For product or process decisions, `lca_assessment` accepts a declared
+functional unit and boundary plus caller-supplied inventory flows and
+characterization factors. It reports hotspots and sensitivity without bundling
+licensed databases. The workflow covers goal and scope, life-cycle inventory,
+impact assessment, interpretation, and documented limitations.
+
+The same tool can turn hotspots into a life-cycle-management plan with owners,
+target metrics, due periods, evidence requirements, decision gates, and
+monitoring indicators. It can also combine environmental impacts with
+lifecycle cost and disaggregated social indicators without mixing their units.
+
+```
+> Run an LCA for this product using a cradle-to-grave boundary
+> Run sensitivity scenarios for recycled content, energy mix, and transport distance
+> Build an owner-assigned life-cycle-management plan from the top hotspots
+> Run an LCSA with lifecycle costs and worker/community indicators
+> Assess whether this LCA is ready for an investment or procurement decision
 ```
 
 ### Trust Infrastructure (v3): evidence governance, LP narrative & queries
@@ -595,20 +534,21 @@ impact-vision/
 │   │   │   # --- v2 institutional backbone (v0.13+) ---
 │   │   ├── metric_records.py          # Canonical MetricRecord contract
 │   │   ├── investee_collection.py     # Questionnaire schema + submission lifecycle
-│   │   ├── climate_accounting.py      # Scope 1/2 GHG inventory
+│   │   ├── climate_accounting.py      # Entity carbon calculator: Scope 1/2/3, intensity, trends
+│   │   ├── lca.py                      # LCA/LCSA, lifecycle costs, social hotspots, LCM plans
 │   │   ├── evidence_graph.py          # Claim↔metric↔target↔evidence lineage
 │   │   ├── standards_registry.py      # Versioned standards metadata
 │   │   ├── roadmap_v2.py              # Collection / disclosure / assurance helpers
 │   │   │
 │   │   │   # --- v3 Trust Infrastructure (v0.15.0) ---
-│   │   ├── emission_factors.py        # Versioned factors + sensitivity bands
+│   │   ├── emission_factors.py        # Versioned factors + sensitivity/provenance bands
 │   │   ├── stakeholder_voice.py       # Lean Data + GDPR/PDPA consent
 │   │   ├── evidence_workflow.py       # AI extraction review queue
 │   │   ├── verification_workspace.py  # Assurer workspace + findings
 │   │   ├── lp_narrative.py            # LP narrative + Q&A (approved-data only)
 │   │   ├── greenwashing_reviewer.py   # Per-claim explainable review
 │   │   ├── portfolio_nlq.py           # NL portfolio queries + ApprovedDataPolicy
-│   │   ├── exit_impact.py             # OPIM P7 exit-impact scoring + P8 learning context
+│   │   ├── exit_impact.py             # OPIM Principle 8 exit-impact scoring + learning context
 │   │   │
 │   │   │   # --- v4 Engagement Suite (latest) ---
 │   │   ├── engagements/
@@ -625,7 +565,7 @@ impact-vision/
 │   │   │   └── verification_bundle.py # 3-pillar signed assurance bundle (HMAC)
 │   │   │
 │   │   ├── report_templates/          # Jinja2-based HTML report templates
-│   │   ├── frameworks/                # 10 ESG/sustainability frameworks
+│   │   ├── frameworks/                # 20+ ESG/sustainability frameworks
 │   │   │   ├── sasb.py · gri.py · tcfd.py · sfdr_pai.py · edci.py
 │   │   │   ├── unpri.py · theory_of_change.py · issb_ifrs_s1.py · issb_ifrs_s2.py
 │   │   │   ├── esrs.py · ifc_opim.py · pcaf.py · sbti.py · eu_taxonomy.py
@@ -634,10 +574,10 @@ impact-vision/
 │   │   ├── mcp_server.py              # MCP server (FastMCP)
 │   │   └── sdk.py                     # High-level ImpactVision SDK facade
 │   │
-│   ├── tools/impact/                  # 51 LLM-callable impact agent tools (see "Tools" below)
+│   ├── tools/impact/                  # 52 LLM-callable impact agent tools (see "Tools" below)
 │   ├── api_gateway/router.py          # FastAPI REST API
 │   ├── web/                           # Single-file Web Console + SSE streaming
-│   ├── dashboard/app.py               # Streamlit 5-tab dashboard
+│   ├── dashboard/app.py               # Streamlit 6-tab dashboard
 │   ├── skills/bundled/content/        # Agent knowledge (markdown)
 │   ├── prompts/system_prompt.py       # Impact Vision persona + instructions
 │   └── cli.py                         # CLI (7 subcommand groups + serve-mcp / serve-web)
@@ -645,6 +585,9 @@ impact-vision/
 │   ├── raw/                           # IRIS+ Excel file (not committed)
 │   ├── processed/                     # JSON catalog cache (auto-generated)
 │   ├── dd_checklist.yaml              # 122 DD questions / 34 categories
+│   ├── esrs_simplified_2026.yaml      # Revised-ESRS screening fixture with provenance metadata
+│   ├── issb_s2_amendments.yaml        # Issued IFRS S2 amendments and effective dates
+│   ├── standard_articles/             # Article-level standards/regulatory summaries
 │   ├── scoring_config.yaml            # Sector baselines + keyword boosts
 │   ├── sdg_keywords.yaml              # SDG keyword mappings for 20+ sectors
 │   ├── core_metric_set_per_sdg.yaml   # Curated SDG core metric set
@@ -654,6 +597,7 @@ impact-vision/
 │   ├── fund-manager-guide.md          # Python SDK walkthrough for funds
 │   ├── roadmap-v3.md / -v3-implementation.md
 │   ├── roadmap-v4.md                  # Consultant-led engagement suite
+│   ├── roadmap-updates-2026-07.md     # Current regulatory and implementation delta
 │   └── cursor-integration.md          # Cursor/VS Code MCP setup
 ├── examples/                          # Sample company, portfolio, MCP configs
 ├── tests/                             # Test suite (impact + v2 + v3 + v4)
@@ -748,8 +692,8 @@ cross-references to IRIS+ metric IDs via the shared
 | | UNPRI | 6 Principles, 27 actions |
 | | Theory of Change | RS Group 8 Blended Value Principles + GIIN 8-step ToC Checklist |
 | | ISSB IFRS S1 | General sustainability disclosure (4 pillars) |
-| | ISSB IFRS S2 | Climate-related disclosures |
-| | EU CSRD / ESRS | 11 standards, double-materiality; current to Omnibus I (Directive (EU) 2026/470) |
+| | ISSB IFRS S2 | Climate-related disclosures plus an issued-amendments register (effective 2027-01-01) |
+| | EU CSRD / ESRS | 11 standards, double-materiality; revised-ESRS screening fixture marked adopted pending Official Journal, with FY2027 effective-date metadata |
 | | EFRAG VSME | Voluntary SME standard: Basic B1-B11 + Comprehensive C1-C9 (post-Omnibus default for out-of-scope SMEs) |
 | | 2X Criteria | Gender-lens investing standard (6 dimensions + governance/GBVH minimum requirements) |
 | | TISFD (beta) | Inequality & Social-related Financial Disclosures readiness: 4 pillars, 13 disclosures, GRI/ESRS crosswalk |
@@ -774,6 +718,7 @@ cross-references to IRIS+ metric IDs via the shared
 | | IFVI / VBA monetary valuation | Value-factor catalogue → net monetary impact, benefit/cost ratio, impact multiple of money |
 | | Welfare quantifier (QALYs) | breadth × depth × theme × geography → QALYs / lives improved + cost-per-QALY + portfolio roll-up |
 | | Impact Target Setter | Context-driven conservative/base/stretch IRIS+/SDG target ranges from theme × geography × capital |
+| | LCA / LCSA | Goal/scope, inventory, impact hotspots, sensitivity, lifecycle cost/social dimensions, and management-plan readiness |
 | **Greenwashing & NLP** | Standard greenwashing scoring | Vague-language + quantitative-evidence checks |
 | | Green Authenticity Index (GAI) | Ratio of substantive to vague claims |
 | | Cheap Talk Index (CTI) | Forward-looking vs. evidenced statements |
@@ -784,7 +729,7 @@ cross-references to IRIS+ metric IDs via the shared
 | | 3-pillar assurance bundle | HMAC-signed evidence graph + audit trail + workspace (v4) |
 | | AI governance (EU AI Act) | Model card + data lineage + human-oversight log + risk classification & obligations |
 
-### Agent Tools (51)
+### Agent Tools (52)
 
 All tools below are exposed through the default OpenHarness tool registry
 and `openharness.tools.impact`, so the interactive agent, Web Console,
@@ -841,7 +786,7 @@ REST API, and MCP server see the same surface.
 | Tool | Description |
 |------|-------------|
 | `decision_workflow` | Quick screen, IC memo proof bundle, deal comparison, LP readiness, and context-driven impact target setting (`set_targets`) |
-| `regulatory_calendar` | Jurisdiction-specific reporting deadlines plus a market-wide milestone watch-list (ECGT, revised ESRS, ISSA 5000, EUDR, CSDDD, SFDR 2.0) |
+| `regulatory_calendar` | Jurisdiction-specific reporting deadlines, ISSB S2 amendment summaries, and a market-wide milestone watch-list (ECGT, revised ESRS, ISSA 5000, EUDR, CSDDD, SFDR 2.0) |
 
 **Portfolio workflow (5)**
 
@@ -865,10 +810,16 @@ REST API, and MCP server see the same surface.
 
 | Tool | Description |
 |------|-------------|
-| `emission_factors` | Versioned factor catalog, sensitivity bands, inventory repricing |
+| `emission_factors` | Versioned factors and sensitivity; entity carbon inventory, Scope 2 certificate adjustment, selected manufacturing Scope 3, intensity, and trend outputs |
 | `evidence_review` | AI extraction review queue with policy-driven auto-approval |
 | `verification_workspace` | Verification prep (BlueMark / IFC OPIM / AA1000 readiness, evidence map) + assurer workspace with finding lifecycle and threaded comments |
 | `lp_narrative` | LP narrative + Q&A constrained to verified data with citations |
+
+**Lifecycle & climate (1)**
+
+| Tool | Description |
+|------|-------------|
+| `lca_assessment` | ISO-aligned goal/scope, LCI/LCIA hotspots, sensitivity, lifecycle cost/social dimensions, readiness, and life-cycle-management plan; uses caller-supplied factors |
 
 **Exit & assurance (1)**
 
@@ -920,7 +871,7 @@ toolbox, and portfolio analysis.
 ## Web Console (power-user UI)
 
 For a browser-native surface to every tool — useful when you want the
-full 51-tool set at your fingertips rather than Streamlit's curated
+full 52-tool set at your fingertips rather than Streamlit's curated
 tabs — run the **web console**:
 
 ```bash
@@ -955,6 +906,9 @@ python scripts/check_imports.py --all
 
 # Lint
 ruff check src/
+
+# v6 data-quality and lifecycle checks
+python -m pytest tests/test_quality_review_v6.py tests/test_lca.py tests/test_climate_accounting.py -v
 ```
 
 GitHub Actions runs import smoke, full tests, and ruff on every push/PR.
@@ -973,24 +927,11 @@ Use stdio for local desktop clients such as Claude Desktop, Cursor, and
 VS Code. Use SSE when the MCP server is started separately and clients
 connect over HTTP.
 
-### Cursor / VS Code Setup
+### Client setup
 
-Add to `.cursor/mcp.json`:
-
-```json
-{
-  "mcpServers": {
-    "impact-vision": {
-      "command": "impact-vision",
-      "args": ["serve-mcp"]
-    }
-  }
-}
-```
-
-### Claude Desktop Setup
-
-Copy `examples/claude_desktop_config.json` to your Claude Desktop config directory.
+For Cursor or VS Code, add the `impact-vision` stdio server to the client's MCP
+configuration. For Claude Desktop, copy
+`examples/claude_desktop_config.json` into its configuration directory.
 
 ### MCP Resources
 
@@ -1026,25 +967,12 @@ See the auto-generated OpenAPI docs at `/docs`.
 
 Strategy and engineering plans live in [`docs/`](docs/):
 
-- [`docs/roadmap-v2.md`](docs/roadmap-v2.md) — April 2026 institutional-readiness
-  plan (data contracts, investee collection, climate accounting, LP reporting,
-  assurance controls, causal impact, governed AI).
-- [`docs/roadmap-v3.md`](docs/roadmap-v3.md) / [`-v3-implementation.md`](docs/roadmap-v3-implementation.md)
-  — Trust infrastructure (evidence review, verification workspace, LP
-  narrative, portfolio NLQ, exit impact). Shipped.
-- [`docs/roadmap-v4.md`](docs/roadmap-v4.md) — Consultant-led engagement
-  suite (Tracks 3-10). Backend shipped; frontend + paid-data wiring
-  deferred to Wave 5.
-- [`docs/roadmap-v5.md`](docs/roadmap-v5.md) — Legally-current + frontier
-  measurement wave (Omnibus I, IFVI valuation, QALYs, 2X, TISFD, HRDD,
-  NGFS climate scenarios). Shipped.
-- [`docs/roadmap-v6.md`](docs/roadmap-v6.md) — "Comparable, assured &
-  connected" wave (XBRL, ISSA 5000, SFDR 2.0, nature/carbon integrity,
-  regulatory radar). Planning.
-- [`docs/roadmap-updates-2026-07.md`](docs/roadmap-updates-2026-07.md) —
-  July-2026 regulatory/market delta; its four actionable items (SFDR 2.0
-  preview, estimate provenance, EDCI-first collection, milestone
-  watch-list) are shipped.
+- [`docs/roadmap-v2.md`](docs/roadmap-v2.md) — Institutional-readiness plan: data contracts, investee collection, climate accounting, LP reporting, assurance, causal impact, and governed AI.
+- [`docs/roadmap-v3.md`](docs/roadmap-v3.md) / [`-v3-implementation.md`](docs/roadmap-v3-implementation.md) — Trust infrastructure. Shipped.
+- [`docs/roadmap-v4.md`](docs/roadmap-v4.md) — Consultant-led engagement suite. Backend shipped; frontend and paid-data wiring deferred.
+- [`docs/roadmap-v5.md`](docs/roadmap-v5.md) — Legally-current and frontier measurement wave. Shipped.
+- [`docs/roadmap-v6.md`](docs/roadmap-v6.md) — Comparable, assured, and connected wave. Planning baseline with initial v6 surfaces shipped.
+- [`docs/roadmap-updates-2026-07.md`](docs/roadmap-updates-2026-07.md) — July 2026 regulatory and implementation delta; actionable items shipped.
 - [`ROADMAP.md`](ROADMAP.md) — historical engineering record.
 - [`CHANGELOG.md`](CHANGELOG.md) — release notes.
 
@@ -1058,9 +986,6 @@ MIT License. See [LICENSE](LICENSE) for details.
 
 ## Acknowledgments
 
-- [AvantFaire Investment Management](https://www.avantfaireim.com/) -- the first impact investment company in Hong Kong that nurtured the creator's passion for impact measurement
-- [GIIN](https://thegiin.org/) for IRIS+ and the Impact Due Diligence Guide
-- [Pacific Community Ventures](https://www.pacificcommunityventures.org/) for DD emerging best practices
-- [Seraf](https://seraf-investor.com/) for the impact investing DD checklist
-- [Impact Management Project](https://impactfrontiers.org/) for the 5 Dimensions of Impact
-- [OpenHarness](https://github.com/HKUDS/OpenHarness) for the agent infrastructure
+Thanks to AvantFaire Investment Management, GIIN, Pacific Community Ventures,
+Seraf, the Impact Management Project, and OpenHarness for the frameworks,
+practices, and infrastructure that inform Impact Vision.

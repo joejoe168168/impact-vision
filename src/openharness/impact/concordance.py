@@ -45,8 +45,9 @@ class ConcordanceMap:
         self,
         record: MetricRecord,
         to_framework: str,
+        from_framework: str = "iris",
     ) -> list[tuple[DatapointRef, MetricRecord]]:
-        entry = self.lookup("iris", record.metric_id)
+        entry = self.lookup(from_framework, record.metric_id)
         if not entry:
             return []
         return [
@@ -55,12 +56,17 @@ class ConcordanceMap:
             if ref.framework == to_framework
         ]
 
-    def coverage_report(self, records: list[MetricRecord], to_framework: str) -> dict:
+    def coverage_report(
+        self,
+        records: list[MetricRecord],
+        to_framework: str,
+        from_framework: str = "iris",
+    ) -> dict:
         covered: list[dict] = []
         partial: list[dict] = []
         mapped_concepts: set[str] = set()
         for record in records:
-            entry = self.lookup("iris", record.metric_id)
+            entry = self.lookup(from_framework, record.metric_id)
             refs = [] if entry is None else [r for r in entry.refs if r.framework == to_framework]
             if refs and entry:
                 row = {
@@ -102,6 +108,9 @@ def _from_legacy() -> list[ConcordanceEntry]:
         "esrs": "esrs",
     }
     entries: list[ConcordanceEntry] = []
+    canonical_ids = {
+        "GHG Emissions - Scope 1 (Direct)": "ghg_scope1_emissions",
+    }
     for legacy in CROSS_REFERENCE_MAP:
         refs: list[DatapointRef] = []
         for framework, field in field_map.items():
@@ -117,7 +126,7 @@ def _from_legacy() -> list[ConcordanceEntry]:
                 )
         entries.append(
             ConcordanceEntry(
-                concept_id=_slug(legacy.concept),
+                concept_id=canonical_ids.get(legacy.concept, _slug(legacy.concept)),
                 refs=refs,
                 match_quality={"direct": "exact", "partial": "partial"}.get(
                     legacy.mapping_confidence, "close"
@@ -150,7 +159,36 @@ def load_concordance(path: str | Path | None = None) -> ConcordanceMap:
         extra = [ConcordanceEntry.model_validate(item) for item in payload.get("entries", [])]
         by_id = {entry.concept_id: entry for entry in entries}
         for entry in extra:
-            by_id[entry.concept_id] = entry
+            existing = by_id.get(entry.concept_id)
+            if existing is None:
+                by_id[entry.concept_id] = entry
+                continue
+            # Canonical extensions should enrich the legacy map, not silently
+            # replace its EDCI/SFDR/SASB/TCFD references.  This matters for the
+            # two seeded v6 concepts, where the YAML intentionally adds units
+            # and taxonomy tags but does not repeat all 59 legacy refs.
+            refs_by_key = {
+                (ref.framework, ref.datapoint_id.lower()): ref for ref in existing.refs
+            }
+            for ref in entry.refs:
+                key = (ref.framework, ref.datapoint_id.lower())
+                if key in refs_by_key:
+                    refs_by_key[key] = refs_by_key[key].model_copy(
+                        update={
+                            "label": ref.label or refs_by_key[key].label,
+                            "unit_hint": ref.unit_hint or refs_by_key[key].unit_hint,
+                            "taxonomy_uri": ref.taxonomy_uri or refs_by_key[key].taxonomy_uri,
+                        }
+                    )
+                else:
+                    refs_by_key[key] = ref
+            by_id[entry.concept_id] = existing.model_copy(
+                update={
+                    "refs": list(refs_by_key.values()),
+                    "match_quality": entry.match_quality,
+                    "notes": "; ".join(filter(None, [existing.notes, entry.notes])),
+                }
+            )
         entries = list(by_id.values())
     return ConcordanceMap(entries)
 

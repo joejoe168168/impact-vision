@@ -1,6 +1,11 @@
 standard_id: SSE_G14
-as_of: "2026-01"
-source: SSE Self-Regulatory Guideline No. 14; original summaries, not regulation text
+as_of: "2024-05-01"
+effective_date: "2024-05-01"
+legal_status: effective_trial_guideline
+content_status: generated_summary
+source: SSE Self-Regulatory Guideline No. 14; chapter-level summaries, not regulation text
+source_url: https://www.sse.com.cn/lawandrules/sselawsrules/stocks/mainipo/c/c_20240412_10753180.shtml
+source_note: Use the official Chinese guideline for the controlling text; this fixture supports screening and gap triage only.
 article_count: 63
 modality_counts: {shall: 49, encouraged: 7, neutral: 7}
 chapter_ranges:
