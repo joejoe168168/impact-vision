@@ -2,7 +2,7 @@
 
 Open-source AI-powered impact measurement and SDG alignment agent for VC and impact investment funds.
 
-Built on [OpenHarness](https://github.com/HKUDS/OpenHarness), Impact Vision ships a conversational AI agent, a **CLI**, a **REST API**, an **MCP server**, a **Streamlit dashboard**, and a **single-file Web Console** — all backed by the same engine with deep expertise in GIIN's IRIS+ framework, UN SDGs, the 5 Dimensions of Impact, and 20+ ESG / regulatory frameworks (ISSB, ESRS, SFDR, TCFD, SASB, GRI, PCAF, SBTi, EU Taxonomy, TNFD, CDP, TISFD, VSME, 2X, and SBTN).
+Built on [OpenHarness](https://github.com/HKUDS/OpenHarness), Impact Vision ships a conversational AI agent, a **CLI**, a **REST API**, an **MCP server**, a **Streamlit dashboard**, and a **single-file web chat UI** — all backed by the same engine with deep expertise in GIIN's IRIS+ framework, UN SDGs, the 5 Dimensions of Impact, and 20+ ESG / regulatory frameworks (ISSB, ESRS, SFDR, TCFD, SASB, GRI, PCAF, SBTi, EU Taxonomy, TNFD, CDP, TISFD, VSME, 2X, and SBTN).
 
 Release history lives in [CHANGELOG.md](CHANGELOG.md). Strategy and engineering plans live in [`docs/`](docs/).
 
@@ -218,7 +218,7 @@ Opens the six-tab dashboard at http://localhost:8501. `iv` is shorthand for
 
 Impact Vision ships **52 impact agent tools** covering screening, diligence,
 monitoring, reporting, assurance, and exit. Paste the examples below into the
-agent or Web Console; `impact_advisor` routes unfamiliar requests.
+agent or the web chat UI; `impact_advisor` routes unfamiliar requests.
 
 ### Analyzing a Pitch Deck
 
@@ -476,7 +476,7 @@ impact-vision dd analyze "text or /path/to/doc.txt"
 # Service surfaces
 impact-vision serve-mcp                                  # MCP server (stdio)
 impact-vision serve-mcp --transport sse --port 8765      # MCP over SSE
-impact-vision serve-web                                  # Web Console + REST API (http://127.0.0.1:8787)
+impact-vision serve-web                                  # Chat UI + tool console + REST API (http://127.0.0.1:8787)
 
 # Developer utilities
 impact-vision mcp      list | add | remove               # Manage MCP server configs
@@ -576,7 +576,12 @@ impact-vision/
 │   │
 │   ├── tools/impact/                  # 52 LLM-callable impact agent tools (see "Tools" below)
 │   ├── api_gateway/router.py          # FastAPI REST API
-│   ├── web/                           # Single-file Web Console + SSE streaming
+│   ├── web/                           # Browser surfaces (single-file, no build step)
+│   │   ├── chat_ui.py                 #   ChatGPT-style chat UI served at /
+│   │   ├── chat_api.py                #   WebSocket + sessions / provider / uploads
+│   │   ├── chat_session.py            #   One agent runtime per conversation
+│   │   ├── console.py                 #   Tool-form console served at /console
+│   │   └── app.py                     #   Mounts everything onto the REST gateway
 │   ├── dashboard/app.py               # Streamlit 6-tab dashboard
 │   ├── skills/bundled/content/        # Agent knowledge (markdown)
 │   ├── prompts/system_prompt.py       # Impact Vision persona + instructions
@@ -732,7 +737,7 @@ cross-references to IRIS+ metric IDs via the shared
 ### Agent Tools (52)
 
 All tools below are exposed through the default OpenHarness tool registry
-and `openharness.tools.impact`, so the interactive agent, Web Console,
+and `openharness.tools.impact`, so the interactive agent, web chat UI,
 REST API, and MCP server see the same surface.
 
 **Tool routing (1)**
@@ -868,25 +873,33 @@ streamlit run src/openharness/dashboard/app.py
 The six tabs cover company assessment, IRIS+, DD, framework scans, the ESG
 toolbox, and portfolio analysis.
 
-## Web Console (power-user UI)
+## Web Interface
 
-For a browser-native surface to every tool — useful when you want the
-full 52-tool set at your fingertips rather than Streamlit's curated
-tabs — run the **web console**:
+One command serves a browser chat UI, the tool console and the REST API on a
+single port:
 
 ```bash
-# Start the console + REST API (defaults to http://127.0.0.1:8787)
-impact-vision serve-web
-
-# Or directly via uvicorn
-uvicorn openharness.web.app:app --host 127.0.0.1 --port 8787
+impact-vision serve-web --open        # http://127.0.0.1:8787
 ```
 
-The console is a **single self-contained HTML file** (no build step, no JS
-framework) on top of the existing FastAPI gateway: a searchable tool sidebar
-(`Ctrl/⌘+K`), typed forms derived from `/openapi.json`, syntax-highlighted
-JSON results with copy/save, run history in `localStorage`, and an optional
-bearer-token box for `IMPACT_VISION_API_KEY`-protected deployments.
+| URL | Surface |
+|-----|---------|
+| `/` | **Chat UI** — ChatGPT-style conversation with the full agent |
+| `/console` | **Tool console** — typed forms for every REST endpoint |
+| `/docs` | OpenAPI explorer |
+| `/api/v1/*` | REST gateway |
+
+The chat UI runs the *same* agent runtime as the CLI — same tools, skills,
+slash commands and permission model — with streaming markdown replies,
+collapsible tool-call cards, drag-and-drop file upload for pitch decks and
+data rooms, a downloadable artifacts panel, a conversation history sidebar,
+and in-browser provider/model/API-key settings so you can point it at Claude,
+OpenAI, Ollama or any compatible endpoint without touching a config file.
+
+Both surfaces are **single self-contained HTML files** — no build step, no JS
+framework, no CDN.
+
+**→ Full walkthrough: [`docs/web-chat-guide.md`](docs/web-chat-guide.md)**
 
 ## Development
 
@@ -948,7 +961,7 @@ setup guide and client-specific notes.
 
 ## REST API
 
-FastAPI REST gateway backing the Web Console, MCP server, and third-party
+FastAPI REST gateway backing the web chat UI, MCP server, and third-party
 integrations:
 
 ```bash

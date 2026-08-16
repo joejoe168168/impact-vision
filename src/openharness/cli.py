@@ -129,13 +129,28 @@ def serve_web(
     host: str = typer.Option("127.0.0.1", help="Host to bind"),
     port: int = typer.Option(8787, help="Port to bind"),
     reload: bool = typer.Option(False, "--reload", help="Auto-reload on code changes (dev)"),
+    open_browser: bool = typer.Option(
+        False, "--open", help="Open the chat UI in your default browser once the server is up"
+    ),
+    workspace: str = typer.Option(
+        None,
+        "--workspace",
+        "-w",
+        help="Directory the agent works in (defaults to the current directory)",
+    ),
 ) -> None:
-    """Start the Impact Vision web console — UI + REST gateway in one process.
+    """Start the Impact Vision web app — chat UI, tool console and REST API.
 
-    The console is mounted at ``/`` and proxies every /api/v1/* endpoint of
-    the FastAPI gateway. Think of it as the Impact Vision equivalent of
-    ``sst/opencode`` or ``siteboon/claudecodeui``: a browser UI for the
-    same tool surface the CLI / MCP server exposes.
+    Mounts four surfaces on one port:
+
+    \b
+      /            conversational chat UI (streaming, tools, file upload)
+      /console     power-user tool console (typed forms for every endpoint)
+      /docs        OpenAPI explorer
+      /api/v1/*    REST gateway
+
+    Set ``IMPACT_VISION_API_KEY`` before launching to require a bearer token
+    on every request, including the chat WebSocket handshake.
     """
     try:
         import uvicorn  # type: ignore
@@ -148,9 +163,29 @@ def serve_web(
         )
         raise typer.Exit(1) from exc
 
-    print(f"Impact Vision web console → http://{host}:{port}")
-    print(f"  · REST API: http://{host}:{port}/api/v1/*")
-    print(f"  · OpenAPI:  http://{host}:{port}/docs")
+    if workspace:
+        target = Path(workspace).expanduser().resolve()
+        if not target.is_dir():
+            print(f"Workspace directory does not exist: {target}", file=sys.stderr)
+            raise typer.Exit(1)
+        os.chdir(target)
+
+    url = f"http://{host}:{port}"
+    secured = bool(os.environ.get("IMPACT_VISION_API_KEY"))
+    print(f"Impact Vision → {url}")
+    print(f"  · Chat UI:      {url}/")
+    print(f"  · Tool console: {url}/console")
+    print(f"  · OpenAPI:      {url}/docs")
+    print(f"  · REST API:     {url}/api/v1/*")
+    print(f"  · Workspace:    {Path.cwd()}")
+    print(f"  · Auth:         {'bearer token required' if secured else 'open (local use)'}")
+
+    if open_browser:
+        import threading
+        import webbrowser
+
+        threading.Timer(1.5, lambda: webbrowser.open(url)).start()
+
     uvicorn.run(
         "openharness.web.app:app",
         host=host,

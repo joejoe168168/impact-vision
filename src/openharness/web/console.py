@@ -839,13 +839,14 @@ def _require_fastapi() -> None:
         ) from _FASTAPI_IMPORT_ERROR
 
 
-def _build_router() -> Any:
+def _build_router(root_path: bool = True) -> Any:
     _require_fastapi()
     router = APIRouter()
 
-    @router.get("/", response_class=HTMLResponse, include_in_schema=False)
-    async def _console_root() -> str:
-        return render_console_html()
+    if root_path:
+        @router.get("/", response_class=HTMLResponse, include_in_schema=False)
+        async def _console_root() -> str:
+            return render_console_html()
 
     @router.get("/console", response_class=HTMLResponse, include_in_schema=False)
     async def _console_alias() -> str:
@@ -854,6 +855,11 @@ def _build_router() -> Any:
     return router
 
 
-def console_router() -> Any:
-    """Return a FastAPI :class:`APIRouter` serving the web console SPA."""
-    return _build_router()
+def console_router(root_path: bool = True) -> Any:
+    """Return a FastAPI :class:`APIRouter` serving the web console SPA.
+
+    Pass ``root_path=False`` when another router already owns ``/`` — the
+    combined app in :mod:`openharness.web.app` gives ``/`` to the chat UI and
+    keeps the tool console at ``/console``.
+    """
+    return _build_router(root_path=root_path)

@@ -20,12 +20,15 @@ If the FastAPI gateway is already running, the console is also mounted at
 UI.
 """
 
+from openharness.web.chat_ui import chat_ui_router, render_chat_html
 from openharness.web.console import (
     console_router,
     render_console_html,
 )
 
 __all__ = [
+    "chat_ui_router",
     "console_router",
+    "render_chat_html",
     "render_console_html",
 ]
