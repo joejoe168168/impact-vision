@@ -442,6 +442,11 @@ def test_cli_provider_use_activates_codex_profile(monkeypatch, tmp_path: Path):
     )
     monkeypatch.setenv("OPENHARNESS_CONFIG_DIR", str(config_dir))
     monkeypatch.setenv("CODEX_HOME", str(codex_home))
+    # ``_apply_env_overrides`` folds ANTHROPIC_BASE_URL / OPENAI_BASE_URL into
+    # settings when the active profile has no base_url of its own. A developer
+    # with either exported would otherwise see this assertion fail spuriously.
+    for leaky in ("OPENHARNESS_BASE_URL", "ANTHROPIC_BASE_URL", "OPENAI_BASE_URL"):
+        monkeypatch.delenv(leaky, raising=False)
 
     runner = CliRunner()
     assert runner.invoke(app, ["auth", "codex-login"]).exit_code == 0
