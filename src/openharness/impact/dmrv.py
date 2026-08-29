@@ -1,12 +1,17 @@
 """Digital MRV time-series ingestion, hashing and HMAC anchoring."""
 
 from __future__ import annotations
-import json
+
 import hashlib
+import json
+import os
 from typing import Literal
+
 from pydantic import BaseModel, model_validator
+
 from openharness.impact.evidence_graph import EvidenceGraph, EvidenceLink, EvidenceNode
 from openharness.impact.models import MetricRecord
+from openharness.impact.signed_feed import HMACSigner
 
 
 class TimeSeriesEvidence(BaseModel):
@@ -84,6 +89,52 @@ def verify_anchor(envelope: dict, signer) -> bool:
     )
 
 
+def get_dmrv_signer(*, key: bytes | str | None = None) -> HMACSigner:
+    """Return the HMAC signer for dMRV envelopes.
+
+    Production deployments must set ``IMPACT_VISION_DMRV_HMAC_KEY``. A
+    development default is used only when ``IMPACT_VISION_ALLOW_DEV_KEYS``
+    is not ``0``.
+    """
+    raw = key if key is not None else os.environ.get("IMPACT_VISION_DMRV_HMAC_KEY")
+    if not raw:
+        if os.environ.get("IMPACT_VISION_ALLOW_DEV_KEYS", "1") == "0":
+            raise ValueError(
+                "IMPACT_VISION_DMRV_HMAC_KEY is required when IMPACT_VISION_ALLOW_DEV_KEYS=0"
+            )
+        raw = "impact-vision-dmrv"
+    if isinstance(raw, str):
+        raw = raw.encode("utf-8")
+    return HMACSigner(key=raw)
+
+
+def observations_to_series(observations: list, metric_id: str) -> TimeSeriesEvidence:
+    """Lift geospatial observations into a remote-sensing dMRV series."""
+    if not observations:
+        raise ValueError("observations must not be empty")
+    first = observations[0]
+    points = [
+        {
+            "t": getattr(item.observation_date, "isoformat", lambda: str(item.observation_date))(),
+            "value": item.value,
+            "unit": item.unit,
+            "biome": getattr(item, "biome", None),
+            "dataset": getattr(item, "dataset", ""),
+        }
+        for item in observations
+    ]
+    note = getattr(first, "methodology_note", "") or getattr(first, "dataset", "remote_sensing")
+    version = getattr(first, "dataset_version", "")
+    return TimeSeriesEvidence(
+        series_id=f"{first.asset_id}:{getattr(first, 'dataset', 'obs')}",
+        source_kind="remote_sensing",
+        metric_id=metric_id,
+        points=points,
+        provider=getattr(first, "provider_id", "geospatial"),
+        methodology=f"{note} {version}".strip(),
+    )
+
+
 def summarise_series(evidence: TimeSeriesEvidence) -> MetricRecord:
     values = [float(p["value"]) for p in evidence.points]
     method = "sum" if "sum" in evidence.methodology.lower() else "mean"
@@ -107,7 +158,9 @@ def summarise_series(evidence: TimeSeriesEvidence) -> MetricRecord:
 __all__ = [
     "TimeSeriesEvidence",
     "anchor_claim",
+    "get_dmrv_signer",
     "ingest_time_series",
+    "observations_to_series",
     "summarise_series",
     "verify_anchor",
 ]

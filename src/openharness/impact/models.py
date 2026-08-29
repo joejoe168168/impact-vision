@@ -384,6 +384,23 @@ class Company(BaseModel):
 
         return normalize_sector(v)
 
+    @field_validator("reported_metrics", mode="before")
+    @classmethod
+    def _normalize_reported_metrics(cls, v: object) -> dict[str, Any]:
+        """Uppercase canonical IRIS+ IDs so engine lookups hit the catalog."""
+        if not v:
+            return {}
+        if not isinstance(v, dict):
+            raise TypeError("reported_metrics must be a mapping of metric ID to value")
+        from openharness.tools.impact.common import canonicalize_metric_id
+
+        out: dict[str, Any] = {}
+        for key, val in v.items():
+            metric_id = canonicalize_metric_id(key)
+            if metric_id:
+                out[metric_id] = val
+        return out
+
 
 PIPELINE_STAGES = (
     "sourcing",

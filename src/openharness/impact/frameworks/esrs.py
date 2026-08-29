@@ -72,6 +72,39 @@ def simplified_esrs_metadata(path: str | Path | None = None) -> dict:
     }
 
 
+def _named_rows_from_standards(payload: dict) -> list[dict]:
+    """Promote the in-module ESRS disclosure catalogue into screening rows.
+
+    These are named EFRAG Set 1 disclosure requirements, not invented OJ
+    taxonomy IDs. They stay ``synthetic=False`` with explicit Commission
+    provenance so callers can tell them apart from generated fillers.
+    """
+    counts = payload.get("standard_counts", {}) or {}
+    rows: list[dict] = []
+    for topic in ESRS_STANDARDS:
+        if topic.code not in counts:
+            continue
+        for disclosure in topic.disclosures:
+            datapoint_id = disclosure.code
+            if topic.code == "ESRS 2" and not datapoint_id.upper().startswith("ESRS2"):
+                datapoint_id = f"ESRS2-{datapoint_id}"
+            rows.append(
+                {
+                    "datapoint_id": datapoint_id,
+                    "standard": topic.code,
+                    "name": disclosure.name,
+                    "mandatory": True,
+                    "phase_in": None,
+                    "removed_in_simplification": False,
+                    "source": payload.get("source", ""),
+                    "status": payload.get("status", "draft"),
+                    "synthetic": False,
+                    "source_url": payload.get("source_url"),
+                }
+            )
+    return rows
+
+
 def load_simplified_datapoints(path: str | Path | None = None) -> list[ESRSDatapoint]:
     data_path = (
         Path(path)
@@ -80,6 +113,12 @@ def load_simplified_datapoints(path: str | Path | None = None) -> list[ESRSDatap
     )
     payload = yaml.safe_load(data_path.read_text(encoding="utf-8"))
     rows = list(payload.get("datapoints", []))
+    seen = {str(row.get("datapoint_id")) for row in rows}
+    for row in _named_rows_from_standards(payload):
+        if row["datapoint_id"] in seen:
+            continue
+        rows.append(row)
+        seen.add(row["datapoint_id"])
     counts = payload.get("standard_counts", {})
     seeded = {
         standard: sum(1 for row in rows if row["standard"] == standard) for standard in counts

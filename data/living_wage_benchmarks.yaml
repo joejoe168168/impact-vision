@@ -1,5 +1,161 @@
 as_of: "2026-01"
 currency: USD
+source: Anker methodology and WageIndicator benchmark synthesis; indicative only
+disclaimer: >
+  Annual full-time living-wage estimates in USD, synthesised from Anker-method
+  studies and WageIndicator ranges. They are screening values for gap analysis,
+  not a substitute for a location-specific Anker study or a collective-bargaining
+  settlement. Urban figures unless the key says otherwise.
+aliases:
+  hk: Hong Kong
+  hksar: Hong Kong
+  hong kong sar: Hong Kong
+  hong kong china: Hong Kong
+  hong kong sar china: Hong Kong
+  prc: China tier 2
+  mainland china: China tier 2
+  china: China tier 2
+  beijing: China tier 1
+  shanghai: China tier 1
+  shenzhen: China tier 1
+  guangzhou: China tier 1
+  hangzhou: China tier 1
+  chengdu: China tier 2
+  wuhan: China tier 2
+  xi'an: China tier 2
+  sg: Singapore
+  republic of singapore: Singapore
+  my: Malaysia
+  kuala lumpur: Malaysia
+  id: Indonesia
+  jakarta: Indonesia
+  ph: Philippines
+  manila: Philippines
+  th: Thailand
+  bangkok: Thailand
+  vn: Vietnam
+  viet nam: Vietnam
+  ho chi minh: Vietnam
+  hanoi: Vietnam
+  kh: Cambodia
+  phnom penh: Cambodia
+  la: Laos
+  lao pdr: Laos
+  vientiane: Laos
+  mm: Myanmar
+  yangon: Myanmar
+  in: India urban
+  india: India urban
+  mumbai: India urban
+  delhi: India urban
+  bengaluru: India urban
+  bangalore: India urban
+  rural india: India rural
+  bd: Bangladesh
+  dhaka: Bangladesh
+  pk: Pakistan
+  karachi: Pakistan
+  lahore: Pakistan
+  lk: Sri Lanka
+  colombo: Sri Lanka
+  np: Nepal
+  kathmandu: Nepal
+  ke: Kenya
+  nairobi: Kenya
+  ug: Uganda
+  kampala: Uganda
+  tz: Tanzania
+  dar es salaam: Tanzania
+  rw: Rwanda
+  kigali: Rwanda
+  gh: Ghana
+  accra: Ghana
+  ng: Nigeria
+  lagos: Nigeria
+  abuja: Nigeria
+  za: South Africa
+  johannesburg: South Africa
+  cape town: South Africa
+  et: Ethiopia
+  addis ababa: Ethiopia
+  sn: Senegal
+  dakar: Senegal
+  zm: Zambia
+  lusaka: Zambia
+  zw: Zimbabwe
+  harare: Zimbabwe
+  eg: Egypt
+  cairo: Egypt
+  ma: Morocco
+  casablanca: Morocco
+  mx: Mexico
+  mexico city: Mexico
+  ciudad de mexico: Mexico
+  br: Brazil
+  sao paulo: Brazil
+  são paulo: Brazil
+  rio de janeiro: Brazil
+  co: Colombia
+  bogota: Colombia
+  bogotá: Colombia
+  pe: Peru
+  lima: Peru
+  cl: Chile
+  santiago: Chile
+  us: United States
+  usa: United States
+  united states of america: United States
+  uk: United Kingdom
+  britain: United Kingdom
+  great britain: United Kingdom
+  england: United Kingdom
+  au: Australia
+  sydney: Australia
+  melbourne: Australia
+  ci: Côte d'Ivoire
+  cote d'ivoire: Côte d'Ivoire
+  ivory coast: Côte d'Ivoire
+  abidjan: Côte d'Ivoire
+  mz: Mozambique
+  maputo: Mozambique
+  jo: Jordan
+  amman: Jordan
+  tn: Tunisia
+  tunis: Tunisia
+  ar: Argentina
+  buenos aires: Argentina
+  tr: Turkey
+  türkiye: Turkey
+  turkiye: Turkey
+  istanbul: Turkey
+  jp: Japan
+  tokyo: Japan
+  kr: South Korea
+  korea: South Korea
+  seoul: South Korea
+  tw: Taiwan
+  taipei: Taiwan
+  ca: Canada
+  toronto: Canada
+  de: Germany
+  fr: France
+  nl: Netherlands
+  es: Spain
+  it: Italy
+  pt: Portugal
+  ie: Ireland
+  se: Sweden
+  no: Norway
+  dk: Denmark
+  ch: Switzerland
+  nz: New Zealand
+  ae: UAE
+  united arab emirates: UAE
+  dubai: UAE
+  sa: Saudi Arabia
+  riyadh: Saudi Arabia
+  il: Israel
+  tel aviv: Israel
 benchmarks:
   Hong Kong: 27000
   China tier 1: 12500
@@ -33,12 +189,36 @@ benchmarks:
   Zimbabwe: 4000
   Egypt: 3900
   Morocco: 6000
+  Mozambique: 3400
+  Côte d'Ivoire: 4800
+  Tunisia: 5200
+  Jordan: 7200
   Mexico: 10000
   Brazil: 9600
   Colombia: 8000
   Peru: 7200
   Chile: 15000
+  Argentina: 11000
   United States: 42000
   United Kingdom: 36000
   Australia: 41000
-source: Anker methodology and WageIndicator benchmark synthesis; indicative only
+  Canada: 40000
+  Germany: 34000
+  France: 32000
+  Netherlands: 34000
+  Spain: 24000
+  Italy: 25000
+  Portugal: 20000
+  Ireland: 36000
+  Sweden: 38000
+  Norway: 42000
+  Denmark: 40000
+  Switzerland: 48000
+  Japan: 32000
+  South Korea: 28000
+  Taiwan: 22000
+  New Zealand: 38000
+  UAE: 22000
+  Saudi Arabia: 18000
+  Israel: 30000
+  Turkey: 9000

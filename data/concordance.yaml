@@ -1,5 +1,10 @@
-version: "2026-07"
-source_note: "Canonical extensions to the legacy 59-concept cross-reference map."
+version: "2026-08"
+source_note: >
+  Canonical extensions to the legacy cross-reference map. Target is the
+  LP-comparable core (climate, energy, water, waste, social, governance,
+  SFDR PAI / EDCI) so one MetricRecord can tag ESRS, ISSB, GRI, and EDCI.
+  taxonomy_uri values are screening qnames pending the Official Journal ESRS
+  XBRL taxonomy and ISSB taxonomy alignment.
 entries:
   - concept_id: ghg_scope1_emissions
     match_quality: exact
@@ -14,3 +19,405 @@ entries:
       - {framework: iris, datapoint_id: OI8869, label: Permanent employees, unit_hint: count}
       - {framework: gri, datapoint_id: "2-7", label: Employees, unit_hint: count, taxonomy_uri: "gri:Employees"}
       - {framework: esrs, datapoint_id: S1-6, label: Characteristics of employees, unit_hint: count, taxonomy_uri: "esrs:NumberOfEmployees"}
+  - concept_id: ghg_scope2_emissions
+    match_quality: exact
+    refs:
+      - {framework: iris, datapoint_id: OI9604, label: Indirect Scope 2 GHG emissions, unit_hint: tCO2e}
+      - {framework: gri, datapoint_id: "305-2", label: Energy indirect GHG, unit_hint: tCO2e, taxonomy_uri: "gri:EnergyIndirectGHGEmissionsScope2"}
+      - {framework: esrs, datapoint_id: E1-6, label: Gross Scope 2 emissions, unit_hint: tCO2e, taxonomy_uri: "esrs:GrossScope2GHGEmissions"}
+      - {framework: issb, datapoint_id: S2-MT-1, label: Scope 2 emissions, unit_hint: tCO2e, taxonomy_uri: "issb:AbsoluteGrossScope2GreenhouseGasEmissions"}
+      - {framework: edci, datapoint_id: EDCI-E2, label: Scope 2 GHG, unit_hint: tCO2e}
+      - {framework: sfdr_pai, datapoint_id: PAI-1, label: GHG emissions, unit_hint: tCO2e}
+      - {framework: tcfd, datapoint_id: MET-B, label: Scope 2 metrics}
+  - concept_id: ghg_scope3_emissions
+    match_quality: close
+    refs:
+      - {framework: iris, datapoint_id: OI1479, label: GHG emissions total, unit_hint: tCO2e}
+      - {framework: gri, datapoint_id: "305-3", label: Other indirect GHG, unit_hint: tCO2e, taxonomy_uri: "gri:OtherIndirectGHGEmissionsScope3"}
+      - {framework: esrs, datapoint_id: E1-6, label: Gross Scope 3 emissions, unit_hint: tCO2e, taxonomy_uri: "esrs:GrossScope3GHGEmissions"}
+      - {framework: issb, datapoint_id: S2-MT-1, label: Scope 3 emissions, unit_hint: tCO2e, taxonomy_uri: "issb:AbsoluteGrossScope3GreenhouseGasEmissions"}
+      - {framework: edci, datapoint_id: EDCI-E3, label: Scope 3 GHG, unit_hint: tCO2e}
+      - {framework: sfdr_pai, datapoint_id: PAI-1, label: GHG emissions, unit_hint: tCO2e}
+  - concept_id: energy_consumption
+    match_quality: exact
+    refs:
+      - {framework: gri, datapoint_id: "302-1", label: Energy consumption, unit_hint: MWh, taxonomy_uri: "gri:EnergyConsumptionWithinTheOrganization"}
+      - {framework: esrs, datapoint_id: E1-5, label: Energy consumption and mix, unit_hint: MWh, taxonomy_uri: "esrs:EnergyConsumptionAndMix"}
+      - {framework: issb, datapoint_id: S2-MT-2, label: Energy, unit_hint: MWh, taxonomy_uri: "issb:EnergyConsumption"}
+  - concept_id: renewable_energy_share
+    match_quality: close
+    refs:
+      - {framework: gri, datapoint_id: "302-1", label: Renewable energy share, unit_hint: percent, taxonomy_uri: "gri:RenewableEnergyPercentage"}
+      - {framework: esrs, datapoint_id: E1-5, label: Renewable energy share, unit_hint: percent, taxonomy_uri: "esrs:RenewableEnergyShare"}
+      - {framework: edci, datapoint_id: EDCI-E5, label: Renewable energy, unit_hint: percent}
+  - concept_id: water_withdrawn
+    match_quality: exact
+    refs:
+      - {framework: iris, datapoint_id: OI0263, label: Water withdrawn, unit_hint: m3}
+      - {framework: gri, datapoint_id: "303-3", label: Water withdrawal, unit_hint: m3, taxonomy_uri: "gri:WaterWithdrawal"}
+      - {framework: esrs, datapoint_id: E3-4, label: Water consumption, unit_hint: m3, taxonomy_uri: "esrs:WaterConsumption"}
+      - {framework: sfdr_pai, datapoint_id: PAI-8, label: Emissions to water}
+  - concept_id: water_consumed
+    match_quality: exact
+    refs:
+      - {framework: gri, datapoint_id: "303-5", label: Water consumption, unit_hint: m3, taxonomy_uri: "gri:WaterConsumption"}
+      - {framework: esrs, datapoint_id: E3-4, label: Water consumption, unit_hint: m3, taxonomy_uri: "esrs:WaterConsumption"}
+  - concept_id: water_stress
+    match_quality: close
+    refs:
+      - {framework: iris, datapoint_id: OI3637, label: Water consumed in high-stress regions, unit_hint: m3}
+      - {framework: gri, datapoint_id: "303-3", label: Withdrawal from stressed areas, unit_hint: m3}
+      - {framework: esrs, datapoint_id: E3-4, label: Water in areas at water risk, unit_hint: m3, taxonomy_uri: "esrs:WaterInAreasAtWaterRisk"}
+  - concept_id: waste_generated
+    match_quality: exact
+    refs:
+      - {framework: gri, datapoint_id: "306-3", label: Waste generated, unit_hint: t, taxonomy_uri: "gri:WasteGenerated"}
+      - {framework: esrs, datapoint_id: E5-5, label: Resource outflows / waste, unit_hint: t, taxonomy_uri: "esrs:WasteGenerated"}
+  - concept_id: hazardous_waste
+    match_quality: exact
+    refs:
+      - {framework: iris, datapoint_id: OI1346, label: Hazardous waste produced, unit_hint: t}
+      - {framework: gri, datapoint_id: "306-3", label: Hazardous waste, unit_hint: t}
+      - {framework: esrs, datapoint_id: E2-4, label: Pollution of air, water and soil, unit_hint: t, taxonomy_uri: "esrs:PollutionToAirWaterSoil"}
+      - {framework: sfdr_pai, datapoint_id: PAI-9, label: Hazardous waste ratio}
+  - concept_id: land_use
+    match_quality: close
+    refs:
+      - {framework: esrs, datapoint_id: E4-5, label: Impact metrics related to biodiversity, taxonomy_uri: "esrs:BiodiversityImpactMetrics"}
+      - {framework: gri, datapoint_id: "304-1", label: Operational sites in protected areas, taxonomy_uri: "gri:OperationalSitesOwnedLeasedManagedInProtectedAreas"}
+  - concept_id: biodiversity_assessment
+    match_quality: close
+    refs:
+      - {framework: iris, datapoint_id: OI5929, label: Biodiversity assessment}
+      - {framework: gri, datapoint_id: "304-2", label: Significant impacts on biodiversity, taxonomy_uri: "gri:SignificantImpactsOfActivitiesOnBiodiversity"}
+      - {framework: esrs, datapoint_id: E4-5, label: Biodiversity impact metrics, taxonomy_uri: "esrs:BiodiversityImpactMetrics"}
+      - {framework: sfdr_pai, datapoint_id: PAI-7, label: Activities negatively affecting biodiversity-sensitive areas}
+  - concept_id: women_employees
+    match_quality: exact
+    refs:
+      - {framework: gri, datapoint_id: "405-1", label: Diversity of governance and employees, unit_hint: percent, taxonomy_uri: "gri:DiversityOfGovernanceBodiesAndEmployees"}
+      - {framework: esrs, datapoint_id: S1-9, label: Diversity metrics, unit_hint: percent, taxonomy_uri: "esrs:DiversityMetrics"}
+      - {framework: edci, datapoint_id: EDCI-S2, label: Women in workforce, unit_hint: percent}
+      - {framework: sfdr_pai, datapoint_id: PAI-13, label: Board gender diversity}
+  - concept_id: gender_pay_gap
+    match_quality: exact
+    refs:
+      - {framework: gri, datapoint_id: "405-2", label: Ratio of basic salary women to men, unit_hint: percent, taxonomy_uri: "gri:RatioOfBasicSalaryAndRemunerationOfWomenToMen"}
+      - {framework: esrs, datapoint_id: S1-16, label: Gender pay gap, unit_hint: percent, taxonomy_uri: "esrs:GenderPayGap"}
+      - {framework: sfdr_pai, datapoint_id: PAI-12, label: Unadjusted gender pay gap}
+  - concept_id: board_gender_diversity
+    match_quality: exact
+    refs:
+      - {framework: gri, datapoint_id: "405-1", label: Board diversity, unit_hint: percent, taxonomy_uri: "gri:DiversityOfGovernanceBodiesAndEmployees"}
+      - {framework: esrs, datapoint_id: S1-9, label: Top-level diversity, unit_hint: percent, taxonomy_uri: "esrs:TopLevelDiversity"}
+      - {framework: sfdr_pai, datapoint_id: PAI-13, label: Board gender diversity}
+      - {framework: edci, datapoint_id: EDCI-G3, label: Board gender diversity}
+  - concept_id: living_wage
+    match_quality: close
+    refs:
+      - {framework: iris, datapoint_id: OI4202, label: Wages}
+      - {framework: gri, datapoint_id: "202-1", label: Ratios of standard entry-level wage, taxonomy_uri: "gri:RatiosOfStandardEntryLevelWageByGenderComparedToLocalMinimumWage"}
+      - {framework: esrs, datapoint_id: S1-10, label: Adequate wages, taxonomy_uri: "esrs:AdequateWages"}
+  - concept_id: jobs_created
+    match_quality: close
+    refs:
+      - {framework: iris, datapoint_id: PI4874, label: Jobs created, unit_hint: count}
+      - {framework: gri, datapoint_id: "401-1", label: New employee hires, unit_hint: count, taxonomy_uri: "gri:NewEmployeeHiresAndEmployeeTurnover"}
+      - {framework: esrs, datapoint_id: S1-6, label: Characteristics of employees, unit_hint: count}
+  - concept_id: occupational_injuries
+    match_quality: exact
+    refs:
+      - {framework: iris, datapoint_id: OI3757, label: Occupational injuries, unit_hint: count}
+      - {framework: gri, datapoint_id: "403-9", label: Work-related injuries, taxonomy_uri: "gri:WorkRelatedInjuries"}
+      - {framework: esrs, datapoint_id: S1-14, label: Health and safety metrics, taxonomy_uri: "esrs:HealthAndSafetyMetrics"}
+  - concept_id: occupational_fatalities
+    match_quality: exact
+    refs:
+      - {framework: iris, datapoint_id: OI6525, label: Occupational fatalities, unit_hint: count}
+      - {framework: gri, datapoint_id: "403-9", label: Fatalities, taxonomy_uri: "gri:WorkRelatedInjuries"}
+      - {framework: esrs, datapoint_id: S1-14, label: Health and safety metrics, taxonomy_uri: "esrs:HealthAndSafetyMetrics"}
+  - concept_id: employee_training
+    match_quality: close
+    refs:
+      - {framework: iris, datapoint_id: PI2998, label: Training}
+      - {framework: gri, datapoint_id: "404-1", label: Average hours of training, taxonomy_uri: "gri:AverageHoursOfTrainingPerYearPerEmployee"}
+      - {framework: esrs, datapoint_id: S1-13, label: Training and skills development, taxonomy_uri: "esrs:TrainingAndSkillsDevelopmentMetrics"}
+  - concept_id: community_investment
+    match_quality: close
+    refs:
+      - {framework: iris, datapoint_id: PI2251, label: Community investment}
+      - {framework: gri, datapoint_id: "201-1", label: Direct economic value, taxonomy_uri: "gri:DirectEconomicValueGeneratedAndDistributed"}
+      - {framework: esrs, datapoint_id: S3-4, label: Actions for affected communities, taxonomy_uri: "esrs:AffectedCommunitiesActions"}
+  - concept_id: grievance_mechanism
+    match_quality: close
+    refs:
+      - {framework: iris, datapoint_id: OI1042, label: Employee grievances}
+      - {framework: gri, datapoint_id: "2-25", label: Processes to remediate negative impacts, taxonomy_uri: "gri:ProcessesToRemediateNegativeImpacts"}
+      - {framework: esrs, datapoint_id: S1-3, label: Processes to remediate and channels, taxonomy_uri: "esrs:ProcessesToRemediateNegativeImpacts"}
+  - concept_id: forced_labour
+    match_quality: close
+    refs:
+      - {framework: gri, datapoint_id: "409-1", label: Operations at risk of forced labour, taxonomy_uri: "gri:OperationsAndSuppliersAtSignificantRiskForIncidentsOfForcedOrCompulsoryLabor"}
+      - {framework: esrs, datapoint_id: S2-1, label: Policies for value-chain workers, taxonomy_uri: "esrs:ValueChainWorkersPolicies"}
+      - {framework: sfdr_pai, datapoint_id: PAI-10, label: UNGC / OECD violations}
+  - concept_id: child_labour
+    match_quality: close
+    refs:
+      - {framework: gri, datapoint_id: "408-1", label: Operations at risk of child labour, taxonomy_uri: "gri:OperationsAndSuppliersAtSignificantRiskForIncidentsOfChildLabor"}
+      - {framework: esrs, datapoint_id: S2-1, label: Value-chain workers policies, taxonomy_uri: "esrs:ValueChainWorkersPolicies"}
+  - concept_id: freedom_of_association
+    match_quality: close
+    refs:
+      - {framework: iris, datapoint_id: OI1401, label: Freedom of association}
+      - {framework: gri, datapoint_id: "407-1", label: Freedom of association, taxonomy_uri: "gri:OperationsAndSuppliersInWhichTheRightToFreedomOfAssociationAndCollectiveBargainingMayBeAtRisk"}
+      - {framework: esrs, datapoint_id: S1-8, label: Collective bargaining coverage, taxonomy_uri: "esrs:CollectiveBargainingCoverage"}
+  - concept_id: financed_emissions
+    match_quality: close
+    refs:
+      - {framework: issb, datapoint_id: S2-MT-1, label: Financed emissions, unit_hint: tCO2e, taxonomy_uri: "issb:FinancedEmissions"}
+      - {framework: esrs, datapoint_id: E1-6, label: Gross Scope 3 Category 15, unit_hint: tCO2e, taxonomy_uri: "esrs:GrossScope3GHGEmissions"}
+      - {framework: tcfd, datapoint_id: MET-B, label: Financed emissions}
+  - concept_id: carbon_credits
+    match_quality: close
+    refs:
+      - {framework: esrs, datapoint_id: E1-7, label: GHG removals and carbon credits, taxonomy_uri: "esrs:GHGRemovalsAndCarbonCredits"}
+      - {framework: gri, datapoint_id: "305-5", label: GHG reductions, taxonomy_uri: "gri:ReductionOfGHGEmissions"}
+      - {framework: issb, datapoint_id: S2-MT-3, label: Carbon credits, taxonomy_uri: "issb:CarbonCredits"}
+  - concept_id: climate_transition_plan
+    match_quality: close
+    refs:
+      - {framework: esrs, datapoint_id: E1-1, label: Transition plan for climate change mitigation, taxonomy_uri: "esrs:TransitionPlanForClimateChangeMitigation"}
+      - {framework: issb, datapoint_id: S2-STR-1, label: Climate transition plan, taxonomy_uri: "issb:ClimateRelatedTransitionPlan"}
+      - {framework: tcfd, datapoint_id: STR-B, label: Strategy resilience}
+  - concept_id: science_based_targets
+    match_quality: close
+    refs:
+      - {framework: esrs, datapoint_id: E1-4, label: Climate targets, taxonomy_uri: "esrs:TargetsRelatedToClimateChangeMitigationAndAdaptation"}
+      - {framework: issb, datapoint_id: S2-MT-4, label: Climate targets, taxonomy_uri: "issb:ClimateRelatedTargets"}
+  - concept_id: air_pollutants
+    match_quality: close
+    refs:
+      - {framework: gri, datapoint_id: "305-7", label: NOx SOx and other air emissions, taxonomy_uri: "gri:NitrogenOxidesSulfurOxidesAndOtherSignificantAirEmissions"}
+      - {framework: esrs, datapoint_id: E2-4, label: Pollution of air, taxonomy_uri: "esrs:PollutionToAirWaterSoil"}
+      - {framework: sfdr_pai, datapoint_id: PAI-2, label: Carbon footprint}
+  - concept_id: recycling_rate
+    match_quality: close
+    refs:
+      - {framework: gri, datapoint_id: "306-4", label: Waste diverted from disposal, taxonomy_uri: "gri:WasteDivertedFromDisposal"}
+      - {framework: esrs, datapoint_id: E5-5, label: Resource outflows, taxonomy_uri: "esrs:ResourceOutflows"}
+  - concept_id: circular_materials
+    match_quality: close
+    refs:
+      - {framework: gri, datapoint_id: "301-2", label: Recycled input materials, taxonomy_uri: "gri:RecycledInputMaterialsUsed"}
+      - {framework: esrs, datapoint_id: E5-4, label: Resource inflows, taxonomy_uri: "esrs:ResourceInflows"}
+  - concept_id: anti_corruption
+    match_quality: close
+    refs:
+      - {framework: gri, datapoint_id: "205-2", label: Communication and training about anti-corruption, taxonomy_uri: "gri:CommunicationAndTrainingAboutAntiCorruptionPoliciesAndProcedures"}
+      - {framework: esrs, datapoint_id: G1-3, label: Prevention and detection of corruption, taxonomy_uri: "esrs:PreventionAndDetectionOfCorruptionAndBribery"}
+  - concept_id: whistleblower
+    match_quality: close
+    refs:
+      - {framework: gri, datapoint_id: "2-26", label: Mechanisms for seeking advice and raising concerns, taxonomy_uri: "gri:MechanismsForSeekingAdviceAndRaisingConcerns"}
+      - {framework: esrs, datapoint_id: G1-1, label: Business conduct policies, taxonomy_uri: "esrs:BusinessConductPoliciesAndCorporateCulture"}
+  - concept_id: data_privacy
+    match_quality: close
+    refs:
+      - {framework: gri, datapoint_id: "418-1", label: Substantiated complaints concerning customer privacy, taxonomy_uri: "gri:SubstantiatedComplaintsConcerningBreachesOfCustomerPrivacyAndLossesOfCustomerData"}
+      - {framework: sasb, datapoint_id: CG-EC-220a.2, label: Data privacy}
+  - concept_id: cybersecurity
+    match_quality: close
+    refs:
+      - {framework: edci, datapoint_id: EDCI-G1, label: Cybersecurity testing}
+      - {framework: sasb, datapoint_id: CG-EC-230a.1, label: Data security}
+  - concept_id: just_transition
+    match_quality: partial
+    refs:
+      - {framework: esrs, datapoint_id: S1-4, label: Taking action on material impacts, taxonomy_uri: "esrs:TakingActionOnMaterialImpactsRisksAndOpportunities"}
+      - {framework: gri, datapoint_id: "3-3", label: Management of material topics, taxonomy_uri: "gri:ManagementOfMaterialTopics"}
+  - concept_id: nature_related_risks
+    match_quality: close
+    refs:
+      - {framework: esrs, datapoint_id: E4-1, label: Transition plan on biodiversity, taxonomy_uri: "esrs:TransitionPlanOnBiodiversityAndEcosystems"}
+      - {framework: issb, datapoint_id: S1-RISK, label: Nature-related risks (practice statement track), taxonomy_uri: "issb:NatureRelatedRisks"}
+      - {framework: tcfd, datapoint_id: RSK-A, label: Risk identification}
+  - concept_id: clients_reached
+    match_quality: close
+    refs:
+      - {framework: iris, datapoint_id: PI4060, label: Client individuals, unit_hint: count}
+      - {framework: edci, datapoint_id: EDCI-S1, label: Employees / stakeholders}
+  - concept_id: farmers_reached
+    match_quality: close
+    refs:
+      - {framework: iris, datapoint_id: PI4060, label: Client individuals, unit_hint: count}
+  - concept_id: patients_served
+    match_quality: close
+    refs:
+      - {framework: iris, datapoint_id: PI7161, label: Target stakeholder injuries}
+  - concept_id: students_reached
+    match_quality: close
+    refs:
+      - {framework: iris, datapoint_id: PI9910, label: Student dropout rate}
+  - concept_id: housing_units
+    match_quality: close
+    refs:
+      - {framework: iris, datapoint_id: PD5833, label: Percent affordable housing, unit_hint: percent}
+  - concept_id: displacement
+    match_quality: close
+    refs:
+      - {framework: iris, datapoint_id: PI1297, label: Individuals displaced, unit_hint: count}
+      - {framework: esrs, datapoint_id: S3-4, label: Affected communities actions, taxonomy_uri: "esrs:AffectedCommunitiesActions"}
+  - concept_id: ungc_oecd_violations
+    match_quality: close
+    refs:
+      - {framework: sfdr_pai, datapoint_id: PAI-10, label: UNGC / OECD violations}
+      - {framework: esrs, datapoint_id: S2-1, label: Value-chain workers policies, taxonomy_uri: "esrs:ValueChainWorkersPolicies"}
+      - {framework: gri, datapoint_id: "2-23", label: Policy commitments, taxonomy_uri: "gri:PolicyCommitments"}
+  - concept_id: controversial_weapons
+    match_quality: close
+    refs:
+      - {framework: sfdr_pai, datapoint_id: PAI-14, label: Exposure to controversial weapons}
+  - concept_id: fossil_fuel_exposure
+    match_quality: close
+    refs:
+      - {framework: sfdr_pai, datapoint_id: PAI-4, label: Exposure to companies active in the fossil fuel sector}
+      - {framework: tcfd, datapoint_id: MET-A, label: Climate-related metrics}
+  - concept_id: energy_intensity
+    match_quality: close
+    refs:
+      - {framework: gri, datapoint_id: "302-3", label: Energy intensity, taxonomy_uri: "gri:EnergyIntensity"}
+      - {framework: esrs, datapoint_id: E1-5, label: Energy intensity, taxonomy_uri: "esrs:EnergyIntensity"}
+  - concept_id: ghg_intensity
+    match_quality: close
+    refs:
+      - {framework: gri, datapoint_id: "305-4", label: GHG emissions intensity, taxonomy_uri: "gri:GHGEmissionsIntensity"}
+      - {framework: esrs, datapoint_id: E1-6, label: GHG intensity, taxonomy_uri: "esrs:GHGIntensity"}
+      - {framework: sfdr_pai, datapoint_id: PAI-3, label: GHG intensity of investee companies}
+  - concept_id: board_independence
+    match_quality: close
+    refs:
+      - {framework: gri, datapoint_id: "2-9", label: Governance structure, taxonomy_uri: "gri:GovernanceStructureAndComposition"}
+      - {framework: esrs, datapoint_id: ESRS2-GOV-1, label: Role of administrative bodies, taxonomy_uri: "esrs:RoleOfAdministrativeManagementAndSupervisoryBodies"}
+  - concept_id: supplier_code
+    match_quality: close
+    refs:
+      - {framework: gri, datapoint_id: "308-1", label: New suppliers screened using environmental criteria, taxonomy_uri: "gri:NewSuppliersThatWereScreenedUsingEnvironmentalCriteria"}
+      - {framework: esrs, datapoint_id: G1-2, label: Management of relationships with suppliers, taxonomy_uri: "esrs:ManagementOfRelationshipsWithSuppliers"}
+  - concept_id: collective_bargaining
+    match_quality: exact
+    refs:
+      - {framework: gri, datapoint_id: "2-30", label: Collective bargaining agreements, taxonomy_uri: "gri:CollectiveBargainingAgreements"}
+      - {framework: esrs, datapoint_id: S1-8, label: Collective bargaining coverage, taxonomy_uri: "esrs:CollectiveBargainingCoverage"}
+  - concept_id: adequate_housing
+    match_quality: close
+    refs:
+      - {framework: iris, datapoint_id: PD5833, label: Percent affordable housing, unit_hint: percent}
+      - {framework: esrs, datapoint_id: S3-4, label: Affected communities, taxonomy_uri: "esrs:AffectedCommunitiesActions"}
+  - concept_id: water_discharged
+    match_quality: close
+    refs:
+      - {framework: gri, datapoint_id: "303-4", label: Water discharge, taxonomy_uri: "gri:WaterDischarge"}
+      - {framework: esrs, datapoint_id: E3-4, label: Water, taxonomy_uri: "esrs:WaterConsumption"}
+  - concept_id: packaging_waste
+    match_quality: close
+    refs:
+      - {framework: gri, datapoint_id: "301-1", label: Materials used, taxonomy_uri: "gri:MaterialsUsedByWeightOrVolume"}
+      - {framework: esrs, datapoint_id: E5-5, label: Resource outflows, taxonomy_uri: "esrs:ResourceOutflows"}
+  - concept_id: indigenous_rights
+    match_quality: close
+    refs:
+      - {framework: gri, datapoint_id: "411-1", label: Incidents of violations involving rights of indigenous peoples, taxonomy_uri: "gri:IncidentsOfViolationsInvolvingRightsOfIndigenousPeoples"}
+      - {framework: esrs, datapoint_id: S3-1, label: Policies for affected communities, taxonomy_uri: "esrs:PoliciesForAffectedCommunities"}
+  - concept_id: political_contributions
+    match_quality: close
+    refs:
+      - {framework: gri, datapoint_id: "415-1", label: Political contributions, taxonomy_uri: "gri:PoliticalContributions"}
+      - {framework: esrs, datapoint_id: G1-5, label: Political influence and lobbying, taxonomy_uri: "esrs:PoliticalInfluenceAndLobbyingActivities"}
+  - concept_id: lobbying
+    match_quality: close
+    refs:
+      - {framework: esrs, datapoint_id: G1-5, label: Political influence and lobbying, taxonomy_uri: "esrs:PoliticalInfluenceAndLobbyingActivities"}
+      - {framework: gri, datapoint_id: "2-28", label: Membership associations, taxonomy_uri: "gri:MembershipAssociations"}
+  - concept_id: tax_transparency
+    match_quality: close
+    refs:
+      - {framework: gri, datapoint_id: "207-1", label: Approach to tax, taxonomy_uri: "gri:ApproachToTax"}
+      - {framework: esrs, datapoint_id: G1-6, label: Payment practices, taxonomy_uri: "esrs:PaymentPractices"}
+  - concept_id: lost_time_injury_rate
+    match_quality: close
+    refs:
+      - {framework: iris, datapoint_id: OI3757, label: Occupational injuries}
+      - {framework: gri, datapoint_id: "403-9", label: Work-related injuries, taxonomy_uri: "gri:WorkRelatedInjuries"}
+      - {framework: esrs, datapoint_id: S1-14, label: Health and safety metrics, taxonomy_uri: "esrs:HealthAndSafetyMetrics"}
+  - concept_id: employee_turnover
+    match_quality: close
+    refs:
+      - {framework: gri, datapoint_id: "401-1", label: Employee turnover, taxonomy_uri: "gri:NewEmployeeHiresAndEmployeeTurnover"}
+      - {framework: esrs, datapoint_id: S1-6, label: Characteristics of employees, taxonomy_uri: "esrs:CharacteristicsOfUndertakingsEmployees"}
+  - concept_id: value_chain_workers
+    match_quality: close
+    refs:
+      - {framework: esrs, datapoint_id: S2-4, label: Taking action on value-chain workers, taxonomy_uri: "esrs:TakingActionOnValueChainWorkers"}
+      - {framework: gri, datapoint_id: "414-1", label: New suppliers screened using social criteria, taxonomy_uri: "gri:NewSuppliersThatWereScreenedUsingSocialCriteria"}
+  - concept_id: consumers_end_users
+    match_quality: close
+    refs:
+      - {framework: esrs, datapoint_id: S4-4, label: Taking action on consumers, taxonomy_uri: "esrs:TakingActionOnConsumersAndEndUsers"}
+      - {framework: gri, datapoint_id: "416-1", label: Assessment of health and safety impacts of product, taxonomy_uri: "gri:AssessmentOfTheHealthAndSafetyImpactsOfProductAndServiceCategories"}
+  - concept_id: pollution_to_water
+    match_quality: close
+    refs:
+      - {framework: sfdr_pai, datapoint_id: PAI-8, label: Emissions to water}
+      - {framework: esrs, datapoint_id: E2-4, label: Pollution of water, taxonomy_uri: "esrs:PollutionToAirWaterSoil"}
+      - {framework: gri, datapoint_id: "303-4", label: Water discharge, taxonomy_uri: "gri:WaterDischarge"}
+  - concept_id: microplastics
+    match_quality: partial
+    refs:
+      - {framework: esrs, datapoint_id: E2-4, label: Microplastics, taxonomy_uri: "esrs:Microplastics"}
+      - {framework: esrs, datapoint_id: E5-5, label: Resource outflows, taxonomy_uri: "esrs:ResourceOutflows"}
+  - concept_id: substances_of_concern
+    match_quality: close
+    refs:
+      - {framework: esrs, datapoint_id: E2-5, label: Substances of concern, taxonomy_uri: "esrs:SubstancesOfConcernAndSubstancesOfVeryHighConcern"}
+      - {framework: gri, datapoint_id: "305-7", label: Other significant air emissions}
+  - concept_id: net_zero_target
+    match_quality: close
+    refs:
+      - {framework: esrs, datapoint_id: E1-4, label: Climate targets, taxonomy_uri: "esrs:TargetsRelatedToClimateChangeMitigationAndAdaptation"}
+      - {framework: issb, datapoint_id: S2-MT-4, label: Climate-related targets, taxonomy_uri: "issb:ClimateRelatedTargets"}
+      - {framework: tcfd, datapoint_id: MET-C, label: Targets}
+  - concept_id: physical_climate_risk
+    match_quality: close
+    refs:
+      - {framework: issb, datapoint_id: S2-RISK-1, label: Physical climate risks, taxonomy_uri: "issb:ClimateRelatedPhysicalRisks"}
+      - {framework: esrs, datapoint_id: E1-9, label: Anticipated financial effects, taxonomy_uri: "esrs:AnticipatedFinancialEffectsFromMaterialPhysicalAndTransitionRisks"}
+      - {framework: tcfd, datapoint_id: RSK-A, label: Risk identification}
+  - concept_id: transition_climate_risk
+    match_quality: close
+    refs:
+      - {framework: issb, datapoint_id: S2-RISK-2, label: Transition climate risks, taxonomy_uri: "issb:ClimateRelatedTransitionRisks"}
+      - {framework: esrs, datapoint_id: E1-9, label: Anticipated financial effects, taxonomy_uri: "esrs:AnticipatedFinancialEffectsFromMaterialPhysicalAndTransitionRisks"}
+      - {framework: tcfd, datapoint_id: RSK-B, label: Risk management}
+  - concept_id: energy_access
+    match_quality: close
+    refs:
+      - {framework: iris, datapoint_id: PI4060, label: Client individuals, unit_hint: count}
+  - concept_id: financial_inclusion
+    match_quality: close
+    refs:
+      - {framework: iris, datapoint_id: PI4060, label: Client individuals, unit_hint: count}
+      - {framework: edci, datapoint_id: EDCI-S1, label: Stakeholders}
+  - concept_id: complaints_ratio
+    match_quality: close
+    refs:
+      - {framework: iris, datapoint_id: PI5216, label: Complaints ratio}
+      - {framework: iris, datapoint_id: OI5049, label: Client feedback system}
+  - concept_id: over_indebtedness
+    match_quality: close
+    refs:
+      - {framework: iris, datapoint_id: OI4753, label: Client protection}
+      - {framework: iris, datapoint_id: PI4733, label: Repayment capacity}
+  - concept_id: portfolio_at_risk
+    match_quality: close
+    refs:
+      - {framework: iris, datapoint_id: FP2635, label: Non-performing loans 30 days}

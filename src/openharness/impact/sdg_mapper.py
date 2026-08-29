@@ -216,14 +216,21 @@ _GEO_SDG_BOOST: dict[str, dict[int, float]] = {
 
 def _infer_sdg_from_description(company: Company) -> dict[int, float]:
     """Infer SDG relevance from company description and sector."""
+    from openharness.tools.impact.common import keyword_match_with_context, normalize_sector
+
     text = f"{company.description} {company.sector} {' '.join(company.impact_themes)}".lower()
     inferred: dict[int, float] = {}
 
     sector_relevance = _get_sector_sdg_relevance()
-    for sector_key, sdg_map in sector_relevance.items():
-        if sector_key in text:
-            for goal, relevance in sdg_map.items():
-                inferred[goal] = max(inferred.get(goal, 0), relevance)
+    canonical = normalize_sector(company.sector or "")
+    if canonical in sector_relevance:
+        for goal, relevance in sector_relevance[canonical].items():
+            inferred[goal] = max(inferred.get(goal, 0), relevance)
+    else:
+        for sector_key, sdg_map in sector_relevance.items():
+            if keyword_match_with_context(text, sector_key):
+                for goal, relevance in sdg_map.items():
+                    inferred[goal] = max(inferred.get(goal, 0), relevance)
 
     keyword_map = _get_keyword_sdg_map()
     for keyword, sdg_list in keyword_map.items():

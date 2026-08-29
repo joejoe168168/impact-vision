@@ -1,7 +1,573 @@
 version: "2026-07"
 framework_counts: {ilpa_ddq2: 25, pri_2026: 40, ilpa_climate_module: 15}
 sources:
-  ilpa_ddq2: ILPA DDQ 2.0 ESG section (question intents paraphrased)
+  ilpa_ddq2: ILPA DDQ 2.0 ESG / impact section (question intents paraphrased)
   pri_2026: PRI 2026 reporting framework mandatory indicators (intents paraphrased)
   ilpa_climate_module: PRI/ILPA/iCI Climate Module 2025 (intents paraphrased)
 metric_concepts: [ghg_scope1_emissions, total_employees, water_consumption, renewable_energy_share]
+questions:
+  # --- ILPA DDQ 2.0 ESG / impact (25) ---
+  - qid: ilpa_ddq2-01
+    framework: ilpa_ddq2
+    section: policy
+    text: Describe the firm's responsible-investment / ESG / impact policy, who approved it, and when it was last reviewed.
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: ILPA DDQ 2.0 ESG section (question intents paraphrased)
+  - qid: ilpa_ddq2-02
+    framework: ilpa_ddq2
+    section: governance
+    text: Who at board and senior-management level is accountable for ESG and impact, and how is that accountability documented?
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: ILPA DDQ 2.0 ESG section (question intents paraphrased)
+  - qid: ilpa_ddq2-03
+    framework: ilpa_ddq2
+    section: integration
+    text: How are ESG and impact factors integrated into origination, screening, due diligence, IC papers, and deal approval?
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: ILPA DDQ 2.0 ESG section (question intents paraphrased)
+  - qid: ilpa_ddq2-04
+    framework: ilpa_ddq2
+    section: risk
+    text: How are material ESG risks identified, scored, escalated, and monitored across the portfolio?
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: ILPA DDQ 2.0 ESG section (question intents paraphrased)
+  - qid: ilpa_ddq2-05
+    framework: ilpa_ddq2
+    section: exclusions
+    text: Describe exclusion / negative-screening criteria, revenue thresholds, and any exception process.
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: ILPA DDQ 2.0 ESG section (question intents paraphrased)
+  - qid: ilpa_ddq2-06
+    framework: ilpa_ddq2
+    section: impact_thesis
+    text: How is the fund's impact thesis defined at strategy and deal level, and how is it tested in diligence?
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: ILPA DDQ 2.0 ESG section (question intents paraphrased)
+  - qid: ilpa_ddq2-07
+    framework: ilpa_ddq2
+    section: kpis
+    text: How are impact KPIs selected, mapped to IRIS+ / SDGs / EDCI, and set as investment conditions?
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: ILPA DDQ 2.0 ESG section (question intents paraphrased)
+  - qid: ilpa_ddq2-08
+    framework: ilpa_ddq2
+    section: contribution
+    text: How does the firm document investor contribution / additionality beyond the provision of capital?
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: ILPA DDQ 2.0 ESG section (question intents paraphrased)
+  - qid: ilpa_ddq2-09
+    framework: ilpa_ddq2
+    section: stakeholder_voice
+    text: How is beneficiary or worker voice collected, consented, and used as evidence for impact claims?
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: ILPA DDQ 2.0 ESG section (question intents paraphrased)
+  - qid: ilpa_ddq2-10
+    framework: ilpa_ddq2
+    section: dei
+    text: Describe DEI policy covering the GP's own workforce, IC composition, and portfolio companies.
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: ILPA DDQ 2.0 ESG section (question intents paraphrased)
+  - qid: ilpa_ddq2-11
+    framework: ilpa_ddq2
+    section: climate
+    text: How is climate physical and transition risk assessed in due diligence and monitoring?
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: ILPA DDQ 2.0 ESG section (question intents paraphrased)
+  - qid: ilpa_ddq2-12
+    framework: ilpa_ddq2
+    section: climate
+    text: Report verified Scope 1 greenhouse-gas emissions for the GP and, where collected, financed emissions.
+    answer_kind: metric
+    maps_to: [ghg_scope1_emissions]
+    source: ILPA DDQ 2.0 ESG section (question intents paraphrased)
+  - qid: ilpa_ddq2-13
+    framework: ilpa_ddq2
+    section: climate
+    text: Describe any net-zero, SBTi, or equivalent climate commitment and the coverage of the portfolio.
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: ILPA DDQ 2.0 ESG section (question intents paraphrased)
+  - qid: ilpa_ddq2-14
+    framework: ilpa_ddq2
+    section: incidents
+    text: How are ESG incidents at portfolio companies detected, investigated, remediated, and reported to LPs?
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: ILPA DDQ 2.0 ESG section (question intents paraphrased)
+  - qid: ilpa_ddq2-15
+    framework: ilpa_ddq2
+    section: lp_reporting
+    text: Describe LP reporting cadence and content for ESG, impact KPIs, incidents, and climate metrics.
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: ILPA DDQ 2.0 ESG section (question intents paraphrased)
+  - qid: ilpa_ddq2-16
+    framework: ilpa_ddq2
+    section: regulatory
+    text: How is product classification determined under SFDR, UK SDR, or equivalent labelling regimes?
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: ILPA DDQ 2.0 ESG section (question intents paraphrased)
+  - qid: ilpa_ddq2-17
+    framework: ilpa_ddq2
+    section: pai
+    text: Which principal adverse impact (PAI) or equivalent adverse indicators are collected at GP and investee level?
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: ILPA DDQ 2.0 ESG section (question intents paraphrased)
+  - qid: ilpa_ddq2-18
+    framework: ilpa_ddq2
+    section: assurance
+    text: What independent verification or assurance is obtained over impact and ESG data, and over which periods?
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: ILPA DDQ 2.0 ESG section (question intents paraphrased)
+  - qid: ilpa_ddq2-19
+    framework: ilpa_ddq2
+    section: exit
+    text: How is durability of impact considered at exit (OPIM Principle 8), including buyer selection and covenants?
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: ILPA DDQ 2.0 ESG section (question intents paraphrased)
+  - qid: ilpa_ddq2-20
+    framework: ilpa_ddq2
+    section: conflicts
+    text: How are conflicts between financial return and stated impact objectives identified and managed?
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: ILPA DDQ 2.0 ESG section (question intents paraphrased)
+  - qid: ilpa_ddq2-21
+    framework: ilpa_ddq2
+    section: incentives
+    text: How are investment professionals incentivised on ESG/impact (carry, scorecards, impact-linked compensation)?
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: ILPA DDQ 2.0 ESG section (question intents paraphrased)
+  - qid: ilpa_ddq2-22
+    framework: ilpa_ddq2
+    section: systems
+    text: Describe systems, audit trail, and data-quality controls used to collect investee ESG and impact data.
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: ILPA DDQ 2.0 ESG section (question intents paraphrased)
+  - qid: ilpa_ddq2-23
+    framework: ilpa_ddq2
+    section: human_rights
+    text: Describe human-rights / OECD due-diligence covering own operations and the value chain of portfolio companies.
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: ILPA DDQ 2.0 ESG section (question intents paraphrased)
+  - qid: ilpa_ddq2-24
+    framework: ilpa_ddq2
+    section: workforce
+    text: Report total employees at the GP (and, if collected, aggregated portfolio headcount).
+    answer_kind: metric
+    maps_to: [total_employees]
+    source: ILPA DDQ 2.0 ESG section (question intents paraphrased)
+  - qid: ilpa_ddq2-25
+    framework: ilpa_ddq2
+    section: value_creation
+    text: Provide examples of ESG or impact value-creation work at portfolio companies in the last 24 months.
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: ILPA DDQ 2.0 ESG section (question intents paraphrased)
+
+  # --- PRI 2026 mandatory-style indicators (40) ---
+  - qid: pri_2026-01
+    framework: pri_2026
+    section: policy
+    text: Does the organisation have a responsible-investment policy covering all AUM, and is it public?
+    answer_kind: boolean
+    maps_to: [fund_profile]
+    source: PRI 2026 reporting framework mandatory indicators (intents paraphrased)
+  - qid: pri_2026-02
+    framework: pri_2026
+    section: governance
+    text: Describe board oversight of responsible investment, including frequency and information received.
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: PRI 2026 reporting framework mandatory indicators (intents paraphrased)
+  - qid: pri_2026-03
+    framework: pri_2026
+    section: governance
+    text: Which senior role is formally accountable for implementation of the PRI, and to whom do they report?
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: PRI 2026 reporting framework mandatory indicators (intents paraphrased)
+  - qid: pri_2026-04
+    framework: pri_2026
+    section: objectives
+    text: What responsible-investment objectives were set for the reporting year, and were they met?
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: PRI 2026 reporting framework mandatory indicators (intents paraphrased)
+  - qid: pri_2026-05
+    framework: pri_2026
+    section: resources
+    text: How many FTEs (or equivalent) are dedicated to ESG/impact, and where do they sit in the organisation?
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: PRI 2026 reporting framework mandatory indicators (intents paraphrased)
+  - qid: pri_2026-06
+    framework: pri_2026
+    section: incorporation
+    text: For private equity / growth, how is ESG incorporated pre-investment (screening, DD questionnaires, IC)?
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: PRI 2026 reporting framework mandatory indicators (intents paraphrased)
+  - qid: pri_2026-07
+    framework: pri_2026
+    section: incorporation
+    text: How is ESG incorporated post-investment (100-day plans, board seats, monitoring packs, value-creation)?
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: PRI 2026 reporting framework mandatory indicators (intents paraphrased)
+  - qid: pri_2026-08
+    framework: pri_2026
+    section: stewardship
+    text: Describe stewardship / engagement priorities, escalation tools, and outcomes for the reporting year.
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: PRI 2026 reporting framework mandatory indicators (intents paraphrased)
+  - qid: pri_2026-09
+    framework: pri_2026
+    section: climate
+    text: Does the organisation have a climate policy covering financed emissions, and is it aligned to TCFD/IFRS S2?
+    answer_kind: boolean
+    maps_to: [fund_profile]
+    source: PRI 2026 reporting framework mandatory indicators (intents paraphrased)
+  - qid: pri_2026-10
+    framework: pri_2026
+    section: climate
+    text: Report Scope 1 GHG emissions for the organisation (tCO2e) for the latest reporting period.
+    answer_kind: metric
+    maps_to: [ghg_scope1_emissions]
+    source: PRI 2026 reporting framework mandatory indicators (intents paraphrased)
+  - qid: pri_2026-11
+    framework: pri_2026
+    section: climate
+    text: What share of AUM has a financed-emissions estimate (PCAF or equivalent), by Scope 1/2/3?
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: PRI 2026 reporting framework mandatory indicators (intents paraphrased)
+  - qid: pri_2026-12
+    framework: pri_2026
+    section: climate
+    text: Describe climate scenario analysis used (NGFS / IEA / custom) and how it affects allocation or engagement.
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: PRI 2026 reporting framework mandatory indicators (intents paraphrased)
+  - qid: pri_2026-13
+    framework: pri_2026
+    section: human_rights
+    text: How are UNGPs / OECD Guidelines applied to the investment process, including salience assessment?
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: PRI 2026 reporting framework mandatory indicators (intents paraphrased)
+  - qid: pri_2026-14
+    framework: pri_2026
+    section: human_rights
+    text: Describe grievance mechanisms available to affected stakeholders of the GP and of portfolio companies.
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: PRI 2026 reporting framework mandatory indicators (intents paraphrased)
+  - qid: pri_2026-15
+    framework: pri_2026
+    section: diversity
+    text: Report gender and, where lawful, ethnicity representation at partnership, IC, and investment-team levels.
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: PRI 2026 reporting framework mandatory indicators (intents paraphrased)
+  - qid: pri_2026-16
+    framework: pri_2026
+    section: workforce
+    text: Report total employees of the signatory organisation for the reporting year.
+    answer_kind: metric
+    maps_to: [total_employees]
+    source: PRI 2026 reporting framework mandatory indicators (intents paraphrased)
+  - qid: pri_2026-17
+    framework: pri_2026
+    section: pe
+    text: For PE/VC, what percentage of new investments in the year had an ESG DD completed before IC?
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: PRI 2026 reporting framework mandatory indicators (intents paraphrased)
+  - qid: pri_2026-18
+    framework: pri_2026
+    section: pe
+    text: What percentage of portfolio companies provide ESG data at least annually, and how is completeness tracked?
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: PRI 2026 reporting framework mandatory indicators (intents paraphrased)
+  - qid: pri_2026-19
+    framework: pri_2026
+    section: pe
+    text: How are ESG clauses (reporting, incident notice, audit rights) used in investment agreements?
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: PRI 2026 reporting framework mandatory indicators (intents paraphrased)
+  - qid: pri_2026-20
+    framework: pri_2026
+    section: listed
+    text: If listed equity is held, describe screening, integration, and voting policy coverage of AUM.
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: PRI 2026 reporting framework mandatory indicators (intents paraphrased)
+  - qid: pri_2026-21
+    framework: pri_2026
+    section: listed
+    text: What share of listed AUM is covered by an active voting / engagement programme?
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: PRI 2026 reporting framework mandatory indicators (intents paraphrased)
+  - qid: pri_2026-22
+    framework: pri_2026
+    section: real_assets
+    text: For real assets (if any), how are energy, water, and waste performance collected at asset level?
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: PRI 2026 reporting framework mandatory indicators (intents paraphrased)
+  - qid: pri_2026-23
+    framework: pri_2026
+    section: water
+    text: Report water consumption where this is a material metric for the GP or a significant share of AUM.
+    answer_kind: metric
+    maps_to: [water_consumption]
+    source: PRI 2026 reporting framework mandatory indicators (intents paraphrased)
+  - qid: pri_2026-24
+    framework: pri_2026
+    section: energy
+    text: Report the share of energy from renewable sources for the GP (and portfolio, if collected).
+    answer_kind: metric
+    maps_to: [renewable_energy_share]
+    source: PRI 2026 reporting framework mandatory indicators (intents paraphrased)
+  - qid: pri_2026-25
+    framework: pri_2026
+    section: nature
+    text: How are nature-related impacts and dependencies assessed (TNFD LEAP or equivalent)?
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: PRI 2026 reporting framework mandatory indicators (intents paraphrased)
+  - qid: pri_2026-26
+    framework: pri_2026
+    section: tax
+    text: Describe the organisation's approach to tax policy, transparency, and tax-haven exposure of vehicles.
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: PRI 2026 reporting framework mandatory indicators (intents paraphrased)
+  - qid: pri_2026-27
+    framework: pri_2026
+    section: corruption
+    text: Describe anti-bribery / anti-corruption controls applying to the GP and to portfolio companies.
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: PRI 2026 reporting framework mandatory indicators (intents paraphrased)
+  - qid: pri_2026-28
+    framework: pri_2026
+    section: cyber
+    text: How is cybersecurity and data-protection risk assessed at GP and material portfolio companies?
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: PRI 2026 reporting framework mandatory indicators (intents paraphrased)
+  - qid: pri_2026-29
+    framework: pri_2026
+    section: service_providers
+    text: How are ESG expectations applied to material service providers (fund admin, valuation, consultants)?
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: PRI 2026 reporting framework mandatory indicators (intents paraphrased)
+  - qid: pri_2026-30
+    framework: pri_2026
+    section: assurance
+    text: Is any of the PRI / ESG dataset independently assured, and if so at what level (limited / reasonable)?
+    answer_kind: boolean
+    maps_to: [fund_profile]
+    source: PRI 2026 reporting framework mandatory indicators (intents paraphrased)
+  - qid: pri_2026-31
+    framework: pri_2026
+    section: sfdr
+    text: If marketing in the EEA, how are SFDR entity- and product-level disclosures produced and kept current?
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: PRI 2026 reporting framework mandatory indicators (intents paraphrased)
+  - qid: pri_2026-32
+    framework: pri_2026
+    section: uk_sdr
+    text: If marketing in the UK, how is the SDR labelling / anti-greenwashing rule applied to products?
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: PRI 2026 reporting framework mandatory indicators (intents paraphrased)
+  - qid: pri_2026-33
+    framework: pri_2026
+    section: training
+    text: What responsible-investment training is mandatory for investment staff, and how is completion tracked?
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: PRI 2026 reporting framework mandatory indicators (intents paraphrased)
+  - qid: pri_2026-34
+    framework: pri_2026
+    section: remuneration
+    text: Is a portion of variable pay linked to responsible-investment objectives, and for which roles?
+    answer_kind: boolean
+    maps_to: [fund_profile]
+    source: PRI 2026 reporting framework mandatory indicators (intents paraphrased)
+  - qid: pri_2026-35
+    framework: pri_2026
+    section: collaboration
+    text: List collaborative initiatives (PRI, GIIN, 2X, ICI, NZAM, etc.) and the activities undertaken this year.
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: PRI 2026 reporting framework mandatory indicators (intents paraphrased)
+  - qid: pri_2026-36
+    framework: pri_2026
+    section: outcomes
+    text: What portfolio-level impact outcomes can the firm evidence for the reporting year, with data quality notes?
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: PRI 2026 reporting framework mandatory indicators (intents paraphrased)
+  - qid: pri_2026-37
+    framework: pri_2026
+    section: data_quality
+    text: How are estimates vs measured values labelled in ESG/impact reporting (including AI-extracted figures)?
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: PRI 2026 reporting framework mandatory indicators (intents paraphrased)
+  - qid: pri_2026-38
+    framework: pri_2026
+    section: incidents
+    text: Number and nature of material ESG incidents in the portfolio this year, and remediation status.
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: PRI 2026 reporting framework mandatory indicators (intents paraphrased)
+  - qid: pri_2026-39
+    framework: pri_2026
+    section: exit
+    text: How is responsible investment considered in exit planning and buyer due diligence?
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: PRI 2026 reporting framework mandatory indicators (intents paraphrased)
+  - qid: pri_2026-40
+    framework: pri_2026
+    section: lessons
+    text: What is the most material responsible-investment lesson from the year, and what process changed as a result?
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: PRI 2026 reporting framework mandatory indicators (intents paraphrased)
+
+  # --- ILPA / PRI / iCI Climate Module (15) ---
+  - qid: ilpa_climate_module-01
+    framework: ilpa_climate_module
+    section: governance
+    text: Describe board-level oversight of climate-related risks and opportunities (TCFD/IFRS S2 Governance).
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: PRI/ILPA/iCI Climate Module 2025 (intents paraphrased)
+  - qid: ilpa_climate_module-02
+    framework: ilpa_climate_module
+    section: governance
+    text: How is climate competence of the board / IC assessed, and which committee owns climate?
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: PRI/ILPA/iCI Climate Module 2025 (intents paraphrased)
+  - qid: ilpa_climate_module-03
+    framework: ilpa_climate_module
+    section: strategy
+    text: How does climate change affect the fund strategy over short, medium, and long time horizons?
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: PRI/ILPA/iCI Climate Module 2025 (intents paraphrased)
+  - qid: ilpa_climate_module-04
+    framework: ilpa_climate_module
+    section: strategy
+    text: Describe climate-related opportunities pursued (transition finance, climate solutions, adaptation).
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: PRI/ILPA/iCI Climate Module 2025 (intents paraphrased)
+  - qid: ilpa_climate_module-05
+    framework: ilpa_climate_module
+    section: risk
+    text: How are physical climate risks (acute and chronic) screened at deal and portfolio level?
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: PRI/ILPA/iCI Climate Module 2025 (intents paraphrased)
+  - qid: ilpa_climate_module-06
+    framework: ilpa_climate_module
+    section: risk
+    text: How are transition risks (policy, technology, market, reputation) screened, including carbon-price sensitivity?
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: PRI/ILPA/iCI Climate Module 2025 (intents paraphrased)
+  - qid: ilpa_climate_module-07
+    framework: ilpa_climate_module
+    section: metrics
+    text: Report organisational Scope 1 GHG emissions (tCO2e) for the latest year.
+    answer_kind: metric
+    maps_to: [ghg_scope1_emissions]
+    source: PRI/ILPA/iCI Climate Module 2025 (intents paraphrased)
+  - qid: ilpa_climate_module-08
+    framework: ilpa_climate_module
+    section: metrics
+    text: What is the coverage and quality of Scope 2 and material Scope 3 / financed-emissions data?
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: PRI/ILPA/iCI Climate Module 2025 (intents paraphrased)
+  - qid: ilpa_climate_module-09
+    framework: ilpa_climate_module
+    section: metrics
+    text: Report renewable-energy share for GP operations (and portfolio if available).
+    answer_kind: metric
+    maps_to: [renewable_energy_share]
+    source: PRI/ILPA/iCI Climate Module 2025 (intents paraphrased)
+  - qid: ilpa_climate_module-10
+    framework: ilpa_climate_module
+    section: targets
+    text: What climate targets exist (absolute / intensity / SBTi), base year, and progress vs last year?
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: PRI/ILPA/iCI Climate Module 2025 (intents paraphrased)
+  - qid: ilpa_climate_module-11
+    framework: ilpa_climate_module
+    section: scenario
+    text: Which climate scenarios are used, and how do 1.5°C / delayed-transition pathways change holdings or engagement?
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: PRI/ILPA/iCI Climate Module 2025 (intents paraphrased)
+  - qid: ilpa_climate_module-12
+    framework: ilpa_climate_module
+    section: fossil
+    text: Exposure to fossil-fuel extraction, coal, and high-carbon generation, including exclusion policy.
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: PRI/ILPA/iCI Climate Module 2025 (intents paraphrased)
+  - qid: ilpa_climate_module-13
+    framework: ilpa_climate_module
+    section: offsets
+    text: If carbon credits are used, describe integrity screen (ICVCM CCP / VCMI) and claim wording controls.
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: PRI/ILPA/iCI Climate Module 2025 (intents paraphrased)
+  - qid: ilpa_climate_module-14
+    framework: ilpa_climate_module
+    section: regulation
+    text: How is California SB 253/261, CSRD/ISSB, or equivalent climate-disclosure applicability assessed for investees?
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: PRI/ILPA/iCI Climate Module 2025 (intents paraphrased)
+  - qid: ilpa_climate_module-15
+    framework: ilpa_climate_module
+    section: engagement
+    text: Describe climate engagement with portfolio companies this year (transition plans, capex, lobbying).
+    answer_kind: narrative
+    maps_to: [fund_profile]
+    source: PRI/ILPA/iCI Climate Module 2025 (intents paraphrased)

@@ -16,7 +16,7 @@ from openharness.impact.database import ensure_catalog_loaded
 from openharness.impact.five_dimensions import assess_five_dimensions
 from openharness.impact.gap_analysis import analyze_gaps
 from openharness.impact.greenwashing import assess_greenwashing
-from openharness.impact.models import Company, ImpactClaim, MetricValue
+from openharness.impact.models import BeneficiaryFeedback, Company, ImpactClaim, MetricValue
 from openharness.impact.sdg_mapper import generate_sdg_gap_recommendations, map_sdg_alignment
 from openharness.impact.toolbox import build_esg_workflow
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
@@ -180,6 +180,10 @@ class ImpactReportInput(BaseModel):
         default_factory=list,
         description="Impact claims extracted from pitch decks or memos for report evidence sections.",
     )
+    beneficiary_feedback: dict[str, object] | None = Field(
+        default=None,
+        description="Structured beneficiary / Lean Data feedback for the voice section.",
+    )
     output_format: Literal[
         "html", "csv", "json", "text", "xlsx", "pdf", "ixbrl", "xbrl-json", "cids"
     ] = Field(
@@ -300,21 +304,28 @@ class ImpactReportTool(BaseTool):
         except FileNotFoundError as e:
             return ToolResult(output=str(e), is_error=True)
 
-        reported_metrics, _ = normalize_metric_map(args.reported_metrics)
-        sdg_claims, _ = normalize_sdg_goals(args.sdg_claims)
-        impact_targets, _ = normalize_impact_targets(args.impact_targets)
+        reported_metrics, metric_warnings = normalize_metric_map(args.reported_metrics)
+        sdg_claims, sdg_warnings = normalize_sdg_goals(args.sdg_claims)
+        impact_targets, target_warnings = normalize_impact_targets(args.impact_targets)
+        input_warnings = list(metric_warnings) + list(sdg_warnings) + list(target_warnings)
         metric_history = []
         for entry in args.metric_history:
             try:
                 metric_history.append(MetricValue.model_validate(entry))
-            except Exception:
-                continue
+            except Exception as exc:  # noqa: BLE001 — keep report generation going
+                input_warnings.append(f"Ignored metric_history row: {exc}")
         impact_claims = []
         for claim in args.impact_claims:
             try:
                 impact_claims.append(ImpactClaim.model_validate(claim))
-            except Exception:
-                continue
+            except Exception as exc:  # noqa: BLE001 — keep report generation going
+                input_warnings.append(f"Ignored impact_claim row: {exc}")
+        beneficiary_feedback = None
+        if args.beneficiary_feedback:
+            try:
+                beneficiary_feedback = BeneficiaryFeedback.model_validate(args.beneficiary_feedback)
+            except Exception as exc:  # noqa: BLE001 — keep report generation going
+                input_warnings.append(f"Ignored beneficiary_feedback: {exc}")
 
         company = Company(
             name=args.company_name,
@@ -328,6 +339,7 @@ class ImpactReportTool(BaseTool):
             sdg_claims=sdg_claims,
             impact_targets=impact_targets,
             metric_history=metric_history,
+            beneficiary_feedback=beneficiary_feedback,
         )
 
         report_data: dict = {
@@ -391,6 +403,8 @@ class ImpactReportTool(BaseTool):
 
         if company.beneficiary_feedback:
             report_data["beneficiary_feedback"] = company.beneficiary_feedback.model_dump()
+        if input_warnings:
+            report_data["input_warnings"] = input_warnings
 
         _attach_tracked_metrics_to_five_dimensions(report_data)
 
@@ -529,7 +543,11 @@ class ImpactReportTool(BaseTool):
             summary = _to_text(report_data) if args.output_format != "text" else output[:1500]
             return ToolResult(
                 output=f"Report saved to: {path}\nFormat: {args.output_format}\n\n{summary}",
-                metadata={"output_path": str(path), "format": args.output_format},
+                metadata={
+                    "output_path": str(path),
+                    "format": args.output_format,
+                    "input_warnings": input_warnings,
+                },
             )
 
         if args.output_format == "html" and len(output) > 2000:
@@ -550,12 +568,17 @@ class ImpactReportTool(BaseTool):
                     # the rendered output isn't silently discarded when no
                     # output_path is provided.
                     "html": output,
+                    "input_warnings": input_warnings,
                 },
             )
 
         return ToolResult(
             output=output,
-            metadata={"format": args.output_format, "report_data": report_data},
+            metadata={
+                "format": args.output_format,
+                "report_data": report_data,
+                "input_warnings": input_warnings,
+            },
         )
 
 

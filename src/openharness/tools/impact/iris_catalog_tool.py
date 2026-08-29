@@ -7,7 +7,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from openharness.impact.database import get_metric_store
+from openharness.impact.database import ensure_catalog_loaded
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 
@@ -41,7 +41,7 @@ class IrisCatalogTool(BaseTool):
         args = arguments if isinstance(arguments, IrisCatalogInput) else IrisCatalogInput.model_validate(arguments)
 
         try:
-            store = get_metric_store()
+            store = ensure_catalog_loaded()
         except FileNotFoundError as e:
             return ToolResult(output=str(e), is_error=True)
 

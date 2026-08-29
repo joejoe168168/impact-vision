@@ -8,7 +8,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from openharness.impact.database import get_metric_store
+from openharness.impact.database import ensure_catalog_loaded
 from openharness.impact.gap_analysis import CORE_METRIC_SET_IDS
 from openharness.impact.toolbox import build_esg_workflow
 from openharness.tools.impact.common import normalize_sdg_goals, normalize_str_list
@@ -56,7 +56,7 @@ class MetricRecommenderTool(BaseTool):
         description = args.description or args.company_description
 
         try:
-            store = get_metric_store()
+            store = ensure_catalog_loaded()
         except FileNotFoundError as e:
             return ToolResult(output=str(e), is_error=True)
 

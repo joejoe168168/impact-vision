@@ -1070,7 +1070,12 @@ class FrameworkTool(BaseTool):
             MetricRecord.model_validate(row) for row in args.structured_inputs.get("records", [])
         ]
         payload = assess_just_transition(
-            company, records, args.structured_inputs.get("transition_plan")
+            company,
+            records,
+            args.structured_inputs.get("transition_plan"),
+            wages=args.structured_inputs.get("wages"),
+            wage_geography=args.structured_inputs.get("wage_geography")
+            or args.structured_inputs.get("geography"),
         )
         return ToolResult(output=json.dumps(payload, default=str), metadata=payload)
 

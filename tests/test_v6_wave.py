@@ -91,7 +91,7 @@ def test_regulatory_currency_assets_and_boundaries() -> None:
 
 def test_concordance_xbrl_and_comparability_acceptance() -> None:
     concordance = load_concordance()
-    assert len(concordance.entries) >= 20
+    assert len(concordance.entries) >= 100
     record = _record()
     translations = concordance.translate(record, "gri")
     assert translations[0][0].datapoint_id == "305-1"

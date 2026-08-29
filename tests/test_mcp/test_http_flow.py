@@ -6,8 +6,7 @@ from pathlib import Path
 
 import httpx
 import pytest
-from mcp.server.fastmcp import FastMCP
-from mcp.server.transport_security import TransportSecuritySettings
+from openharness.mcp.highlevel import FastMCP, create_highlevel_server
 
 import openharness.mcp.client as client_module
 from openharness.mcp.client import McpClientManager
@@ -18,10 +17,15 @@ from openharness.tools.base import ToolExecutionContext
 
 @pytest.mark.asyncio
 async def test_http_mcp_manager_connects_and_executes_in_process_server(monkeypatch):
-    server = FastMCP(
-        "demo-http",
-        transport_security=TransportSecuritySettings(enable_dns_rebinding_protection=False),
-    )
+    try:
+        from mcp.server.transport_security import TransportSecuritySettings
+
+        server = FastMCP(
+            "demo-http",
+            transport_security=TransportSecuritySettings(enable_dns_rebinding_protection=False),
+        )
+    except (TypeError, ImportError):
+        server = create_highlevel_server("demo-http")
 
     @server.tool()
     def hello(name: str) -> str:

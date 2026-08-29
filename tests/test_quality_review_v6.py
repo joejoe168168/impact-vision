@@ -39,7 +39,7 @@ def test_simplified_esrs_rows_are_explicitly_provenanced() -> None:
     assert len(rows) == 430
     assert metadata["status"] == "adopted_pending_oj_scrutiny"
     assert metadata["effective_from"] == "2027-01-01"
-    assert sum(not row.synthetic for row in rows) == 4
+    assert sum(not row.synthetic for row in rows) >= 50
     assert all(row.source_url for row in rows)
 
 

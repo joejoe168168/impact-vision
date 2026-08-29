@@ -14,7 +14,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from openharness.impact.database import get_metric_store
+from openharness.impact.database import ensure_catalog_loaded
 from openharness.impact.five_dimensions import assess_five_dimensions
 from openharness.impact.gap_analysis import analyze_gaps
 from openharness.impact.models import Company
@@ -176,7 +176,7 @@ class LpDdqExportTool(BaseTool):
 
     def _generate(self, args: LpDdqExportInput, template: dict, context: ToolExecutionContext | None = None) -> ToolResult:
         try:
-            store = get_metric_store()
+            store = ensure_catalog_loaded()
         except FileNotFoundError as e:
             return ToolResult(output=str(e), is_error=True)
 

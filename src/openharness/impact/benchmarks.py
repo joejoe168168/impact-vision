@@ -260,15 +260,28 @@ SECTOR_BENCHMARKS: dict[str, SectorBenchmark] = {
 
 
 def get_benchmark(sector: str) -> SectorBenchmark | None:
-    """Get benchmark for a sector (case-insensitive fuzzy match)."""
-    sector_lower = sector.lower()
+    """Get benchmark for a sector (case-insensitive fuzzy match).
+
+    Accepts both GIIN display names (``Financial Services``) and canonical
+    engine keys (``fintech``) produced by ``Company.sector`` normalisation.
+    """
+    if not sector:
+        return None
+    from openharness.tools.impact.common import benchmark_sector_name, normalize_sector
+
+    display = benchmark_sector_name(sector)
+    if display in SECTOR_BENCHMARKS:
+        return SECTOR_BENCHMARKS[display]
+    sector_lower = normalize_sector(sector) or sector.lower()
+    display_lower = display.lower()
     for name, bm in SECTOR_BENCHMARKS.items():
-        if name.lower() == sector_lower or name.lower() in sector_lower or sector_lower in name.lower():
+        name_lower = name.lower()
+        if name_lower in {sector_lower, display_lower}:
             return bm
-    for name, bm in SECTOR_BENCHMARKS.items():
-        for word in sector_lower.split():
-            if word in name.lower():
-                return bm
+        if name_lower in sector_lower or sector_lower in name_lower:
+            return bm
+        if name_lower in display_lower or display_lower in name_lower:
+            return bm
     return None
 
 

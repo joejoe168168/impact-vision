@@ -22,6 +22,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ### Added
 
+- **Just Transition, SBTN and biodiversity-credit content.** Replaced
+  placeholder metric/principle names with the 19 Shift/WBA/WBCSD/LSE Just
+  Transition metrics, a full SBTN five-step (AR3T) questionnaire, and the
+  21 IAPB/BCA/WEF biodiversity-credit principles. Coverage now matches
+  keywords and IRIS+ hints instead of looking for synthetic `JT-01` IDs.
+
+- **Living-wage geography aliases and FX fallback.** Benchmark lookup
+  accepts `nairobi, kenya` / `HK` / China-city aliases, converts non-USD
+  wages through the offline FX table instead of raising, and the FX snapshot
+  now covers common impact-fund currencies (KES, PHP, VND, XOF, …).
+
 - **Lifecycle assessment surface.** Added `impact.lca` and the
   `lca_assessment` tool for transparent ISO 14040/14044-style goal/scope,
   caller-supplied LCI/LCIA factors, hotspots, sensitivity, lifecycle cost and
@@ -40,6 +51,81 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
   backwards-compatible `esg_basics` code.
 
 ### Fixed
+
+- **Greenwashing claim–metric gap.** SDG claims are no longer treated as
+  substantiated just because *any* metrics were reported. Support is counted
+  only when a reported IRIS+ ID maps to that SDG (or a theme family).
+
+- **Carbon-credit integrity.** Removed invented `icvcm-method-01`…`36`
+  IDs, added programme/methodology aliases (`Verra`, `VM-0042`), and stopped
+  treating “eligible programme + approved method” as a CCP label.
+
+- **Pitch-deck reported metrics.** Explicit `OI4112: 1,200 tCO2e` values are
+  now extracted; metric *suggestions* still stay out of `reported_metrics`.
+  Company models uppercase canonical IRIS+ IDs on intake.
+
+- **MCP SDK pin.** Constrained the `mcp` dependency to `>=1.0.0,<2` so
+  `impact.mcp_server` keeps importing FastMCP. Uncapped `mcp>=1.0.0` resolved
+  to 2.x, which removed `mcp.server.fastmcp` and broke every MCP tool/resource.
+
+- **Fintech sector vs GIIN benchmarks.** `Company.sector` canonicalises to
+  `fintech`, which never matched `SECTOR_BENCHMARKS["Financial Services"]`.
+  Reports and the improvement advisor now resolve via a reverse map.
+
+- **Greenwashing verification.** A pile of unrelated metrics no longer
+  drives the verification sub-score to zero. `CUSTOM:*` and `EDCI-*`
+  adverse IDs survive tool normalisation.
+
+- **5D / SDG sector inference.** `"energy"` no longer matches `"synergy"`;
+  baselines key off the canonical sector, and description keywords use
+  word-boundary + negation matching.
+
+- **Pitch-deck claim metrics.** `mapped_metrics` only attach IRIS+ IDs that
+  appear in the claim sentence. Missing catalog now errors instead of
+  looking like “no impact”.
+
+- **ILPA/PRI DDQ bank.** Replaced generated “intent {i}” strings with 80
+  paraphrased ILPA DDQ 2.0, PRI 2026, and climate-module questions. The
+  approved-data responder is unchanged.
+
+- **GIIN KPI snapshot.** Added education, water, housing, manufacturing,
+  waste, and transport quartile rows so the offline snapshot covers the
+  same sector set as 5D benchmarks.
+
+- **Impact report beneficiary feedback.** `beneficiary_feedback` is now an
+  input field and invalid metric/claim rows surface in `input_warnings`
+  instead of being dropped silently.
+
+- **Empty catalog on tools.** Data quality, LP DDQ export, narrative,
+  monitoring, IRIS catalog, and metric recommender now use
+  `ensure_catalog_loaded()` so a missing catalog errors instead of scoring
+  an empty store.
+
+- **Concordance expansion.** `data/concordance.yaml` now carries the
+  LP-comparable core (Scope 2/3, energy, water, waste, gender, living wage,
+  jobs, PAI/EDCI, climate transition) so iXBRL tagging and CIDS/ask-once
+  have taxonomy qnames. Legacy 59-concept merge is unchanged.
+
+- **Biome-aware geospatial stub + dMRV.** Tree-cover loss is capped by
+  biome (Amazon ≠ Dubai); dMRV HMAC key comes from
+  `IMPACT_VISION_DMRV_HMAC_KEY`; satellite observations can be ingested as
+  remote-sensing series. Climate-claim classifier is heuristic with optional
+  ClimateBERT.
+
+- **Simplified ESRS named disclosures.** Screening rows now include the
+  EFRAG Set 1 disclosure catalogue (GOV/SBM/IRO/E1–E5/S1–S4/G1) as
+  non-synthetic; generated fillers remain labelled `synthetic=true`.
+
+- **iXBRL document shell.** Facts emit schemaRef, units, and transformation
+  format; still a screening prototype, not an Arelle-validated filing.
+
+- **MCP v1/v2 import shim.** `openharness.mcp.highlevel` loads FastMCP
+  (SDK 1.x) or MCPServer (SDK 2.x). The HTTP/stdio *client* still targets
+  1.x, so the dependency stays `mcp>=1.0.0,<2` until that handshake is
+  ported.
+
+- **`impact_vision` namespace.** `import impact_vision.impact` re-exports
+  `openharness.impact`. `openharness` remains the implementation package.
 
 - **Concordance enrichment.** Canonical YAML entries now merge with the
   legacy 59-concept map instead of replacing its cross-framework references;

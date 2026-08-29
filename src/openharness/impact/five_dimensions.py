@@ -185,16 +185,24 @@ def assess_additionality(company: Company) -> dict:
 
 def _infer_baseline(company: Company) -> dict[str, float]:
     """Infer baseline 5D scores from sector and description keywords."""
+    from openharness.tools.impact.common import keyword_match_with_context, normalize_sector
+
     text = f"{company.description} {company.sector} {' '.join(company.impact_themes)}".lower()
     baseline: dict[str, float] = {"what": 0.5, "who": 0.5, "how_much": 0.5, "contribution": 0.5, "risk": 0.5}
 
-    for sector_key, scores in _get_sector_baselines().items():
-        if sector_key in text:
-            for dim, val in scores.items():
-                baseline[dim] = max(baseline[dim], val)
+    sector_baselines = _get_sector_baselines()
+    canonical = normalize_sector(company.sector or "")
+    if canonical in sector_baselines:
+        for dim, val in sector_baselines[canonical].items():
+            baseline[dim] = max(baseline[dim], val)
+    else:
+        for sector_key, scores in sector_baselines.items():
+            if keyword_match_with_context(text, sector_key):
+                for dim, val in scores.items():
+                    baseline[dim] = max(baseline[dim], val)
 
     for keyword, boosts in _get_keyword_boosts().items():
-        if keyword in text and _keyword_not_negated(text, keyword):
+        if keyword_match_with_context(text, keyword):
             for dim, val in boosts.items():
                 baseline[dim] = baseline[dim] + val
 

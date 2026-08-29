@@ -21,7 +21,7 @@ dependencies = [
     "pydantic>=2.0.0",
     "httpx>=0.27.0",
     "websockets>=12.0",
-    "mcp>=1.0.0",
+    "mcp>=1.0.0,<2",  # FastMCP 1.x. openharness.mcp.highlevel is MCPServer-ready; client transports still v1.
     "pyperclip>=1.9.0",
     "pyyaml>=6.0",
     "questionary>=2.0.1",
@@ -54,7 +54,7 @@ impact-vision = "openharness.cli:app"
 iv = "openharness.cli:app"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/openharness"]
+packages = ["src/openharness", "src/impact_vision"]
 
 [tool.hatch.build]
 exclude = [
@@ -75,6 +75,7 @@ exclude = [
 "frontend/terminal/tsconfig.json" = "openharness/_frontend/tsconfig.json"
 "frontend/terminal/src" = "openharness/_frontend/src"
 "data" = "openharness/_data"
+"src/impact_vision/__init__.py" = "impact_vision/__init__.py"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

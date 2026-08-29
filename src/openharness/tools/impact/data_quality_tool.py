@@ -8,7 +8,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from openharness.impact.database import get_metric_store
+from openharness.impact.database import ensure_catalog_loaded
 from openharness.tools.impact.common import normalize_metric_map
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
@@ -47,7 +47,7 @@ class DataQualityTool(BaseTool):
         if args.action != "assess":
             return ToolResult(output=f"Unknown action: {args.action}", is_error=True)
         try:
-            store = get_metric_store()
+            store = ensure_catalog_loaded()
         except FileNotFoundError as e:
             return ToolResult(output=str(e), is_error=True)
 

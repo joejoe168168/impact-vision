@@ -253,7 +253,7 @@ class MonitoringTool(BaseTool):
         if not prev:
             return ToolResult(output=f"No previous assessment for {args.company_name}. Run impact_report first.")
 
-        from openharness.impact.database import get_metric_store
+        from openharness.impact.database import ensure_catalog_loaded
         from openharness.impact.five_dimensions import assess_five_dimensions
         from openharness.impact.models import Company
         from openharness.impact.sdg_mapper import map_sdg_alignment
@@ -262,7 +262,7 @@ class MonitoringTool(BaseTool):
         company = Company.model_validate(company_data)
 
         try:
-            metric_store = get_metric_store()
+            metric_store = ensure_catalog_loaded()
         except FileNotFoundError as e:
             return ToolResult(output=str(e), is_error=True)
 

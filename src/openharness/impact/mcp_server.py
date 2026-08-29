@@ -11,9 +11,8 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from mcp.server.fastmcp import FastMCP
-
 from openharness.mcp.compat import patch_fastmcp_func_metadata
+from openharness.mcp.highlevel import FastMCP, create_highlevel_server
 
 logger = logging.getLogger(__name__)
 
@@ -57,19 +56,16 @@ patch_fastmcp_func_metadata()
 
 
 def _init_fastmcp() -> FastMCP:
-    """Instantiate FastMCP with graceful fallback for older/newer signatures."""
+    """Instantiate FastMCP / MCPServer with graceful fallback for signatures."""
     for kwargs in (
-        # New signature (no version/description kwargs)
         {},
-        # Older signature (pre-0.3) accepted version+description
         {"version": IMPACT_VISION_MCP_VERSION, "description": IMPACT_VISION_MCP_DESCRIPTION},
     ):
         try:
-            return FastMCP(IMPACT_VISION_MCP_NAME, **kwargs)
+            return create_highlevel_server(IMPACT_VISION_MCP_NAME, **kwargs)
         except TypeError:
             continue
-    # Last resort — positional only
-    return FastMCP(IMPACT_VISION_MCP_NAME)
+    return create_highlevel_server(IMPACT_VISION_MCP_NAME)
 
 
 mcp = _init_fastmcp()

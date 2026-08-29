@@ -10,20 +10,18 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from openharness.impact.benchmarks import SECTOR_BENCHMARKS
-from openharness.impact.database import get_metric_store
+from openharness.impact.database import ensure_catalog_loaded
 from openharness.impact.five_dimensions import assess_five_dimensions
 from openharness.impact.models import Company
 from openharness.impact.sdg_mapper import generate_sdg_gap_recommendations, map_sdg_alignment
 from openharness.impact.sdg_taxonomy import get_sdg_goal
+from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 from openharness.tools.impact.common import (
     infer_themes,
     normalize_metric_map,
     normalize_sdg_goals,
     normalize_sector,
 )
-from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
-
 
 _DIMENSION_IMPROVEMENT_STRATEGIES: dict[str, list[dict[str, str]]] = {
     "what": [
@@ -117,7 +115,7 @@ class ImprovementAdvisorTool(BaseTool):
         args = arguments if isinstance(arguments, ImprovementAdvisorInput) else ImprovementAdvisorInput.model_validate(arguments)
 
         try:
-            store = get_metric_store()
+            store = ensure_catalog_loaded()
         except FileNotFoundError as e:
             return ToolResult(output=str(e), is_error=True)
 
@@ -230,12 +228,13 @@ class ImprovementAdvisorTool(BaseTool):
             for p in partners:
                 lines.append(f"  • {p}")
 
-        bm = SECTOR_BENCHMARKS.get(sector, {})
+        from openharness.impact.benchmarks import get_benchmark
+
+        bm = get_benchmark(company.sector)
         if bm:
             lines.append("\nSECTOR BENCHMARKS")
             lines.append("-" * 40)
-            bm_scores = bm.get("five_d", {})
-            for dim, score in bm_scores.items():
+            for dim, score in bm.five_d_avg.items():
                 lines.append(f"  {dim.replace('_', ' ').title()}: {score}/5 (sector average)")
 
         return ToolResult(output="\n".join(lines))

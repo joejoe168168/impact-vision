@@ -6,8 +6,32 @@ import html
 import re
 from collections.abc import Iterable
 
-
 METRIC_ID_PATTERN = re.compile(r"^(PI|OI|OD|FP|PD)\d{4}$", re.IGNORECASE)
+EDCI_METRIC_ID_PATTERN = re.compile(r"^EDCI-[A-Z0-9-]+$", re.IGNORECASE)
+
+
+def canonicalize_metric_id(key: str) -> str:
+    """Normalise IRIS+, EDCI, and CUSTOM metric keys for engine lookups."""
+    metric_id = str(key or "").strip()
+    if not metric_id:
+        return ""
+    if METRIC_ID_PATTERN.match(metric_id):
+        return metric_id.upper()
+    if EDCI_METRIC_ID_PATTERN.match(metric_id):
+        return metric_id.upper()
+    if metric_id[:7].upper() == "CUSTOM:":
+        suffix = metric_id.split(":", 1)[1].strip().lower()
+        return f"CUSTOM:{suffix}" if suffix else ""
+    return metric_id
+
+
+def is_engine_metric_id(key: str) -> bool:
+    metric_id = canonicalize_metric_id(key)
+    return bool(
+        METRIC_ID_PATTERN.match(metric_id)
+        or EDCI_METRIC_ID_PATTERN.match(metric_id)
+        or metric_id.startswith("CUSTOM:")
+    )
 
 
 _NEGATION_PHRASES = (
@@ -158,10 +182,10 @@ def normalize_metric_map(
     normalized: dict[str, str] = {}
     warnings: list[str] = []
     for key, value in metrics.items():
-        metric_id = (str(key) or "").strip().upper()
+        metric_id = canonicalize_metric_id(key)
         if not metric_id:
             continue
-        if not METRIC_ID_PATTERN.match(metric_id):
+        if not is_engine_metric_id(metric_id):
             warnings.append(f"Ignored invalid metric ID: {key}")
             continue
         normalized[metric_id] = "" if value is None else str(value).strip()
@@ -175,10 +199,10 @@ def normalize_metric_ids(values: Iterable[str] | None) -> tuple[list[str], list[
     normalized: list[str] = []
     warnings: list[str] = []
     for value in values:
-        metric_id = (str(value) or "").strip().upper()
+        metric_id = canonicalize_metric_id(value)
         if not metric_id:
             continue
-        if not METRIC_ID_PATTERN.match(metric_id):
+        if not is_engine_metric_id(metric_id):
             warnings.append(f"Ignored invalid metric ID: {value}")
             continue
         if metric_id not in normalized:
@@ -376,6 +400,41 @@ _SECTOR_ALIASES: dict[str, str] = {
     "ict": "ict",
     "livestock": "livestock",
 }
+
+
+# Display names used by GIIN ``SECTOR_BENCHMARKS``. Canonical engine keys
+# (``fintech``, ``water``) must map here or ``get_benchmark("fintech")`` misses.
+ENGINE_TO_BENCHMARK_SECTOR: dict[str, str] = {
+    "fintech": "Financial Services",
+    "financial": "Financial Services",
+    "healthcare": "Healthcare",
+    "health": "Healthcare",
+    "education": "Education",
+    "agriculture": "Agriculture",
+    "livestock": "Agriculture",
+    "energy": "Energy",
+    "technology": "Technology",
+    "real estate": "Real Estate",
+    "water": "Water & Sanitation",
+    "manufacturing": "Manufacturing",
+    "transport": "Transport & Logistics",
+    "logistics": "Transport & Logistics",
+    "construction": "Construction",
+    "tourism": "Tourism",
+    "retail": "Retail",
+    "mining": "Mining & Extractives",
+    "extractives": "Mining & Extractives",
+    "media": "Media",
+    "professional services": "Professional Services",
+    "waste management": "Waste Management",
+    "ict": "ICT",
+}
+
+
+def benchmark_sector_name(sector: str) -> str:
+    """Map a canonical engine sector key onto a GIIN benchmark display name."""
+    key = normalize_sector(sector)
+    return ENGINE_TO_BENCHMARK_SECTOR.get(key, sector)
 
 
 def normalize_sector(sector: str) -> str:

@@ -128,30 +128,215 @@ def get_ecosystem_provider(provider_id: str = "offline-unit-values") -> Ecosyste
 register_ecosystem_provider(UnitValueProvider())
 
 
+# IAPB / Biodiversity Credit Alliance / WEF High-Level Principles (21),
+# grouped as nature outcomes, equity for people, and good governance.
 BIODIVERSITY_CREDIT_PRINCIPLES = [
     {
-        "id": f"BCP-{i:02d}",
-        "pillar": ("outcomes" if i <= 7 else "equity" if i <= 14 else "governance"),
-        "principle": f"High-integrity biodiversity credit principle {i}",
-        "assessment_question": f"Is principle {i} evidenced?",
+        "id": "BCP-01",
+        "pillar": "outcomes",
+        "principle": "Nature-positive, quantified outcomes",
+        "assessment_question": "Do credits represent verified, quantified gains for nature (not avoided loss alone unless additional)?",
         "scoring_guidance": "0 absent; 1 partial; 2 evidenced",
         "source": "IAPB/BCA/WEF High-Level Principles",
-    }
-    for i in range(1, 22)
+    },
+    {
+        "id": "BCP-02",
+        "pillar": "outcomes",
+        "principle": "Additionality",
+        "assessment_question": "Would the outcome have occurred without the credit activity?",
+        "scoring_guidance": "0 absent; 1 partial; 2 evidenced",
+        "source": "IAPB/BCA/WEF High-Level Principles",
+    },
+    {
+        "id": "BCP-03",
+        "pillar": "outcomes",
+        "principle": "Robust baselines",
+        "assessment_question": "Is the baseline conservative, documented, and aligned to a recent ecological reference?",
+        "scoring_guidance": "0 absent; 1 partial; 2 evidenced",
+        "source": "IAPB/BCA/WEF High-Level Principles",
+    },
+    {
+        "id": "BCP-04",
+        "pillar": "outcomes",
+        "principle": "Leakage addressed",
+        "assessment_question": "Are activity-shifting and market leakage assessed and deducted?",
+        "scoring_guidance": "0 absent; 1 partial; 2 evidenced",
+        "source": "IAPB/BCA/WEF High-Level Principles",
+    },
+    {
+        "id": "BCP-05",
+        "pillar": "outcomes",
+        "principle": "Durability / permanence",
+        "assessment_question": "Is there a durability mechanism (buffer, insurance, long-term stewardship)?",
+        "scoring_guidance": "0 absent; 1 partial; 2 evidenced",
+        "source": "IAPB/BCA/WEF High-Level Principles",
+    },
+    {
+        "id": "BCP-06",
+        "pillar": "outcomes",
+        "principle": "No double counting",
+        "assessment_question": "Are units uniquely serialised and excluded from overlapping claims?",
+        "scoring_guidance": "0 absent; 1 partial; 2 evidenced",
+        "source": "IAPB/BCA/WEF High-Level Principles",
+    },
+    {
+        "id": "BCP-07",
+        "pillar": "outcomes",
+        "principle": "Independent MRV",
+        "assessment_question": "Is monitoring, reporting and verification independent of the project proponent?",
+        "scoring_guidance": "0 absent; 1 partial; 2 evidenced",
+        "source": "IAPB/BCA/WEF High-Level Principles",
+    },
+    {
+        "id": "BCP-08",
+        "pillar": "equity",
+        "principle": "Indigenous Peoples and local community rights",
+        "assessment_question": "Are IPLC land, resource and knowledge rights recognised in project design?",
+        "scoring_guidance": "0 absent; 1 partial; 2 evidenced",
+        "source": "IAPB/BCA/WEF High-Level Principles",
+    },
+    {
+        "id": "BCP-09",
+        "pillar": "equity",
+        "principle": "Free, Prior and Informed Consent",
+        "assessment_question": "Was FPIC obtained where Indigenous Peoples or customary rights-holders are affected?",
+        "scoring_guidance": "0 absent; 1 partial; 2 evidenced",
+        "source": "IAPB/BCA/WEF High-Level Principles",
+    },
+    {
+        "id": "BCP-10",
+        "pillar": "equity",
+        "principle": "Equitable benefit-sharing",
+        "assessment_question": "Is there a documented, fair benefit-sharing arrangement with rights-holders?",
+        "scoring_guidance": "0 absent; 1 partial; 2 evidenced",
+        "source": "IAPB/BCA/WEF High-Level Principles",
+    },
+    {
+        "id": "BCP-11",
+        "pillar": "equity",
+        "principle": "Do-no-harm safeguards",
+        "assessment_question": "Are social and environmental safeguards in place and monitored?",
+        "scoring_guidance": "0 absent; 1 partial; 2 evidenced",
+        "source": "IAPB/BCA/WEF High-Level Principles",
+    },
+    {
+        "id": "BCP-12",
+        "pillar": "equity",
+        "principle": "Gender equality and social inclusion",
+        "assessment_question": "Do design and benefit-sharing address gender and inclusion explicitly?",
+        "scoring_guidance": "0 absent; 1 partial; 2 evidenced",
+        "source": "IAPB/BCA/WEF High-Level Principles",
+    },
+    {
+        "id": "BCP-13",
+        "pillar": "equity",
+        "principle": "Inclusive participation",
+        "assessment_question": "Can affected people participate in design, monitoring and governance?",
+        "scoring_guidance": "0 absent; 1 partial; 2 evidenced",
+        "source": "IAPB/BCA/WEF High-Level Principles",
+    },
+    {
+        "id": "BCP-14",
+        "pillar": "equity",
+        "principle": "Accessible grievance and redress",
+        "assessment_question": "Is there an independent, accessible grievance mechanism with remedy?",
+        "scoring_guidance": "0 absent; 1 partial; 2 evidenced",
+        "source": "IAPB/BCA/WEF High-Level Principles",
+    },
+    {
+        "id": "BCP-15",
+        "pillar": "governance",
+        "principle": "Transparency of supply and claims",
+        "assessment_question": "Are methodologies, issuance, retirements and claims publicly disclosed?",
+        "scoring_guidance": "0 absent; 1 partial; 2 evidenced",
+        "source": "IAPB/BCA/WEF High-Level Principles",
+    },
+    {
+        "id": "BCP-16",
+        "pillar": "governance",
+        "principle": "Unique serialisation and registry",
+        "assessment_question": "Are units tracked on a public registry with unique IDs?",
+        "scoring_guidance": "0 absent; 1 partial; 2 evidenced",
+        "source": "IAPB/BCA/WEF High-Level Principles",
+    },
+    {
+        "id": "BCP-17",
+        "pillar": "governance",
+        "principle": "Independent validation and verification",
+        "assessment_question": "Are validation and verification done by an accredited third party?",
+        "scoring_guidance": "0 absent; 1 partial; 2 evidenced",
+        "source": "IAPB/BCA/WEF High-Level Principles",
+    },
+    {
+        "id": "BCP-18",
+        "pillar": "governance",
+        "principle": "Science-based methodologies",
+        "assessment_question": "Is the methodology peer-reviewed and aligned to ecological science?",
+        "scoring_guidance": "0 absent; 1 partial; 2 evidenced",
+        "source": "IAPB/BCA/WEF High-Level Principles",
+    },
+    {
+        "id": "BCP-19",
+        "pillar": "governance",
+        "principle": "Legal underpinning and tenure",
+        "assessment_question": "Are land/resource tenure and the legal right to issue credits documented?",
+        "scoring_guidance": "0 absent; 1 partial; 2 evidenced",
+        "source": "IAPB/BCA/WEF High-Level Principles",
+    },
+    {
+        "id": "BCP-20",
+        "pillar": "governance",
+        "principle": "Adaptive management",
+        "assessment_question": "Can the project revise activities when monitoring shows under-delivery?",
+        "scoring_guidance": "0 absent; 1 partial; 2 evidenced",
+        "source": "IAPB/BCA/WEF High-Level Principles",
+    },
+    {
+        "id": "BCP-21",
+        "pillar": "governance",
+        "principle": "Accountability, liability and buyer due diligence",
+        "assessment_question": "Are reversal liability and buyer due-diligence expectations defined?",
+        "scoring_guidance": "0 absent; 1 partial; 2 evidenced",
+        "source": "IAPB/BCA/WEF High-Level Principles",
+    },
 ]
 
 
 def screen_biodiversity_credit(answers: dict[str, int]) -> dict:
+    answers = answers or {}
     pillars = {}
     gaps = []
     for pillar in ("outcomes", "equity", "governance"):
         relevant = [item for item in BIODIVERSITY_CREDIT_PRINCIPLES if item["pillar"] == pillar]
         score = sum(max(0, min(2, int(answers.get(item["id"], 0)))) for item in relevant)
         pillars[pillar] = round(100 * score / (2 * len(relevant)), 1)
-        gaps.extend(item["id"] for item in relevant if item["id"] not in answers)
+        gaps.extend(
+            {"id": item["id"], "principle": item["principle"]}
+            for item in relevant
+            if int(answers.get(item["id"], 0)) < 2
+        )
     overall = sum(pillars.values()) / len(pillars)
-    band = "high" if overall >= 80 and not gaps else "medium" if overall >= 50 else "low"
-    return {"score": round(overall, 1), "per_pillar": pillars, "quality_band": band, "gaps": gaps}
+    unanswered = [item["id"] for item in BIODIVERSITY_CREDIT_PRINCIPLES if item["id"] not in answers]
+    band = (
+        "high"
+        if overall >= 80 and not unanswered
+        else "medium"
+        if overall >= 50
+        else "low"
+    )
+    return {
+        "score": round(overall, 1),
+        "per_pillar": pillars,
+        "quality_band": band,
+        "gaps": gaps,
+        "unanswered": unanswered,
+        "principles": BIODIVERSITY_CREDIT_PRINCIPLES,
+        "status": "indicative",
+        "as_of": "2026-07",
+        "citations": [
+            "IAPB / Biodiversity Credit Alliance / WEF High-Level Principles to Guide the Biodiversity Credit Market"
+        ],
+    }
 
 
 __all__ = [

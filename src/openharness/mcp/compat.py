@@ -20,9 +20,14 @@ def patch_fastmcp_func_metadata() -> None:
     try:
         import inspect
 
-        from mcp.server.fastmcp.resources import templates as resource_templates
-        from mcp.server.fastmcp.tools import base as tool_base
-        from mcp.server.fastmcp.utilities import func_metadata as fm
+        try:
+            from mcp.server.fastmcp.resources import templates as resource_templates
+            from mcp.server.fastmcp.tools import base as tool_base
+            from mcp.server.fastmcp.utilities import func_metadata as fm
+        except ModuleNotFoundError:  # mcp 2.x
+            from mcp.server.mcpserver.resources import templates as resource_templates
+            from mcp.server.mcpserver.tools import base as tool_base
+            from mcp.server.mcpserver.utilities import func_metadata as fm
         from mcp.types import CallToolResult
     except Exception:  # pragma: no cover
         return

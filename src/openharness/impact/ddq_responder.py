@@ -28,10 +28,15 @@ class DDQQuestion(BaseModel):
 
 def load_ddq_bank() -> list[DDQQuestion]:
     path = Path(__file__).resolve().parents[3] / "data/ddq_bank.yaml"
-    payload = yaml.safe_load(path.read_text(encoding="utf-8"))
+    payload = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    raw_questions = payload.get("questions") or []
+    if raw_questions:
+        return [DDQQuestion.model_validate(row) for row in raw_questions]
+    # Legacy fixture: synthesise intents from counts (kept so older YAML still loads).
     questions = []
-    concepts = payload["metric_concepts"]
-    for framework, count in payload["framework_counts"].items():
+    concepts = payload.get("metric_concepts") or ["ghg_scope1_emissions"]
+    sources = payload.get("sources") or {}
+    for framework, count in (payload.get("framework_counts") or {}).items():
         for i in range(1, int(count) + 1):
             is_metric = i % 4 == 0
             questions.append(
@@ -39,12 +44,16 @@ def load_ddq_bank() -> list[DDQQuestion]:
                     qid=f"{framework}-{i:02d}",
                     framework=framework,
                     section="climate" if "climate" in framework else "responsible investment",
-                    text=f"Describe the fund's {'verified performance for ' + concepts[(i // 4 - 1) % len(concepts)] if is_metric else 'policy, governance and implementation evidence'} (intent {i}).",
+                    text=(
+                        "Describe the fund's "
+                        f"{'verified performance for ' + concepts[(i // 4 - 1) % len(concepts)] if is_metric else 'policy, governance and implementation evidence'}"
+                        f" (intent {i})."
+                    ),
                     answer_kind="metric" if is_metric else "narrative",
                     maps_to=[concepts[(i // 4 - 1) % len(concepts)]]
                     if is_metric
                     else ["fund_profile"],
-                    source=payload["sources"][framework],
+                    source=sources.get(framework, ""),
                 )
             )
     return questions

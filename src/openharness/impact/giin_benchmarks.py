@@ -127,6 +127,48 @@ _BENCHMARKS: list[KpiBenchmark] = [
     _b("healthcare", "pct_low_income_patients", "Share of low-income patients", "%",
        30, 50, 70, 85, 110, [1, 3, 10],
        "Reaching underserved, low-income populations is the SDG 3 equity test."),
+    # Education
+    _b("education", "students_reached", "Learners reached", "students",
+       2000, 12000, 45000, 120000, 95, [4, 5, 10],
+       "~244M children and youth are out of school; learning poverty remains high in LMICs."),
+    _b("education", "learning_gain_pct", "Measured learning gain", "%",
+       5, 12, 22, 35, 60, [4],
+       "Learning-adjusted years of schooling lag years enrolled in many impact geographies."),
+    # Water & sanitation
+    _b("water", "people_safe_water", "People with new/improved safe water", "people",
+       3000, 15000, 60000, 180000, 80, [6],
+       "~2.2B people lack safely managed drinking water (SDG 6)."),
+    _b("water", "water_non_revenue_pct", "Non-revenue water", "%",
+       18, 28, 40, 55, 55, [6, 12],
+       "Utility losses of 30%+ are common; lower is better.", "lower_better"),
+    # Housing
+    _b("housing", "housing_units", "Affordable / adequate housing units", "units",
+       80, 400, 1500, 5000, 70, [1, 11],
+       "The global affordable-housing gap is estimated in the hundreds of millions of units."),
+    _b("housing", "pct_affordable_units", "Share of units below local affordability threshold", "%",
+       40, 60, 80, 95, 65, [1, 11],
+       "Additionality is the share that would not have been delivered at market rate."),
+    # Manufacturing
+    _b("manufacturing", "jobs_created", "Direct jobs created / sustained", "jobs",
+       40, 180, 600, 1800, 90, [8, 9],
+       "Decent-work creation in manufacturing remains a core SDG 8 pathway in emerging markets."),
+    _b("manufacturing", "ghg_intensity_tco2e", "GHG intensity", "tCO2e / unit output",
+       0.4, 0.9, 1.8, 3.5, 70, [9, 12, 13],
+       "Intensity reduction is the typical PE climate lever in manufacturing.", "lower_better"),
+    # Waste
+    _b("waste management", "tonnes_diverted", "Waste diverted from landfill", "tonnes",
+       500, 4000, 18000, 50000, 50, [11, 12],
+       "Landfill diversion and circular recovery are core SDG 12 metrics."),
+    _b("waste management", "recycling_rate_pct", "Recycling / recovery rate", "%",
+       15, 35, 55, 75, 45, [12],
+       "Municipal recycling rates remain below 20% in many impact geographies."),
+    # Transport
+    _b("transport", "passengers_served", "Passengers / users served", "people",
+       8000, 40000, 150000, 400000, 60, [9, 11],
+       "Safe, affordable mobility is a core SDG 11 service gap."),
+    _b("transport", "ghg_avoided_tco2e", "GHG emissions avoided vs baseline mode", "tCO2e",
+       400, 2500, 12000, 40000, 55, [11, 13],
+       "Mode shift and fleet efficiency are the usual climate claims in mobility."),
 ]
 
 # Sector aliases → canonical sector keys.
@@ -138,6 +180,12 @@ _SECTOR_ALIASES: dict[str, str] = {
     "fintech": "financial services", "microfinance": "financial services",
     "forestry": "forestry", "forests": "forestry", "land": "forestry",
     "healthcare": "healthcare", "health": "healthcare",
+    "education": "education", "edtech": "education",
+    "water": "water", "water & sanitation": "water", "wash": "water",
+    "housing": "housing", "real estate": "housing", "affordable housing": "housing",
+    "manufacturing": "manufacturing",
+    "waste management": "waste management", "waste": "waste management",
+    "transport": "transport", "logistics": "transport", "mobility": "transport",
 }
 
 

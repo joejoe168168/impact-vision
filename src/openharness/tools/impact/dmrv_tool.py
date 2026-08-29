@@ -4,7 +4,7 @@ from typing import Literal
 from pydantic import BaseModel, Field
 from openharness.impact.audit_trail import AuditTrail
 from openharness.impact.evidence_graph import EvidenceGraph
-from openharness.impact.signed_feed import HMACSigner
+from openharness.impact.dmrv import get_dmrv_signer
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 
@@ -24,7 +24,7 @@ class DMRVEvidenceTool(BaseTool):
     def __init__(self):
         self.graph = EvidenceGraph()
         self.trail = AuditTrail()
-        self.signer = HMACSigner(key=b"impact-vision-dmrv")
+        self.signer = get_dmrv_signer()
 
     def is_read_only(self, arguments: BaseModel) -> bool:
         return getattr(arguments, "action", "") == "verify"

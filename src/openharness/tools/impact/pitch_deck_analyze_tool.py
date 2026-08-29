@@ -7,7 +7,7 @@ from pathlib import Path
 
 from pydantic import BaseModel, Field
 
-from openharness.impact.database import get_metric_store
+from openharness.impact.database import ensure_catalog_loaded
 from openharness.impact.dd_checklist import analyze_document_coverage, select_questions_for_document
 from openharness.impact.greenwashing import assess_greenwashing
 from openharness.impact.models import ImpactClaim
@@ -139,7 +139,10 @@ class PitchDeckAnalyzeTool(BaseTool):
         if not text.strip():
             return ToolResult(output="No text could be extracted from the document", is_error=True)
 
-        store = get_metric_store()
+        try:
+            store = ensure_catalog_loaded()
+        except FileNotFoundError as exc:
+            return ToolResult(output=str(exc), is_error=True)
         claims = _extract_impact_claims(page_texts, store)
         detected_themes = _detect_themes(text)
         detected_sdgs = _detect_sdg_goals(text, claims)
@@ -544,24 +547,17 @@ def _classify_claim(text_lower: str) -> str:
 
 
 def _match_metrics(sentence: str, store) -> list:
-    lower = sentence.lower()
-    keywords = [
-        "revenue", "employee", "client", "beneficiar", "emission", "carbon",
-        "energy", "water", "waste", "health", "education", "job", "wage",
-        "poverty", "inclusion", "gender", "women", "training",
-    ]
+    """Attach IRIS+ IDs only when they actually appear in the claim sentence."""
+    import re
+
     matched: list = []
-    for kw in keywords:
-        if kw in lower:
-            results = store.search(kw, limit=3)
-            matched.extend(results)
-    seen = set()
-    deduped = []
-    for m in matched:
-        if m.id not in seen:
-            seen.add(m.id)
-            deduped.append(m)
-    return deduped[:5]
+    seen: set[str] = set()
+    for metric_id in re.findall(r"\b((?:PI|OI|OD|FP|PD)\d{4})\b", sentence, re.IGNORECASE):
+        metric = store.get(metric_id.upper())
+        if metric is not None and metric.id not in seen:
+            seen.add(metric.id)
+            matched.append(metric)
+    return matched[:5]
 
 
 def _match_sdg_targets(sentence: str) -> list[str]:
@@ -575,6 +571,40 @@ def _match_sdg_targets(sentence: str) -> list[str]:
     return targets
 
 
+def _extract_reported_metrics(text: str) -> dict[str, str]:
+    """Pull IRIS+ IDs that appear next to an actual reported value.
+
+    Suggestions without a value must never land in ``reported_metrics`` —
+    that path previously inflated 5D / SDG / greenwashing scores.
+    """
+    import re
+
+    if not text:
+        return {}
+    pattern = re.compile(
+        r"\b((?:PI|OI|OD|FP|PD)\d{4})\b\s*[)\]]?\s*"
+        r"(?:[:\-=]|is|was|of|at|equals)\s*"
+        r"([+-]?\d{1,3}(?:,\d{3})*(?:\.\d+)?(?:\s*(?:%|tCO2e|tCO₂e|tCO2|MW|kWh|MWh|ha|USD|US\$|\$|people|clients|customers|households|employees))?)",
+        re.IGNORECASE,
+    )
+    reported: dict[str, str] = {}
+    for match in pattern.finditer(text):
+        metric_id = match.group(1).upper()
+        raw_value = (match.group(2) or "").strip()
+        if not raw_value:
+            continue
+        number = re.sub(r"[^\d.\-]", "", raw_value.split()[0])
+        try:
+            numeric = float(number)
+        except ValueError:
+            continue
+        # Bare years next to an ID are almost always a reporting period, not a value.
+        if 1990 <= numeric <= 2040 and not re.search(r"[%a-z$]", raw_value, re.IGNORECASE):
+            continue
+        reported[metric_id] = raw_value
+    return reported
+
+
 def _extract_company_model(
     text: str,
     filename: str,
@@ -586,6 +616,8 @@ def _extract_company_model(
     """Extract a Company model from document text for downstream tools."""
     import re
     from openharness.impact.models import Company
+
+    del suggested_metric_ids, store
 
     company_name = filename.replace("_", " ").replace("-", " ").title()
     name_patterns = [
@@ -602,7 +634,7 @@ def _extract_company_model(
 
     sector = _detect_sector(text)
     geography = _detect_geography(text)
-    reported: dict[str, str] = {}
+    reported = _extract_reported_metrics(text)
 
     return Company(
         name=company_name,

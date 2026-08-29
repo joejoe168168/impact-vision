@@ -12,7 +12,7 @@ Extended with NLP-enhanced signals:
 - Cheap Talk Index - proportion of non-specific commitments
 - Sentiment deflection detection
 - Claim decomposition into verifiable sub-claims
-- ClimateBERT integration stub for model-based detection
+- Climate-claim classifier (heuristic, ClimateBERT when a local model is present)
 """
 
 from __future__ import annotations
@@ -166,6 +166,35 @@ _ADVERSE_METRICS_BY_SECTOR: dict[str, list[str]] = {
     "waste management": [
         "OI4112", "OI1346", "OI3757",
     ],
+    # Tourism: emissions, water, community displacement, labour.
+    "tourism": [
+        "OI4112",
+        "OI9604",
+        "OI0263",
+        "PI1297",
+        "OI3757",
+        "CUSTOM:community_displacement",
+    ],
+    # Retail: packaging waste, labour, Scope 3.
+    "retail": [
+        "OI4112",
+        "OI9604",
+        "OI1479",
+        "OI1346",
+        "OI3757",
+        "CUSTOM:packaging_waste",
+    ],
+    "professional services": [
+        "OI9604",
+        "EDCI-G1",
+        "CUSTOM:data_breach_incidents",
+        "OI3757",
+    ],
+    "media": [
+        "CUSTOM:content_moderation_incidents",
+        "EDCI-G1",
+        "OI9604",
+    ],
     # Default: GHG + worker safety as universal adverse signals.
     "default": [
         "OI4112",   # Scope 1
@@ -210,13 +239,25 @@ class GreenwashingScore(BaseModel):
     recommendations: list[str] = Field(default_factory=list)
 
 
+def _canonical_metric_ids(raw: Any) -> set[str]:
+    """Normalise reported metric keys so catalog lookups are case-stable."""
+    from openharness.tools.impact.common import canonicalize_metric_id
+
+    ids: set[str] = set()
+    for key in raw or ():
+        metric_id = canonicalize_metric_id(key)
+        if metric_id:
+            ids.add(metric_id)
+    return ids
+
+
 def assess_greenwashing(
     company: Company,
     claims: list[dict[str, Any]] | None = None,
 ) -> GreenwashingScore:
     """Run greenwashing risk assessment for a company."""
     text = f"{company.description} {' '.join(company.impact_themes)}".lower()
-    metrics = set(company.reported_metrics.keys())
+    metrics = _canonical_metric_ids(company.reported_metrics.keys())
 
     gap_score = _score_claim_metric_gap(company, metrics)
     omission_score = _score_adverse_omission(company, metrics)
@@ -290,11 +331,28 @@ def _score_claim_metric_gap(company: Company, metrics: set[str]) -> float:
         if any(theme_lower in str(v).lower() for v in company.reported_metrics.values()):
             supported += 1
 
-    relevant_metric_count = supported
-    if company.sdg_claims:
-        relevant_metric_count += min(len(metrics), len(company.sdg_claims))
+    for goal in company.sdg_claims:
+        try:
+            goal_num = int(goal)
+        except (TypeError, ValueError):
+            continue
+        sdg_metric_ids: set[str] = set()
+        if store is not None:
+            try:
+                sdg_metric_ids = {m.id.upper() for m in store.filter_by_sdg(goal_num)}
+            except Exception:  # pragma: no cover
+                sdg_metric_ids = set()
+        if sdg_metric_ids and metrics & sdg_metric_ids:
+            supported += 1
+            continue
+        # Catalog-less fallback: only credit an SDG when the claim number or
+        # an explicit "SDG N" token appears in a *reported value* — never by
+        # counting unrelated metric IDs.
+        needle = f"sdg {goal_num}"
+        if any(needle in str(v).lower() for v in company.reported_metrics.values()):
+            supported += 1
 
-    support_ratio = relevant_metric_count / max(1, claims_count)
+    support_ratio = supported / max(1, claims_count)
     return max(0, round(80 - support_ratio * 60, 1))
 
 
@@ -389,7 +447,10 @@ def _score_verification(text: str, metrics: set[str]) -> float:
     score = 70.0
     score -= verification_hits * 12
     score -= measurement_hits * 8
-    score -= len(metrics) * 2
+    # Metrics only reduce verification risk when measurement/audit language
+    # is also present — a pile of unrelated IDs is not verification.
+    if metrics and (verification_hits or measurement_hits):
+        score -= 4
 
     return max(0, min(100, score))
 
@@ -852,15 +913,77 @@ def _decompose_claims(text: str, claims: list[dict[str, Any]] | None) -> list[di
     return results
 
 
-def _check_climatebert_available() -> bool:
-    """Check if ClimateBERT model is available locally.
+_CLIMATE_CLAIM_PATTERNS: dict[str, tuple[str, ...]] = {
+    "net_zero": ("net-zero", "net zero", "climate positive", "carbon negative"),
+    "neutrality": ("carbon neutral", "climate neutral", "carbon-neutral"),
+    "offset": ("offset", "carbon credit", "carbon credits", "retired credits"),
+    "mitigation": ("scope 1", "scope 2", "scope 3", "tco2e", "emissions reduction", "sbti"),
+    "adaptation": ("climate adaptation", "physical risk", "resilience", "flood", "drought"),
+}
 
-    ClimateBERT (climatebert/distilroberta-base-climate-detector) can classify
-    text as climate-related and detect specific climate claims. This is a stub
-    that checks for the transformers library and model availability.
+
+def classify_climate_claims(text: str) -> dict:
+    """Classify climate-related claims.
+
+    Uses ClimateBERT when ``transformers`` and the local model are available;
+    otherwise a transparent keyword classifier. Outputs always include the
+    backend name so callers never mistake the heuristic for a model score.
     """
+    lowered = (text or "").lower()
+    hits = {
+        kind: [pat for pat in patterns if pat in lowered]
+        for kind, patterns in _CLIMATE_CLAIM_PATTERNS.items()
+    }
+    kinds = [kind for kind, matched in hits.items() if matched]
+    backend = "heuristic"
+    model_score = None
+    if _check_climatebert_available():
+        try:
+            model_score = _climatebert_score(text)
+            backend = "climatebert"
+        except Exception:  # noqa: BLE001 — optional model path
+            backend = "heuristic"
+    return {
+        "is_climate_related": bool(kinds) or (model_score or 0) >= 0.5,
+        "claim_kinds": kinds,
+        "keyword_hits": {k: v for k, v in hits.items() if v},
+        "backend": backend,
+        "model_score": model_score,
+        "neutrality_language": bool(hits["neutrality"] or hits["net_zero"]),
+        "offset_language": bool(hits["offset"]),
+    }
+
+
+def _climatebert_score(text: str) -> float:
+    """Best-effort ClimateBERT inference; never required at import time."""
+    from transformers import pipeline  # type: ignore[import-untyped]
+
+    clf = pipeline(
+        "text-classification",
+        model="climatebert/distilroberta-base-climate-detector",
+        truncation=True,
+    )
+    result = clf(text[:512])[0]
+    label = str(result.get("label", "")).lower()
+    score = float(result.get("score", 0.0))
+    if "yes" in label or "climate" in label:
+        return score
+    return 1.0 - score
+
+
+def _check_climatebert_available() -> bool:
+    """Return True when transformers *and* a local ClimateBERT model exist."""
     try:
         import transformers  # noqa: F401
-        return True
     except ImportError:
+        return False
+    try:
+        from transformers import AutoConfig
+
+        AutoConfig.from_pretrained(
+            "climatebert/distilroberta-base-climate-detector",
+            local_files_only=True,
+        )
+        return True
+    except Exception:
         return False

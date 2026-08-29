@@ -140,13 +140,34 @@ def _from_legacy() -> list[ConcordanceEntry]:
 def _taxonomy_uri(framework: str, datapoint_id: str) -> str | None:
     known = {
         ("esrs", "E1-6"): "esrs:GrossScope1GHGEmissions",
-        ("esrs", "E1-5"): "esrs:EnergyConsumption",
+        ("esrs", "E1-5"): "esrs:EnergyConsumptionAndMix",
+        ("esrs", "E1-1"): "esrs:TransitionPlanForClimateChangeMitigation",
+        ("esrs", "E1-4"): "esrs:TargetsRelatedToClimateChangeMitigationAndAdaptation",
+        ("esrs", "E1-7"): "esrs:GHGRemovalsAndCarbonCredits",
+        ("esrs", "S1-6"): "esrs:CharacteristicsOfUndertakingsEmployees",
+        ("esrs", "S1-16"): "esrs:GenderPayGap",
         ("issb", "S2-MT-1"): "issb:AbsoluteGrossGreenhouseGasEmissions",
+        ("issb", "S2-MT-4"): "issb:ClimateRelatedTargets",
         ("gri", "305-1"): "gri:DirectGHGEmissionsScope1",
         ("gri", "305-2"): "gri:EnergyIndirectGHGEmissionsScope2",
         ("gri", "305-3"): "gri:OtherIndirectGHGEmissionsScope3",
+        ("gri", "302-1"): "gri:EnergyConsumptionWithinTheOrganization",
+        ("gri", "303-5"): "gri:WaterConsumption",
+        ("gri", "405-1"): "gri:DiversityOfGovernanceBodiesAndEmployees",
     }
-    return known.get((framework, datapoint_id))
+    hit = known.get((framework, datapoint_id))
+    if hit:
+        return hit
+    slug = re.sub(r"[^A-Za-z0-9]", "", datapoint_id)
+    if not slug:
+        return None
+    if framework == "esrs":
+        return f"esrs:{slug}"
+    if framework == "issb":
+        return f"issb:{slug}"
+    if framework == "gri":
+        return f"gri:{slug}"
+    return None
 
 
 def load_concordance(path: str | Path | None = None) -> ConcordanceMap:
