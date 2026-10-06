@@ -49,7 +49,7 @@ jobs:
         with:
           python-version: "3.11"
       - name: Install ruff
-        run: pip install ruff
+        run: pip install "ruff>=0.15,<0.16"  # 0.16 enables new default rules; upgrade deliberately
       - name: Ruff check
         run: ruff check src/
 
