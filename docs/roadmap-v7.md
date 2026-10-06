@@ -171,6 +171,14 @@ word-boundary + weighting treatment as W0.3.
 | W1.6 | **Install split.** Lean core + extras `[web]`, `[dashboard]`, `[mcp]`, `[pdf]`, `[llm]`. Default the TUI to Python, or document Node. Add `pipx install impact-vision` and Docker one-liners. Remove the obscure provider profiles from the default README table | `pyproject.toml`, `ui/react_launcher.py` | M |
 | W1.7 | **Plain-language layer.** A glossary (NESTA, OPIM, Lean Data, 5D, …) with in-report tooltips. Name sections by task, not by release ("v3 Trust Infrastructure" → "Evidence & assurance") | `docs/glossary.md`, i18n catalogue | S |
 
+**Wave 1 status (2026-10-06):** done on branch `v7-wave1`. W1.1 `demo`,
+W1.2 `assess`, W1.3 `assess_deal` + `assessment_id`, W1.4 fund tool profile,
+W1.5 `engagement_suite` catalogue/validation + five duplicate tools merged
+(53 → 48; the ≤40 target was deliberately not pursued), W1.6 extras +
+dashboard command + Node guidance, W1.7 glossary + task-named docs.
+Not done: Docker image and `pipx` instructions (W1.6), which wait for a
+PyPI release.
+
 ### Wave 2 — Report design system & decision-first deliverables (weeks 5–12)
 
 | ID | Item | Extends | Effort |
