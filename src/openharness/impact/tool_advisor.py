@@ -582,7 +582,7 @@ TOOL_ROUTES: list[ToolRoute] = [
     ToolRoute(
         tool="engagement_suite",
         category="engagement",
-        summary="Consolidated consultant suite (46 actions): data room, value creation, reporting studio, training, regulatory, verification bundle.",
+        summary="Consolidated consultant suite (65 actions; action='describe' lists payload keys): data room, value creation, reporting studio, training, regulatory, verification bundle.",
         keywords=[
             "data room",
             "value creation",

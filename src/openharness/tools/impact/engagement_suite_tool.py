@@ -117,6 +117,8 @@ from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 
 SuiteAction = Literal[
+    # Catalogue: payload keys per action (v7 W1.5)
+    "describe",
     # Track 3
     "build_request_pack",
     "score_completeness",
@@ -199,24 +201,32 @@ class EngagementSuiteInput(BaseModel):
 
     action: SuiteAction
     engagement_id: str = ""
-    payload: dict[str, Any] = Field(default_factory=dict)
-    """Free-form payload for the action (validated inside the dispatcher)."""
+    payload: dict[str, Any] = Field(
+        default_factory=dict,
+        description=(
+            "Action arguments. Call action='describe' (optionally with "
+            "payload={'action': '<name>'}) to see the keys each action reads; "
+            "unknown keys are rejected."
+        ),
+    )
     output_format: Literal["json", "text"] = "json"
 
 
 class EngagementSuiteTool(BaseTool):
     name = "engagement_suite"
     description = (
-        "Consolidated v4 Tracks 3-10 surface. One action parameter dispatches "
-        "to the data room (Track 3), value-creation intelligence (4), "
-        "reporting studio (5), training engine (6), public website data "
-        "(7), AI copilot governance (8), regulatory workbench (9), and "
-        "BlueMark-style 3-pillar verification bundle (10). Operates on the "
-        "shared in-memory EngagementWorkspace singleton."
+        "Consultant engagement suite: data room (request packs, completeness, LP data "
+        "room), value creation & benchmarks, reporting studio (templates, claim review, "
+        "decks, microsites, materiality), training & coaching, website & lead capture, "
+        "AI copilot governance, regulatory workbench (EU Omnibus scope, SFDR / UK SDR / "
+        "China classification, deadlines) and 3-pillar assurance bundles. Pick an "
+        "action; call action='describe' to list every action's payload keys. Works on "
+        "the shared engagement workspace (see engagement_workspace)."
     )
     input_model = EngagementSuiteInput
 
     _READONLY_ACTIONS: set[str] = {
+        "describe",
         "benchmark",
         "list_giin_benchmarks",
         "giin_kpi_context",
@@ -282,6 +292,28 @@ class EngagementSuiteTool(BaseTool):
             if isinstance(arguments, EngagementSuiteInput)
             else EngagementSuiteInput.model_validate(arguments)
         )
+        from openharness.tools.impact.engagement_suite_catalog import (
+            describe,
+            payload_catalog,
+            unknown_payload_keys,
+        )
+
+        if args.action == "describe":
+            target = str(args.payload.get("action", "") or "")
+            payload = describe(target or None)
+            return ToolResult(output=json.dumps(payload, indent=2), metadata={"catalog": payload})
+        unknown = [
+            k for k in unknown_payload_keys(args.action, args.payload) if k != "engagement_id"
+        ]
+        if unknown:
+            allowed = payload_catalog()[0].get(args.action, ())
+            return ToolResult(
+                output=(
+                    f"Unknown payload key(s) for {args.action!r}: {', '.join(unknown)}. "
+                    f"Accepted keys: {', '.join(allowed) or 'none'}."
+                ),
+                is_error=True,
+            )
         try:
             payload = self._dispatch(args)
         except (KeyError, ValueError, TypeError) as exc:

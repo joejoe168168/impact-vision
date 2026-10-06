@@ -28,7 +28,7 @@ module. Progress so far:
   agent tool.
 - **Tracks 3-10 — Integration Wave** (shipped). Eight backend modules in
   `impact.engagements` plus a consolidated `engagement_suite` agent tool
-  (46 actions) covering the consultant workflow end-to-end:
+  (65 actions; action='describe' lists payload keys) covering the consultant workflow end-to-end:
   - `engagements.data_room` (Track 3) — data request packs, completeness
     scoring, exception workflow, multi-entity rollup, coaching cards.
   - `engagements.value_creation` (Track 4) — pluggable `BenchmarkProvider`,
@@ -253,7 +253,7 @@ src/openharness/
 │   ├── exit_impact_tool.py        # v3 OPIM P8 exit-impact scoring + plan
 │   ├── engagement_workspace_tool.py # v4 W1 Track 1 consultant workspace
 │   ├── toc_builder_tool.py        # v4 W2 Track 2 ToC canvas + KPI framework
-│   ├── engagement_suite_tool.py   # v4 Tracks 3-10 consolidated surface (46 actions)
+│   ├── engagement_suite_tool.py   # v4 Tracks 3-10 consolidated surface (65 actions; action='describe' lists payload keys)
 │   ├── common.py                  # Shared input normalization helpers
 │   └── portfolio_tool.py          # Portfolio batch analysis + scenario modeling
 ├── dashboard/                     # Streamlit dashboard (5 tabs, optional auth)

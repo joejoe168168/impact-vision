@@ -53,6 +53,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
   of 90, and no bash, file writes, worktrees, plan mode, tasks, sub-agents,
   cron or teams. The web chat defaults to it. The terminal agent keeps the
   `developer` profile. `IMPACT_VISION_TOOL_PROFILE` overrides either.
+- **`engagement_suite` is discoverable and validated (W1.5, part 1).** Its 65
+  actions took an untyped `payload`, so agents guessed keys and typos were
+  silently ignored. The new `engagement_suite_catalog` derives each action's
+  payload keys from the dispatcher source (including fields of the pydantic
+  models a payload is handed to), so it can't drift. `action='describe'` lists
+  actions by area with their keys. Unknown keys are rejected with the
+  accepted list. The tool description now names the areas instead of
+  "Tracks 3-10".
 
 ### Security
 
