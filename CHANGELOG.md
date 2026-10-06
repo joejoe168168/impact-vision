@@ -20,6 +20,38 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Added — v7 Wave 1: effortless first run
+
+- **`impact-vision demo` (W1.1).** Assesses three bundled, fictional sample
+  pitch decks (PDF: pig farm / Malaysia, pay-as-you-go solar / Kenya,
+  microfinance / Sub-Saharan Africa) offline, with no API key, and opens a
+  results gallery that links each company's impact report, IC memo, DD
+  report, DD questionnaire and JSON summary. It runs in about 3 s and works
+  from a pip-installed wheel (checked in the `wheel-smoke` CI job). Deck
+  sources live in `data/sample_decks/*.md`; rebuild the PDFs with
+  `scripts/build_sample_decks.py`.
+- **`impact-vision assess <file>` (W1.2).** One pitch deck / memo (`.pdf`,
+  `.txt`, `.md`) in; impact report, IC memo, DD report, DD questionnaire and
+  summary out. Options: `--sector`, `--geography`, `--name`,
+  `--audience full|ic|lp|regulator|public`, `--out-dir`, `--json`, `--open`.
+  Built on the new `impact.pipeline` module (`assess_document`,
+  `assess_file`, `write_deliverables`). The examples/demo scripts now reuse
+  it instead of hand-assembling the pipeline.
+
+### Security
+
+- Removed hard-coded API key defaults from
+  `examples/generate_pig_farm_reports.py` and four upstream test files. The
+  keys remain in git history and must be revoked at the provider.
+
+### Fixed
+
+- PDF text is reflowed before extraction, so wrapped lines ("142\nstaff")
+  don't split facts and headings don't bleed into the next sentence.
+  Company names are matched within a single line, and title lines
+  ("X — Investor Memo") are recognised. IRIS+ IDs the document cites
+  explicitly are merged into the assessment.
+
 ### Fixed — v7 Wave 0 trust fixes (see `docs/roadmap-v7.md` §4)
 
 - **Pitch-deck front door (W0.11).** `pitch_deck_analyze` named the pig-farm

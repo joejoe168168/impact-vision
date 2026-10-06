@@ -19,7 +19,6 @@ Run from the repo root::
 from __future__ import annotations
 
 import argparse
-import asyncio
 import json
 import os
 import re
@@ -34,19 +33,17 @@ if str(REPO_ROOT / "src") not in sys.path:
     sys.path.insert(0, str(REPO_ROOT / "src"))
 
 from openharness.impact.ic_memo import render_ic_memo_html
-from openharness.impact.models import Company
 from openharness.impact.report_templates import (
     render_dd_questionnaire_docx,
     render_dd_report_html,
 )
-from openharness.impact.sdk import ImpactVision
 
 # ---------------------------------------------------------------------------
 # 1. AI gateway helpers
 # ---------------------------------------------------------------------------
 
 API_URL = os.environ.get("HXI_API_URL", "https://runanytime.hxi.me/v1/chat/completions")
-API_KEY = os.environ.get("HXI_API_KEY", "sk-OB3CIBZfVBFB07LerwR5sjVbyoWIbsR6ITiOmSCBTiUN9lZe")
+API_KEY = os.environ.get("HXI_API_KEY", "")
 # Primary + fallback chain. The gateway has been observed to 504 on
 # some models, so we retry down the list on gateway errors.
 MODEL_PRIMARY = os.environ.get("HXI_MODEL", "minimax/minimax-m2.7")
@@ -265,127 +262,37 @@ def fetch_profile(*, offline: bool, model: str) -> dict[str, Any]:
 def assess_and_assemble(profile: dict[str, Any]) -> dict[str, Any]:
     """Run the full assessment pipeline and assemble the ``report_data`` dict.
 
-    Returns a bundle with the company assessment, DD coverage, greenwashing
-    screen, IC scorecard/thesis and the assembled ``report_data`` that the
-    flagship ``impact_report`` HTML renderer expects. Split out from
-    :func:`run` so other demos (e.g. ``DEMO/generate_demo.py``) can reuse the
-    identical pipeline without duplicating ~80 lines of assembly.
+    Thin wrapper over :func:`openharness.impact.pipeline.assess_document`
+    (the engine behind ``impact-vision assess``), kept for the demo scripts
+    that expect this dict shape.
     """
-    # --- Assess the company using the pitch text so the extractor
-    #     populates reported_metrics and the downstream engine runs
-    #     full 5D + SDG + greenwashing + benchmark.
-    iv = ImpactVision()
-    comp = Company(
+    from openharness.impact.pipeline import assess_document
+
+    print("[demo] running assessment, DD coverage, greenwashing screen and IC gate …", flush=True)
+    bundle = assess_document(
+        profile["pitch_text"],
         name=profile["name"],
         sector=profile.get("sector", "agriculture"),
         geography=profile.get("geography", "Malaysia"),
         description=profile.get("description", ""),
         impact_themes=profile.get("impact_themes", []),
         sdg_claims=profile.get("sdg_claims", []),
-        reported_metrics=profile.get("reported_metrics", {}),
-    )
-    pitch = profile["pitch_text"]
-
-    print("[demo] running assessment …", flush=True)
-    assess = iv.assess_company_text(
-        comp.name,
-        text=pitch,
-        sector=comp.sector,
-        country=comp.geography,
-        impact_themes=comp.impact_themes,
-    )
-    # Re-inject the full company fields (model_dump overwrites description)
-    assess.company.description = comp.description or pitch[:1000]
-    assess.company.sdg_claims = comp.sdg_claims
-
-    # --- DD + greenwashing so we can feed them into the IC memo
-    print("[demo] running DD coverage + greenwashing screen …", flush=True)
-    dd = iv.run_dd_coverage(pitch, sector=comp.sector)
-    gw = iv.screen_greenwashing(assess)  # extracted claims count as evidence
-
-    # --- IC gate using default or repo-provided thesis
-    print("[demo] running IC gate …", flush=True)
-    thesis = iv.load_thesis()
-    scorecard = iv.evaluate_deal_against_thesis(
-        assess, thesis=thesis,
-        dd_coverage_pct=dd.coverage_pct,
-        greenwashing_score=gw.overall_score,
+        reported_metrics=profile.get("reported_metrics") or None,
+        source_label="Founder pitch narrative",
     )
     print(
-        f"       gate={scorecard.overall_status.upper()} · DD coverage={dd.coverage_pct:.1f}% "
-        f"· GW={gw.overall_score:.1f} ({getattr(gw, 'classification', '')})",
+        f"       gate={bundle.scorecard.display_status} · DD coverage={bundle.dd.coverage_pct:.1f}% "
+        f"· GW={bundle.greenwashing.overall_score:.1f} ({bundle.greenwashing.classification})",
         flush=True,
     )
-
-    # --- Assemble the same report_data shape the MCP `impact_report` tool
-    #     builds, so the full stack (executive summary + KPI strip + TOC +
-    #     gap analysis + benchmark + pathway + metric tracking + claims)
-    #     renders.
-    from openharness.impact.benchmarks import compare_to_benchmark
-    from openharness.impact.database import get_metric_store
-    from openharness.impact.gap_analysis import analyze_gaps
-    from openharness.impact.sdg_mapper import generate_sdg_gap_recommendations
-    from openharness.tools.impact.impact_report_tool import (
-        _infer_opportunities_and_risks,
-    )
-    # Use the full IRIS+ catalog so missing-metric rows get names,
-    # definitions, units, and dimension tags.
-    store = get_metric_store()
-
-    sdg_recs = generate_sdg_gap_recommendations(assess.sdg_alignments, assess.company, store)
-    sdg_dicts = []
-    for a in assess.sdg_alignments:
-        d = a.model_dump()
-        d["recommendations"] = sdg_recs.get(a.goal, [])
-        sdg_dicts.append(d)
-
-    gap_result = analyze_gaps(assess.company, store)
-
-    gw_dump = gw.model_dump()
-    gw_dump["sub_scores"] = {
-        "claim_metric_gap": gw.claim_metric_gap,
-        "adverse_omission": gw.adverse_omission,
-        "specificity": gw.specificity,
-        "selectivity": gw.selectivity,
-        "verification": gw.verification,
-    }
-
-    report_data: dict[str, Any] = {
-        "company": assess.company.model_dump(),
-        "generated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        "catalog_version": "IRIS+ 5.3c",
-        "five_dimensions": assess.five_dimensions.model_dump() if assess.five_dimensions else None,
-        "sdg_alignments": sdg_dicts,
-        "sdg_alignment": sdg_dicts,  # executive-summary uses the singular key
-        "gap_analysis": gap_result,
-        "greenwashing": gw_dump,
-        "impact_analysis": _infer_opportunities_and_risks(assess.company, pitch),
-        "impact_claims": [c.model_dump() for c in assess.impact_claims],
-    }
-    if report_data["five_dimensions"] and assess.company.sector:
-        fd = report_data["five_dimensions"]
-        five_d_scores = {
-            "what": fd["what"]["score"],
-            "who": fd["who"]["score"],
-            "how_much": fd["how_much"]["score"],
-            "contribution": fd["contribution"]["score"],
-            "risk": fd["risk"]["score"],
-        }
-        bm = compare_to_benchmark(
-            assess.company.sector, five_d_scores,
-            fd["overall_score"], gap_result["coverage_percentage"],
-        )
-        if bm.get("benchmark_available"):
-            report_data["benchmark_comparison"] = bm
-
     return {
-        "comp": comp,
-        "assess": assess,
-        "dd": dd,
-        "gw": gw,
-        "thesis": thesis,
-        "scorecard": scorecard,
-        "report_data": report_data,
+        "comp": bundle.company,
+        "assess": bundle.assessment,
+        "dd": bundle.dd,
+        "gw": bundle.greenwashing,
+        "thesis": bundle.thesis,
+        "scorecard": bundle.scorecard,
+        "report_data": bundle.report_data,
     }
 
 

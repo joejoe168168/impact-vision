@@ -22,7 +22,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 from openharness.config.settings import Settings
 
-API_KEY = os.environ.get("ANTHROPIC_API_KEY", "sk-Ue1kdhq9prvNwuwySlzRtWVD7ek0iJJaHyPdKDa3ecKLwYuG")
+API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
 BASE_URL = os.environ.get("ANTHROPIC_BASE_URL", "https://api.moonshot.cn/anthropic")
 MODEL = os.environ.get("ANTHROPIC_MODEL", "kimi-k2.5")
 WORKSPACE = Path("/home/tangjiabin/AutoAgent")

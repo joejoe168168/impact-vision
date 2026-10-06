@@ -87,6 +87,93 @@ app.add_typer(framework_app)
 app.add_typer(dd_app)
 
 
+# ---- assess / demo: one document in, deliverables out (no API key) ----
+
+
+@app.command("assess")
+def assess_cmd(
+    file: Path = typer.Argument(..., help="Pitch deck or memo (.pdf, .txt, .md)"),
+    name: str = typer.Option("", "--name", help="Company name (inferred if omitted)"),
+    sector: str = typer.Option("", "--sector", "-s", help="Sector, e.g. agriculture, 'Financial Services'"),
+    geography: str = typer.Option("", "--geography", "-g", help="Country or region"),
+    audience: str = typer.Option(
+        "full", "--audience", "-a", help="Report audience: full, ic, lp, regulator, public"
+    ),
+    out_dir: Path = typer.Option(Path("impact-vision-output"), "--out-dir", "-o", help="Output folder"),
+    as_json: bool = typer.Option(False, "--json", help="Print the summary as JSON"),
+    open_report: bool = typer.Option(False, "--open", help="Open the impact report in a browser"),
+) -> None:
+    """Assess one pitch deck / memo and write the impact report, IC memo and DD report.
+
+    Runs fully offline — no API key needed.
+    """
+    from openharness.impact.pipeline import AUDIENCES, assess_file, format_summary, write_deliverables
+
+    if audience not in AUDIENCES:
+        print(f"--audience must be one of: {', '.join(AUDIENCES)}", file=sys.stderr)
+        raise typer.Exit(2)
+    try:
+        bundle = assess_file(file, name=name, sector=sector, geography=geography, audience=audience)
+    except (FileNotFoundError, ValueError, ImportError) as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        raise typer.Exit(1) from exc
+    files = write_deliverables(bundle, out_dir)
+    if as_json:
+        print(json.dumps(bundle.summary(), indent=2, default=str))
+    else:
+        print(format_summary(bundle))
+        print("\nWrote:")
+        for f in files:
+            print(f"  {f}")
+    if open_report:
+        import webbrowser
+
+        webbrowser.open(files[0].resolve().as_uri())
+
+
+@app.command("demo")
+def demo_cmd(
+    deck: str = typer.Option(
+        "all", "--deck", "-d", help="Sample deck: pig-farm, solar, microfinance, or all"
+    ),
+    out_dir: Path = typer.Option(Path("impact-vision-demo"), "--out-dir", "-o", help="Output folder"),
+    no_open: bool = typer.Option(False, "--no-open", help="Don't open the results in a browser"),
+) -> None:
+    """Run Impact Vision on bundled sample pitch decks — no API key, no setup.
+
+    The sample companies are fictional.
+    """
+    from openharness.impact.pipeline import (
+        SAMPLE_DECKS,
+        assess_file,
+        format_summary,
+        sample_deck_path,
+        write_deliverables,
+        write_gallery,
+    )
+
+    keys = list(SAMPLE_DECKS) if deck == "all" else [deck]
+    unknown = [k for k in keys if k not in SAMPLE_DECKS]
+    if unknown:
+        print(f"Unknown deck {unknown[0]!r}. Choose from: {', '.join(SAMPLE_DECKS)}, all", file=sys.stderr)
+        raise typer.Exit(2)
+    bundles = []
+    for key in keys:
+        path = sample_deck_path(key)
+        print(f"Assessing {path.name} …")
+        bundle = assess_file(path)
+        write_deliverables(bundle, out_dir)
+        print(format_summary(bundle) + "\n")
+        bundles.append(bundle)
+    index = write_gallery(bundles, out_dir)
+    print(f"Results: {index.resolve()}")
+    print("Next: run your own deck with  impact-vision assess path/to/deck.pdf")
+    if not no_open:
+        import webbrowser
+
+        webbrowser.open(index.resolve().as_uri())
+
+
 # ---- serve-mcp command (Impact Vision MCP server) ----
 
 

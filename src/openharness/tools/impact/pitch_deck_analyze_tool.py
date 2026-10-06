@@ -656,9 +656,11 @@ def _extract_company_model(
         r'(?:Company|Firm|Organization|Fund|Venture|Startup)\s*(?:Name|:)\s*[:\-]?\s*([A-Z][A-Za-z\s&\.]{2,30})',
         r'^([A-Z][A-Za-z\s&\.]{2,25})(?:\s*[-–—|]\s*(?:Pitch|Investor|Impact))',
         # Legal-entity suffix anywhere near the top: "Kampung Makmur Sdn Bhd".
-        r"\b((?:[A-Z][\w&'.-]*\s+){0,5}(?:Sdn\.?\s*Bhd|Pte\.?\s*Ltd|Ltd|Limited|Inc|LLC|PLC|GmbH|S\.A\.|Co\.,?\s*Ltd)\.?)",
+        r"\b((?:[A-Z][\w&'.-]*[ \t]+){0,5}(?:Sdn\.?[ \t]*Bhd|Pte\.?[ \t]*Ltd|Ltd|Limited|Inc|LLC|PLC|GmbH|S\.A\.|Co\.,?[ \t]*Ltd)\.?)",
+        # Title line: "BrightPath Finance — Growth Round Investor Memo".
+        r"^[ \t#]*([A-Z][\w&'.-]*(?:[ \t]+[A-Z][\w&'.-]*){0,4})[ \t]+[\u2014\u2013|-][ \t]+[^\n]*\b(?:Pitch|Investor|Memo|Deck|Overview)\b",
         # Opening sentence: "Kampung Makmur is a 3,000-sow integrated pig farm".
-        r"^\s*((?:[A-Z][\w&'.-]*)(?:\s+[A-Z][\w&'.-]*){0,5})\s+(?:is|are)\s+(?:a|an|the)\b",
+        r"^[ \t]*((?:[A-Z][\w&'.-]*)(?:[ \t]+[A-Z][\w&'.-]*){0,5})[ \t]+(?:is|are)[ \t]+(?:a|an|the)\b",
     ]
     for pat in name_patterns:
         match = re.search(pat, text[:2000], re.MULTILINE)

@@ -43,6 +43,23 @@ def main() -> int:
     if (root / "impact_vision.db").exists():
         failures.append("impact_vision.db is shipped in the wheel")
 
+    # The no-key quickstart must work from an installed wheel (W1.1).
+    import tempfile
+
+    from openharness.impact.pipeline import SAMPLE_DECKS, assess_file, sample_deck_path
+    from openharness.impact.pipeline import write_deliverables
+
+    for key in SAMPLE_DECKS:
+        deck = sample_deck_path(key)
+        if not deck.is_file():
+            failures.append(f"sample deck missing from the wheel: {deck}")
+    if not failures:
+        with tempfile.TemporaryDirectory() as tmp:
+            bundle = assess_file(sample_deck_path("pig-farm"))
+            files = write_deliverables(bundle, tmp)
+            if bundle.summary()["claims"] == 0 or not files[0].is_file():
+                failures.append("demo assessment produced no claims or no report")
+
     for msg in failures:
         print(f"FAIL: {msg}")
     if not failures:

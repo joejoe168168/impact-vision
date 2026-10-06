@@ -164,7 +164,23 @@ Try asking:
 
 ### 5. Try the CLI tools (no API key needed)
 
-These commands work without any LLM setup:
+The fastest first result: assess three bundled (fictional) pitch decks and
+open the reports in your browser:
+
+```bash
+impact-vision demo
+```
+
+Then assess your own deck or memo (`.pdf`, `.txt`, `.md`). This writes an
+impact report, IC memo, DD report, DD questionnaire (`.docx`) and a JSON
+summary:
+
+```bash
+impact-vision assess path/to/deck.pdf --open
+impact-vision assess memo.pdf --sector agriculture --audience lp -o reports/
+```
+
+These commands also work without any LLM setup:
 
 ```bash
 # See all available commands
@@ -443,10 +459,14 @@ impact-vision -p "Search IRIS+ catalog for climate-related metrics"
 ## CLI Reference
 
 `impact-vision` (or the `iv` shorthand) exposes seven top-level
-subcommand groups plus three service commands. Run any command with
+subcommand groups, two quickstart commands and three service commands. Run any command with
 `--help` for full flags.
 
 ```bash
+# No-key quickstart
+impact-vision demo [--deck pig-farm|solar|microfinance|all] [--no-open]
+impact-vision assess deck.pdf [--sector S] [--audience full|ic|lp|regulator|public] [-o DIR] [--json] [--open]
+
 # Interactive agent
 impact-vision                              # Start interactive agent session
 impact-vision -p "your prompt"             # Single prompt, then exit

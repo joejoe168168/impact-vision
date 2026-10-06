@@ -70,8 +70,9 @@ _EVIDENCE_SIGNALS: tuple[tuple[str, re.Pattern[str]], ...] = (
 )
 
 # Sentence boundaries: ., ! or ? followed by whitespace/end — never the point
-# inside a decimal such as "1.8 GWh".
-_SENTENCE_END = re.compile(r"(?<!\d)[.!?](?=\s|$)|(?<=\d)\.(?=\s|$)")
+# inside a decimal such as "1.8 GWh" — and line breaks (headings, list items;
+# reflow wrapped PDF lines before extracting).
+_SENTENCE_END = re.compile(r"(?<!\d)[.!?](?=\s|$)|(?<=\d)\.(?=\s|$)|\n")
 
 
 _FORWARD_RE = re.compile(

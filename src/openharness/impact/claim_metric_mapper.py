@@ -22,7 +22,7 @@ from openharness.impact.extractors.regex_extractor import _FORWARD_RE, _NUMBER_U
 
 # Clause boundaries inside a sentence (the decimal point in "1.8" is not one).
 _CLAUSE_SPLIT = re.compile(
-    r"[,;:()—–]|\s-\s|(?<!\d)\.(?!\d)|\b(?:and|while|but|whereas)\b",
+    r"[,;:()—–\n]|\s-\s|(?<!\d)\.(?!\d)|\b(?:and|while|but|whereas)\b",
     re.IGNORECASE,
 )
 # The extractor's unit regex stops at "tonnes"; look ahead for "CO2e".
