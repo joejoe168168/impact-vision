@@ -82,94 +82,16 @@ def _b(
 # Seeded benchmark catalogue (offline snapshot — illustrative distributions).
 # ---------------------------------------------------------------------------
 
-_BENCHMARKS: list[KpiBenchmark] = [
-    # Agriculture
-    _b("agriculture", "farmers_reached", "Smallholder farmers reached", "farmers",
-       1500, 6000, 18000, 45000, 180, [1, 2, 8],
-       "~500M smallholder farms worldwide; the majority earn below a living income."),
-    _b("agriculture", "yield_increase_pct", "Crop yield increase", "%",
-       8, 18, 32, 50, 120, [2],
-       "Smallholder yield gaps of 50%+ vs. potential are common."),
-    _b("agriculture", "income_increase_pct", "Farmer income increase", "%",
-       10, 22, 40, 65, 110, [1, 8],
-       "Closing the smallholder living-income gap is a core SDG 1 target."),
-    # Clean energy
-    _b("energy", "ghg_avoided_tco2e", "GHG emissions avoided", "tCO2e",
-       2000, 12000, 45000, 120000, 140, [7, 13],
-       "Power sector is ~25% of global emissions; rapid decarbonisation required."),
-    _b("energy", "energy_access_people", "People with new/improved energy access", "people",
-       5000, 25000, 90000, 250000, 130, [7],
-       "~675M people still lack electricity access (SDG 7)."),
-    _b("energy", "clean_energy_mwh", "Clean energy generated", "MWh",
-       3000, 15000, 60000, 180000, 120, [7, 13],
-       "Tripling renewables capacity by 2030 is the global benchmark."),
-    # Financial inclusion
-    _b("financial services", "active_clients", "Active clients reached", "clients",
-       5000, 30000, 120000, 400000, 200, [1, 8, 10],
-       "~1.4B adults remain unbanked (Global Findex)."),
-    _b("financial services", "pct_women_clients", "Share of women clients", "%",
-       35, 52, 68, 80, 180, [5, 8],
-       "Women are disproportionately financially excluded; gender gap persists."),
-    _b("financial services", "pct_rural_clients", "Share of rural clients", "%",
-       20, 40, 60, 78, 150, [8, 10],
-       "Rural and last-mile populations face the largest access gaps."),
-    # Forestry
-    _b("forestry", "hectares_sustainable", "Hectares under sustainable management", "ha",
-       1000, 8000, 30000, 90000, 70, [13, 15],
-       "Forests absorb ~16 Gt CO2/yr; sustainable management is critical for SDG 15."),
-    _b("forestry", "tco2e_sequestered", "Carbon sequestered", "tCO2e",
-       3000, 20000, 75000, 200000, 65, [13, 15],
-       "Nature-based removals are a key net-zero lever."),
-    # Healthcare
-    _b("healthcare", "patients_served", "Patients / clients served", "patients",
-       8000, 40000, 150000, 450000, 130, [3],
-       "~4.5B people lack full coverage of essential health services."),
-    _b("healthcare", "pct_low_income_patients", "Share of low-income patients", "%",
-       30, 50, 70, 85, 110, [1, 3, 10],
-       "Reaching underserved, low-income populations is the SDG 3 equity test."),
-    # Education
-    _b("education", "students_reached", "Learners reached", "students",
-       2000, 12000, 45000, 120000, 95, [4, 5, 10],
-       "~244M children and youth are out of school; learning poverty remains high in LMICs."),
-    _b("education", "learning_gain_pct", "Measured learning gain", "%",
-       5, 12, 22, 35, 60, [4],
-       "Learning-adjusted years of schooling lag years enrolled in many impact geographies."),
-    # Water & sanitation
-    _b("water", "people_safe_water", "People with new/improved safe water", "people",
-       3000, 15000, 60000, 180000, 80, [6],
-       "~2.2B people lack safely managed drinking water (SDG 6)."),
-    _b("water", "water_non_revenue_pct", "Non-revenue water", "%",
-       18, 28, 40, 55, 55, [6, 12],
-       "Utility losses of 30%+ are common; lower is better.", "lower_better"),
-    # Housing
-    _b("housing", "housing_units", "Affordable / adequate housing units", "units",
-       80, 400, 1500, 5000, 70, [1, 11],
-       "The global affordable-housing gap is estimated in the hundreds of millions of units."),
-    _b("housing", "pct_affordable_units", "Share of units below local affordability threshold", "%",
-       40, 60, 80, 95, 65, [1, 11],
-       "Additionality is the share that would not have been delivered at market rate."),
-    # Manufacturing
-    _b("manufacturing", "jobs_created", "Direct jobs created / sustained", "jobs",
-       40, 180, 600, 1800, 90, [8, 9],
-       "Decent-work creation in manufacturing remains a core SDG 8 pathway in emerging markets."),
-    _b("manufacturing", "ghg_intensity_tco2e", "GHG intensity", "tCO2e / unit output",
-       0.4, 0.9, 1.8, 3.5, 70, [9, 12, 13],
-       "Intensity reduction is the typical PE climate lever in manufacturing.", "lower_better"),
-    # Waste
-    _b("waste management", "tonnes_diverted", "Waste diverted from landfill", "tonnes",
-       500, 4000, 18000, 50000, 50, [11, 12],
-       "Landfill diversion and circular recovery are core SDG 12 metrics."),
-    _b("waste management", "recycling_rate_pct", "Recycling / recovery rate", "%",
-       15, 35, 55, 75, 45, [12],
-       "Municipal recycling rates remain below 20% in many impact geographies."),
-    # Transport
-    _b("transport", "passengers_served", "Passengers / users served", "people",
-       8000, 40000, 150000, 400000, 60, [9, 11],
-       "Safe, affordable mobility is a core SDG 11 service gap."),
-    _b("transport", "ghg_avoided_tco2e", "GHG emissions avoided vs baseline mode", "tCO2e",
-       400, 2500, 12000, 40000, 55, [11, 13],
-       "Mode shift and fleet efficiency are the usual climate claims in mobility."),
-]
+def _load_kpi_benchmarks() -> list[KpiBenchmark]:
+    """KPI distributions from ``data/benchmarks.yaml`` → ``kpi`` (illustrative, W5.1)."""
+    from openharness.impact.knowledge import load_knowledge
+
+    block = load_knowledge("benchmarks.yaml").get("kpi", {})
+    source = block.get("source", "")
+    return [KpiBenchmark.model_validate({"source": source, **row}) for row in block.get("rows", [])]
+
+
+_BENCHMARKS: list[KpiBenchmark] = _load_kpi_benchmarks()
 
 # Sector aliases → canonical sector keys.
 _SECTOR_ALIASES: dict[str, str] = {

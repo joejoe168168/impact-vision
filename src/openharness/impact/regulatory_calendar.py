@@ -150,54 +150,19 @@ class RegulatoryWatchlistItem(BaseModel):
     days_until: int = 0
     status: Literal["upcoming", "due_soon", "passed"] = "upcoming"
     source_url: str = ""
+    source: str = ""
+    last_verified: str = ""
 
 
-# Market-wide milestones, re-verified 2026-10-06 (see docs/roadmap-v7.md §2
-# and §9). Unlike the per-fund deadline calendar, these are fixed calendar
-# dates that apply regardless of fiscal year end.
-# (date, event, jurisdiction, source_url)
-_LINKLATERS_ESRS = "https://sustainablefutures.linklaters.com/post/102o1ou/eu-csrd-revised-esrs-and-voluntary-reporting-standard-are-published-in-the-offic"
-_REGULATORY_WATCHLIST: list[tuple[str, str, str, str]] = [
-    ("2026-09-24", "VSME Delegated Regulation (EU) 2026/1560 in force (voluntary SME standard; value-chain cap from FY2027)", "EU", _LINKLATERS_ESRS),
-    ("2026-09-27", "ECGT Directive (EU) 2024/825 applies — generic green claims banned", "EU",
-     "https://www.lw.com/en/insights/eu-empowering-consumers-directive-new-rules-on-green-claims-apply-from-27-september-2026"),
-    ("2026-10-07", "Hong Kong Taxonomy Phase 2B prototype consultation closes", "HK",
-     "https://www.info.gov.hk/gia/general/202609/07/P2026090700249.htm"),
-    ("2026-10-31", "European Parliament plenary vote on the SFDR 2.0 mandate (expected October 2026)", "EU",
-     "https://www.debevoise.com/insights/publications/2026/09/sfdr-20-recap-briefing"),
-    ("2026-10-31", "ISSB nature-related Practice Statement exposure draft (targeted for CBD COP17, October 2026)", "Global",
-     "https://www.ifrs.org/content/ifrs/home/news-and-events/updates/issb/2026/issb-update-september-2026.html"),
-    ("2026-11-10", "First California SB 253 Scope 1+2 GHG reports due (limited assurance waived this cycle)", "US",
-     "https://ww2.arb.ca.gov/our-work/programs/california-corporate-greenhouse-gas-reporting"),
-    ("2026-11-10", "Revised ESRS Delegated Regulation (EU) 2026/1563 enters into force", "EU", _LINKLATERS_ESRS),
-    ("2026-11-11", "EFRAG draft ESRS XBRL taxonomy consultation closes", "EU",
-     "https://www.xbrl.org/news/efrag-advances-the-revised-esrs-toward-a-digital-taxonomy/"),
-    ("2026-12-02", "EU AI Act Art 50 marking of AI-generated content applies to systems placed on the market before 2026-08-02", "EU",
-     "https://www.hunton.com/privacy-and-cybersecurity-law-blog/eu-digital-omnibus-on-ai-enters-into-force"),
-    ("2026-12-15", "ISSA 5000 sustainability assurance effective (periods beginning on/after)", "Global",
-     "https://www.iaasb.org/consultations-projects/issa-5000-adoption-and-implementation"),
-    ("2026-12-15", "HKSSA 5000 effective in Hong Kong (periods beginning on/after)", "HK",
-     "https://www.hkicpa.org.hk/-/media/HKICPA-Website/Members-Handbook/volumeIII/324ssa5.pdf"),
-    ("2026-12-30", "EUDR obligations apply (large/medium operators)", "EU", ""),
-    ("2027-01-01", "Revised ESRS mandatory (financial years beginning on/after); VSME value-chain cap applies", "EU", _LINKLATERS_ESRS),
-    ("2027-01-01", "UK SRS comply-or-explain for listed issuers (periods beginning on/after; FCA PS26/19)", "UK",
-     "https://www.fca.org.uk/publications/policy-statements/ps26-19-aligning-listed-issuers-sustainability-disclosures-international-standards"),
-    ("2027-01-01", "IFRS S2 targeted amendments effective", "Global", ""),
-    ("2027-03-19", "CSRD (as amended by Omnibus I) member-state transposition deadline", "EU", ""),
-    ("2027-03-31", "Japan SSBJ standards mandatory for Prime-listed companies with ≥¥3tn market cap (FY ending March 2027)", "Japan",
-     "https://www.fsa.go.jp/en/news/2025/20251106/02.pdf"),
-    ("2027-06-30", "EUDR obligations apply to other micro and small operators", "EU", ""),
-    ("2027-12-02", "EU AI Act Annex III high-risk obligations apply (deferred by Reg (EU) 2026/1744)", "EU",
-     "https://www.hunton.com/privacy-and-cybersecurity-law-blog/eu-digital-omnibus-on-ai-enters-into-force"),
-    ("2027-12-31", "California SB 253 Scope 3 reporting phase begins", "US",
-     "https://ww2.arb.ca.gov/our-work/programs/california-corporate-greenhouse-gas-reporting"),
-    ("2028-01-01", "Singapore: non-STI listed issuers ≥S$1bn market cap begin ISSB-based climate reporting (FY2028)", "Singapore",
-     "https://www.acra.gov.sg/news-events/news-details/id/887"),
-    ("2028-07-26", "CSDDD member-state transposition deadline", "EU", ""),
-    ("2029-06-30", "SFDR 2.0 expected application (24 months after adoption; Council and Parliament both propose 24)", "EU",
-     "https://www.debevoise.com/insights/publications/2026/09/sfdr-20-recap-briefing"),
-    ("2029-07-26", "CSDDD applies to first wave (>5,000 employees + €1.5B turnover)", "EU", ""),
-]
+def _watchlist_rows() -> list[dict]:
+    """Market-wide milestones from ``data/regulatory/watchlist.yaml`` (W5.1).
+
+    Unlike the per-fund deadline calendar these are fixed calendar dates that
+    apply regardless of fiscal year end.
+    """
+    from openharness.impact.knowledge import load_knowledge
+
+    return list(load_knowledge("regulatory/watchlist.yaml").get("milestones", []))
 
 
 def regulatory_watchlist(
@@ -209,7 +174,10 @@ def regulatory_watchlist(
     """Return the market-wide regulatory milestone watch-list, soonest first."""
     ref = today or date.today()
     items: list[RegulatoryWatchlistItem] = []
-    for event_date, event, event_jurisdiction, source_url in _REGULATORY_WATCHLIST:
+    for row in _watchlist_rows():
+        event_date, event = str(row["event_date"]), row["event"]
+        event_jurisdiction, source_url = row.get("jurisdiction", "EU"), row.get("source_url", "")
+        source = row.get("source", "")
         if jurisdiction and event_jurisdiction.lower() != jurisdiction.strip().lower():
             continue
         days = (date.fromisoformat(event_date) - ref).days
@@ -224,6 +192,8 @@ def regulatory_watchlist(
                 days_until=days,
                 status=status,
                 source_url=source_url,
+                last_verified=str(row.get("last_verified", "")),
+                source=source,
             )
         )
     items.sort(key=lambda item: item.event_date)

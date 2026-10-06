@@ -144,21 +144,16 @@ def set_default_benchmark_provider(provider: BenchmarkProvider) -> None:
 
 
 def _seed_sample_data(provider: InMemoryBenchmarkProvider) -> None:
-    seed = [
-        ("OI4112", "financial services", [1200, 2100, 3400, 900, 1800]),
-        ("OI4112", "energy", [8500, 12000, 5500, 3400]),
-        ("PD5833", "financial services", [450, 600, 720, 910]),
-        ("PD5833", "energy", [12000, 18000, 24000, 32000]),
-        ("OI6213", "financial services", [25, 45, 60, 30]),
-    ]
-    for metric_id, sector, values in seed:
-        for idx, value in enumerate(values):
+    """Seed from ``data/benchmarks.yaml`` → ``sample_observations`` (illustrative, W5.1)."""
+    from openharness.impact.knowledge import load_knowledge
+
+    block = load_knowledge("benchmarks.yaml").get("sample_observations", {})
+    for row in block.get("rows", []):
+        for idx, value in enumerate(row["values"]):
             provider.add_observation(
-                metric_id=metric_id,
-                sector=sector,
-                observation=BenchmarkObservation(
-                    entity_alias=f"peer-{idx+1}", value=float(value),
-                ),
+                metric_id=row["metric_id"],
+                sector=row["sector"],
+                observation=BenchmarkObservation(entity_alias=f"peer-{idx+1}", value=float(value)),
             )
 
 

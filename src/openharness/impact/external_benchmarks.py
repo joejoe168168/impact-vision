@@ -71,21 +71,17 @@ def _seed(sector: str, dim: DimensionKey, p25: float, p50: float, p75: float, p9
     )
 
 
-# Rough percentile snapshot — tuned so the demo reports tell a coherent story
-for _sector, _base in [
-    ("energy",       (2.0, 2.7, 3.4, 4.0, 310)),
-    ("agriculture",  (1.8, 2.5, 3.1, 3.8, 220)),
-    ("financial-services", (1.6, 2.2, 2.9, 3.5, 180)),
-    ("healthcare",   (2.2, 2.9, 3.5, 4.1, 140)),
-    ("education",    (2.1, 2.8, 3.4, 4.0, 160)),
-    ("water",        (2.0, 2.7, 3.3, 3.9, 95)),
-    ("forestry",     (2.3, 3.0, 3.6, 4.2, 75)),
-    ("buildings",    (1.7, 2.3, 2.9, 3.5, 90)),
-    ("technology",   (1.5, 2.1, 2.7, 3.3, 200)),
-    ("generic",      (1.8, 2.5, 3.1, 3.7, 500)),
-]:
-    for dim in ("what", "who", "how_much", "contribution", "risk"):
-        _seed(_sector, dim, *_base)  # type: ignore[arg-type]
+def _load_percentiles() -> None:
+    """Seed from ``data/benchmarks.yaml`` → ``peer_percentiles`` (illustrative, W5.1)."""
+    from openharness.impact.knowledge import load_knowledge
+
+    block = load_knowledge("benchmarks.yaml").get("peer_percentiles", {})
+    for row in block.get("rows", []):
+        for dim in block.get("dimensions", ["what", "who", "how_much", "contribution", "risk"]):
+            _seed(row["sector"], dim, row["p25"], row["p50"], row["p75"], row["p90"], row["sample_size"])
+
+
+_load_percentiles()
 
 
 @dataclass

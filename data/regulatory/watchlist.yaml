@@ -1,0 +1,123 @@
+schema_version: 1
+as_of: '2026-10-06'
+source_note: Market-wide regulatory milestones (fixed calendar dates). Re-verify monthly via regulatory_radar; rows
+  inherit as_of/last_verified unless they set their own.
+milestones:
+- event_date: '2026-09-24'
+  event: VSME Delegated Regulation (EU) 2026/1560 in force (voluntary SME standard; value-chain cap from FY2027)
+  jurisdiction: EU
+  source_url: https://sustainablefutures.linklaters.com/post/102o1ou/eu-csrd-revised-esrs-and-voluntary-reporting-standard-are-published-in-the-offic
+  last_verified: '2026-10-06'
+- event_date: '2026-09-27'
+  event: ECGT Directive (EU) 2024/825 applies — generic green claims banned
+  jurisdiction: EU
+  source_url: https://www.lw.com/en/insights/eu-empowering-consumers-directive-new-rules-on-green-claims-apply-from-27-september-2026
+  last_verified: '2026-10-06'
+- event_date: '2026-10-07'
+  event: Hong Kong Taxonomy Phase 2B prototype consultation closes
+  jurisdiction: HK
+  source_url: https://www.info.gov.hk/gia/general/202609/07/P2026090700249.htm
+  last_verified: '2026-10-06'
+- event_date: '2026-10-31'
+  event: European Parliament plenary vote on the SFDR 2.0 mandate (expected October 2026)
+  jurisdiction: EU
+  source_url: https://www.debevoise.com/insights/publications/2026/09/sfdr-20-recap-briefing
+  last_verified: '2026-10-06'
+- event_date: '2026-10-31'
+  event: ISSB nature-related Practice Statement exposure draft (targeted for CBD COP17, October 2026)
+  jurisdiction: Global
+  source_url: https://www.ifrs.org/content/ifrs/home/news-and-events/updates/issb/2026/issb-update-september-2026.html
+  last_verified: '2026-10-06'
+- event_date: '2026-11-10'
+  event: First California SB 253 Scope 1+2 GHG reports due (limited assurance waived this cycle)
+  jurisdiction: US
+  source_url: https://ww2.arb.ca.gov/our-work/programs/california-corporate-greenhouse-gas-reporting
+  last_verified: '2026-10-06'
+- event_date: '2026-11-10'
+  event: Revised ESRS Delegated Regulation (EU) 2026/1563 enters into force
+  jurisdiction: EU
+  source_url: https://sustainablefutures.linklaters.com/post/102o1ou/eu-csrd-revised-esrs-and-voluntary-reporting-standard-are-published-in-the-offic
+  last_verified: '2026-10-06'
+- event_date: '2026-11-11'
+  event: EFRAG draft ESRS XBRL taxonomy consultation closes
+  jurisdiction: EU
+  source_url: https://www.xbrl.org/news/efrag-advances-the-revised-esrs-toward-a-digital-taxonomy/
+  last_verified: '2026-10-06'
+- event_date: '2026-12-02'
+  event: EU AI Act Art 50 marking of AI-generated content applies to systems placed on the market before 2026-08-02
+  jurisdiction: EU
+  source_url: https://www.hunton.com/privacy-and-cybersecurity-law-blog/eu-digital-omnibus-on-ai-enters-into-force
+  last_verified: '2026-10-06'
+- event_date: '2026-12-15'
+  event: ISSA 5000 sustainability assurance effective (periods beginning on/after)
+  jurisdiction: Global
+  source_url: https://www.iaasb.org/consultations-projects/issa-5000-adoption-and-implementation
+  last_verified: '2026-10-06'
+- event_date: '2026-12-15'
+  event: HKSSA 5000 effective in Hong Kong (periods beginning on/after)
+  jurisdiction: HK
+  source_url: https://www.hkicpa.org.hk/-/media/HKICPA-Website/Members-Handbook/volumeIII/324ssa5.pdf
+  last_verified: '2026-10-06'
+- event_date: '2026-12-30'
+  event: EUDR obligations apply (large/medium operators)
+  jurisdiction: EU
+  source: Regulation (EU) 2023/1115 (EUDR), as amended
+- event_date: '2027-01-01'
+  event: Revised ESRS mandatory (financial years beginning on/after); VSME value-chain cap applies
+  jurisdiction: EU
+  source_url: https://sustainablefutures.linklaters.com/post/102o1ou/eu-csrd-revised-esrs-and-voluntary-reporting-standard-are-published-in-the-offic
+  last_verified: '2026-10-06'
+- event_date: '2027-01-01'
+  event: UK SRS comply-or-explain for listed issuers (periods beginning on/after; FCA PS26/19)
+  jurisdiction: UK
+  source_url: https://www.fca.org.uk/publications/policy-statements/ps26-19-aligning-listed-issuers-sustainability-disclosures-international-standards
+  last_verified: '2026-10-06'
+- event_date: '2027-01-01'
+  event: IFRS S2 targeted amendments effective
+  jurisdiction: Global
+  source: ISSB
+  source_url: https://www.ifrs.org/news-and-events/news/2025/12/issb-issues-targeted-amendments-ifrs-s2/
+- event_date: '2027-03-19'
+  event: CSRD (as amended by Omnibus I) member-state transposition deadline
+  jurisdiction: EU
+  source: Directive (EU) 2026/470 (Omnibus I)
+  source_url: https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=OJ:L_202600470
+- event_date: '2027-03-31'
+  event: Japan SSBJ standards mandatory for Prime-listed companies with ≥¥3tn market cap (FY ending March 2027)
+  jurisdiction: Japan
+  source_url: https://www.fsa.go.jp/en/news/2025/20251106/02.pdf
+  last_verified: '2026-10-06'
+- event_date: '2027-06-30'
+  event: EUDR obligations apply to other micro and small operators
+  jurisdiction: EU
+  source: Regulation (EU) 2023/1115 (EUDR), as amended
+- event_date: '2027-12-02'
+  event: EU AI Act Annex III high-risk obligations apply (deferred by Reg (EU) 2026/1744)
+  jurisdiction: EU
+  source_url: https://www.hunton.com/privacy-and-cybersecurity-law-blog/eu-digital-omnibus-on-ai-enters-into-force
+  last_verified: '2026-10-06'
+- event_date: '2027-12-31'
+  event: California SB 253 Scope 3 reporting phase begins
+  jurisdiction: US
+  source_url: https://ww2.arb.ca.gov/our-work/programs/california-corporate-greenhouse-gas-reporting
+  last_verified: '2026-10-06'
+- event_date: '2028-01-01'
+  event: 'Singapore: non-STI listed issuers ≥S$1bn market cap begin ISSB-based climate reporting (FY2028)'
+  jurisdiction: Singapore
+  source_url: https://www.acra.gov.sg/news-events/news-details/id/887
+  last_verified: '2026-10-06'
+- event_date: '2028-07-26'
+  event: CSDDD member-state transposition deadline
+  jurisdiction: EU
+  source: Directive (EU) 2026/470 (Omnibus I)
+  source_url: https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=OJ:L_202600470
+- event_date: '2029-06-30'
+  event: SFDR 2.0 expected application (24 months after adoption; Council and Parliament both propose 24)
+  jurisdiction: EU
+  source_url: https://www.debevoise.com/insights/publications/2026/09/sfdr-20-recap-briefing
+  last_verified: '2026-10-06'
+- event_date: '2029-07-26'
+  event: CSDDD applies to first wave (>5,000 employees + €1.5B turnover)
+  jurisdiction: EU
+  source: Directive (EU) 2026/470 (Omnibus I)
+  source_url: https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=OJ:L_202600470

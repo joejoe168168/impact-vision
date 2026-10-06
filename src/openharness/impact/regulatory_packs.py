@@ -35,7 +35,7 @@ Jurisdiction = Literal[
 
 class RegulatoryFiling(BaseModel):
     name: str
-    cadence: Literal["annual", "semi-annual", "quarterly", "event-driven"]
+    cadence: Literal["annual", "biennial", "semi-annual", "quarterly", "event-driven"]
     format: str = ""
     deadline_days_after_period: int = 120
     mandatory_for: str = "all funds in scope"
@@ -52,228 +52,19 @@ class RegulatoryPack(BaseModel):
     legal_basis: str = Field(
         default="", description="Primary legal citation, e.g. Directive (EU) 2026/470"
     )
+    last_verified: str = ""
+    source_url: str = ""
 
 
-_PACKS: dict[str, RegulatoryPack] = {
-    "US-CA-CLIMATE": RegulatoryPack(
-        jurisdiction="US-CA-CLIMATE",
-        issuer="California Air Resources Board",
-        as_of="2026-02-26",
-        legal_basis="California SB 253 and SB 261; CARB initial regulations 2026-02-26",
-        in_scope_summary="US entities doing business in California: SB 253 above $1B revenue; SB 261 above $500M.",
-        filings=[
-            RegulatoryFiling(
-                name="SB 253 Scope 1 and 2 emissions",
-                cadence="annual",
-                format="GHG Protocol",
-                deadline_days_after_period=314,
-            ),
-            RegulatoryFiling(
-                name="SB 261 climate financial risk report",
-                cadence="semi-annual",
-                format="TCFD / IFRS S2 mapping",
-            ),
-        ],
-        required_metrics=[
-            "TCFD-GOV",
-            "TCFD-STR",
-            "TCFD-RM",
-            "TCFD-MET",
-            "scope1_ghg",
-            "scope2_ghg",
-            "scope3_ghg",
-        ],
-        notes="SB 261 enforcement is stayed pending Ninth Circuit proceedings; obtain current legal advice.",
-    ),
-    "EU-SFDR": RegulatoryPack(
-        jurisdiction="EU-SFDR",
-        issuer="ESAs (EBA/EIOPA/ESMA)",
-        in_scope_summary=(
-            "All financial market participants and financial advisers "
-            "distributing products in the EU."
-        ),
-        filings=[
-            RegulatoryFiling(
-                name="Principal Adverse Impacts (PAI) statement",
-                cadence="annual",
-                format="RTS Annex I template",
-                deadline_days_after_period=180,
-            ),
-            RegulatoryFiling(
-                name="Article 8/9 periodic report",
-                cadence="annual",
-                format="RTS Annex IV/V template",
-                deadline_days_after_period=120,
-            ),
-        ],
-        required_metrics=[
-            "scope1_2_tco2e",
-            "scope3_tco2e",
-            "carbon_footprint",
-            "gross_energy_consumption_per_meur",
-            "violations_ungc_oecd",
-            "board_gender_ratio",
-            "unadjusted_gender_pay_gap",
-        ],
-    ),
-    "EU-CSRD": RegulatoryPack(
-        jurisdiction="EU-CSRD",
-        issuer="European Commission / EFRAG",
-        as_of="2026-10-06",
-        legal_basis=(
-            "Directive (EU) 2026/470 (Omnibus I), in force 2026-03-18; revised ESRS "
-            "Delegated Reg (EU) 2026/1563 (in force 2026-11-10); VSME Delegated Reg (EU) 2026/1560"
-        ),
-        in_scope_summary=(
-            "POST-OMNIBUS I: mandatory only for undertakings meeting BOTH "
-            ">1,000 employees AND >€450M net turnover. Non-EU groups: >€450M EU "
-            "turnover with an in-scope EU subsidiary or a >€200M EU branch. "
-            "Listed SMEs and most former Wave 2/3 entities are now OUT of scope; "
-            "former Wave 1 reporters below the thresholds may pause FY2025-FY2026."
-        ),
-        filings=[
-            RegulatoryFiling(
-                name="ESRS sustainability statement in mgmt report",
-                cadence="annual",
-                format="XBRL digital tagging",
-                deadline_days_after_period=120,
-            ),
-        ],
-        required_metrics=[
-            "ESRS E1 climate",
-            "ESRS E2 pollution",
-            "ESRS E3 water",
-            "ESRS S1 own-workforce",
-            "ESRS G1 business-conduct",
-        ],
-        notes=(
-            "Member States transpose Omnibus I by 2027-03-19; new scope applies "
-            "from FY2027. Sector-specific ESRS removed. The revised ESRS "
-            "(Delegated Reg (EU) 2026/1563, OJ 2026-09-21) are mandatory for FY "
-            "beginning on/after 2027-01-01. From FY2027, value-chain partners with "
-            "up to 1,000 employees may refuse data requests beyond the VSME "
-            "(Delegated Reg (EU) 2026/1560) — use the VSME request pack for them."
-        ),
-    ),
-    "EU-CSDDD": RegulatoryPack(
-        jurisdiction="EU-CSDDD",
-        issuer="European Commission",
-        as_of="2026-03-18",
-        legal_basis="CSDDD as amended by Directive (EU) 2026/470 (Omnibus I)",
-        in_scope_summary=(
-            "POST-OMNIBUS I: applies to companies with >5,000 employees AND "
-            ">€1.5B net worldwide turnover (non-EU: >€1.5B EU turnover). "
-            "Application deferred to 2029-07-26; MS transposition by 2028-07-26."
-        ),
-        filings=[
-            RegulatoryFiling(
-                name="Human-rights & environmental due-diligence statement",
-                cadence="annual",
-                format="narrative + value-chain risk register",
-                deadline_days_after_period=120,
-            ),
-        ],
-        required_metrics=[
-            "salient_human_rights_issues",
-            "value_chain_risk_register",
-            "grievance_mechanism",
-            "remediation_actions",
-        ],
-        notes=(
-            "Climate transition-plan ADOPTION obligation removed by Omnibus I; "
-            "EU-harmonised civil-liability regime removed (national law applies); "
-            "penalties capped at 3% of net global turnover. Even when out of legal "
-            "scope, OECD Guidelines / UNGP-aligned HRDD remains an LP and customer "
-            "expectation — use the hrdd module to evidence it."
-        ),
-    ),
-    "UK-FCA-SDR": RegulatoryPack(
-        jurisdiction="UK-FCA-SDR",
-        issuer="UK FCA",
-        in_scope_summary=(
-            "UK-authorised asset managers with AUM > £5bn (SDR). Listed issuers: UK SRS "
-            "comply-or-explain for periods from 2027-01-01 (FCA PS26/19)."
-        ),
-        filings=[
-            RegulatoryFiling(name="Sustainability Product Label disclosure", cadence="annual"),
-            RegulatoryFiling(name="Entity-level sustainability report", cadence="annual"),
-            RegulatoryFiling(
-                name="UK SRS comply-or-explain statement (listed issuers)",
-                cadence="annual",
-                mandatory_for="UK listed issuers, periods beginning on/after 2027-01-01",
-            ),
-        ],
-        required_metrics=[
-            "outcome_metric_per_product",
-            "naming_and_marketing_evidence",
-        ],
-    ),
-    "US-SEC-ESG": RegulatoryPack(
-        jurisdiction="US-SEC-ESG",
-        issuer="US Securities and Exchange Commission",
-        in_scope_summary=(
-            "All SEC-registered investment companies; climate-disclosure "
-            "rule currently in litigation, other ESG naming rules in force."
-        ),
-        filings=[
-            RegulatoryFiling(name="Form N-CSR ESG sections", cadence="semi-annual"),
-            RegulatoryFiling(name="Climate-related disclosures in 10-K", cadence="annual"),
-        ],
-        required_metrics=["ghg_scope1_2", "climate_related_financial_impacts"],
-    ),
-    "HK-HKEX-ESG": RegulatoryPack(
-        jurisdiction="HK-HKEX-ESG",
-        issuer="Hong Kong Exchanges and Clearing (HKEX)",
-        as_of="2026-10-06",
-        legal_basis="HKEX Main Board Listing Rules Appendix C2 (IFRS S2-based climate requirements)",
-        in_scope_summary=(
-            "All HKEX-listed issuers. IFRS S2-based climate requirements from FY2025 "
-            "(Main Board comply-or-explain); mandatory for LargeCap issuers for FY "
-            "beginning on/after 2026-01-01. Full HKFRS S1/S2 targeted ~2028; HKSSA 5000 "
-            "assurance from periods beginning 2026-12-15."
-        ),
-        filings=[
-            RegulatoryFiling(
-                name="Environmental, Social and Governance Report",
-                cadence="annual",
-                format="IFRS S2-based climate disclosures (HKEX)",
-            ),
-        ],
-        required_metrics=[
-            "scope1_ghg",
-            "scope2_ghg",
-            "scope3_ghg",
-            "climate-transition-plan",
-            "internal-carbon-price",
-        ],
-    ),
-    "AU-AASB-S2": RegulatoryPack(
-        jurisdiction="AU-AASB-S2",
-        issuer="Australian Accounting Standards Board",
-        in_scope_summary=(
-            "Large Australian entities; phased-in from FY2025 via the AASB S2 "
-            "climate-related standard (based on IFRS S2)."
-        ),
-        filings=[
-            RegulatoryFiling(
-                name="AASB S2 climate-related disclosures",
-                cadence="annual",
-                format="AASB S2 structured data",
-            ),
-        ],
-        required_metrics=["scope1_ghg", "scope2_ghg", "scope3_ghg", "physical_risk"],
-    ),
-    "GLOBAL-ISSB": RegulatoryPack(
-        jurisdiction="GLOBAL-ISSB",
-        issuer="IFRS Foundation / ISSB",
-        in_scope_summary="Baseline global sustainability reporting.",
-        filings=[
-            RegulatoryFiling(name="IFRS S1 general disclosures", cadence="annual"),
-            RegulatoryFiling(name="IFRS S2 climate disclosures", cadence="annual"),
-        ],
-        required_metrics=["ghg_scope1", "ghg_scope2", "ghg_scope3", "transition_plan"],
-    ),
-}
+def _load_packs() -> dict[str, RegulatoryPack]:
+    """Packs from ``data/regulatory/packs.yaml`` (W5.1)."""
+    from openharness.impact.knowledge import load_knowledge
+
+    payload = load_knowledge("regulatory/packs.yaml")
+    return {row["jurisdiction"]: RegulatoryPack.model_validate(row) for row in payload.get("packs", [])}
+
+
+_PACKS: dict[str, RegulatoryPack] = _load_packs()
 
 
 def list_packs() -> list[RegulatoryPack]:
