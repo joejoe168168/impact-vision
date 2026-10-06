@@ -20,6 +20,60 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Added — v7 Wave 5: platform hardening
+
+- **Knowledge as data (W5.1).**
+  - `data/regulatory/{watchlist,jurisdictions,packs}.yaml`,
+    `data/standards_registry.yaml` and `data/benchmarks.yaml`; the crosswalk
+    is folded into `data/concordance.yaml`.
+  - `impact/knowledge.py` adds provenance inheritance and
+    `freshness_report()`. `scripts/check_knowledge.py` is a CI gate (180
+    days).
+  - `impact/benchmark_provider.py` is one provider for every benchmark set.
+- **Methodology versioning (W5.2).**
+  - `data/methodology/v1.yaml` and `impact/methodology.py`.
+  - `methodology_version` + `config_hash` appear on assessments, 5D,
+    greenwashing, the report, IC memo, XLSX/CSV/JSON and `summary.json`.
+  - `IMPACT_VISION_METHODOLOGY` selects a custom file.
+- **Persistence (W5.3).** `impact/state_store.py` (SQLite default,
+  Postgres, memory). The engagement workspace, audit trail, radar/DDQ review
+  queues and `PersistentRBACStore` survive restarts. Configure with
+  `IMPACT_VISION_STATE_STORE`, `IMPACT_VISION_STATE_DB` and
+  `IMPACT_VISION_STATE_DSN`.
+- **Extraction (W5.6).**
+  - Real benchmark over 18 gold docs, with a blocking CI gate at F1 ≥ 0.90.
+  - The regex extractor reads "500 low-income customers".
+  - New mapper rules: Scope 1 (OI4112) and jobs created (PI3687), with rule
+    priority and `none_in_sentence`.
+  - Extractor `auto` picks the LLM when `OPENAI_API_KEY` is set
+    (`IMPACT_VISION_EXTRACTOR` overrides).
+- **Docs (W5.7).**
+  - `scripts/build_tool_reference.py` → `docs/reference/tools.md`.
+  - `tests/test_docs_counts.py`.
+  - Web-first `docs/fund-manager-guide.md`.
+  - `.gitattributes`.
+
+### Changed
+
+- **`impact_vision` is the supported import path (W5.5).**
+  - Console scripts are `impact_vision.cli:app`.
+  - The wheel excludes `openharness/channels` and `openharness/vim`.
+- **`roadmap_v2` helpers moved (W5.4).**
+  - They now live in `investee_collection`, `ai_review`,
+    `climate_accounting`, `frameworks.pcaf`, `disclosure_packs`,
+    `regulatory_calendar` (`DISCLOSURE_PROFILES`), `cross_reference`,
+    `standards_registry`, `report_governance`, `contribution`,
+    `exit_impact`, `portfolio_nlq` and `regulatory_radar`.
+  - `questionnaire_v2` → `questionnaire_branching`; `frameworks.sfdr_v2` →
+    `frameworks.sfdr_recast`.
+- **`ImpactVision()` defaults to `extractor_id="auto"`.**
+- **SB 261 filing cadence corrected to biennial** in the US-CA-CLIMATE pack.
+
+### Deprecated
+
+- `openharness.impact.roadmap_v2`, `openharness.impact.questionnaire_v2` and
+  `openharness.impact.frameworks.sfdr_v2` (DeprecationWarning; removed in 0.18).
+
 ### Added — v7 Wave 4: standards currency
 
 Facts re-verified 2026-10-06; see `docs/roadmap-v7.md` (Wave 4 status) for

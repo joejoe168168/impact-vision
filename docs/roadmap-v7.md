@@ -327,6 +327,71 @@ Not done:
 | W5.6 | **Extraction quality.** Expand the `extraction_eval` gold set (outcome vs activity classification, units, decimals, SDG recall). Make the CI gate blocking (currently `continue-on-error`). Use the LLM extractor by default when a key exists | `extraction_eval.py`, `extractors/` | M |
 | W5.7 | **Docs hygiene.** A generated `docs/reference/tools.md` and counts. CI asserts that README/CLAUDE.md numbers match code. Trim README to ≤850 lines. Rewrite `fund-manager-guide.md` as web-first task recipes. Add `.gitattributes` (LF). Fold the five untracked root strategy files into this roadmap and delete them | docs, CI | S |
 
+
+**Wave 5 status (2026-10-06):** done on branch `v7-wave5`.
+
+- **W5.1 Knowledge as data.**
+  - Watch-list, jurisdiction profiles, regulatory packs, standards
+    registry, benchmarks and the 61-concept crosswalk now live in YAML
+    under `data/`.
+  - Rows inherit file-level `as_of` / `source_url` and set their own
+    `last_verified`. `scripts/check_knowledge.py` (CI) fails when a row has
+    no source or is more than 180 days past its last verification.
+  - The gate caught two stale packs on day one: US-CA-CLIMATE and EU-CSDDD,
+    both re-verified. It also found that SB 261 was mis-coded as
+    semi-annual (it is biennial).
+  - `benchmark_provider.ImpactBenchmarkProvider` serves all four benchmark
+    sets. The seed distributions are labelled `illustrative`, never
+    "verified".
+- **W5.2 Methodology versioning.**
+  - Every 5D / SDG / greenwashing weight and threshold is in
+    `data/methodology/v1.yaml`.
+  - Assessments, 5D and greenwashing results, the report, IC memo, exports
+    and `summary.json` carry `methodology_version` plus a `config_hash`.
+    The appendix text is generated from the YAML.
+  - Scores are unchanged.
+- **W5.3 Persistence.**
+  - New `state_store` (SQLite by default, Postgres optional, in-memory for
+    tests).
+  - The engagement workspace auto-saves and restores, and the tools use
+    the persistent one. The audit trail keeps one hash chain across writers
+    and restarts.
+  - The radar and DDQ review queues and RBAC (`PersistentRBACStore`) are
+    persisted too.
+- **W5.4 Retire `roadmap_v2`.**
+  - Its 56 helpers moved verbatim into the modules they duplicated, or into
+    `ai_review` / `disclosure_packs` / `report_governance`.
+  - `roadmap_v2`, `questionnaire_v2` and `frameworks.sfdr_v2` remain as
+    deprecation shims until 0.18.
+- **W5.5 Package.**
+  - `impact_vision.*` is the supported import path: the same module objects
+    via an alias finder. Console scripts use `impact_vision.cli`.
+  - The wheel drops `channels/` and `vim/`.
+- **W5.6 Extraction quality.**
+  - The CI gate previously scored an empty stub. It now runs the production
+    chain on an 18-document gold set covering claims, metrics, SDGs,
+    categories and quantities.
+  - The gate is blocking at F1 ≥ 0.90; the regex extractor measures 0.945.
+    Three gold expectations that contradicted the methodology were fixed.
+  - Extractor `auto` uses the LLM when `OPENAI_API_KEY` is set.
+- **W5.7 Docs hygiene.**
+  - Generated `docs/reference/tools.md` (checked in CI).
+  - `tests/test_docs_counts.py` guards the README/CLAUDE.md numbers; it
+    fixed 59 → 61 concepts and 10 → 22 framework modules.
+  - README is 846 lines. The fund-manager guide is rewritten as web-first
+    recipes. `.gitattributes` (LF) plus a one-time renormalisation.
+
+Not done / deferred:
+- **The physical move of the code to `src/impact_vision/`.** This waits for
+  the 0.18 shim removal; until then `impact_vision` is the alias.
+- **Dropping `themes` / `voice` / `bridge` / `keybindings` from the wheel.**
+  The slash-command registry imports them, so those imports must become
+  lazy first.
+- **The "five untracked root strategy files" (W5.7).** They are not present
+  in this repository.
+- **SDG inference recall without explicit "SDG n" mentions.** It measures
+  0.71 and is the known extraction gap.
+
 ---
 
 ## 5. Build order & releases

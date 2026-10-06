@@ -148,23 +148,31 @@ The project has an explicit preference for a **short, newcomer-friendly
 The current `README.md` is ~846 lines; keep it at or below 850. If it
 grows past ~1000, trim before shipping.
 
-## Engineering housekeeping (deferred refactor)
+## Engineering housekeeping (package rename status)
 
-**Package rename**: the project is `impact-vision` (pyproject) but the
-importable package is still `openharness` and carries many unused HKUDS-era
-sub-packages (`swarm`, `vim`, `coordinator`, `engine`, `themes`, `ui`,
-`bridge`, `frontend/terminal`). They inflate the wheel and the import-time
-attack surface. Plan:
+**`impact_vision` is the supported import path** (v7 W5.5). Every
+`impact_vision.*` module is the same object as its `openharness.impact.*`
+implementation (plus `impact_vision.tools` / `.cli` / `.web` /
+`.api_gateway` / `.dashboard`), and the console scripts point at
+`impact_vision.cli:app`. Write new docs and examples against `impact_vision`.
 
-1. Add a top-level `impact_vision` namespace that re-exports everything in
-   `openharness.impact.*` (keep `openharness` as a deprecated alias).
-2. Trim `[tool.hatch.build.targets.wheel.force-include]` to ship only
-   `impact/`, `tools/impact/`, `api_gateway/`, `prompts/`, `cli.py`.
-3. Delete the unused submodules in a separate PR once downstream callers
-   (Streamlit dashboard, examples) have been updated.
+Still deferred, to land with the 0.18 shim removal:
 
-This is intentionally **not** done in the same PR as the Phase-11
-correctness fixes to keep the diff readable.
+1. Physically move the code under `src/impact_vision/` and turn `openharness`
+   into the alias (the reverse of today).
+2. `channels/` and `vim/` are already excluded from the wheel. `themes`,
+   `voice`, `bridge` and `keybindings` are still imported by the slash-command
+   registry / TUI, so make those imports lazy before dropping them.
+3. Remove the deprecated shims: `roadmap_v2`, `questionnaire_v2`,
+   `frameworks.sfdr_v2`.
+
+**Knowledge, methodology and state (v7 Wave 5):** reference data lives in
+sourced YAML under `data/` (`regulatory/`, `standards_registry.yaml`,
+`benchmarks.yaml`, `concordance.yaml`, `methodology/v1.yaml`).
+`scripts/check_knowledge.py` fails CI on rows not re-verified in 180 days.
+Never hard-code a regulatory date, weight or benchmark in Python: add it to
+the YAML with `as_of` / `source_url`. Consultant state persists through
+`impact.state_store` (SQLite by default; tests use the memory backend).
 
 ## Project Structure
 
@@ -189,7 +197,11 @@ src/openharness/
 │   ├── metric_records.py          # v2 canonical MetricRecord contract + helpers
 │   ├── investee_collection.py     # v2 questionnaire schema + submission lifecycle
 │   ├── climate_accounting.py      # v2 Scope 1/2 GHG inventory calculator
-│   ├── roadmap_v2.py              # v2 institutional-readiness helpers
+│   ├── roadmap_v2.py              # DEPRECATED shim (W5.4) → ai_review / disclosure_packs / report_governance / …
+│   ├── knowledge.py               # v7 W5.1: YAML knowledge loader + freshness gate
+│   ├── benchmark_provider.py      # v7 W5.1: one provider over data/benchmarks.yaml
+│   ├── methodology.py             # v7 W5.2: versioned scoring methodology + stamp
+│   ├── state_store.py             # v7 W5.3: tenant-scoped SQLite/Postgres/memory state
 │   ├── emission_factors.py        # v3 versioned emission factors + sensitivity
 │   ├── stakeholder_voice.py       # v3 Lean Data templates + consent + claim linking
 │   ├── evidence_workflow.py       # v3 AI extraction review queue + policies
