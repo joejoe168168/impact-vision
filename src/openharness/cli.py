@@ -129,6 +129,7 @@ def assess_cmd(
     as_json: bool = typer.Option(False, "--json", help="Print the summary as JSON"),
     open_report: bool = typer.Option(False, "--open", help="Open the impact report in a browser"),
     pdf: bool = typer.Option(False, "--pdf", help="Also write PDFs of the impact report and IC memo ([pdf] extra)"),
+    lang: str = typer.Option("en", "--lang", help="Report language: en, zh-HK (Traditional), zh-CN (Simplified)"),
 ) -> None:
     """Assess one pitch deck / memo and write the impact report, IC memo and DD report.
 
@@ -147,9 +148,9 @@ def assess_cmd(
     from openharness.impact.report_templates.pdf import PdfUnavailable
 
     try:
-        files = write_deliverables(bundle, out_dir, pdf=pdf)
+        files = write_deliverables(bundle, out_dir, pdf=pdf, lang=lang)
     except PdfUnavailable as exc:
-        files = write_deliverables(bundle, out_dir)
+        files = write_deliverables(bundle, out_dir, lang=lang)
         print(f"Note: {exc}", file=sys.stderr)
     if as_json:
         print(json.dumps(bundle.summary(), indent=2, default=str))

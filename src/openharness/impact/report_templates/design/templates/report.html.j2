@@ -21,7 +21,7 @@
       {%- if company.sector or company.geography %} · {% endif %}{{ t('generated', date=generated) }} · {{ t('standard', version=catalog_version) }}
       {%- if source %} · {{ t('source', source=source) }}{% endif %}
     </p>
-    <p class="notice">{{ notice }}</p>
+    <p class="notice">{{ notice }}{% if lang_note %} {{ lang_note }}{% endif %}</p>
   </div>
   {% if branding.logo_url %}<img class="logo" src="{{ branding.logo_url }}" alt="{{ branding.fund_name or 'Logo' }}">{% endif %}
 </header>
@@ -49,7 +49,7 @@
 </section>
 
 {% elif section == 'kpis' %}
-<section class="kpis" aria-label="Headline numbers">
+<section class="kpis" aria-label="{{ t('kpis_label') }}">
   {% for k in kpis %}
   <div class="tile">
     <p class="label">{{ k.label }}</p>
@@ -73,7 +73,7 @@
   <div class="bars" role="img" aria-label="{{ t('sec_5d') }}: {% for r in five_d.rows %}{{ r.label }} {{ '%.1f' % r.score }}{% if not loop.last %}, {% endif %}{% endfor %}">
     {% for r in five_d.rows %}
     <div class="bl">{{ r.label }}{% if r.sentence %}<span class="note">{{ r.sentence }}</span>{% endif %}</div>
-    <div class="track" title="{{ r.label }}: {{ '%.1f' % r.score }}/5{% if r.benchmark is not none %} · benchmark {{ '%.1f' % r.benchmark }}{% endif %}">
+    <div class="track" title="{{ r.label }}: {{ '%.1f' % r.score }}/5{% if r.benchmark is not none %} · {{ t('col_benchmark') }} {{ '%.1f' % r.benchmark }}{% endif %}">
       <div class="fill" style="width:{{ r.score | pct }}%"></div>
       {% if r.benchmark is not none %}<div class="bench" style="left:calc({{ r.benchmark | pct }}% - 1px)"></div>{% endif %}
     </div>
@@ -100,7 +100,7 @@
   {% if sdg.material %}
   <div class="bars" role="img" aria-label="{{ t('sec_sdg') }}: {% for g in sdg.material %}SDG {{ g.goal }} {{ '%.0f' % g.score }}{% if not loop.last %}, {% endif %}{% endfor %}">
     {% for g in sdg.material %}
-    <div class="bl"><span class="sdg-chip" style="background:{{ g.color }}" aria-hidden="true"></span>SDG {{ g.goal }} · {{ g.name }}<span class="note">{{ g.confidence }} confidence</span></div>
+    <div class="bl"><span class="sdg-chip" style="background:{{ g.color }}" aria-hidden="true"></span>SDG {{ g.goal }} · {{ g.name }}<span class="note">{{ t('conf_' ~ g.confidence) }}</span></div>
     <div class="track" title="SDG {{ g.goal }}: {{ '%.0f' % g.score }}/100"><div class="fill" style="width:{{ g.score | pct(100) }}%"></div></div>
     <div class="bv">{{ '%.0f' % g.score }}</div>
     {% endfor %}
@@ -115,7 +115,7 @@
     <div class="table-wrap"><table>
       <caption>{{ t('sec_sdg') }}</caption>
       <thead><tr><th scope="col">{{ t('col_goal') }}</th><th scope="col" class="num">{{ t('col_score') }}</th><th scope="col">{{ t('col_confidence') }}</th><th scope="col">{{ t('col_metrics') }}</th></tr></thead>
-      <tbody>{% for g in sdg.material %}<tr><th scope="row">SDG {{ g.goal }} · {{ g.name }}</th><td class="num">{{ '%.0f' % g.score }}</td><td>{{ g.confidence }}</td><td>{{ g.metrics | join(', ') or '—' }}</td></tr>{% endfor %}</tbody>
+      <tbody>{% for g in sdg.material %}<tr><th scope="row">SDG {{ g.goal }} · {{ g.name }}</th><td class="num">{{ '%.0f' % g.score }}</td><td>{{ t('conf_' ~ g.confidence) }}</td><td>{{ g.metrics | join(', ') or '—' }}</td></tr>{% endfor %}</tbody>
     </table></div>
   </details>
   {% endif %}
@@ -179,7 +179,7 @@
   <h2 id="h-actions">{{ t('sec_actions') }}</h2>
   <p class="lede">{{ t('lede_actions') }}</p>
   <div class="table-wrap"><table>
-    <thead><tr><th scope="col" class="num">#</th><th scope="col">{{ t('sec_actions') }}</th><th scope="col">Area</th></tr></thead>
+    <thead><tr><th scope="col" class="num">#</th><th scope="col">{{ t('sec_actions') }}</th><th scope="col">{{ t('col_area') }}</th></tr></thead>
     <tbody>{% for a in actions %}<tr><td class="num">{{ loop.index }}</td><td>{{ a.text }}</td><td>{{ a.area }}</td></tr>{% endfor %}</tbody>
   </table></div>
 </section>
@@ -197,9 +197,9 @@
 <section id="sec-feedback" class="card" aria-labelledby="h-feedback">
   <h2 id="h-feedback">{{ t('sec_feedback') }}</h2>
   <div class="kpis" style="margin:0">
-    {% if feedback.satisfaction_score is not none %}<div class="tile"><p class="label">Satisfaction</p><p class="value">{{ feedback.satisfaction_score }}<small>/5</small></p></div>{% endif %}
-    {% if feedback.nps is not none %}<div class="tile"><p class="label">Net Promoter Score</p><p class="value">{{ feedback.nps }}</p></div>{% endif %}
-    {% if feedback.sample_size %}<div class="tile"><p class="label">Respondents</p><p class="value">{{ feedback.sample_size | num }}</p></div>{% endif %}
+    {% if feedback.satisfaction_score is not none %}<div class="tile"><p class="label">{{ t('fb_satisfaction') }}</p><p class="value">{{ feedback.satisfaction_score }}<small>/5</small></p></div>{% endif %}
+    {% if feedback.nps is not none %}<div class="tile"><p class="label">{{ t('fb_nps') }}</p><p class="value">{{ feedback.nps }}</p></div>{% endif %}
+    {% if feedback.sample_size %}<div class="tile"><p class="label">{{ t('fb_respondents') }}</p><p class="value">{{ feedback.sample_size | num }}</p></div>{% endif %}
   </div>
   {% if feedback.methodology %}<p class="small muted" style="margin:10px 0 0">{{ feedback.methodology }}{% if feedback.survey_date %} · {{ feedback.survey_date }}{% endif %}</p>{% endif %}
   {% for q in (feedback.quotes or [])[:3] %}<blockquote class="quote small">{{ q }}</blockquote>{% endfor %}

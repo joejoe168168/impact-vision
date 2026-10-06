@@ -19,7 +19,12 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
-from openharness.impact.report_templates.design.strings import translator
+from openharness.impact.report_templates.design.strings import (
+    SDG_NAMES,
+    SECTOR_NAMES,
+    normalize_lang,
+    translator,
+)
 from openharness.impact.report_templates.report_v2 import SDG_COLORS
 
 _DESIGN = Path(__file__).resolve().parent / "design"
@@ -156,13 +161,17 @@ _ICON = {
 }
 
 
-def _check_text(check: dict[str, Any]) -> str:
+def _check_text(check: dict[str, Any], t=None) -> str:  # type: ignore[no-untyped-def]
     """'Greenwashing risk 50.6 (max 40)' rather than the gate's terse message."""
+    t = t or translator("en")
     name, actual, threshold = check.get("name", ""), check.get("actual"), check.get("threshold")
-    if name == "Top SDG score" or not isinstance(actual, (int, float)):
+    label = t(f"check_{name}") if t(f"check_{name}") != f"check_{name}" else name
+    if name == "Top SDG score" and t("check_Top SDG score") == "Top SDG score":
         return check.get("message") or name
-    bound = "max" if "greenwashing" in name.lower() else "min"
-    return f"{name} {actual:.1f} ({bound} {threshold:g})" if isinstance(threshold, (int, float)) else name
+    if not isinstance(actual, (int, float)):
+        return check.get("message") or label
+    bound = t("bound_max") if "greenwashing" in name.lower() else t("bound_min")
+    return f"{label} {actual:.1f} ({bound} {threshold:g})" if isinstance(threshold, (int, float)) else label
 
 
 def _verdict(decision: dict[str, Any] | None, fd: dict | None, t) -> dict[str, Any]:  # type: ignore[no-untyped-def]
@@ -178,15 +187,13 @@ def _verdict(decision: dict[str, Any] | None, fd: dict | None, t) -> dict[str, A
         label = t(key)
         # The gate's recommendation opens by restating the status; the card
         # already shows it as the headline.
-        recommendation = re.sub(
-            r"^(Not IC-ready|BLOCK IC submission|Conditional IC|All gates passed)[:.—\s-]*",
-            "", decision.get("recommendation", ""),
-        ).strip()
-        recommendation = recommendation[:1].upper() + recommendation[1:]
+        recommendation = t({
+            "good": "rec_pass", "warning": "rec_insufficient" if insufficient else "rec_warn",
+        }.get(tone, "rec_fail"))
         reasons = []
         for check in decision.get("checks", []):
             if check.get("status") in ("fail", "warn"):
-                text = _check_text(check)
+                text = _check_text(check, t)
                 if check.get("data_gap"):
                     text = f"{text} ({t('missing_data')})"
                 reasons.append(text)
@@ -235,13 +242,13 @@ def _five_d(data: dict[str, Any], t) -> dict[str, Any] | None:  # type: ignore[n
     }
 
 
-def _sdg(data: dict[str, Any]) -> dict[str, Any]:
+def _sdg(data: dict[str, Any], lang: str = "en") -> dict[str, Any]:
     alignments = sorted(data.get("sdg_alignments") or [], key=lambda a: -float(a.get("score") or 0))
     material = [a for a in alignments if a.get("material", True) and float(a.get("score") or 0) > 0]
     other = [a for a in alignments if a not in material]
     to_row = lambda a: {  # noqa: E731
         "goal": int(a["goal"]),
-        "name": a.get("goal_name", ""),
+        "name": SDG_NAMES.get(lang, {}).get(int(a["goal"]), a.get("goal_name", "")),
         "score": float(a.get("score") or 0),
         "confidence": a.get("confidence", "low"),
         "metrics": a.get("matched_metrics", [])[:6],
@@ -293,7 +300,7 @@ def _greenwashing(data: dict[str, Any], t) -> dict[str, Any] | None:  # type: ig
     subs = gw.get("sub_scores") or {k: gw.get(k) for k in _GW_COMPONENTS}
     return {
         "score": float(gw.get("overall_score") or 0),
-        "classification": gw.get("classification", ""),
+        "classification": t(f"gwc_{gw.get('classification', '')}"),
         "components": [
             {"label": t(f"gw_{k}"), "value": float(subs.get(k) or 0)} for k in _GW_COMPONENTS
             if subs.get(k) is not None
@@ -423,6 +430,7 @@ def _branding(raw: dict[str, Any] | None) -> dict[str, Any]:
 def build_view(data: dict[str, Any], *, audience: str | None = None, lang: str = "en",
                branding: dict[str, Any] | None = None) -> dict[str, Any]:
     """Assemble everything the template needs from ``report_data``."""
+    lang = normalize_lang(lang)
     audience = (audience or data.get("audience") or "full").lower()
     if data.get("report_type") == "lp_ready" and audience == "full":
         audience = "lp"
@@ -439,7 +447,7 @@ def build_view(data: dict[str, Any], *, audience: str | None = None, lang: str =
         "notice": t(f"notice_{spec.audience}"),
         "company": {
             "name": company.get("name") or "Company",
-            "sector": company.get("sector", ""),
+            "sector": SECTOR_NAMES.get(lang, {}).get(company.get("sector", ""), company.get("sector", "")),
             "geography": company.get("geography", ""),
         },
         "generated": str(data.get("generated_at", ""))[:10],
@@ -447,7 +455,8 @@ def build_view(data: dict[str, Any], *, audience: str | None = None, lang: str =
         "source": data.get("source_label", ""),
         "branding": _branding(branding),
         "five_d": _five_d(data, t),
-        "sdg": _sdg(data),
+        "sdg": _sdg(data, lang),
+        "lang_note": t("lang_note"),
         "evidence": _evidence(data, t),
         "greenwashing": _greenwashing(data, t) if spec.show_greenwashing else None,
         "risks": _risks(data),
@@ -492,7 +501,7 @@ def render_decision_report(data: dict[str, Any], *, audience: str | None = None,
     env = _env()
     body = env.get_template("report.html.j2").render(css=design_css(), glossary_html="", **view)
     visible = re.sub(r"<style.*?</style>|<script.*?</script>|<[^>]+>", " ", body, flags=re.S)
-    glossary = render_glossary_html(visible) if lang == "en" else ""
+    glossary = render_glossary_html(visible) if view["lang"] == "en" else ""
     if glossary:
         from markupsafe import Markup
 

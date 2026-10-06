@@ -310,6 +310,10 @@ class ImpactReportInput(BaseModel):
             "accent_color, logo_url, footer_text}. Colors must be hex."
         ),
     )
+    lang: Literal["en", "zh-HK", "zh-CN"] = Field(
+        default="en",
+        description="Language of the decision-style HTML/PDF report (Traditional or Simplified Chinese).",
+    )
     style: Literal["decision", "classic"] = Field(
         default="decision",
         description=(
@@ -521,7 +525,9 @@ class ImpactReportTool(BaseTool):
                 render_decision_report,
             )
 
-            output = render_decision_report(report_data, branding=args.branding or None)
+            output = render_decision_report(
+                report_data, branding=args.branding or None, lang=args.lang
+            )
         elif args.output_format in ("html", "pdf"):
             output = _to_html(report_data)
             if args.branding:

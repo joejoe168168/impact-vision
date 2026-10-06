@@ -69,6 +69,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
   report is 9 A4 pages (was 20 via browser print), the IC memo 5.
   Deliverables now include the IC memo as `.docx` when python-docx is
   installed (`[office]`).
+- **Traditional and Simplified Chinese reports (W2.5).** `--lang zh-HK` /
+  `zh-CN` on `assess`, and `lang=` on `impact_report` and
+  `render_decision_report`. Covered: every label, verdict, gate reason,
+  greenwashing class, confidence level, SDG name (official UN Chinese
+  titles) and common sector name. Fonts put the right CJK face first
+  (PingFang / Noto Sans HK·TC vs SC), and `<html lang>` is set. Quoted
+  claims, engine recommendations and DD questions stay in the source
+  language, and the report says so. Aliases like `zh_hk`, `zh-Hant` and
+  `zh` resolve automatically.
 
 ### Added — v7 Wave 1: effortless first run
 

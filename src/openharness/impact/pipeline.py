@@ -263,6 +263,7 @@ def write_deliverables(
     basename: str | None = None,
     include_docx: bool = True,
     pdf: bool = False,
+    lang: str = "en",
 ) -> list[Path]:
     """Write the impact report, IC memo, DD report (+ DOCX, JSON summary).
 
@@ -282,7 +283,7 @@ def write_deliverables(
     files: list[Path] = []
 
     report = out / f"{stem}_impact_report.html"
-    report.write_text(render_decision_report(bundle.report_data), encoding="utf-8")
+    report.write_text(render_decision_report(bundle.report_data, lang=lang), encoding="utf-8")
     files.append(report)
 
     memo = out / f"{stem}_ic_memo.html"

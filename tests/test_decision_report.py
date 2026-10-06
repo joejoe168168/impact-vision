@@ -122,3 +122,22 @@ def test_print_css_hides_table_twins_and_avoids_row_breaks():
     css = design_css()
     assert "details.twin" in css
     assert "@page" in css and "tr, .verdict { break-inside: avoid" in css
+
+
+@pytest.mark.parametrize(
+    ("lang", "html_lang", "verdict", "sdg2"),
+    [("zh-HK", "zh-HK", "證據不足", "零飢餓"), ("zh_cn", "zh-CN", "证据不足", "零饥饿")],
+)
+def test_chinese_reports(pig_data, lang, html_lang, verdict, sdg2):
+    html = render_decision_report(pig_data, lang=lang)
+    assert f'<html lang="{html_lang}"' in html
+    assert verdict in html and sdg2 in html
+    assert "Not IC-ready" not in html and "What would change our mind" not in html
+
+
+def test_every_string_is_translated():
+    from openharness.impact.report_templates.design.strings import EN, ZH_CN, ZH_HK
+
+    assert set(ZH_HK) == set(EN) == set(ZH_CN)
+    traditional = set("響評機資與夥監審據證險風綠會業標貢獻誰總擇無這來")
+    assert not {c for v in ZH_CN.values() for c in v} & traditional

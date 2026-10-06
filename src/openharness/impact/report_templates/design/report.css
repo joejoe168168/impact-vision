@@ -6,6 +6,12 @@ body {
   font: 15px/1.55 var(--font); -webkit-font-smoothing: antialiased;
 }
 a { color: var(--link); }
+/* Chinese reports: put the right CJK face first (Traditional vs Simplified glyph forms). */
+html:lang(zh-HK) { --font: system-ui, -apple-system, "PingFang HK", "PingFang TC", "Noto Sans HK",
+  "Noto Sans TC", "Microsoft JhengHei", sans-serif; }
+html:lang(zh-CN) { --font: system-ui, -apple-system, "PingFang SC", "Noto Sans SC",
+  "Microsoft YaHei", sans-serif; }
+html:lang(zh-HK) body, html:lang(zh-CN) body { line-height: 1.7; }
 .skip-link { position: absolute; left: -9999px; }
 .skip-link:focus { left: 16px; top: 8px; background: var(--surface); padding: 6px 10px; z-index: 10; }
 :focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
