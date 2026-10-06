@@ -57,6 +57,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
     Deleting a report revokes its links.
   - `/api/v1/chat/assess` only reads files from the uploads folder.
   - `pipeline.save_bundle()` is shared by `assess_deal` and the web app.
+- **Streamlit dashboard repositioned as the no-LLM workbench (W3.3).**
+  - Company Assessment now starts from **a pitch deck or memo**: upload a
+    PDF / Word / Markdown / text file and get the IC gate, 5D, greenwashing
+    and SDG tiles, the embedded decision report (edition and language
+    switches), and HTML / Excel / CSV / slim-JSON downloads.
+  - The "data I enter" path uses a sector dropdown (the 18 benchmark
+    sectors), an SDG picker by goal title, and a searchable IRIS+ metric
+    picker by name with a value table, instead of free-text IDs and
+    `ID=value` lines. New `dashboard/forms.py` holds the testable helpers.
+  - `/console` stays as the power-user tool runner (now generated from the
+    registry, W3.1) rather than being retired.
 
 ### Added — v7 Wave 2: report design system & decision-first deliverables
 

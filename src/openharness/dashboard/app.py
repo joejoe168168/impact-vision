@@ -97,7 +97,8 @@ def main():
         return
 
     st.title("Impact Vision Dashboard")
-    st.caption("Open-source impact measurement and SDG alignment")
+    st.caption("Screen decks, score companies and review a portfolio — no AI model or API key needed. "
+               "For the conversational agent, run `impact-vision serve-web`.")
 
     tabs = st.tabs(
         [
@@ -131,22 +132,48 @@ def main():
 
 def _company_assessment_tab():
     st.header("Company Impact Assessment")
+    mode = st.radio("Start from", ["A pitch deck or memo", "Data I enter"], horizontal=True,
+                    key="assess_mode")
+    if mode.startswith("A pitch"):
+        _deck_assessment()
+        return
 
+    from openharness.dashboard.forms import (
+        metric_id,
+        metric_options,
+        metrics_from_rows,
+        sdg_numbers,
+        sdg_options,
+        sector_options,
+    )
+
+    store = _load_store()
+    sectors = sector_options()
+    sdgs = sdg_options()
     col1, col2 = st.columns(2)
     with col1:
-        name = st.text_input("Company Name", "BrightPath Finance")
-        sector = st.text_input("Sector", "Financial Services")
+        name = st.text_input("Company name", "BrightPath Finance")
+        sector = st.selectbox("Sector", sectors, index=sectors.index("Financial Services")
+                              if "Financial Services" in sectors else 0)
         description = st.text_area(
             "Description",
             "Digital microfinance platform for smallholder farmers and women-led micro-enterprises in Sub-Saharan Africa.",
         )
     with col2:
-        themes = st.text_input("Impact Themes (comma-separated)", "Financial Inclusion")
-        sdg_claims_str = st.text_input("Claimed SDGs (comma-separated numbers)", "1,5,8,10")
-        metrics_str = st.text_area(
-            "Reported Metrics (ID=value, one per line)",
-            "PI4060=45000\nOI8869=180\nOI6213=85\nOI1571=12\nOI1479=120\nOI4112=80",
-        )
+        themes = st.text_input("Impact themes (comma-separated)", "Financial Inclusion")
+        sdg_labels = st.multiselect("SDGs the company claims", sdgs,
+                                    default=[o for o in sdgs if sdg_numbers([o])[0] in (1, 5, 8, 10)])
+
+    st.markdown("**Reported metrics** — pick IRIS+ metrics by name, then type each value with its unit.")
+    defaults = {"PI4060": "45,000 clients", "OI8869": "180", "OI6213": "85", "OI1571": "12",
+                "OI1479": "120"}
+    options = metric_options(store, ids=defaults)
+    chosen = st.multiselect("Metrics", options, default=[o for o in options if metric_id(o) in defaults],
+                            placeholder="Type to search 787 IRIS+ metrics by name")
+    table = st.data_editor(
+        pd.DataFrame({"Metric": chosen, "Value": [defaults.get(metric_id(c), "") for c in chosen]}),
+        disabled=["Metric"], hide_index=True, use_container_width=True, key="metric_values",
+    )
 
     if st.button("Run Assessment", type="primary"):
         from openharness.impact.models import Company
@@ -155,14 +182,9 @@ def _company_assessment_tab():
         from openharness.impact.gap_analysis import analyze_gaps
         from openharness.impact.benchmarks import compare_to_benchmark
 
-        store = _load_store()
         theme_list = [t.strip() for t in themes.split(",") if t.strip()]
-        sdg_list = [int(x.strip()) for x in sdg_claims_str.split(",") if x.strip().isdigit()]
-        reported = {}
-        for line in metrics_str.strip().split("\n"):
-            if "=" in line:
-                k, v = line.split("=", 1)
-                reported[k.strip()] = v.strip()
+        sdg_list = sdg_numbers(sdg_labels)
+        reported = metrics_from_rows(table)
 
         company = Company(
             name=name,
@@ -357,6 +379,85 @@ def _company_assessment_tab():
         st.caption(
             f"Quadrant: {materiality[0].quadrant}; consequence: {materiality[0].disclosure_consequence}"
         )
+
+
+def _deck_assessment():
+    """Upload a deck → verdict, decision report and data downloads (no LLM needed)."""
+    import tempfile
+    from pathlib import Path
+
+    import streamlit.components.v1 as components
+
+    from openharness.dashboard.forms import sector_options
+    from openharness.impact import exports
+    from openharness.impact.pipeline import assess_file
+    from openharness.impact.report_templates.decision_report import render_decision_report
+
+    upload = st.file_uploader("Pitch deck or investment memo", type=["pdf", "docx", "md", "txt"],
+                              help="Read locally; nothing is sent to a model.")
+    c1, c2, c3 = st.columns(3)
+    name = c1.text_input("Company name (optional)", "", help="Detected from the document if empty")
+    sector = c2.selectbox("Sector", ["Detect from the document", *sector_options()])
+    geography = c3.text_input("Geography (optional)", "")
+
+    if upload is not None and st.button("Assess deck", type="primary"):
+        suffix = Path(upload.name).suffix.lower()
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / f"upload{suffix}"
+            path.write_bytes(upload.getvalue())
+            with st.spinner("Reading and scoring the document…"):
+                try:
+                    bundle = assess_file(path, name=name, geography=geography, source_label=upload.name,
+                                         sector="" if sector.startswith("Detect") else sector)
+                except ValueError as exc:
+                    st.error(f"Could not read {upload.name}: {exc}")
+                    return
+        st.session_state["deck_result"] = {"summary": bundle.summary(), "data": bundle.report_data}
+
+    result = st.session_state.get("deck_result")
+    if not result:
+        st.info("Upload a PDF, Word, Markdown or text file. Try one of the sample decks in "
+                "data/sample_decks.")
+        return
+
+    s, data = result["summary"], result["data"]
+    st.subheader(s["company"])
+    st.caption(" · ".join(x for x in (s.get("sector"), s.get("geography")) if x))
+    k1, k2, k3, k4 = st.columns(4)
+    gate = {"INSUFFICIENT EVIDENCE": "Not ready"}.get(s["gate"], s["gate"].title())
+    k1.metric("IC gate", gate, help=s["gate"].capitalize())
+    k2.metric(f"5 Dimensions · grade {s.get('five_d_grade') or '—'}", f"{s['five_d_score'] or 0:.1f} / 5")
+    k3.metric(f"Greenwashing · {(s.get('greenwashing_class') or '').lower() or '—'}",
+              f"{s['greenwashing_risk'] or 0:.0f} / 100")
+    k4.metric("Top SDGs", ", ".join(str(g["goal"]) for g in s["top_sdgs"]) or "—")
+    (st.success if "PASS" in s["gate"] else st.warning)(s["recommendation"])
+
+    v1, v2 = st.columns(2)
+    audience = v1.selectbox("Report edition", ["full", "ic", "lp", "regulator", "public"],
+                            format_func=lambda a: {"full": "Full", "ic": "Investment committee",
+                                                   "lp": "LP", "regulator": "Regulator",
+                                                   "public": "Public"}[a])
+    lang = v2.selectbox("Language", ["en", "zh-HK", "zh-CN"],
+                        format_func=lambda x: {"en": "English", "zh-HK": "繁體中文",
+                                               "zh-CN": "简体中文"}[x])
+    html = render_decision_report(data, audience=audience, lang=lang)
+
+    stem = "".join(c if c.isalnum() else "_" for c in s["company"].lower()).strip("_") or "company"
+    d1, d2, d3, d4 = st.columns(4)
+    d1.download_button("Report (HTML)", html, f"{stem}_impact_report.html", "text/html")
+    try:
+        import io
+
+        buf = io.BytesIO()
+        exports.build_workbook(data).save(buf)
+        d2.download_button("Data (Excel)", buf.getvalue(), f"{stem}_data.xlsx",
+                           "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    except ImportError:
+        d2.caption("Excel export needs openpyxl")
+    d3.download_button("Data (CSV)", exports.to_csv(data), f"{stem}_data.csv", "text/csv")
+    d4.download_button("Data (JSON)", exports.to_json(data, slim=True), f"{stem}_data.json",
+                       "application/json")
+    components.html(html, height=1500, scrolling=True)
 
 
 def _iris_catalog_tab():
