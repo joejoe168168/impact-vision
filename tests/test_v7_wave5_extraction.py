@@ -55,3 +55,15 @@ def test_llm_fallback_claims_are_not_disclosed_as_ai() -> None:
 
     prov = ai_provenance_for_report({"impact_claims": [{"text": "x", "extracted_by": "llm-fallback(no-api-key-or-empty)"}]})
     assert prov.extraction == "rules" and not prov.ai_generated
+
+
+def test_sdg_hints_accept_inflections_but_not_compounds() -> None:
+    from openharness.tools.impact.pitch_deck_analyze_tool import _detect_sdg_goals, _has_inflected
+
+    assert _has_inflected("annual emissions totalled", "emission")
+    assert _has_inflected("we are recycling plastics", "recycl")
+    assert not _has_inflected("a city landmark", "land")
+    assert not _has_inflected("group-housing units", "housing")
+    assert _detect_sdg_goals("We sourced coffee from 3,400 smallholder farmers.", []) == {2}
+    # explicit SDG references still win over keyword hints
+    assert _detect_sdg_goals("Solar for farmers, supporting SDG 7.", []) == {7}

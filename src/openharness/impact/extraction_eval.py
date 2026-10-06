@@ -25,7 +25,7 @@ from openharness.impact._paths import data_path
 
 # Blocking CI threshold for the regex extractor on the bundled gold set; raise
 # it as extraction improves (never lower it to make a regression pass).
-GATE = 0.90  # regex extractor measured 0.945 on 18 docs (2026-10-06)
+GATE = 0.95  # regex extractor measured 0.978 on 18 docs (2026-10-06)
 
 
 class EvalResult(BaseModel):

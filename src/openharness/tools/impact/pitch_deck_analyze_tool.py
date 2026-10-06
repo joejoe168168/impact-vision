@@ -469,6 +469,16 @@ def _has_term(text_lower: str, term: str) -> bool:
     return re.search(rf"(?<![\w-]){re.escape(term)}(?![\w-])", text_lower) is not None
 
 
+def _has_inflected(text_lower: str, term: str) -> bool:
+    """Like :func:`_has_term` but accepts simple inflections of the term.
+
+    "emission" matches "emissions", "job" matches "jobs" and the stem "recycl"
+    matches "recycling" / "recycled". Hyphen compounds are still refused.
+    """
+    suffix = r"(?:s|es|e|ed|ing|er|ers|able)?"  # inflections only, never compounds
+    return re.search(rf"(?<![\w-]){re.escape(term)}{suffix}(?![\w-])", text_lower) is not None
+
+
 def _detect_themes(text: str) -> list[str]:
     """Detect impact themes from document text."""
     text_lower = text.lower()
@@ -507,8 +517,9 @@ def _detect_sdg_goals(text: str, claims: list[ImpactClaim]) -> set[int]:
         return explicit
 
     theme_sdg_hints = {
-        "poverty": [1], "hunger": [2], "food": [2], "nutrition": [2],
-        "health": [3], "medical": [3], "healthcare": [3],
+        "poverty": [1], "low-income": [1], "livelihood": [1],
+        "hunger": [2], "food": [2], "nutrition": [2], "smallholder": [2], "farmer": [2],
+        "health": [3], "medical": [3], "healthcare": [3], "patient": [3], "clinic": [3],
         "education": [4], "learning": [4], "school": [4],
         "gender": [5], "women": [5], "girl": [5],
         "water": [6], "sanitation": [6],
@@ -518,13 +529,14 @@ def _detect_sdg_goals(text: str, claims: list[ImpactClaim]) -> set[int]:
         "inequality": [10], "inclusion": [10],
         "urban": [11], "city": [11], "housing": [11],
         "waste": [12], "circular": [12], "recycl": [12],
-        "climate": [13], "carbon": [13], "emission": [13],
+        "climate": [13], "carbon": [13], "emission": [13], "net zero": [13], "net-zero": [13],
+        "ghg": [13], "co2": [13], "co2e": [13],
         "ocean": [14], "marine": [14],
         "forest": [15], "biodiversity": [15], "land": [15],
     }
     text_lower = text.lower()
     for keyword, sdg_list in theme_sdg_hints.items():
-        if _has_term(text_lower, keyword):
+        if _has_inflected(text_lower, keyword):
             goals.update(sdg_list)
 
     for claim in claims:
