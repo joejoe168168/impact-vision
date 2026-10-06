@@ -108,6 +108,23 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
     PATH help moved to `docs/install-troubleshooting.md`).
   - Retired the classic-report screenshots and `docs/screenshots/`.
   - `examples/sample_impact_report.html` is now a decision-first report.
+- **Accessibility & responsive QA in CI (W2.7).** New `tests/visual` runs
+  every deliverable in Chromium: impact report (all audiences, zh-HK, zh-CN,
+  dark), IC memo, DD report, investee portal and gallery.
+  - axe-core must report no serious or critical violations, in light and dark.
+  - There must be no horizontal scrolling at 390, 1024 and 1440 px.
+  - The tests skip locally without Playwright and run in the new
+    `report-qa` CI job.
+
+  Fixes the checks found:
+  - SDG pills use a colour swatch with neutral text, and numeric SDG badges
+    use large text with black or white ink chosen per colour (white failed
+    on SDGs 2, 6, 7, 11, 12 and 15).
+  - Footer links are underlined in the link colour, and dark-mode red text
+    uses the text-safe red.
+  - The duplicate `<main>` landmark is gone from the IC memo and DD report.
+  - Gallery navigation is labelled.
+  - Wide tables scroll inside themselves on phones.
 - **Browser chat polish.**
   - A friendly setup card replaces the red monospace "No API credentials"
     error, and points to the offline `demo` / `assess` commands.

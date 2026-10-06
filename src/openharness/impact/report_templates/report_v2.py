@@ -44,7 +44,7 @@ REPORT_CSS_V2 = r"""
   --accent: var(--series-1); --accent-light: var(--series-1-wash);
   --success: var(--good); --success-light: var(--good-wash); --success-dark: var(--good-ink);
   --warning: var(--warning); --warning-light: var(--warning-wash); --warning-dark: var(--warning-ink);
-  --danger: var(--critical); --danger-light: var(--critical-wash); --danger-dark: var(--critical-ink);
+  --danger: var(--critical-ink); --danger-light: var(--critical-wash); --danger-dark: var(--critical-ink);
   --neutral: var(--ink-2); --neutral-light: var(--surface-2);
   --bg: var(--page);
   --text: var(--ink); --text-secondary: var(--ink-2); --text-muted: var(--muted);
@@ -85,7 +85,7 @@ aside.toc a {
 aside.toc a:hover, aside.toc a.active {
   color: var(--primary); background: var(--primary-light); border-left-color: var(--primary);
 }
-main { min-width: 0; }
+main, .memo-main { min-width: 0; }
 
 /* ---------- Header (masthead, same as the decision report) ---------- */
 .report-hero {
@@ -109,6 +109,14 @@ main { min-width: 0; }
   border: 1px solid var(--border);
   padding: 3px 11px; border-radius: var(--radius-pill); font-size: 0.78em; font-weight: 500;
 }
+
+.tag.sdg-tag { display: inline-flex; align-items: center; gap: 6px; }
+/* Wide tables scroll inside themselves on phones instead of widening the page. */
+@media (max-width: 760px) {
+  table.data, section.card table { display: block; max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+}
+.sdg-dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+@media print { .sdg-dot { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
 
 /* ---------- KPI strip ---------- */
 .kpi-strip {
@@ -231,13 +239,13 @@ table.data tbody tr:hover td { background: var(--primary-light); }
   margin-top: 40px; padding: 18px 0; border-top: 1px solid var(--border);
   color: var(--text-muted); font-size: 0.8em; text-align: center;
 }
-.footer a { color: var(--accent); text-decoration: none; }
+.footer a { color: var(--link); text-decoration: underline; }
 .footer a:hover { text-decoration: underline; }
 
 /* ---------- Accessibility (WCAG 2.2 AA) ---------- */
 .skip-link {
   position: absolute; left: -9999px; top: 0; z-index: 1000;
-  background: var(--primary); color: #fff; padding: 10px 16px;
+  background: var(--primary); color: var(--brand-ink); padding: 10px 16px;
   border-radius: 0 0 var(--radius-sm) 0; font-weight: 600; text-decoration: none;
 }
 .skip-link:focus { left: 0; }
@@ -477,11 +485,25 @@ def wrap_document(
     )
 
 
+def _luminance(hex_colour: str) -> float:
+    h = hex_colour.lstrip("#")
+    r, g, b = (int(h[i:i + 2], 16) / 255 for i in (0, 2, 4))
+    lin = [c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4 for c in (r, g, b)]
+    return 0.2126 * lin[0] + 0.7152 * lin[1] + 0.0722 * lin[2]
+
+
+def sdg_text_colour(goal: int) -> str:
+    """Ink that clears contrast on the official SDG colour (white fails on 2, 6, 7, 11, 12, 15)."""
+    lum = _luminance(SDG_COLORS.get(goal, "#666666"))
+    return "#ffffff" if (1.05 / (lum + 0.05)) >= (lum + 0.05) / 0.05 else "#0b0b0b"
+
+
 def sdg_swatch(goal: int, score: float | None = None) -> str:
     """Small pill showing SDG number in the official UN colour."""
     colour = SDG_COLORS.get(goal, "#666")
     score_suffix = f" · {score:.0f}/100" if score is not None else ""
     return (
-        f'<span class="tag" style="background:{colour};color:#fff">'
+        '<span class="tag sdg-tag">'
+        f'<span class="sdg-dot" style="background:{colour}" aria-hidden="true"></span>'
         f'SDG {goal}{score_suffix}</span>'
     )

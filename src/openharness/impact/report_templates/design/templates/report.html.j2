@@ -60,7 +60,7 @@
   <div class="tile">
     <p class="label">{{ k.label }}</p>
     {% if k.badge %}
-    <p class="value"><span class="sdg-badge" style="background:{{ k.badge.color }}">{{ k.badge.goal }}</span>SDG {{ k.badge.goal }}</p>
+    <p class="value"><span class="sdg-badge" style="background:{{ k.badge.color }};color:{{ k.badge.ink }}">{{ k.badge.goal }}</span>SDG {{ k.badge.goal }}</p>
     {% else %}
     <p class="value">{{ k.value }}{% if k.unit %}<small>{{ k.unit }}</small>{% endif %}</p>
     {% endif %}

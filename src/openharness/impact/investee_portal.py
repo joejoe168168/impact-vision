@@ -238,7 +238,7 @@ fieldset.portal-section>legend{font-weight:700;font-size:1.1rem;padding:0 8px;}
 .portal-q .field-error{color:#c62828;font-size:0.82em;margin-top:4px;display:none;}
 .portal-q.invalid input,.portal-q.invalid select,.portal-q.invalid textarea{border-color:#c62828;}
 .portal-actions{margin:24px 0;display:flex;gap:12px;flex-wrap:wrap;align-items:center;}
-.portal-btn{background:var(--primary,#1565c0);color:#fff;border:none;padding:10px 20px;border-radius:8px;
+.portal-btn{background:var(--primary,#1565c0);color:var(--brand-ink,#fff);border:none;padding:10px 20px;border-radius:8px;
   font-weight:600;cursor:pointer;}
 .portal-btn.secondary{background:#fff;color:var(--primary,#1565c0);border:1px solid var(--primary,#1565c0);}
 #portal-status{font-size:0.9em;}

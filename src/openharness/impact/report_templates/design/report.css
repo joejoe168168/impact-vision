@@ -137,9 +137,8 @@ details > summary { cursor: pointer; color: var(--link); font-size: 0.88rem; }
 .meter .fill.good { background: var(--good); } .meter .fill.warning { background: var(--warning); }
 .meter .fill.critical { background: var(--critical); }
 .meter .tick { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--ink-2); }
-.tile .sdg-badge { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 8px;
-  color: #fff; font-weight: 800; font-size: 0.95rem; margin-right: 8px; vertical-align: -4px;
-  text-shadow: 0 1px 1px rgba(0,0,0,0.35); }
+.tile .sdg-badge { display: inline-grid; place-items: center; width: 36px; height: 36px; border-radius: 8px;
+  font-weight: 800; font-size: 1.2rem; margin-right: 8px; vertical-align: -4px; }
 .mix { display: flex; height: 8px; gap: 2px; margin: 10px 0 6px; }
 .mix span { border-radius: 2px; min-width: 6px; }
 .lvl-1 { background: var(--lvl-1); } .lvl-2 { background: var(--lvl-2); } .lvl-3 { background: var(--lvl-3); }
@@ -162,7 +161,7 @@ details > summary { cursor: pointer; color: var(--link); font-size: 0.88rem; }
   box-shadow: inset 0 0 0 1px var(--border); position: relative; }
 .wheel-legend .lbar .track span { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; background: var(--series-1); }
 .wheel-legend .lbar b { text-align: right; font-variant-numeric: tabular-nums; }
-.wheel text { font: 700 11px var(--font); fill: #fff; }
+.wheel text { font: 800 13px var(--font); }
 .wheel .center-num { font: 750 30px var(--font); fill: var(--ink); }
 .wheel .center-lbl { font: 500 11px var(--font); fill: var(--ink-2); }
 .wheel-legend { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; font-size: 0.86rem; }

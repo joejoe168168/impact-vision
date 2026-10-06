@@ -85,3 +85,18 @@ jobs:
       - name: Smoke-test bundled data from outside the repo
         working-directory: /tmp
         run: /tmp/wheel-venv/bin/python "$GITHUB_WORKSPACE/scripts/wheel_smoke.py"
+
+  report-qa:
+    name: Report accessibility & layout QA
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Install with PDF + browser tooling
+        run: |
+          pip install -e ".[dev,pdf]" axe-playwright-python
+          python -m playwright install --with-deps chromium
+      - name: axe-core + responsive checks (390 / 1024 / 1440 px, light & dark)
+        run: pytest tests/visual -q --tb=short

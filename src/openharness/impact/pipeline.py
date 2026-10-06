@@ -400,7 +400,7 @@ def write_gallery(
         design_css,
         monogram,
     )
-    from openharness.impact.report_templates.report_v2 import SDG_COLORS
+    from openharness.impact.report_templates.report_v2 import SDG_COLORS, sdg_text_colour
 
     out = Path(out_dir)
     cards = []
@@ -436,7 +436,8 @@ def write_gallery(
             "five_d_pct": (s["five_d_score"] or 0) / 5 * 100,
             "gw": f"{gw:.0f}",
             "gw_tone": "good" if gw < 40 else "warning" if gw < 60 else "critical",
-            "sdgs": [{"goal": g["goal"], "color": SDG_COLORS.get(g["goal"], "#888")} for g in s["top_sdgs"]],
+            "sdgs": [{"goal": g["goal"], "color": SDG_COLORS.get(g["goal"], "#888"),
+                      "ink": sdg_text_colour(g["goal"])} for g in s["top_sdgs"]],
             "sdg_text": ", ".join(str(g["goal"]) for g in s["top_sdgs"]) or "—",
             "claims": s["claims"],
             "metrics": len(s["reported_metrics"]),

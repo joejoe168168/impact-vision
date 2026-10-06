@@ -619,7 +619,7 @@ def render_dd_questionnaire_html(
         extra_css +
         '<div class="page">'
         f'{toc}'
-        '<main>'
+        '<div class="memo-main">'
         f'{hero}'
         f'{render_kpi_strip(kpis)}'
         f'{risk_html}'
@@ -630,7 +630,7 @@ def render_dd_questionnaire_html(
         f'{addressed_html}'
         f'{legend_html}'
         f'{render_footer("DD Questionnaire Helper — review with the investment team before sending.")}'
-        '</main>'
+        '</div>'
         '</div>'
     )
 

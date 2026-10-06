@@ -20,8 +20,8 @@
 .links a:hover { border-color: var(--link); color: var(--link); }
 .links .kind { font-size: 0.68rem; font-weight: 700; color: var(--ink-2); background: var(--surface); border-radius: 4px; padding: 0 4px; }
 .links-label { font-size: 0.75rem; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 6px; }
-.gstat .sdg-badge { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 6px; color: #fff;
-  font-weight: 800; font-size: 0.8rem; margin-right: 4px; text-shadow: 0 1px 1px rgba(0,0,0,.35); }
+.gstat .sdg-badge { display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: 7px; 
+  font-weight: 800; font-size: 1.2rem; margin-right: 4px; }
 .hero-intro { margin: 0 0 24px; max-width: 70ch; color: var(--ink-2); }
 </style>
 </head>
@@ -51,13 +51,13 @@
         <div class="meter" aria-hidden="true"><div class="fill" style="width:{{ c.five_d_pct }}%"></div></div></div>
       <div class="gstat"><p class="label">Greenwashing risk</p><p class="value big">{{ c.gw }}<small class="muted">/100</small></p>
         <div class="meter" aria-hidden="true"><div class="fill {{ c.gw_tone }}" style="width:{{ c.gw }}%"></div><div class="tick" style="left:60%"></div></div></div>
-      <div class="gstat"><p class="label">Top SDGs</p><p class="value">{% for g in c.sdgs %}<span class="sdg-badge" style="background:{{ g.color }}" title="SDG {{ g.goal }}">{{ g.goal }}</span>{% endfor %}</p></div>
+      <div class="gstat"><p class="label">Top SDGs</p><p class="value">{% for g in c.sdgs %}<span class="sdg-badge" style="background:{{ g.color }};color:{{ g.ink }}" title="SDG {{ g.goal }}">{{ g.goal }}</span>{% endfor %}</p></div>
       <div class="gstat"><p class="label">Evidence</p><p class="value">{{ c.claims }} claims · {{ c.metrics }} metrics</p></div>
     </div>
     {% for group in c.groups %}
     <div>
       <p class="links-label">{{ group.label }}</p>
-      <nav class="links">{% for l in group.links %}<a href="{{ l.href }}"><span class="kind">{{ l.kind }}</span>{{ l.label }}</a>{% endfor %}</nav>
+      <nav class="links" aria-label="{{ c.company }} — {{ group.label }}">{% for l in group.links %}<a href="{{ l.href }}"><span class="kind">{{ l.kind }}</span>{{ l.label }}</a>{% endfor %}</nav>
     </div>
     {% endfor %}
   </article>

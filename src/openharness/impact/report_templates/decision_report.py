@@ -25,7 +25,7 @@ from openharness.impact.report_templates.design.strings import (
     normalize_lang,
     translator,
 )
-from openharness.impact.report_templates.report_v2 import SDG_COLORS
+from openharness.impact.report_templates.report_v2 import SDG_COLORS, sdg_text_colour
 
 _DESIGN = Path(__file__).resolve().parent / "design"
 
@@ -280,7 +280,7 @@ def sdg_wheel_svg(material: list[dict[str, Any]], *, center_label: str, title: s
         parts.append(f'<path d="{d}" fill="{fill}"><title>{escape(label)}</title></path>')
         am = (a0 + a1) / 2
         tx, ty = cx + 93 * math.cos(am), cy + 93 * math.sin(am)
-        color = "#fff" if g else "var(--muted)"
+        color = sdg_text_colour(goal) if g else "var(--muted)"
         parts.append(
             f'<text x="{tx:.1f}" y="{ty:.1f}" text-anchor="middle" dominant-baseline="central" '
             f'style="fill:{color}" aria-hidden="true">{goal}</text>'
@@ -384,6 +384,7 @@ def _sdg(data: dict[str, Any], lang: str = "en") -> dict[str, Any]:
         "confidence": a.get("confidence", "low"),
         "metrics": a.get("matched_metrics", [])[:6],
         "color": SDG_COLORS.get(int(a["goal"]), "#888888"),
+        "ink": sdg_text_colour(int(a["goal"])),
     }
     return {"material": [to_row(a) for a in material[:8]], "other": [int(a["goal"]) for a in other]}
 

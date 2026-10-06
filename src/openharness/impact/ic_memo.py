@@ -727,7 +727,7 @@ def render_ic_memo_html(
     body = (
         '<div class="page">'
         f"{toc}"
-        "<main>"
+        '<div class="memo-main">'
         f"{hero}"
         f"{render_kpi_strip(kpis)}"
         f"{''.join(thesis_html)}"
@@ -739,7 +739,7 @@ def render_ic_memo_html(
         f"{rec_html}"
         f"{proof_html}"
         f"{render_footer('Review before submission. Not investment advice.')}"
-        "</main>"
+        "</div>"
         "</div>"
     )
     return wrap_document(
