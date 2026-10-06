@@ -87,6 +87,32 @@ app.add_typer(framework_app)
 app.add_typer(dd_app)
 
 
+# ---- dashboard: Streamlit portfolio dashboard ----
+
+
+@app.command("dashboard")
+def dashboard_cmd(
+    port: int = typer.Option(8501, "--port", help="Port for the Streamlit server"),
+) -> None:
+    """Launch the Streamlit portfolio dashboard (needs the [dashboard] extra)."""
+    import importlib.util
+    import subprocess
+
+    if importlib.util.find_spec("streamlit") is None:
+        print(
+            "The dashboard needs Streamlit. Install it with: "
+            "pip install 'impact-vision[dashboard]'",
+            file=sys.stderr,
+        )
+        raise typer.Exit(1)
+    app_path = Path(__file__).resolve().parent / "dashboard" / "app.py"
+    raise typer.Exit(
+        subprocess.call(
+            [sys.executable, "-m", "streamlit", "run", str(app_path), "--server.port", str(port)]
+        )
+    )
+
+
 # ---- assess / demo: one document in, deliverables out (no API key) ----
 
 
@@ -239,16 +265,16 @@ def serve_web(
     Set ``IMPACT_VISION_API_KEY`` before launching to require a bearer token
     on every request, including the chat WebSocket handshake.
     """
-    try:
-        import uvicorn  # type: ignore
-    except ImportError as exc:  # pragma: no cover
+    import importlib.util
+
+    if any(importlib.util.find_spec(mod) is None for mod in ("fastapi", "uvicorn", "multipart")):
         print(
-            "uvicorn is required to run the web console. "
-            "Install with: pip install 'impact-vision[web]' or "
-            "'pip install uvicorn fastapi'.",
+            "The browser chat needs the web extra. Install it with: "
+            "pip install 'impact-vision[web]'",
             file=sys.stderr,
         )
-        raise typer.Exit(1) from exc
+        raise typer.Exit(1)
+    import uvicorn  # type: ignore
 
     if workspace:
         target = Path(workspace).expanduser().resolve()

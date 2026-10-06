@@ -128,6 +128,16 @@ async def launch_react_tui(
     if not package_json.exists():
         raise RuntimeError(f"React terminal frontend is missing: {package_json}")
 
+    if shutil.which("npm") is None:
+        raise SystemExit(
+            "The interactive terminal agent needs Node.js 20+ (it runs a small React UI).\n"
+            "Install Node.js from https://nodejs.org, then run impact-vision again.\n\n"
+            "No Node.js? These work without it:\n"
+            "  impact-vision demo                 # sample reports, no setup\n"
+            "  impact-vision assess deck.pdf      # assess your own deck\n"
+            "  impact-vision serve-web            # browser chat (pip install 'impact-vision[web]')\n"
+            "  impact-vision -p \"your question\"   # one-shot agent answer"
+        )
     npm = _resolve_npm()
 
     if not (frontend_dir / "node_modules").exists():

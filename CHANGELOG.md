@@ -75,6 +75,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
   The old names stay registered for one release as `[Deprecated: …]` aliases
   in the `developer` profile only. Impact tools: 53 → 48; fund profile:
   62 → 57.
+- **Lean install with extras (W1.6).** Streamlit, pandas, Plotly
+  (dashboard), FastAPI/uvicorn/python-multipart (web) and Textual (legacy
+  TUI) are now extras: `[web]`, `[dashboard]`, `[tui]`, `[office]`
+  (python-docx / python-pptx) and `[all]`. `[dev]` includes `[all]`. The core
+  install runs `demo`, `assess`, reports and the agent. `serve-web` and the
+  new `impact-vision dashboard` command print the extra to install instead
+  of a traceback. Without Node.js, the interactive terminal agent now
+  explains the requirement and lists alternatives instead of crashing in
+  `npm install`. The README lists Node.js as a prerequisite for the
+  terminal agent, documents the extras, and drops the NaxtClaude proxy from
+  the default provider table.
 
 ### Security
 

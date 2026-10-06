@@ -67,14 +67,17 @@ Key concepts Impact Vision helps with:
 
 ### 1. Prerequisites
 
-You need **Python 3.11+** and **Git**. Check if they're installed:
+You need **Python 3.11+** and **Git**. The interactive terminal agent
+(`impact-vision` with no arguments) also needs **Node.js 20+**; `demo`,
+`assess`, the browser chat and the other CLI commands don't.
 
 ```bash
 python --version    # should show 3.11 or higher
 git --version       # any recent version
+node --version      # only for the interactive terminal agent
 ```
 
-If not installed: [Python](https://www.python.org/downloads/) | [Git](https://git-scm.com/downloads)
+If not installed: [Python](https://www.python.org/downloads/) | [Git](https://git-scm.com/downloads) | [Node.js](https://nodejs.org)
 
 ### 2. Clone and install
 
@@ -94,11 +97,16 @@ python -m venv .venv
 # Mac/Linux:           source .venv/bin/activate
 ```
 
-Install the package:
+Install the package (`dev` includes every optional extra plus the test tools):
 
 ```bash
 pip install -e ".[dev]"
 ```
+
+The core install is enough for `demo`, `assess`, reports and the agent.
+Optional extras add the other surfaces: `[web]` (browser chat + REST API),
+`[dashboard]` (Streamlit), `[office]` (Word/PowerPoint exports), `[tui]`,
+or `[all]`. For example: `pip install -e ".[web,office]"`.
 
 > **`'impact-vision' is not recognized`?** Run the auto-fix script:
 >
@@ -137,19 +145,11 @@ impact-vision setup
 | OpenRouter | OpenAI-Compatible API | Trying multiple hosted models, including free tiers |
 | Anthropic | Anthropic-Compatible API | Highest-quality production impact analysis |
 | OpenAI | OpenAI-Compatible API | General-purpose hosted analysis |
-| NaxtClaude | `impact-vision provider use naxtclaude` | OpenAI-compatible Claude endpoint |
 | Ollama | `impact-vision ollama-setup --model llama3.2` | Local, private, offline analysis |
 
 For hosted providers, select a model with reliable function/tool calling and
 enough context for the documents you analyze. Local Ollama needs no API key;
 the other providers require a credential from their service.
-
-To configure the NaxtClaude profile explicitly:
-
-```bash
-impact-vision auth login naxtclaude
-impact-vision provider edit naxtclaude --model claude-sonnet-4-6
-```
 
 ### 4. Start the AI agent
 
@@ -224,7 +224,8 @@ impact-vision catalog stats   # Verify metric count
 ### 7. Launch the dashboard (optional)
 
 ```bash
-streamlit run src/openharness/dashboard/app.py
+pip install -e ".[dashboard]"   # already included in [dev]
+impact-vision dashboard
 ```
 
 Opens the six-tab dashboard at http://localhost:8501. `iv` is shorthand for
@@ -459,7 +460,7 @@ impact-vision -p "Search IRIS+ catalog for climate-related metrics"
 ## CLI Reference
 
 `impact-vision` (or the `iv` shorthand) exposes seven top-level
-subcommand groups, two quickstart commands and three service commands. Run any command with
+subcommand groups, two quickstart commands and four service commands. Run any command with
 `--help` for full flags.
 
 ```bash
@@ -497,6 +498,7 @@ impact-vision dd analyze "text or /path/to/doc.txt"
 impact-vision serve-mcp                                  # MCP server (stdio)
 impact-vision serve-mcp --transport sse --port 8765      # MCP over SSE
 impact-vision serve-web                                  # Chat UI + tool console + REST API (http://127.0.0.1:8787)
+impact-vision dashboard [--port 8501]                    # Streamlit portfolio dashboard ([dashboard] extra)
 
 # Developer utilities
 impact-vision mcp      list | add | remove               # Manage MCP server configs
