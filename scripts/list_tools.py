@@ -11,6 +11,7 @@ def main() -> None:
         tool
         for tool in create_default_tool_registry().list_tools()
         if type(tool).__module__.startswith("openharness.tools.impact.")
+        and not getattr(tool, "deprecated_for", None)  # merged-tool aliases
     ]
     print(f"Impact tools: {len(tools)}\n")
     print("| Tool | Description |")

@@ -130,7 +130,11 @@ def test_registry() -> bool:
             print(f"WARNING: essential tools missing from registry: {missing}")
             return False
         impact_tools = [
-            tool for tool in tools if type(tool).__module__.startswith("openharness.tools.impact.")
+            tool
+            for tool in tools
+            if type(tool).__module__.startswith("openharness.tools.impact.")
+            # One-release aliases for merged tools are registered but not exported.
+            and not getattr(tool, "deprecated_for", None)
         ]
         if len(impact_exports) != len(impact_tools):
             print(
