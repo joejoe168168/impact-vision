@@ -22,6 +22,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ### Fixed — v7 Wave 0 trust fixes (see `docs/roadmap-v7.md` §4)
 
+- **Pitch-deck front door (W0.11).** `pitch_deck_analyze` named the pig-farm
+  company "Pig" (from the filename), detected its sector as *education*
+  (one mention of "school attendance"), added Affordable Housing / SDG 4 / 11
+  ("slatted housing", "school") and routed ESG modules on "the, of, and, to".
+  Names now come from legal-entity suffixes or the opening "X is a …"
+  sentence. Sectors are scored by whole-word frequency, with the opening text
+  counting double. Themes and SDG hints match whole words only (no hyphen
+  compounds). Explicit SDG lists ("SDG 2/6/7/8/12/13", "SDGs 1, 5 and 8") are
+  parsed and, when present, are the claims. ESG toolbox routing ignores
+  stop-words and generic tags, and CBAM tools require a CBAM good
+  (steel, cement, aluminium, …), not just "tCO2e" and "EU".
 - **Pitch numbers reach the scoring engines (W0.10).** New
   `impact.claim_metric_mapper` maps quantities in extracted claims to IRIS+
   IDs using conservative, data-driven rules (`data/claim_metric_map.yaml`):

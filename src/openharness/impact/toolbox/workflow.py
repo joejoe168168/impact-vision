@@ -67,6 +67,17 @@ class ToolboxWorkflowResult(BaseModel):
     next_questions: list[str] = Field(default_factory=list)
 
 
+# Tools that only apply when one of these terms is present. Generic carbon
+# vocabulary (tCO2e, MWh, "EU") otherwise sends every company with an emissions
+# figure to the CBAM steel calculator.
+_CBAM_GOODS = ("cbam", "carbon border", "cement", "iron", "steel", "aluminium", "aluminum",
+               "fertilizer", "fertiliser", "hydrogen")
+_TOOL_REQUIRED_TERMS: dict[str, tuple[str, ...]] = {
+    "cbam": _CBAM_GOODS,
+    "cbam-export": (*_CBAM_GOODS, "cn code", "hs code", "customs"),
+    "cbam-steel": ("cbam", "steel", "iron", "aluminium", "aluminum"),
+}
+
 _TOOL_ROUTE_TERMS: dict[str, list[str]] = {
     "ghg": ["scope 1", "scope 2", "ghg", "greenhouse", "emission", "carbon inventory"],
     "carbon-calculator": ["manufacturing", "factory", "electricity", "fuel", "scope 3", "carbon footprint"],
@@ -191,6 +202,9 @@ def build_esg_workflow(
     scored: list[tuple[int, ToolboxToolSpec, list[str], ToolboxAssessmentResult]] = []
     category_filter = None if category in ("", "all") else category
     for tool in list_toolbox_tools(category_filter):
+        anchors = _TOOL_REQUIRED_TERMS.get(tool.tool_id)
+        if anchors and not include_low_score and not any(_term_in(context, t) for t in anchors):
+            continue  # e.g. CBAM needs a CBAM good, not just "tCO2e" and "EU"
         route_terms = _TOOL_ROUTE_TERMS.get(tool.tool_id, [])
         matched_terms = _matched_terms(context, [*route_terms, *tool.tags, *tool.aliases, *tool.source_tags])
         category_score = _category_score(tool.categories, context, reported_metrics or {})
@@ -396,12 +410,33 @@ def _context_text(**values: Any) -> str:
     return " ".join(parts).lower()
 
 
+# Scraped toolbox tags include stop-words and generic words ("the", "of",
+# "data", "code"); matching on them routed a pig farm to CBAM steel tools.
+_NON_ROUTING_TERMS = frozenset({
+    "a", "an", "and", "are", "as", "at", "by", "for", "from", "in", "is", "it", "of", "on",
+    "or", "the", "to", "vs", "with", "all", "add", "ask", "due", "key", "new", "see", "use",
+    "way", "law", "red", "code", "data", "category", "criteria", "standard", "green",
+    "climate", "e.g", "pdf", "faq", "org", "co", "id", "pre", "q1", "above", "below",
+    "derived", "tier", "level", "type", "total", "other", "general",
+})
+# Two-letter terms are only meaningful as jurisdiction codes.
+_SHORT_ROUTING_TERMS = frozenset({"eu", "uk", "hk", "cn", "us", "ai"})
+
+
+def _is_routing_term(term: str) -> bool:
+    if term in _NON_ROUTING_TERMS:
+        return False
+    if len(term) <= 2:
+        return term in _SHORT_ROUTING_TERMS
+    return True
+
+
 def _matched_terms(context: str, terms: list[str]) -> list[str]:
     out: list[str] = []
     seen: set[str] = set()
     for raw in terms:
         term = " ".join(str(raw).lower().replace("_", " ").replace("-", " ").split())
-        if not term or term in seen:
+        if not term or term in seen or not _is_routing_term(term):
             continue
         pattern = r"\b" + re.escape(term).replace(r"\ ", r"\s+") + r"\b"
         if re.search(pattern, context):

@@ -157,6 +157,8 @@ themes/SDGs (Affordable Housing, SDG 4/11), and routes ESG modules on
 stop-words ("the, of, and, to"). Sector/theme detection needs the same
 word-boundary + weighting treatment as W0.3.
 
+**Wave 0 complete (2026-10-06):** W0.1–W0.11 are done and merged to `main`.
+
 ### Wave 1 — Effortless first run (weeks 3–7)
 
 | ID | Item | Extends | Effort |

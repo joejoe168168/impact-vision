@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from pathlib import Path
 
 from pydantic import BaseModel, Field
@@ -35,9 +36,16 @@ SECTOR_THEME_MAP = {
     "energy": ["Clean Energy", "Energy Access", "Renewable Energy"],
     "solar": ["Clean Energy", "Energy Access"],
     "agriculture": ["Smallholder Agriculture", "Food Security"],
+    "agricultural": ["Smallholder Agriculture", "Food Security"],
+    "smallholder": ["Smallholder Agriculture"],
+    "livestock": ["Smallholder Agriculture", "Food Security"],
+    "biogas": ["Renewable Energy"],
     "water": ["Water", "Sustainable Water Management"],
-    "housing": ["Affordable Housing"],
+    # "housing" alone matched pig pens ("slatted housing", "group-housing").
+    "affordable housing": ["Affordable Housing"],
+    "social housing": ["Affordable Housing"],
     "climate": ["Climate Mitigation", "Climate Adaptation"],
+    "emissions": ["Climate Mitigation"],
 }
 
 
@@ -451,28 +459,52 @@ def _extract_impact_claims(page_texts: list[dict], store) -> list[ImpactClaim]:
     return claims[:30]
 
 
+def _has_term(text_lower: str, term: str) -> bool:
+    """Whole-word match that also refuses hyphen compounds.
+
+    "housing" must not fire on "group-housing", nor "school" on
+    "pre-school-age" style compounds — those produced Affordable Housing /
+    SDG 11 themes for a pig farm.
+    """
+    return re.search(rf"(?<![\w-]){re.escape(term)}(?![\w-])", text_lower) is not None
+
+
 def _detect_themes(text: str) -> list[str]:
     """Detect impact themes from document text."""
     text_lower = text.lower()
     themes: list[str] = []
     for keyword, theme_list in SECTOR_THEME_MAP.items():
-        if keyword in text_lower:
+        if _has_term(text_lower, keyword):
             for t in theme_list:
                 if t not in themes:
                     themes.append(t)
     return themes
 
 
+_SDG_LIST_RE = re.compile(
+    r"\bSDGs?\s*#?\s*(\d{1,2}(?:\s*(?:[/,&+]|and|\.)\s*\d{1,2})*)", re.IGNORECASE
+)
+
+
+def _explicit_sdg_refs(text: str) -> set[int]:
+    """Goals explicitly referenced, including lists like "SDG 2/6/7" or "SDGs 1, 5 and 8"."""
+    goals: set[int] = set()
+    for match in _SDG_LIST_RE.finditer(text):
+        for num in re.findall(r"\d{1,2}", match.group(1)):
+            if 1 <= int(num) <= 17:
+                goals.add(int(num))
+    return goals
+
+
 def _detect_sdg_goals(text: str, claims: list[ImpactClaim]) -> set[int]:
     """Detect SDG goals from explicit references and claim mappings."""
-    import re
     goals: set[int] = set()
 
-    sdg_refs = re.findall(r'SDG\s*(\d{1,2})', text, re.IGNORECASE)
-    for ref in sdg_refs:
-        num = int(ref)
-        if 1 <= num <= 17:
-            goals.add(num)
+    explicit = _explicit_sdg_refs(text)
+    if explicit:
+        # The document states its SDGs ("SDG 2/6/7/8/12/13"): those are the
+        # claims. Keyword hints would only add goals the company never claimed.
+        return explicit
 
     theme_sdg_hints = {
         "poverty": [1], "hunger": [2], "food": [2], "nutrition": [2],
@@ -492,7 +524,7 @@ def _detect_sdg_goals(text: str, claims: list[ImpactClaim]) -> set[int]:
     }
     text_lower = text.lower()
     for keyword, sdg_list in theme_sdg_hints.items():
-        if keyword in text_lower:
+        if _has_term(text_lower, keyword):
             goals.update(sdg_list)
 
     for claim in claims:
@@ -623,6 +655,10 @@ def _extract_company_model(
     name_patterns = [
         r'(?:Company|Firm|Organization|Fund|Venture|Startup)\s*(?:Name|:)\s*[:\-]?\s*([A-Z][A-Za-z\s&\.]{2,30})',
         r'^([A-Z][A-Za-z\s&\.]{2,25})(?:\s*[-–—|]\s*(?:Pitch|Investor|Impact))',
+        # Legal-entity suffix anywhere near the top: "Kampung Makmur Sdn Bhd".
+        r"\b((?:[A-Z][\w&'.-]*\s+){0,5}(?:Sdn\.?\s*Bhd|Pte\.?\s*Ltd|Ltd|Limited|Inc|LLC|PLC|GmbH|S\.A\.|Co\.,?\s*Ltd)\.?)",
+        # Opening sentence: "Kampung Makmur is a 3,000-sow integrated pig farm".
+        r"^\s*((?:[A-Z][\w&'.-]*)(?:\s+[A-Z][\w&'.-]*){0,5})\s+(?:is|are)\s+(?:a|an|the)\b",
     ]
     for pat in name_patterns:
         match = re.search(pat, text[:2000], re.MULTILINE)
@@ -654,27 +690,49 @@ def _extract_company_model(
     )
 
 
+_SECTOR_KEYWORDS: dict[str, tuple[str, ...]] = {
+    "Financial Services": ("fintech", "microfinance", "banking", "lending", "loan", "loans",
+                           "borrower", "borrowers", "insurance", "payment", "payments", "credit"),
+    "Healthcare": ("health", "healthcare", "medical", "pharmaceutical", "clinic", "clinics",
+                   "hospital", "telemedicine", "patient", "patients"),
+    "Education": ("education", "edtech", "school", "schools", "university", "learning",
+                  "student", "students", "teacher", "teachers", "curriculum"),
+    "Agriculture": ("agriculture", "agricultural", "agritech", "farming", "farm", "farms",
+                    "farmer", "farmers", "smallholder", "smallholders", "crop", "crops",
+                    "livestock", "pig", "pigs", "swine", "piggery", "piggeries", "hog", "hogs",
+                    "sow", "sows", "poultry", "cattle", "dairy", "outgrower", "harvest",
+                    "veterinary", "feed"),
+    "Energy": ("energy", "solar", "wind", "renewable", "electricity", "cleantech", "mini-grid",
+               "off-grid", "grid"),
+    "Technology": ("software", "saas", "app", "digital", "technology", "platform"),
+    "Real Estate": ("real estate", "property", "affordable housing", "construction",
+                    "housing units"),
+    "Water & Sanitation": ("sanitation", "drinking water", "water treatment", "wash",
+                           "wastewater", "water utility"),
+    "Transportation": ("transport", "mobility", "logistics", "fleet"),
+    "Food & Beverage": ("food", "nutrition", "beverage", "restaurant", "meal"),
+}
+
+
 def _detect_sector(text: str) -> str:
-    """Detect company sector from document text."""
+    """Detect company sector from document text.
+
+    Scores whole-word occurrences per sector (the opening 400 characters, which
+    usually say what the company *is*, count double). Previously each keyword
+    counted once as a substring, so one mention of "school attendance" made a
+    pig farm an education company.
+    """
     text_lower = text.lower()
-    sector_keywords = {
-        "Financial Services": ["fintech", "microfinance", "banking", "lending", "insurance", "payment"],
-        "Healthcare": ["health", "medical", "pharmaceutical", "clinic", "hospital", "telemedicine"],
-        "Education": ["education", "edtech", "school", "university", "learning", "training platform"],
-        "Agriculture": ["agriculture", "agritech", "farming", "smallholder", "crop", "livestock"],
-        "Energy": ["energy", "solar", "wind", "renewable", "power", "electricity", "cleantech"],
-        "Technology": ["software", "platform", "saas", "app", "digital", "technology"],
-        "Real Estate": ["housing", "real estate", "property", "affordable housing", "construction"],
-        "Water & Sanitation": ["water", "sanitation", "waste management", "recycling"],
-        "Transportation": ["transport", "mobility", "logistics", "fleet"],
-        "Food & Beverage": ["food", "nutrition", "beverage", "restaurant", "meal"],
-    }
+    opening = text_lower[:400]
     best_sector = ""
-    best_hits = 0
-    for sector, keywords in sector_keywords.items():
-        hits = sum(1 for kw in keywords if kw in text_lower)
-        if hits > best_hits:
-            best_hits = hits
+    best_score = 0
+    for sector, keywords in _SECTOR_KEYWORDS.items():
+        score = 0
+        for kw in keywords:
+            pattern = rf"(?<![\w-]){re.escape(kw)}(?![\w-])"
+            score += len(re.findall(pattern, text_lower)) + len(re.findall(pattern, opening))
+        if score > best_score:
+            best_score = score
             best_sector = sector
     return best_sector
 
