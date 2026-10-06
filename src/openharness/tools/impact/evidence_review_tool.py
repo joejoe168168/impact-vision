@@ -31,6 +31,12 @@ class EvidenceReviewInput(BaseModel):
     confidence: float = 0.0
     source_refs: list[str] = Field(default_factory=list)
     item_id: str = ""
+    queue_name: str = Field(
+        default="",
+        description="Persist the queue under this name (e.g. 'deal:acme'): items accumulate across "
+        "calls and appear on the portfolio home. Empty = stateless (items passed in).",
+    )
+    tenant_id: str = "default"
 
 
 class EvidenceReviewTool(BaseTool):
@@ -67,8 +73,16 @@ class EvidenceReviewTool(BaseTool):
         from openharness.impact.ai_review import AIExtractionReview
 
         args = arguments if isinstance(arguments, EvidenceReviewInput) else EvidenceReviewInput.model_validate(arguments)
+        from openharness.impact.evidence_workflow import load_review_queue, save_review_queue
+
         policy = ExtractionReviewPolicy.model_validate(args.policy) if args.policy else ExtractionReviewPolicy()
-        queue = ReviewQueue(policy=policy)
+        if args.queue_name:  # persisted queue (W5.3 state store)
+            queue = load_review_queue(args.queue_name, tenant_id=args.tenant_id, policy=policy)
+            if args.policy:
+                queue.policy = policy
+            policy = queue.policy
+        else:
+            queue = ReviewQueue(policy=policy)
         for item in args.items:
             try:
                 queue.items.append(_load_item(item))
@@ -100,10 +114,17 @@ class EvidenceReviewTool(BaseTool):
                     model_version=args.model_version,
                 )
 
+        def _persist() -> None:
+            if args.queue_name:
+                save_review_queue(queue, args.queue_name, tenant_id=args.tenant_id)
+
         if args.action == "queue_summary":
+            if args.extractions:
+                _persist()
             return _ok(queue.export().model_dump(mode="json"))
 
         if args.action == "triage":
+            _persist()
             return _ok({
                 "policy": policy.model_dump(mode="json"),
                 "items": [item.model_dump(mode="json") for item in queue.items],
@@ -120,6 +141,7 @@ class EvidenceReviewTool(BaseTool):
                 )
             except (KeyError, ValueError) as e:
                 return ToolResult(output=str(e), is_error=True)
+            _persist()
             return _ok({
                 "decided": [item.model_dump(mode="json") for item in decisions],
                 "summary": queue.summary().model_dump(mode="json"),
@@ -130,6 +152,7 @@ class EvidenceReviewTool(BaseTool):
                 approved = queue.auto_approve_high_confidence(reviewer=args.reviewer)
             except (KeyError, ValueError) as e:
                 return ToolResult(output=str(e), is_error=True)
+            _persist()
             return _ok({
                 "approved": [item.model_dump(mode="json") for item in approved],
                 "summary": queue.summary().model_dump(mode="json"),

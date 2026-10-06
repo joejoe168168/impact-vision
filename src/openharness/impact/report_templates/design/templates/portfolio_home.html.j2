@@ -152,7 +152,7 @@ table.heat .gap { width: 10px; min-width: 10px; padding: 0; background: none; }
 
   <section class="card" id="sec-review" aria-labelledby="h-review">
     <h2 id="h-review">Evidence to review</h2>
-    <p class="lede">AI-extracted claims below {{ '%.0f' % 50 }}% confidence — confirm or correct before they reach LPs.{% if v.review_total > v.review|length %} Showing {{ v.review|length }} of {{ v.review_total }}.{% endif %}</p>
+    <p class="lede">AI-extracted claims below {{ '%.0f' % 50 }}% confidence, plus pending items in the review queues — confirm or correct before they reach LPs.{% if v.review_total > v.review|length %} Showing {{ v.review|length }} of {{ v.review_total }}.{% endif %}</p>
     {% if v.review %}
     <ul class="list">
       {% for r in v.review %}

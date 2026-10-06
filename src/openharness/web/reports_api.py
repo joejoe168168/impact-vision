@@ -157,8 +157,14 @@ def render_portfolio_page(*, jurisdictions: str = "EU,US,UK", fund_name: str = "
     except Exception:  # noqa: BLE001 - the page works without the CRM table
         pass
     codes = [j.strip() for j in jurisdictions.split(",") if j.strip()][:8] or ["EU"]
+    try:
+        from openharness.impact.evidence_workflow import list_review_queues
+
+        queues = list_review_queues()
+    except Exception:  # noqa: BLE001 - the page must render even if the state store is unavailable
+        queues = {}
     view = build_portfolio_home(records, fund_name=fund_name[:120] or "Portfolio",
-                                jurisdictions=codes, pipeline_rows=pipeline_rows)
+                                jurisdictions=codes, pipeline_rows=pipeline_rows, review_queues=queues)
     return render_portfolio_home(view, theme=theme)
 
 

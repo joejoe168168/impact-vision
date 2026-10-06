@@ -10,7 +10,8 @@ bundles or any ``{company, created_at, summary, report_data}`` records):
 * heat-map – 5 Dimensions and material-SDG scores per company;
 * regulatory deadlines – SFDR, CSRD/ESRS, California SB 253/261, UK SDR …
   for the fund's jurisdictions, next 180 days and overdue;
-* evidence-review queue – low-confidence AI-extracted claims to confirm;
+* evidence-review queue – low-confidence AI-extracted claims to confirm, plus
+  pending items in the persisted review queues (radar, DDQ drafts, deals);
 * needs attention – stale assessments and companies held back by missing data.
 """
 from __future__ import annotations
@@ -26,6 +27,7 @@ GATE_LABEL = {"PASS": "IC-ready", "WARN": "Conditional", "INSUFFICIENT EVIDENCE"
               "FAIL": "Do not proceed"}
 GATE_TONE = {"PASS": "good", "WARN": "warning", "INSUFFICIENT EVIDENCE": "warning", "FAIL": "critical"}
 REVIEW_CONFIDENCE = 0.5
+_QUEUE_LABELS = {"regulatory_radar": "Regulatory radar", "ddq_drafts": "DDQ drafts"}
 GREENWASHING_FLAG = 60
 
 
@@ -62,7 +64,11 @@ def build_portfolio_home(
     stale_days: int = 180,
     pipeline_rows: Iterable[dict[str, Any]] = (),
     deadline_window_days: int = 180,
+    review_queues: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    """``review_queues`` (name → ``ReviewQueue``, e.g. from
+    ``evidence_workflow.list_review_queues()``) adds their pending items to the
+    evidence-review list next to the low-confidence claims in saved reports."""
     today = today or datetime.now(timezone.utc).date()
     now = datetime.combine(today, datetime.min.time(), tzinfo=timezone.utc)
     rows = sorted(records, key=lambda r: str(r.get("company", "")).lower())
@@ -113,6 +119,14 @@ def build_portfolio_home(
             attention.append({"company": companies[-1]["name"],
                               "reason": f"Greenwashing risk {s['greenwashing_risk']:.0f}/100 — review claims",
                               "tone": "critical"})
+    for name, queue in (review_queues or {}).items():
+        label = _QUEUE_LABELS.get(name, name.replace("_", " ").replace(":", ": "))
+        for item in queue.items:
+            if item.review.decision != "pending":
+                continue
+            review.append({"company": label, "text": _clip(item.review.extracted_text, 180),
+                           "category": f"review queue · {item.verdict.replace('_', ' ')}",
+                           "confidence": item.review.confidence, "nesta": None, "queue": name})
     review.sort(key=lambda x: (x["confidence"], x["company"]))
 
     deadlines = _deadlines(jurisdictions, today, deadline_window_days)

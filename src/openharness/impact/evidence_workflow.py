@@ -332,6 +332,19 @@ def load_review_queue(
     return ReviewQueue(policy=policy or ExtractionReviewPolicy())
 
 
+def list_review_queues(*, tenant_id: str = "default", store=None) -> dict[str, ReviewQueue]:  # noqa: ANN001
+    """Every persisted review queue for a tenant, by name."""
+    from openharness.impact.state_store import get_state_store
+
+    s = store or get_state_store()
+    out: dict[str, ReviewQueue] = {}
+    for name in s.keys(tenant_id, "review_queue"):
+        raw = s.get(tenant_id, "review_queue", name)
+        if raw:
+            out[name] = ReviewQueue.model_validate(raw)
+    return out
+
+
 def save_review_queue(
     queue: ReviewQueue, name: str, *, tenant_id: str = "default", store=None  # noqa: ANN001
 ) -> None:
@@ -341,6 +354,7 @@ def save_review_queue(
 
 
 __all__ = [
+    "list_review_queues",
     "load_review_queue",
     "save_review_queue",
     "ExtractionReviewPolicy",
