@@ -540,7 +540,7 @@ impact-vision/
 │   │   │   ├── unpri.py · theory_of_change.py · issb_ifrs_s1.py · issb_ifrs_s2.py
 │   │   │   ├── esrs.py · ifc_opim.py · pcaf.py · sbti.py · eu_taxonomy.py
 │   │   │   ├── tnfd.py · cdp.py
-│   │   │   └── cross_reference.py     # 59 cross-framework metric mappings
+│   │   │   └── cross_reference.py     # 61 cross-framework metric mappings
 │   │   ├── mcp_server.py              # MCP server (FastMCP)
 │   │   └── sdk.py                     # High-level ImpactVision SDK facade
 │   │
@@ -601,7 +601,7 @@ tables: [docs/dd-checklist.md](docs/dd-checklist.md).
 All frameworks below are exposed via the `framework_assess` tool, the
 MCP server, the REST API, and the Python SDK. Every framework ships with
 cross-references to IRIS+ metric IDs via the shared
-`cross_reference` module (59 concept mappings).
+`cross_reference` module (61 concept mappings).
 
 | Category | Framework | Coverage |
 |----------|-----------|----------|
@@ -609,7 +609,7 @@ cross-references to IRIS+ metric IDs via the shared
 | | UN SDGs | 17 Goals, 169 Targets |
 | | Impact DD Checklist | 122 questions / 34 categories (GIIN, PCV, Seraf, IMP, AFME + 15 sectors) with NESTA evidence (1-5) |
 | | Sector Benchmarks | 18 sectors (GIIN survey data) with aggregated 5D scores and coverage |
-| | Cross-Reference Mapping | 59 concepts mapped across IRIS+/GRI/EDCI/SFDR PAI/SASB/TCFD/ESRS/ISSB/PCAF/SBTi/TNFD/CDP/EU Taxonomy |
+| | Cross-Reference Mapping | 61 concepts mapped across IRIS+/GRI/EDCI/SFDR PAI/SASB/TCFD/ESRS/ISSB/PCAF/SBTi/TNFD/CDP/EU Taxonomy |
 | **ESG disclosure** | SASB | 17 industries, 77+ material topics |
 | | GRI | 34 standards (Universal + Topic), 120+ disclosures |
 | | TCFD / IFRS S2 | 4 pillars, 11 disclosures, scenario analysis, Scope 1/2/3 |
@@ -658,127 +658,26 @@ cross-references to IRIS+ metric IDs via the shared
 
 ### Agent Tools (48)
 
-All tools below are exposed through the default OpenHarness tool registry
-and `openharness.tools.impact`, so the interactive agent, web chat UI,
-REST API, and MCP server see the same surface.
+Every tool is registered once and exposed identically to the interactive
+agent, web chat, REST API and MCP server. The full generated list, with each
+tool's description and the counts quoted in these docs, is in
+[docs/reference/tools.md](docs/reference/tools.md).
 
-**Tool routing (1)**
-
-| Tool | Description |
-|------|-------------|
-| `impact_advisor` | Tool router: ranks the most relevant tools for a free-text request and suggests multi-step playbooks (deal screening, LP reporting, regulatory compliance, verification, portfolio review, supply-chain HRDD, carbon & climate, data collection, theory of change) |
-| `assess_deal` | Start here for a pitch deck or memo: one call runs the full offline screen (claims, IRIS+ metrics, 5D, SDGs, gaps, DD coverage, greenwashing, IC gate), optionally writes the reports, and returns an `assessment_id` that `impact_report`, `sdg_mapper`, `five_dimension_assess`, `gap_analysis` and `greenwashing_detect` accept instead of re-typed fields |
-
-**Pre-screen & core assessment (7)**
-
-| Tool | Description |
-|------|-------------|
-| `pitch_deck_analyze` | PDF/TXT/MD intake with impact-claim extraction + Company model; `action='compare_documents' / 'detect_changes' / 'verify_claims'` for multi-document checks |
-| `iris_catalog` | IRIS+ catalog search, browse, filter by SDG/theme |
-| `sdg_mapper` | SDG alignment scoring with theme inference and evidence chains |
-| `five_dimension_assess` | 5-Dimension assessment with additionality & counterfactual prompts |
-| `gap_analysis` | Metric gap analysis vs Core Metric Set |
-| `impact_metric_recommender` | Recommend IRIS+ metrics by theme, SDG, and sector |
-| `impact_data_quality` | Quality score for reported metrics (placeholders, unknown IDs) |
-
-**Due diligence & evidence (4)**
-
-| Tool | Description |
-|------|-------------|
-| `dd_checklist` | 122-question DD checklist, document analysis, and targeted suggestions |
-| `product_passport` | EU Digital Product Passport import and IRIS+/ESRS mapping |
-
-**Risk & credibility (3)**
-
-| Tool | Description |
-|------|-------------|
-| `greenwashing_detect` | Composite screen (5 sub-scores) + Green Claims / FCA / GAI / CTI; `action='review_claims'` runs the per-claim explainable review with severity + governance metadata |
-| `impact_risk_opportunity` | 14 risk categories on a likelihood × severity matrix |
-| `exclusion_screening` | UNGC, weapons, fossil-fuel exclusion lists |
-
-**Frameworks & reporting (6)**
-
-| Tool | Description |
-|------|-------------|
-| `framework_assess` | Multi-framework ESG assessment (all frameworks in the table above, incl. VSME, 2X Criteria, TISFD, CDP questionnaire readiness) |
-| `esg_toolbox` | Unified 33-module ESG toolbox for disclosure, ratings, export compliance, supplier ESG, sustainable finance, water stewardship, responsible mining, and carbon accounting; supports `list`, `search`, `get`, `methodology`, `checklist`, `assess`, `crosswalk`, `source_profile`, `recommend`, `workflow`, and `input_plan` |
-| `cross_reference` | Cross-framework metric lookup (59 mappings) |
-| `impact_report` | Interactive HTML reports + XLSX/CSV/JSON/text/PDF; `narrative_mode='narrative_prompt'` appends LLM narrative prompts (exec summary, key findings, impact narrative, case study) |
-| `impact_valuation` | IFVI/VBA monetary impact accounting: value factors → net monetary impact, benefit/cost ratio, impact multiple of money |
-
-**Decision workflow — v5 (2)**
-
-| Tool | Description |
-|------|-------------|
-| `decision_workflow` | Quick screen, IC memo proof bundle, deal comparison, LP readiness, and context-driven impact target setting (`set_targets`) |
-| `regulatory_calendar` | Jurisdiction-specific reporting deadlines, ISSB S2 amendment summaries, and a market-wide milestone watch-list with sources (ECGT, revised ESRS/VSME, SB 253, ISSA/HKSSA 5000, UK SRS, AI Act, SFDR 2.0); live alerts for statutory dates; `action='radar_*'` is the review-gated regulatory-change radar |
-
-**Portfolio workflow (5)**
-
-| Tool | Description |
-|------|-------------|
-| `portfolio_analyze` | Batch analysis, capital-weighted roll-ups, benchmarking |
-| `portfolio_query` | Natural-language portfolio queries (`ApprovedDataPolicy`-gated) |
-| `pipeline` | 8-stage investment pipeline with transition tracking; `action='guided_*'` runs step-by-step assessments with deal-stage templates |
-| `monitoring` | Continuous monitoring, metric updates, alerts, re-assessment |
-| `trend_analysis` | Time-series metric trend analysis with trajectory projection |
-
-**Stakeholder voice & narrative (3)**
-
-| Tool | Description |
-|------|-------------|
-| `stakeholder_voice` | Lean Data templates + GDPR/PDPA consent + feedback↔claim links; `action='feedback_import' / 'feedback_analyze'` for beneficiary feedback data |
-| `improvement_advisor` | LLM-guided improvement recs, peer insights, SDG opportunities |
-
-**Trust infrastructure — v3 (4)**
-
-| Tool | Description |
-|------|-------------|
-| `emission_factors` | Versioned factors and sensitivity; entity carbon inventory, Scope 2 certificate adjustment, selected manufacturing Scope 3, intensity, and trend outputs |
-| `evidence_review` | AI extraction review queue with policy-driven auto-approval |
-| `verification_workspace` | Verification prep (BlueMark / IFC OPIM / AA1000 readiness, evidence map) + assurer workspace with finding lifecycle and threaded comments |
-| `lp_narrative` | LP narrative + Q&A constrained to verified data with citations |
-
-**Lifecycle & climate (1)**
-
-| Tool | Description |
-|------|-------------|
-| `lca_assessment` | ISO-aligned goal/scope, LCI/LCIA hotspots, sensitivity, lifecycle cost/social dimensions, readiness, and life-cycle-management plan; uses caller-supplied factors |
-
-**Exit & assurance (1)**
-
-| Tool | Description |
-|------|-------------|
-| `exit_impact` | OPIM Principle 8 scoring + exit plan |
-
-**Consultant engagement suite — v4 (3)**
-
-| Tool | Description |
-|------|-------------|
-| `engagement_workspace` | Engagement lifecycle (scoping → delivery → closeout) + artifact audit |
-| `toc_builder` | ToC canvas + logic-chain validator + multi-framework KPI generator (wraps v3 `toc_graph` + `metric_recommender`) |
-| `engagement_suite` | Umbrella tool for Tracks 3-10: proposal, data room, value-creation, reporting studio, training/readiness, public website, governed AI copilot, regulatory deadlines, 3-pillar assurance bundle |
-
-**Frontier measurement & governance — v5 (5)**
-
-| Tool | Description |
-|------|-------------|
-| `impact_quantifier` | Welfare quantifier (GIIN Impact Lab lineage): breadth × depth × theme × geography → QALYs + lives improved, cost-per-QALY, portfolio roll-up |
-| `hrdd_assess` | Human-rights & value-chain due diligence (UNGP + OECD 6-step + CSDDD): salience ranking, grievance score, remediation tracker, CSDDD readiness band |
-| `climate_scenario_risk` | NGFS physical/transition scenario screen with portfolio-weighted exposure, combined score, and illustrative value-at-risk per scenario |
-| `ai_governance` | AI governance artifact (EU AI Act-aware): model card, data lineage, human-oversight log from the copilot review queue, risk classification + obligations |
-| `investee_portal` | Generate a self-contained offline HTML data-collection portal (guided questionnaire, SFDR PAI plain language, validation, "why we ask", JSON export) |
-
-**Comparable, assured & connected — v6 (7)**
-
-| Tool | Description |
-|------|-------------|
-| `contribution_tracker` | Pre-register and monitor contribution claims, evidence, staleness, and attribution inflation |
-| `carbon_credit_integrity` | ICVCM/VCMI carbon-credit and biodiversity-credit integrity screens |
-| `impact_linked_finance` | KPI credibility, payment-by-results verification, and carry/SAFI simulations |
-| `dmrv_evidence` | Hash, anchor, summarise, and verify digital MRV evidence |
-| `survey_delivery` | Consent-gated WhatsApp, SMS, voice, and web survey delivery |
-| `ddq_responder` | ILPA DDQ 2.0 / PRI 2026 answer drafting from approved evidence only; `action='template_generate'` fills ILPA / GIIN / EDCI / SFDR DDQ templates |
+| Task area | Tools |
+|-----------|-------|
+| Start here / routing | `assess_deal`, `impact_advisor` |
+| Pre-screen & core assessment | `pitch_deck_analyze`, `iris_catalog`, `sdg_mapper`, `five_dimension_assess`, `gap_analysis`, `impact_metric_recommender`, `impact_data_quality` |
+| Due diligence & evidence | `dd_checklist`, `product_passport` |
+| Risk & credibility | `greenwashing_detect` (incl. EU ECGT, UK FCA), `impact_risk_opportunity`, `exclusion_screening` |
+| Frameworks & reporting | `framework_assess` (incl. VSME, HK Taxonomy, SFDR 2.0), `esg_toolbox`, `cross_reference`, `impact_report`, `impact_valuation` |
+| Decisions & deadlines | `decision_workflow`, `regulatory_calendar` |
+| Portfolio | `portfolio_analyze`, `portfolio_query`, `pipeline`, `monitoring`, `trend_analysis` |
+| Stakeholder voice & narrative | `stakeholder_voice`, `improvement_advisor`, `lp_narrative` |
+| Evidence & assurance | `emission_factors`, `evidence_review`, `verification_workspace`, `exit_impact` |
+| Lifecycle & climate | `lca_assessment`, `climate_scenario_risk` |
+| Consultant engagements | `engagement_workspace`, `toc_builder`, `engagement_suite` |
+| Frontier measurement & governance | `impact_quantifier`, `hrdd_assess`, `ai_governance`, `investee_portal` |
+| Comparable, assured & connected | `contribution_tracker`, `carbon_credit_integrity`, `impact_linked_finance`, `dmrv_evidence`, `survey_delivery`, `ddq_responder` |
 
 ## Streamlit Dashboard
 

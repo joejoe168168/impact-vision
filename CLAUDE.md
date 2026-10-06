@@ -21,7 +21,7 @@ module. Progress so far:
   `engagement_workspace` agent tool.
 - **Wave 2 / Track 2 — Theory of Change + KPI framework builder** (shipped).
   `impact.engagements.toc_builder` wraps the existing v3 `toc_graph`
-  renderer and the 59-concept cross-reference map into a consultant-facing
+  renderer and the 61-concept cross-reference map into a consultant-facing
   ToC canvas, an 11-rule logic-chain validator (missing assumptions, weak
   causal links, unmeasured outcomes, risk blind spots, equity lens), and
   a multi-framework KPI generator, exposed through the `toc_builder`
@@ -64,7 +64,7 @@ module. Progress so far:
 2. `pitch_deck_analyze` extracts text, identifies impact claims, maps to IRIS+/SDGs, runs DD checklist, auto-extracts a Company model
 3. Agent presents gaps and asks the most important unanswered DD questions (with NESTA evidence levels)
 4. Deeper scoring via `sdg_mapper`, `five_dimension_assess`, `gap_analysis` with sector benchmarks
-5. `cross_reference` tool maps metrics across all 10 frameworks
+5. `cross_reference` tool maps metrics across all 22 framework modules
 6. Greenwashing detection (standard + EU ECGT green claims + UK FCA + NLP) and regulatory compliance checks
 7. `impact_report` generates the final assessment (HTML with Plotly charts, XLSX, CSV, JSON)
 
@@ -129,9 +129,11 @@ The project has an explicit preference for a **short, newcomer-friendly
 
 5. **Tool / CLI / architecture sections must be kept current.** When you
    add or remove an agent tool, CLI subcommand, or top-level package,
-   update the matching `README.md` table and architecture tree. Tool
-   count references in the `README.md` (currently **48**) must match
-   `openharness.tools.impact.__all__`.
+   update the README's grouped "Agent Tools" summary (every tool listed once)
+   and architecture tree, then run `python scripts/build_tool_reference.py`
+   to regenerate `docs/reference/tools.md`. `tests/test_docs_counts.py`
+   fails when a number quoted in `README.md` / `CLAUDE.md` (tool count,
+   currently **48**; crosswalk concepts; DD questions; …) drifts from the code.
 
 6. **Frameworks & Standards is a single consolidated table.** Do not
    split it back into "Core / ESG / Regulatory / Greenwashing /
@@ -143,7 +145,7 @@ The project has an explicit preference for a **short, newcomer-friendly
    first scroll?* If not, move it to `CHANGELOG.md`, `docs/`, or
    `ROADMAP.md`.
 
-The current `README.md` is ~850 lines; keep it at or below that. If it
+The current `README.md` is ~846 lines; keep it at or below 850. If it
 grows past ~1000, trim before shipping.
 
 ## Engineering housekeeping (deferred refactor)
@@ -215,7 +217,7 @@ src/openharness/
 │   │   └── workspace.py           # In-memory store + audit-trail integration
 │   ├── report_templates/          # Jinja2-based HTML report template engine
 │   │   └── html_template.py       # Shared CSS, header/footer, SDG colors
-│   └── frameworks/                # ESG/sustainability frameworks (10 frameworks)
+│   └── frameworks/                # ESG/sustainability frameworks (22 framework modules)
 │       ├── sasb.py                # SASB industry-specific materiality (17 industries)
 │       ├── gri.py                 # GRI Universal + Topic Standards (34 standards)
 │       ├── tcfd.py                # TCFD / IFRS S2 climate disclosure (4 pillars)
@@ -228,7 +230,7 @@ src/openharness/
 │       ├── esrs.py                # EU CSRD/ESRS Double Materiality (11 standards)
 │       ├── hk_taxonomy.py         # v7 W4: Hong Kong Taxonomy eligibility/alignment screen
 │       ├── ifc_opim.py            # IFC Operating Principles for Impact Management
-│       └── cross_reference.py     # 59 cross-framework metric mappings
+│       └── cross_reference.py     # 61 cross-framework metric mappings
 ├── tools/impact/                  # Agent tools for LLM orchestration
 │   ├── pitch_deck_analyze_tool.py # PDF/TXT/MD intake + full pipeline + Company extraction
 │   ├── dd_checklist_tool.py       # DD question list/analyze/suggest
@@ -237,7 +239,7 @@ src/openharness/
 │   ├── five_dimension_assess_tool.py  # 5-Dimension assessment + additionality
 │   ├── gap_analysis_tool.py       # Gap analysis vs Core Metrics
 │   ├── impact_report_tool.py      # Report generation (HTML/CSV/JSON/text/XLSX)
-│   ├── framework_tool.py          # Multi-framework ESG assessment (10 frameworks)
+│   ├── framework_tool.py          # Multi-framework ESG assessment (22 framework modules)
 │   ├── cross_reference_tool.py    # Cross-framework metric lookup
 │   ├── data_quality_tool.py       # Metric data quality assessment
 │   ├── metric_recommender_tool.py # IRIS+ metric recommendation engine
@@ -306,7 +308,7 @@ scoring (levels 1-5) for assessing evidence quality.
 
 ## Cross-Reference Mapping
 
-59 concepts mapped across IRIS+, GRI, EDCI, SFDR PAI, TCFD, SASB, ESRS, and ISSB.
+61 concepts mapped across IRIS+, GRI, EDCI, SFDR PAI, TCFD, SASB, ESRS, and ISSB.
 Enables lookup in any direction (e.g., "what GRI disclosure corresponds to
 IRIS+ OI4112?").
 

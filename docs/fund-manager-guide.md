@@ -1,136 +1,134 @@
-# Fund Manager Quick Reference
+# Fund Manager Guide — task recipes
 
-A short Python-first walkthrough for fund managers / investment analysts who
-want the Impact Vision SDK behind their pipeline or IC workflow. If you are
-just exploring the tool, start from the [README](../README.md) — it covers
-the CLI, interactive agent, and Web Console.
+Short, web-first recipes for fund managers, analysts and impact consultants.
+Every recipe starts in the browser; the command-line and Python equivalents
+follow where they exist. Terms are defined in the [glossary](glossary.md) and
+at the end of every report.
 
-The SDK (`openharness.impact.sdk.ImpactVision`) wraps every agent tool
-behind a single typed Python class so you can embed it in any notebook,
-cron job, or internal platform.
-
-## No code: one command per deck
+**Start the web app once:**
 
 ```bash
-impact-vision demo                                  # three fictional sample decks, no setup
-impact-vision assess deck.pdf --open                # impact report, IC memo, DD report, .docx
-impact-vision assess memo.pdf --sector agriculture --audience lp -o reports/
+pip install "impact-vision[web]"
+impact-vision serve-web --open        # http://127.0.0.1:8787
 ```
 
-The IC gate says **INSUFFICIENT EVIDENCE** when the deck simply lacks data
-(questions to ask), and **FAIL** only for negative findings. Terms are
-defined in the [glossary](glossary.md) and at the end of every report.
+No API key is needed for deck screening, reports, the portfolio home or the
+console. Connect a model (chat settings, or `OPENAI_API_KEY`) only when you
+want the conversational agent, or LLM claim extraction, which is then used
+automatically.
 
-In the agent or web chat, ask it to "screen this deck". The `assess_deal`
-tool runs the whole pipeline in one call and returns an `assessment_id`,
-which other tools (`impact_report`, `greenwashing_detect`, …) accept.
+---
 
-## 60-second workflow (Python SDK)
+## 1. Screen a pitch deck
 
-```python
-from openharness.impact.sdk import ImpactVision
+1. In the chat, click **Analyze a pitch deck** and drop a PDF, TXT or MD file.
+2. The report opens in the side panel: the verdict card, KPIs, *what would
+   change our mind*, 5D, SDGs, the evidence ledger, risks and an action plan.
+3. Read the gate: **INSUFFICIENT EVIDENCE** means the deck lacks data (send
+   the questions), **FAIL** means a negative finding.
 
-iv = ImpactVision()  # regex extractor + heuristic verifier by default
+CLI: `impact-vision assess deck.pdf --open`. Agent: "screen this deck" runs
+`assess_deal` and returns an `assessment_id` that other tools accept.
 
-# 1) Assess a deal from a pitch deck / impact report
-asst = iv.assess_company_text(
-    "Acme Solar",
-    text=pitch_deck_text,
-    sector="energy",
-    country="KE",
-    impact_themes=["climate"],
-)
+## 2. Send a report to someone
 
-# 2) Run it through your fund's IC gate (uses data/fund_thesis.yaml)
-dd_coverage = iv.run_dd_coverage(pitch_deck_text).coverage_pct
-greenwashing = iv.screen_greenwashing(asst.company)
-sc = iv.evaluate_deal_against_thesis(
-    asst,
-    dd_coverage_pct=dd_coverage,
-    greenwashing_score=greenwashing.overall_score,
-)
-print(sc.overall_status)  # "pass" / "warn" / "fail"
+1. In the report viewer, pick the **audience** (IC, LP, public, regulator),
+   **language** (English, 繁體中文, 简体中文) and theme.
+2. Click **Share** to create a signed, read-only link. Revoke it from the
+   **Reports** tab at any time.
+3. For an offline copy, download the HTML, PDF (with the `[pdf]` extra),
+   IC memo `.docx`, or the XLSX / CSV / JSON data export.
 
-# 3) v5 decision workflow — quick screen + IC memo proof bundle
-screen = iv.quick_screen(
-    asst.company,
-    dd_coverage_pct=dd_coverage,
-)
-print(screen.classification)  # aligned_and_credible / misaligned_but_improvable / red_flag
+Every output carries an **AI & automation disclosure** (EU AI Act Art 50)
+and the **methodology version + config hash**. Two reports are directly
+comparable only when the methodology stamps match.
 
-summary = iv.build_ic_workflow_summary(
-    asst.company,
-    dd_coverage_pct=dd_coverage,
-)
-print(summary.verdict_card.verdict)  # pass / caution / fail
-print(summary.proof_appendix.evidence_warnings)
+## 3. Prepare the IC
 
-# 4) IC memo — Markdown, HTML (print-ready), Word, PowerPoint
-iv.render_ic_memo(asst, scorecard=sc, output_format="html", path="ic/acme.html")
-iv.render_ic_memo(asst, scorecard=sc, output_format="docx", path="ic/acme.docx")
+- Use the **IC memo** (HTML / Word) from the report's file list. It is built
+  on your fund thesis (§8) and lists the evidence warnings.
+- The **DD questionnaire** (`.docx`) holds the open questions, risk-first,
+  with founder-response slots. Send it to the company.
+- Several deals: ask the agent to "compare these two deals"
+  (`decision_workflow`).
 
-# 5) DD Questionnaire Helper — risk-first HTML the analyst actually works from
-iv.render_dd_questionnaire_html(
-    pitch_deck_text, company_name="Acme Solar",
-    document_label="Pitch deck v3", path="dd/acme.html",
-)
+## 4. See the whole portfolio
 
-# 6) Same questionnaire as an editable Word doc with founder-response slots
-iv.render_dd_questionnaire_docx(
-    pitch_deck_text, company_name="Acme Solar",
-    document_label="Pitch deck v3", path="dd/acme.docx",
-)
+Open **/portfolio/view**: pipeline by IC-gate status, the 5D / SDG heat-map,
+the evidence-review queue, stale assessments, and regulatory deadlines for
+EU, US, UK and Hong Kong. Statutory dates inside 60 days appear under **Needs
+attention** (for example California SB 253, first report due 2026-11-10).
 
-# 7) Portfolio-level roll-up weighted by capital deployed
-roll = iv.rollup([(asst_a, 5.0, 12.0), (asst_b, 8.0, 20.0)])  # (assessment, EUR_m, ownership_%)
+## 5. Check regulatory exposure
 
-# 8) Next 12 months of LP report deliverables
-cal = iv.build_lp_calendar(horizon_months=12)
+Ask the agent, or use the console form for `regulatory_calendar`:
 
-# 9) Regulatory deadline calendar for LP/compliance planning
-reg = iv.build_regulatory_calendar(jurisdiction="EU", fiscal_year_end="2026-12-31")
-print(reg.due_within_60_days_count)
-```
+- *"What is due in the next 90 days for an EU and Hong Kong fund?"*
+  gives a per-jurisdiction calendar with live alerts.
+- *"Show the regulatory watch-list"* gives market-wide dates (revised ESRS,
+  VSME, ISSA 5000 / HKSSA 5000, UK SRS, AI Act, SFDR 2.0), each with its
+  source link.
+- *"Can this fund call itself an impact fund under SFDR 2.0?"* runs the
+  Commission / Council / Parliament category preview and the "impact"
+  wording check (Art 7/9, theory of change, measured outcomes) via
+  `framework_assess`.
+- *"Screen this company against the Hong Kong Taxonomy"* gives eligibility
+  candidates, plus alignment % once you supply the revenue split.
 
-The same v5 workflows are available over the agent/Web Console tool surface
-as `decision_workflow` and `regulatory_calendar`, over MCP with the same names,
-and over REST at `/api/v1/decision-workflow` and `/api/v1/regulatory-calendar`.
+## 6. Collect data from investees
 
-## Browser alternative
+- **SME investees:** use the VSME template (`sector="vsme"`). It is the most
+  a CSRD reporter may require from a partner with ≤1,000 employees, and the
+  data-request packs enforce that cap automatically.
+- **LP reporting:** use the EDCI-first pack (`bundle_id="edci_core"`).
+- **Offline portal:** `investee_portal` produces a self-contained HTML form
+  with plain-language SFDR PAI guidance.
 
-Prefer a browser? `pip install "impact-vision[web]"`, then
-`impact-vision serve-web` serves the **chat UI** at `http://127.0.0.1:8787`
-(upload a deck and ask the agent to screen it), the tool-form console at
-`/console` and the REST API at `/api/v1`. The chat uses the fund tool
-profile: impact tools only, with no shell or file edits. See the
-[web chat guide](web-chat-guide.md).
+## 7. Run a consultant engagement
 
-## Configuring your fund
+`engagement_workspace` and `engagement_suite` cover proposal → data room →
+ToC / KPI framework → reporting studio → assurance bundle. Engagements, the
+audit trail and review queues are saved to `~/.impact-vision/state.db`
+(override with `IMPACT_VISION_STATE_DB`, or use Postgres with
+`IMPACT_VISION_STATE_STORE=postgres` + `IMPACT_VISION_STATE_DSN`), so work
+survives a restart.
 
-The SDK reads `data/fund_thesis.yaml` by default. Four regional packs ship
-out of the box — see `data/fund_thesis.climate_eu.yaml`,
+## 8. Configure your fund
+
+The IC gate reads `data/fund_thesis.yaml`. Four regional packs ship as
+examples: `fund_thesis.climate_eu.yaml`,
 `fund_thesis.inclusive_finance_africa.yaml`,
-`fund_thesis.gender_lens_south_asia.yaml`, and
-`fund_thesis.indigenous_led_na.yaml`.
+`fund_thesis.gender_lens_south_asia.yaml` and `fund_thesis.indigenous_led_na.yaml`.
+The `branding:` block (fund name, logo, colour, footer) is applied to every
+HTML deliverable.
 
-To override:
+---
+
+## For developers: the same flows in Python
 
 ```python
-iv = ImpactVision(fund_thesis_path="data/fund_thesis.climate_eu.yaml")
+from impact_vision import ImpactVision
+from impact_vision.pipeline import assess_file, write_deliverables
+
+bundle = assess_file("deck.pdf", sector="energy")        # one deck → everything
+write_deliverables(bundle, "reports/", lang="zh-HK")      # HTML, memo, DD, docx, data
+print(bundle.summary()["gate"], bundle.summary()["methodology"])
+
+iv = ImpactVision()                                       # LLM extractor if a key is set
+thesis = iv.load_thesis("data/fund_thesis.climate_eu.yaml")
+asst = iv.assess_company_text("Acme Solar", text=deck_text, sector="energy")
+sc = iv.evaluate_deal_against_thesis(asst, thesis=thesis)
+iv.render_ic_memo(asst, scorecard=sc, output_format="docx", path="ic/acme.docx")
+reg = iv.build_regulatory_calendar(jurisdiction="HK", fiscal_year_end="2026-12-31")
+print(reg.alerts)
 ```
 
-Branding (logo, colours, footer) is driven by the `branding:` block in the
-same YAML and auto-injected into every HTML surface.
+REST: every tool is `POST /api/v1/tools/{name}` (schemas at
+`GET /api/v1/tools?schemas=true`). MCP: `impact-vision serve-mcp` exposes the same
+48 tools plus playbook prompts. The full list is in
+[reference/tools.md](reference/tools.md).
 
-## Where to go next
-
-- [`docs/roadmap-v3-implementation.md`](roadmap-v3-implementation.md) — trust-infrastructure
-  modules (evidence review, verification workspace, LP narrative, governed AI).
-- [`docs/roadmap-v4.md`](roadmap-v4.md) — consultant-led engagement workspace,
-  ToC builder, data room, reporting studio, 3-pillar verification bundle.
-- [`CLAUDE.md`](../CLAUDE.md) — codebase map for developers.
-- [`CHANGELOG.md`](../CHANGELOG.md) — release history.
-## Survey delivery channels (v6)
+## Survey delivery channels
 
 `survey_delivery` renders WhatsApp, SMS, voice, or self-contained web content
 without coupling the engine to a vendor SDK. Deployments configure Twilio/Meta
@@ -140,3 +138,9 @@ carry an active `ConsentRecord`; respondent references should be pseudonymous,
 PII stays in the delivery provider, and `STOP`/`退订` immediately opts out the
 dispatch. Keep the API bearer-authenticated and validate provider signatures at
 the reverse proxy before forwarding the normalized payload.
+
+## Where to go next
+
+- [Web chat guide](web-chat-guide.md) — the chat UI in detail.
+- [Roadmap v7](roadmap-v7.md) — current direction; [CHANGELOG](../CHANGELOG.md) — release history.
+- [CLAUDE.md](../CLAUDE.md) — codebase map for developers.

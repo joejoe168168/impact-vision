@@ -38,6 +38,8 @@ jobs:
         run: pytest tests/ -q --tb=short
       - name: Knowledge freshness gate (every row sourced; re-verified within 180 days)
         run: python scripts/check_knowledge.py
+      - name: Generated tool reference is current
+        run: python scripts/build_tool_reference.py --check
       - name: Extraction benchmark gate (blocking; deterministic regex extractor)
         run: python -m openharness.impact.extraction_eval --extractor regex --summary
 
