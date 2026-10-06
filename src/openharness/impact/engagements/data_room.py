@@ -186,64 +186,90 @@ class CoachingCard(BaseModel):
 # ----------------------------------------------------------------- builders
 
 
+# Canonical default fields, keyed by intent. Each metric_id is an IRIS+ 5.3c
+# catalogue ID whose name matches the label (enforced by
+# tests/test_data_room_defaults.py).
+_BENEFICIARIES = ("PI4060", "Client individuals served (total beneficiaries)", "people")
+_REVENUE_GROWTH = ("FP4761", "Revenue growth", "%")
+_JOBS = ("OI5479", "Full-time employees hired (jobs created)", "count")
+_GHG = ("OI1479", "Greenhouse gas emissions: total", "tCO2e")
+_IMPACT_REVENUE = (
+    "PI8168",
+    "Percent revenue from social/environmental products and services (impact-weighted revenue)",
+    "%",
+)
+_WORKFORCE_DIVERSITY = ("OI6213", "Full-time female employees (workforce diversity)", "count")
+_CLIENT_SATISFACTION = (
+    "PI7163",
+    "Client satisfaction (target stakeholder satisfaction ratio)",
+    "score",
+)
+
+
+def _f(
+    base: tuple[str, str, str], frameworks: list[str]
+) -> tuple[str, str, str, list[str]]:
+    return (*base, frameworks)
+
+
 _DEFAULT_FIELDS_BY_BUNDLE: dict[str, list[tuple[str, str, str, list[str]]]] = {
     # Each tuple: (metric_id, label, unit, frameworks)
     "strategy_imm": [
-        ("OI4112", "Direct beneficiaries served", "people", ["IRIS+", "SDG"]),
-        ("PI4060", "Growth in revenue", "%", ["IRIS+"]),
-        ("OI6213", "Jobs created", "count", ["IRIS+", "GRI"]),
+        _f(_BENEFICIARIES, ["IRIS+", "SDG"]),
+        _f(_REVENUE_GROWTH, ["IRIS+"]),
+        _f(_JOBS, ["IRIS+", "GRI"]),
     ],
     "dd_light": [
-        ("OI4112", "Direct beneficiaries served", "people", ["IRIS+"]),
-        ("PI4060", "Growth in revenue", "%", ["IRIS+"]),
+        _f(_BENEFICIARIES, ["IRIS+"]),
+        _f(_REVENUE_GROWTH, ["IRIS+"]),
     ],
     "dd_mid": [
-        ("OI4112", "Direct beneficiaries served", "people", ["IRIS+"]),
-        ("PI4060", "Growth in revenue", "%", ["IRIS+"]),
-        ("OI6213", "Jobs created", "count", ["IRIS+", "GRI"]),
-        ("PD5833", "Greenhouse-gas emissions", "tCO2e", ["IRIS+", "TCFD"]),
+        _f(_BENEFICIARIES, ["IRIS+"]),
+        _f(_REVENUE_GROWTH, ["IRIS+"]),
+        _f(_JOBS, ["IRIS+", "GRI"]),
+        _f(_GHG, ["IRIS+", "TCFD"]),
     ],
     "dd_full_iwa": [
-        ("OI4112", "Direct beneficiaries served", "people", ["IRIS+"]),
-        ("PI4060", "Growth in revenue", "%", ["IRIS+"]),
-        ("OI6213", "Jobs created", "count", ["IRIS+", "GRI"]),
-        ("PD5833", "Greenhouse-gas emissions", "tCO2e", ["IRIS+", "TCFD"]),
-        ("PI7098", "Impact-weighted revenue", "USD", ["IRIS+", "IWA"]),
+        _f(_BENEFICIARIES, ["IRIS+"]),
+        _f(_REVENUE_GROWTH, ["IRIS+"]),
+        _f(_JOBS, ["IRIS+", "GRI"]),
+        _f(_GHG, ["IRIS+", "TCFD"]),
+        _f(_IMPACT_REVENUE, ["IRIS+", "IWA"]),
     ],
     "esg_baseline": [
-        ("PD5833", "Greenhouse-gas emissions", "tCO2e", ["IRIS+", "TCFD", "ISSB"]),
-        ("OI6213", "Jobs created", "count", ["IRIS+", "GRI"]),
-        ("PD2471", "Diversity of workforce", "%", ["GRI", "ESRS"]),
+        _f(_GHG, ["IRIS+", "TCFD", "ISSB"]),
+        _f(_JOBS, ["IRIS+", "GRI"]),
+        _f(_WORKFORCE_DIVERSITY, ["IRIS+", "GRI", "ESRS"]),
     ],
     "annual_impact_report": [
-        ("OI4112", "Direct beneficiaries served", "people", ["IRIS+"]),
-        ("PI4060", "Growth in revenue", "%", ["IRIS+"]),
-        ("PD5833", "Greenhouse-gas emissions", "tCO2e", ["IRIS+", "TCFD"]),
+        _f(_BENEFICIARIES, ["IRIS+"]),
+        _f(_REVENUE_GROWTH, ["IRIS+"]),
+        _f(_GHG, ["IRIS+", "TCFD"]),
     ],
     "lp_ddq": [
-        ("OI4112", "Direct beneficiaries served", "people", ["IRIS+"]),
-        ("PD5833", "Greenhouse-gas emissions", "tCO2e", ["IRIS+", "EDCI"]),
-        ("PD2471", "Diversity of workforce", "%", ["EDCI", "GRI"]),
+        _f(_BENEFICIARIES, ["IRIS+"]),
+        _f(_GHG, ["IRIS+", "EDCI"]),
+        _f(_WORKFORCE_DIVERSITY, ["IRIS+", "EDCI", "GRI"]),
     ],
     "verification_3pillar": [
-        ("OI4112", "Direct beneficiaries served", "people", ["IRIS+"]),
-        ("PD5833", "Greenhouse-gas emissions", "tCO2e", ["IRIS+"]),
+        _f(_BENEFICIARIES, ["IRIS+"]),
+        _f(_GHG, ["IRIS+"]),
     ],
     "exit_vdd": [
-        ("OI4112", "Direct beneficiaries served", "people", ["IRIS+"]),
-        ("PI4060", "Growth in revenue", "%", ["IRIS+"]),
+        _f(_BENEFICIARIES, ["IRIS+"]),
+        _f(_REVENUE_GROWTH, ["IRIS+"]),
     ],
     "regulatory": [
-        ("PD5833", "Greenhouse-gas emissions", "tCO2e", ["SFDR PAI", "CSRD"]),
-        ("PD2471", "Diversity of workforce", "%", ["SFDR PAI"]),
+        _f(_GHG, ["SFDR PAI", "CSRD"]),
+        _f(_WORKFORCE_DIVERSITY, ["SFDR PAI"]),
     ],
     "stakeholder_voice": [
-        ("OI4112", "Direct beneficiaries served", "people", ["IRIS+"]),
-        ("OI2864", "Client satisfaction", "score", ["IRIS+", "Lean Data"]),
+        _f(_BENEFICIARIES, ["IRIS+"]),
+        _f(_CLIENT_SATISFACTION, ["IRIS+", "Lean Data"]),
     ],
     "capacity_training": [
-        ("OI6213", "Jobs created", "count", ["IRIS+"]),
-        ("OI2864", "Client satisfaction", "score", ["IRIS+"]),
+        _f(_JOBS, ["IRIS+"]),
+        _f(_CLIENT_SATISFACTION, ["IRIS+"]),
     ],
 }
 

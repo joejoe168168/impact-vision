@@ -53,7 +53,7 @@ def test_vsme_value_chain_cap_is_enforced_on_request_packs() -> None:
     )
     assert capped.vsme_ceiling_applied
     by_id = {f.metric_id: f for f in capped.fields}
-    assert by_id["OI4112"].required  # Scope 1 GHG sits inside VSME B3
+    assert by_id["OI1479"].required  # total GHG sits inside VSME B3
     assert not by_id["PI4060"].required  # outside VSME → voluntary
     assert any("PI4060" in n for n in capped.ceiling_notes)
 

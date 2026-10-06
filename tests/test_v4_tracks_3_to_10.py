@@ -90,7 +90,7 @@ def test_data_request_pack_has_bundle_defaults() -> None:
 
 def test_completeness_scoring_flags_missing_and_unverified() -> None:
     pack = _pack()
-    field_oi = next(f for f in pack.fields if f.metric_id == "OI4112")
+    field_oi = next(f for f in pack.fields if f.metric_id == "PI4060")
     submissions = [
         DataRoomSubmission(
             pack_id=pack.pack_id,
@@ -99,7 +99,7 @@ def test_completeness_scoring_flags_missing_and_unverified() -> None:
             responses=[
                 FieldSubmission(
                     field_id=field_oi.field_id,
-                    metric_id="OI4112",
+                    metric_id="PI4060",
                     value="1200",
                     unit="people",
                     evidence_refs=["evidence://a"],
@@ -113,7 +113,7 @@ def test_completeness_scoring_flags_missing_and_unverified() -> None:
             responses=[
                 FieldSubmission(
                     field_id=field_oi.field_id,
-                    metric_id="OI4112",
+                    metric_id="PI4060",
                     value="800",
                     # no evidence refs → unverified exception
                 )
@@ -138,34 +138,34 @@ def test_rollup_multi_entity_tracks_fill_rate() -> None:
             pack_id=pack.pack_id,
             entity_name="A",
             responses=[
-                FieldSubmission(field_id=field_ids["OI4112"], metric_id="OI4112", value="1"),
-                FieldSubmission(field_id=field_ids["PI4060"], metric_id="PI4060", value="2"),
+                FieldSubmission(field_id=field_ids["PI4060"], metric_id="PI4060", value="1"),
+                FieldSubmission(field_id=field_ids["FP4761"], metric_id="FP4761", value="2"),
             ],
         ),
         DataRoomSubmission(
             pack_id=pack.pack_id,
             entity_name="B",
             responses=[
-                FieldSubmission(field_id=field_ids["OI4112"], metric_id="OI4112", value="3"),
+                FieldSubmission(field_id=field_ids["PI4060"], metric_id="PI4060", value="3"),
             ],
         ),
     ]
     rollup = rollup_multi_entity(pack, submissions)
     assert rollup.entity_count == 2
-    assert rollup.per_metric_fill_rate["OI4112"] == 1.0
-    assert rollup.per_metric_fill_rate["PI4060"] == 0.5
+    assert rollup.per_metric_fill_rate["PI4060"] == 1.0
+    assert rollup.per_metric_fill_rate["FP4761"] == 0.5
     assert rollup.fill_rate > 0.0
 
 
 def test_coaching_cards_populate_guidance() -> None:
     pack = _pack()
-    field_oi = next(f for f in pack.fields if f.metric_id == "OI4112")
+    field_oi = next(f for f in pack.fields if f.metric_id == "PI4060")
     submissions = [
         DataRoomSubmission(
             pack_id=pack.pack_id,
             entity_name="Entity A",
             responses=[
-                FieldSubmission(field_id=field_oi.field_id, metric_id="OI4112", value=""),
+                FieldSubmission(field_id=field_oi.field_id, metric_id="PI4060", value=""),
             ],
         ),
     ]
@@ -180,7 +180,7 @@ def test_coaching_cards_populate_guidance() -> None:
 def test_coaching_cards_preserve_entity_for_unverified_exceptions() -> None:
     """Bug regression: non-missing exceptions used to resolve to entity 'Unknown'."""
     pack = _pack()
-    field_oi = next(f for f in pack.fields if f.metric_id == "OI4112")
+    field_oi = next(f for f in pack.fields if f.metric_id == "PI4060")
     submissions = [
         DataRoomSubmission(
             pack_id=pack.pack_id,
@@ -188,7 +188,7 @@ def test_coaching_cards_preserve_entity_for_unverified_exceptions() -> None:
             responses=[
                 FieldSubmission(
                     field_id=field_oi.field_id,
-                    metric_id="OI4112",
+                    metric_id="PI4060",
                     value="1500",
                     # no evidence_refs → unverified exception
                 )
@@ -209,25 +209,25 @@ def test_coaching_cards_preserve_entity_for_unverified_exceptions() -> None:
 def test_completeness_does_not_count_empty_values_as_covered() -> None:
     """Bug regression: empty-value submissions used to inflate coverage."""
     pack = _pack()
-    field_oi = next(f for f in pack.fields if f.metric_id == "OI4112")
+    field_oi = next(f for f in pack.fields if f.metric_id == "PI4060")
     submissions = [
         DataRoomSubmission(
             pack_id=pack.pack_id,
             entity_name="Empty Co",
             responses=[
                 # Empty value — must NOT count toward coverage.
-                FieldSubmission(field_id=field_oi.field_id, metric_id="OI4112", value=""),
+                FieldSubmission(field_id=field_oi.field_id, metric_id="PI4060", value=""),
             ],
         )
     ]
     report = score_completeness(pack, submissions)
     # 4 required fields (dd_mid), 0 covered → coverage 0.0.
     assert report.rows[0].coverage_pct == 0.0
-    assert "OI4112" in report.rows[0].missing_metrics
+    assert "PI4060" in report.rows[0].missing_metrics
     # The empty value should NOT be double-logged as both a missing-metric
-    # exception AND a missing-value exception for OI4112.
+    # exception AND a missing-value exception for PI4060.
     oi_missing = [
-        e for e in report.exceptions if e.metric_id.upper() == "OI4112" and e.kind == "missing"
+        e for e in report.exceptions if e.metric_id.upper() == "PI4060" and e.kind == "missing"
     ]
     assert len(oi_missing) == 1
 
