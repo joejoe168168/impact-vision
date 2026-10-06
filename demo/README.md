@@ -19,6 +19,7 @@ Each company folder has:
 | `*_ic_memo.html` / `.pdf` / `.docx` | **Investment-committee memo**: IC gate, thesis fit, 5D, SDGs, DD and greenwashing. |
 | `*_dd_report.html` | **DD questionnaire helper**: risk-ranked areas and the questions to send. |
 | `*_dd_questionnaire.docx` | The DD questionnaire as an editable Word file. |
+| `*_data.xlsx` / `*_data.csv` | **Data exports**: every score and reported metric as numbers, with a Methodology sheet. |
 | `*_summary.json` | The headline numbers, for pipelines. |
 
 The pig farm also has the **LP** and **public** editions, a forced **dark**

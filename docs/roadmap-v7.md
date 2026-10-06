@@ -199,6 +199,18 @@ PyPI release.
 | W2.7 | **Accessibility & responsive QA.** WCAG 2.2 AA: table `scope`/`caption`, real buttons instead of `tr[role=button]`, contrast ≥4.5:1 in both themes (white-on-SDG-7-yellow fixed), TOC breakpoint ≥1560 px, no dead TOC links, mobile hero shows the verdict above the fold, tables scroll inside their container. **CI: axe-core + Playwright screenshot diff at 390 / 1024 / 1440 px, light & dark** | new `tests/visual/` | M |
 | W2.8 | **Better data exports.** XLSX with frozen headers, autofilter, column widths, numeric cells and a methodology sheet. JSON with `schema_version` and a `slim` mode (no evidence chains, 509 KB → ~50 KB). CSV numeric columns + separate display columns | `impact_report_tool.py` | S |
 
+**Wave 2 status (2026-10-06):** done on branch `v7-wave2`. W2.1–W2.3
+decision-first report on one design system (tokens, Jinja2 autoescape, five
+audience `ReportSpec`s; IC memo, DD report and portal share the tokens),
+W2.4 Chromium PDF + print CSS + IC memo `.docx`, W2.5 zh-HK / zh-CN, W2.6
+white-label (fund name, logo, colour, footer, optional attribution; charts
+deliberately keep the validated palette), W2.7 axe-core + responsive CI, W2.8
+XLSX/JSON/CSV exports (`impact/exports.py`). Plotly was dropped rather than
+vendored: charts are inline SVG/CSS with table twins. Not done: splitting
+`impact_report_tool.py` into `report_builders/` (the classic report remains
+for one release), restyling the portfolio and pipeline dashboards, and
+click-to-filter in the evidence ledger.
+
 ### Wave 3 — One product, many surfaces (weeks 8–14)
 
 | ID | Item | Extends | Effort |

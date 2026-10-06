@@ -1,0 +1,48 @@
+Section,Metric,Value,Details,Numeric,Max,Unit
+Company,Name,BrightPath Finance,,,,
+Company,Generated,2026-10-06T08:53:40Z,,,,
+5D,Overall Grade,C,1.8/5.0,1.8,5,score
+5D,What,1.8/5.0,"Reporting 2 metrics (0 theme-specific, 14 available)",1.8,5,score
+5D,Who,2.5/5.0,"Reporting 5 metrics (0 theme-specific, 6 available)",2.5,5,score
+5D,How Much,1.8/5.0,"Scale=1.8, Depth=1.8, Duration=1.8",1.8,5,score
+5D,Contribution,1.5/5.0,"Depth=1.5, Duration=1.5",1.5,5,score
+5D,Risk,1.5/5.0,Estimated from sector/description (4 metrics available to track),1.5,5,score
+SDG,SDG 13,66.0/100,"high | metrics: OI1479,OI4112,PI4060",66.0,100,score
+SDG,SDG 10,41.9/100,"medium | metrics: OI1571,OI6213,PI4060",41.9,100,score
+SDG,SDG 2,41.0/100,medium | metrics: PI4060,41.0,100,score
+SDG,SDG 1,39.8/100,medium | metrics: PI4060,39.8,100,score
+SDG,SDG 5,39.5/100,"medium | metrics: OI1571,OI6213",39.5,100,score
+SDG,SDG 8,39.5/100,"medium | metrics: OI1571,OI6213,OI8869",39.5,100,score
+SDG,SDG 9,38.5/100,"medium | metrics: OI8869,PI4060",38.5,100,score
+SDG,SDG 6,32.0/100,medium | metrics: PI4060,32.0,100,score
+SDG,SDG 7,32.0/100,medium | metrics: PI4060,32.0,100,score
+SDG,SDG 3,24.8/100,medium | metrics: PI4060,24.8,100,score
+SDG,SDG 16,22.5/100,medium | metrics: ,22.5,100,score
+SDG,SDG 4,20.0/100,medium | metrics: PI4060,20.0,100,score
+SDG,SDG 11,18.0/100,low | metrics: PI4060,18.0,100,score
+SDG,SDG 15,17.5/100,low | metrics: ,17.5,100,score
+SDG,SDG 12,10.0/100,low | metrics: ,10.0,100,score
+SDG,SDG 14,10.0/100,low | metrics: ,10.0,100,score
+Greenwashing,Risk score,58.9/100,Moderate Risk,58.9,100,risk
+Gap,Coverage,47.1%,,47.1,100,%
+Gap,FP2635,MISSING,Non-Performing Loans (Portfolio at Risk): 30 Days,,,
+Gap,OD4091,MISSING,Social and Environmental Targets,,,
+Gap,OD8350,MISSING,Client Model,,,
+Gap,OI1582,MISSING,Wage Equity,,,
+Gap,OI4724,MISSING,Workers Earning a Living Wage or Higher,,,
+Gap,OI4732,MISSING,Social and Environmental Performance Reporting,,,
+Gap,OI4753,MISSING,Client Protection Policy,,,
+Gap,OI5049,MISSING,Client Feedback System,,,
+Gap,PI9319,MISSING,Client Retention Rate,,,
+Gap,FP4761,32%,Revenue Growth,32.0,,%
+Gap,OI1075,7,Board of Directors: Total,7.0,,
+Gap,OI1479,120 tCO2e,Greenhouse Gas Emissions: Total,120.0,,tCO2e
+Gap,OI1571,12,Full-time Employees: Female Managers,12.0,,
+Gap,OI4112,80 tCO2e,Greenhouse Gas Emissions: Direct (Scope 1),80.0,,tCO2e
+Gap,OI6213,85,Full-time Employees: Female,85.0,,
+Gap,OI8869,180,Permanent Employees: Total,180.0,,
+Gap,PI4060,"45,000",Client Individuals: Total,45000.0,,
+Claim,outcome,"We serve 45,000 clients (PI4060: 45,000), 68% of them women.",metrics: PI4060,,,
+Claim,outcome,Revenue grew 32% last year (FP4761: 32%).,metrics: ,,,
+Claim,outcome,Portfolio at risk over 30 days is 3.1%.,metrics: ,,,
+Claim,outcome,"Our own footprint is 120 tCO2e (OI1479: 120 tCO2e), of which 80 tCO2e are direct Scope 1 emissions (OI4112: 80 tCO2e).",metrics: OI1479,,,

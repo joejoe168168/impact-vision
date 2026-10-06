@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-import csv
 import html
-import io
 import json
 import re
 from datetime import datetime, timezone
@@ -238,6 +236,13 @@ class ImpactReportInput(BaseModel):
     ] = Field(
         default="text",
         description="Output format for the report ('xlsx' for Excel, 'pdf' for print-ready)",
+    )
+    slim: bool = Field(
+        default=False,
+        description=(
+            "JSON only: drop evidence chains, IRIS+ definitions and duplicated keys "
+            "(~6x smaller). Every JSON export carries schema_version."
+        ),
     )
     metric_records: list[dict] = Field(
         default_factory=list, description="Canonical MetricRecord rows for machine-readable exports"
@@ -517,7 +522,9 @@ class ImpactReportTool(BaseTool):
         elif args.output_format == "xlsx":
             return _to_xlsx(report_data, args.output_path, context)
         elif args.output_format == "json":
-            output = json.dumps(report_data, indent=2, default=str)
+            from openharness.impact.exports import to_json
+
+            output = to_json(report_data, slim=args.slim)
         elif args.output_format == "csv":
             output = _to_csv(report_data)
         elif args.output_format in ("html", "pdf") and args.style == "decision":
@@ -1024,52 +1031,9 @@ def _esg_toolbox_section(data: dict) -> str:
 
 
 def _to_csv(data: dict) -> str:
-    buf = io.StringIO()
-    writer = csv.writer(buf)
+    from openharness.impact.exports import to_csv
 
-    writer.writerow(["Section", "Metric", "Value", "Details"])
-    writer.writerow(["Company", "Name", data["company"]["name"], ""])
-    writer.writerow(["Company", "Generated", data["generated_at"], ""])
-
-    if "five_dimensions" in data:
-        fd = data["five_dimensions"]
-        writer.writerow(["5D", "Overall Grade", fd["overall_grade"], f"{fd['overall_score']}/5.0"])
-        for dim_name in ["what", "who", "how_much", "contribution", "risk"]:
-            dim = fd[dim_name]
-            writer.writerow(["5D", dim["dimension"], f"{dim['score']}/5.0", dim["notes"]])
-
-    if "sdg_alignments" in data:
-        for a in data["sdg_alignments"]:
-            if a["score"] > 0:
-                writer.writerow(
-                    [
-                        "SDG",
-                        f"SDG {a['goal']}",
-                        f"{a['score']}/100",
-                        f"{a['confidence']} | metrics: {','.join(a.get('matched_metrics', [])[:3])}",
-                    ]
-                )
-
-    if "gap_analysis" in data:
-        ga = data["gap_analysis"]
-        writer.writerow(["Gap", "Coverage", f"{ga['coverage_percentage']}%", ""])
-        for m in ga.get("missing", []):
-            writer.writerow(["Gap", m["id"], "MISSING", m["name"]])
-        for m in ga.get("reported", []):
-            writer.writerow(["Gap", m["id"], m.get("value", ""), m["name"]])
-
-    if "impact_claims" in data:
-        for claim in data["impact_claims"]:
-            writer.writerow(
-                [
-                    "Claim",
-                    claim.get("category", "intent"),
-                    claim.get("text", ""),
-                    "metrics: " + ",".join(str(m) for m in claim.get("mapped_metrics", [])),
-                ]
-            )
-
-    return buf.getvalue()
+    return to_csv(data)
 
 
 def _interactive_scoring_section(fd: dict, sdg_alignments: list, company_name: str = "") -> str:
@@ -4083,10 +4047,11 @@ def _to_lp_ready_text(data: dict) -> str:
 
 
 def _to_xlsx(data: dict, output_path: str, context) -> ToolResult:
-    """Generate an Excel workbook with the impact report."""
+    """Excel workbook: frozen headers, filters, numeric cells, methodology sheet."""
     try:
-        from openpyxl import Workbook
-        from openpyxl.styles import Font, PatternFill
+        from openharness.impact.exports import build_workbook
+
+        wb = build_workbook(data)
     except ImportError:
         return ToolResult(
             output="openpyxl required for XLSX. Install: pip install openpyxl", is_error=True
@@ -4095,86 +4060,6 @@ def _to_xlsx(data: dict, output_path: str, context) -> ToolResult:
     if not output_path:
         return ToolResult(output="output_path is required for xlsx format", is_error=True)
 
-    wb = Workbook()
-    company = data["company"]
-
-    # Sheet 1: Summary
-    ws = wb.active
-    ws.title = "Summary"
-    header_font = Font(name="Calibri", bold=True, size=11, color="FFFFFF")
-    header_fill = PatternFill(start_color="0D47A1", end_color="0D47A1", fill_type="solid")
-
-    ws.append(["Impact Assessment Report"])
-    ws.append(["Company", company["name"]])
-    ws.append(["Sector", company.get("sector", "")])
-    ws.append(["Generated", data["generated_at"]])
-    ws.append(["Standard", data["catalog_version"]])
-    ws.append([])
-
-    if "five_dimensions" in data:
-        fd = data["five_dimensions"]
-        ws.append(["5 DIMENSIONS OF IMPACT"])
-        headers = ["Dimension", "Score", "Metrics Reported", "Available", "Notes"]
-        ws.append(headers)
-        for col_idx in range(1, len(headers) + 1):
-            cell = ws.cell(row=ws.max_row, column=col_idx)
-            cell.font = header_font
-            cell.fill = header_fill
-        for dim_name in ["what", "who", "how_much", "contribution", "risk"]:
-            dim = fd[dim_name]
-            ws.append(
-                [
-                    dim["dimension"],
-                    dim["score"],
-                    dim["metrics_reported"],
-                    dim["metrics_available"],
-                    dim["notes"],
-                ]
-            )
-        ws.append(["Overall", fd["overall_score"], "", "", fd["overall_grade"]])
-        ws.append([])
-
-    # Sheet 2: SDG Alignment
-    if "sdg_alignments" in data:
-        ws2 = wb.create_sheet("SDG Alignment")
-        headers = ["SDG Goal", "Name", "Score", "Confidence", "Matched Metrics", "Matched Targets"]
-        ws2.append(headers)
-        for col_idx in range(1, len(headers) + 1):
-            cell = ws2.cell(row=1, column=col_idx)
-            cell.font = header_font
-            cell.fill = header_fill
-        for a in data["sdg_alignments"]:
-            if a["score"] > 0:
-                ws2.append(
-                    [
-                        f"SDG {a['goal']}",
-                        a.get("goal_name", ""),
-                        a["score"],
-                        a["confidence"],
-                        ", ".join(a.get("matched_metrics", [])[:5]),
-                        ", ".join(a.get("matched_targets", [])[:5]),
-                    ]
-                )
-
-    # Sheet 3: Gap Analysis
-    if "gap_analysis" in data:
-        ws3 = wb.create_sheet("Gap Analysis")
-        ga = data["gap_analysis"]
-        ws3.append(["Coverage %", ga["coverage_percentage"]])
-        ws3.append(["Reported", ga["metrics_reported"]])
-        ws3.append(["Missing", ga["metrics_missing"]])
-        ws3.append([])
-        headers = ["Status", "Metric ID", "Name", "Value"]
-        ws3.append(headers)
-        for col_idx in range(1, len(headers) + 1):
-            cell = ws3.cell(row=5, column=col_idx)
-            cell.font = header_font
-            cell.fill = header_fill
-        for m in ga.get("reported", []):
-            ws3.append(["Reported", m["id"], m["name"], m.get("value", "")])
-        for m in ga.get("missing", []):
-            ws3.append(["Missing", m["id"], m["name"], ""])
-
     path = Path(output_path)
     if not path.is_absolute():
         path = context.cwd / path
@@ -4182,6 +4067,9 @@ def _to_xlsx(data: dict, output_path: str, context) -> ToolResult:
     wb.save(str(path))
 
     return ToolResult(
-        output=f"XLSX report saved to: {path}\nCompany: {company['name']}\nSheets: Summary, SDG Alignment, Gap Analysis",
-        metadata={"output_path": str(path), "format": "xlsx"},
+        output=(
+            f"XLSX report saved to: {path}\nCompany: {data['company']['name']}\n"
+            f"Sheets: {', '.join(wb.sheetnames)}"
+        ),
+        metadata={"output_path": str(path), "format": "xlsx", "sheets": wb.sheetnames},
     )

@@ -1,0 +1,53 @@
+Section,Metric,Value,Details,Numeric,Max,Unit
+Company,Name,SunPath Energy Ltd,,,,
+Company,Generated,2026-10-06T08:53:37Z,,,,
+5D,Overall Grade,C,1.6/5.0,1.6,5,score
+5D,What,2.0/5.0,"Reporting 1 metrics (1 theme-specific, 16 available)",2.0,5,score
+5D,Who,1.8/5.0,"Reporting 3 metrics (0 theme-specific, 1 available)",1.8,5,score
+5D,How Much,1.7/5.0,"Scale=1.7, Depth=1.7, Duration=1.7",1.7,5,score
+5D,Contribution,1.5/5.0,"Depth=1.5, Duration=1.5",1.5,5,score
+5D,Risk,1.2/5.0,Estimated from sector/description (4 metrics available to track) (adverse impact penalty -0.3),1.2,5,score
+SDG,SDG 8,33.5/100,"medium | metrics: OI6213,OI8869",33.5,100,score
+SDG,SDG 7,32.5/100,medium | metrics: ,32.5,100,score
+SDG,SDG 9,30.5/100,medium | metrics: OI8869,30.5,100,score
+SDG,SDG 13,30.0/100,medium | metrics: ,30.0,100,score
+SDG,SDG 1,27.5/100,medium | metrics: ,27.5,100,score
+SDG,SDG 2,25.0/100,medium | metrics: ,25.0,100,score
+SDG,SDG 11,20.0/100,medium | metrics: ,20.0,100,score
+SDG,SDG 6,17.5/100,low | metrics: ,17.5,100,score
+SDG,SDG 15,17.5/100,low | metrics: ,17.5,100,score
+SDG,SDG 5,16.0/100,low | metrics: OI6213,16.0,100,score
+SDG,SDG 3,15.0/100,low | metrics: ,15.0,100,score
+SDG,SDG 10,14.8/100,low | metrics: OI6213,14.8,100,score
+SDG,SDG 4,10.0/100,low | metrics: ,10.0,100,score
+SDG,SDG 12,10.0/100,low | metrics: ,10.0,100,score
+SDG,SDG 16,10.0/100,low | metrics: ,10.0,100,score
+SDG,SDG 14,7.5/100,low | metrics: ,7.5,100,score
+Greenwashing,Risk score,46.0/100,Moderate Risk,46.0,100,risk
+Gap,Coverage,17.6%,,17.6,100,%
+Gap,OD4091,MISSING,Social and Environmental Targets,,,
+Gap,OI1075,MISSING,Board of Directors: Total,,,
+Gap,OI1479,MISSING,Greenhouse Gas Emissions: Total,,,
+Gap,OI1571,MISSING,Full-time Employees: Female Managers,,,
+Gap,OI1582,MISSING,Wage Equity,,,
+Gap,OI3757,MISSING,Occupational Injuries,,,
+Gap,OI4112,MISSING,Greenhouse Gas Emissions: Direct (Scope 1),,,
+Gap,OI4724,MISSING,Workers Earning a Living Wage or Higher,,,
+Gap,OI4732,MISSING,Social and Environmental Performance Reporting,,,
+Gap,OI5049,MISSING,Client Feedback System,,,
+Gap,PD1504,MISSING,Energy Capacity of Products Sold,,,
+Gap,PI2822,MISSING,Client Individuals: Provided New Access,,,
+Gap,PI4060,MISSING,Client Individuals: Total,,,
+Gap,PI5842,MISSING,Energy Generated for Sale: Renewable,,,
+Gap,OI2764,"20,000 tCO2e",Greenhouse Gas Emissions Avoided,20000.0,,tCO2e
+Gap,OI6213,127 (derived: 41% of 310),Full-time Employees: Female,127.0,,(derived: 41% of 310)
+Gap,OI8869,310,Permanent Employees: Total,310.0,,
+Claim,output,Around 25 million people in Kenya still light their homes with kerosene or have no electricity at all.,metrics: ,,,
+Claim,outcome,"We have connected 42,000 households across 14 counties, replacing kerosene lamps and reducing household energy spend by 30%.",metrics: PI7954,,,
+Claim,outcome,"Our systems avoided an estimated 20,000 tCO2e in 2024.",metrics: OI2764,,,
+Claim,outcome,"Repayment rates stay above 92% and we employ 310 staff, of whom 41% are women.","metrics: OI8869,OI6213",,,
+Claim,outcome,"Who we serve 62% of our customers live below the national poverty line according to the Poverty Probability Index, and 71% had no electricity before buying from us.",metrics: ,,,
+Claim,outcome,A 2025 study by an independent evaluator compared customers with a matched control group and found 18% higher evening study hours for children and lower reported respiratory symptoms.,metrics: ,,,
+Claim,outcome,Over-indebtedness: we cap instalments at 10% of estimated household income and offer payment holidays after crop failures.,metrics: ,,,
+Claim,intent,"Over the next three years we target 150,000 connected households and 80,000 tCO2e avoided per year, and we report against IRIS+, SDG 7/1/13 and the GOGLA impact metrics.",metrics: ,,,
+Claim,output,Our carbon methodology is verified by a third-party auditor under Gold Standard rules.,metrics: ,,,

@@ -1,0 +1,55 @@
+Section,Metric,Value,Details,Numeric,Max,Unit
+Company,Name,Kampung Makmur Sdn Bhd,,,,
+Company,Generated,2026-10-06T08:53:30Z,,,,
+5D,Overall Grade,C,1.7/5.0,1.7,5,score
+5D,What,2.3/5.0,"Reporting 2 metrics (1 theme-specific, 25 available)",2.3,5,score
+5D,Who,2.3/5.0,"Reporting 3 metrics (1 theme-specific, 10 available)",2.3,5,score
+5D,How Much,1.5/5.0,"Scale=1.5, Depth=1.5, Duration=1.5",1.5,5,score
+5D,Contribution,1.3/5.0,"Depth=1.3, Duration=1.3",1.3,5,score
+5D,Risk,1.3/5.0,Estimated from sector/description (4 metrics available to track),1.3,5,score
+SDG,SDG 2,35.0/100,medium | metrics: ,35.0,100,score
+SDG,SDG 13,35.0/100,medium | metrics: ,35.0,100,score
+SDG,SDG 8,33.5/100,"medium | metrics: OI6213,OI8869",33.5,100,score
+SDG,SDG 12,32.5/100,medium | metrics: ,32.5,100,score
+SDG,SDG 15,32.5/100,medium | metrics: ,32.5,100,score
+SDG,SDG 6,30.0/100,medium | metrics: ,30.0,100,score
+SDG,SDG 7,30.0/100,medium | metrics: ,30.0,100,score
+SDG,SDG 1,25.0/100,medium | metrics: ,25.0,100,score
+SDG,SDG 9,18.0/100,low | metrics: OI8869,18.0,100,score
+SDG,SDG 3,17.5/100,low | metrics: ,17.5,100,score
+SDG,SDG 17,17.5/100,low | metrics: ,17.5,100,score
+SDG,SDG 10,14.8/100,low | metrics: OI6213,14.8,100,score
+SDG,SDG 5,13.5/100,low | metrics: OI6213,13.5,100,score
+SDG,SDG 11,10.0/100,low | metrics: ,10.0,100,score
+SDG,SDG 14,10.0/100,low | metrics: ,10.0,100,score
+SDG,SDG 16,10.0/100,low | metrics: ,10.0,100,score
+SDG,SDG 4,5.0/100,low | metrics: ,5.0,100,score
+Greenwashing,Risk score,49.0/100,Moderate Risk,49.0,100,risk
+Gap,Coverage,17.6%,,17.6,100,%
+Gap,OD4091,MISSING,Social and Environmental Targets,,,
+Gap,OI0263,MISSING,Water Withdrawn,,,
+Gap,OI1075,MISSING,Board of Directors: Total,,,
+Gap,OI1479,MISSING,Greenhouse Gas Emissions: Total,,,
+Gap,OI1571,MISSING,Full-time Employees: Female Managers,,,
+Gap,OI1582,MISSING,Wage Equity,,,
+Gap,OI3757,MISSING,Occupational Injuries,,,
+Gap,OI4112,MISSING,Greenhouse Gas Emissions: Direct (Scope 1),,,
+Gap,OI4724,MISSING,Workers Earning a Living Wage or Higher,,,
+Gap,OI4732,MISSING,Social and Environmental Performance Reporting,,,
+Gap,OI6709,MISSING,Waste Produced: Total,,,
+Gap,OI6912,MISSING,Land Directly Controlled: Sustainably Managed,,,
+Gap,OI9891,MISSING,Pesticide Use,,,
+Gap,PI7852,MISSING,Payments to Supplier Individuals: Smallholder,,,
+Gap,OI6213,54 (derived: 38% of 142),Full-time Employees: Female,54.0,,(derived: 38% of 142)
+Gap,OI8869,142,Permanent Employees: Total,142.0,,
+Gap,PI9991,18,Supplier Individuals: Smallholder,18.0,,
+Claim,outcome,"Since 2022 we have reduced antibiotic use by 62% through vaccination and group-housing, and replaced 100% of conventional slatted housing with deep-litter, enrichment-enabled pens benchmarked against the EU Welfare Quality protocol.",metrics: ,,,
+Claim,outcome,"Our biogas plant captures methane from manure lagoons and generates 1.8 GWh of electricity per year, replacing ~920 tonnes CO2e of grid emissions and cutting our grid electricity purchases by 74%.","metrics: OI2496,OI2764",,,
+Claim,outcome,"Water withdrawal per kg of live weight dropped 31% versus our 2020 baseline, independently verified by SIRIM.",metrics: ,,,
+Claim,outcome,"We employ 142 staff, of whom 38% are women and 64% are from Kluang district; median wage is 42% above the Johor agricultural minimum and every worker is enrolled in SOCSO and EPF.","metrics: OI8869,OI6213",,,
+Claim,outcome,"We run an outgrower programme with 18 smallholder piggeries, supplying feed and veterinary support at wholesale cost; participating smallholders report average income uplifts of RM 1,850 per month (baseline: RM 900).",metrics: PI9991,,,
+Claim,outcome,A 2024 randomized pilot with Universiti Putra Malaysia compared 120 outgrower households to a matched control group and found 23% higher household food-security scores and 17% higher child school attendance.,metrics: ,,,
+Claim,intent,Over the next five years we target: 45% reduction in Scope 1+2 emissions intensity (kg CO2e / kg live weight); 80% of breeding sows in group-housing >= 10 weeks after weaning; 35 outgrower households onboarded; and a SBTi near-term target submission by 2027.,metrics: ,,,
+Claim,output,We are SEDEX-audited and have a 4-tier grievance mechanism.,metrics: ,,,
+Claim,output,"Risks we actively manage include: (i) ASF biosecurity - all farms are fenced, SPF breeding stock, shower-in/out protocol, quarterly third-party audit by the Department of Veterinary Services; (ii) nutrient run-off during monsoon - on-site retention ponds sized to 1-in-100-year storm, automated ammonia sensors; (iii) community odour - a covered-lagoon retrofit was completed in Q3 2025 and the formal complaints rate has dropped from 14 to 2 per year.",metrics: ,,,
+Claim,output,"We report against IRIS+, SDG 2/6/7/8/12/13, GRI standards, and have commissioned a first independent ESG audit for FY2026.",metrics: ,,,

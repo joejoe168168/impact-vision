@@ -264,8 +264,9 @@ def write_deliverables(
     include_docx: bool = True,
     pdf: bool = False,
     lang: str = "en",
+    include_data: bool = True,
 ) -> list[Path]:
-    """Write the impact report, IC memo, DD report (+ DOCX, JSON summary).
+    """Write the impact report, IC memo, DD report (+ DOCX, data workbook/CSV, JSON summary).
 
     ``pdf=True`` also prints the impact report and IC memo to PDF (needs the
     ``[pdf]`` extra; raises :class:`PdfUnavailable` with an install hint).
@@ -341,6 +342,17 @@ def write_deliverables(
         except ImportError:
             pass  # python-docx is optional
 
+    if include_data:
+        from openharness.impact.exports import to_csv, write_xlsx
+
+        try:
+            files.append(write_xlsx(bundle.report_data, out / f"{stem}_data.xlsx"))
+        except ImportError:
+            pass  # openpyxl missing
+        data_csv = out / f"{stem}_data.csv"
+        data_csv.write_text(to_csv(bundle.report_data), encoding="utf-8")
+        files.append(data_csv)
+
     bundle.files = files
     summary = out / f"{stem}_summary.json"
     summary.write_text(json.dumps(bundle.summary(), indent=2, default=str), encoding="utf-8")
@@ -412,7 +424,7 @@ def write_gallery(
         deliverables = []
         for f in b.files:
             p = Path(f)
-            if p.suffix in {".html", ".pdf", ".docx", ".json"}:
+            if p.suffix in {".html", ".pdf", ".docx", ".xlsx", ".csv", ".json"}:
                 try:
                     href = p.resolve().relative_to(out.resolve()).as_posix()
                 except ValueError:
@@ -464,6 +476,7 @@ def _label(path: Path) -> str:
         ("_dd_report", "DD report"),
         ("_dd_questionnaire", "DD questionnaire"),
         ("_summary", "Summary"),
+        ("_data", "Data"),
     )
     base = next((label for suffix, label in labels if name.endswith(suffix)), path.name)
     return base if path.suffix == ".html" else f"{base} ({path.suffix})"

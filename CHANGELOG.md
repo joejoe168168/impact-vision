@@ -125,6 +125,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
   - The duplicate `<main>` landmark is gone from the IC memo and DD report.
   - Gallery navigation is labelled.
   - Wide tables scroll inside themselves on phones.
+- **Better data exports (W2.8).** New `impact/exports.py` is shared by
+  `impact_report` and the CLI deliverables.
+  - **XLSX**: Summary, 5 Dimensions, SDG Alignment, Gap Analysis, Claims,
+    All figures and Methodology sheets. Headers are frozen and filtered,
+    columns are sized, and scores and reported values are real numbers
+    (`1,200 tCO2e` becomes 1200 with the unit in its own column).
+  - **JSON** carries `schema_version` and `export_mode`. `slim=True` drops
+    evidence chains, IRIS+ definitions and the duplicate `sdg_alignment` key
+    (pig farm: 160 KB to 27 KB).
+  - **CSV** keeps the `Section, Metric, Value, Details` display columns and
+    adds `Numeric`, `Max` and `Unit`, plus the greenwashing score.
+  - `assess` / `demo` deliverables now include `*_data.xlsx` and
+    `*_data.csv`.
 - **Browser chat polish.**
   - A friendly setup card replaces the red monospace "No API credentials"
     error, and points to the offline `demo` / `assess` commands.
