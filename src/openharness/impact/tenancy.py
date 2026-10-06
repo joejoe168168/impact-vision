@@ -160,6 +160,48 @@ class InMemoryRBACStore:
         self._roles[(tenant_id, role.name)] = role
 
 
+class PersistentRBACStore(InMemoryRBACStore):
+    """RBAC store backed by the W5.3 state store: restored on start, saved on every upsert.
+
+    Tenants, users and roles live under ``kind="rbac"``; the store-level tenant
+    key is ``"_global"`` because users and tenants are cross-tenant records.
+    """
+
+    _KEY = ("_global", "rbac", "directory")
+
+    def __init__(self, store=None) -> None:  # noqa: ANN001 - StateStore
+        from openharness.impact.state_store import get_state_store
+
+        super().__init__()
+        self.store = store or get_state_store()
+        saved = self.store.get(*self._KEY) or {}
+        for raw in saved.get("tenants", []):
+            self._tenants[raw["id"]] = Tenant.model_validate(raw)
+        for raw in saved.get("users", []):
+            self._users[raw["id"]] = User.model_validate(raw)
+        for raw in saved.get("roles", []):
+            self._roles[(raw["tenant_id"], raw["role"]["name"])] = Role.model_validate(raw["role"])
+
+    def _save(self) -> None:
+        self.store.put(*self._KEY, {
+            "tenants": [t.model_dump(mode="json") for t in self._tenants.values()],
+            "users": [u.model_dump(mode="json") for u in self._users.values()],
+            "roles": [{"tenant_id": tid, "role": r.model_dump(mode="json")} for (tid, _), r in self._roles.items()],
+        })
+
+    def upsert_tenant(self, tenant: Tenant) -> None:
+        super().upsert_tenant(tenant)
+        self._save()
+
+    def upsert_user(self, user: User) -> None:
+        super().upsert_user(user)
+        self._save()
+
+    def upsert_role(self, tenant_id: str, role: Role) -> None:
+        super().upsert_role(tenant_id, role)
+        self._save()
+
+
 # ---------------------------------------------------------------------------
 # Authorisation evaluator
 # ---------------------------------------------------------------------------

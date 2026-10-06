@@ -44,7 +44,10 @@ _DEFAULT_WORKSPACE: EngagementWorkspace | None = None
 def _workspace() -> EngagementWorkspace:
     global _DEFAULT_WORKSPACE
     if _DEFAULT_WORKSPACE is None:
-        _DEFAULT_WORKSPACE = EngagementWorkspace()
+        from openharness.impact.state_store import get_state_store
+
+        # Persisted (W5.3): consultant work survives a restart.
+        _DEFAULT_WORKSPACE = EngagementWorkspace(store=get_state_store())
     return _DEFAULT_WORKSPACE
 
 

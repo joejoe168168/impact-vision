@@ -316,7 +316,33 @@ def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def load_review_queue(
+    name: str,
+    *,
+    tenant_id: str = "default",
+    policy: ExtractionReviewPolicy | None = None,
+    store=None,  # noqa: ANN001 - StateStore
+) -> ReviewQueue:
+    """Restore a named review queue from the state store (W5.3), or start a new one."""
+    from openharness.impact.state_store import get_state_store
+
+    raw = (store or get_state_store()).get(tenant_id, "review_queue", name)
+    if raw:
+        return ReviewQueue.model_validate(raw)
+    return ReviewQueue(policy=policy or ExtractionReviewPolicy())
+
+
+def save_review_queue(
+    queue: ReviewQueue, name: str, *, tenant_id: str = "default", store=None  # noqa: ANN001
+) -> None:
+    from openharness.impact.state_store import get_state_store
+
+    (store or get_state_store()).put(tenant_id, "review_queue", name, queue.model_dump(mode="json"))
+
+
 __all__ = [
+    "load_review_queue",
+    "save_review_queue",
     "ExtractionReviewPolicy",
     "PolicyVerdict",
     "ReviewQueue",

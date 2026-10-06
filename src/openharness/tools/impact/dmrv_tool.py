@@ -23,7 +23,9 @@ class DMRVEvidenceTool(BaseTool):
 
     def __init__(self):
         self.graph = EvidenceGraph()
-        self.trail = AuditTrail()
+        from openharness.impact.state_store import get_state_store
+
+        self.trail = AuditTrail(store=get_state_store())  # persisted (W5.3)
         # Resolved on first signature so the registry loads without a key.
         self.signer = LazySigner("dmrv")
 

@@ -59,9 +59,17 @@ def load_ddq_bank() -> list[DDQQuestion]:
     return questions
 
 
-_DRAFT_REVIEW_QUEUE = ReviewQueue(
-    policy=ExtractionReviewPolicy(min_source_refs=0, auto_approve_threshold=1.0)
-)
+_DDQ_QUEUE_NAME = "ddq_drafts"
+
+
+def _draft_queue() -> ReviewQueue:
+    """DDQ draft review queue, persisted in the state store (W5.3)."""
+    from openharness.impact.evidence_workflow import load_review_queue
+
+    return load_review_queue(
+        _DDQ_QUEUE_NAME,
+        policy=ExtractionReviewPolicy(min_source_refs=0, auto_approve_threshold=1.0),
+    )
 
 
 def draft_answers(
@@ -78,6 +86,7 @@ def draft_answers(
         and (record.is_verified or not policy.require_verified)
     ]
     answers = []
+    queue = _draft_queue()
     for question in questions:
         citations = []
         answer = ""
@@ -113,9 +122,9 @@ def draft_answers(
             "review_status": "pending",
             "drafted_at": datetime.now(timezone.utc).isoformat(),
         }
-        review_item = _DRAFT_REVIEW_QUEUE.add(
+        review_item = queue.add(
             AIExtractionReview(
-                item_id=f"ddq:{question.qid}:{len(_DRAFT_REVIEW_QUEUE.items)}",
+                item_id=f"ddq:{question.qid}:{len(queue.items)}",
                 extracted_text=answer or gap,
                 confidence=confidence,
                 rationale="Approved-data-only DDQ draft",
@@ -126,6 +135,9 @@ def draft_answers(
         )
         row["review_item_id"] = review_item.review.item_id
         answers.append(row)
+    from openharness.impact.evidence_workflow import save_review_queue
+
+    save_review_queue(queue, _DDQ_QUEUE_NAME)
     return answers
 
 
@@ -157,7 +169,7 @@ def export_ddq(answers, format: Literal["xlsx", "docx_outline", "json"]):
 
 
 def review_status() -> dict:
-    exported = _DRAFT_REVIEW_QUEUE.export()
+    exported = _draft_queue().export()
     return {
         "total": exported.summary.total,
         "pending": exported.summary.pending,

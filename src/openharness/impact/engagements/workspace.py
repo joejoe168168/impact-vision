@@ -114,10 +114,16 @@ class EngagementWorkspace:
         *,
         tenant_id: str = "default",
         audit_trail: AuditTrail | None = None,
+        store=None,  # noqa: ANN001 - openharness.impact.state_store.StateStore
     ) -> None:
         self.tenant_id = tenant_id
         self.audit_trail = audit_trail
+        self.store = store
         self._engagements: dict[str, Engagement] = {}
+        if store is not None:  # W5.3: restore on startup
+            saved = store.get(tenant_id, "engagement_workspace", "default")
+            if saved:
+                self.import_state(saved)
 
     # ------------------------------------------------------------------ engagements
 
@@ -760,7 +766,14 @@ class EngagementWorkspace:
 
     # ------------------------------------------------------------------ internals
 
+    def persist(self) -> None:
+        """Save the workspace to its state store (no-op without one)."""
+        if self.store is not None:
+            self.store.put(self.tenant_id, "engagement_workspace", "default", self.export_state())
+
     def _audit(self, event_type: str, *, actor: str = "system", **payload) -> None:
+        # Every state-changing call ends here, so this is the auto-persist hook.
+        self.persist()
         if self.audit_trail is None:
             return
         cleaned = {

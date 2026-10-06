@@ -7,11 +7,16 @@ from datetime import datetime, timezone
 from typing import Callable, Literal
 from pydantic import BaseModel, Field
 from openharness.impact.models import Company
-from openharness.impact.evidence_workflow import ReviewQueue
+from openharness.impact.evidence_workflow import ReviewQueue, load_review_queue, save_review_queue
 from openharness.impact.roadmap_v2 import AIExtractionReview
 
 
-_RADAR_REVIEW_QUEUE = ReviewQueue()
+_RADAR_QUEUE_NAME = "regulatory_radar"
+
+
+def _radar_queue() -> ReviewQueue:
+    """The radar's review queue, persisted in the state store (W5.3)."""
+    return load_review_queue(_RADAR_QUEUE_NAME)
 
 
 class TrackedStandard(BaseModel):
@@ -59,7 +64,8 @@ def check_tracked_standards(
                 + (f": {', '.join(headings)}" if headings else ""),
                 detected_at=datetime.now(timezone.utc).isoformat(),
             )
-            review = _RADAR_REVIEW_QUEUE.add(
+            queue = _radar_queue()
+            review = queue.add(
                 AIExtractionReview(
                     item_id=f"radar:{standard.standard_id}:{digest[:12]}",
                     extracted_text=finding.summary,
@@ -70,6 +76,7 @@ def check_tracked_standards(
                 prompt_version="regulatory-radar-v1",
                 model_version="deterministic",
             )
+            save_review_queue(queue, _RADAR_QUEUE_NAME)
             finding.review_item_id = review.review.item_id
             findings.append(finding)
         standard.last_seen_hash = digest
@@ -120,12 +127,14 @@ def decide_finding(
 ) -> RadarFinding:
     """Synchronise a radar decision with the shared evidence review queue."""
     if finding.review_item_id:
-        _RADAR_REVIEW_QUEUE.decide(
+        queue = _radar_queue()
+        queue.decide(
             finding.review_item_id,
             "approved" if status == "confirmed" else "rejected",
             reviewer=reviewer,
             rationale=f"Radar finding {status}",
         )
+        save_review_queue(queue, _RADAR_QUEUE_NAME)
     finding.review_status = status
     return finding
 

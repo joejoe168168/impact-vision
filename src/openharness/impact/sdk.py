@@ -529,7 +529,10 @@ class ImpactVision:
     def audit_trail(*, tenant_id: str = "default", fund_id: str = "default"):
         """Phase 17 — Hash-chained append-only audit trail for scoring decisions."""
         from openharness.impact.audit_trail import AuditTrail
-        return AuditTrail(tenant_id=tenant_id, fund_id=fund_id)
+        from openharness.impact.state_store import get_state_store
+
+        # Persisted (W5.3): the chain survives restarts.
+        return AuditTrail(tenant_id=tenant_id, fund_id=fund_id, store=get_state_store())
 
     @staticmethod
     def soc2_readiness(entity: str):

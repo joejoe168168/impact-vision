@@ -27,7 +27,9 @@ class ContributionTrackerTool(BaseTool):
 
     def __init__(self):
         self.graph = EvidenceGraph()
-        self.trail = AuditTrail()
+        from openharness.impact.state_store import get_state_store
+
+        self.trail = AuditTrail(store=get_state_store())  # persisted (W5.3)
 
     def is_read_only(self, arguments: BaseModel) -> bool:
         return getattr(arguments, "action", "") in {"scorecard", "attribution_check"}

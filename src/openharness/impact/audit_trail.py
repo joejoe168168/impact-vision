@@ -73,10 +73,24 @@ class AuditTrail:
     tenant_id: str = "default"
     fund_id: str = "default"
     signer: Signer = field(default_factory=lambda: LazySigner("audit"))
+    store: Any = None  # openharness.impact.state_store.StateStore (W5.3)
     feed: ReportFeed = field(init=False)
 
     def __post_init__(self) -> None:
         self.feed = ReportFeed(tenant_id=self.tenant_id, fund_id=self.fund_id)
+        self._reload()
+
+    def _reload(self) -> None:
+        """Restore the chain from the state store (several trails may share a fund)."""
+        if self.store is None:
+            return
+        saved = self.store.get(self.tenant_id, "audit_trail", self.fund_id)
+        if saved:
+            self.feed = ReportFeed.model_validate(saved)
+
+    def _save(self) -> None:
+        if self.store is not None:
+            self.store.put(self.tenant_id, "audit_trail", self.fund_id, self.feed.model_dump(mode="json"))
 
     def record_event(
         self,
@@ -91,7 +105,10 @@ class AuditTrail:
         enriched.setdefault("actor", actor)
         enriched.setdefault("recorded_at", datetime.now(timezone.utc).isoformat())
         p = period or datetime.now(timezone.utc).strftime("%Y-%m")
-        return self.feed.append(self.signer, event_type, p, enriched)
+        self._reload()  # append to the latest persisted head, not a stale copy
+        report = self.feed.append(self.signer, event_type, p, enriched)
+        self._save()
+        return report
 
     def record_metric_event(
         self,
