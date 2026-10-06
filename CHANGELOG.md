@@ -58,6 +58,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
   `theme="dark"`), and the gradient hero becomes the same masthead as the
   impact report. The IC-gate tile reads "NOT READY" for insufficient
   evidence instead of overflowing.
+- **Print & PDF (W2.4).** `report_templates/pdf.py` prints any deliverable
+  with headless Chromium (new `[pdf]` extra, or set
+  `IMPACT_VISION_CHROMIUM`), falling back to WeasyPrint. Pages are A4 with a
+  title and page-number footer. `impact-vision assess --pdf` writes PDFs of
+  the impact report and IC memo; `impact_report output_format="pdf"` uses
+  the same path, or saves print-ready HTML with an install hint. In print,
+  cards may split across pages (rows and tiles don't), chart table twins
+  stay on screen and the glossary prints expanded. The pig-farm impact
+  report is 9 A4 pages (was 20 via browser print), the IC memo 5.
+  Deliverables now include the IC memo as `.docx` when python-docx is
+  installed (`[office]`).
 
 ### Added — v7 Wave 1: effortless first run
 

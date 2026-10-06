@@ -128,6 +128,7 @@ def assess_cmd(
     out_dir: Path = typer.Option(Path("impact-vision-output"), "--out-dir", "-o", help="Output folder"),
     as_json: bool = typer.Option(False, "--json", help="Print the summary as JSON"),
     open_report: bool = typer.Option(False, "--open", help="Open the impact report in a browser"),
+    pdf: bool = typer.Option(False, "--pdf", help="Also write PDFs of the impact report and IC memo ([pdf] extra)"),
 ) -> None:
     """Assess one pitch deck / memo and write the impact report, IC memo and DD report.
 
@@ -143,7 +144,13 @@ def assess_cmd(
     except (FileNotFoundError, ValueError, ImportError) as exc:
         print(f"Error: {exc}", file=sys.stderr)
         raise typer.Exit(1) from exc
-    files = write_deliverables(bundle, out_dir)
+    from openharness.impact.report_templates.pdf import PdfUnavailable
+
+    try:
+        files = write_deliverables(bundle, out_dir, pdf=pdf)
+    except PdfUnavailable as exc:
+        files = write_deliverables(bundle, out_dir)
+        print(f"Note: {exc}", file=sys.stderr)
     if as_json:
         print(json.dumps(bundle.summary(), indent=2, default=str))
     else:

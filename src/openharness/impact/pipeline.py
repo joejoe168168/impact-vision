@@ -262,8 +262,13 @@ def write_deliverables(
     *,
     basename: str | None = None,
     include_docx: bool = True,
+    pdf: bool = False,
 ) -> list[Path]:
-    """Write the impact report, IC memo, DD report (+ DOCX, JSON summary)."""
+    """Write the impact report, IC memo, DD report (+ DOCX, JSON summary).
+
+    ``pdf=True`` also prints the impact report and IC memo to PDF (needs the
+    ``[pdf]`` extra; raises :class:`PdfUnavailable` with an install hint).
+    """
     from openharness.impact.ic_memo import render_ic_memo_html
     from openharness.impact.report_templates import (
         render_dd_questionnaire_docx,
@@ -306,7 +311,25 @@ def write_deliverables(
     )
     files.append(dd_path)
 
+    if pdf:
+        from openharness.impact.report_templates.pdf import html_to_pdf
+
+        for html_file in (report, memo):
+            pdf_path, _engine = html_to_pdf(
+                html_file.read_text(encoding="utf-8"), html_file.with_suffix(".pdf")
+            )
+            files.append(pdf_path)
+
     if include_docx:
+        from openharness.impact.ic_memo import render_ic_memo
+
+        try:
+            files.append(Path(render_ic_memo(
+                bundle.assessment, bundle.scorecard, bundle.thesis,
+                output_format="docx", path=out / f"{stem}_ic_memo.docx",
+            )))
+        except ImportError:
+            pass  # python-docx is optional ([office] extra)
         docx = out / f"{stem}_dd_questionnaire.docx"
         try:
             render_dd_questionnaire_docx(
@@ -369,7 +392,7 @@ def write_gallery(bundles: list[AssessmentBundle], out_dir: str | Path) -> Path:
         links = "".join(
             f'<a href="{html.escape(Path(f).name)}">{html.escape(_label(Path(f)))}</a>'
             for f in b.files
-            if Path(f).suffix in {".html", ".docx", ".json"}
+            if Path(f).suffix in {".html", ".pdf", ".docx", ".json"}
         )
         gate_class = "warn" if "INSUFFICIENT" in s["gate"] else s["gate"].lower()
         cards.append(
@@ -420,16 +443,15 @@ border:1px solid var(--line);border-radius:8px;padding:4px 10px}}nav a:hover{{bo
 
 def _label(path: Path) -> str:
     name = path.stem
-    for suffix, label in (
+    labels = (
         ("_impact_report", "Impact report"),
         ("_ic_memo", "IC memo"),
         ("_dd_report", "DD report"),
-        ("_dd_questionnaire", "DD questionnaire (.docx)"),
-        ("_summary", "Summary (.json)"),
-    ):
-        if name.endswith(suffix):
-            return label
-    return path.name
+        ("_dd_questionnaire", "DD questionnaire"),
+        ("_summary", "Summary"),
+    )
+    base = next((label for suffix, label in labels if name.endswith(suffix)), path.name)
+    return base if path.suffix == ".html" else f"{base} ({path.suffix})"
 
 
 __all__ = [

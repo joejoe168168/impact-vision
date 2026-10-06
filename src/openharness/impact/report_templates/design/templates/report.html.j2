@@ -84,7 +84,7 @@
   {% if five_d.has_benchmark %}
   <p class="legend"><span><span class="key"></span>{{ t('legend_score') }}</span><span><span class="key bench"></span>{{ t('legend_bench') }}{% if five_d.benchmark_note %} — {{ five_d.benchmark_note }}{% endif %}</span></p>
   {% endif %}
-  <details><summary>{{ t('table_view') }}</summary>
+  <details class="twin"><summary>{{ t('table_view') }}</summary>
     <div class="table-wrap"><table>
       <caption>{{ t('sec_5d') }}</caption>
       <thead><tr><th scope="col">{{ t('col_dimension') }}</th><th scope="col" class="num">{{ t('col_score') }}</th><th scope="col" class="num">{{ t('col_benchmark') }}</th><th scope="col">{{ t('col_evidence') }}</th><th scope="col">{{ t('col_notes') }}</th></tr></thead>
@@ -111,7 +111,7 @@
   {% endif %}
   {% if sdg.other %}<p class="small muted" style="margin:12px 0 0">{{ t('sdg_other', goals=sdg.other | join(', ')) }}</p>{% endif %}
   {% if sdg.material %}
-  <details><summary>{{ t('table_view') }}</summary>
+  <details class="twin"><summary>{{ t('table_view') }}</summary>
     <div class="table-wrap"><table>
       <caption>{{ t('sec_sdg') }}</caption>
       <thead><tr><th scope="col">{{ t('col_goal') }}</th><th scope="col" class="num">{{ t('col_score') }}</th><th scope="col">{{ t('col_confidence') }}</th><th scope="col">{{ t('col_metrics') }}</th></tr></thead>
@@ -221,12 +221,12 @@
 </footer>
 </main>
 <script>
-/* Print every collapsed table view and definition list. */
+/* Print the glossary expanded (chart table views stay on screen only). */
 window.addEventListener("beforeprint", function () {
-  document.querySelectorAll("details").forEach(function (d) { d.dataset.wasOpen = d.open ? "1" : ""; d.open = true; });
+  document.querySelectorAll("details.glossary").forEach(function (d) { d.dataset.wasOpen = d.open ? "1" : ""; d.open = true; });
 });
 window.addEventListener("afterprint", function () {
-  document.querySelectorAll("details").forEach(function (d) { d.open = d.dataset.wasOpen === "1"; });
+  document.querySelectorAll("details.glossary").forEach(function (d) { d.open = d.dataset.wasOpen === "1"; });
 });
 </script>
 </body>

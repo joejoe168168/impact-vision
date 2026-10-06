@@ -96,3 +96,29 @@ def test_report_without_optional_sections_still_renders():
     minimal = {"company": {"name": "Bare Co", "reported_metrics": {}}, "generated_at": "2026-10-06"}
     html = render_decision_report(minimal)
     assert "Bare Co" in html and 'id="sec-appendix"' in html
+
+
+def test_pdf_export_falls_back_with_install_hint(monkeypatch, tmp_path):
+    import builtins
+
+    from openharness.impact.report_templates import pdf
+
+    real_import = builtins.__import__
+
+    def no_engines(name, *args, **kwargs):
+        if name.startswith(("playwright", "weasyprint")):
+            raise ImportError(name)
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", no_engines)
+    with pytest.raises(pdf.PdfUnavailable) as exc:
+        pdf.html_to_pdf("<html><body>x</body></html>", tmp_path / "r.pdf")
+    assert "impact-vision[pdf]" in str(exc.value)
+
+
+def test_print_css_hides_table_twins_and_avoids_row_breaks():
+    from openharness.impact.report_templates.decision_report import design_css
+
+    css = design_css()
+    assert "details.twin" in css
+    assert "@page" in css and "tr, .verdict { break-inside: avoid" in css

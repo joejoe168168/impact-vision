@@ -110,7 +110,7 @@ pip install -e ".[dev]"
 The core install is enough for `demo`, `assess`, reports and the agent.
 Optional extras add the other surfaces: `[web]` (browser chat + REST API),
 `[dashboard]` (Streamlit), `[office]` (Word/PowerPoint exports), `[tui]`,
-or `[all]`. For example: `pip install -e ".[web,office]"`.
+`[pdf]` (PDF export; then run `playwright install chromium`), or `[all]`. For example: `pip install -e ".[web,office]"`.
 
 > **`'impact-vision' is not recognized`?** Run the auto-fix script:
 >
@@ -455,7 +455,7 @@ subcommand groups, two quickstart commands and four service commands. Run any co
 ```bash
 # No-key quickstart
 impact-vision demo [--deck pig-farm|solar|microfinance|all] [--no-open]
-impact-vision assess deck.pdf [--sector S] [--audience full|ic|lp|regulator|public] [-o DIR] [--json] [--open]
+impact-vision assess deck.pdf [--sector S] [--audience full|ic|lp|regulator|public] [-o DIR] [--json] [--open] [--pdf]
 
 # Interactive agent
 impact-vision                              # Start interactive agent session

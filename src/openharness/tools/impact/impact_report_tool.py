@@ -3808,37 +3808,20 @@ def _to_pdf(html: str, output_path: str, context) -> ToolResult:
     else:
         path = context.cwd / "impact_report.pdf"
 
-    try:
-        import weasyprint  # type: ignore[import-untyped]
+    from openharness.impact.report_templates.pdf import PdfUnavailable, html_to_pdf
 
-        # Emit a tagged, accessible PDF/UA-1 document with heading bookmarks when
-        # the installed WeasyPrint supports it (>= 57); fall back gracefully.
-        document = weasyprint.HTML(string=html)
-        pdf_ua = False
-        try:
-            document.write_pdf(str(path), pdf_variant="pdf/ua-1")
-            pdf_ua = True
-        except TypeError:
-            document.write_pdf(str(path))
+    try:
+        written, engine = html_to_pdf(html, path)
         return ToolResult(
-            output=(
-                f"PDF report saved to: {path}"
-                + (" (tagged PDF/UA-1, accessible)" if pdf_ua else "")
-            ),
-            metadata={"output_path": str(path), "format": "pdf", "pdf_ua": pdf_ua},
+            output=f"PDF report saved to: {written} (rendered with {engine})",
+            metadata={"output_path": str(written), "format": "pdf", "engine": engine},
         )
-    except ImportError:
+    except PdfUnavailable as exc:
         html_path = path.with_suffix(".html")
         html_path.parent.mkdir(parents=True, exist_ok=True)
         html_path.write_text(html, encoding="utf-8")
         return ToolResult(
-            output=(
-                f"WeasyPrint not installed. HTML saved to: {html_path}\n"
-                "To generate PDF:\n"
-                "  Option 1: pip install weasyprint  (then re-run)\n"
-                "  Option 2: Open the HTML file in a browser and use Ctrl+P / Cmd+P to print to PDF\n"
-                "The report includes print-friendly CSS for clean PDF output."
-            ),
+            output=f"{exc}\nHTML saved to: {html_path} (print-ready: Ctrl+P / Cmd+P → Save as PDF).",
             metadata={"output_path": str(html_path), "format": "html_for_pdf"},
         )
 
