@@ -649,11 +649,22 @@ def build_view(data: dict[str, Any], *, audience: str | None = None, lang: str =
     view["kpis"] = _kpis(view, spec, decision, t)
     view["mind"] = _mind(data, view["five_d"], decision, t)
     view["actions"] = _actions(data, spec, t)
+    from openharness.impact.methodology import methodology_stamp, section
+
     view["methodology"] = [t("method_1"), t("method_2"), t("method_3")]
     if spec.show_greenwashing:
-        view["methodology"].append(t("method_4"))
+        w = section("greenwashing").get("weights", {})
+        view["methodology"].append(t(
+            "method_4",
+            gap=round(w.get("claim_metric_gap", 0) * 100), omission=round(w.get("adverse_omission", 0) * 100),
+            specificity=round(w.get("specificity", 0) * 100), selectivity=round(w.get("selectivity", 0) * 100),
+            verification=round(w.get("verification", 0) * 100),
+        ))
     if spec.show_gate:
         view["methodology"].append(t("method_5"))
+    stamp = data.get("methodology") or methodology_stamp()
+    view["methodology_stamp"] = stamp
+    view["methodology"].append(t("method_version", version=stamp["methodology_version"], hash=stamp["config_hash"]))
 
     present = {
         "verdict": decision is not None,

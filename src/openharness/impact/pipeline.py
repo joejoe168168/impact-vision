@@ -65,6 +65,7 @@ class AssessmentBundle:
             "reported_metrics": dict(self.company.reported_metrics),
             "files": [Path(p).name for p in self.files],
             "ai_disclosure": ai_provenance_for_report(self.report_data).disclosure,
+            "methodology": self.assessment.methodology,
         }
 
 
@@ -222,6 +223,7 @@ def assess_document(
         "source_label": source_label,
         # The no-LLM chain: rule-based extraction/tagging, deterministic scores.
         "ai_usage": {"extraction": "rules", "tagging": "rules", "drafting": "none"},
+        "methodology": assessment.methodology,
     }
     from openharness.impact.report_templates.decision_report import decision_from_scorecard
 

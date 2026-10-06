@@ -237,6 +237,20 @@ class GreenwashingScore(BaseModel):
 
     flags: list[str] = Field(default_factory=list)
     recommendations: list[str] = Field(default_factory=list)
+    methodology: dict[str, str] = Field(default_factory=lambda: _gw_stamp())
+
+
+def _gw_stamp() -> dict[str, str]:
+    from openharness.impact.methodology import methodology_stamp
+
+    return methodology_stamp()
+
+
+def _gw() -> dict:
+    """Greenwashing parameters from the versioned methodology (W5.2)."""
+    from openharness.impact.methodology import section
+
+    return section("greenwashing")
 
 
 def _canonical_metric_ids(raw: Any) -> set[str]:
@@ -270,7 +284,11 @@ def assess_greenwashing(
     selectivity_score = _score_selectivity(company, metrics)
     verification_score = _score_verification(text, metrics, claims)
 
-    weights = {"gap": 0.30, "omission": 0.20, "specificity": 0.20, "selectivity": 0.15, "verification": 0.15}
+    w = _gw()["weights"]
+    weights = {
+        "gap": w["claim_metric_gap"], "omission": w["adverse_omission"], "specificity": w["specificity"],
+        "selectivity": w["selectivity"], "verification": w["verification"],
+    }
     overall = (
         gap_score * weights["gap"]
         + omission_score * weights["omission"]
@@ -471,28 +489,25 @@ def _score_verification(
 
 
 def _classify(score: float) -> str:
-    if score <= 20:
-        return "Genuine Impact Leader"
-    if score <= 40:
-        return "Substantive with Gaps"
-    if score <= 60:
-        return "Moderate Risk"
-    if score <= 80:
-        return "High Risk"
-    return "Probable Greenwashing"
+    bands = _gw()["classification"]
+    for band in bands:
+        if score <= band["max"]:
+            return band["label"]
+    return bands[-1]["label"]
 
 
 def _generate_flags(gap: float, omission: float, specificity: float, selectivity: float, verification: float) -> list[str]:
     flags = []
-    if gap > 60:
+    limit = _gw()["flag_threshold"]
+    if gap > limit:
         flags.append("HIGH_CLAIM_METRIC_GAP: SDG/theme claims lack supporting metric evidence")
-    if omission > 60:
+    if omission > limit:
         flags.append("ADVERSE_OMISSION: Missing negative-impact metrics for sector")
-    if specificity > 60:
+    if specificity > limit:
         flags.append("VAGUE_LANGUAGE: Claims use aspirational language without concrete evidence")
-    if selectivity > 60:
+    if selectivity > limit:
         flags.append("SELECTIVE_REPORTING: Reporting appears to cherry-pick positive metrics")
-    if verification > 60:
+    if verification > limit:
         flags.append("NO_VERIFICATION: No evidence of third-party verification or auditing")
     return flags
 

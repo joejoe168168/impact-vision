@@ -252,12 +252,28 @@ def _infer_sdg_from_description(company: Company) -> dict[int, float]:
     return inferred
 
 
-# A metric tagged to this many SDGs or more is cross-cutting, not evidence of
-# any particular goal (e.g. "Client Individuals: Total" is tagged to 12 goals).
-_CROSS_CUTTING_MIN_GOALS = 6
-_CROSS_CUTTING_WEIGHT = 0.4
-# Inferred relevance (0-1) from sector/keywords at which a goal is material.
-_MATERIAL_RELEVANCE = 0.5
+def _sdg() -> dict:
+    """SDG scoring parameters from the versioned methodology (W5.2).
+
+    ``cross_cutting_min_goals``: a metric tagged to this many SDGs or more is
+    cross-cutting, not evidence of any one goal (e.g. "Client Individuals:
+    Total" is tagged to 12). ``material_relevance``: inferred relevance (0-1)
+    at which a goal is material.
+    """
+    from openharness.impact.methodology import section
+
+    return section("sdg")
+
+
+def __getattr__(name: str):  # legacy constant names
+    legacy = {
+        "_CROSS_CUTTING_MIN_GOALS": "cross_cutting_min_goals",
+        "_CROSS_CUTTING_WEIGHT": "cross_cutting_weight",
+        "_MATERIAL_RELEVANCE": "material_relevance",
+    }
+    if name in legacy:
+        return _sdg()[legacy[name]]
+    raise AttributeError(name)
 
 
 def map_sdg_alignment(
@@ -272,6 +288,10 @@ def map_sdg_alignment(
     2. Description inference: sector and keyword analysis (up to 25 pts)
     3. Theme alignment (up to 15 pts)
     """
+    params = _sdg()
+    pts = params["max_points"]
+    cross_min, cross_w = params["cross_cutting_min_goals"], params["cross_cutting_weight"]
+    material_at = params["material_relevance"]
     target_goals = goals or list(range(1, 18))
     reported_ids = set(company.reported_metrics.keys())
     inferred_sdg = _infer_sdg_from_description(company)
@@ -288,14 +308,15 @@ def map_sdg_alignment(
         if not goal_metrics:
             relevance = inferred_sdg.get(goal_num, 0)
             if relevance > 0 or goal_num in company.sdg_claims:
-                score = max(10.0, round(relevance * 35, 1))
+                fallback = params["no_catalog_metrics"]
+                score = max(float(fallback["floor"]), round(relevance * fallback["relevance_scale"], 1))
                 alignments.append(SDGAlignment(
                     goal=goal_num,
                     goal_name=sdg.name,
                     score=score,
                     confidence="low",
                     provenance="estimated",
-                    material=goal_num in company.sdg_claims or relevance >= _MATERIAL_RELEVANCE,
+                    material=goal_num in company.sdg_claims or relevance >= material_at,
                 ))
             continue
 
@@ -317,7 +338,7 @@ def map_sdg_alignment(
         # Individuals: Total") count at reduced weight and cannot on their own
         # establish high confidence for a goal.
         specific_matched = {
-            mid for mid in matched_metric_ids if goal_breadth.get(mid, 0) < _CROSS_CUTTING_MIN_GOALS
+            mid for mid in matched_metric_ids if goal_breadth.get(mid, 0) < cross_min
         }
         goal_prefix = f"{goal_num}."
         # Targets / evidence chain still use the broad set so we surface every
@@ -337,13 +358,13 @@ def map_sdg_alignment(
                         "confidence": 0.8 if len(specific_matched) >= 3 else 0.5,
                     })
 
-        weighted = len(specific_matched) + _CROSS_CUTTING_WEIGHT * (
+        weighted = len(specific_matched) + cross_w * (
             len(matched_metric_ids) - len(specific_matched)
         )
         coverage = weighted / len(coverage_set) if coverage_set else 0
-        metric_score = min(60.0, coverage * 60.0)
+        metric_score = min(float(pts["metrics"]), coverage * pts["metrics"])
 
-        inferred_score = inferred_sdg.get(goal_num, 0) * 25.0
+        inferred_score = inferred_sdg.get(goal_num, 0) * float(pts["inference"])
         if inferred_score > 0 and company.description:
             evidence_chain.append({
                 "claim_text": company.description[:120],
@@ -361,27 +382,32 @@ def map_sdg_alignment(
                 goal_themes.update(t.lower() for t in m.impact_themes)
             theme_overlap = themes_lower & goal_themes
             if theme_overlap:
-                theme_score = min(15.0, (len(theme_overlap) / max(len(themes_lower), 1)) * 15.0)
+                theme_score = min(
+                    float(pts["theme"]), (len(theme_overlap) / max(len(themes_lower), 1)) * pts["theme"]
+                )
                 for t in sorted(theme_overlap):
                     evidence_chain.append({
                         "claim_text": f"Theme: {t}",
                         "metric_id": "",
                         "evidence_type": "theme_alignment",
                         "sdg_target": f"SDG {goal_num}",
-                        "confidence": round(theme_score / 15.0, 2),
+                        "confidence": round(theme_score / pts["theme"], 2),
                     })
 
         relevance = inferred_sdg.get(goal_num, 0)
         if not specific_matched and relevance == 0:
             # Nothing ties this goal to the company beyond generic metrics.
-            metric_score = min(metric_score, 10.0)
+            metric_score = min(metric_score, float(params["unlinked_goal_metric_cap"]))
         total_score = round(metric_score + inferred_score + theme_score, 1)
-        confidence = "high" if total_score >= 50 else "medium" if total_score >= 20 else "low"
+        bands = params["confidence_bands"]
+        confidence = (
+            "high" if total_score >= bands["high"] else "medium" if total_score >= bands["medium"] else "low"
+        )
         if confidence == "high" and not specific_matched:
             # Plausibility rule: "high" needs at least one goal-specific metric.
             confidence = "medium"
 
-        if len(specific_matched) >= 3:
+        if len(specific_matched) >= params["evidence_based_min_specific_metrics"]:
             provenance = "evidence-based"
         elif matched_metric_ids:
             provenance = "partial"
@@ -400,7 +426,7 @@ def map_sdg_alignment(
             scoring_basis=scoring_basis,
             material=(
                 goal_num in company.sdg_claims
-                or relevance >= _MATERIAL_RELEVANCE
+                or relevance >= material_at
                 or bool(specific_matched)
             ),
         ))

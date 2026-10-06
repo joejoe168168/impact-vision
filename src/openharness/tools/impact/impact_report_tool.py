@@ -419,6 +419,8 @@ class ImpactReportTool(BaseTool):
             beneficiary_feedback=beneficiary_feedback,
         )
 
+        from openharness.impact.methodology import methodology_stamp
+
         report_data: dict = {
             "company": company.model_dump(),
             "generated_at": datetime.now(timezone.utc).isoformat(),
@@ -429,6 +431,7 @@ class ImpactReportTool(BaseTool):
             ),
             "report_type": args.report_type,
             "ai_usage": dict(args.ai_usage),
+            "methodology": methodology_stamp(),
         }
         if impact_claims:
             report_data["impact_claims"] = [claim.model_dump() for claim in impact_claims]

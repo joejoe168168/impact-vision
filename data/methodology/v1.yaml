@@ -1,0 +1,71 @@
+# Impact Vision scoring methodology (v7 W5.2).
+#
+# Every weight and threshold the 5D, SDG and greenwashing scorers use lives
+# here. Outputs carry `methodology_version` and a `config_hash` (SHA-256 of
+# this file + data/scoring_config.yaml), so two reports are comparable only
+# when both match. Change a number => bump `version` and add a CHANGELOG
+# entry. Sector baselines and keyword boosts stay in scoring_config.yaml.
+version: "1.0.0"
+effective: "2026-10-06"
+as_of: "2026-10-06"
+source: Impact Vision methodology (IMP Five Dimensions, IRIS+ 5.3c, UN SDG framework)
+
+five_dimensions:
+  scale: [1, 5]
+  # score = coverage_of_theme_reference_set * metric_scale + report_bonus + extra_bonus
+  metric_scale: 4.5
+  report_bonus: 0.5
+  extra_bonus:
+    per_metric: 0.1
+    per_metric_narrow: 0.05
+    narrow_reference_below: 10
+    max: 0.5
+  # Until this many metrics hit a dimension's reference set, the dimension is capped.
+  min_metrics_for_above_baseline: 3
+  cap_below_min_metrics: 2.5
+  evidence_based_min_metrics: 3
+  baseline_clamp: [0.5, 2.5]
+  additionality_boosts:
+    - {min_signals: 2, boost: 0.3}
+    - {min_signals: 4, boost: 0.3}
+  penalties:
+    adverse_per_unmitigated: 0.3
+    adverse_max: 1.5
+    exclusion_per_flag: 0.5
+    exclusion_max: 1.0
+  grade_bands:   # first band whose min the overall score reaches
+    - {min: 4.5, grade: "A"}
+    - {min: 3.5, grade: "B+"}
+    - {min: 3.0, grade: "B"}
+    - {min: 2.5, grade: "B-"}
+    - {min: 2.0, grade: "C+"}
+    - {min: 1.5, grade: "C"}
+    - {min: 1.0, grade: "D"}
+    - {min: 0.0, grade: "F"}
+
+sdg:
+  scale: [0, 100]
+  max_points: {metrics: 60, inference: 25, theme: 15}
+  cross_cutting_min_goals: 6
+  cross_cutting_weight: 0.4
+  material_relevance: 0.5
+  unlinked_goal_metric_cap: 10
+  no_catalog_metrics: {relevance_scale: 35, floor: 10}
+  confidence_bands: {high: 50, medium: 20}
+  evidence_based_min_specific_metrics: 3
+
+greenwashing:
+  scale: [0, 100]
+  weights:
+    claim_metric_gap: 0.30
+    adverse_omission: 0.20
+    specificity: 0.20
+    selectivity: 0.15
+    verification: 0.15
+  flag_threshold: 60
+  classification:   # first band whose max the risk score does not exceed
+    - {max: 20, label: "Genuine Impact Leader"}
+    - {max: 40, label: "Substantive with Gaps"}
+    - {max: 60, label: "Moderate Risk"}
+    - {max: 80, label: "High Risk"}
+    - {max: 100, label: "Probable Greenwashing"}

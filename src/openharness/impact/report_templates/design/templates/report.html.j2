@@ -260,6 +260,7 @@
 <footer class="footer">
   {% if branding.footer_text %}<p style="margin:0 0 4px">{{ branding.footer_text }}</p>{% endif %}
   <p style="margin:0 0 4px">{{ ai.disclosure }}</p>
+  <p style="margin:0 0 4px">Methodology v{{ methodology_stamp.methodology_version }} · config {{ methodology_stamp.config_hash }}</p>
   {% if not branding.hide_attribution %}<p style="margin:0">{{ t('generated_by') }}</p>{% endif %}
 </footer>
 </main>

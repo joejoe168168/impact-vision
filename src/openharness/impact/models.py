@@ -7,6 +7,13 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field, computed_field, field_validator
 
 
+def _methodology_stamp() -> dict[str, str]:
+    """Version + config hash of the scoring methodology (v7 W5.2)."""
+    from openharness.impact.methodology import methodology_stamp
+
+    return methodology_stamp()
+
+
 class DimensionTags(BaseModel):
     """5 Dimensions of Impact tags from the IRIS+ catalog."""
 
@@ -507,6 +514,7 @@ class FiveDimensionScore(BaseModel):
     overall_provenance: Literal["evidence-based", "estimated", "partial"] = "estimated"
     impact_theme: str = ""
     recommendations: list[str] = Field(default_factory=list)
+    methodology: dict[str, str] = Field(default_factory=_methodology_stamp)
 
 
 class SDGAlignment(BaseModel):
@@ -542,6 +550,7 @@ class Assessment(BaseModel):
     gap_analysis: dict[str, Any] = Field(default_factory=dict)
     impact_claims: list[ImpactClaim] = Field(default_factory=list)
     timestamp: str = ""
+    methodology: dict[str, str] = Field(default_factory=_methodology_stamp)
 
 
 class ImpactClaim(BaseModel):

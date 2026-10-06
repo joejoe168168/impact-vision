@@ -84,6 +84,27 @@ def slim_report(data: dict) -> dict:
     return out
 
 
+def _stamp(data: dict) -> dict[str, str]:
+    from openharness.impact.methodology import methodology_stamp
+
+    return data.get("methodology") or methodology_stamp()
+
+
+def methodology_rows() -> list[tuple[str, str]]:
+    """Methodology sheet: fixed evidence/standards notes + rows generated from the YAML."""
+    from openharness.impact.methodology import methodology_appendix
+
+    fixed = {topic: text for topic, text in METHODOLOGY}
+    return [
+        ("Evidence", fixed["Evidence"]),
+        *methodology_appendix(),
+        ("Gap analysis", fixed["Gap analysis"]),
+        ("IC gate", fixed["IC gate"]),
+        ("Standards", fixed["Standards"]),
+        ("Schema", fixed["Schema"]),
+    ]
+
+
 def _ai(data: dict):  # type: ignore[no-untyped-def]
     from openharness.impact.ai_provenance import ai_provenance_for_report
 
@@ -94,6 +115,7 @@ def to_json(data: dict, *, slim: bool = False, indent: int | None = 2) -> str:
     payload = slim_report(data) if slim else dict(data)
     payload = {"schema_version": SCHEMA_VERSION, "export_mode": "slim" if slim else "full", **payload}
     payload["ai_provenance"] = _ai(data).model_dump(mode="json")
+    payload["methodology"] = _stamp(data)
     return json.dumps(payload, indent=indent, default=str, ensure_ascii=False)
 
 
@@ -109,6 +131,8 @@ def csv_rows(data: dict) -> list[list[Any]]:
         ["Company", "Name", company.get("name", ""), "", None, None, ""],
         ["Company", "Generated", data.get("generated_at", ""), "", None, None, ""],
         ["Company", "AI disclosure", _ai(data).disclosure, "", None, None, ""],
+        ["Company", "Methodology", _stamp(data)["methodology_version"], f"config {_stamp(data)['config_hash']}",
+         None, None, ""],
     ]
     fd = data.get("five_dimensions")
     if fd:
@@ -233,6 +257,8 @@ def build_workbook(data: dict):  # type: ignore[no-untyped-def]
         ["Core metric coverage (%)", _num(ga.get("coverage_percentage"))],
         ["Claims extracted", len(data.get("impact_claims", []) or [])],
         ["AI disclosure", _ai(data).disclosure],
+        ["Methodology version", _stamp(data)["methodology_version"]],
+        ["Methodology config hash", _stamp(data)["config_hash"]],
         ["Export schema", SCHEMA_VERSION],
     ]
     ws.append(["Impact assessment — " + str(company.get("name", ""))])
@@ -295,7 +321,7 @@ def build_workbook(data: dict):  # type: ignore[no-untyped-def]
             for r in prov.records],
            widths={1: 34, 6: 40}, start_row=len(prov.as_rows()) + 3)
     _table(wb.create_sheet("Methodology"), ["Topic", "How it is calculated"],
-           [list(row) for row in METHODOLOGY] + [["AI use", prov.disclosure]], widths={1: 18, 2: 100})
+           [list(row) for row in methodology_rows()] + [["AI use", prov.disclosure]], widths={1: 18, 2: 100})
     return wb
 
 

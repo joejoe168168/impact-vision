@@ -102,9 +102,18 @@ _NEGATION_PHRASES = (
 )
 
 
+def _fd() -> dict:
+    """5D parameters from the versioned methodology (data/methodology/v1.yaml)."""
+    from openharness.impact.methodology import section
+
+    return section("five_dimensions")
+
+
 def _get_min_metrics_threshold() -> int:
-    config = _load_scoring_config()
-    return int(config.get("min_metrics_for_above_baseline", 3))
+    value = _fd().get("min_metrics_for_above_baseline")
+    if value is None:  # legacy location
+        value = _load_scoring_config().get("min_metrics_for_above_baseline", 3)
+    return int(value)
 
 
 def __getattr__(name: str):
@@ -208,29 +217,18 @@ def _infer_baseline(company: Company) -> dict[str, float]:
                 baseline[dim] = baseline[dim] + val
 
     additionality = assess_additionality(company)
-    if additionality["signal_count"] >= 2:
-        baseline["contribution"] += 0.3
-    if additionality["signal_count"] >= 4:
-        baseline["contribution"] += 0.3
+    for step in _fd()["additionality_boosts"]:
+        if additionality["signal_count"] >= step["min_signals"]:
+            baseline["contribution"] += step["boost"]
 
-    return {dim: min(2.5, max(0.5, val)) for dim, val in baseline.items()}
+    low, high = _fd()["baseline_clamp"]
+    return {dim: min(high, max(low, val)) for dim, val in baseline.items()}
 
 
 def _grade_from_score(score: float) -> str:
-    if score >= 4.5:
-        return "A"
-    if score >= 3.5:
-        return "B+"
-    if score >= 3.0:
-        return "B"
-    if score >= 2.5:
-        return "B-"
-    if score >= 2.0:
-        return "C+"
-    if score >= 1.5:
-        return "C"
-    if score >= 1.0:
-        return "D"
+    for band in _fd()["grade_bands"]:
+        if score >= band["min"]:
+            return band["grade"]
     return "F"
 
 
@@ -278,27 +276,38 @@ def _score_dimension(
     ref_ratio = len(matched_in_reference) / available if available > 0 else 0
     # When the theme's reference set is very small (<10 metrics) the per-extra
     # bonus inflates scores quickly; soften it for narrow themes.
-    extra_per_metric = 0.05 if available < 10 else 0.1
+    params = _fd()
+    extra = params["extra_bonus"]
+    extra_per_metric = (
+        extra["per_metric_narrow"] if available < extra["narrow_reference_below"] else extra["per_metric"]
+    )
     extra_bonus = (
-        min(0.5, (total_reported_dim - len(matched_in_reference)) * extra_per_metric)
+        min(extra["max"], (total_reported_dim - len(matched_in_reference)) * extra_per_metric)
         if total_reported_dim > len(matched_in_reference)
         else 0
     )
-    metric_score = ref_ratio * 4.5 + extra_bonus + (0.5 if total_reported_dim > 0 else 0)
+    metric_score = (
+        ref_ratio * params["metric_scale"]
+        + extra_bonus
+        + (params["report_bonus"] if total_reported_dim > 0 else 0)
+    )
     score = min(5.0, max(metric_score, baseline_score))
 
     # Per-dimension floor: until you've reported at least MIN_METRICS_FOR_ABOVE_BASELINE
     # metrics that hit THIS dimension's reference set, cap its score at 2.5 even if
     # the baseline + extra-bonus interaction tries to push it higher.
-    if len(matched_in_reference) < MIN_METRICS_FOR_ABOVE_BASELINE and score > 2.5:
-        score = 2.5
+    cap = params["cap_below_min_metrics"]
+    if len(matched_in_reference) < _get_min_metrics_threshold() and score > cap:
+        score = cap
 
     gap_ids = sorted(reference_set - reported_ids)[:10]
     gaps = [f"{mid} ({store.get(mid).name if store.get(mid) else mid})" for mid in gap_ids]
 
     if total_reported_dim > 0:
         notes = f"Reporting {total_reported_dim} metrics ({len(matched_in_reference)} theme-specific, {available} available)"
-        provenance = "evidence-based" if total_reported_dim >= 3 else "partial"
+        provenance = (
+            "evidence-based" if total_reported_dim >= params["evidence_based_min_metrics"] else "partial"
+        )
     else:
         notes = f"Estimated from sector/description ({available} metrics available to track)"
         provenance = "estimated"
@@ -344,14 +353,16 @@ def _compute_negative_impact_penalty(company: Company) -> float:
     if adverse_count == 0:
         return 0.0
     unmitigated = max(0, adverse_count - mitigation_count)
-    return min(1.5, unmitigated * 0.3)
+    pen = _fd()["penalties"]
+    return min(pen["adverse_max"], unmitigated * pen["adverse_per_unmitigated"])
 
 
 def _compute_exclusion_penalty(company: Company) -> float:
     """Compute a risk penalty from exclusion flags."""
     if not company.exclusion_flags:
         return 0.0
-    return min(1.0, len(company.exclusion_flags) * 0.5)
+    pen = _fd()["penalties"]
+    return min(pen["exclusion_max"], len(company.exclusion_flags) * pen["exclusion_per_flag"])
 
 
 def assess_five_dimensions(
@@ -428,7 +439,7 @@ def assess_five_dimensions(
 
     total_metrics = len(reported_ids)
     if 0 < total_metrics < MIN_METRICS_FOR_ABOVE_BASELINE:
-        cap = 2.5
+        cap = _fd()["cap_below_min_metrics"]
         for dim_score in [scores["what"], scores["who"], contribution_combined, scores["risk"]]:
             if dim_score.score > cap:
                 dim_score.score = cap
