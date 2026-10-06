@@ -371,7 +371,8 @@ Not done:
   - The CI gate previously scored an empty stub. It now runs the production
     chain on an 18-document gold set covering claims, metrics, SDGs,
     categories and quantities.
-  - The gate is blocking at F1 ≥ 0.90; the regex extractor measures 0.945.
+  - The gate is blocking at F1 ≥ 0.95; the regex extractor measures 0.978
+    after the follow-up SDG-hint fix.
     Three gold expectations that contradicted the methodology were fixed.
   - Extractor `auto` uses the LLM when `OPENAI_API_KEY` is set.
 - **W5.7 Docs hygiene.**
@@ -389,8 +390,9 @@ Not done / deferred:
   lazy first.
 - **The "five untracked root strategy files" (W5.7).** They are not present
   in this repository.
-- **SDG inference recall without explicit "SDG n" mentions.** It measures
-  0.71 and is the known extraction gap.
+- **SDG inference recall without explicit "SDG n" mentions.** It measured
+  0.71. A follow-up fixed the inflection bug in the keyword hints; it is now
+  0.89, and the gate was raised to 0.95.
 
 ---
 

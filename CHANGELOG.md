@@ -41,7 +41,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
   `IMPACT_VISION_STATE_STORE`, `IMPACT_VISION_STATE_DB` and
   `IMPACT_VISION_STATE_DSN`.
 - **Extraction (W5.6).**
-  - Real benchmark over 18 gold docs, with a blocking CI gate at F1 ≥ 0.90.
+  - Real benchmark over 18 gold docs, with a blocking CI gate at F1 ≥ 0.95
+    (measures 0.978).
+  - SDG keyword hints now match inflections ("emissions", "recycling").
   - The regex extractor reads "500 low-income customers".
   - New mapper rules: Scope 1 (OI4112) and jobs created (PI3687), with rule
     priority and `none_in_sentence`.
@@ -68,6 +70,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
     `frameworks.sfdr_recast`.
 - **`ImpactVision()` defaults to `extractor_id="auto"`.**
 - **SB 261 filing cadence corrected to biennial** in the US-CA-CLIMATE pack.
+- **SFDR 2.0: both classifiers read `data/regulatory/sfdr2.yaml`.**
+  - ESG Basics now excludes tobacco in the holdings check.
+  - Sustainable applies the Paris-aligned benchmark exclusions.
+  - Transition applies the fossil-expansion and coal phase-out exclusions.
+  - The label is "ESG Basics" (was "ESG collection").
 
 ### Deprecated
 
