@@ -13,6 +13,8 @@
 <main id="main" class="doc">
 
 <header class="masthead">
+  <div class="ident">
+  <div class="monogram" aria-hidden="true">{{ monogram }}</div>
   <div>
     <p class="eyebrow">{{ branding.fund_name ~ ' · ' if branding.fund_name else '' }}{{ t('eyebrow') }}</p>
     <h1>{{ company.name }}</h1>
@@ -23,7 +25,11 @@
     </p>
     <p class="notice">{{ notice }}{% if lang_note %} {{ lang_note }}{% endif %}</p>
   </div>
-  {% if branding.logo_url %}<img class="logo" src="{{ branding.logo_url }}" alt="{{ branding.fund_name or 'Logo' }}">{% endif %}
+  </div>
+  <div style="display:flex;flex-direction:column;align-items:flex-end;gap:10px">
+    {% if branding.logo_url %}<img class="logo" src="{{ branding.logo_url }}" alt="{{ branding.fund_name or 'Logo' }}">{% endif %}
+    {% if pill %}<span class="pill {{ pill.tone }}">{{ pill.label }}</span>{% endif %}
+  </div>
 </header>
 
 {% if toc | length > 3 %}
@@ -53,7 +59,13 @@
   {% for k in kpis %}
   <div class="tile">
     <p class="label">{{ k.label }}</p>
+    {% if k.badge %}
+    <p class="value"><span class="sdg-badge" style="background:{{ k.badge.color }}">{{ k.badge.goal }}</span>SDG {{ k.badge.goal }}</p>
+    {% else %}
     <p class="value">{{ k.value }}{% if k.unit %}<small>{{ k.unit }}</small>{% endif %}</p>
+    {% endif %}
+    {% if k.meter %}<div class="meter" aria-hidden="true"><div class="fill {{ k.meter.tone }}" style="width:{{ k.meter.pct | pct(100) }}%"></div>{% if k.meter.tick %}<div class="tick" style="left:{{ k.meter.tick }}%"></div>{% endif %}</div>{% endif %}
+    {% if k.mix %}<div class="mix" title="{{ t('mix_legend') }}" aria-label="{{ t('mix_legend') }}: {% for m in k.mix %}{{ m.level }}×{{ m.count }} {% endfor %}">{% for m in k.mix %}<span class="lvl-{{ m.level }}" style="flex:{{ m.count }}" title="NESTA {{ m.level }}: {{ m.count }}"></span>{% endfor %}</div>{% endif %}
     <p class="sub">{{ k.sub }}</p>
   </div>
   {% endfor %}
@@ -61,14 +73,36 @@
 
 {% elif section == 'mind' %}
 <section id="sec-mind" class="card" aria-labelledby="h-mind">
-  <h2 id="h-mind">{{ t('sec_mind') }}</h2>
+  <h2 id="h-mind">{{ icons.mind | safe }}{{ t('sec_mind') }}</h2>
   <p class="lede">{{ t('lede_mind') }}</p>
   <ol class="mind">{% for m in mind %}<li><span class="what">{{ m.what }}</span><span class="why">{{ m.why }}</span></li>{% endfor %}</ol>
 </section>
 
+{% elif section == 'glance' %}
+<section id="sec-glance" class="card" aria-labelledby="h-glance">
+  <h2 id="h-glance">{{ icons.glance | safe }}{{ t('sec_glance') }}</h2>
+  <p class="lede">{{ t('lede_glance') }}</p>
+  <div class="glance">
+    <div class="glance-top">
+      {{ sdg_wheel | safe }}
+      {% if sdg.material %}<ul class="wheel-legend">{% for g in sdg.material[:6] %}<li class="lbar"><span><span class="sdg-chip" style="background:{{ g.color }}" aria-hidden="true"></span>SDG {{ g.goal }} · {{ g.name }}</span><span class="track" aria-hidden="true"><span style="width:{{ g.score | pct(100) }}%"></span></span><b>{{ '%.0f' % g.score }}</b></li>{% endfor %}</ul>{% else %}<p class="muted">{{ t('sdg_none') }}</p>{% endif %}
+    </div>
+    <div class="pathway">
+      {% for stage in pathway %}
+      <div class="stage">
+        <h3>{{ stage.title }}</h3>
+        {% if stage['items'] %}
+        <ul>{% for it in stage['items'] %}<li>{{ it.text }}{% if it.level %}<span class="pips" role="img" aria-label="NESTA {{ it.level }}/5">{% for i in range(1, 6) %}<i class="{{ 'on lvl-' ~ it.level if i <= it.level else '' }}"></i>{% endfor %}</span>{% endif %}</li>{% endfor %}</ul>
+        {% else %}<p class="empty">{{ t('stage_empty') }}</p>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
 {% elif section == 'five_d' %}
 <section id="sec-5d" class="card" aria-labelledby="h-5d">
-  <h2 id="h-5d">{{ t('sec_5d') }}</h2>
+  <h2 id="h-5d">{{ icons.five_d | safe }}{{ t('sec_5d') }}</h2>
   <p class="lede">{{ t('lede_5d') }} <span class="chip {{ five_d.provenance }}"><span class="dot"></span>{{ t(five_d.provenance) }}</span></p>
   <div class="bars" role="img" aria-label="{{ t('sec_5d') }}: {% for r in five_d.rows %}{{ r.label }} {{ '%.1f' % r.score }}{% if not loop.last %}, {% endif %}{% endfor %}">
     {% for r in five_d.rows %}
@@ -95,7 +129,7 @@
 
 {% elif section == 'sdg' %}
 <section id="sec-sdg" class="card" aria-labelledby="h-sdg">
-  <h2 id="h-sdg">{{ t('sec_sdg') }}</h2>
+  <h2 id="h-sdg">{{ icons.sdg | safe }}{{ t('sec_sdg') }}</h2>
   <p class="lede">{{ t('lede_sdg') }}</p>
   {% if sdg.material %}
   <div class="bars" role="img" aria-label="{{ t('sec_sdg') }}: {% for g in sdg.material %}SDG {{ g.goal }} {{ '%.0f' % g.score }}{% if not loop.last %}, {% endif %}{% endfor %}">
@@ -123,13 +157,13 @@
 
 {% elif section == 'evidence' %}
 <section id="sec-evidence" class="card" aria-labelledby="h-evidence">
-  <h2 id="h-evidence">{{ t('sec_evidence') }}</h2>
+  <h2 id="h-evidence">{{ icons.evidence | safe }}{{ t('sec_evidence') }}</h2>
   <p class="lede">{{ t('lede_evidence') }}</p>
   {% if evidence.claims %}
   <div class="table-wrap"><table>
     <caption>{{ t('claims_caption', n=evidence.claims | length) }}</caption>
     <thead><tr><th scope="col">{{ t('col_claim') }}</th><th scope="col">{{ t('col_type') }}</th><th scope="col" class="num">{{ t('col_level') }}</th><th scope="col">{{ t('col_signals') }}</th><th scope="col">{{ t('col_metric') }}</th></tr></thead>
-    <tbody>{% for c in evidence.claims %}<tr><td>{{ c.text }}</td><td>{{ c.category }}</td><td class="num">{{ c.level }}</td><td>{{ c.signals | join(', ') or '—' }}</td><td>{{ c.metrics | join(', ') or '—' }}</td></tr>{% endfor %}</tbody>
+    <tbody>{% for c in evidence.claims %}<tr><td>{{ c.text }}</td><td>{{ c.category }}</td><td class="num"><span class="pips" role="img" aria-label="NESTA {{ c.level }}/5">{% for i in range(1, 6) %}<i class="{{ 'on lvl-' ~ c.level if i <= c.level else '' }}"></i>{% endfor %}</span></td><td>{% for sg in c.signals %}<span class="sig"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>{{ sg }}</span>{% else %}—{% endfor %}</td><td>{{ c.metrics | join(', ') or '—' }}</td></tr>{% endfor %}</tbody>
   </table></div>
   {% else %}<p class="muted">{{ t('no_claims') }}</p>{% endif %}
   {% if evidence.metrics %}
@@ -143,7 +177,7 @@
 
 {% elif section == 'greenwashing' %}
 <section id="sec-greenwashing" class="card" aria-labelledby="h-gw">
-  <h2 id="h-gw">{{ t('sec_gw') }} — {{ '%.0f' % greenwashing.score }}/100 · {{ greenwashing.classification }}</h2>
+  <h2 id="h-gw">{{ icons.greenwashing | safe }}{{ t('sec_gw') }} — {{ '%.0f' % greenwashing.score }}/100 · {{ greenwashing.classification }}</h2>
   <p class="lede">{{ t('lede_gw') }}</p>
   <div class="bars" role="img" aria-label="{{ t('sec_gw') }}: {% for c in greenwashing.components %}{{ c.label }} {{ '%.0f' % c.value }}{% if not loop.last %}, {% endif %}{% endfor %}">
     {% for c in greenwashing.components %}
@@ -159,7 +193,7 @@
 
 {% elif section == 'risks' %}
 <section id="sec-risks" class="card" aria-labelledby="h-risks">
-  <h2 id="h-risks">{{ t('sec_risks') }}</h2>
+  <h2 id="h-risks">{{ icons.risks | safe }}{{ t('sec_risks') }}</h2>
   <div class="two-col">
     <div>
       {% if risks.disclosed %}<h3 class="small">{{ t('risks_disclosed') }}</h3>
@@ -176,17 +210,17 @@
 
 {% elif section == 'actions' %}
 <section id="sec-actions" class="card" aria-labelledby="h-actions">
-  <h2 id="h-actions">{{ t('sec_actions') }}</h2>
+  <h2 id="h-actions">{{ icons.actions | safe }}{{ t('sec_actions') }}</h2>
   <p class="lede">{{ t('lede_actions') }}</p>
   <div class="table-wrap"><table>
     <thead><tr><th scope="col" class="num">#</th><th scope="col">{{ t('sec_actions') }}</th><th scope="col">{{ t('col_area') }}</th></tr></thead>
-    <tbody>{% for a in actions %}<tr><td class="num">{{ loop.index }}</td><td>{{ a.text }}</td><td>{{ a.area }}</td></tr>{% endfor %}</tbody>
+    <tbody>{% for a in actions %}<tr><td class="num"><span class="prio{{ ' top' if loop.index <= 3 else '' }}">{{ loop.index }}</span></td><td>{{ a.text }}</td><td>{{ a.area }}</td></tr>{% endfor %}</tbody>
   </table></div>
 </section>
 
 {% elif section == 'targets' %}
 <section id="sec-targets" class="card" aria-labelledby="h-targets">
-  <h2 id="h-targets">{{ t('sec_targets') }}</h2>
+  <h2 id="h-targets">{{ icons.targets | safe }}{{ t('sec_targets') }}</h2>
   <div class="table-wrap"><table>
     <thead><tr><th scope="col">{{ t('col_metric') }}</th><th scope="col">{{ t('col_target') }}</th><th scope="col">{{ t('col_current') }}</th><th scope="col" class="num">%</th><th scope="col">{{ t('col_status') }}</th></tr></thead>
     <tbody>{% for x in targets %}<tr><th scope="row">{{ x.metric_id }}</th><td>{{ x.target_description or x.target or '—' }}</td><td>{{ x.current_value if x.current_value is not none else '—' }}</td><td class="num">{{ '%.0f' % x.progress_pct if x.progress_pct else '—' }}</td><td>{{ (x.status or '') | replace('_', ' ') }}</td></tr>{% endfor %}</tbody>
@@ -195,7 +229,7 @@
 
 {% elif section == 'feedback' %}
 <section id="sec-feedback" class="card" aria-labelledby="h-feedback">
-  <h2 id="h-feedback">{{ t('sec_feedback') }}</h2>
+  <h2 id="h-feedback">{{ icons.feedback | safe }}{{ t('sec_feedback') }}</h2>
   <div class="kpis" style="margin:0">
     {% if feedback.satisfaction_score is not none %}<div class="tile"><p class="label">{{ t('fb_satisfaction') }}</p><p class="value">{{ feedback.satisfaction_score }}<small>/5</small></p></div>{% endif %}
     {% if feedback.nps is not none %}<div class="tile"><p class="label">{{ t('fb_nps') }}</p><p class="value">{{ feedback.nps }}</p></div>{% endif %}
@@ -207,7 +241,7 @@
 
 {% elif section == 'appendix' %}
 <section id="sec-appendix" class="card" aria-labelledby="h-appendix">
-  <h2 id="h-appendix">{{ t('sec_appendix') }}</h2>
+  <h2 id="h-appendix">{{ icons.appendix | safe }}{{ t('sec_appendix') }}</h2>
   <h3 class="small">{{ t('method_title') }}</h3>
   <ul class="small">{% for m in methodology %}<li>{{ m }}</li>{% endfor %}</ul>
   {{ glossary_html }}

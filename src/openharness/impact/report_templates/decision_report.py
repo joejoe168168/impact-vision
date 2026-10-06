@@ -44,26 +44,26 @@ class ReportSpec:
 
 
 SPECS: dict[str, ReportSpec] = {
-    "full": ReportSpec("full", ("verdict", "kpis", "mind", "five_d", "sdg", "evidence", "greenwashing",
+    "full": ReportSpec("full", ("verdict", "kpis", "mind", "glance", "five_d", "sdg", "evidence", "greenwashing",
                                 "risks", "actions", "targets", "feedback", "appendix"), True, True),
-    "ic": ReportSpec("ic", ("verdict", "kpis", "mind", "five_d", "sdg", "evidence", "greenwashing",
+    "ic": ReportSpec("ic", ("verdict", "kpis", "mind", "glance", "five_d", "sdg", "evidence", "greenwashing",
                             "risks", "actions", "appendix"), True, True),
-    "lp": ReportSpec("lp", ("kpis", "five_d", "sdg", "evidence", "targets", "feedback", "risks",
+    "lp": ReportSpec("lp", ("kpis", "glance", "five_d", "sdg", "evidence", "targets", "feedback", "risks",
                             "appendix"), False, False),
     "regulator": ReportSpec("regulator", ("kpis", "evidence", "greenwashing", "five_d", "sdg",
                                           "risks", "appendix"), False, True),
-    "public": ReportSpec("public", ("kpis", "sdg", "five_d", "evidence", "feedback", "appendix"),
+    "public": ReportSpec("public", ("kpis", "glance", "sdg", "five_d", "evidence", "feedback", "appendix"),
                          False, False),
 }
 
 SECTION_IDS = {
-    "verdict": "sec-verdict", "mind": "sec-mind", "five_d": "sec-5d", "sdg": "sec-sdg",
+    "verdict": "sec-verdict", "mind": "sec-mind", "glance": "sec-glance", "five_d": "sec-5d", "sdg": "sec-sdg",
     "evidence": "sec-evidence", "greenwashing": "sec-greenwashing", "risks": "sec-risks",
     "actions": "sec-actions", "targets": "sec-targets", "feedback": "sec-feedback",
     "appendix": "sec-appendix",
 }
 SECTION_TITLES = {
-    "verdict": "sec_verdict", "mind": "sec_mind", "five_d": "sec_5d", "sdg": "sec_sdg",
+    "verdict": "sec_verdict", "mind": "sec_mind", "glance": "sec_glance", "five_d": "sec_5d", "sdg": "sec_sdg",
     "evidence": "sec_evidence", "greenwashing": "sec_gw", "risks": "sec_risks",
     "actions": "sec_actions", "targets": "sec_targets", "feedback": "sec_feedback",
     "appendix": "sec_appendix",
@@ -207,6 +207,137 @@ def _verdict(decision: dict[str, Any] | None, fd: dict | None, t) -> dict[str, A
         "reasons": reasons,
         "confidence": t(f"confidence_{provenance}") if fd else "",
     }
+
+
+# --------------------------------------------------------------------------- graphics
+
+_SECTION_ICONS = {
+    "mind": '<path d="M12 3a6 6 0 0 0-3.5 10.9V16h7v-2.1A6 6 0 0 0 12 3z"/><path d="M9.5 19h5M10.5 21.5h3"/>',
+    "glance": '<circle cx="12" cy="12" r="8.5"/><path d="M12 3.5V12l6 6"/>',
+    "five_d": '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+    "sdg": '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.5"/>',
+    "evidence": '<path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4M10 12h5M10 16h5"/>',
+    "greenwashing": '<path d="M12 3l8 4v5c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V7z"/><path d="M9 12l2 2 4-4"/>',
+    "risks": '<path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17v.5"/>',
+    "actions": '<path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"/>',
+    "targets": '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1"/>',
+    "feedback": '<path d="M4 5h16v11H9l-5 4z"/>',
+    "appendix": '<path d="M5 4h10l4 4v12H5z"/><path d="M9 12h6M9 16h4"/>',
+}
+
+
+def section_icon(section: str) -> str:
+    path = _SECTION_ICONS.get(section)
+    if not path:
+        return ""
+    return (
+        '<span class="h-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" '
+        'stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+        f"{path}</svg></span>"
+    )
+
+
+_LEGAL_SUFFIXES = {"sdn", "bhd", "ltd", "limited", "inc", "llc", "plc", "gmbh", "pte", "co", "corp"}
+
+
+def monogram(name: str) -> str:
+    words = [w for w in re.findall(r"[A-Za-z0-9]+", name) if w.lower() not in _LEGAL_SUFFIXES]
+    if not words:
+        return (name.strip()[:1] or "?").upper()
+    return "".join(w[0] for w in words[:2]).upper()
+
+
+def sdg_wheel_svg(material: list[dict[str, Any]], *, center_label: str, title: str) -> str:
+    """17-wedge SDG wheel: material goals in their official colour, others muted.
+
+    The colours carry goal identity (like a logo), not magnitude; scores are in
+    the bar chart and table beside it.
+    """
+    import math
+
+    from markupsafe import escape
+
+    lit = {int(g["goal"]): g for g in material}
+    cx = cy = 130.0
+    outer, inner = 120.0, 66.0
+    gap = 0.012  # radians of surface between wedges
+    parts = []
+    for i in range(17):
+        goal = i + 1
+        a0 = -math.pi / 2 + i * 2 * math.pi / 17 + gap
+        a1 = -math.pi / 2 + (i + 1) * 2 * math.pi / 17 - gap
+        p = [
+            (cx + outer * math.cos(a0), cy + outer * math.sin(a0)),
+            (cx + outer * math.cos(a1), cy + outer * math.sin(a1)),
+            (cx + inner * math.cos(a1), cy + inner * math.sin(a1)),
+            (cx + inner * math.cos(a0), cy + inner * math.sin(a0)),
+        ]
+        d = (f"M{p[0][0]:.2f},{p[0][1]:.2f} A{outer},{outer} 0 0 1 {p[1][0]:.2f},{p[1][1]:.2f} "
+             f"L{p[2][0]:.2f},{p[2][1]:.2f} A{inner},{inner} 0 0 0 {p[3][0]:.2f},{p[3][1]:.2f} Z")
+        g = lit.get(goal)
+        fill = SDG_COLORS.get(goal, "#888") if g else "var(--grid)"
+        label = f"SDG {goal}" + (f" · {g['name']} · {g['score']:.0f}/100" if g else "")
+        parts.append(f'<path d="{d}" fill="{fill}"><title>{escape(label)}</title></path>')
+        am = (a0 + a1) / 2
+        tx, ty = cx + 93 * math.cos(am), cy + 93 * math.sin(am)
+        color = "#fff" if g else "var(--muted)"
+        parts.append(
+            f'<text x="{tx:.1f}" y="{ty:.1f}" text-anchor="middle" dominant-baseline="central" '
+            f'style="fill:{color}" aria-hidden="true">{goal}</text>'
+        )
+    parts.append(
+        f'<text class="center-num" x="{cx}" y="{cy - 6}" text-anchor="middle" '
+        f'dominant-baseline="central">{len(lit)}</text>'
+        f'<text class="center-lbl" x="{cx}" y="{cy + 18}" text-anchor="middle">{escape(center_label)}</text>'
+    )
+    return (
+        f'<svg class="wheel" viewBox="0 0 260 260" role="img" aria-label="{escape(title)}">'
+        + "".join(parts) + "</svg>"
+    )
+
+
+def _pathway(data: dict[str, Any], t) -> list[dict[str, Any]]:  # type: ignore[no-untyped-def]
+    company = data.get("company") or {}
+    description = str(company.get("description") or "").strip()
+    sentences = [x.strip() for x in re.split(r"(?<=[.!?])\s+|\n+", description) if len(x.strip()) > 25]
+    business = re.compile(
+        r"\b(?:is an?|are an?|sells|provides|offers|operates|runs|builds|develops|manufactures|"
+        r"delivers|supplies|lends|serves)\b", re.IGNORECASE,
+    )
+    first = next((x for x in sentences if business.search(x) and "fictional" not in x.lower()),
+                 sentences[0] if sentences else "")
+    claims = data.get("impact_claims") or []
+
+    def items(categories: tuple[str, ...]) -> list[dict[str, Any]]:
+        chosen = [c for c in claims if c.get("category") in categories]
+        chosen.sort(key=lambda c: -int(c.get("evidence_strength") or 1))
+        return [
+            {"text": _clip(str(c.get("text", "")), 120), "level": int(c.get("evidence_strength") or 1)}
+            for c in chosen[:3]
+        ]
+
+    return [
+        {"title": t("stage_activities"), "items": [{"text": _clip(first, 160), "level": 0}] if first else []},
+        {"title": t("stage_outputs"), "items": items(("output", "activity"))},
+        {"title": t("stage_outcomes"), "items": items(("outcome",))},
+        {"title": t("stage_targets"), "items": items(("intent",))},
+    ]
+
+
+def _clip(text: str, limit: int) -> str:
+    text = " ".join(text.split())
+    if len(text) <= limit:
+        return text
+    cut = text[:limit].rsplit(" ", 1)[0]
+    return cut.rstrip(",;:") + "\u2026"
+
+
+def _evidence_mix(data: dict[str, Any]) -> list[dict[str, int]]:
+    counts = {lvl: 0 for lvl in range(1, 6)}
+    for c in data.get("impact_claims") or []:
+        lvl = min(5, max(1, int(c.get("evidence_strength") or 1)))
+        counts[lvl] += 1
+    return [{"level": lvl, "count": n} for lvl, n in counts.items() if n]
 
 
 # --------------------------------------------------------------------------- sections
@@ -386,24 +517,28 @@ def _kpis(view: dict[str, Any], spec: ReportSpec, decision: dict | None, t) -> l
     if view["five_d"]:
         fd = view["five_d"]
         tiles.append({"label": t("kpi_5d"), "value": f"{fd['overall']:.1f}", "unit": "/5",
-                      "sub": t("kpi_5d_sub", grade=fd["grade"], evidence=t(fd["provenance"]))})
+                      "sub": t("kpi_5d_sub", grade=fd["grade"], evidence=t(fd["provenance"])),
+                      "meter": {"pct": fd["overall"] / 5 * 100, "tone": ""}})
     material = view["sdg"]["material"]
     if material:
         top = material[0]
-        tiles.append({"label": t("kpi_sdg"), "value": f"SDG {top['goal']}", "unit": "",
+        tiles.append({"label": t("kpi_sdg"), "value": "", "unit": "", "badge": top,
                       "sub": f"{top['name']} · {top['score']:.0f}/100"})
     else:
         tiles.append({"label": t("kpi_sdg"), "value": "—", "unit": "", "sub": t("kpi_sdg_none")})
     if spec.show_greenwashing and view["greenwashing"]:
         gw = view["greenwashing"]
+        tone = "good" if gw["score"] < 40 else "warning" if gw["score"] < 60 else "critical"
         tiles.append({"label": t("kpi_gw"), "value": f"{gw['score']:.0f}", "unit": "/100",
-                      "sub": gw["classification"]})
+                      "sub": f"{gw['classification']} · {t('tile_threshold')}",
+                      "meter": {"pct": gw["score"], "tone": tone, "tick": 60}})
     ev = view["evidence"]
     dd = (decision or {}).get("dd_coverage_pct") if spec.show_gate else None
     tiles.append({
         "label": t("kpi_evidence"),
         "value": t("kpi_evidence_value", claims=len(ev["claims"])),
         "unit": "",
+        "mix": view["evidence_mix"],
         "sub": (t("kpi_evidence_sub", metrics=len(ev["metrics"]), dd=f"{dd:.0f}") if dd is not None
                 else t("kpi_evidence_sub_nodd", metrics=len(ev["metrics"]))),
     })
@@ -463,7 +598,23 @@ def build_view(data: dict[str, Any], *, audience: str | None = None, lang: str =
         "targets": (data.get("target_tracking") or {}).get("targets", []),
         "feedback": data.get("beneficiary_feedback"),
     }
+    view["evidence_mix"] = _evidence_mix(data)
+    view["pathway"] = _pathway(data, t)
+    view["monogram"] = monogram(view["company"]["name"])
+    view["sdg_wheel"] = sdg_wheel_svg(
+        view["sdg"]["material"], center_label=t("wheel_center"), title=t("sec_sdg")
+    )
+    view["icons"] = {key: section_icon(key) for key in _SECTION_ICONS}
     view["verdict"] = _verdict(decision, data.get("five_dimensions"), t)
+    if decision:
+        insufficient = decision.get("evidence_status") == "insufficient"
+        view["pill"] = {
+            "tone": view["verdict"]["tone"],
+            "label": t({"pass": "pill_pass", "warn": "pill_warn"}.get(
+                decision["overall_status"], "pill_insufficient" if insufficient else "pill_fail")),
+        }
+    else:
+        view["pill"] = None
     view["kpis"] = _kpis(view, spec, decision, t)
     view["mind"] = _mind(data, view["five_d"], decision, t)
     view["actions"] = _actions(data, spec, t)
@@ -476,6 +627,7 @@ def build_view(data: dict[str, Any], *, audience: str | None = None, lang: str =
     present = {
         "verdict": decision is not None,
         "kpis": bool(view["kpis"]),
+        "glance": bool(view["sdg"]["material"]) or any(st["items"] for st in view["pathway"][1:]),
         "mind": bool(view["mind"]),
         "five_d": view["five_d"] is not None,
         "sdg": bool(view["sdg"]["material"] or view["sdg"]["other"]),

@@ -119,6 +119,86 @@ details > summary { cursor: pointer; color: var(--link); font-size: 0.88rem; }
 .muted { color: var(--ink-2); }
 .small { font-size: 0.85rem; }
 
+/* ---------- Masthead v2: monogram + verdict pill ---------- */
+.masthead .ident { display: flex; gap: 16px; align-items: center; }
+.monogram { width: 56px; height: 56px; flex: none; border-radius: 14px; display: grid; place-items: center;
+  background: var(--brand); color: var(--brand-ink); font-size: 1.35rem; font-weight: 750; letter-spacing: -0.02em; }
+.pill { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 4px 12px;
+  font-size: 0.82rem; font-weight: 650; border: 1px solid var(--border); background: var(--surface); white-space: nowrap; }
+.pill::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+.pill.good { color: var(--good-ink); } .pill.good::before { background: var(--good); }
+.pill.warning { color: var(--warning-ink); } .pill.warning::before { background: var(--warning); }
+.pill.critical { color: var(--critical-ink); } .pill.critical::before { background: var(--critical); }
+
+/* ---------- Tile mini-visuals ---------- */
+.meter { position: relative; height: 8px; border-radius: 4px; background: var(--surface-2);
+  margin: 10px 0 6px; box-shadow: inset 0 0 0 1px var(--border); }
+.meter .fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; background: var(--series-1); }
+.meter .fill.good { background: var(--good); } .meter .fill.warning { background: var(--warning); }
+.meter .fill.critical { background: var(--critical); }
+.meter .tick { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--ink-2); }
+.tile .sdg-badge { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 8px;
+  color: #fff; font-weight: 800; font-size: 0.95rem; margin-right: 8px; vertical-align: -4px;
+  text-shadow: 0 1px 1px rgba(0,0,0,0.35); }
+.mix { display: flex; height: 8px; gap: 2px; margin: 10px 0 6px; }
+.mix span { border-radius: 2px; min-width: 6px; }
+.lvl-1 { background: var(--lvl-1); } .lvl-2 { background: var(--lvl-2); } .lvl-3 { background: var(--lvl-3); }
+.lvl-4 { background: var(--lvl-4); } .lvl-5 { background: var(--lvl-5); }
+
+/* ---------- NESTA pips & evidence chips ---------- */
+.pips { display: inline-flex; gap: 3px; vertical-align: -1px; }
+.pips i { width: 9px; height: 9px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--axis); }
+.pips i.on { box-shadow: none; }
+.sig { display: inline-flex; align-items: center; gap: 4px; font-size: 0.78rem; font-weight: 600;
+  color: var(--good-ink); background: var(--good-wash); border-radius: 999px; padding: 1px 8px; margin: 1px 2px 1px 0; }
+.sig svg { width: 11px; height: 11px; }
+
+/* ---------- Impact at a glance: SDG wheel + pathway ---------- */
+.glance { display: grid; gap: 22px; }
+.glance-top { display: grid; grid-template-columns: 240px 1fr; gap: 28px; align-items: center; }
+.wheel { width: 100%; max-width: 240px; height: auto; display: block; margin: 0 auto; }
+.wheel-legend .lbar { display: grid; grid-template-columns: 1fr 120px 36px; gap: 10px; align-items: center; }
+.wheel-legend .lbar .track { height: 8px; border-radius: 4px; background: var(--surface-2);
+  box-shadow: inset 0 0 0 1px var(--border); position: relative; }
+.wheel-legend .lbar .track span { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; background: var(--series-1); }
+.wheel-legend .lbar b { text-align: right; font-variant-numeric: tabular-nums; }
+.wheel text { font: 700 11px var(--font); fill: #fff; }
+.wheel .center-num { font: 750 30px var(--font); fill: var(--ink); }
+.wheel .center-lbl { font: 500 11px var(--font); fill: var(--ink-2); }
+.wheel-legend { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; font-size: 0.86rem; }
+.pathway { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; position: relative; }
+.stage { background: var(--surface-2); border-radius: var(--radius-sm); padding: 12px; position: relative; min-width: 0; }
+.stage h3 { margin: 0 0 8px; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-2); }
+.stage:not(:last-child)::after { content: ""; position: absolute; right: -11px; top: 18px; width: 8px; height: 8px;
+  border-top: 2px solid var(--axis); border-right: 2px solid var(--axis); transform: rotate(45deg); }
+.stage ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.stage li { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px;
+  font-size: 0.82rem; line-height: 1.4; }
+.stage li .pips { margin-top: 6px; display: flex; }
+.stage .empty { color: var(--muted); font-size: 0.82rem; }
+
+/* ---------- Section headings with icons ---------- */
+.card > h2 { display: flex; align-items: center; gap: 10px; }
+.card > h2 .h-ico { width: 28px; height: 28px; flex: none; border-radius: 8px; display: grid; place-items: center;
+  background: var(--series-1-wash); color: var(--series-1); }
+.card > h2 .h-ico svg { width: 16px; height: 16px; }
+.prio { display: inline-grid; place-items: center; min-width: 22px; height: 22px; border-radius: 6px; font-size: 0.75rem;
+  font-weight: 700; background: var(--surface-2); color: var(--ink-2); }
+.prio.top { background: var(--brand); color: var(--brand-ink); }
+
+@media (max-width: 860px) {
+  .glance-top { grid-template-columns: 1fr; }
+  .pathway { grid-template-columns: 1fr 1fr; }
+  .stage:not(:last-child)::after { display: none; }
+}
+@media (max-width: 480px) { .pathway { grid-template-columns: 1fr; } }
+@media print {
+  .glance-top { grid-template-columns: 200px 1fr; }
+  .pathway, .stage li, .wheel { break-inside: avoid; }
+  .monogram, .meter .fill, .mix span, .pips i.on, .sig, .h-ico, .prio.top, .wheel path {
+    -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
 .footer { color: var(--ink-2); font-size: 0.8rem; border-top: 1px solid var(--grid); padding-top: 12px; margin-top: 28px; }
 
 @media (max-width: 640px) {

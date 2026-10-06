@@ -78,6 +78,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
   claims, engine recommendations and DD questions stay in the source
   language, and the report says so. Aliases like `zh_hk`, `zh-Hant` and
   `zh` resolve automatically.
+- **More graphical reports.**
+  - Masthead with a company monogram and a verdict pill.
+  - Headline tiles with mini-visuals: a 5D meter, the official SDG badge, a
+    greenwashing meter with status colour and a 60 threshold tick, and an
+    evidence strip of claims by NESTA level (validated ordinal blue ramp,
+    light and dark).
+  - New **Impact at a glance** section: a 17-wedge SDG wheel (material
+    goals in official colours, with the count in the centre) next to ranked
+    score bars, and an impact-pathway flow (What they do → Outputs →
+    Outcomes → Targets) built from the extracted claims.
+  - NESTA pips and verified-evidence chips in the ledger, section icons,
+    and priority badges in the action plan.
+  - All inline SVG/CSS, so it stays offline and print-ready.
 
 ### Added — v7 Wave 1: effortless first run
 
