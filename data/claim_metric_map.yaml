@@ -8,9 +8,11 @@
 # Deliberately conservative — a wrong mapping is worse than none:
 #   * the quantity's unit must be one of `units` (normalised: lowercase, no spaces);
 #   * every group in `all_of` must match the context (word-prefix match);
-#   * no term in `none_of` may match;
+#   * no term in `none_of` may match (`none_in_sentence`: checked on the whole sentence);
 #   * the clause around the quantity is tried first, then the whole sentence;
-#     a mapping is used only when exactly ONE rule matches.
+#     a mapping is used only when exactly ONE rule matches, or when one rule
+#     has a strictly higher `priority` than every other match (a specific
+#     metric beating its total, e.g. Scope 1 over total GHG).
 # Forward-looking claims (targets, commitments) are never mapped.
 #
 # `scale` converts the claim's unit into `canonical_unit` (e.g. GWh → MWh).
@@ -29,6 +31,17 @@ rules:
     all_of:
       - [co2, tco2, carbon, ghg, greenhouse, emission, methane]
       - [avoid, replac, displac, abat, prevent, offset]
+
+  - metric_id: OI4112          # Greenhouse Gas Emissions: Direct (Scope 1)
+    units: [tco2e, tco2, tonnes, tonne, tons, ton, ktco2e, kgco2e]
+    canonical_unit: tCO2e
+    scale: {ktco2e: 1000, kgco2e: 0.001}
+    all_of:
+      - [scope 1, scope one, direct emission, direct ghg]
+    none_of: [avoid, replac, displac, abat, reduc, cut, sav, prevent, offset, intensity]
+    none_in_sentence: [scope 2, scope 3, scopes, scope 1 and 2, scope 1+2, scope 1-2, scope 1-3,
+                       "scope 1, 2", "scope 1,2", scope 1 & 2]
+    priority: 1                # more specific than OI1479 when both match
 
   - metric_id: OI1479          # Greenhouse Gas Emissions: Total
     units: [tco2e, tco2, tonnes, tonne, tons, ton, ktco2e, kgco2e]
@@ -56,6 +69,13 @@ rules:
       - [generat, produc]
       - [solar, wind, biogas, hydro, renewable, biomass, geothermal]
     none_of: [sold, sell, sale, offtake, export]
+    none_in_sentence: [sold, sell, sale, offtake, export]
+
+  - metric_id: PI3687          # Jobs Created at Directly Supported/Financed Enterprises: Total
+    units: [jobs, job]
+    all_of:
+      - [creat, generat, added, new job, hired, hiring]
+    none_of: [maintain, sustain, retain, indirect, induced, supply chain]
 
   - metric_id: OI8869          # Permanent Employees: Total
     units: [staff, employees, employee, workers, worker]
@@ -70,7 +90,8 @@ rules:
     none_of: [control group, compar, pilot, survey, sample, outgrower, supplier]
 
   - metric_id: PI4060          # Client Individuals: Total
-    units: [customers, customer, clients, client, users, user, people, individuals]
+    units: [customers, customer, clients, client, users, user, people, individuals, patients, patient,
+            students, student, beneficiaries]
     all_of:
       - [serv, reach, customer, client, user, borrower, provid, patient, student]
     none_of: [employ, staff, control group, sample, survey]

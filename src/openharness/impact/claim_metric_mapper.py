@@ -59,12 +59,17 @@ def _has(text: str, term: str) -> bool:
     return re.search(r"\b" + re.escape(term.lower()), text) is not None
 
 
-def _rule_matches(rule: dict, unit: str, context: str) -> bool:
+def _rule_matches(rule: dict, unit: str, context: str, sentence: str = "") -> bool:
+    """``all_of`` / ``none_of`` are tested on *context*. ``none_in_sentence`` is
+    tested on the whole sentence: clause splitting at "and" would otherwise hide
+    "scope 1 and 2" from the Scope 1 rule."""
     if unit not in {u.lower() for u in rule.get("units", [])}:
         return False
     if not all(any(_has(context, t) for t in group) for group in rule.get("all_of", [])):
         return False
-    return not any(_has(context, t) for t in rule.get("none_of", []) or [])
+    if any(_has(context, t) for t in rule.get("none_of", []) or []):
+        return False
+    return not any(_has(f"{context} {sentence}", t) for t in rule.get("none_in_sentence", []) or [])
 
 
 def _clause(sentence: str, start: int, end: int) -> str:
@@ -113,7 +118,11 @@ def map_claim_metrics(sentence: str, *, forward_looking: bool = False) -> list[M
         if unit_counts.get(unit, 0) == 1:
             contexts.append(f"{lowered} {unit}")
         for context in contexts:
-            hits = [r for r in cfg.get("rules", []) if _rule_matches(r, unit, context)]
+            hits = [r for r in cfg.get("rules", []) if _rule_matches(r, unit, context, lowered)]
+            if len(hits) > 1:  # a strictly more specific rule wins a tie
+                top = max(int(r.get("priority", 0)) for r in hits)
+                best = [r for r in hits if int(r.get("priority", 0)) == top]
+                hits = best if len(best) == 1 else hits
             if len(hits) == 1:
                 rule = hits[0]
                 scale = float((rule.get("scale") or {}).get(unit, 1))

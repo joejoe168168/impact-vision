@@ -78,7 +78,7 @@ class ImpactVision:
     def __init__(
         self,
         *,
-        extractor_id: str = "regex",
+        extractor_id: str = "auto",
         verifier_id: str = "heuristic",
         enable_plugins: bool = False,
         catalog_path: str | Path | None = None,

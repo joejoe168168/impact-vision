@@ -140,7 +140,28 @@ def register_verifier(verifier: SourceVerifier) -> None:
     _VERIFIERS[verifier.id] = verifier
 
 
+def resolve_extractor_id(extractor_id: str = "auto") -> str:
+    """Pick the claim extractor (v7 W5.6).
+
+    An explicit id is returned as is. For ``"auto"``, ``IMPACT_VISION_EXTRACTOR``
+    decides when set; otherwise ``auto`` means the LLM extractor when an
+    API key is configured (``OPENAI_API_KEY`` for the OpenAI-compatible
+    adapter), else the deterministic regex extractor. The LLM extractor
+    itself falls back to regex on any error, so ``auto`` is always safe.
+    """
+    import os
+
+    if extractor_id and extractor_id != "auto":
+        return extractor_id
+    chosen = os.environ.get("IMPACT_VISION_EXTRACTOR", "auto").strip().lower() or "auto"
+    if chosen != "auto":
+        return chosen
+    return "llm" if os.environ.get("OPENAI_API_KEY") and "llm" in _EXTRACTORS else "regex"
+
+
 def get_extractor(extractor_id: str = "noop") -> ClaimExtractor:
+    if extractor_id == "auto":
+        extractor_id = resolve_extractor_id(extractor_id)
     if extractor_id not in _EXTRACTORS:
         raise KeyError(
             f"Unknown extractor '{extractor_id}'. Registered: {sorted(_EXTRACTORS)}"

@@ -16,6 +16,7 @@ from openharness.impact.extractors.base import (
     get_extractor,
     get_verifier,
     register_extractor,
+    resolve_extractor_id,
     register_verifier,
 )
 from openharness.impact.extractors.regex_extractor import RegexExtractor
@@ -48,5 +49,6 @@ __all__ = [
     "get_extractor",
     "get_verifier",
     "register_extractor",
+    "resolve_extractor_id",
     "register_verifier",
 ]

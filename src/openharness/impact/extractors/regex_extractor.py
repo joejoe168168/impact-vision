@@ -28,6 +28,12 @@ _NUMBER_UNIT = re.compile(
     (?<![\d.,])
     (?P<value>\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?)
     \s*
+    # Up to two modifiers before a *count* noun: "500 low-income customers",
+    # "80 permanent jobs" (never prepositions, articles or scale words).
+    (?:(?:(?!(?:of|per|in|at|to|for|from|by|with|and|or|the|a|an|than|over|under|more|less|
+                million|billion|thousand)\b)[a-z][a-z-]*\s+){1,2}
+       (?=(?:jobs?|students?|patients?|farmers?|households?|smallholders?|customers?|clients?|
+            users?|employees?|staff|workers?|people|individuals|families|beneficiaries)(?![a-z0-9])))?
     (?P<unit>%|million|billion|thousand|GWh|MWh|kWh|MW|tCO2e?|t\s?CO2e?|tonnes?|tons?|kg|
             hectares?|ha|jobs?|students?|patients?|farmers?|households?|smallholders?|
             customers?|clients?|users?|employees?|staff|workers?|people|individuals|
