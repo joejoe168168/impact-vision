@@ -235,8 +235,8 @@ click-to-filter in the evidence ledger.
 Deliberately different from the plan:
 - `/console` was kept (now generated) rather than retired.
 - The engagement view (deliverables, checklist, deadlines per engagement)
-  was not built. Deadlines live on the portfolio home, and the in-memory
-  engagement store needs persistence first.
+  was not built at first, because the engagement store needed persistence.
+  It shipped as a follow-up after W5.3.
 - The evidence-review queue on the portfolio home is derived from saved
   reports, because `evidence_workflow.ReviewQueue` is not persisted.
 

@@ -87,7 +87,9 @@ Ask the agent, or use the console form for `regulatory_calendar`:
 ## 7. Run a consultant engagement
 
 `engagement_workspace` and `engagement_suite` cover proposal → data room →
-ToC / KPI framework → reporting studio → assurance bundle. Engagements, the
+ToC / KPI framework → reporting studio → assurance bundle. In the chat's
+**Reports** panel, **Open engagements** shows every engagement: deliverable
+and checklist progress, what is overdue, and what is due in the next 14 days. Engagements, the
 audit trail and review queues are saved to `~/.impact-vision/state.db`
 (override with `IMPACT_VISION_STATE_DB`, or use Postgres with
 `IMPACT_VISION_STATE_STORE=postgres` + `IMPACT_VISION_STATE_DSN`), so work

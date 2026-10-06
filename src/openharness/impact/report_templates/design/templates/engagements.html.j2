@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en"{% if theme %} data-theme="{{ theme }}"{% endif %}>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ v.title }} — Impact Vision</title>
+<style>{{ css | safe }}
+.doc { max-width: 1180px; }
+.eng-grid { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr)); }
+.eng-grid > .card { margin: 0; }
+.eng-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+.eng-head h2 { margin: 0; font-size: 1.15rem; }
+.eng-head p { margin: 2px 0 0; color: var(--ink-2); font-size: 0.88rem; }
+.bars { display: grid; grid-template-columns: max-content 1fr max-content; gap: 6px 10px; align-items: center; margin: 14px 0; font-size: 0.86rem; }
+.bar { height: 8px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+.bar span { display: block; height: 100%; background: var(--brand); }
+.list { list-style: none; margin: 0; padding: 0; }
+.list li { display: flex; gap: 12px; align-items: baseline; padding: 8px 0; border-top: 1px solid var(--border); font-size: 0.9rem; }
+.list li:first-child { border-top: 0; }
+.list .when { flex: none; width: 96px; white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 600; }
+.list .what { flex: 1; min-width: 0; }
+.list .what small { display: block; color: var(--ink-2); }
+.days { flex: none; font-size: 0.78rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--surface-2); }
+.days.overdue { color: var(--critical-ink); } .days.due_soon { color: var(--warning-ink); }
+h3.small { margin: 16px 0 6px; }
+table.dl { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+table.dl th, table.dl td { text-align: left; padding: 6px 8px; border-top: 1px solid var(--border); }
+table.dl th { color: var(--ink-2); font-weight: 600; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+</style>
+</head>
+<body>
+<main class="doc">
+<header class="masthead">
+  <div class="ident">
+    <div class="monogram" aria-hidden="true">IV</div>
+    <div>
+      <p class="eyebrow">Consultant workspace</p>
+      <h1>{{ v.title }}</h1>
+      <p class="meta">As of {{ v.as_of }} · {{ v.engagements | length }} engagements</p>
+    </div>
+  </div>
+</header>
+
+<section class="kpis" aria-label="Headline numbers">
+  {% for k in v.kpis %}
+  <div class="tile kpi"><p class="label">{{ k.label }}</p><p class="value">{{ k.value }}</p><p class="sub">{{ k.sub }}</p></div>
+  {% endfor %}
+</section>
+
+{% if v.engagements %}
+<div class="eng-grid">
+  {% for e in v.engagements %}
+  <section class="card" aria-labelledby="h-{{ e.id }}">
+    <div class="eng-head">
+      <div>
+        <h2 id="h-{{ e.id }}">{{ e.name }}</h2>
+        <p>{{ e.client }}{% if e.bundle %} · {{ e.bundle }}{% endif %}{% if e.timeline %} · {{ e.timeline }}{% endif %}</p>
+      </div>
+      <span class="pill {{ 'good' if e.active else '' }}">{{ e.status }}</span>
+    </div>
+    <div class="bars">
+      <span>Deliverables final</span><div class="bar" role="img" aria-label="{{ e.deliverable_pct }}%"><span style="width:{{ e.deliverable_pct }}%"></span></div><span>{{ e.deliverable_pct }}%</span>
+      <span>Checklist done</span><div class="bar" role="img" aria-label="{{ e.checklist_pct }}%"><span style="width:{{ e.checklist_pct }}%"></span></div><span>{{ e.checklist_pct }}%</span>
+    </div>
+    <h3 class="small">Next due{% if e.overdue %} · {{ e.overdue }} overdue{% endif %}</h3>
+    {% if e.upcoming %}
+    <ul class="list">
+      {% for i in e.upcoming %}
+      <li><span class="when">{{ i.due }}</span>
+        <span class="what">{{ i.title }}<small>{{ i.kind }}{% if i.owner %} · {{ i.owner }}{% endif %}</small></span>
+        <span class="days {{ i.status }}">{% if i.days < 0 %}{{ -i.days }}d late{% elif i.days == 0 %}today{% else %}in {{ i.days }}d{% endif %}</span></li>
+      {% endfor %}
+    </ul>
+    {% else %}<p class="muted small">No dated open items.</p>{% endif %}
+    {% if e.deliverables %}
+    <h3 class="small">Deliverables ({{ e.open_deliverables }} open)</h3>
+    <div class="table-wrap"><table class="dl">
+      <caption class="sr-only">Deliverables for {{ e.name }}</caption>
+      <thead><tr><th scope="col">Deliverable</th><th scope="col">State</th><th scope="col">Owner</th><th scope="col">Due</th></tr></thead>
+      <tbody>{% for d in e.deliverables %}<tr><td>{{ d.name }}</td><td><span class="pill {{ d.tone }}">{{ d.state }}</span></td><td>{{ d.owner or '—' }}</td><td>{{ d.due or '—' }}</td></tr>{% endfor %}</tbody>
+    </table></div>
+    {% endif %}
+  </section>
+  {% endfor %}
+</div>
+{% else %}
+<section class="card"><p class="muted">No engagements yet. Ask the agent to "create an engagement" (the <code>engagement_workspace</code> tool); they are saved and appear here.</p></section>
+{% endif %}
+
+<footer class="footer"><p style="margin:0">Generated by Impact Vision · engagements are saved in the state store and survive restarts.</p></footer>
+</main>
+</body>
+</html>

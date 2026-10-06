@@ -7,6 +7,8 @@
 ``GET  /api/v1/chat/reports/{id}/files/{name}``    a deliverable (HTML, DOCX, XLSX, CSV, JSON)
 ``POST /api/v1/chat/reports/{id}/share``           signed, expiring read-only link
 ``GET  /api/v1/chat/portfolio/view``               portfolio home across all saved reports (W3.4)
+``GET  /api/v1/chat/engagements``                  saved consultant engagements (summaries)
+``GET  /api/v1/chat/engagements/view``             engagement view: deliverables, checklist, due dates
 ``GET  /shared/{token}``                           the shared report (no API key needed)
 
 Share links are HMAC-signed with ``IMPACT_VISION_SHARE_HMAC_KEY`` (or
@@ -168,6 +170,13 @@ def render_portfolio_page(*, jurisdictions: str = "EU,US,UK", fund_name: str = "
     return render_portfolio_home(view, theme=theme)
 
 
+def _engagement_workspace():  # noqa: ANN202
+    """The persisted workspace the engagement tools write to (W5.3)."""
+    from openharness.tools.impact.engagement_workspace_tool import _workspace
+
+    return _workspace()
+
+
 # ---------------------------------------------------------------- share tokens
 
 
@@ -292,10 +301,23 @@ def build_reports_router(*, auth_dependency: Any = None) -> Any:
         return FileResponse(_report_path(report_id) / name, filename=name)
 
     @router.get("/portfolio/view", dependencies=deps, response_class=HTMLResponse)
-    async def portfolio_view(jurisdictions: str = "EU,US,UK", fund_name: str = "Portfolio",
+    async def portfolio_view(jurisdictions: str = "EU,US,UK,HK", fund_name: str = "Portfolio",
                              theme: str = "") -> HTMLResponse:
         return HTMLResponse(await asyncio.to_thread(
             render_portfolio_page, jurisdictions=jurisdictions, fund_name=fund_name, theme=theme))
+
+    @router.get("/engagements", dependencies=deps)
+    async def engagements_list() -> dict[str, Any]:
+        ws = _engagement_workspace()
+        return {"engagements": [ws.summarize(e.engagement_id).model_dump(mode="json")
+                                for e in ws.list_engagements()]}
+
+    @router.get("/engagements/view", dependencies=deps, response_class=HTMLResponse)
+    async def engagements_view(theme: str = "") -> HTMLResponse:
+        from openharness.impact.engagement_home import build_engagement_home, render_engagement_home
+
+        view = build_engagement_home(_engagement_workspace().list_engagements())
+        return HTMLResponse(render_engagement_home(view, theme=theme))
 
     @router.post("/reports/{report_id}/share", dependencies=deps)
     async def share(report_id: str, req: ShareRequest) -> dict[str, Any]:

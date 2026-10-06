@@ -1115,11 +1115,21 @@ function viewerParams() {
 }
 
 function viewerUrl() {
-  if (S.viewing.portfolio) {
+  if (S.viewing.portfolio || S.viewing.engagements) {
     const p = new URLSearchParams(); if ($('#vTheme').value) p.set('theme', $('#vTheme').value);
-    return '/api/v1/chat/portfolio/view?' + p.toString();
+    return '/api/v1/chat/' + (S.viewing.engagements ? 'engagements' : 'portfolio') + '/view?' + p.toString();
   }
   return '/api/v1/chat/reports/' + S.viewing.id + '/view?' + viewerParams();
+}
+
+function openEngagements() {
+  S.viewing = {engagements: true};
+  $('#viewerTitle').textContent = 'Engagements';
+  $$('.report-only').forEach((el) => { el.hidden = true; });
+  $('#shareBox').classList.remove('show');
+  $('#viewer').classList.add('show');
+  renderViewer();
+  $('#vClose').focus();
 }
 
 function openPortfolio() {
@@ -1203,8 +1213,16 @@ function renderPanel() {
       home.onclick = openPortfolio;
       body.appendChild(home);
     }
+    const engs = document.createElement('button');
+    engs.className = 'btn'; engs.style.cssText = 'width:100%;margin-bottom:8px';
+    engs.textContent = 'Open engagements';
+    engs.onclick = openEngagements;
+    body.appendChild(engs);
     if (!S.reports.length) {
-      body.innerHTML = '<div class="empty">Analyze a pitch deck from the welcome screen — reports you create appear here.</div>';
+      const empty = document.createElement('div');
+      empty.className = 'empty';
+      empty.textContent = 'Analyze a pitch deck from the welcome screen — reports you create appear here.';
+      body.appendChild(empty);
       return;
     }
     S.reports.forEach((r) => {

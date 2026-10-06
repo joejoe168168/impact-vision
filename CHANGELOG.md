@@ -20,6 +20,28 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Added — follow-ups after Wave 5
+
+- **Engagement view** (the W3.2 deferral, unblocked by W5.3 persistence).
+  - `GET /api/v1/chat/engagements[/view]` and an **Open engagements** button
+    in the chat panel.
+  - Shows per-engagement status, deliverable and checklist completion,
+    overdue items and items due within 14 days (`impact/engagement_home.py`).
+- **Persisted evidence-review queues.**
+  - `evidence_review` takes `queue_name`; `list_review_queues()` is new.
+  - The portfolio home lists pending items from every queue (radar, DDQ
+    drafts, deal queues).
+
+### Fixed
+
+- **Data-room bundle defaults cite correctly labelled IRIS+ IDs.**
+  - `OI4112` was used as "beneficiaries"; it is Scope 1 GHG.
+  - `PD5833` was used as "GHG"; it is affordable housing.
+  - Sample benchmark observations and the website teaser had the same
+    mistake.
+  - A guard test now checks that ID and label agree.
+- **The portfolio home route includes Hong Kong deadlines by default.**
+
 ### Added — v7 Wave 5: platform hardening
 
 - **Knowledge as data (W5.1).**
