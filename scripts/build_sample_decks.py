@@ -28,9 +28,15 @@ def _slides(markdown: str) -> list[tuple[str, str]]:
     return slides
 
 
+# The built-in Helvetica only covers Latin-1; map typographic characters so the
+# PDF text layer doesn't turn them into "?".
+_ASCII = str.maketrans({"\u2014": " - ", "\u2013": "-", "\u2265": ">=", "\u2264": "<=",
+                        "\u2019": "'", "\u201c": '"', "\u201d": '"', "\u2192": "->"})
+
+
 def build(md_path: Path) -> Path:
     doc = pymupdf.open()
-    for i, (heading, body) in enumerate(_slides(md_path.read_text(encoding="utf-8"))):
+    for i, (heading, body) in enumerate(_slides(md_path.read_text(encoding="utf-8").translate(_ASCII))):
         page = doc.new_page(width=PAGE.width, height=PAGE.height)
         size = 30 if i == 0 else 24
         page.insert_textbox(

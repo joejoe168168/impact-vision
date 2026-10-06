@@ -15,6 +15,10 @@ from openharness.impact.report_templates.dd_report_html import (
     save_dd_questionnaire_html,
     save_dd_report_html,
 )
+from openharness.impact.report_templates.decision_report import (
+    build_view,
+    render_decision_report,
+)
 from openharness.impact.report_templates.html_template import render_html_report
 from openharness.impact.report_templates.report_v2 import (
     EVIDENCE_BADGE_KINDS,
@@ -32,6 +36,8 @@ from openharness.impact.report_templates.report_v2 import (
 )
 
 __all__ = [
+    "build_view",
+    "render_decision_report",
     "render_html_report",
     "render_dd_questionnaire_html",
     "save_dd_questionnaire_html",

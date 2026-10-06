@@ -23,6 +23,7 @@ def _render(tmp_path: Path, **overrides) -> str:
         sdg_claims=data["sdg_claims"],
         output_format="html",
         output_path=str(out),
+        style="classic",  # W0.7 behaviour of the classic renderer
         **overrides,
     )
     result = asyncio.run(ImpactReportTool().execute(args, ToolExecutionContext(cwd=tmp_path)))

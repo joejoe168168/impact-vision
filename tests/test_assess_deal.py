@@ -74,7 +74,7 @@ def test_downstream_tools_hydrate_from_assessment_id(tmp_path):
     assert not report.is_error, report.output
     html = out.read_text(encoding="utf-8")
     assert "SunPath Energy Ltd" in html
-    assert 'id="sec-claims"' in html  # extracted claims carried over
+    assert 'id="sec-evidence"' in html and "42,000" in html  # extracted claims carried over
 
 
 def test_explicit_fields_win_over_assessment(tmp_path):

@@ -20,6 +20,45 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Added — v7 Wave 2: report design system & decision-first deliverables
+
+- **Decision-first impact report (W2.1–W2.3).** New default HTML layout
+  (`report_templates/decision_report.py`):
+  - Order: verdict card (Proceed / Conditional / Not IC-ready — insufficient
+    evidence / Do not proceed, with the top three reasons and a confidence
+    line) → four stat tiles → "what would change our mind" → 5 Dimensions →
+    SDG alignment → evidence ledger → greenwashing review → risks → action
+    plan → methodology and glossary.
+  - Material SDGs only. The other goals are listed as context.
+  - Every claim and metric is shown with its NESTA level, evidence signals
+    and origin (reported / extracted / derived).
+  - One de-duplicated action plan, with sector-specific first actions
+    instead of "Revenue, Total Clients".
+
+  Built on one design system:
+  - `design/tokens.css`: the validated data-viz palette, with dark mode
+    selected per surface and every text token at WCAG AA or better.
+  - `design/report.css`, plus a Jinja2 template with autoescaping.
+  - HTML/CSS bar charts with benchmark ticks and threshold lines. Each
+    chart has an `aria-label` and a table twin.
+  - No Plotly or CDN: the report works offline, is about 30 KB instead of
+    about 150 KB, and has a print stylesheet that expands every table.
+
+  Audience variants (`full` / `ic` / `lp` / `regulator` / `public`) are
+  declarative `ReportSpec`s, and gate and greenwashing content is omitted
+  from the HTML (methodology and glossary included). White-label branding
+  only accepts a hex colour and an https/data logo.
+
+  `impact-vision assess`, `demo` and `impact_report` (`style="decision"`)
+  use it. `style="classic"` keeps the old report for one release.
+- **IC memo, DD report and investee portal share the tokens.** `report_v2`
+  now maps its variable names onto `design/tokens.css`, so every deliverable
+  has the same palette and type. They gain real dark mode
+  (`prefers-color-scheme`, or `data-theme="dark"` when rendered with
+  `theme="dark"`), and the gradient hero becomes the same masthead as the
+  impact report. The IC-gate tile reads "NOT READY" for insufficient
+  evidence instead of overflowing.
+
 ### Added — v7 Wave 1: effortless first run
 
 - **`impact-vision demo` (W1.1).** Assesses three bundled, fictional sample

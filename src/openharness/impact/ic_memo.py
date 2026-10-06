@@ -398,11 +398,14 @@ def render_ic_memo_html(
     )
     if scorecard.evidence_status == "insufficient":
         gate_kind = "warn"
+    insufficient = scorecard.evidence_status == "insufficient"
     kpis.append(
         {
             "label": "IC Gate",
-            "value": scorecard.display_status,
-            "sub": f"{len(scorecard.checks)} checks · "
+            # "INSUFFICIENT EVIDENCE" doesn't fit a tile; the sub-line says why.
+            "value": "NOT READY" if insufficient else scorecard.display_status,
+            "sub": ("insufficient evidence · " if insufficient else "")
+            + f"{len(scorecard.checks)} checks · "
             f"{len(scorecard.blocking_failures)} fail / {len(scorecard.warnings_list)} warn",
             "kind": gate_kind,
         }

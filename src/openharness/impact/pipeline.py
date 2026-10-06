@@ -216,7 +216,11 @@ def assess_document(
         "impact_claims": [c.model_dump() for c in assessment.impact_claims],
         "audience": audience,
         "theme": theme,
+        "source_label": source_label,
     }
+    from openharness.impact.report_templates.decision_report import decision_from_scorecard
+
+    report_data["decision"] = decision_from_scorecard(scorecard, dd=dd)
     fd = report_data["five_dimensions"]
     if fd and company.sector:
         scores = {k: fd[k]["score"] for k in ("what", "who", "how_much", "contribution", "risk")}
@@ -265,7 +269,7 @@ def write_deliverables(
         render_dd_questionnaire_docx,
         render_dd_report_html,
     )
-    from openharness.tools.impact.impact_report_tool import _to_html
+    from openharness.impact.report_templates.decision_report import render_decision_report
 
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
@@ -273,7 +277,7 @@ def write_deliverables(
     files: list[Path] = []
 
     report = out / f"{stem}_impact_report.html"
-    report.write_text(_to_html(bundle.report_data), encoding="utf-8")
+    report.write_text(render_decision_report(bundle.report_data), encoding="utf-8")
     files.append(report)
 
     memo = out / f"{stem}_ic_memo.html"

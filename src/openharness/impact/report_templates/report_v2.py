@@ -36,22 +36,23 @@ GRADE_CLASS: dict[str, str] = {
 
 
 REPORT_CSS_V2 = r"""
+/* v7 W2.1: the v2 deliverables (IC memo, DD report, investee portal) alias
+   their variable names onto the shared design tokens (design/tokens.css), so
+   every deliverable shares one palette, light/dark behaviour and type. */
 :root {
-  --primary: #0d47a1; --primary-light: #e3f2fd; --primary-dark: #002171;
-  --accent: #1976d2; --accent-light: #63a4ff;
-  --success: #2e7d32; --success-light: #e8f5e9; --success-dark: #1b5e20;
-  --warning: #f57c00; --warning-light: #fff3e0; --warning-dark: #e65100;
-  --danger: #c62828;  --danger-light: #ffebee;  --danger-dark: #b71c1c;
-  --neutral: #5f6368; --neutral-light: #f5f7fa;
-  --surface: #ffffff; --bg: #f5f7fa;
-  --text: #1a1a2e; --text-secondary: #5f6368; --text-muted: #9aa0a6;
-  --border: #e0e4e8; --border-strong: #bdc1c6;
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
-  --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
-  --shadow-lg: 0 10px 25px rgba(0,0,0,0.10);
-  --radius: 14px; --radius-sm: 8px; --radius-pill: 9999px;
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace;
+  --primary: var(--brand); --primary-light: var(--surface-2); --primary-dark: var(--brand);
+  --accent: var(--series-1); --accent-light: var(--series-1-wash);
+  --success: var(--good); --success-light: var(--good-wash); --success-dark: var(--good-ink);
+  --warning: var(--warning); --warning-light: var(--warning-wash); --warning-dark: var(--warning-ink);
+  --danger: var(--critical); --danger-light: var(--critical-wash); --danger-dark: var(--critical-ink);
+  --neutral: var(--ink-2); --neutral-light: var(--surface-2);
+  --bg: var(--page);
+  --text: var(--ink); --text-secondary: var(--ink-2); --text-muted: var(--muted);
+  --border-strong: var(--axis);
+  --shadow-sm: none; --shadow-md: none; --shadow-lg: none;
+  --radius-pill: 9999px;
+  --font-sans: var(--font);
+  --font-mono: var(--mono);
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
@@ -86,38 +87,27 @@ aside.toc a:hover, aside.toc a.active {
 }
 main { min-width: 0; }
 
-/* ---------- Header hero ---------- */
+/* ---------- Header (masthead, same as the decision report) ---------- */
 .report-hero {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 55%, #4fc3f7 100%);
-  color: white; padding: 40px 44px; border-radius: var(--radius);
-  margin-bottom: 28px; box-shadow: var(--shadow-lg);
-  position: relative; overflow: hidden;
-}
-.report-hero::after {
-  content: ""; position: absolute; top: -40%; right: -10%;
-  width: 380px; height: 380px; border-radius: 50%;
-  background: radial-gradient(circle, rgba(255,255,255,0.18), transparent 65%);
-  pointer-events: none;
+  background: var(--surface); color: var(--ink); padding: 24px 28px;
+  border: 1px solid var(--border); border-bottom: 3px solid var(--brand);
+  border-radius: var(--radius); margin-bottom: 24px;
 }
 .report-hero .eyebrow {
-  text-transform: uppercase; letter-spacing: 0.12em; font-size: 0.72em;
-  opacity: 0.85; margin-bottom: 6px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.78em;
+  color: var(--ink-2); margin-bottom: 6px; font-weight: 600;
 }
-.report-hero h1 {
-  font-size: 1.9em; font-weight: 750; margin-bottom: 8px;
-  letter-spacing: -0.02em; line-height: 1.15;
-}
-.report-hero .subtitle { opacity: 0.92; font-size: 0.98em; max-width: 65ch; }
+.report-hero h1 { font-size: 1.9em; font-weight: 750; margin-bottom: 8px; line-height: 1.15; }
+.report-hero .subtitle { color: var(--ink); font-size: 0.98em; max-width: 70ch; }
 .report-hero .meta-row {
-  display: flex; gap: 20px; flex-wrap: wrap; margin-top: 16px;
-  opacity: 0.85; font-size: 0.82em;
+  display: flex; gap: 20px; flex-wrap: wrap; margin-top: 14px; color: var(--ink-2); font-size: 0.85em;
 }
-.report-hero .meta-row b { font-weight: 600; opacity: 0.95; }
+.report-hero .meta-row b { font-weight: 600; color: var(--ink); }
 .tag-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
 .tag {
-  display: inline-block; background: rgba(255,255,255,0.22);
-  backdrop-filter: blur(6px);
-  padding: 4px 12px; border-radius: var(--radius-pill); font-size: 0.78em; font-weight: 500;
+  display: inline-block; background: var(--surface-2); color: var(--ink-2);
+  border: 1px solid var(--border);
+  padding: 3px 11px; border-radius: var(--radius-pill); font-size: 0.78em; font-weight: 500;
 }
 
 /* ---------- KPI strip ---------- */
@@ -289,14 +279,8 @@ summary:focus-visible, .toc a:focus-visible {
 .evidence-legend { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 10px 0; font-size: 0.86em; }
 .evidence-legend .ev-title { font-weight: 650; color: var(--text-secondary); }
 
-/* ---------- Dark mode + white-label opt-in (Track D7) ---------- */
-.theme-dark {
-  --surface: #1c2128; --bg: #0d1117; --text: #e6edf3;
-  --text-secondary: #b6bec8; --text-muted: #8b949e;
-  --border: #30363d; --border-strong: #454d56;
-  --primary-light: #15304d; --neutral-light: #1b222b;
-  --success-light: #12351d; --warning-light: #3a2a12; --danger-light: #3a1518;
-}
+/* Dark mode comes from design/tokens.css (prefers-color-scheme, or
+   data-theme="dark" on <html> when a report is rendered with theme="dark"). */
 
 /* ---------- Print ---------- */
 @media print {
@@ -304,8 +288,7 @@ summary:focus-visible, .toc a:focus-visible {
   .page { display: block; max-width: 100%; padding: 0; }
   aside.toc { display: none; }
   .skip-link { display: none; }
-  .report-hero { background: var(--primary) !important;
-                 -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .report-hero { border-color: #ccc; }
   section.card { box-shadow: none; border: 1px solid #ccc; break-inside: avoid; page-break-inside: avoid; }
   .kpi-tile { box-shadow: none; break-inside: avoid; }
   h2.section-title { break-after: avoid; }
@@ -470,15 +453,20 @@ def wrap_document(
         '<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>'
         if include_plotly else ""
     )
-    body_class = ' class="theme-dark"' if theme.strip().lower() == "dark" else ""
+    dark = theme.strip().lower() == "dark"
+    # Keep the legacy class for any custom CSS, but drive colours from tokens.
+    body_class = ' class="theme-dark"' if dark else ""
+    from openharness.impact.report_templates.decision_report import design_tokens_css
+
+    html_open = '<html lang="en" data-theme="dark"><head>' if dark else '<html lang="en"><head>'
     return (
         '<!DOCTYPE html>'
-        '<html lang="en"><head>'
+        f'{html_open}'
         '<meta charset="UTF-8">'
         '<meta name="viewport" content="width=device-width, initial-scale=1.0">'
         f'<title>{html.escape(title, quote=False)}</title>'
         f'{plotly}'
-        f'<style>{REPORT_CSS_V2}</style>'
+        f'<style>{design_tokens_css()}\n{REPORT_CSS_V2}</style>'
         f'{extra_head}'
         f'</head><body{body_class}>'
         '<a class="skip-link" href="#main-content">Skip to main content</a>'

@@ -1,0 +1,147 @@
+/* Impact Vision report components (v7 W2.1). Uses tokens.css only. */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--page); color: var(--ink);
+  font: 15px/1.55 var(--font); -webkit-font-smoothing: antialiased;
+}
+a { color: var(--link); }
+.skip-link { position: absolute; left: -9999px; }
+.skip-link:focus { left: 16px; top: 8px; background: var(--surface); padding: 6px 10px; z-index: 10; }
+:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+
+.doc { max-width: 1040px; margin: 0 auto; padding: 32px 16px 64px; }
+.masthead { display: flex; gap: 16px; align-items: flex-start; justify-content: space-between;
+  border-bottom: 3px solid var(--brand); padding-bottom: 16px; margin-bottom: 24px; }
+.masthead .eyebrow { color: var(--ink-2); font-size: 0.82rem; font-weight: 600;
+  letter-spacing: 0.04em; text-transform: uppercase; margin: 0 0 4px; }
+.masthead h1 { font-size: 1.9rem; line-height: 1.15; margin: 0; }
+.masthead .meta { color: var(--ink-2); margin: 6px 0 0; font-size: 0.92rem; }
+.masthead .logo { max-height: 48px; max-width: 180px; }
+.notice { color: var(--ink-2); font-size: 0.82rem; margin: 8px 0 0; }
+
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 20px 22px; margin: 0 0 20px; }
+.card > h2 { font-size: 1.15rem; margin: 0 0 4px; }
+.card > .lede { color: var(--ink-2); margin: 0 0 16px; font-size: 0.93rem; }
+section[id] { scroll-margin-top: 16px; }
+
+/* Verdict ---------------------------------------------------------------- */
+.verdict { border-left: 6px solid var(--muted); }
+.verdict.good { border-left-color: var(--good); background: linear-gradient(var(--good-wash), var(--good-wash)), var(--surface); }
+.verdict.warning { border-left-color: var(--warning); background: linear-gradient(var(--warning-wash), var(--warning-wash)), var(--surface); }
+.verdict.serious { border-left-color: var(--serious); background: linear-gradient(var(--serious-wash), var(--serious-wash)), var(--surface); }
+.verdict.critical { border-left-color: var(--critical); background: linear-gradient(var(--critical-wash), var(--critical-wash)), var(--surface); }
+.verdict .status { display: flex; align-items: center; gap: 10px; margin: 0 0 6px; }
+.verdict .status .icon { width: 28px; height: 28px; flex: none; }
+.verdict .status strong { font-size: 1.35rem; }
+.verdict.good .status strong { color: var(--good-ink); }
+.verdict.warning .status strong { color: var(--warning-ink); }
+.verdict.serious .status strong { color: var(--serious-ink); }
+.verdict.critical .status strong { color: var(--critical-ink); }
+.verdict .why { margin: 8px 0 0; padding-left: 20px; }
+.verdict .why li { margin: 2px 0; }
+.verdict .confidence { color: var(--ink-2); font-size: 0.88rem; margin: 10px 0 0; }
+
+/* Stat tiles ------------------------------------------------------------- */
+.kpis { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); margin: 0 0 20px; }
+.tile { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
+.tile .label { color: var(--ink-2); font-size: 0.82rem; margin: 0; }
+.tile .value { font-size: 1.85rem; font-weight: 650; line-height: 1.2; margin: 2px 0; }
+.tile .value small { font-size: 0.95rem; font-weight: 500; color: var(--ink-2); }
+.tile .sub { color: var(--ink-2); font-size: 0.82rem; margin: 0; }
+
+/* Evidence level / status chips ------------------------------------------ */
+.chip { display: inline-flex; align-items: center; gap: 6px; font-size: 0.8rem; font-weight: 600;
+  border: 1px solid var(--border); border-radius: 999px; padding: 1px 9px; color: var(--ink-2);
+  background: var(--surface-2); white-space: nowrap; }
+.chip .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+.chip.evidence-based .dot { background: var(--good); }
+.chip.partial .dot { background: var(--warning); }
+.chip.estimated .dot { background: var(--serious); }
+.sdg-chip { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 8px;
+  vertical-align: -1px; box-shadow: inset 0 0 0 1px var(--border); }
+
+/* Bar charts (HTML/CSS: real text, prints, scales) ---------------------- */
+.bars { display: grid; grid-template-columns: minmax(120px, 34%) 1fr 64px; gap: 10px 12px; align-items: center; }
+.bars .bl { font-size: 0.9rem; }
+.bars .bl .note { display: block; color: var(--ink-2); font-size: 0.8rem; }
+.bars .bv { font-variant-numeric: tabular-nums; text-align: right; font-size: 0.9rem; font-weight: 600; }
+.bars .track { position: relative; height: 24px;
+  background-image: linear-gradient(to right, var(--grid) 1px, transparent 1px);
+  background-size: 20% 100%; border-left: 1px solid var(--axis); }
+.bars .fill { position: absolute; left: 0; top: 6px; height: 12px; background: var(--series-1);
+  border-radius: 0 4px 4px 0; min-width: 2px; }
+.bars .bench { position: absolute; top: 2px; width: 2px; height: 20px; background: var(--ink-2); border-radius: 1px; }
+.bars .threshold { position: absolute; top: 0; bottom: 0; width: 0; border-left: 2px solid var(--critical); }
+.axis-row { display: grid; grid-template-columns: minmax(120px, 34%) 1fr 64px; gap: 0 12px; margin-top: 4px; }
+.axis-row .ticks { position: relative; height: 1.3em; color: var(--muted); font-size: 0.75rem;
+  font-variant-numeric: tabular-nums; }
+.axis-row .ticks span { position: absolute; top: 0; transform: translateX(-50%); }
+.axis-row .ticks span:first-child { transform: none; }
+.axis-row .ticks span:last-child { transform: translateX(-100%); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; color: var(--ink-2); font-size: 0.82rem; margin: 12px 0 0; }
+.legend .key { display: inline-block; width: 14px; height: 10px; border-radius: 0 3px 3px 0;
+  background: var(--series-1); margin-right: 6px; vertical-align: -1px; }
+.legend .key.bench { width: 2px; height: 14px; background: var(--ink-2); border-radius: 1px; }
+.legend .key.threshold { width: 0; height: 14px; border-left: 2px solid var(--critical); border-radius: 0; background: none; }
+
+/* Tables ------------------------------------------------------------------ */
+.table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+caption { text-align: left; color: var(--ink-2); font-size: 0.82rem; padding: 0 0 6px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--grid); vertical-align: top; }
+th { color: var(--ink-2); font-weight: 600; font-size: 0.8rem; background: var(--surface-2); }
+tbody th[scope="row"] { color: var(--ink); font-weight: 500; font-size: 0.88rem; background: none; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+details { margin: 12px 0 0; }
+details > summary { cursor: pointer; color: var(--link); font-size: 0.88rem; }
+
+/* Lists: change-our-mind, actions, risks ---------------------------------- */
+.mind { counter-reset: mind; list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+.mind li { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px 10px 44px;
+  position: relative; background: var(--surface); }
+.mind li::before { counter-increment: mind; content: counter(mind); position: absolute; left: 12px; top: 10px;
+  width: 22px; height: 22px; border-radius: 50%; background: var(--brand); color: var(--brand-ink);
+  font-size: 0.8rem; font-weight: 700; display: grid; place-items: center; }
+.mind .what { font-weight: 600; }
+.mind .why { color: var(--ink-2); font-size: 0.88rem; display: block; }
+.risks { margin: 0; padding-left: 20px; }
+.risks li { margin: 4px 0; }
+.two-col { display: grid; gap: 20px; grid-template-columns: 1fr 1fr; }
+.quote { border-left: 3px solid var(--grid); padding-left: 10px; margin: 0; }
+.muted { color: var(--ink-2); }
+.small { font-size: 0.85rem; }
+
+.footer { color: var(--ink-2); font-size: 0.8rem; border-top: 1px solid var(--grid); padding-top: 12px; margin-top: 28px; }
+
+@media (max-width: 640px) {
+  .doc { padding: 20px 16px 48px; }
+  .masthead { flex-direction: column; }
+  .masthead h1 { font-size: 1.5rem; }
+  .two-col { grid-template-columns: 1fr; }
+  .bars, .axis-row { grid-template-columns: 1fr 56px; }
+  .bars .bl { grid-column: 1 / -1; margin-bottom: -6px; }
+  .axis-row > :first-child { display: none; }
+  .kpis { grid-template-columns: 1fr 1fr; }
+  .tile .value { font-size: 1.5rem; }
+}
+
+@media print {
+  @page { size: A4; margin: 16mm 14mm 18mm; }
+  body { background: #fff; font-size: 10.5pt; }
+  .doc { max-width: none; padding: 0; }
+  .card, .tile, .mind li { break-inside: avoid; border-color: #d0d0d0; }
+  .card > h2 { break-after: avoid; }
+  .no-print, .skip-link { display: none !important; }
+  details > summary { display: none; }
+  details > * { display: block; }
+  a { color: inherit; text-decoration: none; }
+  .verdict { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .bars .fill, .bars .bench, .chip .dot, .sdg-chip, .mind li::before {
+    -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+@media (forced-colors: active) {
+  .bars .fill { background: CanvasText; }
+  .bars .bench { background: Highlight; }
+}

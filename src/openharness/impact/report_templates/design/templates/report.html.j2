@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}"{% if theme %} data-theme="{{ theme }}"{% endif %}>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="Impact Vision">
+<title>{{ t('doc_title') }} — {{ company.name }}</title>
+<style>{{ css | safe }}{% if branding.primary_color %}
+:root { --brand: {{ branding.primary_color }}; }{% endif %}</style>
+</head>
+<body>
+<a class="skip-link" href="#main">{{ t('skip') }}</a>
+<main id="main" class="doc">
+
+<header class="masthead">
+  <div>
+    <p class="eyebrow">{{ branding.fund_name ~ ' · ' if branding.fund_name else '' }}{{ t('eyebrow') }}</p>
+    <h1>{{ company.name }}</h1>
+    <p class="meta">
+      {{ [company.sector, company.geography] | select | join(' · ') }}
+      {%- if company.sector or company.geography %} · {% endif %}{{ t('generated', date=generated) }} · {{ t('standard', version=catalog_version) }}
+      {%- if source %} · {{ t('source', source=source) }}{% endif %}
+    </p>
+    <p class="notice">{{ notice }}</p>
+  </div>
+  {% if branding.logo_url %}<img class="logo" src="{{ branding.logo_url }}" alt="{{ branding.fund_name or 'Logo' }}">{% endif %}
+</header>
+
+{% if toc | length > 3 %}
+<nav class="card no-print" aria-label="{{ t('contents') }}">
+  <p class="small muted" style="margin:0 0 6px"><strong>{{ t('contents') }}</strong></p>
+  <p class="small" style="margin:0">{% for id, label in toc %}<a href="#{{ id }}">{{ label }}</a>{% if not loop.last %} · {% endif %}{% endfor %}</p>
+</nav>
+{% endif %}
+
+{% for section in sections %}
+{% if section == 'verdict' %}
+<section id="sec-verdict" class="card verdict {{ verdict.tone }}" aria-labelledby="h-verdict">
+  <h2 id="h-verdict" class="small muted" style="margin:0 0 6px;font-size:0.82rem">{{ t('sec_verdict') }}</h2>
+  <p class="status">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="10.5" stroke-width="1.6"/>{{ verdict.icon | safe }}</svg>
+    <strong>{{ verdict.label }}</strong>
+  </p>
+  {% if verdict.recommendation %}<p style="margin:0">{{ verdict.recommendation }}</p>{% endif %}
+  {% if verdict.reasons %}
+  <ul class="why" aria-label="{{ t('why') }}">{% for r in verdict.reasons %}<li>{{ r }}</li>{% endfor %}</ul>
+  {% endif %}
+  {% if verdict.confidence %}<p class="confidence">{{ verdict.confidence }}</p>{% endif %}
+</section>
+
+{% elif section == 'kpis' %}
+<section class="kpis" aria-label="Headline numbers">
+  {% for k in kpis %}
+  <div class="tile">
+    <p class="label">{{ k.label }}</p>
+    <p class="value">{{ k.value }}{% if k.unit %}<small>{{ k.unit }}</small>{% endif %}</p>
+    <p class="sub">{{ k.sub }}</p>
+  </div>
+  {% endfor %}
+</section>
+
+{% elif section == 'mind' %}
+<section id="sec-mind" class="card" aria-labelledby="h-mind">
+  <h2 id="h-mind">{{ t('sec_mind') }}</h2>
+  <p class="lede">{{ t('lede_mind') }}</p>
+  <ol class="mind">{% for m in mind %}<li><span class="what">{{ m.what }}</span><span class="why">{{ m.why }}</span></li>{% endfor %}</ol>
+</section>
+
+{% elif section == 'five_d' %}
+<section id="sec-5d" class="card" aria-labelledby="h-5d">
+  <h2 id="h-5d">{{ t('sec_5d') }}</h2>
+  <p class="lede">{{ t('lede_5d') }} <span class="chip {{ five_d.provenance }}"><span class="dot"></span>{{ t(five_d.provenance) }}</span></p>
+  <div class="bars" role="img" aria-label="{{ t('sec_5d') }}: {% for r in five_d.rows %}{{ r.label }} {{ '%.1f' % r.score }}{% if not loop.last %}, {% endif %}{% endfor %}">
+    {% for r in five_d.rows %}
+    <div class="bl">{{ r.label }}{% if r.sentence %}<span class="note">{{ r.sentence }}</span>{% endif %}</div>
+    <div class="track" title="{{ r.label }}: {{ '%.1f' % r.score }}/5{% if r.benchmark is not none %} · benchmark {{ '%.1f' % r.benchmark }}{% endif %}">
+      <div class="fill" style="width:{{ r.score | pct }}%"></div>
+      {% if r.benchmark is not none %}<div class="bench" style="left:calc({{ r.benchmark | pct }}% - 1px)"></div>{% endif %}
+    </div>
+    <div class="bv">{{ '%.1f' % r.score }}</div>
+    {% endfor %}
+  </div>
+  <div class="axis-row" aria-hidden="true"><span></span><span class="ticks">{% for v in range(6) %}<span style="left:{{ v * 20 }}%">{{ v }}</span>{% endfor %}</span><span></span></div>
+  {% if five_d.has_benchmark %}
+  <p class="legend"><span><span class="key"></span>{{ t('legend_score') }}</span><span><span class="key bench"></span>{{ t('legend_bench') }}{% if five_d.benchmark_note %} — {{ five_d.benchmark_note }}{% endif %}</span></p>
+  {% endif %}
+  <details><summary>{{ t('table_view') }}</summary>
+    <div class="table-wrap"><table>
+      <caption>{{ t('sec_5d') }}</caption>
+      <thead><tr><th scope="col">{{ t('col_dimension') }}</th><th scope="col" class="num">{{ t('col_score') }}</th><th scope="col" class="num">{{ t('col_benchmark') }}</th><th scope="col">{{ t('col_evidence') }}</th><th scope="col">{{ t('col_notes') }}</th></tr></thead>
+      <tbody>{% for r in five_d.rows %}<tr><th scope="row">{{ r.label }}</th><td class="num">{{ '%.1f' % r.score }}</td><td class="num">{{ '%.1f' % r.benchmark if r.benchmark is not none else '—' }}</td><td>{{ t(r.provenance) }}</td><td>{{ r.sentence }}</td></tr>{% endfor %}</tbody>
+    </table></div>
+  </details>
+</section>
+
+{% elif section == 'sdg' %}
+<section id="sec-sdg" class="card" aria-labelledby="h-sdg">
+  <h2 id="h-sdg">{{ t('sec_sdg') }}</h2>
+  <p class="lede">{{ t('lede_sdg') }}</p>
+  {% if sdg.material %}
+  <div class="bars" role="img" aria-label="{{ t('sec_sdg') }}: {% for g in sdg.material %}SDG {{ g.goal }} {{ '%.0f' % g.score }}{% if not loop.last %}, {% endif %}{% endfor %}">
+    {% for g in sdg.material %}
+    <div class="bl"><span class="sdg-chip" style="background:{{ g.color }}" aria-hidden="true"></span>SDG {{ g.goal }} · {{ g.name }}<span class="note">{{ g.confidence }} confidence</span></div>
+    <div class="track" title="SDG {{ g.goal }}: {{ '%.0f' % g.score }}/100"><div class="fill" style="width:{{ g.score | pct(100) }}%"></div></div>
+    <div class="bv">{{ '%.0f' % g.score }}</div>
+    {% endfor %}
+  </div>
+  <div class="axis-row" aria-hidden="true"><span></span><span class="ticks">{% for v in range(0, 101, 20) %}<span style="left:{{ v }}%">{{ v }}</span>{% endfor %}</span><span></span></div>
+  {% else %}
+  <p class="muted">{{ t('sdg_none') }}</p>
+  {% endif %}
+  {% if sdg.other %}<p class="small muted" style="margin:12px 0 0">{{ t('sdg_other', goals=sdg.other | join(', ')) }}</p>{% endif %}
+  {% if sdg.material %}
+  <details><summary>{{ t('table_view') }}</summary>
+    <div class="table-wrap"><table>
+      <caption>{{ t('sec_sdg') }}</caption>
+      <thead><tr><th scope="col">{{ t('col_goal') }}</th><th scope="col" class="num">{{ t('col_score') }}</th><th scope="col">{{ t('col_confidence') }}</th><th scope="col">{{ t('col_metrics') }}</th></tr></thead>
+      <tbody>{% for g in sdg.material %}<tr><th scope="row">SDG {{ g.goal }} · {{ g.name }}</th><td class="num">{{ '%.0f' % g.score }}</td><td>{{ g.confidence }}</td><td>{{ g.metrics | join(', ') or '—' }}</td></tr>{% endfor %}</tbody>
+    </table></div>
+  </details>
+  {% endif %}
+</section>
+
+{% elif section == 'evidence' %}
+<section id="sec-evidence" class="card" aria-labelledby="h-evidence">
+  <h2 id="h-evidence">{{ t('sec_evidence') }}</h2>
+  <p class="lede">{{ t('lede_evidence') }}</p>
+  {% if evidence.claims %}
+  <div class="table-wrap"><table>
+    <caption>{{ t('claims_caption', n=evidence.claims | length) }}</caption>
+    <thead><tr><th scope="col">{{ t('col_claim') }}</th><th scope="col">{{ t('col_type') }}</th><th scope="col" class="num">{{ t('col_level') }}</th><th scope="col">{{ t('col_signals') }}</th><th scope="col">{{ t('col_metric') }}</th></tr></thead>
+    <tbody>{% for c in evidence.claims %}<tr><td>{{ c.text }}</td><td>{{ c.category }}</td><td class="num">{{ c.level }}</td><td>{{ c.signals | join(', ') or '—' }}</td><td>{{ c.metrics | join(', ') or '—' }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% else %}<p class="muted">{{ t('no_claims') }}</p>{% endif %}
+  {% if evidence.metrics %}
+  <div class="table-wrap" style="margin-top:16px"><table>
+    <caption>{{ t('metrics_caption', n=evidence.metrics | length) }}</caption>
+    <thead><tr><th scope="col">{{ t('col_metric') }}</th><th scope="col">{{ t('col_value') }}</th><th scope="col">{{ t('col_origin') }}</th></tr></thead>
+    <tbody>{% for m in evidence.metrics %}<tr><th scope="row">{{ m.id }}{% if m.name %} · {{ m.name }}{% endif %}</th><td>{{ m.value }}</td><td>{{ m.origin }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% endif %}
+</section>
+
+{% elif section == 'greenwashing' %}
+<section id="sec-greenwashing" class="card" aria-labelledby="h-gw">
+  <h2 id="h-gw">{{ t('sec_gw') }} — {{ '%.0f' % greenwashing.score }}/100 · {{ greenwashing.classification }}</h2>
+  <p class="lede">{{ t('lede_gw') }}</p>
+  <div class="bars" role="img" aria-label="{{ t('sec_gw') }}: {% for c in greenwashing.components %}{{ c.label }} {{ '%.0f' % c.value }}{% if not loop.last %}, {% endif %}{% endfor %}">
+    {% for c in greenwashing.components %}
+    <div class="bl">{{ c.label }}</div>
+    <div class="track" title="{{ c.label }}: {{ '%.0f' % c.value }}/100"><div class="fill" style="width:{{ c.value | pct(100) }}%"></div><div class="threshold" style="left:60%"></div></div>
+    <div class="bv">{{ '%.0f' % c.value }}</div>
+    {% endfor %}
+  </div>
+  <div class="axis-row" aria-hidden="true"><span></span><span class="ticks">{% for v in range(0, 101, 20) %}<span style="left:{{ v }}%">{{ v }}</span>{% endfor %}</span><span></span></div>
+  <p class="legend"><span><span class="key"></span>{{ t('legend_component') }}</span><span><span class="key threshold"></span>{{ t('legend_threshold') }}</span></p>
+  {% if greenwashing.flags %}<p class="small" style="margin:12px 0 0"><strong>{{ t('flags') }}:</strong> {{ greenwashing.flags | join('; ') }}</p>{% endif %}
+</section>
+
+{% elif section == 'risks' %}
+<section id="sec-risks" class="card" aria-labelledby="h-risks">
+  <h2 id="h-risks">{{ t('sec_risks') }}</h2>
+  <div class="two-col">
+    <div>
+      {% if risks.disclosed %}<h3 class="small">{{ t('risks_disclosed') }}</h3>
+      <ul class="risks">{% for r in risks.disclosed %}<li>{{ r }}</li>{% endfor %}</ul>{% endif %}
+      {% if risks.sector %}<h3 class="small">{{ t('risks_sector') }}</h3>
+      <ul class="risks">{% for r in risks.sector %}<li>{{ r }}</li>{% endfor %}</ul>{% endif %}
+    </div>
+    <div>
+      {% if risks.opportunities %}<h3 class="small">{{ t('opportunities') }}</h3>
+      <ul class="risks">{% for o in risks.opportunities %}<li>{{ o }}</li>{% endfor %}</ul>{% endif %}
+    </div>
+  </div>
+</section>
+
+{% elif section == 'actions' %}
+<section id="sec-actions" class="card" aria-labelledby="h-actions">
+  <h2 id="h-actions">{{ t('sec_actions') }}</h2>
+  <p class="lede">{{ t('lede_actions') }}</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th scope="col" class="num">#</th><th scope="col">{{ t('sec_actions') }}</th><th scope="col">Area</th></tr></thead>
+    <tbody>{% for a in actions %}<tr><td class="num">{{ loop.index }}</td><td>{{ a.text }}</td><td>{{ a.area }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+</section>
+
+{% elif section == 'targets' %}
+<section id="sec-targets" class="card" aria-labelledby="h-targets">
+  <h2 id="h-targets">{{ t('sec_targets') }}</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th scope="col">{{ t('col_metric') }}</th><th scope="col">{{ t('col_target') }}</th><th scope="col">{{ t('col_current') }}</th><th scope="col" class="num">%</th><th scope="col">{{ t('col_status') }}</th></tr></thead>
+    <tbody>{% for x in targets %}<tr><th scope="row">{{ x.metric_id }}</th><td>{{ x.target_description or x.target or '—' }}</td><td>{{ x.current_value if x.current_value is not none else '—' }}</td><td class="num">{{ '%.0f' % x.progress_pct if x.progress_pct else '—' }}</td><td>{{ (x.status or '') | replace('_', ' ') }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+</section>
+
+{% elif section == 'feedback' %}
+<section id="sec-feedback" class="card" aria-labelledby="h-feedback">
+  <h2 id="h-feedback">{{ t('sec_feedback') }}</h2>
+  <div class="kpis" style="margin:0">
+    {% if feedback.satisfaction_score is not none %}<div class="tile"><p class="label">Satisfaction</p><p class="value">{{ feedback.satisfaction_score }}<small>/5</small></p></div>{% endif %}
+    {% if feedback.nps is not none %}<div class="tile"><p class="label">Net Promoter Score</p><p class="value">{{ feedback.nps }}</p></div>{% endif %}
+    {% if feedback.sample_size %}<div class="tile"><p class="label">Respondents</p><p class="value">{{ feedback.sample_size | num }}</p></div>{% endif %}
+  </div>
+  {% if feedback.methodology %}<p class="small muted" style="margin:10px 0 0">{{ feedback.methodology }}{% if feedback.survey_date %} · {{ feedback.survey_date }}{% endif %}</p>{% endif %}
+  {% for q in (feedback.quotes or [])[:3] %}<blockquote class="quote small">{{ q }}</blockquote>{% endfor %}
+</section>
+
+{% elif section == 'appendix' %}
+<section id="sec-appendix" class="card" aria-labelledby="h-appendix">
+  <h2 id="h-appendix">{{ t('sec_appendix') }}</h2>
+  <h3 class="small">{{ t('method_title') }}</h3>
+  <ul class="small">{% for m in methodology %}<li>{{ m }}</li>{% endfor %}</ul>
+  {{ glossary_html }}
+</section>
+{% endif %}
+{% endfor %}
+
+<footer class="footer">
+  {% if branding.footer_text %}<p style="margin:0 0 4px">{{ branding.footer_text }}</p>{% endif %}
+  {% if not branding.hide_attribution %}<p style="margin:0">{{ t('generated_by') }}</p>{% endif %}
+</footer>
+</main>
+<script>
+/* Print every collapsed table view and definition list. */
+window.addEventListener("beforeprint", function () {
+  document.querySelectorAll("details").forEach(function (d) { d.dataset.wasOpen = d.open ? "1" : ""; d.open = true; });
+});
+window.addEventListener("afterprint", function () {
+  document.querySelectorAll("details").forEach(function (d) { d.open = d.dataset.wasOpen === "1"; });
+});
+</script>
+</body>
+</html>

@@ -164,7 +164,7 @@ def _disclosed_risks(text: str, limit: int = 5) -> list[str]:
     out: list[str] = []
     for sentence in RegexExtractor._sentences(text or ""):
         if _DISCLOSED_RISK_RE.search(sentence) and len(sentence) > 30:
-            out.append(sentence if len(sentence) <= 320 else sentence[:317].rstrip() + "\u2026")
+            out.append(sentence if len(sentence) <= 600 else sentence[:597].rstrip() + "\u2026")
         if len(out) >= limit:
             break
     return out
@@ -308,6 +308,13 @@ class ImpactReportInput(BaseModel):
         description=(
             "Optional white-label branding for HTML output: {fund_name, primary_color, "
             "accent_color, logo_url, footer_text}. Colors must be hex."
+        ),
+    )
+    style: Literal["decision", "classic"] = Field(
+        default="decision",
+        description=(
+            "HTML layout. 'decision' (default): verdict-first report with offline charts, "
+            "print-ready, light/dark. 'classic': the pre-v7 interactive report (deprecated)."
         ),
     )
     audience: Literal["full", "lp", "ic", "regulator", "public"] = Field(
@@ -509,6 +516,12 @@ class ImpactReportTool(BaseTool):
             output = json.dumps(report_data, indent=2, default=str)
         elif args.output_format == "csv":
             output = _to_csv(report_data)
+        elif args.output_format in ("html", "pdf") and args.style == "decision":
+            from openharness.impact.report_templates.decision_report import (
+                render_decision_report,
+            )
+
+            output = render_decision_report(report_data, branding=args.branding or None)
         elif args.output_format in ("html", "pdf"):
             output = _to_html(report_data)
             if args.branding:

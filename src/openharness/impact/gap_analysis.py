@@ -273,9 +273,9 @@ def analyze_gaps(
 def _generate_recommendations(missing: list[dict], coverage_pct: float) -> list[str]:
     recs: list[str] = []
     if coverage_pct < 30:
+        first = ", ".join(m["name"] for m in missing[:3]) or "the sector's core metrics"
         recs.append(
-            "Critical: Coverage is below 30%. Start by reporting the most fundamental "
-            "metrics: Revenue, Total Clients, Total Employees."
+            f"Coverage is below 30% of the core metric set. Start with: {first}."
         )
     elif coverage_pct < 60:
         recs.append(

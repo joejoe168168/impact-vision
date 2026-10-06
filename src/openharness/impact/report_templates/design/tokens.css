@@ -1,0 +1,96 @@
+/* Impact Vision design tokens (v7 W2.1) — one source for every deliverable.
+ *
+ * Chart colours follow the validated data-viz palette (series-1 blue, series-2
+ * orange; status good/warning/serious/critical). Light and dark are each
+ * validated against their own surface; dark is selected, not inverted.
+ * White-label overrides only --brand / --brand-ink (never the data colours).
+ */
+:root {
+  color-scheme: light;
+  --page: #f9f9f7;
+  --surface: #fcfcfb;
+  --surface-2: #f3f2ee;
+  --ink: #0b0b0b;
+  --ink-2: #52514e;
+  --muted: #6e6c66;
+  --grid: #e1e0d9;
+  --axis: #c3c2b7;
+  --border: rgba(11, 11, 11, 0.10);
+  --brand: #1c5cab;
+  --brand-ink: #ffffff;
+  --link: #1c5cab;
+  --series-1: #2a78d6;
+  --series-1-wash: rgba(42, 120, 214, 0.10);
+  --series-2: #eb6834;
+  --good: #0ca30c;
+  --good-ink: #006300;
+  --warning: #fab219;
+  --warning-ink: #7a5300;
+  --serious: #ec835a;
+  --serious-ink: #8f3b14;
+  --critical: #d03b3b;
+  --critical-ink: #a32424;
+  --good-wash: rgba(12, 163, 12, 0.10);
+  --warning-wash: rgba(250, 178, 25, 0.16);
+  --serious-wash: rgba(236, 131, 90, 0.14);
+  --critical-wash: rgba(208, 59, 59, 0.10);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --font: system-ui, -apple-system, "Segoe UI", "Noto Sans", "Noto Sans TC", "Noto Sans SC",
+    "PingFang TC", "PingFang SC", "Microsoft JhengHei", "Microsoft YaHei", sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --page: #0d0d0d;
+    --surface: #1a1a19;
+    --surface-2: #232321;
+    --ink: #ffffff;
+    --ink-2: #c3c2b7;
+    --muted: #a19f97;
+    --grid: #2c2c2a;
+    --axis: #383835;
+    --border: rgba(255, 255, 255, 0.10);
+    --brand: #86b6ef;
+    --brand-ink: #0b0b0b;
+    --link: #86b6ef;
+    --series-1: #3987e5;
+    --series-1-wash: rgba(57, 135, 229, 0.16);
+    --series-2: #d95926;
+    --good-ink: #3ec93e;
+    --warning-ink: #fab219;
+    --serious-ink: #ec835a;
+    --critical-ink: #f28b82;
+    --good-wash: rgba(12, 163, 12, 0.16);
+    --warning-wash: rgba(250, 178, 25, 0.14);
+    --serious-wash: rgba(236, 131, 90, 0.14);
+    --critical-wash: rgba(208, 59, 59, 0.18);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0d0d0d;
+  --surface: #1a1a19;
+  --surface-2: #232321;
+  --ink: #ffffff;
+  --ink-2: #c3c2b7;
+  --muted: #a19f97;
+  --grid: #2c2c2a;
+  --axis: #383835;
+  --border: rgba(255, 255, 255, 0.10);
+  --brand: #86b6ef;
+  --brand-ink: #0b0b0b;
+  --link: #86b6ef;
+  --series-1: #3987e5;
+  --series-1-wash: rgba(57, 135, 229, 0.16);
+  --series-2: #d95926;
+  --good-ink: #3ec93e;
+  --warning-ink: #fab219;
+  --serious-ink: #ec835a;
+  --critical-ink: #f28b82;
+  --good-wash: rgba(12, 163, 12, 0.16);
+  --warning-wash: rgba(250, 178, 25, 0.14);
+  --serious-wash: rgba(236, 131, 90, 0.14);
+  --critical-wash: rgba(208, 59, 59, 0.18);
+}

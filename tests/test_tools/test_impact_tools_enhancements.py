@@ -1216,6 +1216,7 @@ class TestImpactReportESGIntegration:
                     geography="EU",
                     reported_metrics={"OI4112": "1200 tCO2e"},
                     output_format="html",
+                    style="classic",  # ESG toolbox cards are classic-only
                 ),
                 ToolExecutionContext(cwd=Path(".")),
             )
