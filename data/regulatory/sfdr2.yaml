@@ -1,0 +1,52 @@
+# SFDR 2.0 (recast) facts shared by both classifiers (v7 follow-up):
+#   * frameworks/sfdr_pai.classify_sfdr2_category  — signal-based category preview
+#   * frameworks/sfdr_recast.classify_sfdr_v2      — holdings-based eligibility check
+# Proposed law, not in force. Category article numbers are the same in all
+# three texts (Art 7 Transition, Art 8 ESG Basics, Art 9 Sustainable).
+schema_version: 1
+as_of: "2026-10-06"
+last_verified: "2026-10-06"
+source: Commission proposal 2025-11-20; Council general approach 2026-06-24; EP ECON mandate 2026-09-10
+source_url: https://www.debevoise.com/insights/publications/2026/09/sfdr-20-recap-briefing
+status_note: >-
+  SFDR 2.0 is PROPOSED LAW, not in force (Council general approach 2026-06-24;
+  European Parliament ECON mandate 2026-09-10, plenary October 2026; trilogue
+  from Q4 2026; application expected ~2029 after a 24-month implementation
+  period). Classify against Article 6/8/9 for current compliance.
+threshold: 0.70
+positions:
+  commission: Commission proposal (2025-11-20)
+  council: Council general approach (2026-06-24)
+  parliament: European Parliament ECON mandate (2026-09-10)
+exclusions:
+  # id: description (benchmark basis: Delegated Regulation (EU) 2020/1818 Art 12)
+  controversial_weapons: Involvement in controversial weapons (CTB/PAB Art 12(1)(a))
+  tobacco: Cultivation and production of tobacco (CTB/PAB Art 12(1)(b))
+  ungc_violations: Violations of UNGC principles or OECD Guidelines (CTB/PAB Art 12(1)(c))
+  coal_1pct: ">= 1% revenue from hard coal and lignite (PAB Art 12(1)(d))"
+  oil_10pct: ">= 10% revenue from oil fuels (PAB Art 12(1)(e))"
+  gas_50pct: ">= 50% revenue from gaseous fuels (PAB Art 12(1)(f))"
+  high_carbon_power_50pct: ">= 50% revenue from power generation above 100 gCO2e/kWh (PAB Art 12(1)(g))"
+  fossil_fuel_expansion: New projects for coal, oil or gas exploration, extraction, distribution or refining
+  coal_no_phase_out: Coal or lignite power generation without a phase-out plan
+categories:
+  sustainable:
+    article: 9
+    label: Sustainable
+    benchmark_exclusions: PAB
+    exclusions: [controversial_weapons, tobacco, ungc_violations, coal_1pct, oil_10pct, gas_50pct,
+                 high_carbon_power_50pct, fossil_fuel_expansion]
+  transition:
+    article: 7
+    label: Transition
+    benchmark_exclusions: CTB
+    exclusions: [controversial_weapons, tobacco, ungc_violations, fossil_fuel_expansion, coal_no_phase_out]
+  esg_basics:
+    article: 8
+    label: ESG Basics
+    benchmark_exclusions: CTB
+    exclusions: [controversial_weapons, tobacco, ungc_violations]
+# Legacy holding flags accepted by the holdings checker.
+flag_aliases:
+  fossil_fuel: [coal_1pct, oil_10pct, gas_50pct, fossil_fuel_expansion]
+  weapons: [controversial_weapons]

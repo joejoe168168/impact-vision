@@ -82,6 +82,8 @@ KNOWLEDGE_FILES: dict[str, tuple[str, Callable[[dict], Iterable[dict]], str]] = 
     "concordance": ("concordance.yaml", _rows("entries"), "concept_id"),
     "esrs_revised": ("esrs_simplified_2026.yaml", _rows("datapoints"), "datapoint_id"),
     "hk_taxonomy": ("hk_taxonomy.yaml", _rows("activities"), "activity_id"),
+    "sfdr2": ("regulatory/sfdr2.yaml", lambda p: [{"category": k, **v} for k, v in (p.get("categories") or {}).items()],
+              "category"),
 }
 
 

@@ -500,19 +500,16 @@ def classify_sfdr_article(
 # not expected before ~2029. Until then Article 6/8/9 remains the law.
 # ---------------------------------------------------------------------------
 
-SFDR2_STATUS_NOTE = (
-    "SFDR 2.0 is PROPOSED LAW, not in force (Council general approach "
-    "2026-06-24; European Parliament ECON mandate 2026-09-10, plenary "
-    "October 2026; trilogue from Q4 2026; application expected ~2029 after a "
-    "24-month implementation period). Classify against Article 6/8/9 for "
-    "current compliance; use this preview to plan label migration."
-)
+def _sfdr2_facts() -> dict:
+    """Shared with frameworks.sfdr_recast via data/regulatory/sfdr2.yaml."""
+    from openharness.impact.knowledge import load_knowledge
 
-SFDR2_POSITIONS: dict[str, str] = {
-    "commission": "Commission proposal (2025-11-20)",
-    "council": "Council general approach (2026-06-24)",
-    "parliament": "European Parliament ECON mandate (2026-09-10)",
-}
+    return load_knowledge("regulatory/sfdr2.yaml")
+
+
+SFDR2_STATUS_NOTE = _sfdr2_facts()["status_note"] + " Use this preview to plan label migration."
+
+SFDR2_POSITIONS: dict[str, str] = dict(_sfdr2_facts()["positions"])
 
 _IMPACT_LANGUAGE = re.compile(
     r"\b(impact fund|impact investing|impact investment|impact strategy|positive impact|"
@@ -540,7 +537,7 @@ SFDR2_CATEGORY_DESCRIPTIONS: dict[str, str] = {
     ),
 }
 
-_SFDR2_THRESHOLD_PCT = 70.0
+_SFDR2_THRESHOLD_PCT = float(_sfdr2_facts()["threshold"]) * 100
 
 
 class SFDR2Input(BaseModel):
@@ -714,10 +711,16 @@ def classify_sfdr2_category(input: SFDR2Input) -> SFDR2Classification:  # noqa: 
         exclusion_flags.append("Tobacco production exposure — excluded in every SFDR 2.0 category.")
     if input.has_ungc_oecd_violators:
         exclusion_flags.append("UNGC / OECD Guidelines violators in portfolio — excluded in every SFDR 2.0 category.")
-    if input.coal_revenue_pct_max is not None and input.coal_revenue_pct_max > 0 and category in ("sustainable", "transition"):
+    coal = input.coal_revenue_pct_max
+    if coal is not None and coal >= 1 and category == "sustainable":
         exclusion_flags.append(
-            f"Coal revenue exposure up to {input.coal_revenue_pct_max:.0f}% — check the "
-            "category-specific coal-revenue threshold in the final text."
+            f"Coal revenue up to {coal:g}% — Sustainable applies the Paris-aligned benchmark "
+            "exclusions (>= 1% hard coal / lignite revenue is excluded)."
+        )
+    elif coal is not None and coal > 0 and category == "transition":
+        caveats.append(
+            f"Coal revenue up to {coal:g}%: Transition excludes coal power without a phase-out "
+            "plan and any new coal, oil or gas projects. Confirm phase-out plans."
         )
     if exclusion_flags and category != "unclassified":
         rationale.append("Mandatory-exclusion breaches would disqualify the category claim until resolved.")

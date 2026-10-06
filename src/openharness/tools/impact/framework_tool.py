@@ -83,7 +83,7 @@ class FrameworkTool(BaseTool):
         "- **GRI**: Browse Universal + Topic Standards (200/300/400 series), match to relevant topics\n"
         "- **TCFD / IFRS S2**: Assess climate disclosure across 4 pillars (Governance, Strategy, Risk, Metrics)\n"
         "- **SFDR PAI**: Check coverage of 14 mandatory EU Principal Adverse Impact indicators\n"
-        "- **sfdr2**: SFDR 2.0 category preview (Sustainable / Transition / ESG collection; "
+        "- **sfdr2**: SFDR 2.0 category preview (Sustainable / Transition / ESG Basics; "
         "70% threshold + exclusion screen + Art 8/9 migration map; PROPOSED LAW, ~2029)\n"
         "- **EDCI**: Assess 2026 private-markets KPI fields, including non-core fields\n"
         "- **UNPRI**: Self-assess alignment with the 6 Principles for Responsible Investment\n"
@@ -1251,7 +1251,7 @@ class FrameworkTool(BaseTool):
             "  gri       - GRI Universal + Topic Standards (30+ standards, 120+ disclosures)",
             "  tcfd      - TCFD / IFRS S2 Climate Disclosure (4 pillars, 11 disclosures)",
             "  sfdr_pai  - SFDR PAI Indicators (14 mandatory EU indicators)",
-            "  sfdr2     - SFDR 2.0 category preview (Sustainable/Transition/ESG collection; proposed law)",
+            "  sfdr2     - SFDR 2.0 category preview (Sustainable/Transition/ESG Basics; proposed law)",
             "  edci      - EDCI 2026 private-markets KPI fields, including non-core fields",
             "  unpri     - UN PRI Self-Assessment (6 principles, 27 actions)",
             "  toc       - Theory of Change (RS Group Blended Value + GIIN ToC Checklist)",
