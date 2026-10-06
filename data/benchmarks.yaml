@@ -777,7 +777,7 @@ sample_observations:
   data_status: illustrative
   source: Consultant sample dataset (illustrative)
   rows:
-  - metric_id: OI4112
+  - metric_id: PI4060
     sector: financial services
     values:
     - 1200.0
@@ -785,21 +785,21 @@ sample_observations:
     - 3400.0
     - 900.0
     - 1800.0
-  - metric_id: OI4112
+  - metric_id: PI4060
     sector: energy
     values:
     - 8500.0
     - 12000.0
     - 5500.0
     - 3400.0
-  - metric_id: PD5833
+  - metric_id: OI1479
     sector: financial services
     values:
     - 450.0
     - 600.0
     - 720.0
     - 910.0
-  - metric_id: PD5833
+  - metric_id: OI1479
     sector: energy
     values:
     - 12000.0

@@ -33,3 +33,18 @@ def test_default_field_metric_exists_and_label_matches_catalogue(metric_id: str,
     assert metric is not None, f"{metric_id} ({label!r}) is not in the IRIS+ catalogue"
     shared = _keywords(label) & _keywords(metric.name)
     assert shared, f"{metric_id} label {label!r} shares no keyword with catalogue name {metric.name!r}"
+
+
+def test_illustrative_benchmark_ids_exist_and_match_their_data() -> None:
+    """Sample observations / website teaser must use real IDs for what their numbers measure."""
+    from openharness.impact.engagements.website import build_benchmark_teaser
+    from openharness.impact.knowledge import load_knowledge
+
+    store = get_metric_store()
+    rows = [(r["metric_id"], r["sector"]) for r in load_knowledge("benchmarks.yaml")["sample_observations"]["rows"]]
+    rows += [(r.metric_id, r.sector) for r in build_benchmark_teaser().rows]
+    for metric_id, _sector in rows:
+        assert store.get(metric_id) is not None, metric_id
+    ids = {metric_id for metric_id, _ in rows}
+    assert "OI4112" not in ids and "PD5833" not in ids  # Scope 1 / affordable housing were mislabels
+    assert store.get("OI1479").name.startswith("Greenhouse Gas Emissions")

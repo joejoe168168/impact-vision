@@ -62,6 +62,6 @@ def test_one_benchmark_provider_answers_every_question() -> None:
     assert provider.kpi("energy", "ghg_avoided_tco2e") is not None
     assert provider.survey()["survey_year"] == 2023
     giin = provider.fetch(BenchmarkQuery(metric_id="ghg_avoided_tco2e", sector="energy"))
-    sample = provider.fetch(BenchmarkQuery(metric_id="OI4112", sector="energy"))
+    sample = provider.fetch(BenchmarkQuery(metric_id="PI4060", sector="energy"))
     assert giin.sample_size and sample.sample_size and giin.provider == sample.provider == "impact_vision"
     assert provider.provenance("kpi")["data_status"] == "illustrative"

@@ -331,9 +331,10 @@ class BenchmarkTeaser(BaseModel):
 def build_benchmark_teaser() -> BenchmarkTeaser:
     """Hard-coded teaser dataset used on the public site (Track 7.3)."""
     sample = [
-        ("OI4112", "financial services", 1800.0, 1200.0, 3400.0, 5),
-        ("PD5833", "financial services", 660.0, 450.0, 910.0, 4),
-        ("PD5833", "energy", 21000.0, 12000.0, 32000.0, 4),
+        # PI4060 Client Individuals: Total; OI1479 GHG Emissions: Total (tCO2e).
+        ("PI4060", "financial services", 1800.0, 1200.0, 3400.0, 5),
+        ("OI1479", "financial services", 660.0, 450.0, 910.0, 4),
+        ("OI1479", "energy", 21000.0, 12000.0, 32000.0, 4),
         ("OI6213", "financial services", 37.5, 25.0, 60.0, 4),
     ]
     return BenchmarkTeaser(

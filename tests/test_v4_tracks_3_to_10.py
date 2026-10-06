@@ -238,7 +238,7 @@ def test_completeness_does_not_count_empty_values_as_covered() -> None:
 def test_benchmark_provider_returns_aggregates() -> None:
     provider = get_default_benchmark_provider()
     result = provider.fetch(
-        BenchmarkQuery(metric_id="OI4112", sector="financial services")
+        BenchmarkQuery(metric_id="PI4060", sector="financial services")
     )
     assert result.sample_size > 0
     assert result.median_value is not None
@@ -249,8 +249,8 @@ def test_peer_dashboard_handles_multiple_queries() -> None:
     dashboard = build_peer_dashboard(
         provider,
         [
-            BenchmarkQuery(metric_id="OI4112", sector="financial services"),
-            BenchmarkQuery(metric_id="PD5833", sector="energy"),
+            BenchmarkQuery(metric_id="PI4060", sector="financial services"),
+            BenchmarkQuery(metric_id="OI1479", sector="energy"),
         ],
         engagement_id="eng-42",
     )
