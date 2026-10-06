@@ -300,8 +300,8 @@ def assess_and_assemble(profile: dict[str, Any]) -> dict[str, Any]:
 
     # --- DD + greenwashing so we can feed them into the IC memo
     print("[demo] running DD coverage + greenwashing screen …", flush=True)
-    dd = iv.run_dd_coverage(pitch)
-    gw = iv.screen_greenwashing(assess.company)
+    dd = iv.run_dd_coverage(pitch, sector=comp.sector)
+    gw = iv.screen_greenwashing(assess)  # extracted claims count as evidence
 
     # --- IC gate using default or repo-provided thesis
     print("[demo] running IC gate …", flush=True)
@@ -359,7 +359,8 @@ def assess_and_assemble(profile: dict[str, Any]) -> dict[str, Any]:
         "sdg_alignment": sdg_dicts,  # executive-summary uses the singular key
         "gap_analysis": gap_result,
         "greenwashing": gw_dump,
-        "impact_analysis": _infer_opportunities_and_risks(assess.company),
+        "impact_analysis": _infer_opportunities_and_risks(assess.company, pitch),
+        "impact_claims": [c.model_dump() for c in assess.impact_claims],
     }
     if report_data["five_dimensions"] and assess.company.sector:
         fd = report_data["five_dimensions"]

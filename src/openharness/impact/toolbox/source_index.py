@@ -5,12 +5,12 @@ from __future__ import annotations
 import json
 import re
 from functools import lru_cache
-from pathlib import Path
 
 from openharness.impact.toolbox.models import ToolboxSourceIndexRecord, ToolboxSourceProfile
+from openharness.impact._paths import data_path
 
 
-SOURCE_PROFILE_DIR = Path(__file__).resolve().parents[4] / "data" / "raw" / "ohesg_toolbox"
+SOURCE_PROFILE_DIR = data_path("raw", "ohesg_toolbox")
 
 
 @lru_cache(maxsize=1)

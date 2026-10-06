@@ -4,7 +4,6 @@ from __future__ import annotations
 import io
 import json
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import Literal
 import yaml
 from openpyxl import Workbook
@@ -14,6 +13,7 @@ from openharness.impact.models import MetricRecord
 from openharness.impact.portfolio_nlq import ApprovedDataPolicy
 from openharness.impact.evidence_workflow import ExtractionReviewPolicy, ReviewQueue
 from openharness.impact.roadmap_v2 import AIExtractionReview
+from openharness.impact._paths import data_path
 
 
 class DDQQuestion(BaseModel):
@@ -27,7 +27,7 @@ class DDQQuestion(BaseModel):
 
 
 def load_ddq_bank() -> list[DDQQuestion]:
-    path = Path(__file__).resolve().parents[3] / "data/ddq_bank.yaml"
+    path = data_path("ddq_bank.yaml")
     payload = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     raw_questions = payload.get("questions") or []
     if raw_questions:

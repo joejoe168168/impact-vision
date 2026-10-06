@@ -9,7 +9,7 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 from openharness.impact.database import ensure_catalog_loaded
-from openharness.impact.gap_analysis import CORE_METRIC_SET_IDS
+from openharness.impact.gap_analysis import core_set_for_sector
 from openharness.impact.toolbox import build_esg_workflow
 from openharness.tools.impact.common import normalize_sdg_goals, normalize_str_list
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
@@ -68,7 +68,8 @@ class MetricRecommenderTool(BaseTool):
         metric_map = {}
 
         if args.include_core_set:
-            for metric_id in CORE_METRIC_SET_IDS:
+            core_ids, _basis = core_set_for_sector(args.sector)
+            for metric_id in sorted(core_ids):
                 metric = store.get(metric_id)
                 if metric is None:
                     continue

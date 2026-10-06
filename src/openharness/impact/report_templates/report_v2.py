@@ -13,6 +13,8 @@ dialog. CSS variables mirror the design tokens in the design system.
 """
 from __future__ import annotations
 
+import html
+
 from typing import Any, Iterable
 
 
@@ -474,7 +476,7 @@ def wrap_document(
         '<html lang="en"><head>'
         '<meta charset="UTF-8">'
         '<meta name="viewport" content="width=device-width, initial-scale=1.0">'
-        f'<title>{title}</title>'
+        f'<title>{html.escape(title, quote=False)}</title>'
         f'{plotly}'
         f'<style>{REPORT_CSS_V2}</style>'
         f'{extra_head}'

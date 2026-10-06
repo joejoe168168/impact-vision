@@ -48,6 +48,14 @@ class DdChecklistInput(BaseModel):
         le=50,
         description="Max questions to return (for 'suggest')",
     )
+    sector: str = Field(
+        default="auto",
+        description=(
+            "Company sector (e.g. 'agriculture', 'Financial Services'). Limits the "
+            "sector-specific questions to that sector; 'auto' infers it from the "
+            "document, 'all' keeps every sector's questions."
+        ),
+    )
     priority: Literal["", "high", "medium", "low"] = Field(
         default="",
         description="Filter by priority: 'high', 'medium', or 'low'",
@@ -154,7 +162,11 @@ class DdChecklistTool(BaseTool):
         return ToolResult(output="\n".join(lines))
 
     def _handle_analyze(self, text: str, args: DdChecklistInput) -> ToolResult:
-        result = analyze_document_coverage(text, categories=args.categories or None)
+        result = analyze_document_coverage(
+            text,
+            categories=args.categories or None,
+            sector=None if args.sector == "all" else (args.sector or "auto"),
+        )
 
         ev_str = (
             f" | Avg Evidence Level: {result.avg_evidence_level:.1f}/5"

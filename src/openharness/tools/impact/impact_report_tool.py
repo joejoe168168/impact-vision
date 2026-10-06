@@ -6,6 +6,7 @@ import csv
 import html
 import io
 import json
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Literal
@@ -136,18 +137,63 @@ _SECTOR_RISKS: dict[str, list[str]] = {
 }
 
 
-def _infer_opportunities_and_risks(company: Company) -> dict[str, list[str]]:
-    """Infer impact opportunities and risks from sector and description."""
-    text = f"{company.description} {company.sector}".lower()
-    opportunities: list[str] = []
-    risks: list[str] = []
+# Description keywords that pull in a template set beyond the canonical sector
+# (word-boundary matched, so "energy" no longer fires on "synergy").
+_TEMPLATE_KEYWORDS: dict[str, tuple[str, ...]] = {
+    "livestock": ("livestock", "pig", "pigs", "swine", "piggery", "piggeries", "hog", "hogs",
+                  "poultry", "cattle", "dairy", "aquaculture"),
+    "energy": ("solar", "renewable energy", "mini-grid", "off-grid", "wind power"),
+    "water": ("drinking water", "sanitation", "wastewater", "water treatment"),
+}
 
-    for sector_key in _SECTOR_OPPORTUNITIES:
-        if sector_key in text:
-            opportunities.extend(_SECTOR_OPPORTUNITIES[sector_key])
-    for sector_key in _SECTOR_RISKS:
-        if sector_key in text:
-            risks.extend(_SECTOR_RISKS[sector_key])
+# Sentences that disclose a concrete risk the company itself is managing.
+_DISCLOSED_RISK_RE = re.compile(
+    r"\b(?:risks?|biosecurity|outbreaks?|disease|pollution|run-?off|spills?|odou?r|"
+    r"complaints?|injur(?:y|ies)|fatalit(?:y|ies)|contaminat\w*|leakage|default rates?|"
+    r"over-?indebtedness|displacement|resettlement)\b",
+    re.IGNORECASE,
+)
+
+
+def _disclosed_risks(text: str, limit: int = 5) -> list[str]:
+    """Pull risk disclosures out of the source document, verbatim (trimmed)."""
+    from openharness.impact.extractors.regex_extractor import RegexExtractor
+
+    out: list[str] = []
+    for sentence in RegexExtractor._sentences(text or ""):
+        if _DISCLOSED_RISK_RE.search(sentence) and len(sentence) > 30:
+            out.append(sentence if len(sentence) <= 320 else sentence[:317].rstrip() + "\u2026")
+        if len(out) >= limit:
+            break
+    return out
+
+
+def _infer_opportunities_and_risks(company: Company, text: str = "") -> dict[str, list[str]]:
+    """Infer impact opportunities and risks.
+
+    Risks the company itself discloses in ``text`` (pitch deck / memo) come
+    first; sector templates follow as prompts for what else to diligence.
+    Templates are chosen by the canonical sector, plus word-boundary keyword
+    matches in the description and ``text``.
+    """
+    from openharness.tools.impact.common import normalize_sector
+
+    haystack = f"{company.description} {' '.join(company.impact_themes)} {text}".lower()
+    keys: list[str] = []
+    sector = normalize_sector(company.sector or "")
+    if sector:
+        keys.append(sector)
+    for key, words in _TEMPLATE_KEYWORDS.items():
+        if key not in keys and any(re.search(rf"\b{re.escape(w)}\b", haystack) for w in words):
+            keys.append(key)
+    if not keys:
+        keys = [k for k in _SECTOR_RISKS if re.search(rf"\b{re.escape(k)}\b", haystack)]
+
+    opportunities: list[str] = []
+    risks: list[str] = [f"Disclosed: {r}" for r in _disclosed_risks(text or company.description)]
+    for key in keys:
+        opportunities.extend(_SECTOR_OPPORTUNITIES.get(key, []))
+        risks.extend(_SECTOR_RISKS.get(key, []))
 
     if not opportunities:
         opportunities = ["Further analysis needed to identify specific impact opportunities"]
@@ -347,7 +393,10 @@ class ImpactReportTool(BaseTool):
             "generated_at": datetime.now(timezone.utc).isoformat(),
             "catalog_version": "IRIS+ 5.3c",
             "theme": args.theme,
-            "audience": args.audience,
+            "audience": (
+                "lp" if args.report_type == "lp_ready" and args.audience == "full" else args.audience
+            ),
+            "report_type": args.report_type,
         }
         if impact_claims:
             report_data["impact_claims"] = [claim.model_dump() for claim in impact_claims]
@@ -370,7 +419,8 @@ class ImpactReportTool(BaseTool):
             gap_result = analyze_gaps(company, store)
             report_data["gap_analysis"] = gap_result
 
-        report_data["impact_analysis"] = _infer_opportunities_and_risks(company)
+        claim_text = " ".join(str(c.get("text", "")) for c in args.impact_claims if isinstance(c, dict))
+        report_data["impact_analysis"] = _infer_opportunities_and_risks(company, claim_text)
         esg_workflow = build_esg_workflow(
             company_name=company.name,
             company_description=company.description,
@@ -1250,8 +1300,8 @@ def _generate_executive_summary(data: dict, company: dict) -> str:
     strengths and watch-outs. Uses the v2 chrome classes so styling matches
     the IC memo and DD HTML reports.
     """
-    name = company.get("name", "the company")
-    sector = company.get("sector", "")
+    name = html.escape(str(company.get("name") or "the company"))
+    sector = html.escape(str(company.get("sector") or ""))
 
     fd = data.get("five_dimensions")
     sdg = data.get("sdg_alignments") or []
@@ -1580,6 +1630,15 @@ def _metric_tracking_dashboard(data: dict) -> str:
     return "\n".join(parts)
 
 
+_EVIDENCE_SIGNAL_LABELS = {
+    "third_party_verified": "Third-party verified",
+    "audited": "Audited",
+    "certified": "Certified",
+    "controlled_evaluation": "Controlled evaluation",
+    "baseline_comparison": "Baseline comparison",
+}
+
+
 def _impact_claims_section(data: dict) -> str:
     """Generate expandable impact claim evidence cards."""
     claims = data.get("impact_claims", [])
@@ -1640,6 +1699,18 @@ def _impact_claims_section(data: dict) -> str:
             f' <span style="font-size:0.78em;color:var(--text-secondary)">NESTA Level {evidence}</span></div>'
         )
 
+        signals = (claim.get("entities") or {}).get("evidence") or []
+        if signals:
+            parts.append(
+                '<div style="margin-bottom:8px"><strong style="font-size:0.82em">Evidence:</strong> '
+            )
+            parts.append(
+                " ".join(
+                    f'<span class="chip">{html.escape(_EVIDENCE_SIGNAL_LABELS.get(str(sig), str(sig)))}</span>'
+                    for sig in signals
+                )
+            )
+            parts.append("</div>")
         if metrics:
             parts.append(
                 '<div style="margin-bottom:8px"><strong style="font-size:0.82em">Mapped Metrics:</strong> '
@@ -2081,6 +2152,7 @@ _AUDIENCE_SECTION_MAP: dict[str, list[str]] = {
     "sec-metrics": ["lp", "ic", "regulator"],
     "sec-targets": ["lp", "ic", "public"],
     "sec-beneficiary": ["lp", "public", "regulator"],
+    "sec-esg-toolbox": ["ic", "regulator"],
 }
 
 # Illustrative confidence-band half-widths (in score points, 0-5 scale) by
@@ -2269,6 +2341,24 @@ _ICON_PRINT = (
 )
 
 
+_DISTRIBUTION_NOTICES = {
+    "public": "Prepared for public disclosure.",
+    "lp": "Confidential &mdash; prepared for the fund&rsquo;s limited partners.",
+    "regulator": "Prepared for regulatory review.",
+    "ic": "Confidential &mdash; prepared for the investment committee.",
+}
+
+
+def _distribution_notice(data: dict) -> str:
+    audience = str(data.get("audience") or "full").lower()
+    text = _DISTRIBUTION_NOTICES.get(
+        audience,
+        "Confidential &mdash; prepared for internal investment and LP use. "
+        "Not for public distribution.",
+    )
+    return f'<div class="pc-confidential">{text}</div>'
+
+
 def _render_print_cover(data: dict) -> str:
     """Render the print/PDF-only cover page (hidden on screen).
 
@@ -2308,10 +2398,7 @@ def _render_print_cover(data: dict) -> str:
         meta_bits.append(f"Standard: {std}")
     parts.append('<div class="pc-meta">')
     parts.append(" &middot; ".join(meta_bits))
-    parts.append(
-        '<div class="pc-confidential">Confidential &mdash; prepared for internal investment '
-        "and LP use. Not for public distribution.</div>"
-    )
+    parts.append(_distribution_notice(data))
     parts.append("</div></section>")
     return "".join(parts)
 
@@ -2485,9 +2572,93 @@ def _collapsible_sections_script() -> str:
     )
 
 
+# Data that feeds each audience-scoped section. When a report is rendered for
+# one audience, data for sections that audience doesn't see is dropped before
+# rendering, so it can't leak via KPI cards, the tear sheet or the summary.
+_SECTION_DATA_KEYS: dict[str, tuple[str, ...]] = {
+    "sec-gap": ("gap_analysis",),
+    "sec-greenwashing": ("greenwashing",),
+    "sec-benchmark": ("benchmark_comparison",),
+    "sec-targets": ("target_tracking",),
+    "sec-beneficiary": ("beneficiary_feedback",),
+    "sec-claims": ("impact_claims",),
+    "sec-opp-risk": ("impact_analysis",),
+}
+
+_H2_ID_RE = re.compile(r'<h2 id="([^"]+)"')
+
+_TOC_PLACEHOLDER = "<!--impact-report-toc-->"
+_TOC_LABELS: dict[str, str] = {
+    "executive-summary": "Executive summary",
+    "sec-5d": "5 Dimensions",
+    "sec-sdg": "SDG alignment",
+    "sec-pathway": "Impact pathway",
+    "sec-opp-risk": "Opportunities &amp; risks",
+    "sec-gap": "Gap analysis",
+    "sec-esg-toolbox": "ESG toolbox",
+    "sec-greenwashing": "Greenwashing",
+    "sec-benchmark": "Benchmarks",
+    "sec-metrics": "Metric tracking",
+    "sec-claims": "Impact claims",
+    "sec-targets": "Targets",
+    "sec-beneficiary": "Beneficiary feedback",
+}
+_SECTION_ID_RE = re.compile(r'id="(executive-summary|sec-[a-z0-9-]+)"')
+
+
+def _render_toc(rendered_html: str) -> str:
+    links = []
+    seen: set[str] = set()
+    for section_id in _SECTION_ID_RE.findall(rendered_html):
+        label = _TOC_LABELS.get(section_id)
+        if label and section_id not in seen:
+            seen.add(section_id)
+            links.append(f'  <a href="#{section_id}">{label}</a>')
+    return (
+        '<nav class="report-toc" aria-label="Report contents">\n  <h4>On this page</h4>\n'
+        + "\n".join(links)
+        + "\n</nav>"
+    )
+
+
+def _visible_to(section_id: str, audience: str) -> bool:
+    allowed = _AUDIENCE_SECTION_MAP.get(section_id)
+    return audience == "full" or allowed is None or audience in allowed
+
+
+def _scope_data_to_audience(data: dict) -> dict:
+    audience = str(data.get("audience") or "full").lower()
+    if audience == "full":
+        return data
+    scoped = dict(data)
+    for section_id, keys in _SECTION_DATA_KEYS.items():
+        if not _visible_to(section_id, audience):
+            for key in keys:
+                scoped.pop(key, None)
+    return scoped
+
+
+def _filter_sections_for_audience(sections: list[str], audience: str) -> list[str]:
+    """Drop rendered H2 sections the audience doesn't see (server-side)."""
+    if audience == "full":
+        return sections
+    out: list[str] = []
+    visible = True
+    for chunk in sections:
+        m = _H2_ID_RE.search(chunk)
+        if m and not chunk[: m.start()].strip():
+            visible = _visible_to(m.group(1), audience)
+        if visible:
+            out.append(chunk)
+    return out
+
+
 def _to_html(data: dict) -> str:
+    data = _scope_data_to_audience(data)
+    audience = str(data.get("audience") or "full").lower()
     company = data["company"]
     sections: list[str] = []
+    print_footer_suffix = "" if audience == "public" else " \u2014 Confidential"
     body_class = ' class="theme-dark"' if str(data.get("theme", "")).lower() == "dark" else ""
     sdg_colors_map = {
         1: "#E5243B",
@@ -2907,7 +3078,7 @@ body.theme-dark .mini-header {{ box-shadow:0 2px 8px rgba(0,0,0,0.6); }}
 /* ---------- Print / PDF cover page + running footer (Track D polish) ---------- */
 .print-cover {{ display:none; }}
 @page {{ size:A4; margin:20mm 18mm 18mm 18mm;
-  @bottom-left {{ content:"Impact Vision \u2014 Confidential"; font-size:8pt; color:#9aa0a6; }}
+  @bottom-left {{ content:"Impact Vision{print_footer_suffix}"; font-size:8pt; color:#9aa0a6; }}
   @bottom-right {{ content:"Page " counter(page) " / " counter(pages); font-size:8pt; color:#9aa0a6; }}
   @top-right {{ content:string(doc-company); font-size:8pt; color:#b0b6bd; }}
 }}
@@ -2936,20 +3107,7 @@ body.theme-dark .mini-header {{ box-shadow:0 2px 8px rgba(0,0,0,0.6); }}
 <a class="skip-link" href="#main-content">Skip to main content</a>
 <div class="read-progress" id="read-progress" aria-hidden="true"></div>
 {_render_sticky_header(data)}
-<nav class="report-toc" aria-label="Report contents">
-  <h4>On this page</h4>
-  <a href="#executive-summary">Executive summary</a>
-  <a href="#sec-5d">5 Dimensions</a>
-  <a href="#sec-sdg">SDG alignment</a>
-  <a href="#sec-pathway">Impact pathway</a>
-  <a href="#sec-opp-risk">Opportunities &amp; risks</a>
-  <a href="#sec-gap">Gap analysis</a>
-  <a href="#sec-esg-toolbox">ESG toolbox</a>
-  <a href="#sec-greenwashing">Greenwashing</a>
-  <a href="#sec-benchmark">Benchmarks</a>
-  <a href="#sec-metrics">Metric tracking</a>
-  <a href="#sec-claims">Impact claims</a>
-</nav>
+{_TOC_PLACEHOLDER}
 <main id="main-content" tabindex="-1">
 {_render_print_cover(data)}
 <div class="report-header">
@@ -2974,7 +3132,9 @@ body.theme-dark .mini-header {{ box-shadow:0 2px 8px rgba(0,0,0,0.6); }}
         sections.append("</div>")
     sections.append("</div>")
 
-    sections.append(_render_audience_toolbar(data))
+    if audience == "full":
+        # Single-audience reports are already filtered server-side.
+        sections.append(_render_audience_toolbar(data))
     sections.append(_render_tear_sheet(data))
 
     sections.append(_generate_executive_summary(data, company))
@@ -3174,7 +3334,7 @@ Plotly.newPlot('radar-chart', [{{
         if fd.get("recommendations"):
             sections.append("<h3>Recommendations</h3>")
             for r in fd["recommendations"]:
-                sections.append(f'<div class="rec">{r}</div>')
+                sections.append(f'<div class="rec">{html.escape(str(r))}</div>')
 
     if "target_tracking" in data:
         tt = data["target_tracking"]
@@ -3204,17 +3364,20 @@ Plotly.newPlot('radar-chart', [{{
                 pct = t.get("progress_pct", 0)
                 pct_display = f"{pct:.0f}%" if pct else "N/A"
                 sections.append(f"""<tr>
-<td>{t["metric_id"]}</td>
-<td>{t.get("target_description") or t.get("target", "N/A")}</td>
-<td>{t.get("current_value", "N/A")}</td>
+<td>{html.escape(str(t.get("metric_id", "")))}</td>
+<td>{html.escape(str(t.get("target_description") or t.get("target", "N/A")))}</td>
+<td>{html.escape(str(t.get("current_value", "N/A")))}</td>
 <td><div class="bar-track"><div class="bar-fill" style="width:{min(pct, 100):.0f}%;background:{color}"></div></div> {pct_display}</td>
 <td style="color:{color};font-weight:600">{icon} {t["status"].replace("_", " ").title()}</td>
 </tr>""")
             sections.append("</table>")
-            summary = tt.get("summary", {})
-            if summary:
-                sections.append(f"""<div style="margin-top:12px;padding:12px 16px;background:var(--primary-light);border-radius:var(--radius-sm);font-size:0.85em">
-<strong>Target Summary:</strong> {summary.get("on_track", 0)} on track, {summary.get("behind", 0)} behind, {summary.get("exceeded", 0)} exceeded, {summary.get("at_risk", 0)} at risk
+            # trend_analysis returns ``summary`` as prose; count statuses here.
+            counts = {k: 0 for k in ("on_track", "behind", "exceeded", "at_risk")}
+            for t in targets:
+                if t.get("status") in counts:
+                    counts[t["status"]] += 1
+            sections.append(f"""<div style="margin-top:12px;padding:12px 16px;background:var(--primary-light);border-radius:var(--radius-sm);font-size:0.85em">
+<strong>Target Summary:</strong> {counts["on_track"]} on track, {counts["behind"]} behind, {counts["exceeded"]} exceeded, {counts["at_risk"]} at risk
 </div>""")
 
     if "beneficiary_feedback" in data:
@@ -3252,10 +3415,10 @@ Plotly.newPlot('radar-chart', [{{
         sections.append("</div>")
         if bf.get("methodology"):
             sections.append(
-                f'<p style="font-size:0.85em;color:var(--text-secondary)">Methodology: {bf["methodology"]}'
+                f'<p style="font-size:0.85em;color:var(--text-secondary)">Methodology: {html.escape(str(bf["methodology"]))}'
             )
             if bf.get("survey_date"):
-                sections[-1] += f" | Survey date: {bf['survey_date']}"
+                sections[-1] += f" | Survey date: {html.escape(str(bf['survey_date']))}"
             sections[-1] += "</p>"
         if bf.get("themes"):
             sections.append('<div style="margin-top:8px"><strong>Positive Themes:</strong> ')
@@ -3329,7 +3492,7 @@ Plotly.newPlot('radar-chart', [{{
                 sections.append(
                     '<div style="margin-bottom:8px"><strong style="font-size:0.82em">Targets:</strong> '
                 )
-                sections.append(" ".join(f'<span class="chip">{t}</span>' for t in targets))
+                sections.append(" ".join(f'<span class="chip">{html.escape(str(t))}</span>' for t in targets))
                 sections.append("</div>")
             chains = a.get("evidence_chain", [])
             if chains:
@@ -3337,10 +3500,10 @@ Plotly.newPlot('radar-chart', [{{
                     '<div style="margin-bottom:8px"><strong style="font-size:0.82em">Evidence Chains:</strong>'
                 )
                 for ch in chains[:5]:
-                    claim_text = str(ch.get("claim_text", ""))[:60]
-                    metric = ch.get("metric_id", "")
-                    ev_type = str(ch.get("evidence_type", "")).replace("_", " ").title()
-                    sdg_tgt = ch.get("sdg_target", "")
+                    claim_text = html.escape(str(ch.get("claim_text", ""))[:60])
+                    metric = html.escape(str(ch.get("metric_id", "")))
+                    ev_type = html.escape(str(ch.get("evidence_type", "")).replace("_", " ").title())
+                    sdg_tgt = html.escape(str(ch.get("sdg_target", "")))
                     conf = ch.get("confidence", 0)
                     sections.append('<div class="evidence-chain">')
                     if claim_text:
@@ -3582,6 +3745,11 @@ Plotly.newPlot('benchmark-chart', [
     if pathway_html:
         sections.append(pathway_html)
 
+    sections = _filter_sections_for_audience(sections, audience)
+    # Build the TOC from the sections actually rendered, in page order, so it
+    # never links to a section that was skipped or filtered out.
+    rendered = "\n".join(sections)
+    sections = [rendered.replace(_TOC_PLACEHOLDER, _render_toc(rendered), 1)]
     sections.append(_audience_filter_script())
     sections.append(_report_ux_script())
     sections.append(_collapsible_sections_script())

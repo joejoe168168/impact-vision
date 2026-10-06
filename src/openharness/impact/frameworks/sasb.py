@@ -13,6 +13,7 @@ from pathlib import Path
 
 import yaml
 from pydantic import BaseModel, Field
+from openharness.impact._paths import data_path
 
 
 class SASBTopic(BaseModel):
@@ -504,7 +505,7 @@ _sasb_cache: list[SASBStandard] | None = None
 def _load_sasb_overrides() -> dict:
     """Load additional industries or keyword overrides from data/sasb_overrides.yaml."""
     config_paths = [
-        Path(__file__).parent.parent.parent.parent / "data" / "sasb_overrides.yaml",
+        data_path("sasb_overrides.yaml"),
         Path("data/sasb_overrides.yaml"),
     ]
     for path in config_paths:

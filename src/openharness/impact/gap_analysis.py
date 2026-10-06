@@ -2,6 +2,11 @@
 
 from __future__ import annotations
 
+from functools import lru_cache
+
+import yaml
+
+from openharness.impact._paths import data_path
 from openharness.impact.database import MetricStore
 from openharness.impact.models import Company
 
@@ -155,6 +160,31 @@ CORE_METRIC_SET_IDS = {
 }
 
 
+@lru_cache(maxsize=1)
+def _sector_core_sets() -> dict:
+    path = data_path("core_metric_sets_by_sector.yaml")
+    if not path.is_file():
+        return {}
+    with open(path, encoding="utf-8") as f:
+        return yaml.safe_load(f) or {}
+
+
+def core_set_for_sector(sector: str | None) -> tuple[set[str], str]:
+    """Return ``(core metric IDs, basis)`` for a company's sector.
+
+    ``basis`` is the canonical sector whose set was used, or ``"default"``
+    when the sector is unknown (the historical one-size-fits-all set).
+    """
+    from openharness.tools.impact.common import normalize_sector
+
+    cfg = _sector_core_sets()
+    key = normalize_sector(sector or "")
+    sector_ids = (cfg.get("sectors") or {}).get(key)
+    if sector_ids:
+        return set(cfg.get("universal") or []) | set(sector_ids), key
+    return set(cfg.get("default") or CORE_METRIC_SET_IDS), "default"
+
+
 def analyze_gaps(
     company: Company,
     store: MetricStore,
@@ -162,9 +192,15 @@ def analyze_gaps(
 ) -> dict:
     """Compare company's reported metrics against Core Metric Set.
 
+    Without an explicit ``core_set`` the set is chosen by the company's
+    sector (see ``data/core_metric_sets_by_sector.yaml``).
+
     Returns a structured gap analysis with coverage ratios.
     """
-    target_set = core_set or CORE_METRIC_SET_IDS
+    if core_set:
+        target_set, basis = set(core_set), "custom"
+    else:
+        target_set, basis = core_set_for_sector(company.sector)
     reported_ids = set(company.reported_metrics.keys())
 
     required_metrics = []
@@ -210,6 +246,7 @@ def analyze_gaps(
 
     return {
         "company": company.name,
+        "core_metric_set_basis": basis,
         "core_metric_set_size": total,
         "metrics_reported": reported_count,
         "metrics_missing": total - reported_count,

@@ -618,7 +618,7 @@ def build_lp_dataroom(fund, companies, records) -> dict:
     from openharness.impact.cids_export import export_cids
     from openharness.impact.concordance import load_concordance
     from openharness.impact.metric_records import portfolio_comparability_index
-    from openharness.impact.signed_feed import HMACSigner
+    from openharness.impact.signed_feed import get_signer
     from openharness.impact.xbrl_export import render_xbrl_json, tag_records
 
     fund_name = (
@@ -672,7 +672,7 @@ def build_lp_dataroom(fund, companies, records) -> dict:
         {"portfolio": cids_docs}, default=str, indent=2
     ).encode()
     hashes = {name: hashlib.sha256(blob).hexdigest() for name, blob in artifacts.items()}
-    signer = HMACSigner(key=b"impact-vision-lp-dataroom")
+    signer = get_signer("lp_dataroom")
     signature = signer.sign(json.dumps(hashes, sort_keys=True).encode())
     manifest = {"fund": fund_name, "files": hashes, "signature": signature, "signer_id": signer.id}
     artifacts["manifest.json"] = json.dumps(manifest, indent=2).encode()

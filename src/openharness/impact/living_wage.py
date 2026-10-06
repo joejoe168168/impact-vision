@@ -7,15 +7,14 @@ from pathlib import Path
 from typing import Any
 
 import yaml
+from openharness.impact._paths import data_path
 
 
 def _benchmark_path(path: str | Path | None = None) -> Path:
     if path:
         return Path(path)
-    here = Path(__file__).resolve()
     candidates = [
-        here.parents[3] / "data" / "living_wage_benchmarks.yaml",
-        here.parents[2] / "_data" / "living_wage_benchmarks.yaml",
+        data_path("living_wage_benchmarks.yaml"),
         Path("data/living_wage_benchmarks.yaml"),
     ]
     for candidate in candidates:

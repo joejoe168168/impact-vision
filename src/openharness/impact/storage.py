@@ -7,6 +7,7 @@ so state can be preserved across sessions.
 from __future__ import annotations
 
 import json
+import os
 import sqlite3
 import threading
 from datetime import datetime, timezone
@@ -14,7 +15,24 @@ from pathlib import Path
 from typing import Any
 
 
-_DEFAULT_DB_PATH = Path("data/impact_vision.db")
+_LEGACY_DB_PATH = Path("data/impact_vision.db")
+
+
+def _default_db_path() -> Path:
+    """Resolve the default SQLite location.
+
+    ``IMPACT_VISION_DB`` wins; an existing ``./data/impact_vision.db`` (the
+    pre-0.16.1 CWD-relative default) is kept so existing checkouts don't lose
+    history; otherwise the store lives in ``~/.impact-vision/``, which works
+    for installed wheels regardless of the working directory.
+    """
+    env = os.environ.get("IMPACT_VISION_DB")
+    if env:
+        return Path(env).expanduser()
+    if _LEGACY_DB_PATH.is_file():
+        return _LEGACY_DB_PATH
+    return Path.home() / ".impact-vision" / "impact_vision.db"
+
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS assessments (
@@ -115,7 +133,7 @@ class AssessmentStore:
     """SQLite-backed store for company assessments and session history."""
 
     def __init__(self, db_path: str | Path | None = None) -> None:
-        self._db_path = str(db_path or _DEFAULT_DB_PATH)
+        self._db_path = str(db_path or _default_db_path())
         self._local = threading.local()
         self._ensure_schema()
 

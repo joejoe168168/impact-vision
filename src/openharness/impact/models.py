@@ -524,6 +524,13 @@ class SDGAlignment(BaseModel):
         description="Chain: [{claim_text, metric_id, evidence_type, sdg_target, confidence}]",
     )
     scoring_basis: Literal["core_set", "broad_catalog", "estimated"] = "estimated"
+    material: bool = Field(
+        default=True,
+        description=(
+            "True when the goal is claimed, inferred from the business, or "
+            "evidenced by a goal-specific metric. Non-material goals are context only."
+        ),
+    )
 
 
 class Assessment(BaseModel):

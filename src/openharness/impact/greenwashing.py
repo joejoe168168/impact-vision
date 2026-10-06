@@ -257,13 +257,18 @@ def assess_greenwashing(
 ) -> GreenwashingScore:
     """Run greenwashing risk assessment for a company."""
     text = f"{company.description} {' '.join(company.impact_themes)}".lower()
+    if claims:
+        # Extracted claim sentences are part of the evidence base — a
+        # truncated description must not hide "independently verified by …".
+        claim_text = " ".join(str(c.get("text", "")) for c in claims if isinstance(c, dict))
+        text = f"{text} {claim_text.lower()}"
     metrics = _canonical_metric_ids(company.reported_metrics.keys())
 
     gap_score = _score_claim_metric_gap(company, metrics)
     omission_score = _score_adverse_omission(company, metrics)
     specificity_score = _score_specificity(text, claims)
     selectivity_score = _score_selectivity(company, metrics)
-    verification_score = _score_verification(text, metrics)
+    verification_score = _score_verification(text, metrics, claims)
 
     weights = {"gap": 0.30, "omission": 0.20, "specificity": 0.20, "selectivity": 0.15, "verification": 0.15}
     overall = (
@@ -438,11 +443,21 @@ def _has_word(text: str, term: str) -> bool:
     return bool(re.search(r"\b" + re.escape(term) + r"\b", text))
 
 
-def _score_verification(text: str, metrics: set[str]) -> float:
+def _score_verification(
+    text: str, metrics: set[str], claims: list[dict[str, Any]] | None = None
+) -> float:
     """Score: does the company show verification/audit signals?"""
     text_lower = text.lower()
     verification_hits = sum(1 for kw in _VERIFICATION_KEYWORDS if _has_word(text_lower, kw))
     measurement_hits = sum(1 for kw in _MEASUREMENT_KEYWORDS if _has_word(text_lower, kw))
+    # Structured evidence signals from extracted claims (verified / audited /
+    # controlled evaluation) count once per distinct signal.
+    signals: set[str] = set()
+    for c in claims or []:
+        if isinstance(c, dict):
+            signals.update((c.get("entities") or {}).get("evidence", []) or [])
+    verification_hits += len(signals & {"third_party_verified", "audited", "certified"})
+    measurement_hits += len(signals & {"controlled_evaluation", "baseline_comparison"})
 
     score = 70.0
     score -= verification_hits * 12

@@ -400,7 +400,9 @@ class LpDdqExportTool(BaseTool):
         if "dd_checklist" in sources:
             from openharness.impact.dd_checklist import analyze_document_coverage
             if company.description:
-                dd_result = analyze_document_coverage(company.description)
+                dd_result = analyze_document_coverage(
+                    company.description, sector=company.sector or "auto"
+                )
                 parts.append(f"\nDue Diligence Coverage: {dd_result.coverage_pct}% of {dd_result.total_questions} questions addressed")
                 if dd_result.high_priority_gaps:
                     parts.append(f"  High-priority gaps: {len(dd_result.high_priority_gaps)}")

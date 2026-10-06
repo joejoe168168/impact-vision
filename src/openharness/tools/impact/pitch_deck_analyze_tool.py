@@ -216,7 +216,7 @@ class PitchDeckAnalyzeTool(BaseTool):
 
         # Section 4: DD Checklist
         if args.include_dd_checklist:
-            dd_result = analyze_document_coverage(text)
+            dd_result = analyze_document_coverage(text, sector=_detect_sector(text) or "auto")
             lines.append("DUE DILIGENCE CHECKLIST COVERAGE")
             lines.append("-" * 50)
             lines.append(f"  Questions addressed: {len(dd_result.addressed)}/{dd_result.total_questions} ({dd_result.coverage_pct}%)")

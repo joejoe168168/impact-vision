@@ -7,10 +7,13 @@ are already addressed vs. which need to be asked, based on document text.
 from __future__ import annotations
 
 import logging
+import re
+from functools import lru_cache
 from pathlib import Path
 
 import yaml
 from pydantic import BaseModel, Field
+from openharness.impact._paths import data_path
 
 logger = logging.getLogger(__name__)
 
@@ -63,13 +66,55 @@ class DDQuestionMatch(BaseModel):
     evidence_label: str = ""
 
 
+# Plain-language equivalents for checklist keywords. A hit on any synonym
+# counts as a hit on the keyword itself.
+_KEYWORD_SYNONYMS: dict[str, tuple[str, ...]] = {
+    "beneficiar": ("household", "smallholder", "farmer", "patient", "student", "worker"),
+    "customer": ("household", "client", "subscriber"),
+    "kpi": ("metric", "indicator"),
+    "measure": ("track", "monitor"),
+    "baseline": ("versus our", "compared to", "compared with"),
+    "third-party": ("independently", "externally verified", "external audit"),
+    "control group": ("matched control", "randomized", "randomised"),
+    "grievance": ("complaint",),
+    "underserved": ("off-grid", "unbanked", "rural", "low-income"),
+    "greenhouse gas": ("ghg", "co2e", "tco2", "carbon emissions"),
+}
+
+_SUFFIXES = ("ments", "ment", "ings", "ing", "ions", "ion", "ies", "ed", "es", "s")
+
+
+def _stem(token: str) -> str:
+    for suf in _SUFFIXES:
+        if token.endswith(suf) and len(token) - len(suf) >= 4:
+            return token[: -len(suf)]
+    return token
+
+
+def _phrase_pattern(phrase: str) -> re.Pattern[str]:
+    """Word-boundary pattern that tolerates plurals / inflections per word."""
+    parts = []
+    for token in phrase.split():
+        if token.isalpha() and len(token) >= 4:
+            parts.append(re.escape(_stem(token)) + r"\w*")
+        else:
+            parts.append(re.escape(token))
+    return re.compile(r"\b" + r"[\s-]+".join(parts) + r"\b")
+
+
+@lru_cache(maxsize=2048)
+def _keyword_patterns(keyword: str) -> tuple[re.Pattern[str], ...]:
+    phrases = (keyword, *_KEYWORD_SYNONYMS.get(keyword, ()))
+    return tuple(_phrase_pattern(p) for p in phrases)
+
+
 _checklist_cache: list[DDQuestion] | None = None
 _checklist_cache_path: str | None = None
 
 
 def _get_default_checklist_path() -> Path:
     candidates = [
-        Path(__file__).parent.parent.parent.parent / "data" / "dd_checklist.yaml",
+        data_path("dd_checklist.yaml"),
         Path.cwd() / "data" / "dd_checklist.yaml",
     ]
     for p in candidates:
@@ -113,25 +158,90 @@ def load_checklist(path: str | Path | None = None) -> list[DDQuestion]:
     return questions
 
 
+# Canonical engine sector (``normalize_sector``) → sector-specific DD category.
+_SECTOR_CATEGORY: dict[str, str] = {
+    "fintech": "sector_fintech",
+    "financial": "sector_fintech",
+    "healthcare": "sector_health",
+    "health": "sector_health",
+    "agriculture": "sector_agriculture",
+    "livestock": "sector_agriculture",
+    "energy": "sector_energy",
+    "education": "sector_education",
+    "manufacturing": "sector_manufacturing",
+    "transport": "sector_transport",
+    "logistics": "sector_transport",
+    "construction": "sector_construction",
+    "real estate": "sector_construction",
+    "tourism": "sector_tourism",
+    "retail": "sector_retail",
+    "mining": "sector_mining",
+    "extractives": "sector_mining",
+    "media": "sector_media",
+    "waste management": "sector_waste_management",
+    "ict": "sector_ict",
+    "technology": "sector_ict",
+    "professional services": "sector_professional_services",
+}
+
+AUTO_SECTOR = "auto"
+
+
+def sector_category(sector: str | None) -> str | None:
+    """Return the sector-specific DD category for *sector*, if any."""
+    if not sector:
+        return None
+    from openharness.tools.impact.common import normalize_sector
+
+    return _SECTOR_CATEGORY.get(normalize_sector(sector))
+
+
+def filter_questions_for_sector(
+    questions: list[DDQuestion],
+    sector: str | None,
+    document_text: str = "",
+) -> list[DDQuestion]:
+    """Keep universal questions plus the sector-specific set for *sector*.
+
+    Running all 51 sector-specific questions against every company made a pig
+    farm's "key risk areas" read Fintech / Health / Mining and halved its DD
+    coverage. When *sector* is ``"auto"`` or doesn't map to a sector set, the
+    sector is inferred from the document text (zero or more sector sets kept).
+    """
+    wanted: set[str] = set()
+    cat = sector_category(sector) if sector and sector != AUTO_SECTOR else None
+    if cat:
+        wanted.add(cat)
+    elif document_text:
+        wanted = {c for c in _detect_relevant_categories(document_text) if c.startswith("sector_")}
+    return [q for q in questions if not q.category.startswith("sector_") or q.category in wanted]
+
+
 def analyze_document_coverage(
     document_text: str,
     questions: list[DDQuestion] | None = None,
     categories: list[str] | None = None,
     min_confidence: float = 0.3,
+    sector: str | None = None,
 ) -> DDChecklistResult:
     """Analyze which DD questions are addressed in a document.
 
     Scans the document text for keyword matches against each question's
     keyword list. Questions with sufficient matches are considered 'addressed'.
+
+    ``sector`` restricts sector-specific questions to the company's sector
+    (``"auto"`` infers it from the text). ``None`` keeps every question.
     """
     if questions is None:
         questions = load_checklist()
+
+    if sector is not None:
+        questions = filter_questions_for_sector(questions, sector, document_text)
 
     if categories:
         cat_set = set(categories)
         questions = [q for q in questions if q.category in cat_set]
 
-    import re
     text_lower = document_text.lower()
     sentences = _rough_sentences(text_lower)
 
@@ -146,9 +256,13 @@ def analyze_document_coverage(
             kw_lower = kw.lower().strip()
             if not kw_lower:
                 continue
-            pattern = re.compile(r"\b" + re.escape(kw_lower) + r"\b")
-            match = pattern.search(text_lower)
-            if not match:
+            match = None
+            pattern = None
+            for pattern in _keyword_patterns(kw_lower):
+                match = pattern.search(text_lower)
+                if match:
+                    break
+            if not match or pattern is None:
                 continue
             matched_kw.append(kw)
             for sent in sentences:
@@ -168,7 +282,11 @@ def analyze_document_coverage(
             unanswered.append(q)
             continue
 
-        confidence = min(1.0, len(matched_kw) / max(len(q.keywords), 1) * 1.5)
+        # Ratio of keywords hit, plus partial credit per hit: questions carry
+        # 5-7 alternative keywords, so a single relevant hit used to score
+        # 0.25 and never count — a clear solar pitch scored 0% DD coverage.
+        hits = len(matched_kw)
+        confidence = min(1.0, hits / max(len(q.keywords), 1) * 1.5 + 0.15 * min(hits, 2))
         if confidence >= min_confidence:
             ev_level = _assess_evidence_level(snippets)
             addressed.append(DDQuestionMatch(
@@ -261,7 +379,10 @@ def _detect_relevant_categories(text: str) -> set[str]:
         "investor_alignment": ["investor", "fund", "portfolio", "covenant", "mandate"],
         "sector_fintech": ["fintech", "microfinance", "lending", "loan", "banking", "payment", "credit"],
         "sector_health": ["health", "medical", "clinic", "patient", "pharmaceutical", "telemedicine"],
-        "sector_agriculture": ["agriculture", "farming", "smallholder", "crop", "livestock", "agri"],
+        "sector_agriculture": [
+            "agriculture", "farming", "farm", "smallholder", "crop", "livestock", "agri",
+            "pig", "poultry", "cattle", "dairy", "harvest",
+        ],
         "sector_energy": ["solar", "renewable", "energy access", "off-grid", "clean energy", "battery"],
         "sector_education": ["education", "edtech", "school", "learning", "student", "teacher", "curriculum"],
     }

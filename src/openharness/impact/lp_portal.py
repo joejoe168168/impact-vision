@@ -22,7 +22,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from openharness.impact.signed_feed import HMACSigner, ReportFeed, Signer
+from openharness.impact.signed_feed import LazySigner, ReportFeed, Signer
 
 
 class CapitalAccountLine(BaseModel):
@@ -81,7 +81,7 @@ class LPPortal:
 
     fund_name: str
     feed: ReportFeed = field(default_factory=_default_feed)
-    signer: Signer = field(default_factory=lambda: HMACSigner(key=b"impact-vision-demo"))
+    signer: Signer = field(default_factory=lambda: LazySigner("lp_portal"))
 
     def capital_account_statement(
         self,

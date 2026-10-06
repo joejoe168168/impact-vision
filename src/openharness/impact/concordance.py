@@ -10,6 +10,7 @@ import yaml
 from pydantic import BaseModel
 
 from openharness.impact.models import MetricRecord
+from openharness.impact._paths import data_path as bundled_data_path
 
 FrameworkName = Literal["iris", "issb", "esrs", "gri", "edci", "sfdr_pai", "sasb", "tcfd"]
 
@@ -173,7 +174,7 @@ def _taxonomy_uri(framework: str, datapoint_id: str) -> str | None:
 def load_concordance(path: str | Path | None = None) -> ConcordanceMap:
     entries = _from_legacy()
     data_path = (
-        Path(path) if path else Path(__file__).resolve().parents[3] / "data" / "concordance.yaml"
+        Path(path) if path else bundled_data_path("concordance.yaml")
     )
     if data_path.exists():
         payload = yaml.safe_load(data_path.read_text(encoding="utf-8")) or {}

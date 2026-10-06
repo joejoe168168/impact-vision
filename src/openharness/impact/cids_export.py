@@ -1,9 +1,9 @@
 """Common Impact Data Standard v3.2 Basic-tier JSON-LD export."""
 
 from __future__ import annotations
-from pathlib import Path
 import yaml
 from openharness.impact.models import Company, ImpactTarget, MetricRecord
+from openharness.impact._paths import data_path
 
 CIDS_CONTEXT = {
     "cids": "https://ontology.commonapproach.org/cids#",
@@ -16,7 +16,7 @@ CIDS_CONTEXT = {
 def _units():
     return (
         yaml.safe_load(
-            (Path(__file__).resolve().parents[3] / "data/cids_unit_map.yaml").read_text(
+            (data_path("cids_unit_map.yaml")).read_text(
                 encoding="utf-8"
             )
         )

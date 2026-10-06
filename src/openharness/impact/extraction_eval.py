@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable
 from pydantic import BaseModel, Field
+from openharness.impact._paths import data_path
 
 
 class EvalResult(BaseModel):
@@ -98,7 +99,7 @@ def main():
     parser.add_argument("--gate", type=float, default=0.75)
     parser.add_argument(
         "--gold",
-        default=str(Path(__file__).resolve().parents[3] / "data/eval/extraction_gold.jsonl"),
+        default=str(data_path("eval", "extraction_gold.jsonl")),
     )
     args = parser.parse_args()
     result = run_eval(lambda text: {"claims": [], "metrics": [], "sdgs": []}, args.gold)

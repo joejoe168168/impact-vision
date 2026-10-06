@@ -18,9 +18,9 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field
 
 from openharness.impact.signed_feed import (
-    HMACSigner,
     ReportFeed,
     SignedReport,
+    LazySigner,
     Signer,
 )
 
@@ -72,7 +72,7 @@ class AuditTrail:
 
     tenant_id: str = "default"
     fund_id: str = "default"
-    signer: Signer = field(default_factory=lambda: HMACSigner(key=b"impact-vision-audit"))
+    signer: Signer = field(default_factory=lambda: LazySigner("audit"))
     feed: ReportFeed = field(init=False)
 
     def __post_init__(self) -> None:

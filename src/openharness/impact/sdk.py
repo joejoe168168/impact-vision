@@ -23,8 +23,8 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
-from openharness.impact.catalog import get_default_json_path, load_catalog_json
-from openharness.impact.database import MetricStore
+from openharness.impact.catalog import load_catalog_json
+from openharness.impact.database import MetricStore, get_metric_store
 from openharness.impact.dd_checklist import (
     analyze_document_coverage,
     load_checklist,
@@ -43,6 +43,8 @@ from openharness.impact.extractors import (
     get_extractor,
     get_verifier,
 )
+from openharness.impact.extractors.base import to_impact_claims
+from openharness.impact.extractors.regex_extractor import evidence_signals
 from openharness.impact.five_dimensions import assess_five_dimensions
 from openharness.impact.fund_thesis import FundThesis, load_fund_thesis
 from openharness.impact.greenwashing import assess_greenwashing
@@ -84,9 +86,15 @@ class ImpactVision:
             discover_plugins()
         self._extractor = get_extractor(extractor_id)
         self._verifier = get_verifier(verifier_id)
-        path = Path(catalog_path) if catalog_path else get_default_json_path()
-        metrics = load_catalog_json(path) if path.exists() else []
-        self._store = MetricStore(metrics)
+        if catalog_path:
+            path = Path(catalog_path)
+            self._store = MetricStore(load_catalog_json(path) if path.exists() else [])
+        else:
+            # Same resolution as every tool (processed JSON → Excel → bundled
+            # catalog). Reading only the processed JSON left the SDK with an
+            # empty store on fresh installs, so SDG/gap scoring silently ran
+            # without the IRIS+ catalog.
+            self._store = get_metric_store()
 
     # ------------------------------------------------------------------
     # Assessment
@@ -132,7 +140,12 @@ class ImpactVision:
         for c in claims:
             if c.suggested_iris_metric_id and c.metric_value is not None:
                 company.reported_metrics[c.suggested_iris_metric_id] = float(c.metric_value)
-        return self.assess_company(company)
+            if not c.evidence_signals:
+                c.evidence_signals = evidence_signals(c.text)
+        assessment = self.assess_company(company)
+        # Every extracted claim is evidence, with or without an IRIS+ ID.
+        assessment.impact_claims = to_impact_claims(claims)
+        return assessment
 
     def extract_claims(self, text: str) -> list[ExtractedClaim]:
         return self._extractor.extract(text)
@@ -234,9 +247,20 @@ class ImpactVision:
     # Due diligence + greenwashing screen
     # ------------------------------------------------------------------
 
-    def run_dd_coverage(self, text: str, *, checklist_path: str | Path | None = None):
+    def run_dd_coverage(
+        self,
+        text: str,
+        *,
+        checklist_path: str | Path | None = None,
+        sector: str | None = "auto",
+    ):
+        """Run the DD checklist against ``text``.
+
+        Sector-specific questions are limited to ``sector`` (``"auto"`` infers
+        it from the text; ``None`` runs every sector's questions).
+        """
         checklist = load_checklist(checklist_path) if checklist_path else load_checklist()
-        return analyze_document_coverage(text, checklist)
+        return analyze_document_coverage(text, checklist, sector=sector)
 
     def render_dd_report_html(
         self,
@@ -247,6 +271,7 @@ class ImpactVision:
         reviewer: str | None = None,
         path: str | Path | None = None,
         checklist_path: str | Path | None = None,
+        sector: str | None = "auto",
     ) -> str | Path:
         """Render a self-contained HTML DD coverage report.
 
@@ -260,7 +285,7 @@ class ImpactVision:
             render_dd_report_html,
             save_dd_report_html,
         )
-        result = self.run_dd_coverage(text, checklist_path=checklist_path)
+        result = self.run_dd_coverage(text, checklist_path=checklist_path, sector=sector)
         if path:
             return save_dd_report_html(
                 result,
@@ -285,6 +310,7 @@ class ImpactVision:
         reviewer: str | None = None,
         path: str | Path | None = None,
         checklist_path: str | Path | None = None,
+        sector: str | None = "auto",
     ) -> str | Path:
         """Alias for :meth:`render_dd_report_html` — emphasises that the output
         is a DD Questionnaire Helper (risk-first, sequence-ordered)."""
@@ -295,6 +321,7 @@ class ImpactVision:
             reviewer=reviewer,
             path=path,
             checklist_path=checklist_path,
+            sector=sector,
         )
 
     def render_dd_questionnaire_docx(
@@ -306,6 +333,7 @@ class ImpactVision:
         document_label: str = "Source document",
         reviewer: str | None = None,
         checklist_path: str | Path | None = None,
+        sector: str | None = "auto",
     ) -> Path:
         """Render an editable Word (.docx) version of the DD Questionnaire
         Helper. Requires the optional ``python-docx`` dependency.
@@ -316,7 +344,7 @@ class ImpactVision:
         Always writes the file and returns the :class:`Path`.
         """
         from openharness.impact.report_templates import render_dd_questionnaire_docx
-        result = self.run_dd_coverage(text, checklist_path=checklist_path)
+        result = self.run_dd_coverage(text, checklist_path=checklist_path, sector=sector)
         return render_dd_questionnaire_docx(
             result,
             path,
@@ -327,10 +355,19 @@ class ImpactVision:
 
     def screen_greenwashing(
         self,
-        company: Company,
+        company: Company | Assessment,
         *,
         claims: list[dict] | None = None,
     ):
+        """Screen for greenwashing risk.
+
+        Pass the ``Assessment`` from :meth:`assess_company_text` to have its
+        extracted claims (and their verification signals) count as evidence.
+        """
+        if isinstance(company, Assessment):
+            if claims is None and company.impact_claims:
+                claims = [c.model_dump() for c in company.impact_claims]
+            company = company.company
         return assess_greenwashing(company, claims=claims)
 
     def render_evidence_chains(

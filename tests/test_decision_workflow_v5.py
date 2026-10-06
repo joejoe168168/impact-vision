@@ -101,7 +101,9 @@ def test_quick_screen_and_lp_readiness_are_decision_outputs() -> None:
         FundThesis(),
         claims=[{"text": "We are green and sustainable.", "mapped_metrics": []}],
     )
-    assert result.classification in {"misaligned_but_improvable", "red_flag"}
+    assert result.classification in {
+        "misaligned_but_improvable", "red_flag", "insufficient_evidence"
+    }
     assert result.reasons
 
     summary = build_ic_workflow_summary(_company(metrics={}), _store(), FundThesis())
@@ -138,6 +140,7 @@ def test_decision_workflow_tool_is_registered_and_executes() -> None:
     payload = json.loads(result.output)
     assert payload["company_name"] == "Solar Co"
     assert payload["classification"] in {
+        "insufficient_evidence",
         "aligned_and_credible",
         "misaligned_but_improvable",
         "red_flag",

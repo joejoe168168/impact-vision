@@ -275,7 +275,10 @@ def test_report_audience_tearsheet_uncertainty_dark() -> None:
 
     dark = _to_html({**data, "theme": "dark", "audience": "lp"})
     assert '<body class="theme-dark">' in dark       # D7 dark mode
-    assert 'data-aud="lp" aria-pressed="true"' in dark
+    # v7 W0.7: a single-audience report is filtered server-side, so the
+    # toggle bar is omitted and LP-hidden sections are absent from the HTML.
+    assert 'class="audience-bar"' not in dark
+    assert 'id="sec-greenwashing"' not in dark
 
 
 def test_report_branding_injection() -> None:

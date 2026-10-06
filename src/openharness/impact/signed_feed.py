@@ -24,6 +24,8 @@ from __future__ import annotations
 import hashlib
 import hmac
 import json
+import logging
+import os
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any, Protocol, runtime_checkable
@@ -63,6 +65,101 @@ class HMACSigner:
     def verify(self, message: bytes, signature: str) -> bool:
         expected = self.sign(message)
         return hmac.compare_digest(expected, signature)
+
+
+# --- Signing keys -----------------------------------------------------------
+#
+# Every signer resolves its key from the environment. The built-in development
+# keys are public (they're in this source file), so anything signed with them
+# is labelled ``hmac-sha256-dev`` and production deployments refuse to use
+# them: set ``IMPACT_VISION_ENV=production`` or ``IMPACT_VISION_ALLOW_DEV_KEYS=0``.
+
+logger = logging.getLogger(__name__)
+
+# Historical development keys, kept per purpose so artifacts signed by earlier
+# releases still verify in development.
+_DEV_KEYS: dict[str, bytes] = {
+    "audit": b"impact-vision-audit",
+    "lp_portal": b"impact-vision-demo",
+    "lp_dataroom": b"impact-vision-lp-dataroom",
+    "assurance": b"impact-vision-assurance",
+    "dmrv": b"impact-vision-dmrv",
+}
+_warned_dev_purposes: set[str] = set()
+
+
+class SigningKeyError(ValueError):
+    """Raised when no signing key is configured and development keys are disabled."""
+
+
+def dev_keys_allowed() -> bool:
+    """True unless the deployment is marked as production."""
+    if os.environ.get("IMPACT_VISION_ENV", "").strip().lower() in {"prod", "production"}:
+        return False
+    return os.environ.get("IMPACT_VISION_ALLOW_DEV_KEYS", "1").strip() != "0"
+
+
+def key_env_var(purpose: str) -> str:
+    return f"IMPACT_VISION_{purpose.upper()}_HMAC_KEY"
+
+
+def resolve_signing_key(purpose: str, key: bytes | str | None = None) -> tuple[bytes, bool]:
+    """Return ``(key, is_dev_key)`` for *purpose*.
+
+    Order: explicit *key* → ``IMPACT_VISION_<PURPOSE>_HMAC_KEY`` →
+    ``IMPACT_VISION_HMAC_KEY`` → the development key (only when
+    :func:`dev_keys_allowed`; otherwise :class:`SigningKeyError`).
+    """
+    raw = key or os.environ.get(key_env_var(purpose)) or os.environ.get("IMPACT_VISION_HMAC_KEY")
+    if raw:
+        return (raw.encode("utf-8") if isinstance(raw, str) else raw), False
+    if not dev_keys_allowed():
+        raise SigningKeyError(
+            f"No signing key configured for {purpose!r}. Set {key_env_var(purpose)} "
+            "(or IMPACT_VISION_HMAC_KEY); development keys are disabled in production."
+        )
+    if purpose not in _warned_dev_purposes:
+        _warned_dev_purposes.add(purpose)
+        logger.warning(
+            "Signing %s artifacts with the public development key; signatures are not "
+            "tamper-evident. Set %s for real deployments.",
+            purpose,
+            key_env_var(purpose),
+        )
+    return _DEV_KEYS.get(purpose, f"impact-vision-{purpose}".encode()), True
+
+
+def get_signer(purpose: str, key: bytes | str | None = None) -> "HMACSigner":
+    """HMAC signer for *purpose*; its ``id`` discloses a development key."""
+    resolved, is_dev = resolve_signing_key(purpose, key)
+    return HMACSigner(key=resolved, id="hmac-sha256-dev" if is_dev else "hmac-sha256")
+
+
+class LazySigner:
+    """Signer that resolves its key on first use, not at construction.
+
+    Objects that *may* sign (audit trails, portals) can be created in a
+    production deployment without a key; actually signing still fails closed.
+    """
+
+    def __init__(self, purpose: str) -> None:
+        self.purpose = purpose
+        self._signer: HMACSigner | None = None
+
+    def _resolve(self) -> "HMACSigner":
+        if self._signer is None:
+            self._signer = get_signer(self.purpose)
+        return self._signer
+
+    @property
+    def id(self) -> str:  # type: ignore[override]
+        return self._resolve().id
+
+    def sign(self, message: bytes) -> str:
+        return self._resolve().sign(message)
+
+    def verify(self, message: bytes, signature: str) -> bool:
+        return self._resolve().verify(message, signature)
 
 
 class SignedReport(BaseModel):

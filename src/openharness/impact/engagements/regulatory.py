@@ -20,11 +20,11 @@ from __future__ import annotations
 
 import secrets
 from datetime import date, timedelta
-from pathlib import Path
 from typing import Iterable, Literal
 
 from pydantic import BaseModel, Field, computed_field
 import yaml
+from openharness.impact._paths import data_path
 
 
 Jurisdiction = Literal[
@@ -373,7 +373,7 @@ JURISDICTION_PROFILES: dict[Jurisdiction, RegulatoryJurisdictionProfile] = {
 
 
 def load_cn_topics() -> list[dict]:
-    path = Path(__file__).resolve().parents[4] / "data" / "cn_sse_topics.yaml"
+    path = data_path("cn_sse_topics.yaml")
     return (yaml.safe_load(path.read_text(encoding="utf-8")) or {}).get("topics", [])
 
 

@@ -18,6 +18,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 import yaml
+from openharness.impact._paths import data_path as bundled_data_path
 
 
 S2RiskType = Literal["transition", "physical-acute", "physical-chronic"]
@@ -113,7 +114,7 @@ def load_s2_amendments(path: str | Path | None = None) -> list[IFRSS2Amendment]:
     data_path = (
         Path(path)
         if path
-        else Path(__file__).resolve().parents[3] / "data" / "issb_s2_amendments.yaml"
+        else bundled_data_path("issb_s2_amendments.yaml")
     )
     payload = yaml.safe_load(data_path.read_text(encoding="utf-8")) or {}
     rows = payload.get("amendments", [])
@@ -125,7 +126,7 @@ def s2_amendment_summary(path: str | Path | None = None) -> dict:
     data_path = (
         Path(path)
         if path
-        else Path(__file__).resolve().parents[3] / "data" / "issb_s2_amendments.yaml"
+        else bundled_data_path("issb_s2_amendments.yaml")
     )
     payload = yaml.safe_load(data_path.read_text(encoding="utf-8")) or {}
     return {

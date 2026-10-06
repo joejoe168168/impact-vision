@@ -9,6 +9,7 @@ import yaml
 from openharness.impact.database import MetricStore
 from openharness.impact.models import Company, SDGAlignment
 from openharness.impact.sdg_taxonomy import get_sdg_goal
+from openharness.impact._paths import data_path
 
 _DEFAULTS_SECTOR_SDG: dict[str, dict[int, float]] = {
     "agriculture": {1: 0.6, 2: 0.9, 3: 0.3, 6: 0.5, 8: 0.5, 12: 0.7, 13: 0.6, 15: 0.7},
@@ -89,7 +90,7 @@ def _load_core_metrics_per_sdg() -> dict[int, list[str]]:
         return _core_metrics_per_sdg_cache
 
     candidates = [
-        Path(__file__).parent.parent.parent.parent / "data" / "core_metric_set_per_sdg.yaml",
+        data_path("core_metric_set_per_sdg.yaml"),
         Path("data/core_metric_set_per_sdg.yaml"),
     ]
     for path in candidates:
@@ -122,7 +123,7 @@ def _load_sdg_keywords_config() -> dict:
         return _sdg_config_cache
 
     config_paths = [
-        Path(__file__).parent.parent.parent.parent / "data" / "sdg_keywords.yaml",
+        data_path("sdg_keywords.yaml"),
         Path("data/sdg_keywords.yaml"),
     ]
     for path in config_paths:
@@ -251,6 +252,14 @@ def _infer_sdg_from_description(company: Company) -> dict[int, float]:
     return inferred
 
 
+# A metric tagged to this many SDGs or more is cross-cutting, not evidence of
+# any particular goal (e.g. "Client Individuals: Total" is tagged to 12 goals).
+_CROSS_CUTTING_MIN_GOALS = 6
+_CROSS_CUTTING_WEIGHT = 0.4
+# Inferred relevance (0-1) from sector/keywords at which a goal is material.
+_MATERIAL_RELEVANCE = 0.5
+
+
 def map_sdg_alignment(
     company: Company,
     store: MetricStore,
@@ -268,6 +277,7 @@ def map_sdg_alignment(
     inferred_sdg = _infer_sdg_from_description(company)
     alignments: list[SDGAlignment] = []
     all_known_ids = {m.id for m in store.all_metrics()}
+    goal_breadth = {m.id: len(set(m.sdg_goals)) for m in store.all_metrics()}
 
     for goal_num in target_goals:
         sdg = get_sdg_goal(goal_num)
@@ -285,6 +295,7 @@ def map_sdg_alignment(
                     score=score,
                     confidence="low",
                     provenance="estimated",
+                    material=goal_num in company.sdg_claims or relevance >= _MATERIAL_RELEVANCE,
                 ))
             continue
 
@@ -294,29 +305,42 @@ def map_sdg_alignment(
         core_per_sdg = _load_core_metrics_per_sdg()
         broad_goal_metric_ids = {m.id for m in goal_metrics}
         curated_ids = set(core_per_sdg.get(goal_num, []))
-        # Intersect with what the catalog actually knows about, so a stale
-        # YAML entry doesn't penalise the company.
-        coverage_set = (curated_ids & all_known_ids) or broad_goal_metric_ids
-        scoring_basis = "core_set" if (curated_ids & all_known_ids) else "broad_catalog"
+        # Intersect with metrics the catalog itself tags to this goal, so a
+        # stale or over-broad YAML entry (e.g. "Community Service Policy"
+        # listed under SDG 14) can neither penalise nor inflate a goal.
+        curated_valid = curated_ids & all_known_ids & broad_goal_metric_ids
+        coverage_set = curated_valid or broad_goal_metric_ids
+        scoring_basis = "core_set" if curated_valid else "broad_catalog"
 
         matched_metric_ids = coverage_set & reported_ids
+        # Cross-cutting metrics (tagged to many goals, e.g. "Client
+        # Individuals: Total") count at reduced weight and cannot on their own
+        # establish high confidence for a goal.
+        specific_matched = {
+            mid for mid in matched_metric_ids if goal_breadth.get(mid, 0) < _CROSS_CUTTING_MIN_GOALS
+        }
+        goal_prefix = f"{goal_num}."
         # Targets / evidence chain still use the broad set so we surface every
-        # SDG target the company has touched.
+        # SDG target the company has touched — but only targets of *this* goal.
         matched_targets: set[str] = set()
         evidence_chain: list[dict[str, object]] = []
         for m in goal_metrics:
             if m.id in (broad_goal_metric_ids & reported_ids):
-                matched_targets.update(m.sdg_targets)
-                for tgt in m.sdg_targets:
+                goal_targets = [t for t in m.sdg_targets if str(t).startswith(goal_prefix)]
+                matched_targets.update(goal_targets)
+                for tgt in goal_targets or [f"SDG {goal_num}"]:
                     evidence_chain.append({
                         "claim_text": company.reported_metrics.get(m.id, ""),
                         "metric_id": m.id,
                         "evidence_type": "reported_metric",
                         "sdg_target": tgt,
-                        "confidence": 0.8 if len(matched_metric_ids) >= 3 else 0.5,
+                        "confidence": 0.8 if len(specific_matched) >= 3 else 0.5,
                     })
 
-        coverage = len(matched_metric_ids) / len(coverage_set) if coverage_set else 0
+        weighted = len(specific_matched) + _CROSS_CUTTING_WEIGHT * (
+            len(matched_metric_ids) - len(specific_matched)
+        )
+        coverage = weighted / len(coverage_set) if coverage_set else 0
         metric_score = min(60.0, coverage * 60.0)
 
         inferred_score = inferred_sdg.get(goal_num, 0) * 25.0
@@ -347,10 +371,17 @@ def map_sdg_alignment(
                         "confidence": round(theme_score / 15.0, 2),
                     })
 
+        relevance = inferred_sdg.get(goal_num, 0)
+        if not specific_matched and relevance == 0:
+            # Nothing ties this goal to the company beyond generic metrics.
+            metric_score = min(metric_score, 10.0)
         total_score = round(metric_score + inferred_score + theme_score, 1)
         confidence = "high" if total_score >= 50 else "medium" if total_score >= 20 else "low"
+        if confidence == "high" and not specific_matched:
+            # Plausibility rule: "high" needs at least one goal-specific metric.
+            confidence = "medium"
 
-        if len(matched_metric_ids) >= 3:
+        if len(specific_matched) >= 3:
             provenance = "evidence-based"
         elif matched_metric_ids:
             provenance = "partial"
@@ -367,6 +398,11 @@ def map_sdg_alignment(
             provenance=provenance,
             evidence_chain=evidence_chain,
             scoring_basis=scoring_basis,
+            material=(
+                goal_num in company.sdg_claims
+                or relevance >= _MATERIAL_RELEVANCE
+                or bool(specific_matched)
+            ),
         ))
 
     alignments.sort(key=lambda a: a.score, reverse=True)
@@ -390,7 +426,7 @@ def generate_sdg_gap_recommendations(
     themes_lower = {t.lower() for t in (company.impact_themes or [])}
 
     for alignment in alignments:
-        if alignment.score <= 5 or alignment.score > 60:
+        if alignment.score <= 5 or alignment.score > 60 or not alignment.material:
             continue
 
         recs: list[str] = []
@@ -416,12 +452,16 @@ def generate_sdg_gap_recommendations(
             )
 
         if goal_metrics:
-            goal_themes: set[str] = set()
+            # Rank themes by how characteristic they are of this goal: share of
+            # the goal's metrics carrying the theme (not alphabetical order,
+            # which made every goal suggest "Access To Quality Education").
+            theme_counts: dict[str, int] = {}
             for m in goal_metrics:
-                goal_themes.update(t.lower() for t in m.impact_themes)
-            missing_themes = goal_themes - themes_lower
+                for t in {t.lower() for t in m.impact_themes}:
+                    theme_counts[t] = theme_counts.get(t, 0) + 1
+            missing_themes = {t: n for t, n in theme_counts.items() if t not in themes_lower}
             if missing_themes:
-                suggest = sorted(missing_themes)[:2]
+                suggest = sorted(missing_themes, key=lambda t: (-missing_themes[t], t))[:2]
                 recs.append(
                     f"Add impact themes: {', '.join(t.title() for t in suggest)}"
                 )

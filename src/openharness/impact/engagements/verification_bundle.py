@@ -289,6 +289,10 @@ class AssuranceManifest(BaseModel):
     generated_at: str = Field(default_factory=lambda: _now())
     signature_algorithm: str = "sha256"
     signature: str = ""
+    key_id: str = Field(
+        default="",
+        description="'development-default' when signed with the public dev key (not tamper-evident).",
+    )
 
 
 class AssuranceBundle(BaseModel):
@@ -324,17 +328,19 @@ def build_assurance_bundle(
     mandate: MandatePack,
     practice: PracticePack,
     reporting: ReportingPack,
-    secret_key: bytes = b"impact-vision-assurance",
+    secret_key: bytes | None = None,
 ) -> AssuranceBundle:
     """Build and sign an assurance bundle.
 
-    ``secret_key`` defaults to the demo constant used throughout the
-    v3 HMAC audit trail (see
-    :class:`openharness.impact.audit_trail.AuditTrail`). Production
-    deployments MUST override it with a KMS- or HSM-issued key; the
-    default is only appropriate for CI and local development.
+    ``secret_key`` defaults to ``IMPACT_VISION_ASSURANCE_HMAC_KEY``. Without
+    it, the public development key is used (``key_id='development-default'``)
+    unless the deployment is marked production, in which case signing fails.
     """
     import hmac
+
+    from openharness.impact.signed_feed import key_env_var, resolve_signing_key
+
+    secret_key, is_dev = resolve_signing_key("assurance", secret_key)
 
     pillar_hashes = {
         "mandate": _hash_payload(mandate.model_dump(mode="json")),
@@ -347,6 +353,7 @@ def build_assurance_bundle(
         engagement_id=engagement_id,
         pillar_hashes=pillar_hashes,  # type: ignore[arg-type]
         signature=signature,
+        key_id="development-default" if is_dev else f"env:{key_env_var('assurance')}",
     )
     return AssuranceBundle(
         engagement_id=engagement_id,
@@ -360,10 +367,14 @@ def build_assurance_bundle(
 def verify_assurance_bundle(
     bundle: AssuranceBundle,
     *,
-    secret_key: bytes = b"impact-vision-assurance",
+    secret_key: bytes | None = None,
 ) -> bool:
     """Recompute hashes / signature and verify the bundle is untampered."""
     import hmac
+
+    from openharness.impact.signed_feed import resolve_signing_key
+
+    secret_key, _ = resolve_signing_key("assurance", secret_key)
 
     expected_hashes = {
         "mandate": _hash_payload(bundle.mandate.model_dump(mode="json")),

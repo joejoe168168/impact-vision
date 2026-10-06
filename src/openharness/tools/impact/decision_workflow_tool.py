@@ -39,7 +39,7 @@ class DecisionWorkflowInput(BaseModel):
         "promote_kpis",
     ] = Field(
         description=(
-            "'quick_screen': 60-second Aligned/Improvable/Red Flag screen. "
+            "'quick_screen': 60-second Aligned/Improvable/Red Flag screen (returns Insufficient Evidence when the input is too thin to judge). "
             "'ic_workflow': full IC summary with memo, verdict, and proof appendix. "
             "'deal_compare': compare company_a and company_b. "
             "'lp_readiness': LP-ready badge and blockers. "

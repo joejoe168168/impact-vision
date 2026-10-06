@@ -10,10 +10,11 @@ import logging
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
+from openharness.impact._paths import data_path
 
 logger = logging.getLogger(__name__)
 
-_I18N_DIR = Path(__file__).resolve().parents[3] / "data" / "i18n"
+_I18N_DIR = data_path("i18n")
 _SUPPORTED_LOCALES = ("en", "es", "fr", "pt", "zh", "ar")
 
 

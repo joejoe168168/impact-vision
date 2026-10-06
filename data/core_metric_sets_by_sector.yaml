@@ -1,0 +1,129 @@
+# Core Metric Set per sector
+#
+# The gap analysis compares a company's reported IRIS+ metrics against a
+# "core set". A single microfinance-flavoured set used to be applied to every
+# company, so a pig farm was told its biggest gap was "Client Protection
+# Policy" and to start tracking "Revenue from Grants and Donations".
+#
+# Each sector set = `universal` (cross-cutting workforce, governance, climate
+# and target-setting metrics every company should report) + the sector list
+# below. Sectors not listed here fall back to `default`, which reproduces the
+# historical CORE_METRIC_SET_IDS so existing reports don't shift.
+#
+# Keys are canonical engine sectors (see normalize_sector in
+# tools/impact/common.py). Every ID must exist in the IRIS+ 5.3c catalog —
+# tests/test_sector_awareness.py enforces this.
+
+version: "1.0"
+source: "GIIN IRIS+ 5.3c catalog; curated per sector (Impact Vision v7 W0.3)"
+as_of: "2026-10-06"
+
+universal:
+  - OI8869   # Permanent Employees: Total
+  - OI6213   # Full-time Employees: Female
+  - OI1571   # Full-time Employees: Female Managers
+  - OI1582   # Wage Equity
+  - OI4724   # Workers Earning a Living Wage or Higher
+  - OI1075   # Board of Directors: Total
+  - OI1479   # Greenhouse Gas Emissions: Total
+  - OI4112   # Greenhouse Gas Emissions: Direct (Scope 1)
+  - OD4091   # Social and Environmental Targets
+  - OI4732   # Social and Environmental Performance Reporting
+
+# Historical one-size-fits-all set — used when the sector is unknown.
+default:
+  - OD8350   # Client Model
+  - OI4753   # Client Protection Policy
+  - PI4060   # Client Individuals: Total
+  - OI8869   # Permanent Employees: Total
+  - OI1571   # Full-time Employees: Female Managers
+  - OI6213   # Full-time Employees: Female
+  - FP3021   # Revenue from Grants and Donations
+  - FP4761   # Revenue Growth
+  - OI1479   # Greenhouse Gas Emissions: Total
+  - OI4112   # Greenhouse Gas Emissions: Direct (Scope 1)
+  - OD4091   # Social and Environmental Targets
+  - OI4732   # Social and Environmental Performance Reporting
+  - OI1582   # Wage Equity
+  - OI1075   # Board of Directors: Total
+  - OI5049   # Client Feedback System
+  - OI4324   # Community Service Policy
+
+sectors:
+  fintech:
+    - OD8350   # Client Model
+    - OI4753   # Client Protection Policy
+    - PI4060   # Client Individuals: Total
+    - OI5049   # Client Feedback System
+    - FP4761   # Revenue Growth
+    - FP2635   # Non-Performing Loans (Portfolio at Risk): 30 Days
+    - PI9319   # Client Retention Rate
+  agriculture: &agriculture
+    - PI9991   # Supplier Individuals: Smallholder
+    - PI7852   # Payments to Supplier Individuals: Smallholder
+    - OI6912   # Land Directly Controlled: Sustainably Managed
+    - OI0263   # Water Withdrawn
+    - OI9891   # Pesticide Use
+    - OI6709   # Waste Produced: Total
+    - OI3757   # Occupational Injuries
+  livestock: *agriculture
+  energy:
+    - PI4060   # Client Individuals: Total
+    - PI2822   # Client Individuals: Provided New Access
+    - PI5842   # Energy Generated for Sale: Renewable
+    - PD1504   # Energy Capacity of Products Sold
+    - OI2764   # Greenhouse Gas Emissions Avoided
+    - OI5049   # Client Feedback System
+    - OI3757   # Occupational Injuries
+  healthcare:
+    - PI4060   # Client Individuals: Total
+    - PI6845   # Patients Screened
+    - PI5060   # Patients Completing Treatment
+    - PI1017   # Healthcare Facilities
+    - PI3902   # Healthcare Crude Coverage
+    - OI5049   # Client Feedback System
+    - OI4753   # Client Protection Policy
+  education:
+    - PI4060   # Client Individuals: Total
+    - PI3786   # Student Attendance Rate
+    - PI5110   # Student to Teacher Ratio
+    - PI1902   # Teachers Qualified
+    - OI5896   # Teachers Employed
+    - PI3499   # Students Provided Partial Scholarship
+    - OI5049   # Client Feedback System
+  water:
+    - PI4060   # Client Individuals: Total
+    - OI0263   # Water Withdrawn
+    - OI1697   # Water Consumed: Total
+    - PD2020   # Water Provision Capacity of Products Sold: Total
+    - PD1403   # Water Provision Capacity of Products Sold: Potable
+    - OI1054   # Wastewater Removed
+    - OI5049   # Client Feedback System
+  real estate:
+    - PI2491   # Number of Housing Units Constructed
+    - PI6058   # Number of Housing Units Improved
+    - PI5965   # Number of Housing Units Financed
+    - OI8825   # Energy Purchased: Total
+    - OI6709   # Waste Produced: Total
+    - OI3757   # Occupational Injuries
+  construction:
+    - PI2491   # Number of Housing Units Constructed
+    - OI8825   # Energy Purchased: Total
+    - OI6709   # Waste Produced: Total
+    - OI4328   # Recycled Materials
+    - OI3757   # Occupational Injuries
+    - OI9266   # Fatal Occupational Injuries
+  manufacturing:
+    - OI8825   # Energy Purchased: Total
+    - OI0263   # Water Withdrawn
+    - OI6709   # Waste Produced: Total
+    - OI1346   # Waste Produced: Hazardous Waste
+    - OI4328   # Recycled Materials
+    - OI3757   # Occupational Injuries
+  waste management:
+    - OI6192   # Waste Disposed: Total
+    - OI2535   # Waste Disposed: Recycled/Reused
+    - OI8364   # Mass of Input Material Converted into Usable Recycled Output
+    - PI5926   # Waste Reductions from Products Sold
+    - OI1346   # Waste Produced: Hazardous Waste
+    - OI3757   # Occupational Injuries

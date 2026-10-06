@@ -28,6 +28,7 @@ def test_rest_decision_workflow_endpoint_returns_metadata() -> None:
     assert "metadata" in payload
     assert payload["metadata"]["company_name"] == "API Solar"
     assert payload["metadata"]["classification"] in {
+        "insufficient_evidence",
         "aligned_and_credible",
         "misaligned_but_improvable",
         "red_flag",

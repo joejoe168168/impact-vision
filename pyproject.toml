@@ -68,6 +68,7 @@ exclude = [
     "/build",
     "/dist",
     "/OpenHarness",
+    "*.db",
 ]
 
 [tool.hatch.build.targets.wheel.force-include]

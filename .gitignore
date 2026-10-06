@@ -72,3 +72,6 @@ react_tui_smoke.txt
 
 # demo screenshot tooling cache (vendored plotly.min.js, fetched on demand)
 demo/.cache/
+
+# Local assessment store (created at runtime, never shipped)
+data/impact_vision.db

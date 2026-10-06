@@ -14,9 +14,12 @@ compliance LLM behind a firewall.
 from __future__ import annotations
 
 from datetime import date
-from typing import Literal, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Literal, Protocol, runtime_checkable
 
 from pydantic import BaseModel, Field
+
+if TYPE_CHECKING:
+    from openharness.impact.models import ImpactClaim
 
 
 ClaimCategory = Literal[
@@ -28,6 +31,8 @@ ClaimCategory = Literal[
     "comparison",     # peer / benchmark comparison
     "estimate",       # modelled / estimated value
     "anecdote",       # qualitative / case-study
+    "verification",   # third-party verification / audit ("verified by SIRIM")
+    "evaluation",     # counterfactual evaluation ("randomized pilot vs control group")
     "unknown",
 ]
 
@@ -43,6 +48,14 @@ class ExtractedClaim(BaseModel):
     confidence: float = Field(ge=0, le=1, default=0.5)
     page_or_section: str | None = None
     suggested_iris_metric_id: str | None = None
+    evidence_signals: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Evidence-quality signals found in the claim sentence: "
+            "'third_party_verified', 'audited', 'certified', 'controlled_evaluation', "
+            "'baseline_comparison'."
+        ),
+    )
     raw_extractor_id: str = ""
 
 
@@ -141,3 +154,59 @@ def get_verifier(verifier_id: str = "noop") -> SourceVerifier:
             f"Unknown verifier '{verifier_id}'. Registered: {sorted(_VERIFIERS)}"
         )
     return _VERIFIERS[verifier_id]
+
+
+# NESTA-inspired evidence level implied by each signal (see ImpactClaim).
+_SIGNAL_EVIDENCE_LEVEL = {
+    "controlled_evaluation": 3,
+    "third_party_verified": 3,
+    "audited": 2,
+    "certified": 2,
+    "baseline_comparison": 2,
+}
+
+_CATEGORY_TO_IMPACT_CLAIM = {
+    "outcome": "outcome",
+    "comparison": "outcome",
+    "estimate": "outcome",
+    "evaluation": "outcome",
+    "output": "output",
+    "input": "output",
+    "certification": "output",
+    "verification": "output",
+    "commitment": "intent",
+    "anecdote": "activity",
+    "unknown": "activity",
+}
+
+
+def to_impact_claims(claims: list[ExtractedClaim]) -> list["ImpactClaim"]:
+    """Convert extractor output into ``ImpactClaim`` evidence for reports.
+
+    Every extracted claim is kept — with or without an IRIS+ metric ID — so a
+    pitch full of quantified, verified outcomes is never reported as
+    "0 claims / no verification" just because no catalogue ID was suggested.
+    """
+    from openharness.impact.models import ImpactClaim
+
+    out: list[ImpactClaim] = []
+    for c in claims:
+        level = max([1, *(_SIGNAL_EVIDENCE_LEVEL.get(s, 1) for s in c.evidence_signals)])
+        if c.metric_value is not None and level == 1:
+            level = 2  # quantified data showing change
+        entities: dict[str, list[str]] = {}
+        if c.evidence_signals:
+            entities["evidence"] = list(c.evidence_signals)
+        if c.geography:
+            entities["geographies"] = [c.geography]
+        claim = ImpactClaim(
+            text=c.text,
+            source_page=int(c.page_or_section) if (c.page_or_section or "").isdigit() else None,
+            mapped_metrics=[c.suggested_iris_metric_id] if c.suggested_iris_metric_id else [],
+            category=_CATEGORY_TO_IMPACT_CLAIM.get(c.category, "activity"),
+            evidence_strength=level,
+            entities=entities,
+        )
+        claim.recalibrate_confidence()
+        out.append(claim)
+    return out

@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 import re
-from pathlib import Path
 from typing import Literal
 import yaml
 from pydantic import BaseModel, Field
+from openharness.impact._paths import data_path
 
 
 class DisclosureItem(BaseModel):
@@ -29,7 +29,7 @@ class DisclosureChecklist(BaseModel):
 
 def load_checklist(topic_id: str) -> DisclosureChecklist:
     path = (
-        Path(__file__).resolve().parents[3] / "data" / "disclosure_checklists" / f"{topic_id}.yaml"
+        data_path("disclosure_checklists", f"{topic_id}.yaml")
     )
     if not path.exists():
         raise KeyError(f"Unknown disclosure checklist topic: {topic_id}")

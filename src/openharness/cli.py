@@ -528,6 +528,26 @@ def framework_list_cmd() -> None:
         print(f"  {'':12} {detail}")
 
 
+def _read_text_or_path(value: str) -> str:
+    """Return file contents when *value* is an existing path, else *value* itself.
+
+    Long pasted text must not be probed as a path (OSError: File name too long).
+    """
+    if len(value) < 1024 and "\n" not in value:
+        try:
+            path = Path(value)
+            if path.is_file():
+                return path.read_text(encoding="utf-8")
+        except OSError:
+            pass
+    return value
+
+
+# Below this many words, keyword-coverage scans can't tell "not disclosed"
+# from "not provided" — say so instead of printing a bare 0%.
+_MIN_SCAN_WORDS = 80
+
+
 @framework_app.command("scan")
 def framework_scan_cmd(
     description: str = typer.Argument(..., help="Company description for assessment"),
@@ -543,6 +563,12 @@ def framework_scan_cmd(
 
     print("MULTI-FRAMEWORK ESG SCAN")
     print(f"{'=' * 50}")
+    words = len(description.split())
+    if words < _MIN_SCAN_WORDS:
+        print(
+            f"Note: only {words} words of input. Coverage below reflects missing text, not "
+            "missing practice — scan a full disclosure, memo or pitch deck for a real result.\n"
+        )
 
     sasb = match_sasb_industry(sector, description)
     if sasb:
@@ -653,15 +679,28 @@ def dd_categories_cmd() -> None:
 @dd_app.command("analyze")
 def dd_analyze_cmd(
     text: str = typer.Argument(..., help="Document text to analyze (or file path)"),
+    sector: str = typer.Option(
+        "auto",
+        "--sector",
+        "-s",
+        help="Company sector (e.g. agriculture, 'Financial Services'); 'auto' infers it, 'all' keeps every sector's questions",
+    ),
+    as_json: bool = typer.Option(False, "--json", help="Print the full result as JSON"),
 ) -> None:
     """Analyze document text against the DD checklist."""
     from openharness.impact.dd_checklist import analyze_document_coverage
 
-    doc_text = text
-    if Path(text).exists():
-        doc_text = Path(text).read_text(encoding="utf-8")
-
-    result = analyze_document_coverage(doc_text)
+    doc_text = _read_text_or_path(text)
+    result = analyze_document_coverage(doc_text, sector=None if sector == "all" else sector)
+    if as_json:
+        print(result.model_dump_json(indent=2))
+        return
+    words = len(doc_text.split())
+    if words < _MIN_SCAN_WORDS:
+        print(
+            f"Insufficient text: only {words} words. Paste the pitch deck / memo text or pass a "
+            "file path for a meaningful DD coverage result."
+        )
     print(f"DD Checklist Coverage: {result.coverage_pct}%")
     print(f"Addressed: {len(result.addressed)}/{result.total_questions}")
     print(f"High-Priority Gaps: {len(result.high_priority_gaps)}")

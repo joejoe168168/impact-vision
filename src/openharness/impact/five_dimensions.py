@@ -9,6 +9,7 @@ import yaml
 
 from openharness.impact.database import MetricStore
 from openharness.impact.models import Company, DimensionScore, FiveDimensionScore
+from openharness.impact._paths import data_path
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +67,7 @@ def _load_scoring_config() -> dict:
         return _config_cache
 
     config_paths = [
-        Path(__file__).parent.parent.parent.parent / "data" / "scoring_config.yaml",
+        data_path("scoring_config.yaml"),
         Path("data/scoring_config.yaml"),
     ]
     for path in config_paths:

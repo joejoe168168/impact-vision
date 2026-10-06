@@ -28,6 +28,7 @@ from typing import Literal
 
 import yaml
 from pydantic import BaseModel, Field
+from openharness.impact._paths import data_path as bundled_data_path
 
 
 class ESRSDatapoint(BaseModel):
@@ -54,7 +55,7 @@ def simplified_esrs_metadata(path: str | Path | None = None) -> dict:
     data_path = (
         Path(path)
         if path
-        else Path(__file__).resolve().parents[4] / "data" / "esrs_simplified_2026.yaml"
+        else bundled_data_path("esrs_simplified_2026.yaml")
     )
     payload = yaml.safe_load(data_path.read_text(encoding="utf-8")) or {}
     return {
@@ -109,7 +110,7 @@ def load_simplified_datapoints(path: str | Path | None = None) -> list[ESRSDatap
     data_path = (
         Path(path)
         if path
-        else Path(__file__).resolve().parents[4] / "data" / "esrs_simplified_2026.yaml"
+        else bundled_data_path("esrs_simplified_2026.yaml")
     )
     payload = yaml.safe_load(data_path.read_text(encoding="utf-8"))
     rows = list(payload.get("datapoints", []))

@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import json
 from collections.abc import Iterable
-from pathlib import Path
 
+from openharness.impact._paths import data_path
 from openharness.impact.toolbox.models import (
     CalculatorMethod,
     RequirementItem,
@@ -26,8 +26,8 @@ TOOLBOX_CATEGORIES: dict[str, str] = {
 }
 
 OHESG_BASE = "https://tool.ohesg.com"
-_SNAPSHOT_PATH = Path(__file__).resolve().parents[4] / "data" / "raw" / "ohesg_toolbox_snapshot.json"
-_SOURCE_PROFILE_DIR = Path(__file__).resolve().parents[4] / "data" / "raw" / "ohesg_toolbox"
+_SNAPSHOT_PATH = data_path("raw", "ohesg_toolbox_snapshot.json")
+_SOURCE_PROFILE_DIR = data_path("raw", "ohesg_toolbox")
 
 
 def _load_ohesg_landing_tools() -> dict[str, dict[str, object]]:

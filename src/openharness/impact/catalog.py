@@ -10,6 +10,7 @@ from typing import Any
 import openpyxl
 
 from openharness.impact.models import DimensionTags, JointImpactIndicators, Metric
+from openharness.impact._paths import data_path
 
 logger = logging.getLogger(__name__)
 
@@ -306,7 +307,7 @@ def load_catalog_json(json_path: str | Path) -> list[Metric]:
 def get_default_excel_path() -> Path:
     """Return the default path to the IRIS+ catalog Excel."""
     candidates = [
-        Path(__file__).parent.parent.parent.parent / "data" / "raw" / "IRIS 5.3c Catalog of Metrics.xlsx",
+        data_path("raw", "IRIS 5.3c Catalog of Metrics.xlsx"),
         Path.cwd() / "data" / "raw" / "IRIS 5.3c Catalog of Metrics.xlsx",
     ]
     for path in candidates:
@@ -318,7 +319,7 @@ def get_default_excel_path() -> Path:
 def get_default_json_path() -> Path:
     """Return the default path for the processed JSON catalog."""
     candidates = [
-        Path(__file__).parent.parent.parent.parent / "data" / "processed" / "iris_catalog_5.3c.json",
+        data_path("processed", "iris_catalog_5.3c.json"),
         Path.cwd() / "data" / "processed" / "iris_catalog_5.3c.json",
     ]
     for path in candidates:

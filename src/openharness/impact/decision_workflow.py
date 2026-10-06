@@ -25,7 +25,19 @@ from openharness.impact.sdg_mapper import map_sdg_alignment
 from openharness.impact.verdict_engine import VerdictCard, build_verdict_card
 
 
-QuickScreenClassification = Literal["aligned_and_credible", "misaligned_but_improvable", "red_flag"]
+QuickScreenClassification = Literal[
+    "aligned_and_credible", "misaligned_but_improvable", "red_flag", "insufficient_evidence"
+]
+
+# Below these thresholds a screen can't distinguish "bad deal" from "thin
+# input", so it says so instead of returning a red flag.
+_MIN_EVIDENCE_WORDS = 80
+_MIN_EVIDENCE_METRICS = 3
+_MIN_QUANTIFIED_CLAIMS = 2
+# Gate checks whose failure on estimated-only scores means "no data", plus the
+# greenwashing score at which risk is a finding in its own right.
+_DATA_GAP_CHECKS = {"5D overall score", "Top SDG score", "DD checklist coverage", "Greenwashing risk"}
+_GREENWASHING_RED_FLAG = 60.0
 LPBadgeStatus = Literal["lp_ready", "needs_work", "blocked"]
 
 
@@ -56,6 +68,50 @@ class ProofAppendix(BaseModel):
     evidence_chains: dict[str, EvidenceChainNode] = Field(default_factory=dict)
 
 
+class EvidenceSufficiency(BaseModel):
+    sufficient: bool
+    words: int = 0
+    reported_metrics: int = 0
+    quantified_claims: int = 0
+    reasons: list[str] = Field(default_factory=list)
+
+
+def assess_evidence_sufficiency(
+    company: Company,
+    claims: list[ImpactClaim | dict[str, Any]] | None = None,
+) -> EvidenceSufficiency:
+    """Is there enough input to screen this company at all?
+
+    Insufficient when the description + claims are short *and* there are
+    few reported metrics *and* few quantified claims.
+    """
+    texts = [company.description or ""]
+    quantified = 0
+    for claim in claims or []:
+        text = claim.text if isinstance(claim, ImpactClaim) else str((claim or {}).get("text", ""))
+        texts.append(text)
+        if any(ch.isdigit() for ch in text):
+            quantified += 1
+    words = sum(len(t.split()) for t in texts)
+    metrics = len(company.reported_metrics)
+    sufficient = (
+        words >= _MIN_EVIDENCE_WORDS
+        or metrics >= _MIN_EVIDENCE_METRICS
+        or quantified >= _MIN_QUANTIFIED_CLAIMS
+    )
+    reasons = [] if sufficient else [
+        f"Only {words} words of description/claims, {metrics} reported IRIS+ metrics and "
+        f"{quantified} quantified claims — not enough to judge impact either way."
+    ]
+    return EvidenceSufficiency(
+        sufficient=sufficient,
+        words=words,
+        reported_metrics=metrics,
+        quantified_claims=quantified,
+        reasons=reasons,
+    )
+
+
 class QuickScreenResult(BaseModel):
     company_name: str
     classification: QuickScreenClassification
@@ -63,6 +119,7 @@ class QuickScreenResult(BaseModel):
     verdict: Literal["pass", "caution", "fail"]
     reasons: list[str] = Field(default_factory=list)
     required_followups: list[str] = Field(default_factory=list)
+    evidence: EvidenceSufficiency | None = None
     generated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 
@@ -286,6 +343,42 @@ def quick_screen(
         dd_coverage_pct=dd_coverage_pct,
         exclusion_pass=exclusion_pass,
     )
+    evidence = assess_evidence_sufficiency(company, claims)
+    fd = summary.assessment.five_dimensions
+    failed = [c for c in summary.scorecard.checks if c.status == "fail"]
+    estimated_only = fd is not None and fd.overall_provenance == "estimated"
+    data_gap_failures = bool(failed) and estimated_only and all(
+        c.name in _DATA_GAP_CHECKS
+        and (c.name != "Greenwashing risk" or float(c.actual or 0) < _GREENWASHING_RED_FLAG)
+        for c in failed
+    )
+    if evidence.sufficient and data_gap_failures:
+        # Every failure is a threshold on a score estimated from text alone:
+        # that is missing data, not a negative finding.
+        evidence = evidence.model_copy(update={
+            "sufficient": False,
+            "reasons": [
+                "Scores are estimated from text only (no IRIS+ metrics reported), so the "
+                "failed checks reflect missing data rather than negative findings: "
+                + "; ".join(f"{c.name} {c.actual} vs {c.threshold}" for c in failed)
+                + "."
+            ],
+        })
+    if exclusion_pass is not False and not evidence.sufficient:
+        # Thin input is not a red flag; ask for the material instead.
+        return QuickScreenResult(
+            company_name=company.name,
+            classification="insufficient_evidence",
+            gate_status=summary.scorecard.overall_status,
+            verdict=summary.verdict_card.verdict,
+            reasons=evidence.reasons,
+            required_followups=[
+                "Share the pitch deck, investment memo or latest impact report.",
+                "Report at least 3 IRIS+ metrics (e.g. clients reached, jobs, GHG avoided).",
+                "Describe the outcome for beneficiaries with numbers and a baseline.",
+            ],
+            evidence=evidence,
+        )
     if summary.scorecard.overall_status == "fail" or summary.verdict_card.verdict == "fail":
         classification: QuickScreenClassification = "red_flag"
     elif summary.scorecard.overall_status == "warn" or summary.verdict_card.verdict == "caution":
@@ -307,6 +400,7 @@ def quick_screen(
         verdict=summary.verdict_card.verdict,
         reasons=reasons[:5],
         required_followups=summary.verdict_card.next_steps[:5],
+        evidence=evidence,
     )
 
 

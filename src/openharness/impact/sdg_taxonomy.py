@@ -1,10 +1,10 @@
 """UN SDG reference data: 17 goals with targets and descriptions."""
 
 from __future__ import annotations
-from pathlib import Path
 import yaml
 
 from openharness.impact.models import SDGGoal, SDGTarget
+from openharness.impact._paths import data_path
 
 SDG_GOALS: list[SDGGoal] = [
     SDGGoal(
@@ -801,7 +801,7 @@ def get_all_targets() -> list[SDGTarget]:
 
 
 def sdg_need_context(geography: str, sdg_goals: list[int]) -> dict:
-    path = Path(__file__).resolve().parents[3] / "data/sdg_need_context.yaml"
+    path = data_path("sdg_need_context.yaml")
     payload = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     country = payload.get("countries", {}).get(geography, {})
     rows = [

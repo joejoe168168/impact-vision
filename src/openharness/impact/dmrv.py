@@ -4,14 +4,13 @@ from __future__ import annotations
 
 import hashlib
 import json
-import os
 from typing import Literal
 
 from pydantic import BaseModel, model_validator
 
 from openharness.impact.evidence_graph import EvidenceGraph, EvidenceLink, EvidenceNode
 from openharness.impact.models import MetricRecord
-from openharness.impact.signed_feed import HMACSigner
+from openharness.impact.signed_feed import HMACSigner, get_signer
 
 
 class TimeSeriesEvidence(BaseModel):
@@ -92,20 +91,10 @@ def verify_anchor(envelope: dict, signer) -> bool:
 def get_dmrv_signer(*, key: bytes | str | None = None) -> HMACSigner:
     """Return the HMAC signer for dMRV envelopes.
 
-    Production deployments must set ``IMPACT_VISION_DMRV_HMAC_KEY``. A
-    development default is used only when ``IMPACT_VISION_ALLOW_DEV_KEYS``
-    is not ``0``.
+    Production deployments must set ``IMPACT_VISION_DMRV_HMAC_KEY`` (see
+    :func:`openharness.impact.signed_feed.resolve_signing_key`).
     """
-    raw = key if key is not None else os.environ.get("IMPACT_VISION_DMRV_HMAC_KEY")
-    if not raw:
-        if os.environ.get("IMPACT_VISION_ALLOW_DEV_KEYS", "1") == "0":
-            raise ValueError(
-                "IMPACT_VISION_DMRV_HMAC_KEY is required when IMPACT_VISION_ALLOW_DEV_KEYS=0"
-            )
-        raw = "impact-vision-dmrv"
-    if isinstance(raw, str):
-        raw = raw.encode("utf-8")
-    return HMACSigner(key=raw)
+    return get_signer("dmrv", key)
 
 
 def observations_to_series(observations: list, metric_id: str) -> TimeSeriesEvidence:

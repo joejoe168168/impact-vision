@@ -22,6 +22,7 @@ from openharness.impact.engagements.regulatory import (
     schedule_deadlines,
 )
 from openharness.impact.issb_reporting import s2_amendment_summary
+from openharness.impact._paths import data_path as bundled_data_path
 
 
 class RegulatoryCalendarItem(BaseModel):
@@ -211,7 +212,7 @@ def jurisdiction_options() -> list[dict[str, object]]:
 
 def issb_summary(path: str | Path | None = None) -> list[dict]:
     data_path = (
-        Path(path) if path else Path(__file__).resolve().parents[3] / "data" / "issb_adoption.yaml"
+        Path(path) if path else bundled_data_path("issb_adoption.yaml")
     )
     payload = yaml.safe_load(data_path.read_text(encoding="utf-8")) or {}
     required = {"jurisdiction", "status", "effective", "scope", "assurance_posture", "source"}

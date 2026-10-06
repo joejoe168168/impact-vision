@@ -20,6 +20,74 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Fixed — v7 Wave 0 trust fixes (see `docs/roadmap-v7.md` §4)
+
+- **Installed wheels lost their reference data (W0.1).** About 20 loaders
+  resolved `Path(__file__).parents[3] / "data"`, which points outside
+  site-packages, so a pip-installed copy silently scored with hard-coded
+  fallbacks and an empty DD checklist. All loaders now go through
+  `impact._paths.data_path()` (`IMPACT_VISION_DATA_DIR` → repo `data/` →
+  wheel `openharness/_data`). The empty `data/impact_vision.db` is no longer
+  tracked or shipped; the SQLite default moves to `~/.impact-vision/`
+  (`IMPACT_VISION_DB` overrides; an existing `./data/impact_vision.db` is
+  still used). New CI job `wheel-smoke` builds the wheel, installs it in a
+  clean venv and runs `scripts/wheel_smoke.py` from outside the repo.
+- **The SDK ran without the IRIS+ catalog.** `ImpactVision()` only read the
+  processed JSON cache, so on fresh installs its metric store was empty and
+  SDG/gap scoring ran on keywords alone. It now uses `get_metric_store()`.
+- **Extracted claims are evidence (W0.2).** Claims without an IRIS+ ID were
+  dropped, so an evidence-rich pitch reported "0 tracked / NO_VERIFICATION".
+  `assess_company_text()` now returns them as `Assessment.impact_claims`
+  (NESTA level from evidence signals), `screen_greenwashing()` accepts the
+  `Assessment` and counts verification signals, and claim cards show
+  evidence badges. The regex extractor no longer splits decimals
+  ("1.8 GWh" → "8 GWh"), recognises GWh/MW/tonnes/staff/clients, tags
+  forward-looking targets as commitments, and detects third-party
+  verification, audits and controlled evaluations.
+- **Sector-aware DD, core metrics and risks (W0.3).** DD runs universal
+  questions plus the company's sector set (`sector="auto"` infers it), so a
+  pig farm no longer gets Fintech/Health/Mining questions. Gap analysis uses
+  per-sector core sets from `data/core_metric_sets_by_sector.yaml`
+  (unknown sectors keep the historical set) and reports
+  `core_metric_set_basis`. Risks now lead with risks disclosed in the
+  document; sector templates match on the canonical sector and word
+  boundaries ("energy" no longer fires on "synergy").
+- **Plausible SDG results (W0.4).** Matched targets are filtered to the goal;
+  curated per-SDG core sets are intersected with the catalog's own SDG tags;
+  cross-cutting metrics (tagged to 6+ goals) count at 0.4 weight and cannot
+  alone produce "high" confidence; theme suggestions are ranked by relevance
+  instead of alphabetically. New `SDGAlignment.material` flag; gap
+  recommendations skip non-material goals.
+- **No false red flags from thin input (W0.5).** `quick_screen` returns
+  `insufficient_evidence` (with follow-ups) when input is too thin, or when
+  every failed gate check is a threshold on text-only estimated scores.
+  Exclusion failures remain red flags. DD matching tolerates inflections,
+  adds synonyms and gives partial credit per keyword hit (a clear solar pitch
+  went from 0% to 16%). `impact-vision dd analyze` gains `--sector` and
+  `--json`, and both it and `framework scan` warn on short input instead of
+  printing a bare 0%. `dd analyze` no longer crashes on long pasted text.
+- **HTML escaping (W0.6).** Company names, claim text, evidence-chain
+  values, targets, beneficiary-feedback methodology and document titles
+  are escaped in the impact report and the shared report chrome; a
+  regression test injects payloads into every user-supplied field.
+- **Report options that did nothing (W0.7).** HTML reports with impact
+  targets crashed (`AttributeError` on the target summary). `report_type=
+  "lp_ready"` now renders the LP view; any single-audience report is filtered
+  server-side (sections and their data, e.g. greenwashing flags for public),
+  drops the audience toggle, and carries an audience-appropriate
+  distribution notice. The table of contents is built from the sections
+  actually rendered, in page order.
+- **Signing keys fail closed in production (W0.8).** Audit trail, LP portal,
+  LP data room, assurance bundle and dMRV signers resolve keys from
+  `IMPACT_VISION_<PURPOSE>_HMAC_KEY` / `IMPACT_VISION_HMAC_KEY`. Without one
+  they fall back to the public development key, labelled `hmac-sha256-dev`
+  (assurance manifests carry `key_id="development-default"`), and refuse to
+  sign when `IMPACT_VISION_ENV=production` or
+  `IMPACT_VISION_ALLOW_DEV_KEYS=0`. Keys resolve lazily, so the tool
+  registry still loads in production without them.
+- **Golden-company tests (W0.9).** Pig farm, BrightPath and a solar deck
+  are pinned with plausibility assertions (`tests/test_golden_companies.py`).
+
 ### Added
 
 - **Just Transition, SBTN and biodiversity-credit content.** Replaced

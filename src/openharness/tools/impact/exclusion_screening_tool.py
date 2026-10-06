@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field
 
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 from openharness.tools.impact.common import keyword_match_with_context
+from openharness.impact._paths import data_path
 
 
 _DEFAULT_CRITERIA: dict[str, dict] = {
@@ -45,7 +46,7 @@ def _load_exclusion_criteria() -> dict[str, dict]:
         return _criteria_cache
 
     paths = [
-        Path(__file__).parent.parent.parent.parent / "data" / "exclusion_criteria.yaml",
+        data_path("exclusion_criteria.yaml"),
         Path("data/exclusion_criteria.yaml"),
     ]
     for path in paths:

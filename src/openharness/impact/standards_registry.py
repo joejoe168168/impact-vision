@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Literal
 import yaml
 
 from pydantic import BaseModel, Field, field_validator
+from openharness.impact._paths import data_path
 
 
 StandardStatus = Literal["active", "draft", "under_revision", "superseded"]
@@ -25,7 +25,7 @@ class StandardArticle(BaseModel):
 
 def load_articles(standard_id: str) -> list[StandardArticle]:
     filename = standard_id.strip().lower().replace("-", "_")
-    path = Path(__file__).resolve().parents[3] / "data" / "standard_articles" / f"{filename}.yaml"
+    path = data_path("standard_articles", f"{filename}.yaml")
     if not path.exists():
         raise KeyError(f"No article data for {standard_id}")
     payload = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
