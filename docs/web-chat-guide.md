@@ -288,8 +288,13 @@ the browser.
 
 ## 7. Permissions and safety
 
-Impact Vision runs real tools on the machine hosting the server — reading and
-writing files, running commands. In the default permission mode every mutating
+The web chat starts every conversation in the **fund** tool profile: the impact
+tools plus safe helpers (read and search files, web search/fetch, ask you a
+question). Shell commands, file edits, git worktrees, schedulers and
+sub-agents are not available. Set `IMPACT_VISION_TOOL_PROFILE=developer`
+before `impact-vision serve-web` to restore the full coding-agent toolset.
+
+Tools still act on the machine hosting the server. In the default permission mode every mutating
 tool triggers an **Allow / Deny** dialog showing the tool name and why it needs
 confirmation. Read-only tools run without prompting.
 
@@ -460,6 +465,7 @@ at *Default* so writes require an explicit approval.
 | `IMPACT_VISION_MAX_UPLOAD_MB` | `64` | Per-file upload limit |
 | `IMPACT_VISION_DOWNLOAD_ROOTS` | *(unset)* | Extra directories downloads may serve from |
 | `IMPACT_VISION_WEB_HOME` | `~/.openharness` | Base directory for stored transcripts |
+| `IMPACT_VISION_TOOL_PROFILE` | `fund` (web) / `developer` (terminal) | `fund` = impact tools + safe helpers; `developer` = full coding-agent toolset |
 | `OPENHARNESS_CONFIG_DIR` | `~/.openharness` | Settings and credentials |
 | `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` | *(unset)* | Picked up if no key is stored |
 

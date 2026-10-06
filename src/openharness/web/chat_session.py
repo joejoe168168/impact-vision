@@ -138,6 +138,11 @@ class SessionOptions:
     cwd: str | None = None
     extra_skill_dirs: tuple[str, ...] = ()
     extra_plugin_roots: tuple[str, ...] = ()
+    # Web chat is for fund managers / consultants: impact tools only, no shell
+    # or file writes. IMPACT_VISION_TOOL_PROFILE=developer restores everything.
+    tool_profile: str | None = field(
+        default_factory=lambda: os.environ.get("IMPACT_VISION_TOOL_PROFILE") or "fund"
+    )
     # Injected client — used by tests and by embedders that already hold a
     # configured API client. Never persisted.
     api_client: Any = None
@@ -200,6 +205,7 @@ class ChatSession:
                     permission_mode=opts.permission_mode,
                     extra_skill_dirs=opts.extra_skill_dirs or None,
                     extra_plugin_roots=opts.extra_plugin_roots or None,
+                    tool_profile=opts.tool_profile,
                 )
                 await start_runtime(self._bundle)
             except SystemExit as exc:

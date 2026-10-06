@@ -21,8 +21,47 @@ def _register_if_available(registry: ToolRegistry, module_name: str, class_name:
     registry.register(tool_cls())
 
 
-def create_default_tool_registry(mcp_manager: McpClientManager | None = None) -> ToolRegistry:
-    """Build a default tool registry with built-in tools and optional MCP tools."""
+# Tool profiles (v7 W1.4). "developer" is the full coding-agent surface; "fund"
+# is what a fund manager / consultant needs: the impact tools plus safe helpers
+# to read uploaded files, research the web and ask questions — no shell, file
+# writes, worktrees, agent orchestration or schedulers.
+TOOL_PROFILES = ("developer", "fund")
+TOOL_PROFILE_ENV = "IMPACT_VISION_TOOL_PROFILE"
+_FUND_CORE_TOOLS = frozenset({
+    "glob_tool",
+    "grep_tool",
+    "file_read_tool",
+    "tool_search_tool",
+    "skill_tool",
+    "todo_write_tool",
+    "web_fetch_tool",
+    "web_search_tool",
+    "ask_user_question_tool",
+})
+
+
+def resolve_tool_profile(profile: str | None = None) -> str:
+    """Explicit *profile* → ``IMPACT_VISION_TOOL_PROFILE`` → ``developer``."""
+    import os
+
+    value = (profile or os.environ.get(TOOL_PROFILE_ENV) or "developer").strip().lower()
+    if value not in TOOL_PROFILES:
+        raise ValueError(f"Unknown tool profile {value!r}; choose from {', '.join(TOOL_PROFILES)}")
+    return value
+
+
+def create_default_tool_registry(
+    mcp_manager: McpClientManager | None = None,
+    *,
+    profile: str | None = None,
+) -> ToolRegistry:
+    """Build a default tool registry with built-in tools and optional MCP tools.
+
+    ``profile="fund"`` exposes only the impact tools plus safe read/research
+    helpers (see ``TOOL_PROFILES``); the default ``developer`` profile keeps the
+    full coding-agent surface.
+    """
+    profile = resolve_tool_profile(profile)
     registry = ToolRegistry()
 
     core_tools: tuple[tuple[str, str], ...] = (
@@ -65,6 +104,8 @@ def create_default_tool_registry(mcp_manager: McpClientManager | None = None) ->
         ("mcp_auth_tool", "McpAuthTool"),
     )
     for module_name, class_name in core_tools:
+        if profile == "fund" and module_name not in _FUND_CORE_TOOLS:
+            continue
         _register_if_available(registry, module_name, class_name)
 
     impact_tools: tuple[tuple[str, str], ...] = (
@@ -147,4 +188,10 @@ def create_default_tool_registry(mcp_manager: McpClientManager | None = None) ->
     return registry
 
 
-__all__ = ["ToolRegistry", "create_default_tool_registry"]
+__all__ = [
+    "TOOL_PROFILES",
+    "TOOL_PROFILE_ENV",
+    "ToolRegistry",
+    "create_default_tool_registry",
+    "resolve_tool_profile",
+]

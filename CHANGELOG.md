@@ -47,6 +47,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
   is now optional on those tools when an `assessment_id` is given. The
   `deal_screening` playbook drops from seven tool calls to three. The impact
   tool count is 53.
+- **Fund-manager tool profile (W1.4).** `create_default_tool_registry(profile=
+  "fund")` exposes the impact tools plus safe helpers (read, glob, grep, web
+  search/fetch, ask-user, to-do list, skills, tool search): 62 tools instead
+  of 90, and no bash, file writes, worktrees, plan mode, tasks, sub-agents,
+  cron or teams. The web chat defaults to it. The terminal agent keeps the
+  `developer` profile. `IMPACT_VISION_TOOL_PROFILE` overrides either.
 
 ### Security
 

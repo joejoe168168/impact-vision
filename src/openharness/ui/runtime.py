@@ -188,6 +188,7 @@ async def build_runtime(
     permission_mode: str | None = None,
     extra_skill_dirs: Iterable[str | Path] | None = None,
     extra_plugin_roots: Iterable[str | Path] | None = None,
+    tool_profile: str | None = None,
 ) -> RuntimeBundle:
     """Build the shared runtime for an OpenHarness session."""
     settings_overrides: dict[str, Any] = {
@@ -211,7 +212,7 @@ async def build_runtime(
         resolved_api_client = _resolve_api_client_from_settings(settings)
     mcp_manager = McpClientManager(load_mcp_server_configs(settings, plugins))
     await mcp_manager.connect_all()
-    tool_registry = create_default_tool_registry(mcp_manager)
+    tool_registry = create_default_tool_registry(mcp_manager, profile=tool_profile)
     provider = detect_provider(settings)
     bridge_manager = get_bridge_manager()
     app_state = AppStateStore(
