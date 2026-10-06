@@ -460,7 +460,7 @@ class FrameworkTool(BaseTool):
         return ToolResult(output=f"sfdr2 does not support action: {args.action}", is_error=True)
 
     def _handle_sfdr_v2(self, args: FrameworkInput) -> ToolResult:
-        from openharness.impact.frameworks.sfdr_v2 import (
+        from openharness.impact.frameworks.sfdr_recast import (
             MANDATORY_EXCLUSIONS,
             PortfolioHolding,
             SFDR_V2_CATEGORY_LABELS,

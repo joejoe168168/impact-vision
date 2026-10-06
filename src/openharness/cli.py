@@ -2277,7 +2277,7 @@ def framework_sfdr2_cmd(
     threshold: float = typer.Option(0.70, min=0.0, max=1.0),
 ) -> None:
     """Preview migration to the proposed SFDR 2.0 categories."""
-    from openharness.impact.frameworks.sfdr_v2 import PortfolioHolding, migrate_from_v1
+    from openharness.impact.frameworks.sfdr_recast import PortfolioHolding, migrate_from_v1
 
     rows = [
         PortfolioHolding.model_validate(row)
@@ -2285,7 +2285,7 @@ def framework_sfdr2_cmd(
     ]
     result = migrate_from_v1(article, rows)
     if threshold != 0.70:
-        from openharness.impact.frameworks.sfdr_v2 import classify_sfdr_v2
+        from openharness.impact.frameworks.sfdr_recast import classify_sfdr_v2
 
         result["result"] = classify_sfdr_v2(rows, result["result"].category, threshold)
     print(json.dumps(result, indent=2, default=str))

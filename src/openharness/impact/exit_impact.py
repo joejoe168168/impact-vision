@@ -216,7 +216,34 @@ def build_exit_plan(
     )
 
 
+# ---------------------------------------------------------------------------
+# Moved from roadmap_v2 (v7 W5.4)
+# ---------------------------------------------------------------------------
+
+class ExitImpactAssessment(BaseModel):
+    """Impact at exit assessment linked to OPIM Principle 7."""
+
+    company_name: str
+    opim_principle: str = "OPIM Principle 7"
+    durability_risks: list[str] = Field(default_factory=list)
+    post_exit_actions: list[str] = Field(default_factory=list)
+    residual_score: int = Field(ge=0, le=100)
+
+
+class ImpactLearningLoop(BaseModel):
+    """Hypothesis -> metric -> result -> action -> follow-up loop."""
+
+    hypothesis: str
+    metric_id: str
+    result: str
+    management_action: str
+    follow_up_period: str
+
+
 __all__ = [
+    "ExitImpactAssessment",
+    "ImpactLearningLoop",
+
     "DurabilityLikelihood",
     "DurabilitySeverity",
     "ExitDurabilityRisk",

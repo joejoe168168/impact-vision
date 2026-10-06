@@ -397,7 +397,7 @@ class EngagementSuiteTool(BaseTool):
                 ]
             }
         if action == "sfdr_v2_migrate":
-            from openharness.impact.frameworks.sfdr_v2 import PortfolioHolding, migrate_from_v1
+            from openharness.impact.frameworks.sfdr_recast import PortfolioHolding, migrate_from_v1
 
             result = migrate_from_v1(
                 str(p.get("article", "8")),

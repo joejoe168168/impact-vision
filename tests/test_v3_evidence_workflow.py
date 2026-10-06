@@ -10,7 +10,7 @@ from openharness.impact.evidence_workflow import (
     ReviewQueue,
     build_review_item_from_extraction,
 )
-from openharness.impact.roadmap_v2 import AIExtractionReview
+from openharness.impact.ai_review import AIExtractionReview
 
 
 def _review(item_id: str, *, confidence: float, source_refs: list[str] | None = None) -> AIExtractionReview:

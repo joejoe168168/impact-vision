@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from datetime import date
 from enum import Enum
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 from openharness.impact.audit_trail import AuditTrail
@@ -168,7 +170,101 @@ def attribution_sanity_check(company: str, investor_claims: list[dict]) -> dict:
     }
 
 
+# ---------------------------------------------------------------------------
+# Moved from roadmap_v2 (v7 W5.4)
+# ---------------------------------------------------------------------------
+
+class ContributionAnalysis(BaseModel):
+    """IMP/Impact Frontiers-style contribution workflow."""
+
+    hypothesis: str
+    contribution_claim: str
+    evidence_for: list[str] = Field(default_factory=list)
+    evidence_against: list[str] = Field(default_factory=list)
+    confidence_score: float = Field(ge=0, le=1)
+
+
+def run_contribution_analysis(
+    *,
+    hypothesis: str,
+    contribution_claim: str,
+    evidence_for: list[str],
+    evidence_against: list[str],
+) -> ContributionAnalysis:
+    """Score a contribution claim from supporting and contradicting evidence."""
+    total = len(evidence_for) + len(evidence_against)
+    confidence = len(evidence_for) / total if total else 0.0
+    return ContributionAnalysis(
+        hypothesis=hypothesis,
+        contribution_claim=contribution_claim,
+        evidence_for=evidence_for,
+        evidence_against=evidence_against,
+        confidence_score=round(confidence, 3),
+    )
+
+
+def generate_counterfactual_questions(sector: str, business_model: str, claimed_outcome: str) -> list[str]:
+    """Generate counterfactual diligence questions."""
+    return [
+        f"What would beneficiaries in {sector} use without this {business_model}?",
+        f"Which comparable providers already deliver {claimed_outcome}?",
+        "What share of observed outcomes would likely happen without the investment?",
+        "Which external trends could explain the observed change?",
+    ]
+
+
+class EvidenceStrength(BaseModel):
+    """Evidence-strength ladder inputs and score."""
+
+    study_design: Literal["none", "case_study", "pre_post", "DID", "RCT"]
+    sample_size: int = 0
+    third_party_review: bool = False
+    beneficiary_voice: bool = False
+    score: int = Field(ge=0, le=100)
+
+
+def score_evidence_strength(
+    *,
+    study_design: Literal["none", "case_study", "pre_post", "DID", "RCT"],
+    sample_size: int,
+    third_party_review: bool,
+    beneficiary_voice: bool,
+) -> EvidenceStrength:
+    """Score evidence quality from design, sample, review, and beneficiary voice."""
+    design_scores = {"none": 0, "case_study": 25, "pre_post": 45, "DID": 70, "RCT": 90}
+    score = design_scores[study_design] + min(20, sample_size // 100)
+    if third_party_review:
+        score += 10
+    if beneficiary_voice:
+        score += 5
+    return EvidenceStrength(
+        study_design=study_design,
+        sample_size=sample_size,
+        third_party_review=third_party_review,
+        beneficiary_voice=beneficiary_voice,
+        score=min(100, score),
+    )
+
+
+def calculate_difference_in_differences(
+    *,
+    treatment_pre: float,
+    treatment_post: float,
+    comparator_pre: float,
+    comparator_post: float,
+) -> float:
+    """Return the difference-in-differences treatment effect."""
+    return round((treatment_post - treatment_pre) - (comparator_post - comparator_pre), 6)
+
+
 __all__ = [
+    "ContributionAnalysis",
+    "run_contribution_analysis",
+    "generate_counterfactual_questions",
+    "EvidenceStrength",
+    "score_evidence_strength",
+    "calculate_difference_in_differences",
+
     "ContributionChannel",
     "ContributionClaim",
     "ContributionEvidence",

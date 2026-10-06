@@ -2,16 +2,20 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+import csv
+import hashlib
+import secrets
+from datetime import datetime, timedelta, timezone
+from io import StringIO
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
+from openharness.impact._util import _now, _parse_datetime
 from openharness.impact.database import MetricStore, get_metric_store
 from openharness.impact.metric_records import metric_record_from_value
 from openharness.impact.models import MetricRecord
 from openharness.tools.impact.common import normalize_metric_ids, normalize_sector
-
 
 SECTOR_METRIC_TEMPLATES: dict[str, list[str]] = {
     "energy": ["OI4112", "OI6697", "PI8706", "PI2822"],
@@ -506,7 +510,186 @@ def submission_to_metric_records(
     return records, []
 
 
+# ---------------------------------------------------------------------------
+# Moved from roadmap_v2 (v7 W5.4)
+# ---------------------------------------------------------------------------
+
+CollectionStatus = Literal["missing", "stale", "submitted", "reviewed", "approved"]
+
+
+class PublicCollectionLink(BaseModel):
+    """No-auth collection link with a bearer token and expiry."""
+
+    link_id: str
+    submission_id: str
+    token_hash: str
+    expires_at: str
+    created_at: str = Field(default_factory=lambda: _now())
+    used_at: str = ""
+
+    def is_active(self, token: str, *, at: datetime | None = None) -> bool:
+        """Return whether ``token`` is valid and not expired."""
+        check_time = at or datetime.now(timezone.utc)
+        if check_time.tzinfo is None:
+            check_time = check_time.replace(tzinfo=timezone.utc)
+        expiry = _parse_datetime(self.expires_at)
+        return (
+            not self.used_at
+            and check_time <= expiry
+            and self.token_hash == hash_token(token)
+        )
+
+
+class CollectionLinkIssue(BaseModel):
+    """Issued collection link plus the plaintext token returned once."""
+
+    link: PublicCollectionLink
+    token: str
+    url_path: str
+
+
+def hash_token(token: str) -> str:
+    """Hash a collection token for storage."""
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
+def issue_collection_link(
+    *,
+    submission_id: str,
+    expires_in_hours: int = 168,
+    token: str | None = None,
+) -> CollectionLinkIssue:
+    """Issue a secure public collection link token."""
+    raw = token or secrets.token_urlsafe(24)
+    expires = datetime.now(timezone.utc) + timedelta(hours=expires_in_hours)
+    link = PublicCollectionLink(
+        link_id=f"link_{secrets.token_hex(8)}",
+        submission_id=submission_id,
+        token_hash=hash_token(raw),
+        expires_at=expires.isoformat(),
+    )
+    return CollectionLinkIssue(link=link, token=raw, url_path=f"/collect/{link.link_id}?token={raw}")
+
+
+class CollectionTrackerRow(BaseModel):
+    """One company-period collection status."""
+
+    company_name: str
+    reporting_period: str
+    status: CollectionStatus
+    missing_metrics: list[str] = Field(default_factory=list)
+    stale_metrics: list[str] = Field(default_factory=list)
+    submitted_at: str = ""
+    reviewed_at: str = ""
+
+
+def build_collection_tracker(
+    *,
+    schemas_by_company: dict[str, InvesteeQuestionnaireSchema],
+    submissions: list[CollectionSubmission],
+    current_period: str,
+    stale_periods: set[str] | None = None,
+) -> list[CollectionTrackerRow]:
+    """Build a multi-company collection tracker for the current period."""
+    stale_periods = stale_periods or set()
+    latest_by_company: dict[str, CollectionSubmission] = {}
+    for sub in submissions:
+        current = latest_by_company.get(sub.company_name)
+        if current is None or _parse_datetime(sub.submitted_at) >= _parse_datetime(current.submitted_at):
+            latest_by_company[sub.company_name] = sub
+    rows: list[CollectionTrackerRow] = []
+    for company_name, schema in schemas_by_company.items():
+        expected = {
+            field.metric_id
+            for section in schema.sections
+            for field in section.fields
+            if field.required
+        }
+        sub = latest_by_company.get(company_name)
+        if sub is None:
+            rows.append(CollectionTrackerRow(
+                company_name=company_name,
+                reporting_period=current_period,
+                status="missing",
+                missing_metrics=sorted(expected),
+            ))
+            continue
+        seen = {resp.metric_id.strip().upper() for resp in sub.responses}
+        missing = sorted(expected - seen)
+        stale = sorted(seen) if sub.reporting_period in stale_periods else []
+        if sub.status == "approved":
+            status: CollectionStatus = "approved"
+        elif sub.status in {"flagged", "rejected", "resubmission_requested"}:
+            status = "reviewed"
+        elif stale:
+            status = "stale"
+        else:
+            status = "submitted"
+        rows.append(CollectionTrackerRow(
+            company_name=company_name,
+            reporting_period=sub.reporting_period,
+            status=status,
+            missing_metrics=missing,
+            stale_metrics=stale,
+            submitted_at=sub.submitted_at,
+            reviewed_at=sub.review_history[-1].timestamp if sub.review_history else "",
+        ))
+    return rows
+
+
+class ImportPreviewRow(BaseModel):
+    """Validation preview for one imported row."""
+
+    row_number: int
+    record: MetricRecord | None = None
+    errors: list[str] = Field(default_factory=list)
+    duplicate: bool = False
+
+
+class ImportPreview(BaseModel):
+    """CSV/XLSX-style import preview."""
+
+    rows: list[ImportPreviewRow]
+    valid_count: int = 0
+    error_count: int = 0
+    duplicate_count: int = 0
+
+
+def preview_csv_metric_import(csv_text: str, column_mapping: dict[str, str]) -> ImportPreview:
+    """Preview a CSV import using a source-column to MetricRecord-field map."""
+    reader = csv.DictReader(StringIO(csv_text))
+    seen: set[tuple[str, str, str]] = set()
+    rows: list[ImportPreviewRow] = []
+    for idx, raw in enumerate(reader, start=2):
+        payload = {target: raw.get(source, "") for source, target in column_mapping.items()}
+        try:
+            record = MetricRecord.model_validate(payload)
+            key = (record.metric_id, record.period, record.owner)
+            duplicate = key in seen
+            seen.add(key)
+            rows.append(ImportPreviewRow(row_number=idx, record=record, duplicate=duplicate))
+        except Exception as exc:  # noqa: BLE001 - preview should collect all row errors
+            rows.append(ImportPreviewRow(row_number=idx, errors=[str(exc)]))
+    return ImportPreview(
+        rows=rows,
+        valid_count=sum(1 for row in rows if row.record is not None and not row.duplicate),
+        error_count=sum(1 for row in rows if row.errors),
+        duplicate_count=sum(1 for row in rows if row.duplicate),
+    )
+
+
 __all__ = [
+    "CollectionStatus",
+    "PublicCollectionLink",
+    "CollectionLinkIssue",
+    "hash_token",
+    "issue_collection_link",
+    "CollectionTrackerRow",
+    "build_collection_tracker",
+    "ImportPreviewRow",
+    "ImportPreview",
+    "preview_csv_metric_import",
+
     "CollectionSubmission",
     "EvidenceRequirement",
     "InvesteeQuestionnaireSchema",

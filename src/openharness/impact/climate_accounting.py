@@ -6,6 +6,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field, field_validator
 
+from openharness.impact._util import _now, _safe_div
+from openharness.impact.disclosure_packs import DisclosureStatus
 
 Scope = Literal["scope1", "scope2"]
 Scope2Method = Literal["location_based", "market_based"]
@@ -739,7 +741,126 @@ def water_balance(withdrawals: list[dict], discharge: float) -> dict:
     }
 
 
+# ---------------------------------------------------------------------------
+# Moved from roadmap_v2 (v7 W5.4)
+# ---------------------------------------------------------------------------
+
+class EmissionFactorCatalog(BaseModel):
+    """Versioned emission-factor catalog metadata."""
+
+    catalog_id: str
+    source: str
+    version: str
+    updated_at: str = Field(default_factory=lambda: _now())
+    provenance: str = ""
+    factor_count: int = 0
+
+
+class Scope3ProxyEstimate(BaseModel):
+    """Proxy Scope 3 estimate when direct data is unavailable."""
+
+    company_name: str
+    sector: str
+    basis: Literal["spend", "revenue", "activity"]
+    amount: float
+    factor_tco2e_per_unit: float
+    tco2e: float
+    method_version: str
+    data_quality_score: int = Field(ge=1, le=5)
+
+
+def estimate_scope3_proxy(
+    *,
+    company_name: str,
+    sector: str,
+    basis: Literal["spend", "revenue", "activity"],
+    amount: float,
+    factor_tco2e_per_unit: float,
+    method_version: str = "scope3-proxy-2026",
+) -> Scope3ProxyEstimate:
+    """Estimate Scope 3 from spend/revenue/activity when direct data is missing."""
+    return Scope3ProxyEstimate(
+        company_name=company_name,
+        sector=sector,
+        basis=basis,
+        amount=amount,
+        factor_tco2e_per_unit=factor_tco2e_per_unit,
+        tco2e=round(amount * factor_tco2e_per_unit, 4),
+        method_version=method_version,
+        data_quality_score=5 if basis in {"spend", "revenue"} else 4,
+    )
+
+
+class CarbonIntensity(BaseModel):
+    """Common carbon intensity metrics."""
+
+    company_name: str
+    tco2e_per_revenue: float | None = None
+    tco2e_per_employee: float | None = None
+    tco2e_per_unit: float | None = None
+    ownership_adjusted_footprint: float | None = None
+
+
+def calculate_carbon_intensity(
+    *,
+    company_name: str,
+    total_tco2e: float,
+    revenue: float | None = None,
+    employees: int | None = None,
+    units: float | None = None,
+    ownership_pct: float | None = None,
+) -> CarbonIntensity:
+    """Calculate carbon intensity metrics from a total footprint."""
+    return CarbonIntensity(
+        company_name=company_name,
+        tco2e_per_revenue=_safe_div(total_tco2e, revenue),
+        tco2e_per_employee=_safe_div(total_tco2e, employees),
+        tco2e_per_unit=_safe_div(total_tco2e, units),
+        ownership_adjusted_footprint=round(total_tco2e * ownership_pct / 100, 4)
+        if ownership_pct is not None else None,
+    )
+
+
+class ClimateCoverageRow(BaseModel):
+    """Actual vs estimated climate coverage by company."""
+
+    company_name: str
+    scope1_status: DisclosureStatus
+    scope2_status: DisclosureStatus
+    scope3_status: DisclosureStatus
+    actual_scopes: int
+    estimated_scopes: int
+    missing_scopes: int
+
+
+def build_climate_coverage_dashboard(
+    rows: list[tuple[str, DisclosureStatus, DisclosureStatus, DisclosureStatus]],
+) -> list[ClimateCoverageRow]:
+    """Build actual/proxy/missing coverage rows for Scope 1/2/3."""
+    out: list[ClimateCoverageRow] = []
+    for company_name, s1, s2, s3 in rows:
+        statuses = [s1, s2, s3]
+        out.append(ClimateCoverageRow(
+            company_name=company_name,
+            scope1_status=s1,
+            scope2_status=s2,
+            scope3_status=s3,
+            actual_scopes=sum(1 for item in statuses if item == "direct"),
+            estimated_scopes=sum(1 for item in statuses if item == "proxy"),
+            missing_scopes=sum(1 for item in statuses if item == "missing"),
+        ))
+    return out
+
+
 __all__ = [
+    "EmissionFactorCatalog",
+    "Scope3ProxyEstimate",
+    "estimate_scope3_proxy",
+    "CarbonIntensity",
+    "calculate_carbon_intensity",
+    "ClimateCoverageRow",
+    "build_climate_coverage_dashboard",
+
     "ActivityData",
     "DEFAULT_EMISSION_FACTORS",
     "EmissionFactor",

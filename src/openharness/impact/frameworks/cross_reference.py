@@ -193,3 +193,29 @@ def format_cross_reference(xref: CrossReference) -> str:
     if xref.notes:
         parts.append(f"  Notes: {xref.notes}")
     return "\n".join(parts)
+
+
+# ---------------------------------------------------------------------------
+# Moved from roadmap_v2 (v7 W5.4)
+# ---------------------------------------------------------------------------
+
+def explore_framework_crosswalk(query: str) -> list[CrossReference]:
+    """Search the governed framework crosswalk by concept or code."""
+    needle = query.strip().lower()
+    out: list[CrossReference] = []
+    for xref in get_all_cross_references():
+        haystack = " ".join([
+            xref.concept,
+            *xref.iris_plus,
+            *xref.gri,
+            *xref.edci,
+            *(str(num) for num in xref.sfdr_pai),
+            *xref.pcaf,
+            *xref.issb,
+            *xref.esrs,
+        ]).lower()
+        if needle in haystack:
+            out.append(xref)
+    return out
+
+

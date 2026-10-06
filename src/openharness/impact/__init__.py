@@ -98,12 +98,9 @@ from openharness.impact.portfolio_nlq import (
     QueryIntent,
     parse_intent,
 )
-from openharness.impact.roadmap_v2 import (
-    build_lp_export_bundle,
-    build_review_queue,
-    issue_collection_link,
-    run_control_checks,
-)
+from openharness.impact.ai_review import build_review_queue
+from openharness.impact.investee_collection import issue_collection_link
+from openharness.impact.report_governance import build_lp_export_bundle, run_control_checks
 from openharness.impact.stakeholder_voice import (
     BeneficiaryFeedbackQuality,
     ConsentRecord,

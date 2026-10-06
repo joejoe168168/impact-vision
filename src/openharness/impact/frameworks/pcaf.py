@@ -181,3 +181,42 @@ def rollup_pcaf(entries: list[FinancedEmissionsInput]) -> PCAFRollup:
         coverage_pct=round(coverage, 1),
         entries=results,
     )
+
+
+# ---------------------------------------------------------------------------
+# Moved from roadmap_v2 (v7 W5.4)
+# ---------------------------------------------------------------------------
+
+class PCAFPosition(BaseModel):
+    """Inputs for financed-emissions attribution."""
+
+    company_name: str
+    investment_value_usd: float = Field(ge=0)
+    enterprise_value_usd: float = Field(gt=0)
+    company_emissions_tco2e: float = Field(ge=0)
+    data_quality_score: int = Field(ge=1, le=5)
+    method_version: str = "pcaf-2022"
+
+
+class PCAFResult(BaseModel):
+    """Financed-emissions output for one position."""
+
+    company_name: str
+    attribution_factor: float
+    financed_emissions_tco2e: float
+    data_quality_score: int
+    method_version: str
+
+
+def calculate_pcaf_financed_emissions(position: PCAFPosition) -> PCAFResult:
+    """Calculate financed emissions using investment value / enterprise value."""
+    attribution = min(1.0, position.investment_value_usd / position.enterprise_value_usd)
+    return PCAFResult(
+        company_name=position.company_name,
+        attribution_factor=round(attribution, 6),
+        financed_emissions_tco2e=round(attribution * position.company_emissions_tco2e, 4),
+        data_quality_score=position.data_quality_score,
+        method_version=position.method_version,
+    )
+
+

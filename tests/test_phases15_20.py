@@ -471,7 +471,7 @@ class TestBranding:
 class TestQuestionnaireV2:
     def test_missing_answer_triggers_followup(self):
         from openharness.impact.dd_checklist import DDQuestion
-        from openharness.impact.questionnaire_v2 import (
+        from openharness.impact.questionnaire_branching import (
             BranchRule, active_follow_up_ids, expand_active,
         )
         catalogue = [

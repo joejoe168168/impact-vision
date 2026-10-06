@@ -70,7 +70,7 @@ CONSULTANT_CHECKLIST_PHASES: dict[str, ChecklistPhase] = {
                 "title": "Send smart data request pack",
                 "description": (
                     "Use the bundle's questionnaire (investee_collection / "
-                    "questionnaire_v2) and issue no-auth links."
+                    "questionnaire_branching) and issue no-auth links."
                 ),
             },
             {

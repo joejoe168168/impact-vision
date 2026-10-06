@@ -259,7 +259,45 @@ def issb_s2_amendments(path: str | Path | None = None) -> dict:
     return s2_amendment_summary(path)
 
 
+# ---------------------------------------------------------------------------
+# Moved from roadmap_v2 (v7 W5.4)
+# ---------------------------------------------------------------------------
+
+class JurisdictionProfile(BaseModel):
+    """Jurisdiction-aware disclosure profile."""
+
+    jurisdiction: str
+    frameworks: list[str]
+    climate_required: bool = True
+    notes: str = ""
+
+
+DISCLOSURE_PROFILES: dict[str, JurisdictionProfile] = {
+    "EU": JurisdictionProfile(jurisdiction="EU", frameworks=["ESRS", "SFDR", "ISSB"], notes="CSRD/SFDR with ESRS versioning"),
+    "UK": JurisdictionProfile(jurisdiction="UK", frameworks=["ISSB", "FCA SDR"], notes="UK SDR and ISSB-aligned climate reporting"),
+    "Singapore": JurisdictionProfile(jurisdiction="Singapore", frameworks=["ISSB"], notes="ISSB climate disclosure baseline"),
+    "Japan": JurisdictionProfile(jurisdiction="Japan", frameworks=["ISSB"], notes="SSBJ/ISSB-aligned profile"),
+    "Australia": JurisdictionProfile(jurisdiction="Australia", frameworks=["AASB S2", "ISSB"], notes="AASB S2 climate profile"),
+    "Canada": JurisdictionProfile(jurisdiction="Canada", frameworks=["ISSB"], notes="CSSB/ISSB-aligned profile"),
+    "US": JurisdictionProfile(jurisdiction="US", frameworks=["California SB 253/261", "state climate"], notes="State-level climate profile (SEC climate rule rescission proposed 2026)"),
+}
+
+
+def select_jurisdiction_profile(jurisdiction: str) -> JurisdictionProfile:
+    """Return a disclosure profile for a roadmap jurisdiction."""
+    key = jurisdiction.strip()
+    profile_by_lower = {name.lower(): profile for name, profile in DISCLOSURE_PROFILES.items()}
+    profile = profile_by_lower.get(key.lower())
+    if profile is None:
+        raise KeyError(f"Unknown jurisdiction profile: {jurisdiction}")
+    return profile
+
+
 __all__ = [
+    "JurisdictionProfile",
+    "DISCLOSURE_PROFILES",
+    "select_jurisdiction_profile",
+
     "RegulatoryCalendar",
     "RegulatoryCalendarItem",
     "RegulatoryWatchlistItem",

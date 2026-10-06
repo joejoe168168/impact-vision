@@ -60,7 +60,7 @@ def test_audit_chain_survives_restart_and_shared_writers(sqlite_store) -> None:
 
 def test_review_queues_and_rbac_persist(sqlite_store) -> None:
     from openharness.impact.evidence_workflow import load_review_queue, save_review_queue
-    from openharness.impact.roadmap_v2 import AIExtractionReview
+    from openharness.impact.ai_review import AIExtractionReview
     from openharness.impact.tenancy import PersistentRBACStore, Role, Tenant, User
 
     q = load_review_queue("radar", store=sqlite_store())
@@ -99,3 +99,22 @@ def test_postgres_backend_round_trip() -> None:  # pragma: no cover - optional
     store.put("t", "k", "x", {"n": 1})
     assert store.get("t", "k", "x") == {"n": 1}
     store.delete("t", "k", "x")
+
+
+def test_retired_module_shims_still_import_with_deprecation() -> None:
+    import importlib
+    import sys
+
+    for old, new, name in [
+        ("openharness.impact.roadmap_v2", "openharness.impact.investee_collection", "issue_collection_link"),
+        ("openharness.impact.roadmap_v2", "openharness.impact.report_governance", "build_lp_export_bundle"),
+        ("openharness.impact.questionnaire_v2", "openharness.impact.questionnaire_branching", "__all__"),
+        ("openharness.impact.frameworks.sfdr_v2", "openharness.impact.frameworks.sfdr_recast", "classify_sfdr_v2"),
+    ]:
+        sys.modules.pop(old, None)
+        with pytest.warns(DeprecationWarning):
+            legacy = importlib.import_module(old)
+        assert getattr(legacy, name) is getattr(importlib.import_module(new), name)
+    from openharness.impact.regulatory_calendar import DISCLOSURE_PROFILES
+
+    assert importlib.import_module("openharness.impact.roadmap_v2").JURISDICTION_PROFILES is DISCLOSURE_PROFILES

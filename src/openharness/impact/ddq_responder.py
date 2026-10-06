@@ -12,7 +12,7 @@ from openharness.impact.concordance import load_concordance
 from openharness.impact.models import MetricRecord
 from openharness.impact.portfolio_nlq import ApprovedDataPolicy
 from openharness.impact.evidence_workflow import ExtractionReviewPolicy, ReviewQueue
-from openharness.impact.roadmap_v2 import AIExtractionReview
+from openharness.impact.ai_review import AIExtractionReview
 from openharness.impact._paths import data_path
 
 

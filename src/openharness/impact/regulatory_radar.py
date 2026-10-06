@@ -8,7 +8,7 @@ from typing import Callable, Literal
 from pydantic import BaseModel, Field
 from openharness.impact.models import Company
 from openharness.impact.evidence_workflow import ReviewQueue, load_review_queue, save_review_queue
-from openharness.impact.roadmap_v2 import AIExtractionReview
+from openharness.impact.ai_review import AIExtractionReview
 
 
 _RADAR_QUEUE_NAME = "regulatory_radar"
@@ -139,7 +139,43 @@ def decide_finding(
     return finding
 
 
+# ---------------------------------------------------------------------------
+# Moved from roadmap_v2 (v7 W5.4)
+# ---------------------------------------------------------------------------
+
+class RegulatoryChangeImpact(BaseModel):
+    """Affected assets from a regulatory-change monitor."""
+
+    change_id: str
+    affected_rule_packs: list[str]
+    affected_templates: list[str]
+    affected_companies: list[str]
+
+
+def monitor_regulatory_change(
+    *,
+    change_id: str,
+    changed_framework: str,
+    rule_packs: dict[str, list[str]],
+    templates: dict[str, list[str]],
+    company_profiles: dict[str, list[str]],
+) -> RegulatoryChangeImpact:
+    """Flag rule packs, templates, and companies affected by a framework change."""
+    affected_rule_packs = [name for name, frameworks in rule_packs.items() if changed_framework in frameworks]
+    affected_templates = [name for name, frameworks in templates.items() if changed_framework in frameworks]
+    affected_companies = [name for name, frameworks in company_profiles.items() if changed_framework in frameworks]
+    return RegulatoryChangeImpact(
+        change_id=change_id,
+        affected_rule_packs=affected_rule_packs,
+        affected_templates=affected_templates,
+        affected_companies=affected_companies,
+    )
+
+
 __all__ = [
+    "RegulatoryChangeImpact",
+    "monitor_regulatory_change",
+
     "RadarFinding",
     "TrackedStandard",
     "check_tracked_standards",

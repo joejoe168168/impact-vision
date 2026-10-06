@@ -8,7 +8,7 @@ every obligation + deadline + gap in one view.
 
 The module doesn't re-implement any framework rules — it composes them.
 
-Naming note: v3 :mod:`openharness.impact.roadmap_v2` ships a much leaner
+Naming note: v3 :mod:`openharness.impact.regulatory_calendar` ships a much leaner
 :class:`JurisdictionProfile` keyed by `climate_required`. To avoid the
 public-API collision, v4's consultant-facing profile is named
 :class:`RegulatoryJurisdictionProfile`. The legacy name is kept as an
@@ -76,7 +76,7 @@ class RegulatoryObligation(BaseModel):
 class RegulatoryJurisdictionProfile(BaseModel):
     """A jurisdiction's regulatory footprint (Track 9).
 
-    Richer sibling of v3's :class:`openharness.impact.roadmap_v2.JurisdictionProfile`
+    Richer sibling of v3's :class:`openharness.impact.regulatory_calendar.JurisdictionProfile`
     adding the per-jurisdiction obligation catalogue the consultant workbench
     needs. The two are intentionally decoupled — this one lives in the
     engagement layer, the v3 one in the shared roadmap helpers.

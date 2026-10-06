@@ -64,7 +64,7 @@ class EvidenceReviewTool(BaseTool):
             ReviewQueue,
             build_review_item_from_extraction,
         )
-        from openharness.impact.roadmap_v2 import AIExtractionReview
+        from openharness.impact.ai_review import AIExtractionReview
 
         args = arguments if isinstance(arguments, EvidenceReviewInput) else EvidenceReviewInput.model_validate(arguments)
         policy = ExtractionReviewPolicy.model_validate(args.policy) if args.policy else ExtractionReviewPolicy()

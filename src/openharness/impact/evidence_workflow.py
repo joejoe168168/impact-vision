@@ -26,7 +26,7 @@ from typing import Any, Iterable, Literal
 from pydantic import BaseModel, Field, field_validator
 
 from openharness.impact.audit_trail import AuditTrail
-from openharness.impact.roadmap_v2 import AIExtractionReview, ReviewDecision
+from openharness.impact.ai_review import AIExtractionReview, ReviewDecision
 
 
 PolicyVerdict = Literal["auto_approve_eligible", "needs_review", "needs_evidence", "blocked"]

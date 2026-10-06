@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import Any, Literal
+
 import yaml
-
 from pydantic import BaseModel, Field, field_validator
-from openharness.impact._paths import data_path
 
+from openharness.impact._paths import data_path
 
 StandardStatus = Literal["active", "draft", "under_revision", "superseded"]
 
@@ -195,7 +195,29 @@ def _status_rank(status: StandardStatus) -> int:
     }[status]
 
 
+# ---------------------------------------------------------------------------
+# Moved from roadmap_v2 (v7 W5.4)
+# ---------------------------------------------------------------------------
+
+class RulePackTestResult(BaseModel):
+    """Compatibility test result for a disclosure rule pack."""
+
+    pack_name: str
+    version: str
+    passed: bool
+    failures: list[str] = Field(default_factory=list)
+
+
+def run_rule_pack_tests(pack_name: str, version: str, required_fields: list[str], payload: dict[str, Any]) -> RulePackTestResult:
+    """Check that a rule pack can still resolve its required fields."""
+    failures = [field for field in required_fields if field not in payload]
+    return RulePackTestResult(pack_name=pack_name, version=version, passed=not failures, failures=failures)
+
+
 __all__ = [
+    "RulePackTestResult",
+    "run_rule_pack_tests",
+
     "StandardArticle",
     "StandardStatus",
     "StandardVersion",

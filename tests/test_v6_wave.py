@@ -39,7 +39,7 @@ from openharness.impact.engagements.regulatory import (
 )
 from openharness.impact.evidence_graph import EvidenceGraph, EvidenceNode
 from openharness.impact.frameworks.esrs import load_simplified_datapoints
-from openharness.impact.frameworks.sfdr_v2 import (
+from openharness.impact.frameworks.sfdr_recast import (
     PortfolioHolding,
     SFDRv2Category,
     classify_sfdr_v2,

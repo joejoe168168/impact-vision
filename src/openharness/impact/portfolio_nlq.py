@@ -310,7 +310,38 @@ def _to_float(value: Any) -> float | None:
         return None
 
 
+# ---------------------------------------------------------------------------
+# Moved from roadmap_v2 (v7 W5.4)
+# ---------------------------------------------------------------------------
+
+class PortfolioQueryResult(BaseModel):
+    """Approved-data natural-language query result."""
+
+    question: str
+    answer: str
+    citations: list[str] = Field(default_factory=list)
+
+
+def answer_portfolio_query(question: str, approved_records: list[MetricRecord]) -> PortfolioQueryResult:
+    """Answer a simple portfolio query constrained to approved data and citations."""
+    verified = [record for record in approved_records if record.is_verified]
+    if "average" in question.lower():
+        values = [_to_float(record.value) for record in verified]
+        numeric = [value for value in values if value is not None]
+        answer = str(round(mean(numeric), 4)) if numeric else "No approved numeric data"
+    else:
+        answer = f"{len(verified)} approved metric record(s) available"
+    return PortfolioQueryResult(
+        question=question,
+        answer=answer,
+        citations=sorted({ref for record in verified for ref in record.evidence_refs}),
+    )
+
+
 __all__ = [
+    "PortfolioQueryResult",
+    "answer_portfolio_query",
+
     "ApprovedDataPolicy",
     "PortfolioNLQEngine",
     "QueryAnswer",
