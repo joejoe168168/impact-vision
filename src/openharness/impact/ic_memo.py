@@ -67,7 +67,7 @@ def render_ic_memo_markdown(
     if deal_size_eur_m is not None:
         out.append(f"- **Proposed deal size**: EUR {deal_size_eur_m:.1f}m")
     out.append(
-        f"- **IC gate result**: **{scorecard.overall_status.upper()}** — {scorecard.recommendation}"
+        f"- **IC gate result**: **{scorecard.display_status}** — {scorecard.recommendation}"
     )
     out.append("")
 
@@ -320,7 +320,7 @@ def render_ic_memo_pptx(
 
     # Slide 4: IC gate
     s4 = prs.slides.add_slide(blank)
-    s4.shapes.title.text = f"IC Gate: {scorecard.overall_status.upper()}"
+    s4.shapes.title.text = f"IC Gate: {scorecard.display_status}"
     body = "\n".join(f"- {c.name}: {c.status}" for c in scorecard.checks)
     body += "\n\nRecommendation:\n" + scorecard.recommendation
     s4.shapes.add_textbox(Inches(0.5), Inches(1.5), Inches(9), Inches(4)).text_frame.text = body
@@ -380,7 +380,7 @@ def render_ic_memo_html(
         meta.append(("Geography", company.geography))
     if deal_size_eur_m is not None:
         meta.append(("Deal size", f"EUR {deal_size_eur_m:.1f}m"))
-    meta.append(("IC gate", scorecard.overall_status.upper()))
+    meta.append(("IC gate", scorecard.display_status))
 
     hero = render_hero(
         eyebrow="Investment Committee Memo",
@@ -396,10 +396,12 @@ def render_ic_memo_html(
         scorecard.overall_status,
         "neutral",
     )
+    if scorecard.evidence_status == "insufficient":
+        gate_kind = "warn"
     kpis.append(
         {
             "label": "IC Gate",
-            "value": scorecard.overall_status.upper(),
+            "value": scorecard.display_status,
             "sub": f"{len(scorecard.checks)} checks · "
             f"{len(scorecard.blocking_failures)} fail / {len(scorecard.warnings_list)} warn",
             "kind": gate_kind,
@@ -701,7 +703,7 @@ def render_ic_memo_html(
     rec_html = (
         '<section class="card" id="rec">'
         '<h2 class="section-title">Recommendation</h2>'
-        f'<div class="callout ok" style="font-size:1.02em"><b>{scorecard.overall_status.upper()}</b> '
+        f'<div class="callout ok" style="font-size:1.02em"><b>{scorecard.display_status}</b> '
         f"— {escape(scorecard.recommendation)}</div>"
         "</section>"
     )

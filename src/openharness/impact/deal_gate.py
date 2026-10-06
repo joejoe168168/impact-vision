@@ -61,6 +61,13 @@ class GateCheck(BaseModel):
     actual: float | str | None = None
     threshold: float | str | None = None
     message: str = ""
+    data_gap: bool = Field(
+        default=False,
+        description=(
+            "True when a fail/warn reflects missing evidence (a score not backed by "
+            "reported metrics, uncovered DD questions) rather than a negative finding."
+        ),
+    )
 
 
 class DealScorecard(BaseModel):
@@ -71,6 +78,22 @@ class DealScorecard(BaseModel):
     blocking_failures: list[str] = Field(default_factory=list)
     warnings_list: list[str] = Field(default_factory=list)
     recommendation: str = ""
+    evidence_status: Literal["sufficient", "insufficient"] = Field(
+        default="sufficient",
+        description="'insufficient' when every blocking failure is a data gap.",
+    )
+
+    @property
+    def display_status(self) -> str:
+        """Status label for memos and UIs."""
+        if self.overall_status == "fail" and self.evidence_status == "insufficient":
+            return "INSUFFICIENT EVIDENCE"
+        return self.overall_status.upper()
+
+
+# Greenwashing composite at which risk is a finding rather than a data gap
+# (the "High Risk" band in greenwashing._classify).
+GREENWASHING_FINDING_THRESHOLD = 60.0
 
 
 def _grade_status(
@@ -106,6 +129,7 @@ def evaluate_deal(
     """
     gate = thesis.ic_gate
     checks: list[GateCheck] = []
+    fd = assessment.five_dimensions
 
     # 5D overall
     if assessment.five_dimensions is not None:
@@ -118,6 +142,7 @@ def evaluate_deal(
                 actual=actual,
                 threshold=gate.min_5d_overall,
                 message=f"5D overall {actual} vs. min {gate.min_5d_overall}",
+                data_gap=fd.overall_provenance != "evidence-based",
             )
         )
 
@@ -132,6 +157,7 @@ def evaluate_deal(
                 actual=top.score,
                 threshold=gate.min_top_sdg_score,
                 message=f"SDG {top.goal} ({top.goal_name}): {top.score} vs. min {gate.min_top_sdg_score}",
+                data_gap=top.provenance != "evidence-based",
             )
         )
 
@@ -145,6 +171,8 @@ def evaluate_deal(
                 actual=dd_coverage_pct,
                 threshold=gate.min_dd_coverage_pct,
                 message=f"{dd_coverage_pct:.1f}% covered vs. min {gate.min_dd_coverage_pct}%",
+                # Uncovered DD questions are questions to ask, not findings.
+                data_gap=True,
             )
         )
 
@@ -158,6 +186,9 @@ def evaluate_deal(
                 actual=greenwashing_score,
                 threshold=gate.max_greenwashing_score,
                 message=f"Risk {greenwashing_score:.1f} vs. max {gate.max_greenwashing_score}",
+                # Below "High Risk" the score is driven by missing metrics;
+                # at or above it, claims outrun evidence — a finding.
+                data_gap=greenwashing_score < GREENWASHING_FINDING_THRESHOLD,
             )
         )
 
@@ -212,7 +243,17 @@ def evaluate_deal(
 
     fails = [c.message for c in checks if c.status == "fail"]
     warns = [c.message for c in checks if c.status == "warn"]
-    if fails:
+    failed_checks = [c for c in checks if c.status == "fail"]
+    evidence_status = (
+        "insufficient" if failed_checks and all(c.data_gap for c in failed_checks) else "sufficient"
+    )
+    if fails and evidence_status == "insufficient":
+        overall = "fail"
+        rec = (
+            "Not IC-ready: the failed checks reflect missing evidence, not negative findings. "
+            "Collect the missing metrics and DD answers, then re-screen."
+        )
+    elif fails:
         overall = "fail"
         rec = "BLOCK IC submission. Resolve blocking failures and re-screen."
     elif warns:
@@ -230,6 +271,7 @@ def evaluate_deal(
         blocking_failures=fails,
         warnings_list=warns,
         recommendation=rec,
+        evidence_status=evidence_status,
     )
 
 

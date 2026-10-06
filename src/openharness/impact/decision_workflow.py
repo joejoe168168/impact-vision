@@ -34,10 +34,7 @@ QuickScreenClassification = Literal[
 _MIN_EVIDENCE_WORDS = 80
 _MIN_EVIDENCE_METRICS = 3
 _MIN_QUANTIFIED_CLAIMS = 2
-# Gate checks whose failure on estimated-only scores means "no data", plus the
-# greenwashing score at which risk is a finding in its own right.
-_DATA_GAP_CHECKS = {"5D overall score", "Top SDG score", "DD checklist coverage", "Greenwashing risk"}
-_GREENWASHING_RED_FLAG = 60.0
+
 LPBadgeStatus = Literal["lp_ready", "needs_work", "blocked"]
 
 
@@ -344,22 +341,14 @@ def quick_screen(
         exclusion_pass=exclusion_pass,
     )
     evidence = assess_evidence_sufficiency(company, claims)
-    fd = summary.assessment.five_dimensions
     failed = [c for c in summary.scorecard.checks if c.status == "fail"]
-    estimated_only = fd is not None and fd.overall_provenance == "estimated"
-    data_gap_failures = bool(failed) and estimated_only and all(
-        c.name in _DATA_GAP_CHECKS
-        and (c.name != "Greenwashing risk" or float(c.actual or 0) < _GREENWASHING_RED_FLAG)
-        for c in failed
-    )
-    if evidence.sufficient and data_gap_failures:
-        # Every failure is a threshold on a score estimated from text alone:
-        # that is missing data, not a negative finding.
+    if evidence.sufficient and summary.scorecard.evidence_status == "insufficient":
+        # Every failure is a data gap (see deal_gate.GateCheck.data_gap):
+        # missing data, not a negative finding.
         evidence = evidence.model_copy(update={
             "sufficient": False,
             "reasons": [
-                "Scores are estimated from text only (no IRIS+ metrics reported), so the "
-                "failed checks reflect missing data rather than negative findings: "
+                "The failed checks reflect missing evidence rather than negative findings: "
                 + "; ".join(f"{c.name} {c.actual} vs {c.threshold}" for c in failed)
                 + "."
             ],

@@ -635,6 +635,13 @@ def _extract_company_model(
     sector = _detect_sector(text)
     geography = _detect_geography(text)
     reported = _extract_reported_metrics(text)
+    # Quantified claims without an explicit IRIS+ ID (W0.10). Explicit IDs win.
+    from openharness.impact.claim_metric_mapper import map_claim_metrics
+    from openharness.impact.extractors.regex_extractor import RegexExtractor
+
+    for claim in RegexExtractor().extract(text):
+        for mapping in map_claim_metrics(claim.text, forward_looking=claim.category == "commitment"):
+            reported.setdefault(mapping.metric_id, mapping.display)
 
     return Company(
         name=company_name,

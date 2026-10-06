@@ -43,6 +43,7 @@ from openharness.impact.extractors import (
     get_extractor,
     get_verifier,
 )
+from openharness.impact.claim_metric_mapper import map_claim_metrics
 from openharness.impact.extractors.base import to_impact_claims
 from openharness.impact.extractors.regex_extractor import evidence_signals
 from openharness.impact.five_dimensions import assess_five_dimensions
@@ -136,15 +137,28 @@ class ImpactVision:
             description=text[:1000],
             impact_themes=impact_themes or [],
         )
-        # Surface extracted claims on the company for downstream tooling
+        # Surface extracted claims on the company for downstream tooling.
+        # Quantities are mapped to IRIS+ IDs (W0.10) so evidence-rich pitches
+        # that never cite an ID still give the 5D / SDG engines hard data.
+        claim_metrics: list[list[str]] = []
         for c in claims:
             if c.suggested_iris_metric_id and c.metric_value is not None:
-                company.reported_metrics[c.suggested_iris_metric_id] = float(c.metric_value)
+                company.reported_metrics.setdefault(
+                    c.suggested_iris_metric_id, float(c.metric_value)
+                )
             if not c.evidence_signals:
                 c.evidence_signals = evidence_signals(c.text)
+            mapped = map_claim_metrics(c.text, forward_looking=c.category == "commitment")
+            for mapping in mapped:
+                company.reported_metrics.setdefault(mapping.metric_id, mapping.display)
+            claim_metrics.append([mapping.metric_id for mapping in mapped])
         assessment = self.assess_company(company)
         # Every extracted claim is evidence, with or without an IRIS+ ID.
         assessment.impact_claims = to_impact_claims(claims)
+        for impact_claim, ids in zip(assessment.impact_claims, claim_metrics):
+            for metric_id in ids:
+                if metric_id not in impact_claim.mapped_metrics:
+                    impact_claim.mapped_metrics.append(metric_id)
         return assessment
 
     def extract_claims(self, text: str) -> list[ExtractedClaim]:

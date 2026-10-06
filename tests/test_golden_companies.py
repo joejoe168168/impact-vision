@@ -122,3 +122,22 @@ def test_solar_deck_is_not_a_red_flag():
     )
     assert screen.classification != "red_flag"
     assert iv.run_dd_coverage(SOLAR_DECK, sector="energy").coverage_pct > 10
+
+
+def test_pig_farm_numbers_reach_the_engines(pig_farm):
+    # W0.10: quantified claims become IRIS+ metrics without the pitch citing IDs.
+    metrics = pig_farm["assess"].company.reported_metrics
+    assert {"OI2496", "OI2764", "OI8869", "PI9991"} <= set(metrics)
+    assert pig_farm["assess"].five_dimensions.overall_provenance != "estimated"
+    assert pig_farm["gw"].overall_score < 60
+
+
+def test_pig_farm_gate_says_insufficient_evidence_not_block(pig_farm):
+    from openharness.impact.ic_memo import render_ic_memo
+
+    scorecard = pig_farm["scorecard"]
+    assert scorecard.display_status == "INSUFFICIENT EVIDENCE"
+    html = str(render_ic_memo(
+        pig_farm["assess"], scorecard, pig_farm["thesis"], output_format="html"
+    ))
+    assert "BLOCK IC submission" not in html

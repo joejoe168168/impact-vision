@@ -149,6 +149,14 @@ gate still fails on those estimated scores, even though `quick_screen` now
 correctly calls this `insufficient_evidence`. The IC memo/deal gate should
 adopt the same data-gap rule.
 
+**W0.10 status (2026-10-06):** implemented on branch `v7-w0.10` (claim →
+IRIS+ mapper + gate `data_gap` / `evidence_status`). New follow-up,
+**W0.11**, is the `pitch_deck_analyze` front door. On the pig-farm pitch it
+names the company "Pig", detects the sector as *education*, adds unrelated
+themes/SDGs (Affordable Housing, SDG 4/11), and routes ESG modules on
+stop-words ("the, of, and, to"). Sector/theme detection needs the same
+word-boundary + weighting treatment as W0.3.
+
 ### Wave 1 — Effortless first run (weeks 3–7)
 
 | ID | Item | Extends | Effort |

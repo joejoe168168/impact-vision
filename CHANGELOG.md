@@ -22,6 +22,23 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ### Fixed — v7 Wave 0 trust fixes (see `docs/roadmap-v7.md` §4)
 
+- **Pitch numbers reach the scoring engines (W0.10).** New
+  `impact.claim_metric_mapper` maps quantities in extracted claims to IRIS+
+  IDs using conservative, data-driven rules (`data/claim_metric_map.yaml`):
+  unit + clause context must match exactly one rule; targets, study samples
+  and ambiguous quantities are never mapped; units are converted (GWh → MWh)
+  and "38% of 142 staff are women" yields a labelled derived OI6213. The SDK
+  and `pitch_deck_analyze` feed these into `reported_metrics` (explicit IDs
+  win). The pig-farm demo now reports OI2496, OI2764, OI8869, OI6213 and
+  PI9991, and its greenwashing risk drops from 61.8 to 48.2.
+- **IC gate distinguishes missing evidence from negative findings.**
+  `GateCheck.data_gap` marks fails driven by non-evidence-based 5D/SDG scores,
+  uncovered DD questions, or greenwashing below the High-Risk band.
+  When every blocking failure is a data gap, `DealScorecard.evidence_status`
+  is `insufficient`, `display_status` reads "INSUFFICIENT EVIDENCE" and the
+  recommendation asks for data instead of "BLOCK IC submission"
+  (`overall_status` stays `fail`, so nothing becomes IC-eligible).
+  The IC memo and `quick_screen` use the same rule.
 - **Installed wheels lost their reference data (W0.1).** About 20 loaders
   resolved `Path(__file__).parents[3] / "data"`, which points outside
   site-packages, so a pip-installed copy silently scored with hard-coded

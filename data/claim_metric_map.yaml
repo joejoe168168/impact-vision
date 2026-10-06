@@ -1,0 +1,99 @@
+# Claim → IRIS+ metric mapping rules (v7 W0.10)
+#
+# Maps a quantity found in an extracted claim ("replacing ~920 tonnes CO2e of
+# grid emissions") to the IRIS+ metric it reports (OI2764 Greenhouse Gas
+# Emissions Avoided), so evidence-rich pitches that never cite IRIS+ IDs still
+# feed 5D / SDG / gap scoring with hard data.
+#
+# Deliberately conservative — a wrong mapping is worse than none:
+#   * the quantity's unit must be one of `units` (normalised: lowercase, no spaces);
+#   * every group in `all_of` must match the context (word-prefix match);
+#   * no term in `none_of` may match;
+#   * the clause around the quantity is tried first, then the whole sentence;
+#     a mapping is used only when exactly ONE rule matches.
+# Forward-looking claims (targets, commitments) are never mapped.
+#
+# `scale` converts the claim's unit into `canonical_unit` (e.g. GWh → MWh).
+# Every metric_id must exist in the IRIS+ 5.3c catalog — enforced by
+# tests/test_claim_metric_mapping.py.
+
+version: "1.0"
+source: "Impact Vision curated rules over GIIN IRIS+ 5.3c"
+as_of: "2026-10-06"
+
+rules:
+  - metric_id: OI2764          # Greenhouse Gas Emissions Avoided
+    units: [tco2e, tco2, tonnes, tonne, tons, ton, ktco2e, kgco2e]
+    canonical_unit: tCO2e
+    scale: {ktco2e: 1000, kgco2e: 0.001}
+    all_of:
+      - [co2, tco2, carbon, ghg, greenhouse, emission, methane]
+      - [avoid, replac, displac, abat, prevent, offset]
+
+  - metric_id: OI1479          # Greenhouse Gas Emissions: Total
+    units: [tco2e, tco2, tonnes, tonne, tons, ton, ktco2e, kgco2e]
+    canonical_unit: tCO2e
+    scale: {ktco2e: 1000, kgco2e: 0.001}
+    all_of:
+      - [co2, tco2, carbon, ghg, greenhouse, emission]
+      - [emit, emitted, emissions of, footprint, scope]
+    none_of: [avoid, replac, displac, abat, reduc, cut, sav, prevent, offset, intensity]
+
+  - metric_id: PI5842          # Energy Generated for Sale: Renewable
+    units: [gwh, mwh, kwh]
+    canonical_unit: MWh
+    scale: {gwh: 1000, mwh: 1, kwh: 0.001}
+    all_of:
+      - [generat, produc]
+      - [solar, wind, biogas, hydro, renewable, biomass, geothermal]
+      - [sold, sell, sale, offtake, export]
+
+  - metric_id: OI2496          # Energy Generated for Use: Renewable
+    units: [gwh, mwh, kwh]
+    canonical_unit: MWh
+    scale: {gwh: 1000, mwh: 1, kwh: 0.001}
+    all_of:
+      - [generat, produc]
+      - [solar, wind, biogas, hydro, renewable, biomass, geothermal]
+    none_of: [sold, sell, sale, offtake, export]
+
+  - metric_id: OI8869          # Permanent Employees: Total
+    units: [staff, employees, employee, workers, worker]
+    all_of:
+      - [employ, staff, workforce, team, headcount]
+    none_of: [train, outgrower, supplier, farmer, smallholder, contractor]
+
+  - metric_id: PI7954          # Client Households: Total
+    units: [households, household]
+    all_of:
+      - [serv, reach, connect, customer, client, provid, supplied, electrif, sold to]
+    none_of: [control group, compar, pilot, survey, sample, outgrower, supplier]
+
+  - metric_id: PI4060          # Client Individuals: Total
+    units: [customers, customer, clients, client, users, user, people, individuals]
+    all_of:
+      - [serv, reach, customer, client, user, borrower, provid, patient, student]
+    none_of: [employ, staff, control group, sample, survey]
+
+  - metric_id: PI9991          # Supplier Individuals: Smallholder
+    units: [smallholders, smallholder, farmers, farmer]
+    all_of:
+      - [outgrower, supplier, sourc, contract farm, buy from, purchas, supply]
+
+  - metric_id: PI6372          # Client Individuals: Smallholder
+    units: [smallholders, smallholder, farmers, farmer]
+    all_of:
+      - [client, customer, serv, reach, provid, train, borrower]
+    none_of: [outgrower, supplier, sourc, purchas, supply]
+
+  - metric_id: OI6912          # Land Directly Controlled: Sustainably Managed
+    units: [hectares, hectare, ha]
+    canonical_unit: ha
+    all_of:
+      - [sustainab, regenerat, organic, agroforest, certified, conservation]
+
+# Derived metrics: computed from another mapped value in the same sentence.
+derived:
+  - metric_id: OI6213          # Full-time Employees: Female
+    from_metric: OI8869
+    share_pattern: '(\d{1,3}(?:\.\d+)?)\s*%\s*(?:of\s+(?:them|whom|our\s+staff)\s+)?(?:are|were)?\s*(?:women|female)'
