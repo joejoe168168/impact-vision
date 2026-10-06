@@ -447,3 +447,60 @@ def normalize_sector(sector: str) -> str:
         return ""
     key = sector.strip().lower()
     return _SECTOR_ALIASES.get(key, key)
+
+
+# --- assessment_id hand-off (v7 W1.3) -------------------------------------
+
+ASSESSMENT_ID_DESCRIPTION = (
+    "ID returned by assess_deal (or a saved assessment). Fills any company "
+    "fields you leave empty — name, description, sector, geography, themes, "
+    "reported metrics, SDG claims and extracted claims — so you don't have to "
+    "re-type them. Fields you pass explicitly win."
+)
+
+_HYDRATE_FIELDS = {
+    "company_name": "name",
+    "company_description": "description",
+    "sector": "sector",
+    "geography": "geography",
+    "impact_themes": "impact_themes",
+    "reported_metrics": "reported_metrics",
+    "sdg_claims": "sdg_claims",
+}
+
+
+def hydrate_from_assessment(args):  # type: ignore[no-untyped-def]
+    """Fill empty company fields on a tool input from its ``assessment_id``.
+
+    Returns ``(args, error)``; *error* is a user-facing message or ``None``.
+    """
+    assessment_id = str(getattr(args, "assessment_id", "") or "").strip()
+    if not assessment_id:
+        if not getattr(args, "company_name", ""):
+            return args, "Provide company_name (or an assessment_id from assess_deal)."
+        return args, None
+
+    from openharness.impact.storage import get_assessment_store
+
+    row = get_assessment_store().get_assessment_by_id(assessment_id)
+    if row is None:
+        return args, (
+            f"No saved assessment with id {assessment_id!r}. Run assess_deal first, "
+            "or list saved assessments with the pipeline tool."
+        )
+    company = row.get("company") or {}
+    metadata = row.get("metadata") or {}
+    fields = type(args).model_fields
+    update: dict = {}
+    for arg_field, company_field in _HYDRATE_FIELDS.items():
+        if arg_field in fields and not getattr(args, arg_field):
+            value = company.get(company_field)
+            if arg_field == "reported_metrics" and isinstance(value, dict):
+                value = {k: str(v) for k, v in value.items()}
+            if value:
+                update[arg_field] = value
+    claims = metadata.get("impact_claims") or []
+    for claim_field in ("impact_claims", "claims"):
+        if claim_field in fields and not getattr(args, claim_field) and claims:
+            update[claim_field] = claims
+    return args.model_copy(update=update), None

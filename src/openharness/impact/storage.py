@@ -219,6 +219,17 @@ class AssessmentStore:
             return None
         return _row_to_assessment(row)
 
+    def get_assessment_by_id(self, assessment_id: int | str) -> dict | None:
+        """Retrieve one assessment by its row ID (the ``assessment_id`` tools share)."""
+        try:
+            row_id = int(str(assessment_id).strip().removeprefix("A-").removeprefix("a-"))
+        except ValueError:
+            return None
+        row = self._get_conn().execute(
+            "SELECT * FROM assessments WHERE id = ?", (row_id,)
+        ).fetchone()
+        return _row_to_assessment(row) if row else None
+
     def list_assessments(self, limit: int = 50) -> list[dict]:
         """List recent assessments (summary only)."""
         conn = self._get_conn()

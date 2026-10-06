@@ -9,7 +9,11 @@ from pydantic import BaseModel, Field
 
 from openharness.impact.greenwashing import assess_greenwashing
 from openharness.impact.models import Company, ImpactClaim
-from openharness.tools.impact.common import infer_themes, normalize_metric_map, normalize_sdg_goals, normalize_sector
+from openharness.tools.impact.common import (
+    ASSESSMENT_ID_DESCRIPTION,
+    hydrate_from_assessment,
+    infer_themes, normalize_metric_map, normalize_sdg_goals, normalize_sector,
+)
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 
@@ -22,7 +26,8 @@ class GreenwashingInput(BaseModel):
             "and suggested follow-up DD questions (requires 'claims')."
         ),
     )
-    company_name: str = Field(description="Name of the company")
+    company_name: str = Field(default="", description="Name of the company (optional with assessment_id)")
+    assessment_id: str = Field(default="", description=ASSESSMENT_ID_DESCRIPTION)
     company_description: str = Field(default="", description="Company description / pitch text")
     sector: str = Field(default="")
     geography: str = Field(default="", description="Country or region")
@@ -55,6 +60,9 @@ class GreenwashingDetectorTool(BaseTool):
 
     async def execute(self, arguments: BaseModel, context: ToolExecutionContext) -> ToolResult:
         args = arguments if isinstance(arguments, GreenwashingInput) else GreenwashingInput.model_validate(arguments)
+        args, hydrate_error = hydrate_from_assessment(args)
+        if hydrate_error:
+            return ToolResult(output=hydrate_error, is_error=True)
 
         metrics, metric_warnings = normalize_metric_map(args.reported_metrics)
         sdg_claims, sdg_warnings = normalize_sdg_goals(args.sdg_claims)

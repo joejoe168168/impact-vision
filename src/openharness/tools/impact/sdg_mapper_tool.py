@@ -8,12 +8,17 @@ from pydantic import BaseModel, Field
 from openharness.impact.database import ensure_catalog_loaded
 from openharness.impact.models import Company
 from openharness.impact.sdg_mapper import map_sdg_alignment
-from openharness.tools.impact.common import infer_themes, normalize_metric_map, normalize_sdg_goals, normalize_sector
+from openharness.tools.impact.common import (
+    ASSESSMENT_ID_DESCRIPTION,
+    hydrate_from_assessment,
+    infer_themes, normalize_metric_map, normalize_sdg_goals, normalize_sector,
+)
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 
 class SdgMapperInput(BaseModel):
-    company_name: str = Field(description="Name of the company to assess")
+    company_name: str = Field(default="", description="Name of the company to assess (optional with assessment_id)")
+    assessment_id: str = Field(default="", description=ASSESSMENT_ID_DESCRIPTION)
     company_description: str = Field(default="", description="Brief description of the company's activities")
     sector: str = Field(default="", description="Industry sector")
     geography: str = Field(default="", description="Country or region (e.g. 'Kenya', 'Southeast Asia')")
@@ -43,6 +48,9 @@ class SdgMapperTool(BaseTool):
 
     async def execute(self, arguments: BaseModel, context: ToolExecutionContext) -> ToolResult:
         args = arguments if isinstance(arguments, SdgMapperInput) else SdgMapperInput.model_validate(arguments)
+        args, hydrate_error = hydrate_from_assessment(args)
+        if hydrate_error:
+            return ToolResult(output=hydrate_error, is_error=True)
 
         try:
             store = ensure_catalog_loaded()

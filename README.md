@@ -232,7 +232,7 @@ Opens the six-tab dashboard at http://localhost:8501. `iv` is shorthand for
 
 ## Usage
 
-Impact Vision ships **52 impact agent tools** covering screening, diligence,
+Impact Vision ships **53 impact agent tools** covering screening, diligence,
 monitoring, reporting, assurance, and exit. Paste the examples below into the
 agent or the web chat UI; `impact_advisor` routes unfamiliar requests.
 
@@ -594,7 +594,7 @@ impact-vision/
 │   │   ├── mcp_server.py              # MCP server (FastMCP)
 │   │   └── sdk.py                     # High-level ImpactVision SDK facade
 │   │
-│   ├── tools/impact/                  # 52 LLM-callable impact agent tools (see "Tools" below)
+│   ├── tools/impact/                  # 53 LLM-callable impact agent tools (see "Tools" below)
 │   ├── api_gateway/router.py          # FastAPI REST API
 │   ├── web/                           # Browser surfaces (single-file, no build step)
 │   │   ├── chat_ui.py                 #   ChatGPT-style chat UI served at /
@@ -754,7 +754,7 @@ cross-references to IRIS+ metric IDs via the shared
 | | 3-pillar assurance bundle | HMAC-signed evidence graph + audit trail + workspace (v4) |
 | | AI governance (EU AI Act) | Model card + data lineage + human-oversight log + risk classification & obligations |
 
-### Agent Tools (52)
+### Agent Tools (53)
 
 All tools below are exposed through the default OpenHarness tool registry
 and `openharness.tools.impact`, so the interactive agent, web chat UI,
@@ -765,6 +765,7 @@ REST API, and MCP server see the same surface.
 | Tool | Description |
 |------|-------------|
 | `impact_advisor` | Tool router: ranks the most relevant tools for a free-text request and suggests multi-step playbooks (deal screening, LP reporting, regulatory compliance, verification, portfolio review, supply-chain HRDD, carbon & climate, data collection, theory of change) |
+| `assess_deal` | Start here for a pitch deck or memo: one call runs the full offline screen (claims, IRIS+ metrics, 5D, SDGs, gaps, DD coverage, greenwashing, IC gate), optionally writes the reports, and returns an `assessment_id` that `impact_report`, `sdg_mapper`, `five_dimension_assess`, `gap_analysis` and `greenwashing_detect` accept instead of re-typed fields |
 
 **Pre-screen & core assessment (7)**
 

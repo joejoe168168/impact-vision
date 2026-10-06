@@ -12,6 +12,7 @@ from openharness.tools.impact.decision_workflow_tool import DecisionWorkflowTool
 from openharness.tools.impact.dd_checklist_tool import DdChecklistTool
 from openharness.tools.impact.ddq_responder_tool import DDQResponderTool
 from openharness.tools.impact.dmrv_tool import DMRVEvidenceTool
+from openharness.tools.impact.assess_deal_tool import AssessDealTool
 from openharness.tools.impact.document_analysis_tool import DocumentAnalysisTool
 from openharness.tools.impact.emission_factors_tool import EmissionFactorsTool
 from openharness.tools.impact.engagement_suite_tool import EngagementSuiteTool
@@ -62,6 +63,7 @@ from openharness.tools.impact.verification_workspace_tool import VerificationWor
 
 __all__ = [
     "AIGovernanceTool",
+    "AssessDealTool",
     "BeneficiaryFeedbackTool",
     "ClimateScenarioTool",
     "CarbonCreditIntegrityTool",

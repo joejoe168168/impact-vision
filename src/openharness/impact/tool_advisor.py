@@ -56,6 +56,23 @@ class Playbook(BaseModel):
 
 TOOL_ROUTES: list[ToolRoute] = [
     ToolRoute(
+        tool="assess_deal",
+        category="dd",
+        summary=(
+            "One call: full impact screen of a pitch deck or memo (claims, IRIS+ metrics, 5D, "
+            "SDGs, gaps, DD coverage, greenwashing, IC gate); returns an assessment_id."
+        ),
+        keywords=[
+            "pitch deck",
+            "investment memo",
+            "assess deal",
+            "screen deal",
+            "new deal",
+            "quick assessment",
+            "evaluate company",
+        ],
+    ),
+    ToolRoute(
         tool="contribution_tracker",
         category="verification",
         summary="Register and monitor investor-contribution claims; flag attribution inflation.",
@@ -625,26 +642,22 @@ PLAYBOOKS: list[Playbook] = [
         ],
         steps=[
             PlaybookStep(
-                tool="pitch_deck_analyze",
-                purpose="Extract text, claims, SDGs, company model; run DD checklist.",
+                tool="assess_deal",
+                purpose=(
+                    "One call: claims, IRIS+ metrics, 5D, SDGs, gaps, DD coverage, "
+                    "greenwashing and IC gate; returns an assessment_id."
+                ),
             ),
             PlaybookStep(
                 tool="exclusion_screening", purpose="Confirm no exclusion-list conflicts."
             ),
             PlaybookStep(
-                tool="five_dimension_assess", purpose="Score the 5 IMP dimensions + additionality."
-            ),
-            PlaybookStep(tool="sdg_mapper", purpose="Score SDG goal/target alignment."),
-            PlaybookStep(
-                tool="gap_analysis", purpose="Find missing core metrics vs sector benchmark."
+                tool="impact_report",
+                purpose="Pass the assessment_id; choose audience (ic / lp / public).",
             ),
             PlaybookStep(
                 tool="greenwashing_detect",
-                purpose="Risk-score claims; action='review_claims' for per-claim review.",
-            ),
-            PlaybookStep(
-                tool="impact_report",
-                purpose="Generate the assessment report (+ narrative prompts).",
+                purpose="Optional deep dive: assessment_id + action='review_claims'.",
             ),
         ],
     ),

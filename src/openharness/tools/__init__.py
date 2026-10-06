@@ -69,6 +69,7 @@ def create_default_tool_registry(mcp_manager: McpClientManager | None = None) ->
 
     impact_tools: tuple[tuple[str, str], ...] = (
         ("impact.advisor_tool", "ImpactAdvisorTool"),
+        ("impact.assess_deal_tool", "AssessDealTool"),
         ("impact.beneficiary_feedback_tool", "BeneficiaryFeedbackTool"),
         ("impact.iris_catalog_tool", "IrisCatalogTool"),
         ("impact.sdg_mapper_tool", "SdgMapperTool"),

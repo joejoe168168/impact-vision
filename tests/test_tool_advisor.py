@@ -61,7 +61,7 @@ def test_route_query_no_match() -> None:
 def test_playbook_lookup() -> None:
     pb = get_playbook("deal_screening")
     assert pb is not None
-    assert pb.steps[0].tool == "pitch_deck_analyze"
+    assert pb.steps[0].tool == "assess_deal"  # v7 W1.3: one call replaces 7 steps
     assert get_playbook("does_not_exist") is None
     assert len(list_playbooks()) == len(PLAYBOOKS)
 

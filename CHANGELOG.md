@@ -37,6 +37,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
   Built on the new `impact.pipeline` module (`assess_document`,
   `assess_file`, `write_deliverables`). The examples/demo scripts now reuse
   it instead of hand-assembling the pipeline.
+- **`assess_deal` agent tool + `assessment_id` hand-off (W1.3).** One tool
+  call runs the full offline screen on a pitch deck or memo, optionally writes
+  the reports, saves the result and returns an `assessment_id`.
+  `impact_report`, `sdg_mapper`, `five_dimension_assess`, `gap_analysis` and
+  `greenwashing_detect` accept that id: empty fields (name, description,
+  sector, geography, themes, metrics, SDG claims, extracted claims) are filled
+  from the saved assessment, and explicitly passed fields win. `company_name`
+  is now optional on those tools when an `assessment_id` is given. The
+  `deal_screening` playbook drops from seven tool calls to three. The impact
+  tool count is 53.
 
 ### Security
 

@@ -22,6 +22,8 @@ from openharness.impact.sdg_mapper import generate_sdg_gap_recommendations, map_
 from openharness.impact.toolbox import build_esg_workflow
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 from openharness.tools.impact.common import (
+    ASSESSMENT_ID_DESCRIPTION,
+    hydrate_from_assessment,
     infer_themes,
     normalize_impact_targets,
     normalize_metric_map,
@@ -207,7 +209,8 @@ def _infer_opportunities_and_risks(company: Company, text: str = "") -> dict[str
 
 
 class ImpactReportInput(BaseModel):
-    company_name: str = Field(description="Name of the company")
+    company_name: str = Field(default="", description="Name of the company (optional with assessment_id)")
+    assessment_id: str = Field(default="", description=ASSESSMENT_ID_DESCRIPTION)
     company_description: str = Field(default="")
     sector: str = Field(default="")
     geography: str = Field(default="", description="Country or region")
@@ -344,6 +347,9 @@ class ImpactReportTool(BaseTool):
             if isinstance(arguments, ImpactReportInput)
             else ImpactReportInput.model_validate(arguments)
         )
+        args, hydrate_error = hydrate_from_assessment(args)
+        if hydrate_error:
+            return ToolResult(output=hydrate_error, is_error=True)
 
         try:
             store = ensure_catalog_loaded()

@@ -9,12 +9,17 @@ from openharness.impact.database import ensure_catalog_loaded
 from openharness.impact.gap_analysis import analyze_gaps
 from openharness.impact.models import Company
 from openharness.impact.toolbox import build_esg_workflow, crosswalk_reported_metrics
-from openharness.tools.impact.common import normalize_metric_ids, normalize_metric_map, normalize_str_list
+from openharness.tools.impact.common import (
+    ASSESSMENT_ID_DESCRIPTION,
+    hydrate_from_assessment,
+    normalize_metric_ids, normalize_metric_map, normalize_str_list,
+)
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 
 class GapAnalysisInput(BaseModel):
-    company_name: str = Field(description="Name of the company")
+    company_name: str = Field(default="", description="Name of the company (optional with assessment_id)")
+    assessment_id: str = Field(default="", description=ASSESSMENT_ID_DESCRIPTION)
     company_description: str = Field(default="", description="Company description for ESG context routing.")
     sector: str = Field(default="", description="Company sector for ESG context routing.")
     geography: str = Field(default="", description="Country or region for ESG context routing.")
@@ -43,6 +48,9 @@ class GapAnalysisTool(BaseTool):
 
     async def execute(self, arguments: BaseModel, context: ToolExecutionContext) -> ToolResult:
         args = arguments if isinstance(arguments, GapAnalysisInput) else GapAnalysisInput.model_validate(arguments)
+        args, hydrate_error = hydrate_from_assessment(args)
+        if hydrate_error:
+            return ToolResult(output=hydrate_error, is_error=True)
 
         try:
             store = ensure_catalog_loaded()
