@@ -1,24 +1,24 @@
-as_of: "2026-07-19"
+as_of: "2026-10-06"
 # Editorial tracking index. ``source`` values are authority names; callers
 # should verify the applicable IFRS jurisdictional profile before legal use.
 source_note: https://www.ifrs.org/ifrs-sustainability-disclosure-standards-around-the-world/use-by-jurisdiction/
 jurisdictions:
-  - {jurisdiction: Hong Kong, status: adopted, effective: "2025-08-01", scope: listed issuers, assurance_posture: phased, source: HKEX}
+  - {jurisdiction: Hong Kong, status: adopted, effective: "2025-08-01", scope: "listed issuers: HKEX IFRS S2-based climate rules (LargeCap mandatory FY2026, others comply-or-explain); full HKFRS S1/S2 targeted ~2028", assurance_posture: phased (HKSSA 5000 from 2026-12-15), source: HKEX / HKICPA, source_url: "https://sustainablefutures.linklaters.com/post/102l784/esg-quick-guide-hong-kong-sar-climate-disclosure-rules-under-hong-kong-listing", last_verified: "2026-10-06"}
   - {jurisdiction: Chile, status: adopted, effective: "2026-01-01", scope: listed issuers, assurance_posture: limited, source: CMF}
   - {jurisdiction: Qatar, status: adopted, effective: "2026-01-01", scope: listed issuers, assurance_posture: phased, source: QFMA}
   - {jurisdiction: Mexico, status: adopted, effective: "2026-01-01", scope: listed issuers, assurance_posture: phased, source: CNBV}
-  - {jurisdiction: Australia, status: adopted, effective: "2025-01-01", scope: large entities, assurance_posture: phased, source: AASB}
+  - {jurisdiction: Australia, status: adopted, effective: "2025-01-01", scope: "large entities phased: Group 1 FY from 2025-01-01, Group 2 FY from 2026-07-01, Group 3 FY from 2027-07-01", assurance_posture: phased, source: AASB, source_url: "https://aasb.gov.au/research-resources/knowledge-hub/aasb-s2-knowledge-hub/aasb-s2-frequently-asked-questions/general-faqs/", last_verified: "2026-10-06"}
   - {jurisdiction: Brazil, status: adopted, effective: "2026-01-01", scope: listed issuers, assurance_posture: limited, source: CVM}
   - {jurisdiction: Canada, status: adopting, effective: "2027-01-01", scope: proposed listed issuers, assurance_posture: proposed, source: CSA}
-  - {jurisdiction: China, status: announced, effective: "2030-01-01", scope: national baseline planned, assurance_posture: developing, source: Ministry of Finance}
-  - {jurisdiction: European Union, status: adopting, effective: "2027-01-01", scope: ESRS interoperability, assurance_posture: limited, source: European Commission}
-  - {jurisdiction: Japan, status: adopting, effective: "2027-04-01", scope: Prime market phased, assurance_posture: phased, source: SSBJ}
+  - {jurisdiction: China, status: adopting, effective: "2030-01-01", scope: "Ministry of Finance national baseline: Basic Standard (trial) issued 2024-11-20; Climate Standard No.1 (trial, voluntary) issued 2025-12-19; unified system targeted by 2030", assurance_posture: developing, source: Ministry of Finance, source_url: "https://www.pwccn.com/en/services/audit-and-assurance/publications/climate-standard-dec2025.html", last_verified: "2026-10-06"}
+  - {jurisdiction: European Union, status: adopted, effective: "2027-01-01", scope: "revised ESRS (Delegated Reg (EU) 2026/1563) with ISSB interoperability; in force 2026-11-10", assurance_posture: limited, source: European Commission, source_url: "https://eur-lex.europa.eu/eli/reg_del/2026/1563/oj", last_verified: "2026-10-06"}
+  - {jurisdiction: Japan, status: adopted, effective: "2026-04-01", scope: "Prime market phased: ≥¥3tn market cap from FY ending March 2027, ¥1–3tn from FY March 2028, ¥0.5–1tn from FY March 2029", assurance_posture: phased, source: SSBJ / FSA, source_url: "https://www.fsa.go.jp/en/news/2025/20251106/02.pdf", last_verified: "2026-10-06"}
   - {jurisdiction: Malaysia, status: adopted, effective: "2025-01-01", scope: listed issuers phased, assurance_posture: phased, source: Securities Commission Malaysia}
   - {jurisdiction: New Zealand, status: adopted, effective: "2023-01-01", scope: climate reporting entities, assurance_posture: limited, source: XRB}
   - {jurisdiction: Nigeria, status: adopting, effective: "2028-01-01", scope: public interest entities, assurance_posture: phased, source: FRC Nigeria}
   - {jurisdiction: Pakistan, status: adopting, effective: "2025-07-01", scope: listed issuers phased, assurance_posture: developing, source: SECP}
   - {jurisdiction: Philippines, status: announced, effective: "2027-01-01", scope: listed issuers, assurance_posture: developing, source: SEC Philippines}
-  - {jurisdiction: Singapore, status: adopted, effective: "2025-01-01", scope: listed issuers phased, assurance_posture: limited, source: ACRA SGX}
+  - {jurisdiction: Singapore, status: adopted, effective: "2025-01-01", scope: "listed issuers phased: STI constituents FY2025; non-STI ≥S$1bn market cap FY2028; others FY2030", assurance_posture: limited, source: ACRA SGX, source_url: "https://www.acra.gov.sg/news-events/news-details/id/887", last_verified: "2026-10-06"}
   - {jurisdiction: South Africa, status: adopting, effective: "2026-01-01", scope: listed issuers, assurance_posture: developing, source: JSE}
   - {jurisdiction: South Korea, status: announced, effective: "2026-01-01", scope: listed issuers phased, assurance_posture: developing, source: FSC}
   - {jurisdiction: Sri Lanka, status: adopting, effective: "2025-01-01", scope: listed issuers phased, assurance_posture: developing, source: CA Sri Lanka}
@@ -26,7 +26,7 @@ jurisdictions:
   - {jurisdiction: Taiwan, status: adopted, effective: "2026-01-01", scope: listed issuers phased, assurance_posture: phased, source: FSC Taiwan}
   - {jurisdiction: Thailand, status: announced, effective: "2026-01-01", scope: listed issuers phased, assurance_posture: developing, source: SEC Thailand}
   - {jurisdiction: Turkey, status: adopted, effective: "2024-01-01", scope: in-scope entities, assurance_posture: limited, source: KGK}
-  - {jurisdiction: United Kingdom, status: adopting, effective: "2027-01-01", scope: economically significant entities, assurance_posture: phased, source: UK government}
+  - {jurisdiction: United Kingdom, status: adopted, effective: "2027-01-01", scope: "listed issuers: UK SRS comply-or-explain (FCA PS26/19); Scope 3 relief 1 yr, wider S1 relief 2 yrs", assurance_posture: phased, source: FCA, source_url: "https://www.fca.org.uk/publications/policy-statements/ps26-19-aligning-listed-issuers-sustainability-disclosures-international-standards", last_verified: "2026-10-06"}
   - {jurisdiction: Bangladesh, status: announced, effective: "2027-01-01", scope: listed issuers, assurance_posture: developing, source: FRC Bangladesh}
   - {jurisdiction: Colombia, status: announced, effective: "2027-01-01", scope: listed issuers, assurance_posture: developing, source: Superfinanciera}
   - {jurisdiction: Costa Rica, status: announced, effective: "2027-01-01", scope: regulated entities, assurance_posture: developing, source: CONASSIF}

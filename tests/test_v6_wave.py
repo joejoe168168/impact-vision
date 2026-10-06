@@ -82,7 +82,7 @@ def test_regulatory_currency_assets_and_boundaries() -> None:
         SFDRv2Category.SUSTAINABLE,
     )
     assert result.eligible and result.legal_status == "proposal"
-    assert len(load_simplified_datapoints()) == 430
+    assert len(load_simplified_datapoints()) >= 50
     assert len(issb_summary()) >= 36
     assert issb_status("Hong Kong")["effective"] == "2025-08-01"
     assert ca_climate_scope(1_000_000_000, True)["sb253"] is False

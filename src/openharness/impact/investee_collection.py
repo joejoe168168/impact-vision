@@ -229,6 +229,57 @@ def default_metric_ids_for_sector(sector: str) -> list[str]:
     return SECTOR_METRIC_TEMPLATES.get(normalized, [])
 
 
+def generate_vsme_questionnaire_schema(
+    *, module: str = "basic", reporting_period: str = "current"
+) -> InvesteeQuestionnaireSchema:
+    """VSME investee template (Delegated Reg (EU) 2026/1560), one section per pillar.
+
+    This is the most a CSRD reporter may ask of a value-chain partner with up
+    to 1,000 employees, so it is the default ask for SME investees.
+    """
+    from openharness.impact.frameworks.vsme import vsme_template_fields
+
+    by_pillar: dict[str, list[QuestionnaireField]] = {}
+    for row in vsme_template_fields(module):
+        numeric = row["value_type"] != "text"
+        rules = [
+            ValidationRule(rule="required", value=True, message="Provide a value or mark it not applicable."),
+            ValidationRule(rule="number_or_text", value=row["value_type"], message=f"Expected {row['value_type']} value."),
+        ]
+        if numeric:
+            rules.append(ValidationRule(rule="expected_unit", value=row["unit"], message=f"Expected unit: {row['unit']}."))
+        by_pillar.setdefault(row["pillar"], []).append(
+            QuestionnaireField(
+                metric_id=row["field_id"],
+                label=row["label"],
+                definition=row["definition"],
+                guidance=f"VSME disclosure {row['disclosure']} ({row['module']} module).",
+                unit=row["unit"],
+                value_type=row["value_type"],
+                required=row["module"] == "basic",
+                evidence=EvidenceRequirement(required=numeric),
+                validation_rules=rules,
+            )
+        )
+    order = ["general", "environment", "social", "governance"]
+    sections = [
+        QuestionnaireSection(
+            id=f"vsme_{pillar}",
+            title=f"VSME — {pillar.title()}",
+            description=f"VSME {pillar} disclosures.",
+            fields=by_pillar[pillar],
+        )
+        for pillar in order
+        if pillar in by_pillar
+    ]
+    return InvesteeQuestionnaireSchema(
+        sector="vsme",
+        reporting_period=reporting_period,
+        metric_count=sum(len(s.fields) for s in sections),
+        sections=sections,
+    )
+
+
 def generate_investee_questionnaire_schema(
     *,
     sector: str,
@@ -236,7 +287,13 @@ def generate_investee_questionnaire_schema(
     reporting_period: str = "current",
     store: MetricStore | None = None,
 ) -> InvesteeQuestionnaireSchema:
-    """Generate a dynamic investee questionnaire schema from metric definitions."""
+    """Generate a dynamic investee questionnaire schema from metric definitions.
+
+    ``sector="vsme"`` (or ``"vsme_comprehensive"``) returns the VSME template.
+    """
+    if not metric_ids and sector.strip().lower() in ("vsme", "vsme_basic", "vsme_comprehensive"):
+        module = "comprehensive" if sector.strip().lower().endswith("comprehensive") else "basic"
+        return generate_vsme_questionnaire_schema(module=module, reporting_period=reporting_period)
     store = store or get_metric_store()
     selected = list(metric_ids or [])
     if not selected:
@@ -463,6 +520,7 @@ __all__ = [
     "create_collection_submission",
     "default_metric_ids_for_sector",
     "generate_investee_questionnaire_schema",
+    "generate_vsme_questionnaire_schema",
     "review_collection_submission",
     "submission_to_metric_records",
     "validate_collection_submission",

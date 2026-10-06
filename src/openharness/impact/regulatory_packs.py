@@ -119,8 +119,11 @@ _PACKS: dict[str, RegulatoryPack] = {
     "EU-CSRD": RegulatoryPack(
         jurisdiction="EU-CSRD",
         issuer="European Commission / EFRAG",
-        as_of="2026-03-18",
-        legal_basis="Directive (EU) 2026/470 (Omnibus I), in force 2026-03-18",
+        as_of="2026-10-06",
+        legal_basis=(
+            "Directive (EU) 2026/470 (Omnibus I), in force 2026-03-18; revised ESRS "
+            "Delegated Reg (EU) 2026/1563 (in force 2026-11-10); VSME Delegated Reg (EU) 2026/1560"
+        ),
         in_scope_summary=(
             "POST-OMNIBUS I: mandatory only for undertakings meeting BOTH "
             ">1,000 employees AND >€450M net turnover. Non-EU groups: >€450M EU "
@@ -145,10 +148,11 @@ _PACKS: dict[str, RegulatoryPack] = {
         ],
         notes=(
             "Member States transpose Omnibus I by 2027-03-19; new scope applies "
-            "from FY2027. Sector-specific ESRS removed. A SIMPLIFIED ESRS "
-            "delegated act is targeted for 2026-09. Undertakings below 1,000 "
-            "employees may refuse data requests exceeding the VSME voluntary "
-            "standard — use the VSME module for those investees."
+            "from FY2027. Sector-specific ESRS removed. The revised ESRS "
+            "(Delegated Reg (EU) 2026/1563, OJ 2026-09-21) are mandatory for FY "
+            "beginning on/after 2027-01-01. From FY2027, value-chain partners with "
+            "up to 1,000 employees may refuse data requests beyond the VSME "
+            "(Delegated Reg (EU) 2026/1560) — use the VSME request pack for them."
         ),
     ),
     "EU-CSDDD": RegulatoryPack(
@@ -186,10 +190,18 @@ _PACKS: dict[str, RegulatoryPack] = {
     "UK-FCA-SDR": RegulatoryPack(
         jurisdiction="UK-FCA-SDR",
         issuer="UK FCA",
-        in_scope_summary="UK-authorised asset managers with AUM > £5bn.",
+        in_scope_summary=(
+            "UK-authorised asset managers with AUM > £5bn (SDR). Listed issuers: UK SRS "
+            "comply-or-explain for periods from 2027-01-01 (FCA PS26/19)."
+        ),
         filings=[
             RegulatoryFiling(name="Sustainability Product Label disclosure", cadence="annual"),
             RegulatoryFiling(name="Entity-level sustainability report", cadence="annual"),
+            RegulatoryFiling(
+                name="UK SRS comply-or-explain statement (listed issuers)",
+                cadence="annual",
+                mandatory_for="UK listed issuers, periods beginning on/after 2027-01-01",
+            ),
         ],
         required_metrics=[
             "outcome_metric_per_product",
@@ -212,12 +224,19 @@ _PACKS: dict[str, RegulatoryPack] = {
     "HK-HKEX-ESG": RegulatoryPack(
         jurisdiction="HK-HKEX-ESG",
         issuer="Hong Kong Exchanges and Clearing (HKEX)",
-        in_scope_summary="All HKEX-listed issuers; full ISSB alignment from 2025.",
+        as_of="2026-10-06",
+        legal_basis="HKEX Main Board Listing Rules Appendix C2 (IFRS S2-based climate requirements)",
+        in_scope_summary=(
+            "All HKEX-listed issuers. IFRS S2-based climate requirements from FY2025 "
+            "(Main Board comply-or-explain); mandatory for LargeCap issuers for FY "
+            "beginning on/after 2026-01-01. Full HKFRS S1/S2 targeted ~2028; HKSSA 5000 "
+            "assurance from periods beginning 2026-12-15."
+        ),
         filings=[
             RegulatoryFiling(
                 name="Environmental, Social and Governance Report",
                 cadence="annual",
-                format="ISSB-aligned from FY2025",
+                format="IFRS S2-based climate disclosures (HKEX)",
             ),
         ],
         required_metrics=[

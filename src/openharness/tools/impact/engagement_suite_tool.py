@@ -440,6 +440,8 @@ class EngagementSuiteTool(BaseTool):
                 title=p.get("title", ""),
                 sector=p.get("sector", ""),
                 geography=p.get("geography", ""),
+                counterparty_employees=p.get("counterparty_employees"),
+                requester_in_csrd_scope=bool(p.get("requester_in_csrd_scope", False)),
             )
             return {"pack": pack.model_dump(mode="json")}
 

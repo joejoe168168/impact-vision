@@ -515,7 +515,7 @@ class ImpactVision:
 
     @staticmethod
     def build_assurance_pack(**kwargs):
-        """Phase 17 — ISAE 3000 / AA1000 assurance input pack."""
+        """Phase 17 — ISSA 5000 / AA1000 assurance input pack (ISAE 3000 for pre-2026-12-15 periods)."""
         from openharness.impact.assurance import build_assurance_pack
         return build_assurance_pack(**kwargs)
 

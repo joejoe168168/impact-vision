@@ -84,9 +84,16 @@ def slim_report(data: dict) -> dict:
     return out
 
 
+def _ai(data: dict):  # type: ignore[no-untyped-def]
+    from openharness.impact.ai_provenance import ai_provenance_for_report
+
+    return ai_provenance_for_report(data)
+
+
 def to_json(data: dict, *, slim: bool = False, indent: int | None = 2) -> str:
     payload = slim_report(data) if slim else dict(data)
     payload = {"schema_version": SCHEMA_VERSION, "export_mode": "slim" if slim else "full", **payload}
+    payload["ai_provenance"] = _ai(data).model_dump(mode="json")
     return json.dumps(payload, indent=indent, default=str, ensure_ascii=False)
 
 
@@ -101,6 +108,7 @@ def csv_rows(data: dict) -> list[list[Any]]:
     rows: list[list[Any]] = [
         ["Company", "Name", company.get("name", ""), "", None, None, ""],
         ["Company", "Generated", data.get("generated_at", ""), "", None, None, ""],
+        ["Company", "AI disclosure", _ai(data).disclosure, "", None, None, ""],
     ]
     fd = data.get("five_dimensions")
     if fd:
@@ -224,6 +232,7 @@ def build_workbook(data: dict):  # type: ignore[no-untyped-def]
         ["Greenwashing risk (0–100)", _num(gw.get("overall_score"))],
         ["Core metric coverage (%)", _num(ga.get("coverage_percentage"))],
         ["Claims extracted", len(data.get("impact_claims", []) or [])],
+        ["AI disclosure", _ai(data).disclosure],
         ["Export schema", SCHEMA_VERSION],
     ]
     ws.append(["Impact assessment — " + str(company.get("name", ""))])
@@ -269,16 +278,24 @@ def build_workbook(data: dict):  # type: ignore[no-untyped-def]
     claims = data.get("impact_claims", []) or []
     if claims:
         rows = [[c.get("category", ""), c.get("text", ""), _num(c.get("evidence_strength", c.get("evidence_level"))),
-                 _num(c.get("confidence")), ", ".join(str(m) for m in c.get("mapped_metrics", []))]
+                 _num(c.get("confidence")), ", ".join(str(m) for m in c.get("mapped_metrics", [])),
+                 c.get("extracted_by", "")]
                 for c in claims]
         _table(wb.create_sheet("Claims"),
-               ["Category", "Claim", "NESTA level", "Confidence", "Mapped metrics"], rows,
+               ["Category", "Claim", "NESTA level", "Confidence", "Mapped metrics", "Extracted by"], rows,
                widths={2: 80}, formats={3: "0", 4: "0.00"})
 
     _table(wb.create_sheet("All figures"), CSV_HEADER, csv_rows(data), widths={3: 40, 4: 60},
            formats={5: "#,##0.##", 6: "0"})
+    prov = _ai(data)
+    ws_ai = wb.create_sheet("AI provenance")
+    _table(ws_ai, ["Field", "Value"], [list(r) for r in prov.as_rows()], widths={1: 28, 2: 100})
+    _table(ws_ai, ["Figure", "Stage", "Method", "Estimated", "Model", "Note"],
+           [[r.figure, r.stage, r.method, "yes" if r.estimated else "no", r.model, r.note]
+            for r in prov.records],
+           widths={1: 34, 6: 40}, start_row=len(prov.as_rows()) + 3)
     _table(wb.create_sheet("Methodology"), ["Topic", "How it is calculated"],
-           [list(row) for row in METHODOLOGY], widths={1: 18, 2: 100})
+           [list(row) for row in METHODOLOGY] + [["AI use", prov.disclosure]], widths={1: 18, 2: 100})
     return wb
 
 

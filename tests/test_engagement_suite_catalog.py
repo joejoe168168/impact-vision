@@ -34,7 +34,9 @@ def test_payload_keys_are_derived_for_every_action_that_reads_one():
     keys, open_actions = payload_catalog()
     missing = sorted(a for a in ACTIONS - NO_PAYLOAD if a not in keys and a not in open_actions)
     assert missing == []
-    assert keys["build_request_pack"] == ("bundle_id", "geography", "sector", "title")
+    assert keys["build_request_pack"] == (
+        "bundle_id", "counterparty_employees", "geography", "requester_in_csrd_scope", "sector", "title"
+    )
     # Payloads handed to pydantic models resolve to the model's fields.
     assert "employees" in keys["assess_eu_omnibus_scope"]
     assert len(open_actions) <= 3

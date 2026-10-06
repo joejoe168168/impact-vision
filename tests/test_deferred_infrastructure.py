@@ -102,8 +102,9 @@ def test_climate_claim_classifier_is_heuristic_without_model() -> None:
 
 def test_simplified_esrs_named_disclosures_outrank_fillers() -> None:
     rows = load_simplified_datapoints()
-    assert len(rows) == 430
-    named = [row for row in rows if not row.synthetic]
+    # W4.1: the revised ESRS are law, so generated filler rows are gone.
+    assert not any(row.synthetic for row in rows)
+    named = rows
     assert len(named) >= 50
     ids = {row.datapoint_id for row in named}
     assert "ESRS2-GOV-1" in ids or "GOV-1" in ids

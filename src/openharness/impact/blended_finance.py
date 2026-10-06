@@ -51,7 +51,7 @@ class ILLoanTerms(BaseModel):
     cap_bps: int | None = None  # maximum step-down
     floor_bps: int | None = None  # maximum step-up
     reporting_cadence: Literal["quarterly", "annual"] = "annual"
-    verification_party: str = "Independent assurer (ISAE 3000)"
+    verification_party: str = "Independent assurer (ISSA 5000)"
 
 
 class SOCTerms(BaseModel):
@@ -77,7 +77,7 @@ class ImpactCarryTerms(BaseModel):
     gp_carry_rate_pct: float = 20.0
     impact_hurdle_pct: float = 80.0
     hurdle_metric: str = "Capital deployed into verified-impact companies"
-    verification_party: str = "Independent assurer (ISAE 3000)"
+    verification_party: str = "Independent assurer (ISSA 5000)"
     clawback_window_years: int = 5
 
 

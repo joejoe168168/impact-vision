@@ -24,6 +24,7 @@
       {%- if source %} · {{ t('source', source=source) }}{% endif %}
     </p>
     <p class="notice">{{ notice }}{% if lang_note %} {{ lang_note }}{% endif %}</p>
+    <p class="ai-badges" aria-label="{{ t('ai_title') }}">{% for b in ai.badges %}<span class="chip ai{{ ' generated' if ai.generated else '' }}"><span class="dot" aria-hidden="true"></span>{{ b }}</span> {% endfor %}</p>
   </div>
   </div>
   <div style="display:flex;flex-direction:column;align-items:flex-end;gap:10px">
@@ -244,6 +245,13 @@
   <h2 id="h-appendix">{{ icons.appendix | safe }}{{ t('sec_appendix') }}</h2>
   <h3 class="small">{{ t('method_title') }}</h3>
   <ul class="small">{% for m in methodology %}<li>{{ m }}</li>{% endfor %}</ul>
+  <h3 class="small" id="ai-disclosure">{{ t('ai_title') }}</h3>
+  <p class="small">{{ ai.disclosure }}</p>
+  <div class="table-wrap"><table class="small">
+    <caption>{{ t('ai_title') }}</caption>
+    <tbody>{% for label, value in ai.rows %}<tr><th scope="row">{{ label }}</th><td>{{ value }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+  <p class="small muted">{{ t('ai_reg') }}</p>
   {{ glossary_html }}
 </section>
 {% endif %}
@@ -251,6 +259,7 @@
 
 <footer class="footer">
   {% if branding.footer_text %}<p style="margin:0 0 4px">{{ branding.footer_text }}</p>{% endif %}
+  <p style="margin:0 0 4px">{{ ai.disclosure }}</p>
   {% if not branding.hide_attribution %}<p style="margin:0">{{ t('generated_by') }}</p>{% endif %}
 </footer>
 </main>

@@ -37,6 +37,7 @@ Jurisdiction = Literal[
     "Japan",
     "Australia",
     "CN",
+    "HK",
 ]
 
 FundLabelEU = Literal["article_6", "article_8", "article_9"]
@@ -59,6 +60,16 @@ class RegulatoryObligation(BaseModel):
     summary: str
     recurrence: Literal["annual", "semi_annual", "quarterly", "one_off"] = "annual"
     owner_hint: str = ""
+    due_offset_days: int | None = Field(
+        default=None, description="Days after fiscal year end; overrides the recurrence default"
+    )
+    fixed_due_date: str = Field(
+        default="",
+        description="Statutory date that applies regardless of fiscal year end (ISO); "
+        "used while it is still ahead, then the offset rule takes over",
+    )
+    as_of: str = ""
+    source_url: str = ""
 
 
 class RegulatoryJurisdictionProfile(BaseModel):
@@ -207,7 +218,7 @@ _EU = RegulatoryJurisdictionProfile(
 
 _UK = RegulatoryJurisdictionProfile(
     jurisdiction="UK",
-    frameworks=["FCA SDR", "ISSB IFRS S1", "ISSB IFRS S2", "TCFD"],
+    frameworks=["FCA SDR", "UK SRS (FCA PS26/19)", "ISSB IFRS S1", "ISSB IFRS S2", "TCFD"],
     obligations=[
         RegulatoryObligation(
             obligation_id="sdr_label",
@@ -226,8 +237,29 @@ _UK = RegulatoryJurisdictionProfile(
             summary="Consumer-facing and pre-contractual disclosures per SDR.",
             recurrence="annual",
         ),
+        RegulatoryObligation(
+            obligation_id="uk_srs_listed_issuers",
+            framework="UK SRS (FCA PS26/19)",
+            title="UK SRS statement (listed issuers, comply-or-explain)",
+            summary=(
+                "Listed issuers report against UK SRS S1/S2 on a comply-or-explain "
+                "basis for periods beginning on or after 2027-01-01 (first reports in "
+                "2028). Reliefs: Scope 3 for the first year; wider (non-climate) UK SRS "
+                "S1 disclosures for the first two years. Transition-plan rules remain "
+                "on the watch-list."
+            ),
+            recurrence="annual",
+            owner_hint="CFO / company secretary",
+            due_offset_days=120,
+            as_of="2026-10-06",
+            source_url="https://www.fca.org.uk/publications/policy-statements/ps26-19-aligning-listed-issuers-sustainability-disclosures-international-standards",
+        ),
     ],
-    notes="UK SDR + ISSB with a strong anti-greenwashing lens.",
+    notes=(
+        "UK SDR + UK SRS with a strong anti-greenwashing lens. UK SRS for listed "
+        "issuers is comply-or-explain (FCA PS26/19, final 2026-09-30) for periods "
+        "from 2027-01-01."
+    ),
 )
 
 _US = RegulatoryJurisdictionProfile(
@@ -241,11 +273,15 @@ _US = RegulatoryJurisdictionProfile(
             summary=(
                 "Entities doing business in California with >$1B revenue must "
                 "report Scope 1+2 GHG emissions annually (first report due "
-                "2026-11-10 after CARB's deferral); Scope 3 phases in from 2027 "
-                "with escalating assurance."
+                "2026-11-10 after CARB's deferral; limited assurance waived for "
+                "this first cycle); Scope 3 phases in from 2027 with escalating "
+                "assurance."
             ),
             recurrence="annual",
             owner_hint="ESG analyst",
+            fixed_due_date="2026-11-10",
+            as_of="2026-10-06",
+            source_url="https://ww2.arb.ca.gov/our-work/programs/california-corporate-greenhouse-gas-reporting",
         ),
         RegulatoryObligation(
             obligation_id="ca_sb261_climate_risk",
@@ -359,6 +395,85 @@ _CN = RegulatoryJurisdictionProfile(
 )
 
 
+_HK = RegulatoryJurisdictionProfile(
+    jurisdiction="HK",
+    frameworks=[
+        "HKEX climate requirements (IFRS S2-based)",
+        "HKFRS S1/S2 (ISSB)",
+        "Hong Kong Taxonomy for Sustainable Finance",
+        "HKSSA 5000",
+    ],
+    obligations=[
+        RegulatoryObligation(
+            obligation_id="hkex_esg_climate_report",
+            framework="HKEX climate requirements",
+            title="HKEX ESG report with climate disclosures",
+            summary=(
+                "Main Board issuers report climate disclosures under the IFRS S2-based "
+                "HKEX requirements. LargeCap issuers (Hang Seng Composite LargeCap "
+                "constituents) must report in full for financial years beginning on or "
+                "after 2026-01-01; other Main Board issuers comply-or-explain. Published "
+                "with the annual report (within four months of year end)."
+            ),
+            recurrence="annual",
+            owner_hint="company secretary / ESG lead",
+            due_offset_days=120,
+            as_of="2026-10-06",
+            source_url="https://sustainablefutures.linklaters.com/post/102l784/esg-quick-guide-hong-kong-sar-climate-disclosure-rules-under-hong-kong-listing",
+        ),
+        RegulatoryObligation(
+            obligation_id="hk_taxonomy_alignment",
+            framework="Hong Kong Taxonomy",
+            title="Hong Kong Taxonomy alignment screen",
+            summary=(
+                "Voluntary alignment screen of activities against the HKMA Hong Kong "
+                "Taxonomy (Phase 2A final 2026-01-22; Phase 2B prototype consultation "
+                "closed 2026-10-07). Use the taxonomy screen for green-finance labelling."
+            ),
+            recurrence="annual",
+            owner_hint="ESG analyst",
+            due_offset_days=120,
+            as_of="2026-10-06",
+            source_url="https://www.hkma.gov.hk/eng/news-and-media/press-releases/2026/01/20260122-3/",
+        ),
+        RegulatoryObligation(
+            obligation_id="hkssa_5000_assurance_readiness",
+            framework="HKSSA 5000",
+            title="Sustainability assurance readiness (HKSSA 5000)",
+            summary=(
+                "HKSSA 5000 replaces ISAE 3000/3410-based engagements for periods "
+                "beginning on or after 2026-12-15. Prepare evidence, controls and a "
+                "record of where AI was used for each assured figure."
+            ),
+            recurrence="annual",
+            owner_hint="CFO / assurance provider",
+            due_offset_days=150,
+            as_of="2026-10-06",
+            source_url="https://www.hkicpa.org.hk/-/media/HKICPA-Website/Members-Handbook/volumeIII/324ssa5.pdf",
+        ),
+        RegulatoryObligation(
+            obligation_id="hk_transition_plan",
+            framework="HKFRS S2 / TPT",
+            title="Climate transition plan (TPT / ISSB-aligned)",
+            summary=(
+                "Disclose transition-plan information under IFRS S2 paragraph 14, "
+                "using the TPT disclosure framework as the template. Full HKFRS S1/S2 "
+                "for all listed issuers is expected from ~2028 after a 2027 consultation."
+            ),
+            recurrence="annual",
+            owner_hint="ESG lead",
+            due_offset_days=120,
+            as_of="2026-10-06",
+        ),
+    ],
+    notes=(
+        "Hong Kong: HKEX climate requirements are mandatory for LargeCap issuers from "
+        "FY2026; HKFRS S1/S2 for all listed issuers targeted ~2028; HKSSA 5000 "
+        "effective for periods beginning on/after 2026-12-15."
+    ),
+)
+
+
 JURISDICTION_PROFILES: dict[Jurisdiction, RegulatoryJurisdictionProfile] = {
     "EU": _EU,
     "UK": _UK,
@@ -369,6 +484,7 @@ JURISDICTION_PROFILES: dict[Jurisdiction, RegulatoryJurisdictionProfile] = {
     "Japan": _JP,
     "Australia": _AU,
     "CN": _CN,
+    "HK": _HK,
 }
 
 
@@ -405,7 +521,15 @@ def list_jurisdictions() -> list[RegulatoryJurisdictionProfile]:
     return list(JURISDICTION_PROFILES.values())
 
 
+_JURISDICTION_ALIASES = {
+    "hong kong": "HK", "hong kong sar": "HK", "hksar": "HK", "hk": "HK",
+    "united kingdom": "UK", "uk": "UK", "china": "CN", "cn": "CN",
+    "european union": "EU", "eu": "EU", "united states": "US", "usa": "US", "us": "US",
+}
+
+
 def get_jurisdiction_profile(jurisdiction: str) -> RegulatoryJurisdictionProfile:
+    jurisdiction = _JURISDICTION_ALIASES.get(jurisdiction.strip().casefold(), jurisdiction)
     try:
         return JURISDICTION_PROFILES[jurisdiction]  # type: ignore[index]
     except KeyError as exc:
@@ -656,6 +780,9 @@ class RegulatoryDeadline(BaseModel):
     due_date: str
     status: DeadlineStatus = "upcoming"
     owner: str = ""
+    statutory: bool = Field(
+        default=False, description="Due date is a fixed statutory date, not a fiscal-year offset"
+    )
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -681,10 +808,15 @@ def schedule_deadlines(
     profile = get_jurisdiction_profile(jurisdiction)
     deadlines: list[RegulatoryDeadline] = []
     for obligation in profile.obligations:
-        offset_days = {"annual": 90, "semi_annual": 60, "quarterly": 45, "one_off": 30}[
-            obligation.recurrence
-        ]
-        if jurisdiction == "CN" and obligation.recurrence == "annual":
+        offset_days = obligation.due_offset_days or {
+            "annual": 90, "semi_annual": 60, "quarterly": 45, "one_off": 30
+        }[obligation.recurrence]
+        fixed = date.fromisoformat(obligation.fixed_due_date) if obligation.fixed_due_date else None
+        if fixed and fixed >= date.today():
+            # A statutory date still ahead (e.g. SB 253's first report) beats
+            # the fiscal-year offset; once it passes the annual rule applies.
+            due = fixed
+        elif jurisdiction == "CN" and obligation.recurrence == "annual":
             # SSE/SZSE sustainability reports are filed with the annual report
             # by the fixed 30 April deadline, irrespective of a 90-day offset.
             due = date(fiscal_year_end.year + 1, 4, 30)
@@ -700,6 +832,7 @@ def schedule_deadlines(
                 due_date=due.isoformat(),
                 status=status,
                 owner=owner or obligation.owner_hint,
+                statutory=fixed is not None and due == fixed,
             )
         )
     return deadlines

@@ -546,6 +546,35 @@ def _kpis(view: dict[str, Any], spec: ReportSpec, decision: dict | None, t) -> l
     return tiles
 
 
+def _ai(data: dict[str, Any], t) -> dict[str, Any]:  # type: ignore[no-untyped-def]
+    """Localised AI-provenance badge + disclosure (EU AI Act Art 50, W4.5)."""
+    from openharness.impact.ai_provenance import ai_provenance_for_report
+
+    prov = ai_provenance_for_report(data)
+    if prov.ai_generated:
+        stages = [t(f"ai_stage_{s}").lower() if t(f"ai_stage_{s}").isascii() else t(f"ai_stage_{s}")
+                  for s in ("extraction", "tagging", "drafting") if getattr(prov, s) == "llm"]
+        sentence = t("ai_assisted", model=f" ({prov.llm_model})" if prov.llm_model else "",
+                     stages=", ".join(stages))
+    else:
+        sentence = t("ai_auto")
+    if prov.estimated_figures:
+        sentence += " " + t("ai_estimated", n=prov.estimated_figures, total=prov.total_figures)
+    sentence += " " + t("ai_reviewed" if prov.human_reviewed else "ai_review")
+    badges = [t("ai_badge_ai" if prov.extraction == "llm" else "ai_badge_rules")]
+    if prov.estimated_figures:
+        badges.append(t("ai_badge_estimated", n=prov.estimated_figures, total=prov.total_figures))
+    if prov.drafting == "llm":
+        badges.append(t("ai_badge_drafted"))
+    return {
+        "generated": prov.ai_generated,
+        "badges": badges,
+        "disclosure": sentence,
+        "rows": [(t(f"ai_stage_{s}"), t(f"ai_m_{getattr(prov, s)}"))
+                 for s in ("extraction", "calculation", "tagging", "drafting")],
+    }
+
+
 _BRANDING_KEYS = ("fund_name", "logo_url", "footer_text", "primary_color", "hide_attribution")
 _HEX = re.compile(r"^#[0-9a-fA-F]{6}$")
 
@@ -599,6 +628,7 @@ def build_view(data: dict[str, Any], *, audience: str | None = None, lang: str =
         "targets": (data.get("target_tracking") or {}).get("targets", []),
         "feedback": data.get("beneficiary_feedback"),
     }
+    view["ai"] = _ai(data, t)
     view["evidence_mix"] = _evidence_mix(data)
     view["pathway"] = _pathway(data, t)
     view["monogram"] = monogram(view["company"]["name"])

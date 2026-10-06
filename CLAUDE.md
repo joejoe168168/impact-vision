@@ -48,8 +48,9 @@ module. Progress so far:
     (`CopilotOutput` + `CopilotReviewQueue`), deterministic challenge
     mode, client-safe answer mode bound to approved evidence only,
     prefix-based meeting-note ingestion.
-  - `engagements.regulatory` (Track 9) — 8 jurisdiction profiles
-    (EU / UK / US / Singapore / Switzerland / Canada / Japan / Australia),
+  - `engagements.regulatory` (Track 9) — 10 jurisdiction profiles
+    (EU / UK / US / Singapore / Switzerland / Canada / Japan / Australia /
+    CN / HK),
     SFDR + UK SDR classifiers, deadline calendar, regulator-facing
     narrative composer.
   - `engagements.verification_bundle` (Track 10) — BlueMark-style
@@ -64,7 +65,7 @@ module. Progress so far:
 3. Agent presents gaps and asks the most important unanswered DD questions (with NESTA evidence levels)
 4. Deeper scoring via `sdg_mapper`, `five_dimension_assess`, `gap_analysis` with sector benchmarks
 5. `cross_reference` tool maps metrics across all 10 frameworks
-6. Greenwashing detection (standard + EU Green Claims + UK FCA + NLP) and regulatory compliance checks
+6. Greenwashing detection (standard + EU ECGT green claims + UK FCA + NLP) and regulatory compliance checks
 7. `impact_report` generates the final assessment (HTML with Plotly charts, XLSX, CSV, JSON)
 
 ## v3 Trust Infrastructure (since 0.15.0)
@@ -195,6 +196,7 @@ src/openharness/
 │   ├── greenwashing_reviewer.py   # v3 per-claim explainable greenwashing review
 │   ├── portfolio_nlq.py           # v3 NL query engine + ApprovedDataPolicy
 │   ├── exit_impact.py             # v3 OPIM P8 exit-impact scoring + plan
+│   ├── ai_provenance.py           # v7 W4: AI/automation disclosure on every output (AI Act Art 50)
 │   ├── engagements/               # v4 W1+W2: consultant workspace + ToC builder
 │   │   ├── models.py              # Engagement / Deliverable / Checklist / Override
 │   │   ├── bundles.py             # 12 productised engagement bundles (§4a)
@@ -224,6 +226,7 @@ src/openharness/
 │       ├── issb_ifrs_s1.py        # ISSB IFRS S1 General Requirements
 │       ├── issb_ifrs_s2.py        # ISSB IFRS S2 Climate Disclosures
 │       ├── esrs.py                # EU CSRD/ESRS Double Materiality (11 standards)
+│       ├── hk_taxonomy.py         # v7 W4: Hong Kong Taxonomy eligibility/alignment screen
 │       ├── ifc_opim.py            # IFC Operating Principles for Impact Management
 │       └── cross_reference.py     # 59 cross-framework metric mappings
 ├── tools/impact/                  # Agent tools for LLM orchestration

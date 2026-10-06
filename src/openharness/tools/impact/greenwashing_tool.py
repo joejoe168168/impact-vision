@@ -82,6 +82,11 @@ class GreenwashingDetectorTool(BaseTool):
 
         result = assess_greenwashing(company)
         payload = result.model_dump()
+        from openharness.impact.greenwashing import assess_green_claims_compliance
+
+        eu = assess_green_claims_compliance(description=args.company_description)
+        if eu.claims_found:
+            payload["eu_green_claims"] = eu.model_dump()
 
         all_warnings = metric_warnings + sdg_warnings
 
@@ -109,6 +114,12 @@ class GreenwashingDetectorTool(BaseTool):
             lines.append("Flags:")
             for flag in result.flags:
                 lines.append(f"  - {flag}")
+
+        if eu.claims_found:
+            lines += ["", f"EU green claims — {eu.operative_law}:"]
+            lines += [f"  ! {b}" for b in eu.ecgt_breaches] or ["  No likely ECGT breaches found."]
+            lines += [f"  - Best practice: {g}" for g in eu.best_practice_gaps]
+            lines.append(f"  Note: {eu.gcd_status}")
 
         if result.recommendations:
             lines.append("")

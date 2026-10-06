@@ -206,6 +206,7 @@ def to_impact_claims(claims: list[ExtractedClaim]) -> list["ImpactClaim"]:
             category=_CATEGORY_TO_IMPACT_CLAIM.get(c.category, "activity"),
             evidence_strength=level,
             entities=entities,
+            extracted_by=c.raw_extractor_id,
         )
         claim.recalibrate_confidence()
         out.append(claim)

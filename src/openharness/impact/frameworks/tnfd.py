@@ -5,12 +5,23 @@ Implements the *LEAP* approach (Locate, Evaluate, Assess, Prepare) and the
 Impact Management, and Metrics & Targets.
 
 Reference: https://tnfd.global/recommendations-of-the-tnfd/ (v1.0, Sep 2023)
+
+Status (2026-10-06): TNFD is pausing new technical work and now *feeds the
+ISSB*. The ISSB is building an IFRS Practice Statement on nature-related
+disclosures on the TNFD recommendations (exposure draft targeted for October
+2026). The LEAP / 14-disclosure structure below remains the best screening
+proxy until that text is final; see ``TNFD_STATUS``.
 """
 from __future__ import annotations
 
 from typing import Literal
 
 from pydantic import BaseModel, Field
+
+TNFD_STATUS = (
+    "TNFD recommendations v1.0 — feeding the ISSB: the ISSB nature-related Practice "
+    "Statement (exposure draft, Oct 2026) builds on them; TNFD has paused new technical work."
+)
 
 
 TNFDPillar = Literal["governance", "strategy", "risk_management", "metrics_targets"]
@@ -90,6 +101,7 @@ class TNFDAssessmentResult(BaseModel):
     leap_progress: dict[str, str]
     findings: list[str] = Field(default_factory=list)
     recommendations: list[str] = Field(default_factory=list)
+    status: str = TNFD_STATUS
 
 
 class TNFDInput(BaseModel):

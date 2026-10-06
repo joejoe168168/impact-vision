@@ -9,20 +9,20 @@ report on both:
 
 Reference: EFRAG Final ESRS Set 1 (July 2023), EU Delegated Regulation (EU) 2023/2772.
 
-Status note (verified 2026-08): Omnibus I (Directive (EU) 2026/470, in force
-2026-03-18) narrowed CSRD scope to >1,000 employees AND >€450M turnover. The
-European Commission adopted revised ESRS delegated acts on 2026-07-03; they
-remain subject to European Parliament/Council scrutiny and Official Journal
-publication, with application from FY2027 and early adoption for FY2026. The
-revised set removes more than 60% of mandatory datapoints. The topical
-structure below therefore stays useful for screening, while the simplified
-datapoint loader marks generated rows explicitly until the final taxonomy is
-published. The VSME voluntary standard doubles as the value-chain cap for
-<1,000-employee suppliers.
+Status note (verified 2026-10-06): Omnibus I (Directive (EU) 2026/470, in
+force 2026-03-18) narrowed CSRD scope to >1,000 employees AND >€450M turnover.
+The revised ESRS are law: Commission Delegated Regulation (EU) 2026/1563 was
+published in the Official Journal on 2026-09-21, enters into force on
+2026-11-10 and is mandatory for financial years beginning on or after
+2027-01-01 (for FY2026 a reporter may use Set 1, Set 1 with reliefs, or the
+revised set, and must say which). The revised set removes more than 60% of
+mandatory datapoints. The VSME (Delegated Regulation (EU) 2026/1560) doubles
+as the value-chain cap for partners with up to 1,000 employees.
 """
 
 from __future__ import annotations
 
+from datetime import date
 from pathlib import Path
 from typing import Literal
 
@@ -39,18 +39,40 @@ class ESRSDatapoint(BaseModel):
     phase_in: str | None = None
     removed_in_simplification: bool = False
     source: str
-    status: Literal["draft", "active", "adopted_pending_oj_scrutiny", "superseded"] = "draft"
+    status: Literal[
+        "draft", "active", "adopted_pending_oj_scrutiny", "published_oj", "in_force", "superseded"
+    ] = "draft"
     synthetic: bool = False
     source_url: str | None = None
 
 
-def simplified_esrs_metadata(path: str | Path | None = None) -> dict:
-    """Return legal-status and provenance metadata for the simplified ESRS set.
+def legal_status(
+    *,
+    oj_published: str = "",
+    entry_into_force: str = "",
+    applies_from: str = "",
+    today: date | None = None,
+) -> str:
+    """Return where a published EU act stands on *today*.
 
-    The bundled datapoint rows intentionally remain a screening fixture until
-    the Commission's delegated act is published in the Official Journal. This
-    helper prevents callers from mistaking generated rows for a final legal
-    taxonomy.
+    ``published_not_in_force`` → ``in_force_not_yet_applicable`` →
+    ``applicable``. Falls back to ``draft`` when there is no OJ date.
+    """
+    ref = today or date.today()
+    if not oj_published:
+        return "draft"
+    if entry_into_force and ref < date.fromisoformat(entry_into_force):
+        return "published_not_in_force"
+    if applies_from and ref < date.fromisoformat(applies_from):
+        return "in_force_not_yet_applicable"
+    return "applicable"
+
+
+def simplified_esrs_metadata(path: str | Path | None = None, *, today: date | None = None) -> dict:
+    """Return legal-status and provenance metadata for the revised ESRS set.
+
+    ``legal_status`` is computed from the OJ / entry-into-force / application
+    dates so the answer stays right without editing the fixture.
     """
     data_path = (
         Path(path)
@@ -61,6 +83,17 @@ def simplified_esrs_metadata(path: str | Path | None = None) -> dict:
     return {
         "regime": payload.get("regime", "esrs_simplified_2026"),
         "status": payload.get("status", "draft"),
+        "legal_status": legal_status(
+            oj_published=str(payload.get("oj_published", "")),
+            entry_into_force=str(payload.get("entry_into_force", "")),
+            applies_from=str(payload.get("effective_from", "")),
+            today=today,
+        ),
+        "legal_instrument": payload.get("legal_instrument", ""),
+        "oj_published": payload.get("oj_published", ""),
+        "entry_into_force": payload.get("entry_into_force", ""),
+        "fy2026_options": list(payload.get("fy2026_options", []) or []),
+        "last_verified": payload.get("last_verified", ""),
         "as_of": payload.get("as_of", ""),
         "effective_from": payload.get("effective_from", ""),
         "early_adoption": bool(payload.get("early_adoption", False)),
@@ -107,6 +140,12 @@ def _named_rows_from_standards(payload: dict) -> list[dict]:
 
 
 def load_simplified_datapoints(path: str | Path | None = None) -> list[ESRSDatapoint]:
+    """Return the revised-ESRS screening rows: fixture rows + named disclosures.
+
+    Earlier releases padded each standard up to ``standard_counts`` with
+    generated ``*-DRAFT-nnn`` rows. Now that the Regulation is published those
+    placeholders are dropped; ``standard_counts`` stays as reference metadata.
+    """
     data_path = (
         Path(path)
         if path
@@ -120,27 +159,6 @@ def load_simplified_datapoints(path: str | Path | None = None) -> list[ESRSDatap
             continue
         rows.append(row)
         seen.add(row["datapoint_id"])
-    counts = payload.get("standard_counts", {})
-    seeded = {
-        standard: sum(1 for row in rows if row["standard"] == standard) for standard in counts
-    }
-    for standard, target_count in counts.items():
-        prefix = standard.replace(" ", "").replace("ESRS", "ESRS2")
-        for number in range(seeded.get(standard, 0) + 1, int(target_count) + 1):
-            rows.append(
-                {
-                    "datapoint_id": f"{prefix}-DRAFT-{number:03d}",
-                    "standard": standard,
-                    "name": f"Simplified {standard} datapoint {number}",
-                    "mandatory": True,
-                    "phase_in": None,
-                    "removed_in_simplification": False,
-                    "source": payload["source"],
-                    "status": payload.get("status", "draft"),
-                    "synthetic": True,
-                    "source_url": payload.get("source_url"),
-                }
-            )
     return [ESRSDatapoint.model_validate(row) for row in rows]
 
 
@@ -776,12 +794,16 @@ def assess_double_materiality(
         payload["simplified_status"] = metadata["status"]
         payload["effective_from"] = metadata["effective_from"]
         payload["early_adoption"] = metadata["early_adoption"]
+        payload["legal_status"] = metadata["legal_status"]
+        payload["legal_instrument"] = metadata["legal_instrument"]
+        payload["entry_into_force"] = metadata["entry_into_force"]
         payload["source_url"] = metadata["source_url"]
         payload["source_note"] = metadata["source_note"]
         payload["total_disclosures"] = len(simplified)
         payload["overall_coverage_pct"] = round(100 * addressed_disc / len(simplified), 1)
         payload["summary"] += (
-            f" Simplified regime ({metadata['status']}) contains {len(simplified)} datapoints; "
-            "generated rows are screening placeholders pending final taxonomy publication."
+            f" Revised ESRS ({metadata['legal_instrument'] or metadata['status']}; "
+            f"{metadata['legal_status'].replace('_', ' ')}) screened against "
+            f"{len(simplified)} named disclosure requirements."
         )
     return payload

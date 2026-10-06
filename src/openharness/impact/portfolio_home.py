@@ -57,7 +57,7 @@ def build_portfolio_home(
     records: Iterable[dict[str, Any]],
     *,
     fund_name: str = "Portfolio",
-    jurisdictions: Iterable[str] = ("EU", "US", "UK"),
+    jurisdictions: Iterable[str] = ("EU", "US", "UK", "HK"),
     today: date | None = None,
     stale_days: int = 180,
     pipeline_rows: Iterable[dict[str, Any]] = (),
@@ -116,6 +116,10 @@ def build_portfolio_home(
     review.sort(key=lambda x: (x["confidence"], x["company"]))
 
     deadlines = _deadlines(jurisdictions, today, deadline_window_days)
+    for d in deadlines:
+        if d["statutory"] and 0 <= d["days"] <= 60:
+            attention.insert(0, {"company": d["framework"], "tone": "critical",
+                                 "reason": f"{d['title']} due {d['due']} — {d['days']} days away"})
     five_d = [c["five_d"] for c in companies if isinstance(c["five_d"], (int, float))]
     gw = [c["greenwashing"] for c in companies if isinstance(c["greenwashing"], (int, float))]
     gate_counts = {g: sum(1 for c in companies if c["gate"] == g) for g in GATE_ORDER}
@@ -173,7 +177,7 @@ def _deadlines(jurisdictions: Iterable[str], today: date, window: int) -> list[d
                 continue
             seen.add(key)
             out.append({"jurisdiction": j, "framework": item.framework, "title": item.title,
-                        "due": item.due_date[:10], "days": days,
+                        "due": item.due_date[:10], "days": days, "statutory": item.statutory,
                         "status": "overdue" if days < 0 else "due_soon" if days <= 60 else "upcoming"})
     return sorted(out, key=lambda d: (d["days"], d["framework"]))
 

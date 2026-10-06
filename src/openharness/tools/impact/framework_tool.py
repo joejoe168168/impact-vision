@@ -28,6 +28,7 @@ class FrameworkInput(BaseModel):
         "issb_s2",
         "esrs",
         "vsme",
+        "hk_taxonomy",
         "two_x",
         "tisfd",
         "sbtn",
@@ -66,7 +67,9 @@ class FrameworkInput(BaseModel):
         description=(
             "Structured inputs for framework='sfdr2' assess (SFDR2Input fields: "
             "current_article, pct_strategy_aligned, has_transition_plan, "
-            "invests_in_controversial_weapons, fund_in_ramp_up, ...)"
+            "invests_in_controversial_weapons, fund_in_ramp_up, position=council|parliament|"
+            "commission, impact_objective_predefined, has_impact_theory, toc_validation, "
+            "evidence_provenance, ...)"
         ),
     )
     structured_inputs: dict = Field(default_factory=dict)
@@ -88,6 +91,8 @@ class FrameworkTool(BaseTool):
         "and GIIN IRIS+ ToC Checklist\n"
         "- **ISSB S1**: IFRS S1 General Sustainability Disclosure readiness (4 pillars, 12 disclosures)\n"
         "- **ESRS**: EU CSRD/ESRS double materiality screening (12 standards)\n"
+        "- **HK Taxonomy**: Hong Kong Taxonomy eligibility candidates + alignment % "
+        "(structured_inputs.activities)\n"
         "- **VSME**: EFRAG Voluntary SME Standard coverage (Basic B1-B11 + Comprehensive C1-C9); "
         "post-Omnibus-I default reporting set for investee SMEs out of CSRD scope "
         "(use category='basic' or 'comprehensive')\n"
@@ -132,6 +137,7 @@ class FrameworkTool(BaseTool):
             "issb_s2": self._handle_issb_s2,
             "esrs": self._handle_esrs,
             "vsme": self._handle_vsme,
+            "hk_taxonomy": self._handle_hk_taxonomy,
             "two_x": self._handle_two_x,
             "tisfd": self._handle_tisfd,
             "sbtn": self._handle_sbtn,
@@ -442,7 +448,13 @@ class FrameworkTool(BaseTool):
                 lines += [f"  - {c}" for c in result.caveats]
             if result.migration_note:
                 lines.append(f"Migration: {result.migration_note}")
-            lines += ["", f"Status: {result.status}"]
+            check = result.impact_check
+            if check and check.uses_impact_language:
+                verdict = "supported" if check.eligible else "NOT supported"
+                lines.append(f"'Impact' wording: {verdict}")
+                lines += [f"  ! {f}" for f in check.failures]
+                lines += [f"  - {e}" for e in check.evidence]
+            lines += ["", f"Modelled text: {result.position_label}", f"Status: {result.status}"]
             return ToolResult(output="\n".join(lines), metadata=payload)
 
         return ToolResult(output=f"sfdr2 does not support action: {args.action}", is_error=True)
@@ -862,6 +874,54 @@ class FrameworkTool(BaseTool):
 
         return ToolResult(output=f"ESRS does not support action: {args.action}", is_error=True)
 
+    def _handle_hk_taxonomy(self, args: FrameworkInput) -> ToolResult:
+        from openharness.impact.frameworks.hk_taxonomy import (
+            hk_taxonomy_metadata,
+            list_hk_activities,
+            screen_hk_taxonomy,
+        )
+
+        meta = hk_taxonomy_metadata()
+        phases = "; ".join(
+            f"Phase {ph['phase']} ({ph['status']}, {ph['published']})" for ph in meta.get("phases") or []
+        )
+        if args.action == "list":
+            lines = ["Hong Kong Taxonomy for Sustainable Finance (HKMA)", phases, ""]
+            current = ""
+            for act in list_hk_activities(args.sector if args.sector else ""):
+                if act.sector != current:
+                    current = act.sector
+                    lines.append(f"--- {current} ---")
+                lines.append(f"  [{act.activity_id}] {act.name} (phase {act.phase})")
+            return ToolResult(output="\n".join(lines), metadata=meta)
+
+        if args.action in ("match", "assess"):
+            result = screen_hk_taxonomy(
+                args.description or "Company",
+                text=f"{args.description} {args.document_text}",
+                activities=list(args.structured_inputs.get("activities") or []) or None,
+                minimum_safeguards_corporate=bool(
+                    args.structured_inputs.get("minimum_safeguards_corporate", True)
+                ),
+            )
+            lines = ["HONG KONG TAXONOMY SCREEN", "=" * 50, phases, ""]
+            if result.candidates:
+                lines.append("Eligibility candidates:")
+                for c in result.candidates:
+                    lines.append(f"  - [{c.activity_id}] {c.name} ({', '.join(c.matched_keywords)})")
+            if result.alignment:
+                a = result.alignment
+                lines.append(
+                    f"Aligned: revenue {a.revenue_aligned_pct}% · capex {a.capex_aligned_pct}% · "
+                    f"opex {a.opex_aligned_pct}%"
+                )
+                lines += [f"  ! {f}" for f in a.findings]
+            lines += ["", "Next steps:"] + [f"  - {n}" for n in result.next_steps]
+            lines.append(f"Source: {result.source_url} (as of {result.as_of})")
+            return ToolResult(output="\n".join(lines), metadata=result.model_dump(mode="json"))
+
+        return ToolResult(output=f"hk_taxonomy does not support action: {args.action}", is_error=True)
+
     def _handle_vsme(self, args: FrameworkInput) -> ToolResult:
         from openharness.impact.frameworks.vsme import assess_vsme, get_vsme_disclosures
 
@@ -874,7 +934,9 @@ class FrameworkTool(BaseTool):
             lines = [
                 f"EFRAG Voluntary SME Standard (VSME) — {module.title()} module "
                 f"({len(disclosures)} disclosures)\n",
-                "Post-Omnibus-I default reporting set for investee SMEs out of CSRD scope.\n",
+                "Delegated Reg (EU) 2026/1560 (in force 2026-09-24). Default reporting set for "
+                "investee SMEs out of CSRD scope and the value-chain cap for partners with "
+                "up to 1,000 employees.\n",
             ]
             current = ""
             for d in disclosures:
@@ -1197,6 +1259,7 @@ class FrameworkTool(BaseTool):
             "  issb_s2   - IFRS S2 Climate-related Disclosures (4 pillars, 13 disclosures, subsumes TCFD)",
             "  esrs      - EU CSRD/ESRS Double Materiality (12 standards)",
             "  vsme      - EFRAG Voluntary SME Standard (Basic B1-B11 + Comprehensive C1-C9)",
+            "  hk_taxonomy - Hong Kong Taxonomy for Sustainable Finance eligibility/alignment screen",
             "  two_x     - 2X Criteria gender-lens investing standard (2X Global 2024)",
             "  tisfd     - TISFD Inequality & Social-related Financial Disclosures (beta, 4 pillars)",
             "  sbtn      - Science Based Targets Network five-step nature readiness (beta)",

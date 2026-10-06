@@ -36,10 +36,10 @@ def _record() -> MetricRecord:
 def test_simplified_esrs_rows_are_explicitly_provenanced() -> None:
     rows = load_simplified_datapoints()
     metadata = simplified_esrs_metadata()
-    assert len(rows) == 430
-    assert metadata["status"] == "adopted_pending_oj_scrutiny"
+    assert len(rows) >= 50 and not any(row.synthetic for row in rows)
+    assert metadata["status"] == "published_oj"
+    assert metadata["legal_instrument"] == "Commission Delegated Regulation (EU) 2026/1563"
     assert metadata["effective_from"] == "2027-01-01"
-    assert sum(not row.synthetic for row in rows) >= 50
     assert all(row.source_url for row in rows)
 
 
@@ -49,7 +49,9 @@ def test_issb_s2_amendment_register_is_available() -> None:
     assert all(item.status == "issued" for item in amendments)
     assert all(item.effective_date == "2027-01-01" for item in amendments)
     assert all(item.early_application for item in amendments)
-    assert issb_summary()[0]["source_quality"] == "authority_name_only"
+    rows = issb_summary()
+    assert all(r["source_quality"] == ("deep_link" if r["source_url"] else "authority_name_only") for r in rows)
+    assert any(r["source_quality"] == "authority_name_only" for r in rows)
 
 
 def test_concordance_yaml_enriches_legacy_refs_instead_of_replacing_them() -> None:

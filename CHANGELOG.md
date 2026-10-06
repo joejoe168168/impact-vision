@@ -20,6 +20,79 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Added — v7 Wave 4: standards currency
+
+Facts re-verified 2026-10-06; see `docs/roadmap-v7.md` (Wave 4 status) for
+sources and the five corrections to the original §2 table.
+
+- **ESRS / VSME are law (W4.1).**
+  - Revised ESRS metadata names Delegated Reg (EU) 2026/1563 and computes
+    `legal_status` from the OJ, entry-into-force and application dates.
+    Generated `*-DRAFT-nnn` filler rows were removed.
+  - VSME (Reg 2026/1560) gains `VSME_LEGAL_BASIS`, a template
+    (`generate_investee_questionnaire_schema(sector="vsme")`), and
+    `vsme_basic` / `vsme_comprehensive` data-request packs.
+  - The value-chain cap is a hard rule: with `requester_in_csrd_scope=True`
+    and `counterparty_employees ≤ 1000`, fields outside VSME become
+    voluntary.
+- **SFDR 2.0 (W4.2).** `SFDR2Input.position`
+  (`commission` / `council` / `parliament`) and a new
+  `check_sfdr2_impact_claim`. "Impact" wording needs:
+  - Transition/Sustainable (Art 7/9) status;
+  - a pre-defined objective;
+  - a theory of impact (a passing `toc_builder` validation counts);
+  - measured outcomes (5D `evidence-based` counts).
+
+  Council ramp-up relief is now modelled only for the Council text.
+- **UK SRS (W4.3)** comply-or-explain obligation (FCA PS26/19) in the UK
+  profile and pack.
+- **Hong Kong (W4.4).**
+  - New `HK` jurisdiction profile: HKEX climate, HK Taxonomy, HKSSA 5000,
+    transition plan.
+  - New `frameworks/hk_taxonomy.py` plus `framework_assess
+    framework=hk_taxonomy`.
+  - Jurisdiction aliases ("Hong Kong", "United Kingdom", …). The portfolio
+    home includes HK deadlines by default.
+- **AI-provenance disclosure on every output (W4.5, EU AI Act Art 50).**
+  - New `impact/ai_provenance.py`.
+  - The decision report shows a localised badge, an appendix table and a
+    footer line. The IC memo (HTML/DOCX), DD outputs, the shared v2 footer,
+    the classic report and the portfolio home carry the disclosure.
+  - XLSX gains an "AI provenance" sheet; CSV/JSON/`summary.json` include it.
+  - `ImpactClaim.extracted_by` records the extractor.
+  - `impact_report` takes an `ai_usage` declaration.
+- **ISSA 5000 framing (W4.6).**
+  - `recommended_assurance_standard()` picks ISSA 5000 for periods from
+    2026-12-15, HKSSA 5000 in HK, and ISAE 3000/3410 for earlier periods.
+  - `build_assurance_pack` defaults to it and infers the period from labels
+    like "FY2027".
+  - Packs carry a per-figure `ai_use` register.
+- **ECGT is operative (W4.7).**
+  - `assess_green_claims_compliance` splits `ecgt_breaches` (UCPD Annex I
+    4a/4c, Art 6(2)(d)) from `best_practice_gaps` (shelved GCD).
+  - `greenwashing_detect` now reports it; it previously had no caller.
+- **ISSB / Asia (W4.8–W4.9).**
+  - Registry entries for revised ESRS, VSME, ISSA 5000, ECGT, UK SRS, the
+    HK Taxonomy, ISSB Workforce-related Disclosures and the nature ED.
+  - TNFD is labelled "feeding ISSB".
+  - Refreshed adoption rows (Japan, China MoF, Singapore, Australia, HK,
+    UK, EU) carry deep links and `last_verified`.
+- **SB 253 alert (W4.10).**
+  - Obligations can carry a `fixed_due_date` / `due_offset_days`. SB 253 is
+    due 2026-11-10 and raises calendar `alerts` and a portfolio-home
+    attention item.
+  - The watch-list was refreshed (VSME, ESRS entry into force, XBRL
+    consultation, AI Act dates, HKSSA 5000, UK SRS, SSBJ, Singapore) and
+    every row has a `source_url`.
+
+### Changed
+
+- Assurance packs without an explicit `standard` now default to ISSA 5000
+  for current/future periods (ISAE 3000 remains for periods before
+  2026-12-15).
+- `load_simplified_datapoints()` returns only named disclosure rows; callers
+  that relied on the 430-row padded fixture will see fewer rows.
+
 ### Added — v7 Wave 3: one product, many surfaces
 
 - **Registry-generated surfaces (W3.1).** New `impact/surfaces.py` reads the

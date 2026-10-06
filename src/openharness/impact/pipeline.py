@@ -40,6 +40,8 @@ class AssessmentBundle:
 
     def summary(self) -> dict[str, Any]:
         """Compact, JSON-safe headline numbers."""
+        from openharness.impact.ai_provenance import ai_provenance_for_report
+
         fd = self.assessment.five_dimensions
         top = [
             {"goal": a.goal, "name": a.goal_name, "score": a.score, "confidence": a.confidence}
@@ -62,6 +64,7 @@ class AssessmentBundle:
             "claims": len(self.assessment.impact_claims),
             "reported_metrics": dict(self.company.reported_metrics),
             "files": [Path(p).name for p in self.files],
+            "ai_disclosure": ai_provenance_for_report(self.report_data).disclosure,
         }
 
 
@@ -217,6 +220,8 @@ def assess_document(
         "audience": audience,
         "theme": theme,
         "source_label": source_label,
+        # The no-LLM chain: rule-based extraction/tagging, deterministic scores.
+        "ai_usage": {"extraction": "rules", "tagging": "rules", "drafting": "none"},
     }
     from openharness.impact.report_templates.decision_report import decision_from_scorecard
 

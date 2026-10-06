@@ -72,6 +72,8 @@ class DataRequestPack(BaseModel):
     created_at: str = Field(default_factory=lambda: _now())
     issued_links: list[str] = Field(default_factory=list)
     version: int = 1
+    vsme_ceiling_applied: bool = False
+    ceiling_notes: list[str] = Field(default_factory=list)
 
 
 class FieldSubmission(BaseModel):
@@ -282,6 +284,70 @@ def edci_request_fields(*, required_only: bool = False) -> list[DataRequestField
     return fields
 
 
+def vsme_request_fields(module: str = "basic") -> list[DataRequestField]:
+    """Build data-request fields from the VSME template (Basic or Comprehensive)."""
+    from openharness.impact.frameworks.vsme import vsme_template_fields
+
+    return [
+        DataRequestField(
+            metric_id=row["field_id"],
+            label=row["label"],
+            required=row["module"] == "basic",
+            unit=row["unit"],
+            definition=row["definition"],
+            acceptable_evidence=_default_evidence(row["field_id"]),
+            frameworks=["VSME", f"VSME {row['disclosure']}"],
+        )
+        for row in vsme_template_fields(module)
+    ]
+
+
+def apply_vsme_ceiling(
+    pack: DataRequestPack,
+    *,
+    counterparty_employees: int | None,
+    requester_in_csrd_scope: bool = True,
+) -> DataRequestPack:
+    """Enforce the VSME value-chain cap on a request pack (hard rule).
+
+    When a CSRD reporter asks a partner with up to 1,000 employees for data,
+    every field outside the VSME data set is made optional and labelled as
+    voluntary: it cannot be demanded (Delegated Reg (EU) 2026/1560, from
+    FY2027). Fields inside VSME are left untouched.
+    """
+    from openharness.impact.frameworks.vsme import value_chain_cap_applies, vsme_ceiling_keys
+
+    if not value_chain_cap_applies(
+        counterparty_employees=counterparty_employees,
+        requester_in_csrd_scope=requester_in_csrd_scope,
+    ):
+        return pack
+    keys = vsme_ceiling_keys()
+    notes: list[str] = []
+    for field in pack.fields:
+        inside = (
+            "VSME" in field.frameworks
+            or field.metric_id in keys
+            or field.metric_id.upper() in keys
+        )
+        if inside or not field.required:
+            continue
+        field.required = False
+        field.common_mistakes = [
+            *field.common_mistakes,
+            "Beyond the VSME value-chain cap: the partner may answer voluntarily but "
+            "cannot be required to.",
+        ]
+        notes.append(f"{field.metric_id} ({field.label}) made voluntary: outside the VSME data set.")
+    pack.vsme_ceiling_applied = True
+    pack.ceiling_notes = [
+        f"VSME value-chain cap applied: partner has {counterparty_employees} employees "
+        "(≤1,000) and the requester reports under CSRD.",
+        *notes,
+    ]
+    return pack
+
+
 def build_data_request_pack(
     *,
     engagement_id: str,
@@ -290,15 +356,22 @@ def build_data_request_pack(
     sector: str = "",
     geography: str = "",
     extra_fields: Iterable[DataRequestField] | None = None,
+    counterparty_employees: int | None = None,
+    requester_in_csrd_scope: bool = False,
 ) -> DataRequestPack:
     """Build a smart data-request pack for the given bundle.
 
     ``bundle_id="edci_core"`` scaffolds the pack from the EDCI metric set
     (the default LP-reporting collection target) instead of a bundle template.
+    ``bundle_id="vsme_basic"`` / ``"vsme_comprehensive"`` scaffold it from the
+    VSME template. With ``requester_in_csrd_scope=True`` and a partner of up
+    to 1,000 employees, :func:`apply_vsme_ceiling` is enforced.
     """
     fields: list[DataRequestField] = []
     if bundle_id == "edci_core":
         fields.extend(edci_request_fields())
+    elif bundle_id in ("vsme_basic", "vsme_comprehensive"):
+        fields.extend(vsme_request_fields(bundle_id.split("_", 1)[1]))
     else:
         defaults = _DEFAULT_FIELDS_BY_BUNDLE.get(bundle_id, [])
         for metric_id, label, unit, frameworks in defaults:
@@ -317,13 +390,18 @@ def build_data_request_pack(
     for extra in extra_fields or []:
         fields.append(extra)
     pack_title = title or f"Data request pack: {bundle_id}"
-    return DataRequestPack(
+    pack = DataRequestPack(
         engagement_id=engagement_id,
         bundle_id=bundle_id,
         title=pack_title,
         fields=fields,
         sector=sector,
         geography=geography,
+    )
+    return apply_vsme_ceiling(
+        pack,
+        counterparty_employees=counterparty_employees,
+        requester_in_csrd_scope=requester_in_csrd_scope,
     )
 
 
@@ -714,7 +792,9 @@ __all__ = [
     "MultiEntityRollup",
     "build_coaching_cards",
     "build_data_request_pack",
+    "apply_vsme_ceiling",
     "edci_request_fields",
+    "vsme_request_fields",
     "rollup_multi_entity",
     "score_completeness",
 ]

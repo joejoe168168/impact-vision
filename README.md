@@ -618,22 +618,24 @@ cross-references to IRIS+ metric IDs via the shared
 | | Theory of Change | RS Group 8 Blended Value Principles + GIIN 8-step ToC Checklist |
 | | ISSB IFRS S1 | General sustainability disclosure (4 pillars) |
 | | ISSB IFRS S2 | Climate-related disclosures plus an issued-amendments register (effective 2027-01-01) |
-| | EU CSRD / ESRS | 11 standards, double-materiality; revised-ESRS screening fixture marked adopted pending Official Journal, with FY2027 effective-date metadata |
-| | EFRAG VSME | Voluntary SME standard: Basic B1-B11 + Comprehensive C1-C9 (post-Omnibus default for out-of-scope SMEs) |
+| | EU CSRD / ESRS | 11 standards, double-materiality; revised ESRS (Delegated Reg 2026/1563, mandatory FY2027) with date-aware legal status |
+| | EFRAG VSME | Voluntary SME standard (Delegated Reg 2026/1560): Basic B1-B11 + Comprehensive C1-C9, investee template, value-chain cap enforced on data requests |
 | | 2X Criteria | Gender-lens investing standard (6 dimensions + governance/GBVH minimum requirements) |
 | | TISFD (beta) | Inequality & Social-related Financial Disclosures readiness: 4 pillars, 13 disclosures, GRI/ESRS crosswalk |
 | **Regulatory** | SFDR | 14 mandatory + 9 optional PAI indicators, Article 6/8/9 classification, deadline scheduler |
-| | SFDR 2.0 preview | Sustainable / Transition / ESG Basics category preview (70% threshold + exclusions + Art 8/9 migration; proposed law, ~2029) |
+| | SFDR 2.0 preview | Sustainable / Transition / ESG Basics preview (Commission, Council or Parliament text; 70% threshold, exclusions, "impact"-wording check against ToC + measured outcomes; proposed law, ~2029) |
 | | EU Omnibus I scope | CSRD/CSDDD in-scope decision tree (employee + turnover thresholds, FY2025-26 pause, VSME fallback) |
 | | CSDDD / HRDD | UNGP + OECD 6-step value-chain human-rights due diligence (salience ranking, grievance score, remediation tracker, readiness band) |
 | | EU Taxonomy | 6 environmental objectives, DNSH + Minimum Safeguards |
 | | UK FCA Anti-Greenwashing Rule | Fair/clear/not-misleading assessment |
-| | EU green claims (ECGT 2024/825) | Substantiation checks per the Empowering Consumers Directive (applies Sep 2026), plus stricter suspended-GCD best practice |
+| | EU green claims (ECGT 2024/825) | Likely ECGT/UCPD breaches (generic claims, offset-based neutrality, unplanned future claims) in `greenwashing_detect`; shelved-GCD tests as best practice |
+| | Hong Kong Taxonomy (HKMA) | Eligibility candidates from text + alignment % (Phase 1 / 2A; 2B flagged as consultation) |
+| | UK SRS (FCA PS26/19) | Listed-issuer comply-or-explain obligation from 2027 in the UK jurisdiction profile |
 | | EU Digital Product Passport (ESPR) | Import + map to IRIS+/ESRS/SDG |
-| | Per-jurisdiction packs | EU-SFDR, EU-CSRD, EU-CSDDD, UK-FCA-SDR, US-SEC-ESG, HK-HKEX-ESG, AU-AASB-S2, ISSB-global |
+| | Per-jurisdiction packs | EU-SFDR, EU-CSRD, EU-CSDDD, UK-FCA-SDR, US-SEC-ESG, HK-HKEX-ESG, AU-AASB-S2, ISSB-global; deadline calendars for 10 jurisdictions incl. Hong Kong |
 | **Climate & nature** | PCAF | Financed-emissions attribution, sector defaults, weighted data quality |
 | | SBTi (Net-Zero Standard v1.2) | 1.5 °C pathway, Scope-3 materiality, 2050 cap |
-| | TNFD v1 | 14 LEAP / pillar disclosures |
+| | TNFD v1 | 14 LEAP / pillar disclosures (now feeding the ISSB nature Practice Statement) |
 | | CDP | Climate / water / forests questionnaire intake + readiness screen (`framework_assess`) |
 | | GHG Protocol | Scope 1/2 inventory (Scope 3 via PCAF) with versioned factor catalog |
 | | NGFS scenarios | Physical/transition portfolio exposure across 7 NGFS pathways + illustrative value-at-risk |
@@ -652,7 +654,7 @@ cross-references to IRIS+ metric IDs via the shared
 | | SOC 2 Type II / ISO 27001 | Starter control set with readiness report |
 | | Verification workspace | Finding lifecycle + threaded comments (v0.15.0) |
 | | 3-pillar assurance bundle | HMAC-signed evidence graph + audit trail + workspace (v4) |
-| | AI governance (EU AI Act) | Model card + data lineage + human-oversight log + risk classification & obligations |
+| | AI governance (EU AI Act) | Model card + data lineage + human-oversight log + risk classification & obligations; Art 50 AI/automation disclosure stamped on every report, memo and export |
 
 ### Agent Tools (48)
 
@@ -709,7 +711,7 @@ REST API, and MCP server see the same surface.
 | Tool | Description |
 |------|-------------|
 | `decision_workflow` | Quick screen, IC memo proof bundle, deal comparison, LP readiness, and context-driven impact target setting (`set_targets`) |
-| `regulatory_calendar` | Jurisdiction-specific reporting deadlines, ISSB S2 amendment summaries, and a market-wide milestone watch-list (ECGT, revised ESRS, ISSA 5000, EUDR, CSDDD, SFDR 2.0); `action='radar_*'` is the review-gated regulatory-change radar |
+| `regulatory_calendar` | Jurisdiction-specific reporting deadlines, ISSB S2 amendment summaries, and a market-wide milestone watch-list with sources (ECGT, revised ESRS/VSME, SB 253, ISSA/HKSSA 5000, UK SRS, AI Act, SFDR 2.0); live alerts for statutory dates; `action='radar_*'` is the review-gated regulatory-change radar |
 
 **Portfolio workflow (5)**
 

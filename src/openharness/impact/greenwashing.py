@@ -517,19 +517,31 @@ def _generate_recommendations(
 
 
 # ---------------------------------------------------------------------------
-# EU green-claims substantiation screen.
+# EU green-claims screen (v7 W4.7, re-verified 2026-10-06).
 #
-# Status note (verified 2026-07): the proposed Green Claims Directive
-# (COM/2023/166) was NEVER adopted — trilogue collapsed in June 2025 and the
-# proposal is suspended. The binding EU anti-greenwashing instrument is the
-# Empowering Consumers for the Green Transition Directive (EU) 2024/825
-# ("ECGT", amending the UCPD), which applies from 27 September 2026 and bans
-# generic environmental claims ("eco-friendly", "green", "climate neutral")
-# that cannot be substantiated with recognised excellent environmental
-# performance, and offsetting-based neutrality claims. The checks below keep
-# the stricter GCD-style tests (LCA, accredited verification) as best
-# practice on top of the ECGT baseline.
+# Operative law: the Empowering Consumers for the Green Transition Directive
+# (EU) 2024/825 ("ECGT"), amending the Unfair Commercial Practices Directive
+# 2005/29/EC ("UCPD"), applies from 2026-09-27. Its Annex I blacklist bans
+# generic environmental claims without recognised excellent environmental
+# performance (point 4a) and product-level neutrality claims based on
+# offsetting (point 4c); Art 6(2)(d) requires future environmental
+# performance claims to rest on a detailed, realistic, independently
+# monitored implementation plan.
+#
+# The proposed Green Claims Directive (COM/2023/166) is SHELVED: the
+# Commission announced its intention to withdraw it on 2025-06-20, but no
+# formal withdrawal has followed and trilogues have stalled. Its stricter
+# tests (life-cycle evidence, accredited ex-ante verification) are reported
+# separately as best practice, never as breaches.
 # ---------------------------------------------------------------------------
+
+ECGT_OPERATIVE_LAW = (
+    "Directive (EU) 2024/825 (ECGT) amending the UCPD 2005/29/EC — applies from 2026-09-27"
+)
+GCD_STATUS = (
+    "Proposed Green Claims Directive (COM/2023/166): shelved — withdrawal announced "
+    "2025-06-20, not formalised; trilogues stalled. Best practice only."
+)
 
 _ENVIRONMENTAL_CLAIM_PATTERNS: list[str] = [
     "carbon neutral", "carbon-neutral", "net zero", "net-zero", "climate neutral",
@@ -539,18 +551,44 @@ _ENVIRONMENTAL_CLAIM_PATTERNS: list[str] = [
     "reduced footprint", "low carbon", "zero emission",
 ]
 
+# ECGT Annex I point 4a: generic claims (no clear, specific substantiation on the medium).
+_GENERIC_CLAIMS: list[str] = [
+    "eco-friendly", "environmentally friendly", "green", "sustainable", "climate friendly",
+    "climate-friendly", "nature friendly", "earth friendly", "planet friendly",
+    "environmentally responsible", "ecological",
+]
+
+# ECGT Annex I point 4c: neutrality / reduced-impact claims based on offsetting.
+_NEUTRALITY_CLAIMS: list[str] = [
+    "carbon neutral", "carbon-neutral", "climate neutral", "climate-neutral",
+    "climate positive", "carbon negative", "co2 neutral", "co2-neutral", "net zero product",
+]
+
+_RECOGNISED_EXCELLENCE = [
+    "eu ecolabel", "ecolabel", "emas", "nordic swan", "blue angel", "iso 14024",
+]
+
 _LCA_TRIGGER_TERMS: list[str] = [
     "carbon neutral", "carbon-neutral", "net zero", "net-zero",
     "climate neutral", "climate-neutral", "carbon negative",
     "zero emission", "climate positive", "reduced footprint",
 ]
 
+_FUTURE_CLAIM = re.compile(
+    r"\b(net[- ]zero|carbon[- ]neutral|climate[- ]neutral|zero[- ]emissions?)\b[^.]{0,40}\bby\s+20\d{2}\b"
+)
+_PLAN_SIGNALS = ("transition plan", "implementation plan", "interim target", "sbti", "science-based target", "independent monitor")
+
 
 class GreenClaimsResult(BaseModel):
-    """EU Green Claims Directive compliance assessment."""
+    """EU green-claims screen: ECGT breaches (law) + GCD-style gaps (best practice)."""
 
     compliant: bool = False
     claims_found: list[str] = Field(default_factory=list)
+    operative_law: str = ECGT_OPERATIVE_LAW
+    gcd_status: str = GCD_STATUS
+    ecgt_breaches: list[str] = Field(default_factory=list)
+    best_practice_gaps: list[str] = Field(default_factory=list)
     lca_required: bool = False
     lca_triggers: list[str] = Field(default_factory=list)
     substantiation_issues: list[str] = Field(default_factory=list)
@@ -565,70 +603,79 @@ def assess_green_claims_compliance(
     has_lca: bool = False,
     has_independent_verification: bool = False,
 ) -> GreenClaimsResult:
-    """Check company claims against EU green-claims rules.
+    """Screen company claims against EU green-claims rules.
 
-    Baseline: ECGT Directive (EU) 2024/825 (applies 27 Sep 2026) — generic
-    environmental claims must be substantiated; offsetting-based carbon/climate
-    neutrality claims are banned outright. Layered on top are the stricter
-    (currently suspended) Green Claims Directive proposals kept as best
-    practice:
-    1. Environmental claims are substantiated by scientific evidence.
-    2. Claims about overall environmental impact require full life-cycle assessment.
-    3. Claims are verified by an accredited independent verifier.
-    4. Carbon offsetting claims must be secondary to actual reduction measures.
+    ``ecgt_breaches`` are likely breaches of operative law (ECGT / UCPD):
+    unsubstantiated generic claims, offsetting-based neutrality claims, and
+    future-performance claims without an implementation plan.
+    ``best_practice_gaps`` are the shelved Green Claims Directive tests
+    (life-cycle evidence, independent verification). ``compliant`` depends on
+    ECGT breaches only. ``substantiation_issues`` is the union, for callers
+    that predate the split.
     """
     text = f"{description} {document_text}".lower()
     metrics = reported_metrics or {}
 
-    # Multi-token / hyphenated patterns are checked as substrings (word boundary
-    # would over-restrict because the patterns themselves include word breaks);
-    # single-word patterns get a word-boundary match to avoid e.g. "green" in
-    # "evergreen".
     def _claim_in(t: str, c: str) -> bool:
         return _has_word(t, c) if (" " not in c and "-" not in c) else c in t
 
     claims = [c for c in _ENVIRONMENTAL_CLAIM_PATTERNS if _claim_in(text, c)]
     lca_triggers = [t for t in _LCA_TRIGGER_TERMS if _claim_in(text, t)]
     lca_required = bool(lca_triggers) and not has_lca
+    excellence = any(term in text for term in _RECOGNISED_EXCELLENCE)
 
-    issues: list[str] = []
+    breaches: list[str] = []
+    best: list[str] = []
     recs: list[str] = []
 
-    for claim in claims:
-        has_data = any(
-            claim.replace("-", " ").split()[0] in str(v).lower()
-            for v in metrics.values()
-        )
-        if not has_data:
-            issues.append(f"Claim '{claim}' lacks quantitative substantiation")
+    generic = [c for c in _GENERIC_CLAIMS if _claim_in(text, c)]
+    for claim in generic:
+        has_data = any(claim.replace("-", " ").split()[0] in str(v).lower() for v in metrics.values())
+        if not has_data and not excellence:
+            breaches.append(
+                f"Possible breach: generic environmental claim '{claim}' without recognised excellent environmental "
+                "performance (ECGT, UCPD Annex I point 4a)"
+            )
+    if generic and breaches:
+        recs.append("Replace generic wording with a specific, quantified claim, or cite an EN ISO 14024 ecolabel")
 
-    if _has_word(text, "offset") or "carbon credit" in text:
-        if "reduc" not in text:
-            issues.append("Offsetting claim without evidence of actual emission reductions (Art. 5(6))")
-            recs.append("Demonstrate primary emission reductions before referencing offsets")
+    neutral = [c for c in _NEUTRALITY_CLAIMS if _claim_in(text, c)]
+    offsets = _has_word(text, "offset") or _has_word(text, "offsets") or "carbon credit" in text
+    if neutral and offsets:
+        breaches.append(
+            f"Possible breach: neutrality claim ('{neutral[0]}') based on offsetting — banned outright "
+            "(ECGT, UCPD Annex I point 4c)"
+        )
+        recs.append("Drop product-level neutrality claims that rely on credits; report reductions and credits separately")
+    elif offsets and "reduc" not in text:
+        best.append("Offsets referenced without evidence of primary emission reductions")
+        recs.append("Demonstrate primary emission reductions before referencing offsets")
+
+    if _FUTURE_CLAIM.search(text) and not any(sig in text for sig in _PLAN_SIGNALS):
+        breaches.append(
+            "Possible breach: future environmental performance claim without a detailed, realistic implementation "
+            "plan and independent monitoring (ECGT, UCPD Art 6(2)(d))"
+        )
+        recs.append("Publish the implementation plan with interim targets and an independent monitor")
 
     if lca_required:
-        issues.append("Full-scope environmental claim requires life-cycle assessment (Art. 3(4))")
-        recs.append("Commission a life-cycle assessment covering full product/service life cycle")
-
+        best.append("Full-scope environmental claim without life-cycle assessment (shelved GCD test)")
+        recs.append("Commission a life-cycle assessment covering the full product/service life cycle")
     if claims and not has_independent_verification:
-        issues.append(
-            "Environmental claims lack independent verification (best practice per "
-            "the proposed Green Claims Directive Art. 10; ECGT still requires substantiation)"
-        )
-        recs.append("Engage an accredited verifier to substantiate environmental claims")
+        best.append("Environmental claims lack independent verification (shelved GCD test)")
+        recs.append("Engage an independent verifier to substantiate environmental claims")
 
-    if not claims and not lca_triggers:
+    if not claims and not neutral and not generic:
         recs.append("No explicit environmental claims detected — EU green-claims rules may not apply")
 
-    compliant = bool(claims) and not issues
-
     return GreenClaimsResult(
-        compliant=compliant,
-        claims_found=claims,
+        compliant=bool(claims or neutral or generic) and not breaches,
+        claims_found=sorted(set(claims + neutral + generic)),
+        ecgt_breaches=breaches,
+        best_practice_gaps=best,
         lca_required=lca_required,
         lca_triggers=lca_triggers,
-        substantiation_issues=issues,
+        substantiation_issues=breaches + best,
         independent_verification_present=has_independent_verification,
         recommendations=recs,
     )

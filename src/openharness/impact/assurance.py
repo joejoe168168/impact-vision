@@ -1,14 +1,18 @@
-"""ISAE 3000 / AA1000 assurance pack generator (Phase 17).
+"""Sustainability assurance pack generator (Phase 17; ISSA 5000 framing v7 W4.6).
 
 Builds the bundle an external assurer needs to issue a limited-assurance
 opinion over an impact report: management assertion, subject matter,
-criteria, evidence index and the signed-feed chain head.
+criteria, evidence index, the signed-feed chain head and a register of
+where AI was used for each figure.
 
-The generator is framework-neutral — the same bundle works for:
+ISSA 5000 (IAASB) is effective for periods beginning on or after
+2026-12-15 and replaces ISAE 3000 / ISAE 3410 for sustainability
+engagements; Hong Kong adopts it as HKSSA 5000 from the same date. The
+generator stays framework-neutral — the same bundle works for:
 
-* ISAE 3000 (International Standard on Assurance Engagements)
+* ISSA 5000 / HKSSA 5000 (default for periods from 2026-12-15)
+* ISAE 3000 / ISAE 3410 (earlier periods only)
 * AA1000AS v3 (AccountAbility)
-* ISAE 3410 (Greenhouse Gas Statements) — for climate-only scopes
 
 It does not *perform* the assurance; it formalises the input pack so an
 independent firm (Big-4 or boutique) can reach a documented opinion.
@@ -16,14 +20,39 @@ independent firm (Big-4 or boutique) can reach a documented opinion.
 
 from __future__ import annotations
 
+import re
 from datetime import date
 from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from openharness.impact.ai_provenance import AIUseRecord
+
 
 AssuranceLevel = Literal["limited", "reasonable", "agreed_upon"]
-AssuranceStandard = Literal["ISAE3000", "AA1000AS", "ISAE3410"]
+AssuranceStandard = Literal["ISSA5000", "HKSSA5000", "ISAE3000", "AA1000AS", "ISAE3410"]
+
+ISSA_5000_EFFECTIVE = date(2026, 12, 15)
+
+
+def recommended_assurance_standard(
+    period_start: date | str | None = None,
+    *,
+    jurisdiction: str = "",
+    climate_only: bool = False,
+) -> AssuranceStandard:
+    """Pick the assurance standard for a reporting period.
+
+    Periods beginning on or after 2026-12-15 (or an unknown period, i.e. new
+    work) use ISSA 5000, or HKSSA 5000 in Hong Kong. Earlier periods keep
+    ISAE 3000, or ISAE 3410 for a GHG-statement-only scope.
+    """
+    if isinstance(period_start, str) and period_start:
+        period_start = date.fromisoformat(period_start[:10])
+    if period_start is None or period_start >= ISSA_5000_EFFECTIVE:  # type: ignore[operator]
+        hk = jurisdiction.strip().casefold() in {"hk", "hong kong", "hong kong sar", "hksar"}
+        return "HKSSA5000" if hk else "ISSA5000"
+    return "ISAE3410" if climate_only else "ISAE3000"
 
 
 class ManagementAssertion(BaseModel):
@@ -57,9 +86,9 @@ class EvidenceEntry(BaseModel):
 
 
 class AssurancePack(BaseModel):
-    """Complete ISAE 3000 / AA1000 input pack."""
+    """Complete assurance input pack (ISSA 5000 by default)."""
 
-    standard: AssuranceStandard = "ISAE3000"
+    standard: AssuranceStandard = "ISSA5000"
     level: AssuranceLevel = "limited"
     fund_name: str
     reporting_period: str
@@ -72,6 +101,11 @@ class AssurancePack(BaseModel):
     produced_at: date = Field(default_factory=date.today)
     assurer: str = ""
     limitations: list[str] = Field(default_factory=list)
+    period_start: date | None = None
+    ai_use: list[AIUseRecord] = Field(
+        default_factory=list,
+        description="Where AI was used per figure (extraction / calculation / tagging / drafting)",
+    )
 
 
 def build_assurance_pack(
@@ -84,17 +118,32 @@ def build_assurance_pack(
     metrics: list[str],
     criteria: list[str] | None = None,
     evidence: list[EvidenceEntry] | None = None,
-    standard: AssuranceStandard = "ISAE3000",
+    standard: AssuranceStandard | None = None,
     level: AssuranceLevel = "limited",
     chain_head_hash: str = "",
     chain_length: int = 0,
     assurer: str = "",
     scope_boundaries: list[str] | None = None,
     exclusions: list[str] | None = None,
+    period_start: date | str | None = None,
+    jurisdiction: str = "",
+    ai_use: list[AIUseRecord] | None = None,
 ) -> AssurancePack:
-    """Return a ready-to-ship :class:`AssurancePack`."""
+    """Return a ready-to-ship :class:`AssurancePack`.
+
+    ``standard`` defaults to :func:`recommended_assurance_standard` for
+    ``period_start`` / ``jurisdiction`` (ISSA 5000 for new periods).
+    """
+    if isinstance(period_start, str) and period_start:
+        period_start = date.fromisoformat(period_start[:10])
+    if not period_start:
+        # "FY2025" / "2025" / "FY2026/27" → start of that year (calendar-year default).
+        match = re.search(r"(?<!\d)(20\d{2})(?!\d)", reporting_period or "")
+        period_start = date(int(match.group(1)), 1, 1) if match else None
     return AssurancePack(
-        standard=standard,
+        standard=standard or recommended_assurance_standard(period_start, jurisdiction=jurisdiction),
+        period_start=period_start or None,
+        ai_use=list(ai_use or []),
         level=level,
         fund_name=fund_name,
         reporting_period=reporting_period,
@@ -194,9 +243,19 @@ def build_issa5000_pack(assessment, graph, trail, level: Literal["limited", "rea
         if row.sufficient_for != level
         and not (level == "limited" and row.sufficient_for == "reasonable")
     ]
+    if isinstance(assessment, dict) and "ai_use" in assessment:
+        ai_use = [r if isinstance(r, dict) else r.model_dump(mode="json") for r in assessment["ai_use"]]
+    elif isinstance(assessment, dict) and ("impact_claims" in assessment or "five_dimensions" in assessment):
+        from openharness.impact.ai_provenance import ai_provenance_for_report
+
+        ai_use = [r.model_dump(mode="json") for r in ai_provenance_for_report(assessment).records]
+    else:
+        ai_use = []
     core = {
         "standard": "ISSA 5000",
+        "jurisdictional_equivalents": {"HK": "HKSSA 5000"},
         "effective_for_periods_beginning": "2026-12-15",
+        "ai_use_register": ai_use,
         "level": level,
         "assertions": [item.model_dump(mode="json") for item in assertions],
         "sufficiency": [item.model_dump(mode="json") for item in sufficiency],
@@ -219,6 +278,8 @@ def build_issa5000_pack(assessment, graph, trail, level: Literal["limited", "rea
 __all__ = [
     "AssuranceLevel",
     "AssuranceStandard",
+    "ISSA_5000_EFFECTIVE",
+    "recommended_assurance_standard",
     "ManagementAssertion",
     "SubjectMatter",
     "EvidenceEntry",

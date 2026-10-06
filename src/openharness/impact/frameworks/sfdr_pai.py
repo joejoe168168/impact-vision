@@ -17,6 +17,8 @@ is adopted.
 
 from __future__ import annotations
 
+import re
+
 from typing import Literal
 
 from pydantic import BaseModel, Field
@@ -499,10 +501,24 @@ def classify_sfdr_article(
 # ---------------------------------------------------------------------------
 
 SFDR2_STATUS_NOTE = (
-    "SFDR 2.0 is PROPOSED LAW, not in force (Council position 2026-06-24; "
-    "trilogue from late 2026; application expected ~2029 after a 24-month "
-    "implementation period). Classify against Article 6/8/9 for current "
-    "compliance; use this preview to plan label migration."
+    "SFDR 2.0 is PROPOSED LAW, not in force (Council general approach "
+    "2026-06-24; European Parliament ECON mandate 2026-09-10, plenary "
+    "October 2026; trilogue from Q4 2026; application expected ~2029 after a "
+    "24-month implementation period). Classify against Article 6/8/9 for "
+    "current compliance; use this preview to plan label migration."
+)
+
+SFDR2_POSITIONS: dict[str, str] = {
+    "commission": "Commission proposal (2025-11-20)",
+    "council": "Council general approach (2026-06-24)",
+    "parliament": "European Parliament ECON mandate (2026-09-10)",
+}
+
+_IMPACT_LANGUAGE = re.compile(
+    r"\b(impact fund|impact investing|impact investment|impact strategy|positive impact|"
+    r"measurable impact|social impact|environmental impact|impact objective|impact-driven|"
+    r"impact-focused|impact first)\b",
+    re.IGNORECASE,
 )
 
 SFDR2_CATEGORY_DESCRIPTIONS: dict[str, str] = {
@@ -564,6 +580,48 @@ class SFDR2Input(BaseModel):
         default=True,
         description="Model the Council-position phase-in / illiquid-asset deviations",
     )
+    position: Literal["commission", "council", "parliament"] = Field(
+        default="council",
+        description="Which institution's text to model: commission, council or parliament",
+    )
+    # --- impact add-on (all three texts) ------------------------------------
+    uses_impact_language: bool | None = Field(
+        default=None,
+        description="Product name/marketing uses 'impact'; None = detect from the text",
+    )
+    impact_objective_predefined: bool = Field(
+        default=False,
+        description="A pre-defined, positive, measurable impact objective is set",
+    )
+    has_measurable_outcomes: bool = Field(
+        default=False,
+        description="Outcomes have indicators and targets that are measured and reported",
+    )
+    has_impact_theory: bool = Field(
+        default=False,
+        description="A pre-set theory of impact / change is disclosed",
+    )
+    toc_validation: dict | None = Field(
+        default=None,
+        description="toc_builder validation report (is_passing, severity_counts) as evidence of the impact theory",
+    )
+    evidence_provenance: str = Field(
+        default="",
+        description="5D overall_provenance (evidence-based / partial / estimated) as evidence of measurement",
+    )
+
+
+class SFDR2ImpactCheck(BaseModel):
+    """Result of the SFDR 2.0 impact add-on check."""
+
+    uses_impact_language: bool
+    eligible: bool | None = None
+    category_ok: bool | None = None
+    objective_ok: bool | None = None
+    theory_ok: bool | None = None
+    measurement_ok: bool | None = None
+    failures: list[str] = Field(default_factory=list)
+    evidence: list[str] = Field(default_factory=list)
 
 
 class SFDR2Classification(BaseModel):
@@ -578,6 +636,9 @@ class SFDR2Classification(BaseModel):
     migration_note: str = ""
     rationale: list[str] = Field(default_factory=list)
     caveats: list[str] = Field(default_factory=list)
+    position: str = "council"
+    position_label: str = SFDR2_POSITIONS["council"]
+    impact_check: SFDR2ImpactCheck | None = None
 
 
 _ARTICLE_TO_SFDR2: dict[int, tuple[str, str]] = {
@@ -632,7 +693,7 @@ def classify_sfdr2_category(input: SFDR2Input) -> SFDR2Classification:  # noqa: 
                 f"Strategy alignment {input.pct_strategy_aligned:.0f}% vs >=70% required → "
                 + ("met." if threshold_met else "NOT met.")
             )
-            if not threshold_met and input.apply_council_flexibility:
+            if not threshold_met and input.apply_council_flexibility and input.position == "council":
                 if input.fund_in_ramp_up:
                     caveats.append(
                         "Council position: the Commission may set phase-in rules for "
@@ -665,6 +726,21 @@ def classify_sfdr2_category(input: SFDR2Input) -> SFDR2Classification:  # noqa: 
     if input.current_article in _ARTICLE_TO_SFDR2:
         migration_note = _ARTICLE_TO_SFDR2[input.current_article][1]
 
+    if input.position == "parliament" and category == "esg_basics":
+        caveats.append(
+            "Parliament mandate: product-level PAI disclosure is extended to ESG Basics "
+            "(Art 8) products."
+        )
+    if input.position != "council" and input.fund_in_ramp_up:
+        caveats.append(
+            "The ramp-up phase-in for the 70% threshold is a Council-position feature; "
+            "check whether it survives trilogue."
+        )
+
+    impact_check = check_sfdr2_impact_claim(input, category)
+    if impact_check.uses_impact_language and impact_check.eligible is False:
+        rationale.append("'Impact' wording is not supported: " + "; ".join(impact_check.failures))
+
     return SFDR2Classification(
         category=category,
         description=SFDR2_CATEGORY_DESCRIPTIONS[category],
@@ -673,6 +749,73 @@ def classify_sfdr2_category(input: SFDR2Input) -> SFDR2Classification:  # noqa: 
         migration_note=migration_note,
         rationale=rationale,
         caveats=caveats,
+        position=input.position,
+        position_label=SFDR2_POSITIONS[input.position],
+        impact_check=impact_check,
+    )
+
+
+def check_sfdr2_impact_claim(input: SFDR2Input, category: str) -> SFDR2ImpactCheck:  # noqa: A002
+    """Check whether a product may use "impact" wording under SFDR 2.0.
+
+    The impact add-on is common to the Commission, Council and Parliament
+    texts: a product that uses "impact" in its name or marketing must sit in
+    the Transition (Art 7) or Sustainable (Art 9) category, pursue a
+    pre-defined, positive and measurable impact objective, and disclose a
+    pre-set theory of impact with provisions to measure, manage and report.
+
+    Evidence for the theory can come from a ``toc_builder`` validation report
+    (passing = no high/critical findings) and evidence for measurement from
+    the Five Dimensions ``overall_provenance`` (``evidence-based``).
+    """
+    text = f"{input.description} {input.document_text}"
+    uses = input.uses_impact_language
+    if uses is None:
+        uses = bool(_IMPACT_LANGUAGE.search(text))
+    if not uses:
+        return SFDR2ImpactCheck(uses_impact_language=False)
+
+    failures: list[str] = []
+    evidence: list[str] = []
+    category_ok = category in ("sustainable", "transition")
+    if not category_ok:
+        failures.append("'impact' wording is reserved for Transition (Art 7) or Sustainable (Art 9) products")
+
+    objective_ok = input.impact_objective_predefined
+    if not objective_ok:
+        failures.append("no pre-defined, positive, measurable impact objective")
+
+    toc = input.toc_validation or {}
+    theory_ok = input.has_impact_theory
+    if toc:
+        passing = bool(toc.get("is_passing"))
+        counts = toc.get("severity_counts") or {}
+        evidence.append(
+            f"ToC validation: {'passing' if passing else 'failing'} "
+            f"({counts.get('critical', 0)} critical, {counts.get('high', 0)} high findings)"
+        )
+        theory_ok = theory_ok or passing
+        if not passing:
+            failures.append("theory of change has high/critical validation findings")
+    if not theory_ok and not toc:
+        failures.append("no theory of impact disclosed")
+
+    provenance = input.evidence_provenance.strip().lower()
+    measurement_ok = input.has_measurable_outcomes or provenance in ("evidence-based", "reported", "measured", "verified")
+    if provenance:
+        evidence.append(f"Five Dimensions evidence: {provenance}")
+    if not measurement_ok:
+        failures.append("outcomes are not measured and reported (estimates only)")
+
+    return SFDR2ImpactCheck(
+        uses_impact_language=True,
+        eligible=not failures,
+        category_ok=category_ok,
+        objective_ok=objective_ok,
+        theory_ok=theory_ok,
+        measurement_ok=measurement_ok,
+        failures=failures,
+        evidence=evidence,
     )
 
 

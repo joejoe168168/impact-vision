@@ -50,9 +50,9 @@ YAML, not this file.
 
 ## Regulation
 
-**SFDR (Article 6 / 8 / 9)** — The EU Sustainable Finance Disclosure Regulation. Article 8 funds promote environmental or social characteristics; Article 9 funds have sustainable investment as their objective. A recast ("SFDR 2.0") with product categories is being negotiated for application around 2029.
+**SFDR (Article 6 / 8 / 9)** — The EU Sustainable Finance Disclosure Regulation. Article 8 funds promote environmental or social characteristics; Article 9 funds have sustainable investment as their objective. A recast ("SFDR 2.0") with product categories is being negotiated for application around 2029; only Transition or Sustainable products with a measurable impact objective and a theory of change may use the word "impact".
 
-**ESRS / CSRD / VSME** — The EU sustainability reporting rules (CSRD) and their standards (ESRS). VSME is the voluntary standard for smaller companies; large reporters may not ask such companies for more than VSME data.
+**ESRS / CSRD / VSME** — The EU sustainability reporting rules (CSRD) and their standards (ESRS). The revised ESRS became law in September 2026 and apply from 2027. VSME is the voluntary standard for smaller companies; from 2027 large reporters may not ask partners with up to 1,000 employees for more than VSME data.
 
 **ISSB (IFRS S1 / S2)** — The International Sustainability Standards Board's global disclosure standards: S1 for general sustainability information, S2 for climate. Adopted or being adopted in Hong Kong, Singapore, Japan, Australia, the UK and elsewhere.
 

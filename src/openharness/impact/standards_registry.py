@@ -299,12 +299,10 @@ def default_standards_registry() -> StandardsRegistry:
                     "CSRD mandatory scope narrowed to undertakings with >1,000 employees "
                     "AND >EUR 450M net turnover (cumulative); listed-SME and most former "
                     "Wave 2/3 entities out of scope; sector-specific ESRS removed. "
-                    "Member States transpose by 2027-03-19, applying from FY2027. A "
-                    "The European Commission adopted revised ESRS delegated acts on "
-                    "2026-07-03, but they are not in force until Official Journal "
-                    "publication and completion of scrutiny. Until then, the "
-                    "2023-delegated-act ESRS remain the substantive rule set for "
-                    "in-scope reporters."
+                    "Member States transpose by 2027-03-19, applying from FY2027. The "
+                    "revised ESRS (Delegated Regulation (EU) 2026/1563, OJ 2026-09-21) "
+                    "enter into force 2026-11-10 and are mandatory for financial years "
+                    "beginning on or after 2027-01-01 (see ESRS_SIMPLIFIED_2026)."
                 ),
             ),
             StandardVersion(
@@ -336,18 +334,112 @@ def default_standards_registry() -> StandardsRegistry:
             ),
             StandardVersion(
                 standard_id="ESRS_SIMPLIFIED_2026",
-                name="Simplified European Sustainability Reporting Standards (adopted, pending scrutiny)",
-                version="2026-draft",
-                status="under_revision",
+                name="Revised ESRS (Commission Delegated Regulation (EU) 2026/1563)",
+                version="2026-oj",
+                status="active",
                 effective_date="2027-01-01",
-                source_url="https://finance.ec.europa.eu/news/commission-adopts-revised-sustainability-reporting-standards-2026-07-03_en",
+                source_url="https://eur-lex.europa.eu/eli/reg_del/2026/1563/oj",
+                aliases=["Revised ESRS", "ESRS 2026", "Simplified ESRS"],
                 scope=["CSRD", "double materiality", "simplified datapoints"],
                 notes=(
-                    "Commission adopted the revised delegated acts on 2026-07-03. "
-                    "They remain under European Parliament/Council scrutiny and do "
-                    "not enter into force until Official Journal publication. "
-                    "Application is from FY2027, with early adoption permitted for FY2026; "
-                    "the bundled datapoint rows are screening placeholders, not the final taxonomy."
+                    "Published in the OJ 2026-09-21; in force 2026-11-10; mandatory for "
+                    "financial years beginning on or after 2027-01-01. For FY2026 a reporter "
+                    "may use Set 1, Set 1 with reliefs, or the revised set and must say which. "
+                    "Removes more than 60% of mandatory datapoints. EFRAG's draft XBRL "
+                    "taxonomy is in consultation until 2026-11-11."
+                ),
+            ),
+            StandardVersion(
+                standard_id="VSME",
+                name="Voluntary SME Standard (Commission Delegated Regulation (EU) 2026/1560)",
+                version="2026-oj",
+                status="active",
+                effective_date="2026-09-24",
+                source_url="https://sustainablefutures.linklaters.com/post/102o1ou/eu-csrd-revised-esrs-and-voluntary-reporting-standard-are-published-in-the-offic",
+                aliases=["EFRAG VSME", "Voluntary SME standard"],
+                scope=["SME reporting", "value-chain cap"],
+                notes=(
+                    "In force 2026-09-24. From FY2027 its datapoints cap what a CSRD reporter "
+                    "may require from value-chain partners with up to 1,000 employees."
+                ),
+            ),
+            StandardVersion(
+                standard_id="ISSA_5000",
+                name="ISSA 5000 General Requirements for Sustainability Assurance Engagements",
+                version="2024",
+                status="active",
+                effective_date="2026-12-15",
+                source_url="https://www.iaasb.org/consultations-projects/issa-5000-adoption-and-implementation",
+                aliases=["ISSA 5000", "HKSSA 5000"],
+                scope=["sustainability assurance", "limited assurance", "reasonable assurance"],
+                notes=(
+                    "Effective for periods beginning on or after 2026-12-15 (or as at a date "
+                    "on/after it); replaces ISAE 3000/3410 for sustainability engagements. "
+                    "Hong Kong adopts it as HKSSA 5000 from the same date."
+                ),
+            ),
+            StandardVersion(
+                standard_id="ECGT",
+                name="Empowering Consumers for the Green Transition Directive (EU) 2024/825",
+                version="2024",
+                status="active",
+                effective_date="2026-09-27",
+                source_url="https://www.lw.com/en/insights/eu-empowering-consumers-directive-new-rules-on-green-claims-apply-from-27-september-2026",
+                aliases=["EmpCo", "ECGT Directive", "UCPD green claims"],
+                scope=["generic environmental claims", "offset-based neutrality claims", "sustainability labels"],
+                notes=(
+                    "Operative EU anti-greenwashing law (amends the UCPD). The proposed Green "
+                    "Claims Directive (COM/2023/166) is shelved: withdrawal announced "
+                    "2025-06-20, not formalised."
+                ),
+            ),
+            StandardVersion(
+                standard_id="UK_SRS",
+                name="UK Sustainability Reporting Standards for listed issuers (FCA PS26/19)",
+                version="PS26-19",
+                status="active",
+                effective_date="2027-01-01",
+                source_url="https://www.fca.org.uk/publications/policy-statements/ps26-19-aligning-listed-issuers-sustainability-disclosures-international-standards",
+                aliases=["UK SRS", "PS26/19"],
+                scope=["listed issuers", "comply-or-explain", "UK SRS S1", "UK SRS S2"],
+                notes=(
+                    "Final 2026-09-30. Comply-or-explain for periods beginning on or after "
+                    "2027-01-01; Scope 3 relief for one year and wider S1 relief for two."
+                ),
+            ),
+            StandardVersion(
+                standard_id="HK_TAXONOMY",
+                name="Hong Kong Taxonomy for Sustainable Finance (HKMA)",
+                version="phase-2a",
+                status="active",
+                effective_date="2026-01-22",
+                source_url="https://www.hkma.gov.hk/eng/news-and-media/press-releases/2026/01/20260122-3/",
+                aliases=["HK Taxonomy", "Hong Kong Taxonomy"],
+                scope=["green activity classification", "Hong Kong"],
+                notes="Phase 2A final 2026-01-22; Phase 2B prototype consultation closed 2026-10-07.",
+            ),
+            StandardVersion(
+                standard_id="ISSB_WORKFORCE",
+                name="ISSB research project: Workforce-related Disclosures",
+                version="research-2026",
+                status="draft",
+                source_url="https://www.ifrs.org/content/ifrs/home/news-and-events/updates/issb/2026/issb-update-september-2026.html",
+                aliases=["ISSB Human Capital", "Human Capital project", "Workforce-related Disclosures"],
+                scope=["workforce", "human capital"],
+                notes="Renamed from 'Human Capital' at the ISSB meeting of 2026-09-24.",
+            ),
+            StandardVersion(
+                standard_id="ISSB_NATURE",
+                name="IFRS Practice Statement on nature-related disclosures",
+                version="ed-2026",
+                status="draft",
+                source_url="https://www.ifrs.org/content/ifrs/home/news-and-events/updates/issb/2026/issb-update-september-2026.html",
+                aliases=["ISSB nature", "Nature Practice Statement"],
+                scope=["nature", "biodiversity", "TNFD"],
+                notes=(
+                    "Exposure draft targeted for October 2026 (CBD COP17), 120-day comment "
+                    "period, built on the TNFD recommendations. TNFD is pausing new technical "
+                    "work and now feeds the ISSB; mapping waits for the ED text."
                 ),
             ),
             StandardVersion(

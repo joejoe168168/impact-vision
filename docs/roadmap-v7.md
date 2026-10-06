@@ -247,6 +247,74 @@ impact-language check → UK SRS → HK taxonomy screen + HKSSA 5000 → AI
 provenance badge on all outputs → ISSA 5000 framing → ECGT in greenwashing →
 ISSB naming / nature mapping prep → Asia adoption rows → SB 253 alert.
 
+**Wave 4 status (2026-10-06):** done on branch `v7-wave4`. The §2 facts were
+re-checked against the §9 sources (and EUR-Lex, HKMA, HKICPA, FSA, ACRA,
+AASB) on implementation day. Five corrections were applied:
+- VSME (Reg 2026/1560) has been in force since 2026-09-24, not 2026-11-10.
+- China's MoF Basic Standard (trial) dates from 2024-11-20. Only Climate
+  Standard No.1 is from December 2025.
+- The Green Claims Directive is "shelved, withdrawal announced but not
+  formalised", not "withdrawn".
+- The SFDR 2.0 "impact" add-on is common to all three institutions'
+  texts, not ECON-only.
+- AI Act content marking has a 2026-12-02 grace period for systems already
+  on the market.
+
+What shipped:
+- **W4.1 ESRS/VSME law:**
+  - Revised-ESRS metadata carries the legal instrument and a date-aware
+    `legal_status`.
+  - The generated `*-DRAFT-nnn` filler rows are gone.
+  - VSME investee template (`sector="vsme"`) and `vsme_basic` /
+    `vsme_comprehensive` request packs.
+  - The value-chain cap is a hard rule in `build_data_request_pack`:
+    fields beyond VSME become voluntary for partners with ≤1,000 employees.
+- **W4.2 SFDR 2.0:** `position=commission|council|parliament`, plus an
+  "impact"-wording check. It requires Art 7/9, a pre-defined objective, a
+  passing `toc_builder` validation (or a disclosed theory) and
+  evidence-based measurement.
+- **W4.3 UK SRS:** a PS26/19 comply-or-explain obligation in the UK profile
+  and pack.
+- **W4.4 Hong Kong:**
+  - New `HK` jurisdiction profile (HKEX climate, HK Taxonomy, HKSSA 5000,
+    transition plan).
+  - `frameworks/hk_taxonomy.py` screen (wraps the EU Taxonomy maths), also
+    exposed as `framework_assess framework=hk_taxonomy`.
+  - HKEX pack refreshed.
+- **W4.5 AI provenance:** `impact/ai_provenance.py` stamps every output
+  with one disclosure:
+  - decision report (badge, appendix and footer, in en / zh-HK / zh-CN),
+    and PDF through it;
+  - IC memo (HTML and DOCX), DD report and questionnaire DOCX, shared v2
+    footer, classic report and portfolio home;
+  - XLSX "AI provenance" sheet, CSV, JSON and `summary.json`.
+  - Claims carry `extracted_by`; `impact_report` accepts an `ai_usage`
+    declaration.
+- **W4.6 ISSA 5000:**
+  - Assurance packs default to ISSA 5000 for periods beginning on or after
+    2026-12-15, or HKSSA 5000 in HK (inferred from labels like "FY2027").
+  - Packs carry a per-figure AI-use register; the ISSA 5000 pack does too.
+- **W4.7 ECGT:** `greenwashing_detect` now reports possible ECGT/UCPD
+  breaches (Annex I 4a/4c, Art 6(2)(d)). Shelved-GCD tests are reported
+  separately as best practice.
+- **W4.8 ISSB:** registry entries for Workforce-related Disclosures (alias
+  "Human Capital") and the nature Practice Statement ED. TNFD is labelled
+  "feeding ISSB".
+- **W4.9 Asia rows:** Japan, China (MoF), Singapore, Australia, Hong Kong,
+  UK and EU adoption rows refreshed with deep links and `last_verified`.
+  The placeholder ISSB watch URL is fixed.
+- **W4.10 SB 253:** obligations can carry a `fixed_due_date`. SB 253 shows
+  at 2026-11-10 with a live calendar alert and a portfolio-home "needs
+  attention" item. Watch-list rows carry `source_url`.
+
+Not done:
+- Pointing `xbrl_export` at the EFRAG 2026 draft taxonomy. It waits for
+  the taxonomy files; the consultation closes 2026-11-11.
+- Replacing ESRS screening rows with the Regulation's annex datapoint codes.
+- ISSB nature mapping (out of scope until the ED text lands).
+- Adding ISSA 5000 to the verifier-marketplace listings. Those are claims
+  about real firms and need confirmation from them.
+
 ### Wave 5 — Platform hardening (weeks 6–16)
 
 | ID | Item | Extends | Effort |

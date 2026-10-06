@@ -1,0 +1,26 @@
+# Hong Kong Taxonomy for Sustainable Finance (HKMA) — screening catalogue.
+# Sector/activity rows summarise the published taxonomy for eligibility
+# screening only. Technical screening criteria, DNSH and minimum safeguards
+# must be checked against the HKMA text before any alignment claim.
+regime: hk_taxonomy
+as_of: "2026-10-06"
+last_verified: "2026-10-06"
+phases:
+  - {phase: "1", status: final, published: "2024-05-03", note: "Prototype: climate-mitigation activities in four sectors"}
+  - {phase: "2A", status: final, published: "2026-01-22", note: "Expanded taxonomy (incl. transition and adaptation elements); verify the activity list against the HKMA text"}
+  - {phase: "2B", status: consultation, published: "2026-09-07", consultation_closes: "2026-10-07", note: "Prototype consultation; not yet usable for alignment claims"}
+source: Hong Kong Monetary Authority, Hong Kong Taxonomy for Sustainable Finance
+source_url: https://www.hkma.gov.hk/eng/news-and-media/press-releases/2026/01/20260122-3/
+activities:
+  - {activity_id: HK-PG-1, sector: Power generation, name: Solar photovoltaic electricity generation, objective: climate_mitigation, phase: "1", keywords: [solar, photovoltaic, " pv "]}
+  - {activity_id: HK-PG-2, sector: Power generation, name: Wind power electricity generation, objective: climate_mitigation, phase: "1", keywords: [wind power, wind farm, wind turbine, offshore wind]}
+  - {activity_id: HK-PG-3, sector: Power generation, name: Hydropower and other renewable electricity generation, objective: climate_mitigation, phase: "1", keywords: [hydropower, hydroelectric, geothermal, tidal]}
+  - {activity_id: HK-PG-4, sector: Power generation, name: Energy from waste and bioenergy, objective: climate_mitigation, phase: "1", keywords: [waste-to-energy, waste to energy, biogas, biomass, anaerobic digestion, landfill gas]}
+  - {activity_id: HK-PG-5, sector: Power generation, name: Electricity transmission, distribution and storage, objective: climate_mitigation, phase: "1", keywords: [transmission, distribution grid, battery storage, energy storage, smart grid]}
+  - {activity_id: HK-TR-1, sector: Transport, name: Low-carbon passenger land transport and fleets, objective: climate_mitigation, phase: "1", keywords: [electric vehicle, electric bus, ev fleet, " evs ", zero-emission vehicle]}
+  - {activity_id: HK-TR-2, sector: Transport, name: "Low-carbon transport infrastructure: EV charging, rail, cycling", objective: climate_mitigation, phase: "1", keywords: [ev charging, charging station, charging infrastructure, railway, metro, cycling infrastructure]}
+  - {activity_id: HK-TR-3, sector: Transport, name: Low-carbon water transport, objective: climate_mitigation, phase: "1", keywords: [electric ferry, low-carbon vessel, zero-emission vessel]}
+  - {activity_id: HK-CO-1, sector: Construction, name: Construction of new green buildings, objective: climate_mitigation, phase: "1", keywords: [green building, beam plus, leed, net zero building, new construction]}
+  - {activity_id: HK-CO-2, sector: Construction, name: Renovation and energy-efficiency retrofits of buildings, objective: climate_mitigation, phase: "1", keywords: [retrofit, renovation, energy efficiency, building efficiency, insulation]}
+  - {activity_id: HK-WW-1, sector: Water and waste management, name: Water supply, sewerage and wastewater treatment, objective: climate_mitigation, phase: "1", keywords: [wastewater, sewage, water treatment, water supply, desalination]}
+  - {activity_id: HK-WW-2, sector: Water and waste management, name: Waste collection, recycling and material recovery, objective: climate_mitigation, phase: "1", keywords: [recycling, waste collection, material recovery, composting, circular]}

@@ -570,6 +570,11 @@ class ImpactClaim(BaseModel):
         default_factory=dict,
         description="Extracted entities: {'stakeholders': [...], 'geographies': [...], 'outcomes': [...]}",
     )
+    extracted_by: str = Field(
+        default="",
+        description="ID of the extractor that produced this claim (e.g. 'regex', 'llm'); "
+        "drives the AI-provenance disclosure",
+    )
 
     def model_post_init(self, __context: Any) -> None:
         """Auto-populate confidence from calibrated formula after model initialization.

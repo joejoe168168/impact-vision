@@ -17,7 +17,11 @@ Structure (EFRAG VSME, final version Dec 2024):
   with more complex needs, or those responding to bank/investor requests.
 
 Reference: EFRAG, "Voluntary sustainability reporting standard for non-listed
-micro-, small- and medium-sized undertakings (VSME)", December 2024.
+micro-, small- and medium-sized undertakings (VSME)", December 2024, adopted as
+Commission Delegated Regulation (EU) 2026/1560 (OJ 2026-09-21, in force
+2026-09-24). Its Annex II datapoints are the value-chain cap: from FY2027 a
+CSRD reporter may not require more than VSME from a value-chain partner with
+up to 1,000 employees, unless other law requires it.
 
 This module ships the disclosure catalogue plus a lightweight keyword/metric
 *coverage screening* (mirroring :mod:`openharness.impact.frameworks.esrs`). It
@@ -303,13 +307,131 @@ def assess_vsme(
         limitations=[
             "Coverage flags are keyword/metric screening signals, not a VSME conformity opinion.",
             "VSME is voluntary; the Basic module is the minimum, Comprehensive adds C1-C9.",
-            "Under Omnibus I, in-scope CSRD undertakings may not demand more from small "
-            "suppliers than the VSME data set (value-chain cap).",
+            "VSME is law (Delegated Regulation (EU) 2026/1560). From FY2027 a CSRD reporter "
+            "may not demand more than the VSME data set from value-chain partners with up "
+            "to 1,000 employees (value-chain cap).",
         ],
     )
 
 
+# ---------------------------------------------------------------------------
+# Legal basis, investee template and value-chain cap (v7 W4.1)
+# ---------------------------------------------------------------------------
+
+VSME_LEGAL_BASIS: dict[str, str] = {
+    "instrument": "Commission Delegated Regulation (EU) 2026/1560",
+    "oj_published": "2026-09-21",
+    "entry_into_force": "2026-09-24",
+    "value_chain_cap_applies_from": "2027-01-01",
+    "value_chain_cap_employee_threshold": "1000",
+    "source_url": "https://sustainablefutures.linklaters.com/post/102o1ou/eu-csrd-revised-esrs-and-voluntary-reporting-standard-are-published-in-the-offic",
+    "last_verified": "2026-10-06",
+}
+
+VALUE_CHAIN_CAP_EMPLOYEES = 1000
+
+_DATAPOINT_UNITS: dict[str, tuple[str, str]] = {
+    # data point -> (unit, value_type)
+    "total_energy_mwh": ("MWh", "number"),
+    "scope1_tco2e": ("tCO2e", "number"),
+    "scope2_tco2e": ("tCO2e", "number"),
+    "water_withdrawal_m3": ("m3", "number"),
+    "water_consumption_m3": ("m3", "number"),
+    "total_waste_t": ("t", "number"),
+    "hazardous_waste_t": ("t", "number"),
+    "recycled_pct": ("%", "percent"),
+    "headcount": ("employees", "number"),
+    "recordable_accidents": ("count", "number"),
+    "fatalities": ("count", "number"),
+    "accident_rate": ("rate", "number"),
+    "gender_pay_gap_pct": ("%", "percent"),
+    "collective_bargaining_pct": ("%", "percent"),
+    "training_hours_per_employee": ("hours", "number"),
+    "corruption_convictions": ("count", "number"),
+    "corruption_fines_eur": ("EUR", "currency"),
+    "ghg_target_pct": ("%", "percent"),
+    "target_base_year": ("year", "number"),
+    "target_year": ("year", "number"),
+    "employee_turnover_pct": ("%", "percent"),
+    "revenue_controversial_sectors_pct": ("%", "percent"),
+    "board_gender_ratio": ("ratio", "number"),
+}
+
+
+def vsme_template_fields(module: str = "basic") -> list[dict]:
+    """Return the VSME investee data template as flat field dicts.
+
+    One field per datapoint; a disclosure without datapoints (policies,
+    narrative items) becomes one ``text`` field keyed by its code. ``module``
+    is ``basic`` (B1–B11) or ``comprehensive`` (B1–B11 + C1–C9).
+    """
+    m = module.strip().lower()
+    if m not in {"basic", "comprehensive"}:
+        raise ValueError("module must be 'basic' or 'comprehensive'")
+    disclosures = get_vsme_disclosures("basic") if m == "basic" else get_vsme_disclosures(None)
+    fields: list[dict] = []
+    for disc in disclosures:
+        if not disc.data_points:
+            fields.append({
+                "field_id": f"VSME-{disc.code}",
+                "disclosure": disc.code,
+                "label": disc.name,
+                "definition": disc.description,
+                "unit": "narrative",
+                "value_type": "text",
+                "pillar": disc.pillar,
+                "module": disc.module,
+            })
+            continue
+        for dp in disc.data_points:
+            unit, value_type = _DATAPOINT_UNITS.get(dp, ("unspecified", "text"))
+            fields.append({
+                "field_id": f"VSME-{disc.code}-{dp}",
+                "disclosure": disc.code,
+                "label": f"{disc.name} — {dp.replace('_', ' ')}",
+                "definition": disc.description,
+                "unit": unit,
+                "value_type": value_type,
+                "pillar": disc.pillar,
+                "module": disc.module,
+            })
+    return fields
+
+
+def vsme_ceiling_keys() -> set[str]:
+    """Identifiers that sit inside the VSME data set (the value-chain cap).
+
+    Includes disclosure codes, datapoint names, ``VSME-*`` field IDs and the
+    IRIS+ / ESRS cross-references of every VSME disclosure.
+    """
+    keys: set[str] = set()
+    for disc in VSME_DISCLOSURES:
+        keys.add(disc.code)
+        keys.add(f"VSME-{disc.code}")
+        keys.update(disc.data_points)
+        keys.update(f"VSME-{disc.code}-{dp}" for dp in disc.data_points)
+        keys.update(disc.iris_cross_refs)
+        keys.update(disc.esrs_cross_refs)
+    return keys
+
+
+def value_chain_cap_applies(
+    *, counterparty_employees: int | None, requester_in_csrd_scope: bool = True
+) -> bool:
+    """True when a CSRD reporter's request to this partner is capped at VSME."""
+    return (
+        requester_in_csrd_scope
+        and counterparty_employees is not None
+        and counterparty_employees <= VALUE_CHAIN_CAP_EMPLOYEES
+    )
+
+
 __all__ = [
+    "VALUE_CHAIN_CAP_EMPLOYEES",
+    "VSME_LEGAL_BASIS",
+    "value_chain_cap_applies",
+    "vsme_ceiling_keys",
+    "vsme_template_fields",
     "VSMEDisclosure",
     "VSMEDisclosureResult",
     "VSMEAssessmentResult",
