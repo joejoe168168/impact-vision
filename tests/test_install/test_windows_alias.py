@@ -13,5 +13,5 @@ except ModuleNotFoundError:  # pragma: no cover - Python < 3.11
 def test_pyproject_exposes_console_scripts():
     data = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))
     scripts = data["project"]["scripts"]
-    assert scripts["impact-vision"] == "openharness.cli:app"
-    assert scripts["iv"] == "openharness.cli:app"
+    assert scripts["impact-vision"] == "impact_vision.cli:app"
+    assert scripts["iv"] == "impact_vision.cli:app"

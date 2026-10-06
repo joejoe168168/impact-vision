@@ -63,11 +63,14 @@ dev = [
 ]
 
 [project.scripts]
-impact-vision = "openharness.cli:app"
-iv = "openharness.cli:app"
+impact-vision = "impact_vision.cli:app"
+iv = "impact_vision.cli:app"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/openharness", "src/impact_vision"]
+# W5.5: HKUDS-era sub-packages with no runtime importers stay out of the wheel
+# (kept in the source tree for the tests / ohmo gateway that still use them).
+exclude = ["src/openharness/channels", "src/openharness/vim"]
 
 [tool.hatch.build]
 exclude = [
@@ -89,7 +92,6 @@ exclude = [
 "frontend/terminal/tsconfig.json" = "openharness/_frontend/tsconfig.json"
 "frontend/terminal/src" = "openharness/_frontend/src"
 "data" = "openharness/_data"
-"src/impact_vision/__init__.py" = "impact_vision/__init__.py"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
