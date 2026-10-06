@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ title }}</title>
+<style>{{ css | safe }}
+.gallery { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+.gcard { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+.gcard header { display: flex; gap: 12px; align-items: center; }
+.gcard h2 { margin: 0; font-size: 1.1rem; line-height: 1.25; }
+.gcard .meta { margin: 2px 0 0; color: var(--ink-2); font-size: 0.85rem; }
+.gstats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; }
+.gstat .label { color: var(--ink-2); font-size: 0.78rem; margin: 0; }
+.gstat .value { font-weight: 650; font-size: 0.98rem; margin: 0; line-height: 1.35; }
+.gstat .value.big { font-size: 1.25rem; }
+.links { display: flex; flex-wrap: wrap; gap: 8px; }
+.links a { text-decoration: none; color: var(--ink); border: 1px solid var(--border); background: var(--surface-2);
+  border-radius: 8px; padding: 5px 10px; font-size: 0.84rem; display: inline-flex; gap: 6px; align-items: center; }
+.links a:hover { border-color: var(--link); color: var(--link); }
+.links .kind { font-size: 0.68rem; font-weight: 700; color: var(--ink-2); background: var(--surface); border-radius: 4px; padding: 0 4px; }
+.links-label { font-size: 0.75rem; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 6px; }
+.gstat .sdg-badge { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 6px; color: #fff;
+  font-weight: 800; font-size: 0.8rem; margin-right: 4px; text-shadow: 0 1px 1px rgba(0,0,0,.35); }
+.hero-intro { margin: 0 0 24px; max-width: 70ch; color: var(--ink-2); }
+</style>
+</head>
+<body>
+<main class="doc">
+<header class="masthead">
+  <div class="ident">
+    <div class="monogram" aria-hidden="true">IV</div>
+    <div>
+      <p class="eyebrow">Impact Vision</p>
+      <h1>{{ title }}</h1>
+      <p class="meta">{{ subtitle }}</p>
+    </div>
+  </div>
+</header>
+{% if intro %}<p class="hero-intro">{{ intro }}</p>{% endif %}
+<div class="gallery">
+{% for c in cards %}
+  <article class="gcard">
+    <header>
+      <div class="monogram" aria-hidden="true" style="width:44px;height:44px;font-size:1rem">{{ c.monogram }}</div>
+      <div><h2>{{ c.company }}</h2><p class="meta">{{ c.meta }}</p></div>
+    </header>
+    <span class="pill {{ c.tone }}" style="align-self:flex-start">{{ c.gate }}</span>
+    <div class="gstats">
+      <div class="gstat"><p class="label">5 Dimensions</p><p class="value big">{{ c.five_d }}<small class="muted">/5</small></p>
+        <div class="meter" aria-hidden="true"><div class="fill" style="width:{{ c.five_d_pct }}%"></div></div></div>
+      <div class="gstat"><p class="label">Greenwashing risk</p><p class="value big">{{ c.gw }}<small class="muted">/100</small></p>
+        <div class="meter" aria-hidden="true"><div class="fill {{ c.gw_tone }}" style="width:{{ c.gw }}%"></div><div class="tick" style="left:60%"></div></div></div>
+      <div class="gstat"><p class="label">Top SDGs</p><p class="value">{% for g in c.sdgs %}<span class="sdg-badge" style="background:{{ g.color }}" title="SDG {{ g.goal }}">{{ g.goal }}</span>{% endfor %}</p></div>
+      <div class="gstat"><p class="label">Evidence</p><p class="value">{{ c.claims }} claims · {{ c.metrics }} metrics</p></div>
+    </div>
+    {% for group in c.groups %}
+    <div>
+      <p class="links-label">{{ group.label }}</p>
+      <nav class="links">{% for l in group.links %}<a href="{{ l.href }}"><span class="kind">{{ l.kind }}</span>{{ l.label }}</a>{% endfor %}</nav>
+    </div>
+    {% endfor %}
+  </article>
+{% endfor %}
+</div>
+<footer class="footer"><p style="margin:0">{{ footer }}</p></footer>
+</main>
+</body>
+</html>

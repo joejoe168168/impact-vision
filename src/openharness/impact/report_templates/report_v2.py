@@ -112,8 +112,8 @@ main { min-width: 0; }
 
 /* ---------- KPI strip ---------- */
 .kpi-strip {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 14px; margin: 20px 0 30px;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px; margin: 20px 0 30px;
 }
 .kpi-tile {
   background: var(--surface); border: 1px solid var(--border);
@@ -131,7 +131,7 @@ main { min-width: 0; }
   font-size: 0.72em; color: var(--text-muted); text-transform: uppercase;
   letter-spacing: 0.08em; font-weight: 600; margin-bottom: 8px;
 }
-.kpi-tile .kpi-value { font-size: 1.9em; font-weight: 750; line-height: 1.05; color: var(--text); }
+.kpi-tile .kpi-value { font-size: 1.7em; font-weight: 750; line-height: 1.05; color: var(--text); overflow-wrap: anywhere; }
 .kpi-tile .kpi-sub { font-size: 0.78em; color: var(--text-secondary); margin-top: 6px; }
 .kpi-tile .kpi-badge {
   display: inline-block; padding: 2px 10px; border-radius: var(--radius-pill);

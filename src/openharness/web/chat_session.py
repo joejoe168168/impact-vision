@@ -214,8 +214,9 @@ class ChatSession:
                 # credentials are configured. In a long-lived server that must
                 # become a recoverable, user-visible error instead.
                 self.startup_error = (
-                    "No API credentials configured. Open Settings (top right) and add a "
-                    "provider API key, or run `impact-vision setup` in a terminal."
+                    "No API credentials configured. Open Settings (top right) to add a provider "
+                    "key (Anthropic, OpenAI, OpenRouter or a local Ollama), or run "
+                    "impact-vision setup in a terminal."
                 )
                 log.warning("Session %s failed to start: %s", self.session_id, exc)
                 await self._emit({"type": "error", "message": self.startup_error})

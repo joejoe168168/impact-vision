@@ -43,7 +43,7 @@ def test_demo_writes_gallery_and_deliverables(tmp_path):
     html = index.read_text(encoding="utf-8")
     for key in SAMPLE_DECKS:
         assert sample_deck_path(key).name  # sanity
-    assert html.count('class="card"') == len(SAMPLE_DECKS)
+    assert html.count('class="gcard"') == len(SAMPLE_DECKS)
     assert len(list(tmp_path.glob("*_impact_report.html"))) == len(SAMPLE_DECKS)
     assert "impact-vision assess" in result.output
 

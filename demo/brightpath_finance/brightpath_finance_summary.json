@@ -1,0 +1,53 @@
+{
+  "company": "BrightPath Finance",
+  "sector": "fintech",
+  "geography": "Sub-Saharan Africa",
+  "gate": "INSUFFICIENT EVIDENCE",
+  "recommendation": "Not IC-ready: the failed checks reflect missing evidence, not negative findings. Collect the missing metrics and DD answers, then re-screen.",
+  "five_d_score": 1.8,
+  "five_d_grade": "C",
+  "five_d_evidence": "partial",
+  "top_sdgs": [
+    {
+      "goal": 13,
+      "name": "Climate Action",
+      "score": 66.0,
+      "confidence": "high"
+    },
+    {
+      "goal": 10,
+      "name": "Reduced Inequalities",
+      "score": 41.9,
+      "confidence": "medium"
+    },
+    {
+      "goal": 2,
+      "name": "Zero Hunger",
+      "score": 41.0,
+      "confidence": "medium"
+    }
+  ],
+  "greenwashing_risk": 58.9,
+  "greenwashing_class": "Moderate Risk",
+  "dd_coverage_pct": 43.4,
+  "claims": 4,
+  "reported_metrics": {
+    "PI4060": "45,000",
+    "OI1479": "120 tCO2e",
+    "OI8869": "180",
+    "OI6213": "85",
+    "OI1571": "12",
+    "OI1075": "7",
+    "FP4761": "32%",
+    "OI4112": "80 tCO2e"
+  },
+  "files": [
+    "brightpath_finance_impact_report.html",
+    "brightpath_finance_ic_memo.html",
+    "brightpath_finance_dd_report.html",
+    "brightpath_finance_impact_report.pdf",
+    "brightpath_finance_ic_memo.pdf",
+    "brightpath_finance_ic_memo.docx",
+    "brightpath_finance_dd_questionnaire.docx"
+  ]
+}

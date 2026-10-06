@@ -3,79 +3,446 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Impact Vision — sample deliverables gallery</title>
-<style>
-  :root { --primary:#1a5d3a; --ink:#1f2937; --muted:#6b7280; --line:#e5e7eb; --bg:#f8fafc; }
-  * { box-sizing:border-box; }
-  body { margin:0; font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-    color:var(--ink); background:var(--bg); line-height:1.55; }
-  header { background:linear-gradient(135deg,#1a5d3a,#0f766e); color:#fff; padding:48px 24px; }
-  header .wrap { max-width:1080px; margin:0 auto; }
-  header h1 { margin:0 0 8px; font-size:30px; }
-  header p { margin:0; max-width:760px; opacity:.92; }
-  .wrap { max-width:1080px; margin:0 auto; padding:0 24px; }
-  .note { background:#ecfdf5; border:1px solid #a7f3d0; color:#065f46; border-radius:10px;
-    padding:14px 16px; margin:28px auto; font-size:14px; }
-  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:22px;
-    margin:8px auto 56px; }
-  .card { display:flex; flex-direction:column; text-decoration:none; color:inherit;
-    background:#fff; border:1px solid var(--line); border-radius:14px; overflow:hidden;
-    box-shadow:0 1px 2px rgba(0,0,0,.04); transition:transform .12s, box-shadow .12s; }
-  .card:hover { transform:translateY(-3px); box-shadow:0 10px 26px rgba(0,0,0,.10); }
-  .thumb { aspect-ratio:16/10; background:#eef2f7; overflow:hidden; border-bottom:1px solid var(--line); }
-  .thumb img { width:100%; height:100%; object-fit:cover; object-position:top center; display:block; }
-  .meta { padding:16px 18px 18px; }
-  .meta h3 { margin:0 0 6px; font-size:17px; color:var(--primary); }
-  .meta p { margin:0 0 12px; font-size:14px; color:var(--muted); }
-  .open { font-size:13px; font-weight:600; color:var(--primary); }
-  footer { color:var(--muted); font-size:13px; padding:8px 0 48px; }
-  footer code { background:#eef2f7; padding:2px 6px; border-radius:5px; }
+<title>Sample deliverables</title>
+<style>/* Impact Vision design tokens (v7 W2.1) — one source for every deliverable.
+ *
+ * Chart colours follow the validated data-viz palette (series-1 blue, series-2
+ * orange; status good/warning/serious/critical). Light and dark are each
+ * validated against their own surface; dark is selected, not inverted.
+ * White-label overrides only --brand / --brand-ink (never the data colours).
+ */
+:root {
+  color-scheme: light;
+  --page: #f9f9f7;
+  --surface: #fcfcfb;
+  --surface-2: #f3f2ee;
+  --ink: #0b0b0b;
+  --ink-2: #52514e;
+  --muted: #6e6c66;
+  --grid: #e1e0d9;
+  --axis: #c3c2b7;
+  --border: rgba(11, 11, 11, 0.10);
+  --brand: #1c5cab;
+  --brand-ink: #ffffff;
+  --link: #1c5cab;
+  --series-1: #2a78d6;
+  --series-1-wash: rgba(42, 120, 214, 0.10);
+  --series-2: #eb6834;
+  --good: #0ca30c;
+  --good-ink: #006300;
+  --warning: #fab219;
+  --warning-ink: #7a5300;
+  --serious: #ec835a;
+  --serious-ink: #8f3b14;
+  --critical: #d03b3b;
+  --critical-ink: #a32424;
+  --good-wash: rgba(12, 163, 12, 0.10);
+  --warning-wash: rgba(250, 178, 25, 0.16);
+  --serious-wash: rgba(236, 131, 90, 0.14);
+  --critical-wash: rgba(208, 59, 59, 0.10);
+  /* NESTA evidence levels 1-5: validated ordinal ramp (one hue, light→dark). */
+  --lvl-1: #86b6ef; --lvl-2: #5598e7; --lvl-3: #2a78d6; --lvl-4: #1c5cab; --lvl-5: #104281;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --font: system-ui, -apple-system, "Segoe UI", "Noto Sans", "Noto Sans TC", "Noto Sans SC",
+    "PingFang TC", "PingFang SC", "Microsoft JhengHei", "Microsoft YaHei", sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --page: #0d0d0d;
+    --surface: #1a1a19;
+    --surface-2: #232321;
+    --ink: #ffffff;
+    --ink-2: #c3c2b7;
+    --muted: #a19f97;
+    --grid: #2c2c2a;
+    --axis: #383835;
+    --border: rgba(255, 255, 255, 0.10);
+    --brand: #86b6ef;
+    --brand-ink: #0b0b0b;
+    --link: #86b6ef;
+    --series-1: #3987e5;
+    --series-1-wash: rgba(57, 135, 229, 0.16);
+    --series-2: #d95926;
+    --good-ink: #3ec93e;
+    --warning-ink: #fab219;
+    --serious-ink: #ec835a;
+    --critical-ink: #f28b82;
+    --good-wash: rgba(12, 163, 12, 0.16);
+    --warning-wash: rgba(250, 178, 25, 0.14);
+    --serious-wash: rgba(236, 131, 90, 0.14);
+    --critical-wash: rgba(208, 59, 59, 0.18);
+    --lvl-1: #184f95; --lvl-2: #256abf; --lvl-3: #3987e5; --lvl-4: #6da7ec; --lvl-5: #b7d3f6;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0d0d0d;
+  --surface: #1a1a19;
+  --surface-2: #232321;
+  --ink: #ffffff;
+  --ink-2: #c3c2b7;
+  --muted: #a19f97;
+  --grid: #2c2c2a;
+  --axis: #383835;
+  --border: rgba(255, 255, 255, 0.10);
+  --brand: #86b6ef;
+  --brand-ink: #0b0b0b;
+  --link: #86b6ef;
+  --series-1: #3987e5;
+  --series-1-wash: rgba(57, 135, 229, 0.16);
+  --series-2: #d95926;
+  --good-ink: #3ec93e;
+  --warning-ink: #fab219;
+  --serious-ink: #ec835a;
+  --critical-ink: #f28b82;
+  --good-wash: rgba(12, 163, 12, 0.16);
+  --warning-wash: rgba(250, 178, 25, 0.14);
+  --serious-wash: rgba(236, 131, 90, 0.14);
+  --critical-wash: rgba(208, 59, 59, 0.18);
+  --lvl-1: #184f95; --lvl-2: #256abf; --lvl-3: #3987e5; --lvl-4: #6da7ec; --lvl-5: #b7d3f6;
+}
+
+/* Impact Vision report components (v7 W2.1). Uses tokens.css only. */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--page); color: var(--ink);
+  font: 15px/1.55 var(--font); -webkit-font-smoothing: antialiased;
+}
+a { color: var(--link); }
+/* Chinese reports: put the right CJK face first (Traditional vs Simplified glyph forms). */
+html:lang(zh-HK) { --font: system-ui, -apple-system, "PingFang HK", "PingFang TC", "Noto Sans HK",
+  "Noto Sans TC", "Microsoft JhengHei", sans-serif; }
+html:lang(zh-CN) { --font: system-ui, -apple-system, "PingFang SC", "Noto Sans SC",
+  "Microsoft YaHei", sans-serif; }
+html:lang(zh-HK) body, html:lang(zh-CN) body { line-height: 1.7; }
+.skip-link { position: absolute; left: -9999px; }
+.skip-link:focus { left: 16px; top: 8px; background: var(--surface); padding: 6px 10px; z-index: 10; }
+:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+
+.doc { max-width: 1040px; margin: 0 auto; padding: 32px 16px 64px; }
+.masthead { display: flex; gap: 16px; align-items: flex-start; justify-content: space-between;
+  border-bottom: 3px solid var(--brand); padding-bottom: 16px; margin-bottom: 24px; }
+.masthead .eyebrow { color: var(--ink-2); font-size: 0.82rem; font-weight: 600;
+  letter-spacing: 0.04em; text-transform: uppercase; margin: 0 0 4px; }
+.masthead h1 { font-size: 1.9rem; line-height: 1.15; margin: 0; }
+.masthead .meta { color: var(--ink-2); margin: 6px 0 0; font-size: 0.92rem; }
+.masthead .logo { max-height: 48px; max-width: 180px; }
+.notice { color: var(--ink-2); font-size: 0.82rem; margin: 8px 0 0; }
+
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 20px 22px; margin: 0 0 20px; }
+.card > h2 { font-size: 1.15rem; margin: 0 0 4px; }
+.card > .lede { color: var(--ink-2); margin: 0 0 16px; font-size: 0.93rem; }
+section[id] { scroll-margin-top: 16px; }
+
+/* Verdict ---------------------------------------------------------------- */
+.verdict { border-left: 6px solid var(--muted); }
+.verdict.good { border-left-color: var(--good); background: linear-gradient(var(--good-wash), var(--good-wash)), var(--surface); }
+.verdict.warning { border-left-color: var(--warning); background: linear-gradient(var(--warning-wash), var(--warning-wash)), var(--surface); }
+.verdict.serious { border-left-color: var(--serious); background: linear-gradient(var(--serious-wash), var(--serious-wash)), var(--surface); }
+.verdict.critical { border-left-color: var(--critical); background: linear-gradient(var(--critical-wash), var(--critical-wash)), var(--surface); }
+.verdict .status { display: flex; align-items: center; gap: 10px; margin: 0 0 6px; }
+.verdict .status .icon { width: 28px; height: 28px; flex: none; }
+.verdict .status strong { font-size: 1.35rem; }
+.verdict.good .status strong { color: var(--good-ink); }
+.verdict.warning .status strong { color: var(--warning-ink); }
+.verdict.serious .status strong { color: var(--serious-ink); }
+.verdict.critical .status strong { color: var(--critical-ink); }
+.verdict .why { margin: 8px 0 0; padding-left: 20px; }
+.verdict .why li { margin: 2px 0; }
+.verdict .confidence { color: var(--ink-2); font-size: 0.88rem; margin: 10px 0 0; }
+
+/* Stat tiles ------------------------------------------------------------- */
+.kpis { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); margin: 0 0 20px; }
+.tile { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
+.tile .label { color: var(--ink-2); font-size: 0.82rem; margin: 0; }
+.tile .value { font-size: 1.85rem; font-weight: 650; line-height: 1.2; margin: 2px 0; }
+.tile .value small { font-size: 0.95rem; font-weight: 500; color: var(--ink-2); }
+.tile .sub { color: var(--ink-2); font-size: 0.82rem; margin: 0; }
+
+/* Evidence level / status chips ------------------------------------------ */
+.chip { display: inline-flex; align-items: center; gap: 6px; font-size: 0.8rem; font-weight: 600;
+  border: 1px solid var(--border); border-radius: 999px; padding: 1px 9px; color: var(--ink-2);
+  background: var(--surface-2); white-space: nowrap; }
+.chip .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+.chip.evidence-based .dot { background: var(--good); }
+.chip.partial .dot { background: var(--warning); }
+.chip.estimated .dot { background: var(--serious); }
+.sdg-chip { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 8px;
+  vertical-align: -1px; box-shadow: inset 0 0 0 1px var(--border); }
+
+/* Bar charts (HTML/CSS: real text, prints, scales) ---------------------- */
+.bars { display: grid; grid-template-columns: minmax(120px, 34%) 1fr 64px; gap: 10px 12px; align-items: center; }
+.bars .bl { font-size: 0.9rem; }
+.bars .bl .note { display: block; color: var(--ink-2); font-size: 0.8rem; }
+.bars .bv { font-variant-numeric: tabular-nums; text-align: right; font-size: 0.9rem; font-weight: 600; }
+.bars .track { position: relative; height: 24px;
+  background-image: linear-gradient(to right, var(--grid) 1px, transparent 1px);
+  background-size: 20% 100%; border-left: 1px solid var(--axis); }
+.bars .fill { position: absolute; left: 0; top: 6px; height: 12px; background: var(--series-1);
+  border-radius: 0 4px 4px 0; min-width: 2px; }
+.bars .bench { position: absolute; top: 2px; width: 2px; height: 20px; background: var(--ink-2); border-radius: 1px; }
+.bars .threshold { position: absolute; top: 0; bottom: 0; width: 0; border-left: 2px solid var(--critical); }
+.axis-row { display: grid; grid-template-columns: minmax(120px, 34%) 1fr 64px; gap: 0 12px; margin-top: 4px; }
+.axis-row .ticks { position: relative; height: 1.3em; color: var(--muted); font-size: 0.75rem;
+  font-variant-numeric: tabular-nums; }
+.axis-row .ticks span { position: absolute; top: 0; transform: translateX(-50%); }
+.axis-row .ticks span:first-child { transform: none; }
+.axis-row .ticks span:last-child { transform: translateX(-100%); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; color: var(--ink-2); font-size: 0.82rem; margin: 12px 0 0; }
+.legend .key { display: inline-block; width: 14px; height: 10px; border-radius: 0 3px 3px 0;
+  background: var(--series-1); margin-right: 6px; vertical-align: -1px; }
+.legend .key.bench { width: 2px; height: 14px; background: var(--ink-2); border-radius: 1px; }
+.legend .key.threshold { width: 0; height: 14px; border-left: 2px solid var(--critical); border-radius: 0; background: none; }
+
+/* Tables ------------------------------------------------------------------ */
+.table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+caption { text-align: left; color: var(--ink-2); font-size: 0.82rem; padding: 0 0 6px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--grid); vertical-align: top; }
+th { color: var(--ink-2); font-weight: 600; font-size: 0.8rem; background: var(--surface-2); }
+tbody th[scope="row"] { color: var(--ink); font-weight: 500; font-size: 0.88rem; background: none; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+details { margin: 12px 0 0; }
+details > summary { cursor: pointer; color: var(--link); font-size: 0.88rem; }
+
+/* Lists: change-our-mind, actions, risks ---------------------------------- */
+.mind { counter-reset: mind; list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+.mind li { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px 10px 44px;
+  position: relative; background: var(--surface); }
+.mind li::before { counter-increment: mind; content: counter(mind); position: absolute; left: 12px; top: 10px;
+  width: 22px; height: 22px; border-radius: 50%; background: var(--brand); color: var(--brand-ink);
+  font-size: 0.8rem; font-weight: 700; display: grid; place-items: center; }
+.mind .what { font-weight: 600; }
+.mind .why { color: var(--ink-2); font-size: 0.88rem; display: block; }
+.risks { margin: 0; padding-left: 20px; }
+.risks li { margin: 4px 0; }
+.two-col { display: grid; gap: 20px; grid-template-columns: 1fr 1fr; }
+.quote { border-left: 3px solid var(--grid); padding-left: 10px; margin: 0; }
+.muted { color: var(--ink-2); }
+.small { font-size: 0.85rem; }
+
+/* ---------- Masthead v2: monogram + verdict pill ---------- */
+.masthead .ident { display: flex; gap: 16px; align-items: center; }
+.monogram { width: 56px; height: 56px; flex: none; border-radius: 14px; display: grid; place-items: center;
+  background: var(--brand); color: var(--brand-ink); font-size: 1.35rem; font-weight: 750; letter-spacing: -0.02em; }
+.pill { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 4px 12px;
+  font-size: 0.82rem; font-weight: 650; border: 1px solid var(--border); background: var(--surface); white-space: nowrap; }
+.pill::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+.pill.good { color: var(--good-ink); } .pill.good::before { background: var(--good); }
+.pill.warning { color: var(--warning-ink); } .pill.warning::before { background: var(--warning); }
+.pill.critical { color: var(--critical-ink); } .pill.critical::before { background: var(--critical); }
+
+/* ---------- Tile mini-visuals ---------- */
+.meter { position: relative; height: 8px; border-radius: 4px; background: var(--surface-2);
+  margin: 10px 0 6px; box-shadow: inset 0 0 0 1px var(--border); }
+.meter .fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; background: var(--series-1); }
+.meter .fill.good { background: var(--good); } .meter .fill.warning { background: var(--warning); }
+.meter .fill.critical { background: var(--critical); }
+.meter .tick { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--ink-2); }
+.tile .sdg-badge { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 8px;
+  color: #fff; font-weight: 800; font-size: 0.95rem; margin-right: 8px; vertical-align: -4px;
+  text-shadow: 0 1px 1px rgba(0,0,0,0.35); }
+.mix { display: flex; height: 8px; gap: 2px; margin: 10px 0 6px; }
+.mix span { border-radius: 2px; min-width: 6px; }
+.lvl-1 { background: var(--lvl-1); } .lvl-2 { background: var(--lvl-2); } .lvl-3 { background: var(--lvl-3); }
+.lvl-4 { background: var(--lvl-4); } .lvl-5 { background: var(--lvl-5); }
+
+/* ---------- NESTA pips & evidence chips ---------- */
+.pips { display: inline-flex; gap: 3px; vertical-align: -1px; }
+.pips i { width: 9px; height: 9px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--axis); }
+.pips i.on { box-shadow: none; }
+.sig { display: inline-flex; align-items: center; gap: 4px; font-size: 0.78rem; font-weight: 600;
+  color: var(--good-ink); background: var(--good-wash); border-radius: 999px; padding: 1px 8px; margin: 1px 2px 1px 0; }
+.sig svg { width: 11px; height: 11px; }
+
+/* ---------- Impact at a glance: SDG wheel + pathway ---------- */
+.glance { display: grid; gap: 22px; }
+.glance-top { display: grid; grid-template-columns: 240px 1fr; gap: 28px; align-items: center; }
+.wheel { width: 100%; max-width: 240px; height: auto; display: block; margin: 0 auto; }
+.wheel-legend .lbar { display: grid; grid-template-columns: 1fr 120px 36px; gap: 10px; align-items: center; }
+.wheel-legend .lbar .track { height: 8px; border-radius: 4px; background: var(--surface-2);
+  box-shadow: inset 0 0 0 1px var(--border); position: relative; }
+.wheel-legend .lbar .track span { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; background: var(--series-1); }
+.wheel-legend .lbar b { text-align: right; font-variant-numeric: tabular-nums; }
+.wheel text { font: 700 11px var(--font); fill: #fff; }
+.wheel .center-num { font: 750 30px var(--font); fill: var(--ink); }
+.wheel .center-lbl { font: 500 11px var(--font); fill: var(--ink-2); }
+.wheel-legend { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; font-size: 0.86rem; }
+.pathway { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; position: relative; }
+.stage { background: var(--surface-2); border-radius: var(--radius-sm); padding: 12px; position: relative; min-width: 0; }
+.stage h3 { margin: 0 0 8px; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-2); }
+.stage:not(:last-child)::after { content: ""; position: absolute; right: -11px; top: 18px; width: 8px; height: 8px;
+  border-top: 2px solid var(--axis); border-right: 2px solid var(--axis); transform: rotate(45deg); }
+.stage ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.stage li { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px;
+  font-size: 0.82rem; line-height: 1.4; }
+.stage li .pips { margin-top: 6px; display: flex; }
+.stage .empty { color: var(--muted); font-size: 0.82rem; }
+
+/* ---------- Section headings with icons ---------- */
+.card > h2 { display: flex; align-items: center; gap: 10px; }
+.card > h2 .h-ico { width: 28px; height: 28px; flex: none; border-radius: 8px; display: grid; place-items: center;
+  background: var(--series-1-wash); color: var(--series-1); }
+.card > h2 .h-ico svg { width: 16px; height: 16px; }
+.prio { display: inline-grid; place-items: center; min-width: 22px; height: 22px; border-radius: 6px; font-size: 0.75rem;
+  font-weight: 700; background: var(--surface-2); color: var(--ink-2); }
+.prio.top { background: var(--brand); color: var(--brand-ink); }
+
+@media (max-width: 860px) {
+  .glance-top { grid-template-columns: 1fr; }
+  .pathway { grid-template-columns: 1fr 1fr; }
+  .stage:not(:last-child)::after { display: none; }
+}
+@media (max-width: 480px) { .pathway { grid-template-columns: 1fr; } }
+@media print {
+  .glance-top { grid-template-columns: 190px 1fr; }
+  body { font-size: 9.8pt; }
+  .kpis { grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .tile { padding: 10px 12px; }
+  .tile .value { font-size: 1.45rem; }
+  .pathway { grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .stage:not(:last-child)::after { display: block; }
+  .stage li { font-size: 8.4pt; padding: 6px 8px; }
+  .bars .bl .note { font-size: 7.6pt; }
+  .pathway, .stage li, .wheel { break-inside: avoid; }
+  .monogram, .meter .fill, .mix span, .pips i.on, .sig, .h-ico, .prio.top, .wheel path {
+    -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
+.footer { color: var(--ink-2); font-size: 0.8rem; border-top: 1px solid var(--grid); padding-top: 12px; margin-top: 28px; }
+
+@media (max-width: 640px) {
+  .doc { padding: 20px 16px 48px; }
+  .masthead { flex-direction: column; }
+  .masthead h1 { font-size: 1.5rem; }
+  .two-col { grid-template-columns: 1fr; }
+  .bars, .axis-row { grid-template-columns: 1fr 56px; }
+  .bars .bl { grid-column: 1 / -1; margin-bottom: -6px; }
+  .axis-row > :first-child { display: none; }
+  .kpis { grid-template-columns: 1fr 1fr; }
+  .tile .value { font-size: 1.5rem; }
+}
+
+@media print {
+  @page { size: A4; margin: 16mm 14mm 18mm; }
+  body { background: #fff; font-size: 10.5pt; }
+  .doc { max-width: none; padding: 0; }
+  .card { border-color: #d0d0d0; padding: 12px 14px; margin-bottom: 12px; }
+  .tile, .mind li, tr, .verdict { break-inside: avoid; }
+  .card > h2, .card > .lede, h3 { break-after: avoid; }
+  .no-print, .skip-link, details.twin { display: none !important; }
+  details > summary { display: none; }
+  a { color: inherit; text-decoration: none; }
+  .verdict { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .bars .fill, .bars .bench, .chip .dot, .sdg-chip, .mind li::before {
+    -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+@media (forced-colors: active) {
+  .bars .fill { background: CanvasText; }
+  .bars .bench { background: Highlight; }
+}
+
+.gallery { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+.gcard { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+.gcard header { display: flex; gap: 12px; align-items: center; }
+.gcard h2 { margin: 0; font-size: 1.1rem; line-height: 1.25; }
+.gcard .meta { margin: 2px 0 0; color: var(--ink-2); font-size: 0.85rem; }
+.gstats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; }
+.gstat .label { color: var(--ink-2); font-size: 0.78rem; margin: 0; }
+.gstat .value { font-weight: 650; font-size: 0.98rem; margin: 0; line-height: 1.35; }
+.gstat .value.big { font-size: 1.25rem; }
+.links { display: flex; flex-wrap: wrap; gap: 8px; }
+.links a { text-decoration: none; color: var(--ink); border: 1px solid var(--border); background: var(--surface-2);
+  border-radius: 8px; padding: 5px 10px; font-size: 0.84rem; display: inline-flex; gap: 6px; align-items: center; }
+.links a:hover { border-color: var(--link); color: var(--link); }
+.links .kind { font-size: 0.68rem; font-weight: 700; color: var(--ink-2); background: var(--surface); border-radius: 4px; padding: 0 4px; }
+.links-label { font-size: 0.75rem; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 6px; }
+.gstat .sdg-badge { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 6px; color: #fff;
+  font-weight: 800; font-size: 0.8rem; margin-right: 4px; text-shadow: 0 1px 1px rgba(0,0,0,.35); }
+.hero-intro { margin: 0 0 24px; max-width: 70ch; color: var(--ink-2); }
 </style>
 </head>
 <body>
-<header><div class="wrap">
-  <h1>Impact Vision — sample deliverables</h1>
-  <p>Every file below was generated by the open-source toolkit from a single
-  offline company profile (a 3,000-sow pig farm in Johor, Malaysia). They are
-  the <em>actual</em> HTML the agent produces — nothing was hand-edited.</p>
-</div></header>
-<div class="wrap">
-  <div class="note"><strong>Reproducible &amp; offline.</strong> Regenerate any time with
-  <code>python demo/generate_demo.py</code> — no API key, no network. Screenshots are
-  captured headlessly with <code>python demo/_screenshot.py</code>.</div>
-  <div class="grid">
-      <a class="card" href="01_impact_report.html">
-        <div class="thumb"><img src="screenshots/01_impact_report.png" alt="Impact Assessment Report preview" loading="lazy"></div>
-        <div class="meta"><h3>Impact Assessment Report</h3><p>Full IMM assessment: executive tear sheet, 5-Dimension radar, SDG alignment, gap analysis, sector benchmark, greenwashing screen, opportunities &amp; risks.</p>
-        <span class="open">Open deliverable &rarr;</span></div>
-      </a>
-      <a class="card" href="02_impact_report_dark.html">
-        <div class="thumb"><img src="screenshots/02_impact_report_dark.png" alt="Impact Report — Dark Mode preview" loading="lazy"></div>
-        <div class="meta"><h3>Impact Report — Dark Mode</h3><p>The same report in the accessible dark palette (WCAG 2.2 AA contrast).</p>
-        <span class="open">Open deliverable &rarr;</span></div>
-      </a>
-      <a class="card" href="03_impact_report_branded.html">
-        <div class="thumb"><img src="screenshots/03_impact_report_branded.png" alt="Impact Report — White-Label preview" loading="lazy"></div>
-        <div class="meta"><h3>Impact Report — White-Label</h3><p>Fund-branded variant with custom primary/accent colours and fund name.</p>
-        <span class="open">Open deliverable &rarr;</span></div>
-      </a>
-      <a class="card" href="04_ic_memo.html">
-        <div class="thumb"><img src="screenshots/04_ic_memo.png" alt="Investment Committee Memo preview" loading="lazy"></div>
-        <div class="meta"><h3>Investment Committee Memo</h3><p>IC gate decision, thesis fit scorecard, DD coverage and greenwashing summary.</p>
-        <span class="open">Open deliverable &rarr;</span></div>
-      </a>
-      <a class="card" href="05_dd_report.html">
-        <div class="thumb"><img src="screenshots/05_dd_report.png" alt="Due-Diligence Coverage Report preview" loading="lazy"></div>
-        <div class="meta"><h3>Due-Diligence Coverage Report</h3><p>122-question DD checklist coverage with NESTA evidence levels and gaps.</p>
-        <span class="open">Open deliverable &rarr;</span></div>
-      </a>
-      <a class="card" href="06_investee_portal.html">
-        <div class="thumb"><img src="screenshots/06_investee_portal.png" alt="Investee Data-Collection Portal preview" loading="lazy"></div>
-        <div class="meta"><h3>Investee Data-Collection Portal</h3><p>Self-contained, offline portal investees fill in — plain-language SFDR PAI, client-side validation, local JSON export.</p>
-        <span class="open">Open deliverable &rarr;</span></div>
-      </a>
+<main class="doc">
+<header class="masthead">
+  <div class="ident">
+    <div class="monogram" aria-hidden="true">IV</div>
+    <div>
+      <p class="eyebrow">Impact Vision</p>
+      <h1>Sample deliverables</h1>
+      <p class="meta">3 assessment(s) generated offline</p>
+    </div>
   </div>
-  <footer>Generated 2026-05-29 · Impact Vision · illustrative data for demonstration only.</footer>
+</header>
+<p class="hero-intro">Real, unedited output from Impact Vision for three fictional companies, generated offline from the PDF decks in data/sample_decks. Open any report in a browser; PDFs are A4 and print-ready.</p><div class="gallery">
+  <article class="gcard">
+    <header>
+      <div class="monogram" aria-hidden="true" style="width:44px;height:44px;font-size:1rem">KM</div>
+      <div><h2>Kampung Makmur Sdn Bhd</h2><p class="meta">agriculture · Malaysia</p></div>
+    </header>
+    <span class="pill warning" style="align-self:flex-start">Insufficient Evidence</span>
+    <div class="gstats">
+      <div class="gstat"><p class="label">5 Dimensions</p><p class="value big">1.7<small class="muted">/5</small></p>
+        <div class="meter" aria-hidden="true"><div class="fill" style="width:34.0%"></div></div></div>
+      <div class="gstat"><p class="label">Greenwashing risk</p><p class="value big">49<small class="muted">/100</small></p>
+        <div class="meter" aria-hidden="true"><div class="fill warning" style="width:49%"></div><div class="tick" style="left:60%"></div></div></div>
+      <div class="gstat"><p class="label">Top SDGs</p><p class="value"><span class="sdg-badge" style="background:#DDA63A" title="SDG 2">2</span><span class="sdg-badge" style="background:#3F7E44" title="SDG 13">13</span><span class="sdg-badge" style="background:#A21942" title="SDG 8">8</span></p></div>
+      <div class="gstat"><p class="label">Evidence</p><p class="value">10 claims · 5 metrics</p></div>
+    </div>
+    <div>
+      <p class="links-label">Deliverables</p>
+      <nav class="links"><a href="kampung_makmur_sdn_bhd/kampung_makmur_sdn_bhd_impact_report.html"><span class="kind">HTML</span>Impact report</a><a href="kampung_makmur_sdn_bhd/kampung_makmur_sdn_bhd_ic_memo.html"><span class="kind">HTML</span>IC memo</a><a href="kampung_makmur_sdn_bhd/kampung_makmur_sdn_bhd_dd_report.html"><span class="kind">HTML</span>DD report</a><a href="kampung_makmur_sdn_bhd/kampung_makmur_sdn_bhd_impact_report.pdf"><span class="kind">PDF</span>Impact report</a><a href="kampung_makmur_sdn_bhd/kampung_makmur_sdn_bhd_ic_memo.pdf"><span class="kind">PDF</span>IC memo</a><a href="kampung_makmur_sdn_bhd/kampung_makmur_sdn_bhd_ic_memo.docx"><span class="kind">DOCX</span>IC memo</a><a href="kampung_makmur_sdn_bhd/kampung_makmur_sdn_bhd_dd_questionnaire.docx"><span class="kind">DOCX</span>DD questionnaire</a><a href="kampung_makmur_sdn_bhd/kampung_makmur_sdn_bhd_summary.json"><span class="kind">JSON</span>Summary</a></nav>
+    </div>
+    <div>
+      <p class="links-label">Variants</p>
+      <nav class="links"><a href="kampung_makmur_sdn_bhd/kampung_makmur_sdn_bhd_impact_report_lp.html"><span class="kind">HTML</span>LP edition</a><a href="kampung_makmur_sdn_bhd/kampung_makmur_sdn_bhd_impact_report_lp.pdf"><span class="kind">PDF</span>LP edition PDF</a><a href="kampung_makmur_sdn_bhd/kampung_makmur_sdn_bhd_impact_report_public.html"><span class="kind">HTML</span>Public edition</a><a href="kampung_makmur_sdn_bhd/kampung_makmur_sdn_bhd_impact_report_dark.html"><span class="kind">HTML</span>Dark theme</a><a href="kampung_makmur_sdn_bhd/kampung_makmur_sdn_bhd_impact_report_branded.html"><span class="kind">HTML</span>White-label</a><a href="kampung_makmur_sdn_bhd/kampung_makmur_sdn_bhd_impact_report_zh-HK.html"><span class="kind">HTML</span>繁體中文 (zh-HK)</a><a href="kampung_makmur_sdn_bhd/kampung_makmur_sdn_bhd_impact_report_zh-HK.pdf"><span class="kind">PDF</span>繁體中文 (zh-HK) PDF</a><a href="kampung_makmur_sdn_bhd/kampung_makmur_sdn_bhd_impact_report_zh-CN.html"><span class="kind">HTML</span>简体中文 (zh-CN)</a><a href="kampung_makmur_sdn_bhd/kampung_makmur_sdn_bhd_investee_portal.html"><span class="kind">HTML</span>Investee data portal</a></nav>
+    </div>
+  </article>
+  <article class="gcard">
+    <header>
+      <div class="monogram" aria-hidden="true" style="width:44px;height:44px;font-size:1rem">SE</div>
+      <div><h2>SunPath Energy Ltd</h2><p class="meta">energy · Kenya</p></div>
+    </header>
+    <span class="pill warning" style="align-self:flex-start">Insufficient Evidence</span>
+    <div class="gstats">
+      <div class="gstat"><p class="label">5 Dimensions</p><p class="value big">1.6<small class="muted">/5</small></p>
+        <div class="meter" aria-hidden="true"><div class="fill" style="width:32.0%"></div></div></div>
+      <div class="gstat"><p class="label">Greenwashing risk</p><p class="value big">46<small class="muted">/100</small></p>
+        <div class="meter" aria-hidden="true"><div class="fill warning" style="width:46%"></div><div class="tick" style="left:60%"></div></div></div>
+      <div class="gstat"><p class="label">Top SDGs</p><p class="value"><span class="sdg-badge" style="background:#A21942" title="SDG 8">8</span><span class="sdg-badge" style="background:#FCC30B" title="SDG 7">7</span><span class="sdg-badge" style="background:#FD6925" title="SDG 9">9</span></p></div>
+      <div class="gstat"><p class="label">Evidence</p><p class="value">9 claims · 4 metrics</p></div>
+    </div>
+    <div>
+      <p class="links-label">Deliverables</p>
+      <nav class="links"><a href="sunpath_energy_ltd/sunpath_energy_ltd_impact_report.html"><span class="kind">HTML</span>Impact report</a><a href="sunpath_energy_ltd/sunpath_energy_ltd_ic_memo.html"><span class="kind">HTML</span>IC memo</a><a href="sunpath_energy_ltd/sunpath_energy_ltd_dd_report.html"><span class="kind">HTML</span>DD report</a><a href="sunpath_energy_ltd/sunpath_energy_ltd_impact_report.pdf"><span class="kind">PDF</span>Impact report</a><a href="sunpath_energy_ltd/sunpath_energy_ltd_ic_memo.pdf"><span class="kind">PDF</span>IC memo</a><a href="sunpath_energy_ltd/sunpath_energy_ltd_ic_memo.docx"><span class="kind">DOCX</span>IC memo</a><a href="sunpath_energy_ltd/sunpath_energy_ltd_dd_questionnaire.docx"><span class="kind">DOCX</span>DD questionnaire</a><a href="sunpath_energy_ltd/sunpath_energy_ltd_summary.json"><span class="kind">JSON</span>Summary</a></nav>
+    </div>
+  </article>
+  <article class="gcard">
+    <header>
+      <div class="monogram" aria-hidden="true" style="width:44px;height:44px;font-size:1rem">BF</div>
+      <div><h2>BrightPath Finance</h2><p class="meta">fintech · Sub-Saharan Africa</p></div>
+    </header>
+    <span class="pill warning" style="align-self:flex-start">Insufficient Evidence</span>
+    <div class="gstats">
+      <div class="gstat"><p class="label">5 Dimensions</p><p class="value big">1.8<small class="muted">/5</small></p>
+        <div class="meter" aria-hidden="true"><div class="fill" style="width:36.0%"></div></div></div>
+      <div class="gstat"><p class="label">Greenwashing risk</p><p class="value big">59<small class="muted">/100</small></p>
+        <div class="meter" aria-hidden="true"><div class="fill warning" style="width:59%"></div><div class="tick" style="left:60%"></div></div></div>
+      <div class="gstat"><p class="label">Top SDGs</p><p class="value"><span class="sdg-badge" style="background:#3F7E44" title="SDG 13">13</span><span class="sdg-badge" style="background:#DD1367" title="SDG 10">10</span><span class="sdg-badge" style="background:#DDA63A" title="SDG 2">2</span></p></div>
+      <div class="gstat"><p class="label">Evidence</p><p class="value">4 claims · 8 metrics</p></div>
+    </div>
+    <div>
+      <p class="links-label">Deliverables</p>
+      <nav class="links"><a href="brightpath_finance/brightpath_finance_impact_report.html"><span class="kind">HTML</span>Impact report</a><a href="brightpath_finance/brightpath_finance_ic_memo.html"><span class="kind">HTML</span>IC memo</a><a href="brightpath_finance/brightpath_finance_dd_report.html"><span class="kind">HTML</span>DD report</a><a href="brightpath_finance/brightpath_finance_impact_report.pdf"><span class="kind">PDF</span>Impact report</a><a href="brightpath_finance/brightpath_finance_ic_memo.pdf"><span class="kind">PDF</span>IC memo</a><a href="brightpath_finance/brightpath_finance_ic_memo.docx"><span class="kind">DOCX</span>IC memo</a><a href="brightpath_finance/brightpath_finance_dd_questionnaire.docx"><span class="kind">DOCX</span>DD questionnaire</a><a href="brightpath_finance/brightpath_finance_summary.json"><span class="kind">JSON</span>Summary</a></nav>
+    </div>
+  </article>
 </div>
+<footer class="footer"><p style="margin:0">Generated by Impact Vision — open-source impact measurement. Sample companies are fictional.</p></footer>
+</main>
 </body>
 </html>

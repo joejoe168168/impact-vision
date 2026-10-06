@@ -1,0 +1,50 @@
+{
+  "company": "Kampung Makmur Sdn Bhd",
+  "sector": "agriculture",
+  "geography": "Malaysia",
+  "gate": "INSUFFICIENT EVIDENCE",
+  "recommendation": "Not IC-ready: the failed checks reflect missing evidence, not negative findings. Collect the missing metrics and DD answers, then re-screen.",
+  "five_d_score": 1.7,
+  "five_d_grade": "C",
+  "five_d_evidence": "partial",
+  "top_sdgs": [
+    {
+      "goal": 2,
+      "name": "Zero Hunger",
+      "score": 35.0,
+      "confidence": "medium"
+    },
+    {
+      "goal": 13,
+      "name": "Climate Action",
+      "score": 35.0,
+      "confidence": "medium"
+    },
+    {
+      "goal": 8,
+      "name": "Decent Work and Economic Growth",
+      "score": 33.5,
+      "confidence": "medium"
+    }
+  ],
+  "greenwashing_risk": 49.0,
+  "greenwashing_class": "Moderate Risk",
+  "dd_coverage_pct": 40.8,
+  "claims": 10,
+  "reported_metrics": {
+    "OI2496": "1,800 MWh",
+    "OI2764": "920 tCO2e",
+    "OI8869": "142",
+    "OI6213": "54 (derived: 38% of 142)",
+    "PI9991": "18"
+  },
+  "files": [
+    "kampung_makmur_sdn_bhd_impact_report.html",
+    "kampung_makmur_sdn_bhd_ic_memo.html",
+    "kampung_makmur_sdn_bhd_dd_report.html",
+    "kampung_makmur_sdn_bhd_impact_report.pdf",
+    "kampung_makmur_sdn_bhd_ic_memo.pdf",
+    "kampung_makmur_sdn_bhd_ic_memo.docx",
+    "kampung_makmur_sdn_bhd_dd_questionnaire.docx"
+  ]
+}

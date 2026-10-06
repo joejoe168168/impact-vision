@@ -145,6 +145,11 @@ a:hover{text-decoration:underline}
 .msg-system{font-size:12.5px;color:var(--text-dim);background:var(--bg-sunken);border:1px solid var(--border-soft);
   border-radius:var(--radius-sm);padding:8px 12px;white-space:pre-wrap;word-break:break-word;font-family:var(--mono)}
 .msg-system.err{color:var(--danger);background:var(--danger-soft);border-color:var(--danger)}
+.setup-card{border:1px solid var(--border-soft);background:var(--bg-sunken);border-radius:var(--radius-sm);
+  padding:14px 16px;font-size:14px;color:var(--text);border-left:4px solid var(--accent)}
+.setup-card p{margin:6px 0 0;color:var(--text-dim)}
+.setup-card code{font-family:var(--mono);font-size:12.5px;background:var(--bg);padding:1px 5px;border-radius:4px}
+.dot.warn{background:#fab219}
 
 /* ---------- markdown ---------- */
 .md>*:first-child{margin-top:0}
@@ -497,7 +502,26 @@ function addUser(text) {
   scrollDown(true);
 }
 
+function addSetupCard(text) {
+  const el = document.createElement('div');
+  el.className = 'msg';
+  const card = document.createElement('div');
+  card.className = 'setup-card';
+  card.innerHTML =
+    '<strong>Connect a model to start chatting</strong>' +
+    '<p></p>' +
+    '<p class="setup-alt">No key yet? These work offline: <code>impact-vision demo</code> ' +
+    'and <code>impact-vision assess deck.pdf</code>.</p>';
+  card.querySelector('p').textContent = text;
+  el.appendChild(card);
+  thread().appendChild(el);
+  const dot = $('#connDot'); if (dot) dot.className = 'dot warn';
+  const label = $('#connLabel'); if (label) label.textContent = 'no model configured';
+  scrollDown();
+}
+
 function addSystem(text, isError) {
+  if (isError && /^No API credentials/.test(text || '')) { addSetupCard(text); return; }
   const el = document.createElement('div');
   el.className = 'msg';
   const inner = document.createElement('div');
@@ -607,10 +631,10 @@ function renderTranscript(rows) {
 }
 
 const STARTERS = [
+  ['Screen a pitch deck', 'I will attach a pitch deck. Screen it with assess_deal and give me the IC verdict, the evidence, and what would change your mind.'],
   ['Score a company on the 5 Dimensions', 'Run an IMP 5-Dimension impact assessment for a company I describe.'],
   ['Map a company to the SDGs', 'Map this company to UN SDG goals and targets, with IRIS+ metrics for each.'],
   ['Screen a report for greenwashing', 'Check this sustainability report for vague or unverifiable impact claims.'],
-  ['Run an IRIS+ gap analysis', 'Compare our reported metrics against the IRIS+ Core Metric Set and list the gaps.'],
   ['Draft an LP impact report', 'Draft an LP-facing impact report section for our portfolio.'],
   ['Check SFDR / ESRS readiness', 'Assess our disclosure readiness against SFDR PAI and ESRS requirements.'],
 ];

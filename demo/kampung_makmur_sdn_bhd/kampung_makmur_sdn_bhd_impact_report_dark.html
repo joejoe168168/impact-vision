@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="Impact Vision">
+<title>Impact assessment — Kampung Makmur Sdn Bhd</title>
+<style>/* Impact Vision design tokens (v7 W2.1) — one source for every deliverable.
+ *
+ * Chart colours follow the validated data-viz palette (series-1 blue, series-2
+ * orange; status good/warning/serious/critical). Light and dark are each
+ * validated against their own surface; dark is selected, not inverted.
+ * White-label overrides only --brand / --brand-ink (never the data colours).
+ */
+:root {
+  color-scheme: light;
+  --page: #f9f9f7;
+  --surface: #fcfcfb;
+  --surface-2: #f3f2ee;
+  --ink: #0b0b0b;
+  --ink-2: #52514e;
+  --muted: #6e6c66;
+  --grid: #e1e0d9;
+  --axis: #c3c2b7;
+  --border: rgba(11, 11, 11, 0.10);
+  --brand: #1c5cab;
+  --brand-ink: #ffffff;
+  --link: #1c5cab;
+  --series-1: #2a78d6;
+  --series-1-wash: rgba(42, 120, 214, 0.10);
+  --series-2: #eb6834;
+  --good: #0ca30c;
+  --good-ink: #006300;
+  --warning: #fab219;
+  --warning-ink: #7a5300;
+  --serious: #ec835a;
+  --serious-ink: #8f3b14;
+  --critical: #d03b3b;
+  --critical-ink: #a32424;
+  --good-wash: rgba(12, 163, 12, 0.10);
+  --warning-wash: rgba(250, 178, 25, 0.16);
+  --serious-wash: rgba(236, 131, 90, 0.14);
+  --critical-wash: rgba(208, 59, 59, 0.10);
+  /* NESTA evidence levels 1-5: validated ordinal ramp (one hue, light→dark). */
+  --lvl-1: #86b6ef; --lvl-2: #5598e7; --lvl-3: #2a78d6; --lvl-4: #1c5cab; --lvl-5: #104281;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --font: system-ui, -apple-system, "Segoe UI", "Noto Sans", "Noto Sans TC", "Noto Sans SC",
+    "PingFang TC", "PingFang SC", "Microsoft JhengHei", "Microsoft YaHei", sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --page: #0d0d0d;
+    --surface: #1a1a19;
+    --surface-2: #232321;
+    --ink: #ffffff;
+    --ink-2: #c3c2b7;
+    --muted: #a19f97;
+    --grid: #2c2c2a;
+    --axis: #383835;
+    --border: rgba(255, 255, 255, 0.10);
+    --brand: #86b6ef;
+    --brand-ink: #0b0b0b;
+    --link: #86b6ef;
+    --series-1: #3987e5;
+    --series-1-wash: rgba(57, 135, 229, 0.16);
+    --series-2: #d95926;
+    --good-ink: #3ec93e;
+    --warning-ink: #fab219;
+    --serious-ink: #ec835a;
+    --critical-ink: #f28b82;
+    --good-wash: rgba(12, 163, 12, 0.16);
+    --warning-wash: rgba(250, 178, 25, 0.14);
+    --serious-wash: rgba(236, 131, 90, 0.14);
+    --critical-wash: rgba(208, 59, 59, 0.18);
+    --lvl-1: #184f95; --lvl-2: #256abf; --lvl-3: #3987e5; --lvl-4: #6da7ec; --lvl-5: #b7d3f6;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0d0d0d;
+  --surface: #1a1a19;
+  --surface-2: #232321;
+  --ink: #ffffff;
+  --ink-2: #c3c2b7;
+  --muted: #a19f97;
+  --grid: #2c2c2a;
+  --axis: #383835;
+  --border: rgba(255, 255, 255, 0.10);
+  --brand: #86b6ef;
+  --brand-ink: #0b0b0b;
+  --link: #86b6ef;
+  --series-1: #3987e5;
+  --series-1-wash: rgba(57, 135, 229, 0.16);
+  --series-2: #d95926;
+  --good-ink: #3ec93e;
+  --warning-ink: #fab219;
+  --serious-ink: #ec835a;
+  --critical-ink: #f28b82;
+  --good-wash: rgba(12, 163, 12, 0.16);
+  --warning-wash: rgba(250, 178, 25, 0.14);
+  --serious-wash: rgba(236, 131, 90, 0.14);
+  --critical-wash: rgba(208, 59, 59, 0.18);
+  --lvl-1: #184f95; --lvl-2: #256abf; --lvl-3: #3987e5; --lvl-4: #6da7ec; --lvl-5: #b7d3f6;
+}
+
+/* Impact Vision report components (v7 W2.1). Uses tokens.css only. */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--page); color: var(--ink);
+  font: 15px/1.55 var(--font); -webkit-font-smoothing: antialiased;
+}
+a { color: var(--link); }
+/* Chinese reports: put the right CJK face first (Traditional vs Simplified glyph forms). */
+html:lang(zh-HK) { --font: system-ui, -apple-system, "PingFang HK", "PingFang TC", "Noto Sans HK",
+  "Noto Sans TC", "Microsoft JhengHei", sans-serif; }
+html:lang(zh-CN) { --font: system-ui, -apple-system, "PingFang SC", "Noto Sans SC",
+  "Microsoft YaHei", sans-serif; }
+html:lang(zh-HK) body, html:lang(zh-CN) body { line-height: 1.7; }
+.skip-link { position: absolute; left: -9999px; }
+.skip-link:focus { left: 16px; top: 8px; background: var(--surface); padding: 6px 10px; z-index: 10; }
+:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+
+.doc { max-width: 1040px; margin: 0 auto; padding: 32px 16px 64px; }
+.masthead { display: flex; gap: 16px; align-items: flex-start; justify-content: space-between;
+  border-bottom: 3px solid var(--brand); padding-bottom: 16px; margin-bottom: 24px; }
+.masthead .eyebrow { color: var(--ink-2); font-size: 0.82rem; font-weight: 600;
+  letter-spacing: 0.04em; text-transform: uppercase; margin: 0 0 4px; }
+.masthead h1 { font-size: 1.9rem; line-height: 1.15; margin: 0; }
+.masthead .meta { color: var(--ink-2); margin: 6px 0 0; font-size: 0.92rem; }
+.masthead .logo { max-height: 48px; max-width: 180px; }
+.notice { color: var(--ink-2); font-size: 0.82rem; margin: 8px 0 0; }
+
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 20px 22px; margin: 0 0 20px; }
+.card > h2 { font-size: 1.15rem; margin: 0 0 4px; }
+.card > .lede { color: var(--ink-2); margin: 0 0 16px; font-size: 0.93rem; }
+section[id] { scroll-margin-top: 16px; }
+
+/* Verdict ---------------------------------------------------------------- */
+.verdict { border-left: 6px solid var(--muted); }
+.verdict.good { border-left-color: var(--good); background: linear-gradient(var(--good-wash), var(--good-wash)), var(--surface); }
+.verdict.warning { border-left-color: var(--warning); background: linear-gradient(var(--warning-wash), var(--warning-wash)), var(--surface); }
+.verdict.serious { border-left-color: var(--serious); background: linear-gradient(var(--serious-wash), var(--serious-wash)), var(--surface); }
+.verdict.critical { border-left-color: var(--critical); background: linear-gradient(var(--critical-wash), var(--critical-wash)), var(--surface); }
+.verdict .status { display: flex; align-items: center; gap: 10px; margin: 0 0 6px; }
+.verdict .status .icon { width: 28px; height: 28px; flex: none; }
+.verdict .status strong { font-size: 1.35rem; }
+.verdict.good .status strong { color: var(--good-ink); }
+.verdict.warning .status strong { color: var(--warning-ink); }
+.verdict.serious .status strong { color: var(--serious-ink); }
+.verdict.critical .status strong { color: var(--critical-ink); }
+.verdict .why { margin: 8px 0 0; padding-left: 20px; }
+.verdict .why li { margin: 2px 0; }
+.verdict .confidence { color: var(--ink-2); font-size: 0.88rem; margin: 10px 0 0; }
+
+/* Stat tiles ------------------------------------------------------------- */
+.kpis { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); margin: 0 0 20px; }
+.tile { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
+.tile .label { color: var(--ink-2); font-size: 0.82rem; margin: 0; }
+.tile .value { font-size: 1.85rem; font-weight: 650; line-height: 1.2; margin: 2px 0; }
+.tile .value small { font-size: 0.95rem; font-weight: 500; color: var(--ink-2); }
+.tile .sub { color: var(--ink-2); font-size: 0.82rem; margin: 0; }
+
+/* Evidence level / status chips ------------------------------------------ */
+.chip { display: inline-flex; align-items: center; gap: 6px; font-size: 0.8rem; font-weight: 600;
+  border: 1px solid var(--border); border-radius: 999px; padding: 1px 9px; color: var(--ink-2);
+  background: var(--surface-2); white-space: nowrap; }
+.chip .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+.chip.evidence-based .dot { background: var(--good); }
+.chip.partial .dot { background: var(--warning); }
+.chip.estimated .dot { background: var(--serious); }
+.sdg-chip { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 8px;
+  vertical-align: -1px; box-shadow: inset 0 0 0 1px var(--border); }
+
+/* Bar charts (HTML/CSS: real text, prints, scales) ---------------------- */
+.bars { display: grid; grid-template-columns: minmax(120px, 34%) 1fr 64px; gap: 10px 12px; align-items: center; }
+.bars .bl { font-size: 0.9rem; }
+.bars .bl .note { display: block; color: var(--ink-2); font-size: 0.8rem; }
+.bars .bv { font-variant-numeric: tabular-nums; text-align: right; font-size: 0.9rem; font-weight: 600; }
+.bars .track { position: relative; height: 24px;
+  background-image: linear-gradient(to right, var(--grid) 1px, transparent 1px);
+  background-size: 20% 100%; border-left: 1px solid var(--axis); }
+.bars .fill { position: absolute; left: 0; top: 6px; height: 12px; background: var(--series-1);
+  border-radius: 0 4px 4px 0; min-width: 2px; }
+.bars .bench { position: absolute; top: 2px; width: 2px; height: 20px; background: var(--ink-2); border-radius: 1px; }
+.bars .threshold { position: absolute; top: 0; bottom: 0; width: 0; border-left: 2px solid var(--critical); }
+.axis-row { display: grid; grid-template-columns: minmax(120px, 34%) 1fr 64px; gap: 0 12px; margin-top: 4px; }
+.axis-row .ticks { position: relative; height: 1.3em; color: var(--muted); font-size: 0.75rem;
+  font-variant-numeric: tabular-nums; }
+.axis-row .ticks span { position: absolute; top: 0; transform: translateX(-50%); }
+.axis-row .ticks span:first-child { transform: none; }
+.axis-row .ticks span:last-child { transform: translateX(-100%); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; color: var(--ink-2); font-size: 0.82rem; margin: 12px 0 0; }
+.legend .key { display: inline-block; width: 14px; height: 10px; border-radius: 0 3px 3px 0;
+  background: var(--series-1); margin-right: 6px; vertical-align: -1px; }
+.legend .key.bench { width: 2px; height: 14px; background: var(--ink-2); border-radius: 1px; }
+.legend .key.threshold { width: 0; height: 14px; border-left: 2px solid var(--critical); border-radius: 0; background: none; }
+
+/* Tables ------------------------------------------------------------------ */
+.table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+caption { text-align: left; color: var(--ink-2); font-size: 0.82rem; padding: 0 0 6px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--grid); vertical-align: top; }
+th { color: var(--ink-2); font-weight: 600; font-size: 0.8rem; background: var(--surface-2); }
+tbody th[scope="row"] { color: var(--ink); font-weight: 500; font-size: 0.88rem; background: none; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+details { margin: 12px 0 0; }
+details > summary { cursor: pointer; color: var(--link); font-size: 0.88rem; }
+
+/* Lists: change-our-mind, actions, risks ---------------------------------- */
+.mind { counter-reset: mind; list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+.mind li { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px 10px 44px;
+  position: relative; background: var(--surface); }
+.mind li::before { counter-increment: mind; content: counter(mind); position: absolute; left: 12px; top: 10px;
+  width: 22px; height: 22px; border-radius: 50%; background: var(--brand); color: var(--brand-ink);
+  font-size: 0.8rem; font-weight: 700; display: grid; place-items: center; }
+.mind .what { font-weight: 600; }
+.mind .why { color: var(--ink-2); font-size: 0.88rem; display: block; }
+.risks { margin: 0; padding-left: 20px; }
+.risks li { margin: 4px 0; }
+.two-col { display: grid; gap: 20px; grid-template-columns: 1fr 1fr; }
+.quote { border-left: 3px solid var(--grid); padding-left: 10px; margin: 0; }
+.muted { color: var(--ink-2); }
+.small { font-size: 0.85rem; }
+
+/* ---------- Masthead v2: monogram + verdict pill ---------- */
+.masthead .ident { display: flex; gap: 16px; align-items: center; }
+.monogram { width: 56px; height: 56px; flex: none; border-radius: 14px; display: grid; place-items: center;
+  background: var(--brand); color: var(--brand-ink); font-size: 1.35rem; font-weight: 750; letter-spacing: -0.02em; }
+.pill { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 4px 12px;
+  font-size: 0.82rem; font-weight: 650; border: 1px solid var(--border); background: var(--surface); white-space: nowrap; }
+.pill::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+.pill.good { color: var(--good-ink); } .pill.good::before { background: var(--good); }
+.pill.warning { color: var(--warning-ink); } .pill.warning::before { background: var(--warning); }
+.pill.critical { color: var(--critical-ink); } .pill.critical::before { background: var(--critical); }
+
+/* ---------- Tile mini-visuals ---------- */
+.meter { position: relative; height: 8px; border-radius: 4px; background: var(--surface-2);
+  margin: 10px 0 6px; box-shadow: inset 0 0 0 1px var(--border); }
+.meter .fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; background: var(--series-1); }
+.meter .fill.good { background: var(--good); } .meter .fill.warning { background: var(--warning); }
+.meter .fill.critical { background: var(--critical); }
+.meter .tick { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--ink-2); }
+.tile .sdg-badge { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 8px;
+  color: #fff; font-weight: 800; font-size: 0.95rem; margin-right: 8px; vertical-align: -4px;
+  text-shadow: 0 1px 1px rgba(0,0,0,0.35); }
+.mix { display: flex; height: 8px; gap: 2px; margin: 10px 0 6px; }
+.mix span { border-radius: 2px; min-width: 6px; }
+.lvl-1 { background: var(--lvl-1); } .lvl-2 { background: var(--lvl-2); } .lvl-3 { background: var(--lvl-3); }
+.lvl-4 { background: var(--lvl-4); } .lvl-5 { background: var(--lvl-5); }
+
+/* ---------- NESTA pips & evidence chips ---------- */
+.pips { display: inline-flex; gap: 3px; vertical-align: -1px; }
+.pips i { width: 9px; height: 9px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--axis); }
+.pips i.on { box-shadow: none; }
+.sig { display: inline-flex; align-items: center; gap: 4px; font-size: 0.78rem; font-weight: 600;
+  color: var(--good-ink); background: var(--good-wash); border-radius: 999px; padding: 1px 8px; margin: 1px 2px 1px 0; }
+.sig svg { width: 11px; height: 11px; }
+
+/* ---------- Impact at a glance: SDG wheel + pathway ---------- */
+.glance { display: grid; gap: 22px; }
+.glance-top { display: grid; grid-template-columns: 240px 1fr; gap: 28px; align-items: center; }
+.wheel { width: 100%; max-width: 240px; height: auto; display: block; margin: 0 auto; }
+.wheel-legend .lbar { display: grid; grid-template-columns: 1fr 120px 36px; gap: 10px; align-items: center; }
+.wheel-legend .lbar .track { height: 8px; border-radius: 4px; background: var(--surface-2);
+  box-shadow: inset 0 0 0 1px var(--border); position: relative; }
+.wheel-legend .lbar .track span { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; background: var(--series-1); }
+.wheel-legend .lbar b { text-align: right; font-variant-numeric: tabular-nums; }
+.wheel text { font: 700 11px var(--font); fill: #fff; }
+.wheel .center-num { font: 750 30px var(--font); fill: var(--ink); }
+.wheel .center-lbl { font: 500 11px var(--font); fill: var(--ink-2); }
+.wheel-legend { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; font-size: 0.86rem; }
+.pathway { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; position: relative; }
+.stage { background: var(--surface-2); border-radius: var(--radius-sm); padding: 12px; position: relative; min-width: 0; }
+.stage h3 { margin: 0 0 8px; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-2); }
+.stage:not(:last-child)::after { content: ""; position: absolute; right: -11px; top: 18px; width: 8px; height: 8px;
+  border-top: 2px solid var(--axis); border-right: 2px solid var(--axis); transform: rotate(45deg); }
+.stage ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.stage li { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px;
+  font-size: 0.82rem; line-height: 1.4; }
+.stage li .pips { margin-top: 6px; display: flex; }
+.stage .empty { color: var(--muted); font-size: 0.82rem; }
+
+/* ---------- Section headings with icons ---------- */
+.card > h2 { display: flex; align-items: center; gap: 10px; }
+.card > h2 .h-ico { width: 28px; height: 28px; flex: none; border-radius: 8px; display: grid; place-items: center;
+  background: var(--series-1-wash); color: var(--series-1); }
+.card > h2 .h-ico svg { width: 16px; height: 16px; }
+.prio { display: inline-grid; place-items: center; min-width: 22px; height: 22px; border-radius: 6px; font-size: 0.75rem;
+  font-weight: 700; background: var(--surface-2); color: var(--ink-2); }
+.prio.top { background: var(--brand); color: var(--brand-ink); }
+
+@media (max-width: 860px) {
+  .glance-top { grid-template-columns: 1fr; }
+  .pathway { grid-template-columns: 1fr 1fr; }
+  .stage:not(:last-child)::after { display: none; }
+}
+@media (max-width: 480px) { .pathway { grid-template-columns: 1fr; } }
+@media print {
+  .glance-top { grid-template-columns: 190px 1fr; }
+  body { font-size: 9.8pt; }
+  .kpis { grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .tile { padding: 10px 12px; }
+  .tile .value { font-size: 1.45rem; }
+  .pathway { grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .stage:not(:last-child)::after { display: block; }
+  .stage li { font-size: 8.4pt; padding: 6px 8px; }
+  .bars .bl .note { font-size: 7.6pt; }
+  .pathway, .stage li, .wheel { break-inside: avoid; }
+  .monogram, .meter .fill, .mix span, .pips i.on, .sig, .h-ico, .prio.top, .wheel path {
+    -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
+.footer { color: var(--ink-2); font-size: 0.8rem; border-top: 1px solid var(--grid); padding-top: 12px; margin-top: 28px; }
+
+@media (max-width: 640px) {
+  .doc { padding: 20px 16px 48px; }
+  .masthead { flex-direction: column; }
+  .masthead h1 { font-size: 1.5rem; }
+  .two-col { grid-template-columns: 1fr; }
+  .bars, .axis-row { grid-template-columns: 1fr 56px; }
+  .bars .bl { grid-column: 1 / -1; margin-bottom: -6px; }
+  .axis-row > :first-child { display: none; }
+  .kpis { grid-template-columns: 1fr 1fr; }
+  .tile .value { font-size: 1.5rem; }
+}
+
+@media print {
+  @page { size: A4; margin: 16mm 14mm 18mm; }
+  body { background: #fff; font-size: 10.5pt; }
+  .doc { max-width: none; padding: 0; }
+  .card { border-color: #d0d0d0; padding: 12px 14px; margin-bottom: 12px; }
+  .tile, .mind li, tr, .verdict { break-inside: avoid; }
+  .card > h2, .card > .lede, h3 { break-after: avoid; }
+  .no-print, .skip-link, details.twin { display: none !important; }
+  details > summary { display: none; }
+  a { color: inherit; text-decoration: none; }
+  .verdict { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .bars .fill, .bars .bench, .chip .dot, .sdg-chip, .mind li::before {
+    -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+@media (forced-colors: active) {
+  .bars .fill { background: CanvasText; }
+  .bars .bench { background: Highlight; }
+}
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to report</a>
+<main id="main" class="doc">
+
+<header class="masthead">
+  <div class="ident">
+  <div class="monogram" aria-hidden="true">KM</div>
+  <div>
+    <p class="eyebrow">Impact assessment</p>
+    <h1>Kampung Makmur Sdn Bhd</h1>
+    <p class="meta">
+      agriculture · Malaysia · Generated 2026-10-06 · IRIS+ 5.3c · Source: kampung_makmur_pig_farm.pdf    </p>
+    <p class="notice">Confidential — prepared for internal investment and LP use.</p>
+  </div>
+  </div>
+  <div style="display:flex;flex-direction:column;align-items:flex-end;gap:10px">
+<span class="pill warning">Not IC-ready</span>  </div>
+</header>
+
+<nav class="card no-print" aria-label="Contents">
+  <p class="small muted" style="margin:0 0 6px"><strong>Contents</strong></p>
+  <p class="small" style="margin:0"><a href="#sec-verdict">Recommendation</a> · <a href="#sec-mind">What would change our mind</a> · <a href="#sec-glance">Impact at a glance</a> · <a href="#sec-5d">Five Dimensions of Impact</a> · <a href="#sec-sdg">SDG alignment</a> · <a href="#sec-evidence">Evidence ledger</a> · <a href="#sec-greenwashing">Greenwashing review</a> · <a href="#sec-risks">Risks and opportunities</a> · <a href="#sec-actions">Action plan</a> · <a href="#sec-appendix">Methodology and definitions</a></p>
+</nav>
+
+<section id="sec-verdict" class="card verdict warning" aria-labelledby="h-verdict">
+  <h2 id="h-verdict" class="small muted" style="margin:0 0 6px;font-size:0.82rem">Recommendation</h2>
+  <p class="status">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="10.5" stroke-width="1.6"/><path d="M12 7v6" /><path d="M12 16.5v.5" /></svg>
+    <strong>Not IC-ready — insufficient evidence</strong>
+  </p>
+<p style="margin:0">The failed checks reflect missing evidence, not negative findings. Collect the missing metrics and DD answers, then re-screen.</p>  <ul class="why" aria-label="Why"><li>5D overall score 1.7 (min 2.5) (missing data)</li><li>SDG 2 (Zero Hunger): 35.0 vs. min 60.0 (missing data)</li><li>DD checklist coverage 40.8 (min 70) (missing data)</li></ul>
+<p class="confidence">Confidence: partly evidenced — some scores rest on a few reported metrics.</p></section>
+
+<section class="kpis" aria-label="Headline numbers">
+  <div class="tile">
+    <p class="label">5 Dimensions score</p>
+    <p class="value">1.7<small>/5</small></p>
+<div class="meter" aria-hidden="true"><div class="fill " style="width:34.0%"></div></div>    <p class="sub">Grade C · partial evidence</p>
+  </div>
+  <div class="tile">
+    <p class="label">Top SDG</p>
+    <p class="value"><span class="sdg-badge" style="background:#DDA63A">2</span>SDG 2</p>
+    <p class="sub">Zero Hunger · 35/100</p>
+  </div>
+  <div class="tile">
+    <p class="label">Greenwashing risk</p>
+    <p class="value">49<small>/100</small></p>
+<div class="meter" aria-hidden="true"><div class="fill warning" style="width:49.0%"></div><div class="tick" style="left:60%"></div></div>    <p class="sub">Moderate risk · finding threshold 60</p>
+  </div>
+  <div class="tile">
+    <p class="label">Evidence</p>
+    <p class="value">10 claims</p>
+<div class="mix" title="Claims by NESTA evidence level (1→5)" aria-label="Claims by NESTA evidence level (1→5): 2×8 3×2 "><span class="lvl-2" style="flex:8" title="NESTA 2: 8"></span><span class="lvl-3" style="flex:2" title="NESTA 3: 2"></span></div>    <p class="sub">5 IRIS+ metrics · DD 41% covered</p>
+  </div>
+</section>
+
+<section id="sec-mind" class="card" aria-labelledby="h-mind">
+  <h2 id="h-mind"><span class="h-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0-3.5 10.9V16h7v-2.1A6 6 0 0 0 12 3z"/><path d="M9.5 19h5M10.5 21.5h3"/></svg></span>What would change our mind</h2>
+  <p class="lede">The three pieces of evidence that would move this assessment most.</p>
+  <ol class="mind"><li><span class="what">Report Social and Environmental Targets (OD4091)</span><span class="why">Contribution is the weakest dimension (1.3/5, estimated); this is a core metric for the sector.</span></li><li><span class="what">Negative-impact metrics for the sector</span><span class="why">Only positive metrics are reported; omissions raise greenwashing risk.</span></li><li><span class="what">Answer: Does the company have a clearly defined theory of change that links its activities to intended outcomes?</span><span class="why">High-priority due-diligence question not answered by the documents.</span></li></ol>
+</section>
+
+<section id="sec-glance" class="card" aria-labelledby="h-glance">
+  <h2 id="h-glance"><span class="h-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5V12l6 6"/></svg></span>Impact at a glance</h2>
+  <p class="lede">Material SDGs and how the company&#39;s activities lead to outcomes, from the claims in the documents.</p>
+  <div class="glance">
+    <div class="glance-top">
+      <svg class="wheel" viewBox="0 0 260 260" role="img" aria-label="SDG alignment"><path d="M131.44,10.01 A120.0,120.0 0 0 1 172.00,17.59 L153.10,68.18 A66.0,66.0 0 0 0 130.79,64.00 Z" fill="#E5243B"><title>SDG 1 · No Poverty · 25/100</title></path><text x="147.1" y="38.6" text-anchor="middle" dominant-baseline="central" style="fill:#fff" aria-hidden="true">1</text><path d="M174.69,18.63 A120.0,120.0 0 0 1 209.77,40.36 L173.88,80.70 A66.0,66.0 0 0 0 154.58,68.75 Z" fill="#DDA63A"><title>SDG 2 · Zero Hunger · 35/100</title></path><text x="179.0" y="50.9" text-anchor="middle" dominant-baseline="central" style="fill:#fff" aria-hidden="true">2</text><path d="M211.90,42.30 A120.0,120.0 0 0 1 236.77,75.23 L188.72,99.87 A66.0,66.0 0 0 0 175.05,81.76 Z" fill="var(--grid)"><title>SDG 3</title></path><text x="204.2" y="74.0" text-anchor="middle" dominant-baseline="central" style="fill:var(--muted)" aria-hidden="true">3</text><path d="M238.05,77.80 A120.0,120.0 0 0 1 249.35,117.49 L195.64,123.12 A66.0,66.0 0 0 0 189.43,101.29 Z" fill="var(--grid)"><title>SDG 4</title></path><text x="219.4" y="104.5" text-anchor="middle" dominant-baseline="central" style="fill:var(--muted)" aria-hidden="true">4</text><path d="M249.61,120.36 A120.0,120.0 0 0 1 245.80,161.45 L193.69,147.30 A66.0,66.0 0 0 0 195.79,124.70 Z" fill="var(--grid)"><title>SDG 5</title></path><text x="222.6" y="138.6" text-anchor="middle" dominant-baseline="central" style="fill:var(--muted)" aria-hidden="true">5</text><path d="M245.02,164.22 A120.0,120.0 0 0 1 226.62,201.16 L183.14,169.14 A66.0,66.0 0 0 0 193.26,148.82 Z" fill="#26BDE2"><title>SDG 6 · Clean Water and Sanitation · 30/100</title></path><text x="213.3" y="171.5" text-anchor="middle" dominant-baseline="central" style="fill:#fff" aria-hidden="true">6</text><path d="M224.89,203.46 A120.0,120.0 0 0 1 194.39,231.26 L165.42,185.69 A66.0,66.0 0 0 0 182.19,170.40 Z" fill="#FCC30B"><title>SDG 7 · Affordable and Clean Energy · 30/100</title></path><text x="192.7" y="198.7" text-anchor="middle" dominant-baseline="central" style="fill:#fff" aria-hidden="true">7</text><path d="M191.94,232.78 A120.0,120.0 0 0 1 153.46,247.68 L142.91,194.73 A66.0,66.0 0 0 0 164.07,186.53 Z" fill="#A21942"><title>SDG 8 · Decent Work and Economic Growth · 34/100</title></path><text x="163.6" y="216.7" text-anchor="middle" dominant-baseline="central" style="fill:#fff" aria-hidden="true">8</text><path d="M150.63,248.21 A120.0,120.0 0 0 1 109.37,248.21 L118.65,195.02 A66.0,66.0 0 0 0 141.35,195.02 Z" fill="var(--grid)"><title>SDG 9</title></path><text x="130.0" y="223.0" text-anchor="middle" dominant-baseline="central" style="fill:var(--muted)" aria-hidden="true">9</text><path d="M106.54,247.68 A120.0,120.0 0 0 1 68.06,232.78 L95.93,186.53 A66.0,66.0 0 0 0 117.09,194.73 Z" fill="var(--grid)"><title>SDG 10</title></path><text x="96.4" y="216.7" text-anchor="middle" dominant-baseline="central" style="fill:var(--muted)" aria-hidden="true">10</text><path d="M65.61,231.26 A120.0,120.0 0 0 1 35.11,203.46 L77.81,170.40 A66.0,66.0 0 0 0 94.58,185.69 Z" fill="var(--grid)"><title>SDG 11</title></path><text x="67.3" y="198.7" text-anchor="middle" dominant-baseline="central" style="fill:var(--muted)" aria-hidden="true">11</text><path d="M33.38,201.16 A120.0,120.0 0 0 1 14.98,164.22 L66.74,148.82 A66.0,66.0 0 0 0 76.86,169.14 Z" fill="#BF8B2E"><title>SDG 12 · Responsible Consumption and Production · 32/100</title></path><text x="46.7" y="171.5" text-anchor="middle" dominant-baseline="central" style="fill:#fff" aria-hidden="true">12</text><path d="M14.20,161.45 A120.0,120.0 0 0 1 10.39,120.36 L64.21,124.70 A66.0,66.0 0 0 0 66.31,147.30 Z" fill="#3F7E44"><title>SDG 13 · Climate Action · 35/100</title></path><text x="37.4" y="138.6" text-anchor="middle" dominant-baseline="central" style="fill:#fff" aria-hidden="true">13</text><path d="M10.65,117.49 A120.0,120.0 0 0 1 21.95,77.80 L70.57,101.29 A66.0,66.0 0 0 0 64.36,123.12 Z" fill="var(--grid)"><title>SDG 14</title></path><text x="40.6" y="104.5" text-anchor="middle" dominant-baseline="central" style="fill:var(--muted)" aria-hidden="true">14</text><path d="M23.23,75.23 A120.0,120.0 0 0 1 48.10,42.30 L84.95,81.76 A66.0,66.0 0 0 0 71.28,99.87 Z" fill="#56C02B"><title>SDG 15 · Life on Land · 32/100</title></path><text x="55.8" y="74.0" text-anchor="middle" dominant-baseline="central" style="fill:#fff" aria-hidden="true">15</text><path d="M50.23,40.36 A120.0,120.0 0 0 1 85.31,18.63 L105.42,68.75 A66.0,66.0 0 0 0 86.12,80.70 Z" fill="var(--grid)"><title>SDG 16</title></path><text x="81.0" y="50.9" text-anchor="middle" dominant-baseline="central" style="fill:var(--muted)" aria-hidden="true">16</text><path d="M88.00,17.59 A120.0,120.0 0 0 1 128.56,10.01 L129.21,64.00 A66.0,66.0 0 0 0 106.90,68.18 Z" fill="var(--grid)"><title>SDG 17</title></path><text x="112.9" y="38.6" text-anchor="middle" dominant-baseline="central" style="fill:var(--muted)" aria-hidden="true">17</text><text class="center-num" x="130.0" y="124.0" text-anchor="middle" dominant-baseline="central">8</text><text class="center-lbl" x="130.0" y="148.0" text-anchor="middle">material goals</text></svg>
+<ul class="wheel-legend"><li class="lbar"><span><span class="sdg-chip" style="background:#DDA63A" aria-hidden="true"></span>SDG 2 · Zero Hunger</span><span class="track" aria-hidden="true"><span style="width:35.0%"></span></span><b>35</b></li><li class="lbar"><span><span class="sdg-chip" style="background:#3F7E44" aria-hidden="true"></span>SDG 13 · Climate Action</span><span class="track" aria-hidden="true"><span style="width:35.0%"></span></span><b>35</b></li><li class="lbar"><span><span class="sdg-chip" style="background:#A21942" aria-hidden="true"></span>SDG 8 · Decent Work and Economic Growth</span><span class="track" aria-hidden="true"><span style="width:33.5%"></span></span><b>34</b></li><li class="lbar"><span><span class="sdg-chip" style="background:#BF8B2E" aria-hidden="true"></span>SDG 12 · Responsible Consumption and Production</span><span class="track" aria-hidden="true"><span style="width:32.5%"></span></span><b>32</b></li><li class="lbar"><span><span class="sdg-chip" style="background:#56C02B" aria-hidden="true"></span>SDG 15 · Life on Land</span><span class="track" aria-hidden="true"><span style="width:32.5%"></span></span><b>32</b></li><li class="lbar"><span><span class="sdg-chip" style="background:#26BDE2" aria-hidden="true"></span>SDG 6 · Clean Water and Sanitation</span><span class="track" aria-hidden="true"><span style="width:30.0%"></span></span><b>30</b></li></ul>    </div>
+    <div class="pathway">
+      <div class="stage">
+        <h3>What they do</h3>
+        <ul><li>Kampung Makmur is a 3,000-sow commercial pig farm in Johor, Malaysia, operating an integrated breed-to-finish facility with a licensed biogas-to-power plant.</li></ul>
+      </div>
+      <div class="stage">
+        <h3>Outputs</h3>
+        <ul><li>We are SEDEX-audited and have a 4-tier grievance mechanism.<span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></li><li>Risks we actively manage include: (i) ASF biosecurity - all farms are fenced, SPF breeding stock, shower-in/out…<span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></li><li>We report against IRIS+, SDG 2/6/7/8/12/13, GRI standards, and have commissioned a first independent ESG audit for…<span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></li></ul>
+      </div>
+      <div class="stage">
+        <h3>Outcomes</h3>
+        <ul><li>Water withdrawal per kg of live weight dropped 31% versus our 2020 baseline, independently verified by SIRIM.<span class="pips" role="img" aria-label="NESTA 3/5"><i class="on lvl-3"></i><i class="on lvl-3"></i><i class="on lvl-3"></i><i class=""></i><i class=""></i></span></li><li>A 2024 randomized pilot with Universiti Putra Malaysia compared 120 outgrower households to a matched control group and…<span class="pips" role="img" aria-label="NESTA 3/5"><i class="on lvl-3"></i><i class="on lvl-3"></i><i class="on lvl-3"></i><i class=""></i><i class=""></i></span></li><li>Since 2022 we have reduced antibiotic use by 62% through vaccination and group-housing, and replaced 100% of…<span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></li></ul>
+      </div>
+      <div class="stage">
+        <h3>Targets</h3>
+        <ul><li>Over the next five years we target: 45% reduction in Scope 1+2 emissions intensity (kg CO2e / kg live weight); 80% of…<span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></li></ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="sec-5d" class="card" aria-labelledby="h-5d">
+  <h2 id="h-5d"><span class="h-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span>Five Dimensions of Impact</h2>
+  <p class="lede">Scored 1–5. The tick shows the sector benchmark where one exists. <span class="chip partial"><span class="dot"></span>partial evidence</span></p>
+  <div class="bars" role="img" aria-label="Five Dimensions of Impact: What 2.3, Who 2.3, How much 1.5, Contribution 1.3, Risk 1.3">
+    <div class="bl">What<span class="note">Reporting 2 metrics (1 theme-specific, 25 available)</span></div>
+    <div class="track" title="What: 2.3/5 · Benchmark 3.0">
+      <div class="fill" style="width:46.0%"></div>
+<div class="bench" style="left:calc(60.0% - 1px)"></div>    </div>
+    <div class="bv">2.3</div>
+    <div class="bl">Who<span class="note">Reporting 3 metrics (1 theme-specific, 10 available)</span></div>
+    <div class="track" title="Who: 2.3/5 · Benchmark 3.2">
+      <div class="fill" style="width:46.0%"></div>
+<div class="bench" style="left:calc(64.0% - 1px)"></div>    </div>
+    <div class="bv">2.3</div>
+    <div class="bl">How much<span class="note">OI5951 (Greenhouse Gas Emissions Mitigated)</span></div>
+    <div class="track" title="How much: 1.5/5 · Benchmark 2.5">
+      <div class="fill" style="width:30.0%"></div>
+<div class="bench" style="left:calc(50.0% - 1px)"></div>    </div>
+    <div class="bv">1.5</div>
+    <div class="bl">Contribution<span class="note">OI9101 (Adaptation Needs Assessment)</span></div>
+    <div class="track" title="Contribution: 1.3/5 · Benchmark 2.3">
+      <div class="fill" style="width:26.0%"></div>
+<div class="bench" style="left:calc(46.0% - 1px)"></div>    </div>
+    <div class="bv">1.3</div>
+    <div class="bl">Risk<span class="note">Estimated from sector/description (4 metrics available to track)</span></div>
+    <div class="track" title="Risk: 1.3/5 · Benchmark 2.6">
+      <div class="fill" style="width:26.0%"></div>
+<div class="bench" style="left:calc(52.0% - 1px)"></div>    </div>
+    <div class="bv">1.3</div>
+  </div>
+  <div class="axis-row" aria-hidden="true"><span></span><span class="ticks"><span style="left:0%">0</span><span style="left:20%">1</span><span style="left:40%">2</span><span style="left:60%">3</span><span style="left:80%">4</span><span style="left:100%">5</span></span><span></span></div>
+  <p class="legend"><span><span class="key"></span>Company score</span><span><span class="key bench"></span>Sector benchmark — Food / agriculture impact funds; n≈58 (GIIN 2022 SOTM)</span></p>
+  <details class="twin"><summary>Show as table</summary>
+    <div class="table-wrap"><table>
+      <caption>Five Dimensions of Impact</caption>
+      <thead><tr><th scope="col">Dimension</th><th scope="col" class="num">Score</th><th scope="col" class="num">Benchmark</th><th scope="col">Evidence</th><th scope="col">Notes</th></tr></thead>
+      <tbody><tr><th scope="row">What</th><td class="num">2.3</td><td class="num">3.0</td><td>partial evidence</td><td>Reporting 2 metrics (1 theme-specific, 25 available)</td></tr><tr><th scope="row">Who</th><td class="num">2.3</td><td class="num">3.2</td><td>evidence-based</td><td>Reporting 3 metrics (1 theme-specific, 10 available)</td></tr><tr><th scope="row">How much</th><td class="num">1.5</td><td class="num">2.5</td><td>estimated</td><td>OI5951 (Greenhouse Gas Emissions Mitigated)</td></tr><tr><th scope="row">Contribution</th><td class="num">1.3</td><td class="num">2.3</td><td>estimated</td><td>OI9101 (Adaptation Needs Assessment)</td></tr><tr><th scope="row">Risk</th><td class="num">1.3</td><td class="num">2.6</td><td>estimated</td><td>Estimated from sector/description (4 metrics available to track)</td></tr></tbody>
+    </table></div>
+  </details>
+</section>
+
+<section id="sec-sdg" class="card" aria-labelledby="h-sdg">
+  <h2 id="h-sdg"><span class="h-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.5"/></svg></span>SDG alignment</h2>
+  <p class="lede">Material goals only (claimed, inferred from the business, or evidenced by a goal-specific metric), scored 0–100.</p>
+  <div class="bars" role="img" aria-label="SDG alignment: SDG 2 35, SDG 13 35, SDG 8 34, SDG 12 32, SDG 15 32, SDG 6 30, SDG 7 30, SDG 1 25">
+    <div class="bl"><span class="sdg-chip" style="background:#DDA63A" aria-hidden="true"></span>SDG 2 · Zero Hunger<span class="note">medium confidence</span></div>
+    <div class="track" title="SDG 2: 35/100"><div class="fill" style="width:35.0%"></div></div>
+    <div class="bv">35</div>
+    <div class="bl"><span class="sdg-chip" style="background:#3F7E44" aria-hidden="true"></span>SDG 13 · Climate Action<span class="note">medium confidence</span></div>
+    <div class="track" title="SDG 13: 35/100"><div class="fill" style="width:35.0%"></div></div>
+    <div class="bv">35</div>
+    <div class="bl"><span class="sdg-chip" style="background:#A21942" aria-hidden="true"></span>SDG 8 · Decent Work and Economic Growth<span class="note">medium confidence</span></div>
+    <div class="track" title="SDG 8: 34/100"><div class="fill" style="width:33.5%"></div></div>
+    <div class="bv">34</div>
+    <div class="bl"><span class="sdg-chip" style="background:#BF8B2E" aria-hidden="true"></span>SDG 12 · Responsible Consumption and Production<span class="note">medium confidence</span></div>
+    <div class="track" title="SDG 12: 32/100"><div class="fill" style="width:32.5%"></div></div>
+    <div class="bv">32</div>
+    <div class="bl"><span class="sdg-chip" style="background:#56C02B" aria-hidden="true"></span>SDG 15 · Life on Land<span class="note">medium confidence</span></div>
+    <div class="track" title="SDG 15: 32/100"><div class="fill" style="width:32.5%"></div></div>
+    <div class="bv">32</div>
+    <div class="bl"><span class="sdg-chip" style="background:#26BDE2" aria-hidden="true"></span>SDG 6 · Clean Water and Sanitation<span class="note">medium confidence</span></div>
+    <div class="track" title="SDG 6: 30/100"><div class="fill" style="width:30.0%"></div></div>
+    <div class="bv">30</div>
+    <div class="bl"><span class="sdg-chip" style="background:#FCC30B" aria-hidden="true"></span>SDG 7 · Affordable and Clean Energy<span class="note">medium confidence</span></div>
+    <div class="track" title="SDG 7: 30/100"><div class="fill" style="width:30.0%"></div></div>
+    <div class="bv">30</div>
+    <div class="bl"><span class="sdg-chip" style="background:#E5243B" aria-hidden="true"></span>SDG 1 · No Poverty<span class="note">medium confidence</span></div>
+    <div class="track" title="SDG 1: 25/100"><div class="fill" style="width:25.0%"></div></div>
+    <div class="bv">25</div>
+  </div>
+  <div class="axis-row" aria-hidden="true"><span></span><span class="ticks"><span style="left:0%">0</span><span style="left:20%">20</span><span style="left:40%">40</span><span style="left:60%">60</span><span style="left:80%">80</span><span style="left:100%">100</span></span><span></span></div>
+<p class="small muted" style="margin:12px 0 0">Other goals (context only): 9, 3, 10, 5, 11, 14, 16, 4</p>  <details class="twin"><summary>Show as table</summary>
+    <div class="table-wrap"><table>
+      <caption>SDG alignment</caption>
+      <thead><tr><th scope="col">Goal</th><th scope="col" class="num">Score</th><th scope="col">Confidence</th><th scope="col">Matched metrics</th></tr></thead>
+      <tbody><tr><th scope="row">SDG 2 · Zero Hunger</th><td class="num">35</td><td>medium confidence</td><td>—</td></tr><tr><th scope="row">SDG 13 · Climate Action</th><td class="num">35</td><td>medium confidence</td><td>—</td></tr><tr><th scope="row">SDG 8 · Decent Work and Economic Growth</th><td class="num">34</td><td>medium confidence</td><td>OI6213, OI8869</td></tr><tr><th scope="row">SDG 12 · Responsible Consumption and Production</th><td class="num">32</td><td>medium confidence</td><td>—</td></tr><tr><th scope="row">SDG 15 · Life on Land</th><td class="num">32</td><td>medium confidence</td><td>—</td></tr><tr><th scope="row">SDG 6 · Clean Water and Sanitation</th><td class="num">30</td><td>medium confidence</td><td>—</td></tr><tr><th scope="row">SDG 7 · Affordable and Clean Energy</th><td class="num">30</td><td>medium confidence</td><td>—</td></tr><tr><th scope="row">SDG 1 · No Poverty</th><td class="num">25</td><td>medium confidence</td><td>—</td></tr></tbody>
+    </table></div>
+  </details>
+</section>
+
+<section id="sec-evidence" class="card" aria-labelledby="h-evidence">
+  <h2 id="h-evidence"><span class="h-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4M10 12h5M10 16h5"/></svg></span>Evidence ledger</h2>
+  <p class="lede">Every claim found in the documents and every metric used in scoring.</p>
+  <div class="table-wrap"><table>
+    <caption>Claims (10)</caption>
+    <thead><tr><th scope="col">Claim</th><th scope="col">Type</th><th scope="col" class="num">NESTA level</th><th scope="col">Evidence</th><th scope="col">Metric</th></tr></thead>
+    <tbody><tr><td>Since 2022 we have reduced antibiotic use by 62% through vaccination and group-housing, and replaced 100% of conventional slatted housing with deep-litter, enrichment-enabled pens benchmarked against the EU Welfare Quality protocol.</td><td>outcome</td><td class="num"><span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></td><td>—</td><td>—</td></tr><tr><td>Our biogas plant captures methane from manure lagoons and generates 1.8 GWh of electricity per year, replacing ~920 tonnes CO2e of grid emissions and cutting our grid electricity purchases by 74%.</td><td>outcome</td><td class="num"><span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></td><td>—</td><td>OI2496, OI2764</td></tr><tr><td>Water withdrawal per kg of live weight dropped 31% versus our 2020 baseline, independently verified by SIRIM.</td><td>outcome</td><td class="num"><span class="pips" role="img" aria-label="NESTA 3/5"><i class="on lvl-3"></i><i class="on lvl-3"></i><i class="on lvl-3"></i><i class=""></i><i class=""></i></span></td><td><span class="sig"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Third-party verified</span><span class="sig"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Baseline comparison</span></td><td>—</td></tr><tr><td>We employ 142 staff, of whom 38% are women and 64% are from Kluang district; median wage is 42% above the Johor agricultural minimum and every worker is enrolled in SOCSO and EPF.</td><td>outcome</td><td class="num"><span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></td><td>—</td><td>OI8869, OI6213</td></tr><tr><td>We run an outgrower programme with 18 smallholder piggeries, supplying feed and veterinary support at wholesale cost; participating smallholders report average income uplifts of RM 1,850 per month (baseline: RM 900).</td><td>outcome</td><td class="num"><span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></td><td><span class="sig"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Baseline comparison</span></td><td>PI9991</td></tr><tr><td>A 2024 randomized pilot with Universiti Putra Malaysia compared 120 outgrower households to a matched control group and found 23% higher household food-security scores and 17% higher child school attendance.</td><td>outcome</td><td class="num"><span class="pips" role="img" aria-label="NESTA 3/5"><i class="on lvl-3"></i><i class="on lvl-3"></i><i class="on lvl-3"></i><i class=""></i><i class=""></i></span></td><td><span class="sig"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Controlled evaluation</span></td><td>—</td></tr><tr><td>Over the next five years we target: 45% reduction in Scope 1+2 emissions intensity (kg CO2e / kg live weight); 80% of breeding sows in group-housing &gt;= 10 weeks after weaning; 35 outgrower households onboarded; and a SBTi near-term target submission by 2027.</td><td>intent</td><td class="num"><span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></td><td>—</td><td>—</td></tr><tr><td>We are SEDEX-audited and have a 4-tier grievance mechanism.</td><td>output</td><td class="num"><span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></td><td><span class="sig"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Audited</span></td><td>—</td></tr><tr><td>Risks we actively manage include: (i) ASF biosecurity - all farms are fenced, SPF breeding stock, shower-in/out protocol, quarterly third-party audit by the Department of Veterinary Services; (ii) nutrient run-off during monsoon - on-site retention ponds sized to 1-in-100-year storm, automated ammonia sensors; (iii) community odour - a covered-lagoon retrofit was completed in Q3 2025 and the formal complaints rate has dropped from 14 to 2 per year.</td><td>output</td><td class="num"><span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></td><td><span class="sig"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Audited</span></td><td>—</td></tr><tr><td>We report against IRIS+, SDG 2/6/7/8/12/13, GRI standards, and have commissioned a first independent ESG audit for FY2026.</td><td>output</td><td class="num"><span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></td><td><span class="sig"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Audited</span></td><td>—</td></tr></tbody>
+  </table></div>
+  <div class="table-wrap" style="margin-top:16px"><table>
+    <caption>Metrics (5)</caption>
+    <thead><tr><th scope="col">Metric</th><th scope="col">Value</th><th scope="col">Origin</th></tr></thead>
+    <tbody><tr><th scope="row">OI2496 · Energy Generated for Use: Renewable</th><td>1,800 MWh</td><td>extracted from text</td></tr><tr><th scope="row">OI2764 · Greenhouse Gas Emissions Avoided</th><td>920 tCO2e</td><td>extracted from text</td></tr><tr><th scope="row">OI6213 · Full-time Employees: Female</th><td>54 (derived: 38% of 142)</td><td>derived</td></tr><tr><th scope="row">OI8869 · Permanent Employees: Total</th><td>142</td><td>extracted from text</td></tr><tr><th scope="row">PI9991 · Supplier Individuals: Smallholder</th><td>18</td><td>extracted from text</td></tr></tbody>
+  </table></div>
+</section>
+
+<section id="sec-greenwashing" class="card" aria-labelledby="h-gw">
+  <h2 id="h-gw"><span class="h-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 4v5c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V7z"/><path d="M9 12l2 2 4-4"/></svg></span>Greenwashing review — 49/100 · Moderate risk</h2>
+  <p class="lede">Components of the 0–100 risk score. At 60 or above risk is a finding; below it mostly reflects missing data.</p>
+  <div class="bars" role="img" aria-label="Greenwashing review: Claims without metrics 50, Missing negative impacts 90, Vague language 24, Selective reporting 75, No verification 0">
+    <div class="bl">Claims without metrics</div>
+    <div class="track" title="Claims without metrics: 50/100"><div class="fill" style="width:50.0%"></div><div class="threshold" style="left:60%"></div></div>
+    <div class="bv">50</div>
+    <div class="bl">Missing negative impacts</div>
+    <div class="track" title="Missing negative impacts: 90/100"><div class="fill" style="width:90.0%"></div><div class="threshold" style="left:60%"></div></div>
+    <div class="bv">90</div>
+    <div class="bl">Vague language</div>
+    <div class="track" title="Vague language: 24/100"><div class="fill" style="width:24.0%"></div><div class="threshold" style="left:60%"></div></div>
+    <div class="bv">24</div>
+    <div class="bl">Selective reporting</div>
+    <div class="track" title="Selective reporting: 75/100"><div class="fill" style="width:75.0%"></div><div class="threshold" style="left:60%"></div></div>
+    <div class="bv">75</div>
+    <div class="bl">No verification</div>
+    <div class="track" title="No verification: 0/100"><div class="fill" style="width:0.0%"></div><div class="threshold" style="left:60%"></div></div>
+    <div class="bv">0</div>
+  </div>
+  <div class="axis-row" aria-hidden="true"><span></span><span class="ticks"><span style="left:0%">0</span><span style="left:20%">20</span><span style="left:40%">40</span><span style="left:60%">60</span><span style="left:80%">80</span><span style="left:100%">100</span></span><span></span></div>
+  <p class="legend"><span><span class="key"></span>Risk component (0–100)</span><span><span class="key threshold"></span>Finding threshold (60)</span></p>
+<p class="small" style="margin:12px 0 0"><strong>Flags:</strong> Missing negative-impact metrics for sector; Reporting appears to cherry-pick positive metrics</p></section>
+
+<section id="sec-risks" class="card" aria-labelledby="h-risks">
+  <h2 id="h-risks"><span class="h-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17v.5"/></svg></span>Risks and opportunities</h2>
+  <div class="two-col">
+    <div>
+<h3 class="small">Disclosed in the documents</h3>
+      <ul class="risks"><li>Founded in 2014 by a second-generation farmer, the company has repositioned itself around animal welfare, antibiotic-stewardship and manure-to-energy circularity following the regional ASF outbreaks.</li><li>ASF biosecurity - all farms are fenced, SPF breeding stock, shower-in/out protocol, quarterly third-party audit by the Department of Veterinary Services</li><li>nutrient run-off during monsoon - on-site retention ponds sized to 1-in-100-year storm, automated ammonia sensors</li><li>community odour - a covered-lagoon retrofit was completed in Q3 2025 and the formal complaints rate has dropped from 14 to 2 per year</li></ul><h3 class="small">Typical for the sector — check in diligence</h3>
+      <ul class="risks"><li>Environmental degradation: soil depletion, water pollution from fertilizers/pesticides</li><li>Climate vulnerability: sensitivity to extreme weather events and climate change</li><li>Labor conditions: risk of exploitative labor practices</li><li>Land use change: deforestation or biodiversity loss from land conversion</li><li>Market volatility: commodity price fluctuations affecting farmer incomes</li><li>Environmental pollution: waste management, methane emissions, water contamination</li></ul>    </div>
+    <div>
+<h3 class="small">Opportunities</h3>
+      <ul class="risks"><li>Food security: improving access to nutritious food for underserved populations</li><li>Poverty reduction: increasing income for smallholder farmers</li><li>Sustainable supply chains: promoting responsible sourcing and production</li><li>Climate adaptation: developing climate-resilient farming practices</li><li>Rural employment: creating jobs in farming communities</li><li>Food security: providing protein and nutrition to local markets</li></ul>    </div>
+  </div>
+</section>
+
+<section id="sec-actions" class="card" aria-labelledby="h-actions">
+  <h2 id="h-actions"><span class="h-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"/></svg></span>Action plan</h2>
+  <p class="lede">De-duplicated next steps, most important first.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th scope="col" class="num">#</th><th scope="col">Action plan</th><th scope="col">Area</th></tr></thead>
+    <tbody><tr><td class="num"><span class="prio top">1</span></td><td>Coverage is below 30% of the core metric set. Start with: Social and Environmental Targets, Water Withdrawn, Board of Directors: Total.</td><td>Metrics</td></tr><tr><td class="num"><span class="prio top">2</span></td><td>Priority missing metrics: OD4091 (Social and Environmental Targets), OI0263 (Water Withdrawn), OI1075 (Board of Directors: Total), OI1479 (Greenhouse Gas Emissions: Total), OI1571 (Full-time Employees: Female Managers)</td><td>Metrics</td></tr><tr><td class="num"><span class="prio top">3</span></td><td>Measure HOW MUCH: track scale (# stakeholders), depth (degree of change), and duration</td><td>Impact</td></tr><tr><td class="num"><span class="prio">4</span></td><td>Assess CONTRIBUTION: establish counterfactual or benchmark comparison</td><td>Impact</td></tr><tr><td class="num"><span class="prio">5</span></td><td>Evaluate RISK: assess evidence risk, execution risk, and external risk factors</td><td>Impact</td></tr><tr><td class="num"><span class="prio">6</span></td><td>Map each SDG claim to at least one IRIS+ metric with reported data</td><td>Evidence quality</td></tr><tr><td class="num"><span class="prio">7</span></td><td>Report adverse-impact metrics appropriate for agriculture sector (e.g., GHG emissions, client protection)</td><td>Evidence quality</td></tr><tr><td class="num"><span class="prio">8</span></td><td>Include risk-oriented and negative-impact metrics alongside positive outcomes</td><td>Evidence quality</td></tr><tr><td class="num"><span class="prio">9</span></td><td>Add specific outcome descriptions related to &#34;Zero Hunger&#34; targets in company documentation</td><td>SDGs</td></tr><tr><td class="num"><span class="prio">10</span></td><td>Add specific outcome descriptions related to &#34;Climate Action&#34; targets in company documentation</td><td>SDGs</td></tr></tbody>
+  </table></div>
+</section>
+
+<section id="sec-appendix" class="card" aria-labelledby="h-appendix">
+  <h2 id="h-appendix"><span class="h-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h10l4 4v12H5z"/><path d="M9 12h6M9 16h4"/></svg></span>Methodology and definitions</h2>
+  <h3 class="small">How this report was produced</h3>
+  <ul class="small"><li>Claims are extracted from the documents and graded on the NESTA standards of evidence; quantities are mapped to IRIS+ metric IDs only when unit and context are unambiguous.</li><li>Five Dimensions scores (1–5) come from reported metrics where available and from document text otherwise; the evidence label says which.</li><li>SDG scores (0–100) combine goal-specific metric coverage, inference from the business and impact themes; cross-cutting metrics count at reduced weight.</li><li>Greenwashing risk weights claim–metric gaps (30%), missing negative impacts (20%), vague language (20%), selective reporting (15%) and lack of verification (15%).</li><li>The IC gate applies the fund thesis thresholds; failures caused by missing data are reported as insufficient evidence, not as a negative finding.</li></ul>
+  <h2 id="sec-glossary">Terms used in this report</h2><details class="glossary"><summary>Show definitions (15 terms)</summary><dl><dt>Impact claim</dt><dd>A statement in a pitch deck or report about the change a company creates (&quot;we connected 42,000 households&quot;). Impact Vision extracts each claim, maps it to a metric where possible and grades how well it is evidenced.</dd><dt>IRIS+</dt><dd>The Global Impact Investing Network&#x27;s catalogue of standard impact metrics (about 790 in version 5.3c), each with a short ID such as OI2764 for &quot;Greenhouse Gas Emissions Avoided&quot;. Using the same IDs makes results comparable across companies and funds.</dd><dt>Core metric set</dt><dd>The short list of IRIS+ metrics a company in a given sector should report. Coverage is the share of that list the company reports; Impact Vision picks the list by sector.</dd><dt>Five Dimensions of Impact (5D)</dt><dd>The Impact Management Project&#x27;s framework for describing impact: What outcome occurs, Who experiences it, How Much change (scale, depth, duration), the investor&#x27;s and company&#x27;s Contribution compared with what would have happened anyway, and the Risk that impact doesn&#x27;t happen. Impact Vision scores each dimension from 1 to 5.</dd><dt>Evidence-based / partial / estimated</dt><dd>How a score was derived. Evidence-based scores rest on several reported metrics; partial scores on a few; estimated scores only on the text of the documents. Treat estimated scores as a starting hypothesis, not a finding.</dd><dt>SDG alignment</dt><dd>How strongly the company&#x27;s activities and metrics relate to each of the 17 UN Sustainable Development Goals (0-100). A goal is &quot;material&quot; when the company claims it, its business clearly relates to it, or it reports a goal-specific metric; other goals are context only.</dd><dt>NESTA standards of evidence</dt><dd>A five-level scale for how strong evidence of impact is: 1 = a narrative, 2 = data showing change, 3 = a comparison or control group suggesting the company caused it, 4-5 = independent or replicated rigorous evaluations.</dd><dt>Third-party verification</dt><dd>An independent organisation (auditor, certifier, regulator) has checked a figure or practice. It raises confidence in a claim and lowers greenwashing risk.</dd><dt>Additionality</dt><dd>Whether the outcome would have happened anyway without the company or investor. Strong additionality means the impact depends on them.</dd><dt>Greenwashing (impact-washing) risk</dt><dd>A 0-100 score of how far a company&#x27;s claims run ahead of its evidence: vague language, claims without metrics, missing negative impacts, selective reporting and no verification. Below 60 it mostly reflects missing data; at 60 or above it is a finding in itself.</dd><dt>Due diligence (DD) coverage</dt><dd>The share of the impact due-diligence questions (universal plus the company&#x27;s sector) that the documents already answer. Low coverage means more questions to ask, not a bad company.</dd><dt>IC gate</dt><dd>The fund&#x27;s minimum thresholds before a deal goes to the investment committee (5D score, top SDG score, DD coverage, greenwashing risk, exclusions). &quot;Insufficient evidence&quot; means the failures are missing data; &quot;Fail&quot; means a negative finding.</dd><dt>Theory of change</dt><dd>The chain from what a company does (activities) to what it produces (outputs) to the changes people or the planet experience (outcomes), with the assumptions that must hold along the way.</dd><dt>Scope 1, 2 and 3 emissions</dt><dd>Greenhouse-gas emissions from a company&#x27;s own operations (Scope 1), from the energy it buys (Scope 2) and from its value chain (Scope 3), as defined by the GHG Protocol.</dd><dt>tCO2e</dt><dd>Tonnes of carbon-dioxide equivalent: a common unit that converts all greenhouse gases to the warming effect of CO2.</dd></dl></details>
+</section>
+
+<footer class="footer">
+<p style="margin:0">Generated by Impact Vision — open-source impact measurement.</p></footer>
+</main>
+<script>
+/* Print the glossary expanded (chart table views stay on screen only). */
+window.addEventListener("beforeprint", function () {
+  document.querySelectorAll("details.glossary").forEach(function (d) { d.dataset.wasOpen = d.open ? "1" : ""; d.open = true; });
+});
+window.addEventListener("afterprint", function () {
+  document.querySelectorAll("details.glossary").forEach(function (d) { d.open = d.dataset.wasOpen === "1"; });
+});
+</script>
+</body>
+</html>

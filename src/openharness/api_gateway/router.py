@@ -346,7 +346,15 @@ async def _fire_webhooks(event: str, payload: dict) -> None:
 
 @app.get("/api/v1/health")
 async def health():
-    return {"status": "ok", "version": "0.15.0", "engine": "impact-vision", "tools": 39}
+    import openharness.tools.impact as impact_tools
+    from openharness.web.chat_api import _version
+
+    return {
+        "status": "ok",
+        "version": _version(),
+        "engine": "impact-vision",
+        "tools": len(impact_tools.__all__),
+    }
 
 
 @app.post("/api/v1/score", dependencies=[Depends(verify_api_key)])

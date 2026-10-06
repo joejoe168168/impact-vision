@@ -61,7 +61,7 @@ class AssessmentBundle:
             "dd_coverage_pct": self.dd.coverage_pct,
             "claims": len(self.assessment.impact_claims),
             "reported_metrics": dict(self.company.reported_metrics),
-            "files": [str(p) for p in self.files],
+            "files": [Path(p).name for p in self.files],
         }
 
 
@@ -382,61 +382,74 @@ def format_summary(bundle: AssessmentBundle) -> str:
     return "\n".join(lines)
 
 
-def write_gallery(bundles: list[AssessmentBundle], out_dir: str | Path) -> Path:
-    """Write an index.html linking every company's deliverables."""
-    import html
+def write_gallery(
+    bundles: list[AssessmentBundle],
+    out_dir: str | Path,
+    *,
+    extras: dict[str, list[tuple[str, str]]] | None = None,
+    title: str = "Impact Vision results",
+    intro: str = "",
+) -> Path:
+    """Write an index.html linking every company's deliverables.
+
+    *extras* maps a company name to extra ``(label, relative path)`` links
+    (e.g. audience or language variants), shown as their own group.
+    """
+    from openharness.impact.report_templates.decision_report import (
+        _env,
+        design_css,
+        monogram,
+    )
+    from openharness.impact.report_templates.report_v2 import SDG_COLORS
 
     out = Path(out_dir)
     cards = []
     for b in bundles:
         s = b.summary()
-        links = "".join(
-            f'<a href="{html.escape(Path(f).name)}">{html.escape(_label(Path(f)))}</a>'
-            for f in b.files
-            if Path(f).suffix in {".html", ".pdf", ".docx", ".json"}
-        )
-        gate_class = "warn" if "INSUFFICIENT" in s["gate"] else s["gate"].lower()
-        cards.append(
-            '<article class="card">'
-            f'<h2>{html.escape(s["company"])}</h2>'
-            f'<p class="meta">{html.escape(s["sector"] or "")} · {html.escape(s["geography"] or "")}</p>'
-            f'<p class="gate {html.escape(gate_class)}">{html.escape(s["gate"])}</p>'
-            '<dl>'
-            f'<dt>5D score</dt><dd>{s["five_d_score"]}/5 · {html.escape(str(s["five_d_evidence"]))}</dd>'
-            f'<dt>Greenwashing risk</dt><dd>{s["greenwashing_risk"]:.0f}/100</dd>'
-            f'<dt>DD coverage</dt><dd>{s["dd_coverage_pct"]:.0f}%</dd>'
-            f'<dt>Evidence</dt><dd>{s["claims"]} claims · {len(s["reported_metrics"])} metrics</dd>'
-            '</dl>'
-            f'<nav>{links}</nav>'
-            '</article>'
-        )
-    page = f"""<!doctype html>
-<html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Impact Vision results</title>
-<style>
-:root{{--bg:#f6f7f9;--card:#fff;--text:#1a1d23;--muted:#5b6370;--line:#dde1e6;--accent:#0d47a1;
---ok:#1b7f3b;--warn:#a15c00;--bad:#b3261e}}
-@media (prefers-color-scheme: dark){{:root{{--bg:#111418;--card:#1a1f26;--text:#e8eaed;--muted:#a3abb7;
---line:#2c333d;--accent:#8ab4f8;--ok:#7bd88f;--warn:#f6c26b;--bad:#f28b82}}}}
-*{{box-sizing:border-box}}body{{margin:0;background:var(--bg);color:var(--text);
-font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}}
-main{{max-width:1080px;margin:0 auto;padding:32px 16px}}
-h1{{font-size:1.6rem;margin:0 0 4px}}.lede{{color:var(--muted);margin:0 0 24px}}
-.grid{{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}}
-.card{{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px}}
-.card h2{{font-size:1.15rem;margin:0}}.meta{{color:var(--muted);margin:2px 0 12px}}
-.gate{{font-weight:700;margin:0 0 12px}}.gate.pass{{color:var(--ok)}}.gate.warn{{color:var(--warn)}}
-.gate.fail{{color:var(--bad)}}
-dl{{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0 0 16px}}
-dt{{color:var(--muted)}}dd{{margin:0;font-variant-numeric:tabular-nums}}
-nav{{display:flex;flex-wrap:wrap;gap:8px}}nav a{{color:var(--accent);text-decoration:none;
-border:1px solid var(--line);border-radius:8px;padding:4px 10px}}nav a:hover{{border-color:var(--accent)}}
-</style></head><body><main>
-<h1>Impact Vision results</h1>
-<p class="lede">Generated offline from {len(bundles)} document(s). Sample companies are fictional.</p>
-<div class="grid">{"".join(cards)}</div>
-</main></body></html>"""
+        gate = s["gate"]
+        tone = ("warning" if "INSUFFICIENT" in gate else
+                {"PASS": "good", "WARN": "warning", "FAIL": "critical"}.get(gate, ""))
+        deliverables = []
+        for f in b.files:
+            p = Path(f)
+            if p.suffix in {".html", ".pdf", ".docx", ".json"}:
+                try:
+                    href = p.resolve().relative_to(out.resolve()).as_posix()
+                except ValueError:
+                    href = p.name
+                deliverables.append({"href": href, "label": _label(p).split(" (")[0],
+                                     "kind": p.suffix.lstrip(".").upper()})
+        groups = [{"label": "Deliverables", "links": deliverables}]
+        if extras and b.company.name in extras:
+            groups.append({"label": "Variants", "links": [
+                {"href": href, "label": label, "kind": Path(href).suffix.lstrip(".").upper()}
+                for label, href in extras[b.company.name]
+            ]})
+        gw = s["greenwashing_risk"] or 0
+        cards.append({
+            "company": s["company"],
+            "monogram": monogram(s["company"]),
+            "meta": " · ".join(x for x in (s["sector"], s["geography"]) if x),
+            "gate": gate.title() if gate.isupper() else gate,
+            "tone": tone,
+            "five_d": f"{s['five_d_score'] or 0:.1f}",
+            "five_d_pct": (s["five_d_score"] or 0) / 5 * 100,
+            "gw": f"{gw:.0f}",
+            "gw_tone": "good" if gw < 40 else "warning" if gw < 60 else "critical",
+            "sdgs": [{"goal": g["goal"], "color": SDG_COLORS.get(g["goal"], "#888")} for g in s["top_sdgs"]],
+            "sdg_text": ", ".join(str(g["goal"]) for g in s["top_sdgs"]) or "—",
+            "claims": s["claims"],
+            "metrics": len(s["reported_metrics"]),
+            "groups": groups,
+        })
+    page = _env().get_template("gallery.html.j2").render(
+        css=design_css(),
+        title=title,
+        subtitle=f"{len(bundles)} assessment(s) generated offline",
+        intro=intro,
+        cards=cards,
+        footer="Generated by Impact Vision — open-source impact measurement. Sample companies are fictional.",
+    )
     path = out / "index.html"
     path.write_text(page, encoding="utf-8")
     return path

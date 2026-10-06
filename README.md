@@ -1,218 +1,165 @@
 # Impact Vision
 
-Open-source AI-powered impact measurement and SDG alignment agent for VC and impact investment funds.
+**Open-source impact due diligence for VC and impact funds.** Drop in a pitch
+deck or investment memo and get an investment-committee-ready verdict, an
+evidence ledger, SDG and 5-Dimension scoring, a greenwashing review and
+print-ready reports in English, 繁體中文 or 简体中文. Runs offline; an LLM is optional.
 
-Built on [OpenHarness](https://github.com/HKUDS/OpenHarness), Impact Vision ships a conversational AI agent, a **CLI**, a **REST API**, an **MCP server**, a **Streamlit dashboard**, and a **single-file web chat UI** — all backed by the same engine with deep expertise in GIIN's IRIS+ framework, UN SDGs, the 5 Dimensions of Impact, and 20+ ESG / regulatory frameworks (ISSB, ESRS, SFDR, TCFD, SASB, GRI, PCAF, SBTi, EU Taxonomy, TNFD, CDP, TISFD, VSME, 2X, and SBTN).
+Built on [OpenHarness](https://github.com/HKUDS/OpenHarness), with GIIN's IRIS+
+catalogue, the UN SDGs, the 5 Dimensions of Impact and 20+ ESG and regulatory
+frameworks (ISSB, ESRS/VSME, SFDR, TCFD, SASB, GRI, PCAF, SBTi, EU Taxonomy,
+TNFD, CDP, TISFD, 2X, SBTN). Release notes: [CHANGELOG.md](CHANGELOG.md) ·
+roadmap: [docs/roadmap-v7.md](docs/roadmap-v7.md).
 
-Release history lives in [CHANGELOG.md](CHANGELOG.md). Strategy and engineering plans live in [`docs/`](docs/).
+![Decision-first impact report: verdict, headline numbers and what would change our mind](docs/images/report-overview.png)
 
-![Impact Vision Banner](docs/images/banner.png)
+## See it in 60 seconds
+
+```bash
+git clone https://github.com/joejoe168168/impact-vision.git && cd impact-vision
+pip install -e .
+impact-vision demo                     # three fictional sample decks → reports in your browser
+impact-vision assess your_deck.pdf --open --pdf
+```
+
+No API key or setup is needed. Browse ready-made output in [`demo/`](demo/)
+(open [`demo/index.html`](demo/index.html)).
 
 ## Screenshots
 
 <table>
 <tr>
-<td width="50%"><img src="docs/images/agent-greeting.png" alt="AI Agent greeting"><br><em>AI agent with full impact measurement toolkit</em></td>
-<td width="50%"><img src="docs/images/dd-scoring.png" alt="DD questions and 5D scoring"><br><em>Due diligence questions + 5-Dimension scoring</em></td>
+<td width="50%"><img src="docs/images/web-chat.png" alt="Browser chat UI with starter cards"><br><em><b>Browser chat</b> (<code>impact-vision serve-web</code>): attach a deck and ask the agent to screen it.</em></td>
+<td width="50%"><img src="docs/images/report-glance.png" alt="SDG wheel and impact pathway"><br><em><b>Impact at a glance</b>: SDG wheel of material goals and the impact pathway from the deck's own claims.</em></td>
 </tr>
 <tr>
-<td><img src="docs/images/iris-metrics.png" alt="IRIS+ metric recommendations"><br><em>Recommended IRIS+ metrics by category</em></td>
-<td><img src="docs/images/html-5d-radar.png" alt="HTML report 5D radar chart"><br><em>HTML report: 5-Dimension radar chart with scores</em></td>
+<td><img src="docs/images/report-5d.png" alt="5 Dimensions with sector benchmark"><br><em><b>5 Dimensions</b> against the sector benchmark, with an evidence label per dimension.</em></td>
+<td><img src="docs/images/report-evidence.png" alt="Evidence ledger"><br><em><b>Evidence ledger</b>: every claim with its NESTA level, verification signals and mapped IRIS+ metric.</em></td>
 </tr>
 <tr>
-<td><img src="docs/images/html-sdg-chart.png" alt="SDG alignment chart"><br><em>SDG alignment scoring (17 goals, official UN colors)</em></td>
-<td><img src="docs/images/html-opportunities-risks.png" alt="Impact opportunities and risks"><br><em>Sector-specific opportunities & risks analysis</em></td>
+<td><img src="docs/images/report-pdf.png" alt="A4 PDF pages"><br><em><b>Print-ready PDF</b> (A4, page numbers) via <code>--pdf</code>.</em></td>
+<td><img src="docs/images/report-zh-hk.png" alt="Traditional Chinese report"><br><em><b>繁體中文 / 简体中文</b> reports via <code>--lang zh-HK</code> or <code>zh-CN</code>.</em></td>
+</tr>
+<tr>
+<td><img src="docs/images/report-dark.png" alt="Dark theme"><br><em><b>Dark mode</b>: follows the reader's system setting, with a validated palette.</em></td>
+<td><img src="docs/images/report-greenwashing.png" alt="Greenwashing review"><br><em><b>Greenwashing review</b>: risk components against the finding threshold.</em></td>
+</tr>
+<tr>
+<td><img src="docs/images/ic-memo.png" alt="IC memo"><br><em><b>IC memo</b> (HTML, PDF, Word) with the gate result and thesis fit.</em></td>
+<td><img src="docs/images/dd-report.png" alt="DD questionnaire helper"><br><em><b>DD questionnaire helper</b>: risk-ranked areas and questions to send.</em></td>
+</tr>
+<tr>
+<td><img src="docs/images/investee-portal.png" alt="Investee data portal"><br><em><b>Investee data portal</b>: an offline, single-file form for collecting data.</em></td>
+<td><img src="docs/images/gallery.png" alt="Results gallery"><br><em><b>Results gallery</b> produced by <code>impact-vision demo</code>.</em></td>
+</tr>
+<tr>
+<td><img src="docs/images/agent-greeting.png" alt="Terminal agent"><br><em><b>Terminal agent</b> with the full impact toolkit.</em></td>
+<td><img src="docs/images/report-mobile.png" alt="Report on a phone" width="45%"><br><em>Every report works on a <b>phone</b>.</em></td>
 </tr>
 </table>
 
-> **Try it yourself:** See a [sample HTML report](examples/sample_impact_report.html) generated for a pig farm in Malaysia.
->
-> **More samples:** Browse the full set of generated deliverables — impact report (light / dark / white-label), IC memo, DD report and investee portal — in [`demo/`](demo/) (open [`demo/index.html`](demo/index.html) for the gallery).
+## What it does
 
-## What is Impact Investing?
+**Give it a pitch deck or memo** (PDF, text or Markdown), from the CLI, the
+browser chat or the `assess_deal` agent tool. Impact Vision will:
 
-Impact investing means investing with the intention to generate **positive, measurable social and environmental impact** alongside a financial return. Unlike traditional investing (financial return only) or philanthropy (social good only), impact investing seeks both.
+1. **Extract every impact claim** and grade its evidence on the NESTA scale,
+   spotting third-party verification, audits and controlled evaluations.
+2. **Map the numbers to IRIS+ metrics** (787 in the catalogue), e.g.
+   "920 tonnes CO2e avoided" → OI2764.
+3. **Score the 5 Dimensions of Impact** and **material SDGs** against sector
+   benchmarks.
+4. **Run sector-specific impact due diligence** (122 questions from GIIN, PCV,
+   Seraf, IMP and AFME) and list what to ask the founders.
+5. **Review greenwashing risk** claim by claim.
+6. **Apply your fund's IC gate**, separating *insufficient evidence* (data to
+   collect) from *negative findings*.
+7. **Write the deliverables**:
+   - decision-first impact report (HTML/PDF), in IC, LP, public and regulator
+     editions;
+   - IC memo (HTML/PDF/Word);
+   - DD questionnaire (HTML/Word);
+   - JSON summary;
+   - XLSX / CSV / iXBRL exports.
 
-Key concepts Impact Vision helps with:
+> **Using Impact Vision in a fund?** The
+> [fund-manager guide](docs/fund-manager-guide.md) starts with the no-code
+> path, then the Python SDK. New to the jargon (5D, NESTA, OPIM, SFDR…)? See
+> the [plain-language glossary](docs/glossary.md); every report also ends with
+> definitions of the terms it uses.
+
+<details>
+<summary><b>New to impact investing?</b> Key concepts</summary>
 
 | Concept | What it means |
 |---------|---------------|
-| **IRIS+** | The "GAAP for impact" -- ~787 standardized metrics for measuring social/environmental outcomes (maintained by GIIN) |
-| **SDGs** | 17 UN Sustainable Development Goals (e.g., No Poverty, Clean Energy, Climate Action) with 169 targets |
-| **5 Dimensions** | The standard framework for assessing impact quality: What outcome? Who benefits? How much? Would it happen anyway? What could go wrong? |
-| **Impact DD** | Due diligence focused on whether an investment will actually generate the claimed impact |
-| **ESG** | Environmental, Social, Governance -- risk management frameworks (SASB, GRI, TCFD, SFDR, EDCI, UNPRI, ISSB, ESRS) |
-| **NESTA Evidence** | 5 levels rating how strong the evidence is: Level 1 (narrative) to Level 5 (rigorous RCT) |
+| **IRIS+** | GIIN's "GAAP for impact": about 787 standard metrics for social and environmental outcomes |
+| **SDGs** | The 17 UN Sustainable Development Goals and their 169 targets |
+| **5 Dimensions** | What outcome, Who benefits, How much, Contribution (would it happen anyway?), Risk |
+| **Impact DD** | Due diligence on whether an investment will actually create the claimed impact |
+| **ESG** | Environmental, social and governance risk frameworks (SASB, GRI, TCFD, SFDR, EDCI, ISSB, ESRS…) |
+| **NESTA evidence** | Five levels of evidence strength: 1 = narrative … 5 = rigorous evaluation |
 
-## Core Use Case
+</details>
 
-**Upload a pitch deck or investment memo** and Impact Vision will:
+## Quick Start
 
-1. Extract and classify impact claims (outcome / output / activity / intent / risk)
-2. Map claims to relevant **IRIS+ metrics** from the 787-metric catalog
-3. Detect **SDG goal/target alignment** from the content
-4. Run an **impact DD checklist** (122 questions across 34 categories from GIIN, PCV, Seraf, IMP, AFME + sector-specific for 15 sectors)
-5. Assess **evidence strength** using NESTA Standards of Evidence (levels 1-5)
-6. Auto-extract a **Company model** for immediate use with downstream assessment tools
-7. Compare against **sector benchmarks** from GIIN survey data
-8. Suggest the most important **follow-up questions** for the investment team
-9. Generate reports in **HTML** (with Plotly charts), **XLSX**, CSV, JSON, or text
+### 1. Install
 
-> **Using Impact Vision in your fund workflow?** See the
-> [Fund Manager Quick Reference](docs/fund-manager-guide.md) for a
-> Python-first 60-second SDK walkthrough (deal scoring, IC memo,
-> DD questionnaire, portfolio roll-up, LP calendar).
->
-> New to the jargon (5D, NESTA, OPIM, SFDR …)? See the
-> [plain-language glossary](docs/glossary.md); every HTML report also ends
-> with definitions of the terms it uses.
-
-## Quick Start (from scratch)
-
-### 1. Prerequisites
-
-You need **Python 3.11+** and **Git**. The interactive terminal agent
-(`impact-vision` with no arguments) also needs **Node.js 20+**; `demo`,
-`assess`, the browser chat and the other CLI commands don't.
+You need **Python 3.11+** and Git. Node.js 20+ is needed only for the
+interactive terminal agent.
 
 ```bash
-python --version    # should show 3.11 or higher
-git --version       # any recent version
-node --version      # only for the interactive terminal agent
+git clone https://github.com/joejoe168168/impact-vision.git && cd impact-vision
+python -m venv .venv && source .venv/bin/activate      # Windows: .venv\Scripts\activate
+pip install -e ".[dev]"                                # dev = every extra + test tools
 ```
 
-If not installed: [Python](https://www.python.org/downloads/) | [Git](https://git-scm.com/downloads) | [Node.js](https://nodejs.org)
+The core install (`pip install -e .`) runs `demo`, `assess`, the reports and
+the agent. Extras add the other surfaces: `[web]` (browser chat + REST API),
+`[dashboard]` (Streamlit), `[office]` (Word/PowerPoint), `[pdf]` (PDF export;
+then run `playwright install chromium`), `[tui]` and `[all]`. If
+`impact-vision` isn't found, see
+[install troubleshooting](docs/install-troubleshooting.md) or use
+`python -m openharness`.
 
-### 2. Clone and install
+### 2. Try it without an API key
 
 ```bash
-git clone https://github.com/joejoe168168/impact-vision.git
-cd impact-vision
+impact-vision demo                                     # sample decks → reports + gallery
+impact-vision assess deck.pdf --open                   # your own deck or memo
+impact-vision assess memo.pdf --sector agriculture --audience lp --lang zh-HK --pdf -o reports/
+impact-vision catalog search "climate"                 # 787 IRIS+ metrics, bundled
+impact-vision framework xref OI4112                    # metric across frameworks
+impact-vision dd analyze memo.txt --sector energy      # DD coverage for a document
 ```
 
-Create a virtual environment (recommended):
+### 3. Connect a model for the AI agent
 
 ```bash
-python -m venv .venv
-
-# Activate it:
-# Windows PowerShell:  .venv\Scripts\Activate.ps1
-# Windows CMD:         .venv\Scripts\activate.bat
-# Mac/Linux:           source .venv/bin/activate
-```
-
-Install the package (`dev` includes every optional extra plus the test tools):
-
-```bash
-pip install -e ".[dev]"
-```
-
-The core install is enough for `demo`, `assess`, reports and the agent.
-Optional extras add the other surfaces: `[web]` (browser chat + REST API),
-`[dashboard]` (Streamlit), `[office]` (Word/PowerPoint exports), `[tui]`,
-`[pdf]` (PDF export; then run `playwright install chromium`), or `[all]`. For example: `pip install -e ".[web,office]"`.
-
-> **`'impact-vision' is not recognized`?** Run the auto-fix script:
->
-> ```bash
-> # Windows PowerShell
-> powershell -ExecutionPolicy Bypass -File scripts\add-to-path.ps1
->
-> # Windows CMD
-> scripts\add-to-path.bat
->
-> # Mac/Linux
-> bash scripts/add-to-path.sh
-> ```
->
-> **Important:** After running the script, you must **close and reopen your terminal** (CMD/PowerShell/Terminal) for the PATH change to take effect. Then try `impact-vision --help`.
->
-> **Alternative:** Use `python -m openharness` instead (works without PATH changes):
->
-> ```bash
-> python -m openharness --help
-> python -m openharness catalog stats
-> python -m openharness dd list
-> ```
-
-### 3. Set up an LLM provider
-
-The AI agent needs a tool-calling language model. Run the setup wizard and
-choose a provider; credentials are stored locally and must never be committed.
-
-```bash
-impact-vision setup
+impact-vision setup                                    # provider wizard; keys stay local
 ```
 
 | Provider | Setup choice | Best for |
 |----------|--------------|----------|
-| OpenRouter | OpenAI-Compatible API | Trying multiple hosted models, including free tiers |
-| Anthropic | Anthropic-Compatible API | Highest-quality production impact analysis |
+| Anthropic | Anthropic-Compatible API | Highest-quality impact analysis |
 | OpenAI | OpenAI-Compatible API | General-purpose hosted analysis |
-| Ollama | `impact-vision ollama-setup --model llama3.2` | Local, private, offline analysis |
+| OpenRouter | OpenAI-Compatible API | Trying many hosted models, including free tiers |
+| Ollama | `impact-vision ollama-setup --model llama3.2` | Local, private, offline |
 
-For hosted providers, select a model with reliable function/tool calling and
-enough context for the documents you analyze. Local Ollama needs no API key;
-the other providers require a credential from their service.
+Pick a model with reliable tool calling.
 
-### 4. Start the AI agent
-
-```bash
-impact-vision
-```
-
-Try asking:
-- "Analyze this pitch deck" (provide a path to a PDF)
-- "What SDGs does a solar energy company align with?"
-- "Run a 5-dimension assessment for a fintech serving 50,000 clients"
-
-### 5. Try the CLI tools (no API key needed)
-
-The fastest first result: assess three bundled (fictional) pitch decks and
-open the reports in your browser:
+### 4. Chat in the browser or the terminal
 
 ```bash
-impact-vision demo
+pip install -e ".[web]" && impact-vision serve-web     # http://127.0.0.1:8787
+impact-vision                                          # terminal agent (Node.js 20+)
 ```
 
-Then assess your own deck or memo (`.pdf`, `.txt`, `.md`). This writes an
-impact report, IC memo, DD report, DD questionnaire (`.docx`) and a JSON
-summary:
+Try: *"Screen this pitch deck: ./deck.pdf"*, *"What SDGs does a solar energy
+company align with?"* or *"Draft the LP edition of the report for assessment 3."*
 
-```bash
-impact-vision assess path/to/deck.pdf --open
-impact-vision assess memo.pdf --sector agriculture --audience lp -o reports/
-```
-
-These commands also work without any LLM setup:
-
-```bash
-# See all available commands
-impact-vision --help
-
-# Browse IRIS+ metrics (all 787 metrics included out of the box)
-impact-vision catalog stats
-impact-vision catalog search "climate"
-impact-vision catalog search "gender"
-
-# List ESG/sustainability frameworks
-impact-vision framework list
-
-# Quick multi-framework scan of a company description
-impact-vision framework scan "Solar energy company providing clean power to 50,000 rural households"
-
-# Cross-reference a metric across all frameworks
-impact-vision framework xref OI4112
-
-# Browse the Due Diligence checklist (122 questions across 34 categories)
-impact-vision dd list
-impact-vision dd categories
-
-# Analyze text against the DD checklist
-impact-vision dd analyze "We serve 45,000 clients across 3 countries. Our NPS score is 72."
-```
-
-### 6. Update the IRIS+ Catalog (optional)
+### 5. Update the IRIS+ Catalog (optional)
 
 All 787 IRIS+ 5.3c metrics are already bundled and work out of the box. If GIIN releases a newer version of the catalog:
 
@@ -225,7 +172,7 @@ impact-vision catalog load    # Parse Excel into JSON cache
 impact-vision catalog stats   # Verify metric count
 ```
 
-### 7. Launch the dashboard (optional)
+### 6. Launch the dashboard (optional)
 
 ```bash
 pip install -e ".[dashboard]"   # already included in [dev]
@@ -243,27 +190,20 @@ agent or the web chat UI; `impact_advisor` routes unfamiliar requests.
 
 ### Analyzing a Pitch Deck
 
-The primary workflow: upload a PDF and let the agent analyze it.
-
 ```
-> Analyze this pitch deck for impact: /path/to/pitch_deck.pdf
+> Screen this pitch deck: /path/to/pitch_deck.pdf
 ```
 
-The agent will use the `pitch_deck_analyze` tool which:
-- Extracts text from all PDF pages
-- Identifies impact claims and maps them to IRIS+ metrics and SDGs
-- Runs the full DD checklist against the document
-- Presents addressed questions vs. gaps
-- Suggests follow-up questions to ask the investment team
-
-Follow-up prompts that chain the v3/v4 tools on the same deal:
+The agent calls `assess_deal`, which runs the whole screen in one step. That
+covers claims and evidence, IRIS+ mapping, 5D, SDGs, gaps, sector DD coverage,
+greenwashing and the IC gate. It returns the verdict plus an `assessment_id`
+that other tools reuse, so follow-ups don't re-type the company:
 
 ```
-> Run a 5-dimension assessment for BrightPath Finance with the claims you just extracted
-> Draft a Theory of Change for BrightPath and link it to IRIS+ metrics
-> Score greenwashing risk per-claim and show which claims need verification
-> Build a completeness scorecard for the data pack and produce coaching cards
-> Run the AI extraction review queue over the claims you flagged as low-confidence
+> Write the LP edition of the report for assessment 3, in Traditional Chinese
+> Review greenwashing risk claim by claim for assessment 3
+> Draft a Theory of Change for the company and link it to IRIS+ metrics
+> Which DD questions should we send the founders first?
 ```
 
 ### ESG Toolbox
@@ -313,14 +253,25 @@ and `input_plan` asks only for unresolved fields.
 ### Generating Reports
 
 ```
-> Generate an HTML impact report for BrightPath Finance (includes Plotly charts)
+> Generate the IC edition of the impact report for BrightPath Finance as PDF
 > Export the assessment as XLSX for our LP report
-> Generate a report with sector benchmark comparison
 ```
 
-HTML reports include an **Interactive Score Improvement** section -- check boxes for practices your organization follows (e.g., "We track beneficiaries", "We have a Theory of Change") and watch scores update in real-time with a before/after radar chart.
+Reports open with the **decision**: a verdict card (Proceed / Conditional /
+Not IC-ready — insufficient evidence / Do not proceed) with its reasons, four
+headline tiles and *what would change our mind*. Then come:
+- **Impact at a glance**: SDG wheel and impact pathway;
+- the **5 Dimensions** against sector benchmarks and the **material SDGs**;
+- an **evidence ledger** of every claim and metric;
+- the **greenwashing review**, risks and a de-duplicated **action plan**;
+- methodology and a glossary.
 
-Reports are built for sharing with investment committees, LPs, and regulators: an **audience filter** (LP / IC / regulator / public) tailors which sections show, an **executive tear sheet** gives an at-a-glance summary, **confidence bands** surface evidence quality, and every section is **collapsible** with copy-link anchors for deep-linking. The reading chrome (progress bar, scrollspy table of contents, sticky company/grade header) is **WCAG 2.2 AA accessible** -- skip links, keyboard navigation, and reduced-motion support -- with an in-browser **dark mode** toggle and **white-label branding**. Print and PDF output ships a cover page, running page numbers, and a confidentiality footer, and the **PDF export is tagged (PDF/UA-1)** for accessibility.
+**Audience editions** (`ic`, `lp`, `regulator`, `public`) leave out
+internal content. Every chart has a table twin, and reports follow the
+reader's dark mode. They work offline (no CDN), meet WCAG AA contrast,
+support white-labelling, and come in English, 繁體中文 and 简体中文. PDFs are
+A4 with page numbers (`--pdf`, `[pdf]` extra).
+`style="classic"` keeps the pre-v7 interactive report for one release.
 
 ### Improving Scores Through Q&A
 
@@ -941,6 +892,7 @@ See the auto-generated OpenAPI docs at `/docs`.
 
 Strategy and engineering plans live in [`docs/`](docs/):
 
+- [`docs/roadmap-v7.md`](docs/roadmap-v7.md) — **current**: trust fixes, effortless first run, decision-first reports, standards currency. Waves 0–1 shipped; Wave 2 in progress.
 - [`docs/roadmap-v2.md`](docs/roadmap-v2.md) — Institutional-readiness plan: data contracts, investee collection, climate accounting, LP reporting, assurance, causal impact, and governed AI.
 - [`docs/roadmap-v3.md`](docs/roadmap-v3.md) / [`-v3-implementation.md`](docs/roadmap-v3-implementation.md) — Trust infrastructure. Shipped.
 - [`docs/roadmap-v4.md`](docs/roadmap-v4.md) — Consultant-led engagement suite. Backend shipped; frontend and paid-data wiring deferred.

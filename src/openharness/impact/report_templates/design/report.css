@@ -193,7 +193,15 @@ details > summary { cursor: pointer; color: var(--link); font-size: 0.88rem; }
 }
 @media (max-width: 480px) { .pathway { grid-template-columns: 1fr; } }
 @media print {
-  .glance-top { grid-template-columns: 200px 1fr; }
+  .glance-top { grid-template-columns: 190px 1fr; }
+  body { font-size: 9.8pt; }
+  .kpis { grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .tile { padding: 10px 12px; }
+  .tile .value { font-size: 1.45rem; }
+  .pathway { grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .stage:not(:last-child)::after { display: block; }
+  .stage li { font-size: 8.4pt; padding: 6px 8px; }
+  .bars .bl .note { font-size: 7.6pt; }
   .pathway, .stage li, .wheel { break-inside: avoid; }
   .monogram, .meter .fill, .mix span, .pips i.on, .sig, .h-ico, .prio.top, .wheel path {
     -webkit-print-color-adjust: exact; print-color-adjust: exact; }
