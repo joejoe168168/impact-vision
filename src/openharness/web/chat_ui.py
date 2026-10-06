@@ -270,6 +270,42 @@ a:hover{text-decoration:underline}
 .task .tstat.completed{color:var(--accent);border-color:var(--accent)}
 .task .tstat.in_progress{color:var(--warn);border-color:var(--warn)}
 
+/* ---------- reports: cards, viewer, share ---------- */
+.rcard{max-width:760px;margin:16px auto;border:1px solid var(--border);border-radius:var(--radius);
+  background:var(--bg-elev);padding:16px 18px;box-shadow:var(--shadow)}
+.rcard .rhead{display:flex;gap:12px;align-items:center}
+.rcard .mono{flex:none;width:40px;height:40px;border-radius:10px;background:var(--accent);color:var(--accent-text);
+  display:grid;place-items:center;font-weight:700;font-size:14px}
+.rcard h4{margin:0;font-size:15.5px;line-height:1.3}
+.rcard .rmeta{font-size:12.5px;color:var(--text-dim)}
+.gate{display:inline-block;font-size:12px;font-weight:600;padding:2px 10px;border-radius:999px;border:1px solid currentColor;margin-top:10px}
+.gate.ok{color:var(--accent)} .gate.warn{color:var(--warn)} .gate.bad{color:var(--danger)}
+.rrec{font-size:13px;color:var(--text-dim);margin:8px 0 0}
+.rstats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0}
+.rstat .k{font-size:11.5px;color:var(--text-dim)} .rstat .v{font-size:18px;font-weight:650;line-height:1.3}
+.rstat .v small{font-size:12px;color:var(--text-faint);font-weight:500}
+.ractions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ractions .dl{font-size:12px;padding:4px 9px;border:1px solid var(--border);border-radius:7px;color:var(--text-dim)}
+.ractions .dl:hover{border-color:var(--accent);color:var(--accent)}
+.rcard .busy{display:flex;gap:10px;align-items:center;color:var(--text-dim);font-size:13.5px;margin-top:10px}
+.spin{width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.card.primary{border-color:var(--accent);background:var(--accent-soft)}
+.rep{display:flex;gap:10px;align-items:center;padding:9px 10px;border-radius:var(--radius-sm);cursor:pointer}
+.rep:hover{background:var(--bg-elev)}
+.rep .gate{margin:0;font-size:10.5px;padding:0 7px}
+.viewer{position:fixed;inset:0;z-index:90;background:var(--bg);display:none;flex-direction:column}
+.viewer.show{display:flex}
+.viewer-bar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--bg-elev)}
+.viewer-bar h3{margin:0 auto 0 0;font-size:15px;font-weight:600}
+.viewer-bar label{font-size:12.5px;color:var(--text-dim);display:flex;gap:6px;align-items:center}
+.viewer-bar select{padding:5px 8px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg);font-size:13px}
+.sharebox{display:none;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--accent-soft);font-size:13px}
+.sharebox.show{display:flex}
+.sharebox input{flex:1;min-width:220px;padding:6px 9px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg-elev);font-family:var(--mono);font-size:12px}
+.viewer iframe{flex:1;border:0;width:100%;background:var(--bg)}
+@media (max-width:700px){.rstats{grid-template-columns:repeat(2,1fr)}}
+
 /* ---------- modals ---------- */
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.42);display:none;place-items:center;z-index:100;padding:20px}
 .overlay.show{display:grid}
@@ -332,7 +368,8 @@ const $$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
 const S = {
   ws: null, sessionId: null, sessions: [], commands: [], provider: null,
   busy: false, streamEl: null, streamBuf: '', pendingTools: [],
-  attachments: [], artifacts: [], tasks: [], filter: '', tab: 'artifacts',
+  attachments: [], artifacts: [], tasks: [], reports: [], filter: '', tab: 'artifacts',
+  analyzeNext: false, viewing: null,
   slashIdx: 0, slashItems: [], reconnectDelay: 500, bootstrap: null, modalQueue: [],
 };
 
@@ -510,8 +547,9 @@ function addSetupCard(text) {
   card.innerHTML =
     '<strong>Connect a model to start chatting</strong>' +
     '<p></p>' +
-    '<p class="setup-alt">No key yet? These work offline: <code>impact-vision demo</code> ' +
-    'and <code>impact-vision assess deck.pdf</code>.</p>';
+    '<p class="setup-alt">No key yet? Deck analysis works offline: <a href="#" class="setup-analyze">analyze a pitch deck</a>, ' +
+    'or run <code>impact-vision assess deck.pdf</code>.</p>';
+  card.querySelector('.setup-analyze').onclick = (e) => { e.preventDefault(); pickDeck(); };
   card.querySelector('p').textContent = text;
   el.appendChild(card);
   thread().appendChild(el);
@@ -631,7 +669,7 @@ function renderTranscript(rows) {
 }
 
 const STARTERS = [
-  ['Screen a pitch deck', 'I will attach a pitch deck. Screen it with assess_deal and give me the IC verdict, the evidence, and what would change your mind.'],
+  ['Analyze a pitch deck', 'Drop or choose a PDF, Word, Markdown or text file. Works offline — you get the IC verdict, the decision report and the data in about a second.', pickDeck],
   ['Score a company on the 5 Dimensions', 'Run an IMP 5-Dimension impact assessment for a company I describe.'],
   ['Map a company to the SDGs', 'Map this company to UN SDG goals and targets, with IRIS+ metrics for each.'],
   ['Screen a report for greenwashing', 'Check this sustainability report for vague or unverifiable impact claims.'],
@@ -649,13 +687,15 @@ function renderWelcome() {
     'and 20+ ESG and regulatory frameworks. Ask anything, or start here.</p>' +
     '<div class="cards"></div>';
   const cards = $('.cards', el);
-  STARTERS.forEach(([title, prompt]) => {
+  STARTERS.forEach(([title, prompt, action]) => {
     const c = document.createElement('div');
-    c.className = 'card';
+    c.className = 'card' + (action ? ' primary' : '');
+    c.setAttribute('role', 'button'); c.tabIndex = 0;
+    c.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); c.onclick(); } };
     c.innerHTML = '<b></b><span></span>';
     $('b', c).textContent = title;
     $('span', c).textContent = prompt;
-    c.onclick = () => { $('#input').value = prompt; autosize(); $('#input').focus(); };
+    c.onclick = action || (() => { $('#input').value = prompt; autosize(); $('#input').focus(); });
     cards.appendChild(c);
   });
   thread().appendChild(el);
@@ -968,6 +1008,158 @@ async function uploadFiles(fileList) {
 }
 
 /* ---------------------------------------------------------------------
+   Reports: analyze a deck offline, view inline, share read-only (W3.2)
+   ------------------------------------------------------------------- */
+const DECK_EXT = /\.(pdf|md|markdown|txt|docx)$/i;
+const GATE_TONE = (g) => /PASS/.test(g) ? 'ok' : /FAIL/.test(g) ? 'bad' : 'warn';
+const FILE_LABEL = [['_impact_report.html', 'Report HTML'], ['_ic_memo.html', 'IC memo'], ['_ic_memo.docx', 'IC memo .docx'],
+  ['_dd_report.html', 'DD report'], ['_dd_questionnaire.docx', 'DD questions .docx'], ['_data.xlsx', 'Data .xlsx'],
+  ['_data.csv', 'Data .csv'], ['_summary.json', 'Summary .json']];
+
+function pickDeck() { S.analyzeNext = true; $('#fileInput').click(); }
+
+async function authed(path) {
+  const headers = token() ? {Authorization: 'Bearer ' + token()} : {};
+  const res = await fetch(path, {headers});
+  if (!res.ok) throw new Error(res.status + ' ' + res.statusText);
+  return res;
+}
+
+async function downloadFile(rep, name) {
+  try {
+    const blob = await (await authed('/api/v1/chat/reports/' + rep.id + '/files/' + encodeURIComponent(name))).blob();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = name; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  } catch (e) { toast('Download failed: ' + e.message); }
+}
+
+function monogramOf(name) {
+  return (name || '?').split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join('');
+}
+
+async function analyzeFiles(fileList) {
+  const f = Array.from(fileList || [])[0];
+  if (!f) return;
+  if (!DECK_EXT.test(f.name)) { toast('Use a PDF, Word, Markdown or text file'); return; }
+  const welcome = $('.welcome', thread()); if (welcome) welcome.remove();
+  const card = document.createElement('div');
+  card.className = 'rcard';
+  card.innerHTML = '<div class="rhead"><div class="mono">…</div><div><h4></h4><div class="rmeta"></div></div></div>' +
+    '<div class="busy"><span class="spin"></span><span>Reading the deck and scoring it…</span></div>';
+  $('h4', card).textContent = f.name;
+  $('.rmeta', card).textContent = fmtSize(f.size);
+  thread().appendChild(card); scrollDown(true);
+  try {
+    const fd = new FormData(); fd.append('files', f, f.name);
+    const up = await api('/uploads', {method: 'POST', body: fd});
+    const rep = await api('/assess', {method: 'POST', body: JSON.stringify({stored_name: up.files[0].stored_name})});
+    fillReportCard(card, rep);
+    S.reports.unshift(rep); renderPanel();
+  } catch (e) {
+    $('.busy', card).textContent = 'Analysis failed: ' + e.message;
+  }
+}
+
+function fillReportCard(card, rep) {
+  const s = rep.summary || {};
+  card.innerHTML =
+    '<div class="rhead"><div class="mono"></div><div style="min-width:0"><h4></h4><div class="rmeta"></div></div></div>' +
+    '<span class="gate"></span><p class="rrec"></p>' +
+    '<div class="rstats">' +
+      '<div class="rstat"><div class="k">5 Dimensions</div><div class="v s5"></div></div>' +
+      '<div class="rstat"><div class="k">Greenwashing risk</div><div class="v sgw"></div></div>' +
+      '<div class="rstat"><div class="k">Top SDGs</div><div class="v ssdg"></div></div>' +
+      '<div class="rstat"><div class="k">Evidence</div><div class="v sev"></div></div>' +
+    '</div>' +
+    '<div class="ractions"><button class="btn primary" data-act="view">View report</button>' +
+    '<button class="btn" data-act="share">Share…</button><button class="btn" data-act="ask">Ask the agent</button></div>' +
+    '<div class="ractions dls" style="margin-top:10px"></div>';
+  $('.mono', card).textContent = monogramOf(s.company || rep.company);
+  $('h4', card).textContent = s.company || rep.company;
+  $('.rmeta', card).textContent = [s.sector, s.geography, rep.source].filter(Boolean).join(' · ');
+  const gate = $('.gate', card); gate.textContent = s.gate || '—'; gate.classList.add(GATE_TONE(s.gate || ''));
+  $('.rrec', card).textContent = s.recommendation || '';
+  $('.s5', card).innerHTML = esc(s.five_d_score == null ? '—' : Number(s.five_d_score).toFixed(1)) + '<small> /5</small>';
+  $('.sgw', card).innerHTML = esc(s.greenwashing_risk == null ? '—' : Math.round(s.greenwashing_risk)) + '<small> /100</small>';
+  $('.ssdg', card).textContent = (s.top_sdgs || []).map((g) => g.goal).join(' · ') || '—';
+  $('.sev', card).innerHTML = esc(s.claims || 0) + '<small> claims · </small>' +
+    esc(Object.keys(s.reported_metrics || {}).length) + '<small> metrics</small>';
+  card.querySelector('[data-act=view]').onclick = () => openViewer(rep);
+  card.querySelector('[data-act=share]').onclick = () => openViewer(rep, true);
+  card.querySelector('[data-act=ask]').onclick = () => {
+    $('#input').value = 'Use assessment_id ' + rep.assessment_id + ' (' + (s.company || '') +
+      '). Explain the verdict and draft the three most important questions for the founders.';
+    autosize(); $('#input').focus();
+  };
+  const dls = $('.dls', card);
+  FILE_LABEL.forEach(([suffix, label]) => {
+    const name = (rep.files || []).find((n) => n.endsWith(suffix));
+    if (!name) return;
+    const b = document.createElement('button');
+    b.className = 'dl'; b.textContent = label; b.title = name;
+    b.onclick = () => downloadFile(rep, name);
+    dls.appendChild(b);
+  });
+}
+
+async function loadReports() {
+  try { S.reports = (await api('/reports')).reports || []; renderPanel(); } catch (e) { /* non-fatal */ }
+}
+
+function viewerParams() {
+  const p = new URLSearchParams({audience: $('#vAudience').value, lang: $('#vLang').value});
+  if ($('#vTheme').value) p.set('theme', $('#vTheme').value);
+  return p.toString();
+}
+
+async function renderViewer() {
+  const rep = S.viewing; if (!rep) return;
+  const frame = $('#viewerFrame');
+  try {
+    frame.srcdoc = await (await authed('/api/v1/chat/reports/' + rep.id + '/view?' + viewerParams())).text();
+  } catch (e) { frame.srcdoc = '<p style="font:15px system-ui;margin:2rem">Could not load the report: ' + esc(e.message) + '</p>'; }
+}
+
+function openViewer(rep, share) {
+  S.viewing = rep;
+  $('#viewerTitle').textContent = (rep.summary && rep.summary.company) || rep.company;
+  $('#shareBox').classList.remove('show');
+  $('#viewer').classList.add('show');
+  renderViewer();
+  if (share) createShare();
+  $('#vClose').focus();
+}
+
+function closeViewer() { $('#viewer').classList.remove('show'); S.viewing = null; $('#viewerFrame').srcdoc = ''; }
+
+async function openViewerTab() {
+  try {
+    const html = await (await authed('/api/v1/chat/reports/' + S.viewing.id + '/view?' + viewerParams())).text();
+    window.open(URL.createObjectURL(new Blob([html], {type: 'text/html'})), '_blank', 'noopener');
+  } catch (e) { toast('Could not open: ' + e.message); }
+}
+
+async function createShare() {
+  const rep = S.viewing; if (!rep) return;
+  let audience = $('#vAudience').value;
+  if (audience === 'full' || audience === 'ic') audience = 'lp';   /* never share internal views by default */
+  $('#shareAudience').value = audience;
+  $('#shareBox').classList.add('show');
+  await refreshShare();
+}
+
+async function refreshShare() {
+  const rep = S.viewing; if (!rep) return;
+  try {
+    const out = await api('/reports/' + rep.id + '/share', {method: 'POST', body: JSON.stringify({
+      audience: $('#shareAudience').value, lang: $('#vLang').value, days: Number($('#shareDays').value)})});
+    $('#shareUrl').value = location.origin + out.path;
+    $('#shareExp').textContent = 'Read-only · expires ' + new Date(out.expires_at * 1000).toLocaleDateString();
+  } catch (e) { toast('Share failed: ' + e.message); }
+}
+
+/* ---------------------------------------------------------------------
    Right panel
    ------------------------------------------------------------------- */
 async function loadArtifacts() {
@@ -983,6 +1175,25 @@ function renderPanel() {
   $$('.panel-tabs button').forEach((b) => b.classList.toggle('on', b.dataset.tab === S.tab));
   const body = $('#panelBody');
   body.innerHTML = '';
+  if (S.tab === 'reports') {
+    if (!S.reports.length) {
+      body.innerHTML = '<div class="empty">Analyze a pitch deck from the welcome screen — reports you create appear here.</div>';
+      return;
+    }
+    S.reports.forEach((r) => {
+      const s = r.summary || {};
+      const el = document.createElement('div');
+      el.className = 'rep'; el.setAttribute('role', 'button'); el.tabIndex = 0;
+      el.innerHTML = '<div style="flex:1;min-width:0"><div class="fname"></div><div class="fmeta"></div></div><span class="gate"></span>';
+      $('.fname', el).textContent = s.company || r.company;
+      $('.fmeta', el).textContent = new Date((r.created_at || 0) * 1000).toLocaleString();
+      const g = $('.gate', el); g.textContent = (s.gate || '').replace('INSUFFICIENT EVIDENCE', 'NOT READY'); g.classList.add(GATE_TONE(s.gate || ''));
+      el.onclick = () => openViewer(r);
+      el.onkeydown = (e) => { if (e.key === 'Enter') openViewer(r); };
+      body.appendChild(el);
+    });
+    return;
+  }
   if (S.tab === 'artifacts') {
     if (!S.artifacts.length) {
       body.innerHTML = '<div class="empty">Files the agent writes during this conversation appear here.</div>';
@@ -1242,7 +1453,23 @@ async function boot() {
   $('#settingsOverlay').onclick = (e) => { if (e.target.id === 'settingsOverlay') e.currentTarget.classList.remove('show'); };
   $('#railSearch').oninput = (e) => { S.filter = e.target.value; renderSessions(); };
   $('#attachBtn').onclick = () => $('#fileInput').click();
-  $('#fileInput').onchange = (e) => { uploadFiles(e.target.files); e.target.value = ''; };
+  $('#fileInput').onchange = (e) => {
+    if (S.analyzeNext) analyzeFiles(e.target.files); else uploadFiles(e.target.files);
+    S.analyzeNext = false; e.target.value = '';
+  };
+  $('#vAudience').onchange = renderViewer; $('#vLang').onchange = renderViewer; $('#vTheme').onchange = renderViewer;
+  $('#vClose').onclick = closeViewer; $('#vOpen').onclick = openViewerTab; $('#vShare').onclick = createShare;
+  $('#shareAudience').onchange = refreshShare; $('#shareDays').onchange = refreshShare;
+  $('#shareCopy').onclick = async () => {
+    try { await navigator.clipboard.writeText($('#shareUrl').value); toast('Link copied'); }
+    catch (e) { $('#shareUrl').select(); toast('Press Ctrl+C to copy'); }
+  };
+  const thr = thread();
+  ['dragenter', 'dragover'].forEach((t) => thr.addEventListener(t, (e) => { if ($('.welcome', thr)) e.preventDefault(); }));
+  thr.addEventListener('drop', (e) => {
+    if (!$('.welcome', thr) || !e.dataTransfer || !e.dataTransfer.files.length) return;
+    e.preventDefault(); analyzeFiles(e.dataTransfer.files);
+  });
   $$('.panel-tabs button').forEach((b) => { b.onclick = () => { S.tab = b.dataset.tab; renderPanel(); }; });
   $('#themeBtn').onclick = () => {
     const now = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
@@ -1262,6 +1489,7 @@ async function boot() {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); $('#railSearch').focus(); }
     if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'o') { e.preventDefault(); newChat(); }
     if (e.key === 'Escape') {
+      if ($('#viewer').classList.contains('show')) { closeViewer(); return; }
       if ($('#settingsOverlay').classList.contains('show')) $('#settingsOverlay').classList.remove('show');
       else if (S.busy) S.ws && S.ws.send(JSON.stringify({type: 'cancel'}));
     }
@@ -1278,6 +1506,7 @@ async function boot() {
     const last = localStorage.getItem('iv_last_session');
     const known = S.sessions.find((s) => s.session_id === last);
     connect(known ? last : null);
+    loadReports();
   } catch (e) {
     addSystem('Could not reach the Impact Vision server: ' + e.message +
       '\nIf the server requires an API key, open Settings and paste it.', true);
@@ -1381,6 +1610,7 @@ _HTML = r"""<!DOCTYPE html>
   <aside class="panel">
     <div class="panel-head">Workspace</div>
     <div class="panel-tabs">
+      <button data-tab="reports">Reports</button>
       <button data-tab="artifacts" class="on">Artifacts</button>
       <button data-tab="tasks">Tasks</button>
     </div>
@@ -1406,6 +1636,36 @@ _HTML = r"""<!DOCTYPE html>
     </div>
     <div class="modal-body" id="settingsBody"></div>
   </div>
+</div>
+
+<!-- ============ report viewer (W3.2) ============ -->
+<div class="viewer" id="viewer" role="dialog" aria-modal="true" aria-labelledby="viewerTitle">
+  <div class="viewer-bar">
+    <h3 id="viewerTitle">Report</h3>
+    <label>Audience <select id="vAudience">
+      <option value="full">Full</option><option value="ic">Investment committee</option>
+      <option value="lp">LP</option><option value="regulator">Regulator</option><option value="public">Public</option>
+    </select></label>
+    <label>Language <select id="vLang">
+      <option value="en">English</option><option value="zh-HK">繁體中文</option><option value="zh-CN">简体中文</option>
+    </select></label>
+    <label>Theme <select id="vTheme"><option value="">Auto</option><option value="light">Light</option><option value="dark">Dark</option></select></label>
+    <button class="btn" id="vOpen" type="button">Open in new tab</button>
+    <button class="btn primary" id="vShare" type="button">Share…</button>
+    <button class="btn" id="vClose" type="button" aria-label="Close report">Close</button>
+  </div>
+  <div class="sharebox" id="shareBox">
+    <label>Edition <select id="shareAudience">
+      <option value="lp">LP</option><option value="public">Public</option><option value="regulator">Regulator</option>
+      <option value="ic">Investment committee</option><option value="full">Full (internal)</option>
+    </select></label>
+    <label>Valid for <select id="shareDays"><option value="7">7 days</option><option value="14" selected>14 days</option>
+      <option value="30">30 days</option><option value="90">90 days</option></select></label>
+    <input id="shareUrl" readonly aria-label="Share link">
+    <button class="btn" id="shareCopy" type="button">Copy link</button>
+    <span id="shareExp" style="color:var(--text-dim)"></span>
+  </div>
+  <iframe id="viewerFrame" title="Report preview" sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox"></iframe>
 </div>
 
 <div class="toast" id="toast"></div>

@@ -11,6 +11,8 @@ The resulting FastAPI app exposes:
   * ``GET  /chat``              — alias of ``/``
   * ``WS   /ws/chat``           — live agent stream (deltas, tools, prompts)
   * ``*    /api/v1/chat/*``     — sessions, provider config, uploads, artifacts
+  * ``*    /api/v1/chat/assess|reports`` — offline deck analysis, report viewer, share links
+  * ``GET  /shared/{token}``    — a signed, expiring read-only report (no API key)
   * ``GET  /console``           — the power-user tool console (typed forms)
   * ``*    /api/v1/*``          — the full REST gateway (26 impact tools)
   * ``GET  /docs``              — Swagger UI for the REST gateway
@@ -31,6 +33,7 @@ try:
     from openharness.web.chat_api import build_chat_router, build_chat_ws_router
     from openharness.web.chat_ui import chat_ui_router
     from openharness.web.console import console_router
+    from openharness.web.reports_api import build_reports_router, build_shared_router
     from openharness.web.streaming import build_sse_router
 except ImportError as _exc:  # pragma: no cover — optional
     raise ImportError(
@@ -45,6 +48,8 @@ app = _gateway_app
 # Chat first: it owns "/" and registers the WebSocket.
 app.include_router(build_chat_router(auth_dependency=verify_api_key))
 app.include_router(build_chat_ws_router())
+app.include_router(build_reports_router(auth_dependency=verify_api_key))
+app.include_router(build_shared_router())
 app.include_router(chat_ui_router())
 
 # The original tool console keeps working, now at /console.

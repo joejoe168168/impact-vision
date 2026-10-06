@@ -361,6 +361,29 @@ def write_deliverables(
     return files
 
 
+def save_bundle(bundle: AssessmentBundle, *, source_label: str = "") -> str:
+    """Persist *bundle* in the AssessmentStore; returns the shared ``assessment_id``."""
+    from openharness.impact.storage import get_assessment_store
+
+    a = bundle.assessment
+    row_id = get_assessment_store().save_assessment(
+        bundle.company.name,
+        bundle.company.model_dump(mode="json"),
+        five_dimensions=a.five_dimensions.model_dump(mode="json") if a.five_dimensions else None,
+        sdg_alignments=[s.model_dump(mode="json") for s in a.sdg_alignments],
+        gap_analysis=bundle.report_data.get("gap_analysis"),
+        greenwashing=bundle.greenwashing.model_dump(mode="json"),
+        metadata={
+            "source": source_label or bundle.source_label,
+            "summary": bundle.summary(),
+            "impact_claims": [c.model_dump(mode="json") for c in a.impact_claims],
+            "dd_coverage_pct": bundle.dd.coverage_pct,
+            "gate": bundle.scorecard.model_dump(mode="json"),
+        },
+    )
+    return str(row_id)
+
+
 # Fictional sample decks bundled for ``impact-vision demo`` (data/sample_decks).
 SAMPLE_DECKS: dict[str, tuple[str, str]] = {
     "pig-farm": ("kampung_makmur_pig_farm.pdf", "Integrated pig farm + biogas, Malaysia"),
@@ -492,6 +515,7 @@ __all__ = [
     "format_summary",
     "read_document",
     "sample_deck_path",
+    "save_bundle",
     "slugify",
     "write_deliverables",
     "write_gallery",

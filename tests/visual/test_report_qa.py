@@ -31,7 +31,7 @@ WIDTHS = (390, 1024, 1440)
 def pages(tmp_path_factory):
     out = tmp_path_factory.mktemp("qa")
     bundle = assess_file(sample_deck_path("pig-farm"))
-    files = write_deliverables(bundle, out, include_docx=False)
+    write_deliverables(bundle, out, include_docx=False)
     write_gallery([bundle], out)
     data = bundle.report_data
     variants = {

@@ -38,6 +38,25 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
     and each of the 10 advisor playbooks is an MCP prompt.
   - **Console**: `/console` adds a schema-driven form for every registry
     tool, labelled by task area, next to the existing named endpoints.
+- **Web chat as the primary app (W3.2).** New `web/reports_api.py`.
+  - **Analyze a pitch deck** is the first welcome card (click or drop a
+    file). It runs the offline pipeline, with no model or API key needed,
+    and shows a verdict card: gate, recommendation, 5D, greenwashing, top
+    SDGs, evidence, and downloads (report, IC memo + .docx, DD report +
+    questions .docx, data .xlsx/.csv, summary .json). "Ask the agent"
+    pre-fills a prompt with the new `assessment_id`.
+  - **Inline report viewer**: a full-screen, sandboxed viewer with
+    audience, language (en / zh-HK / zh-CN) and theme switches, plus "Open
+    in new tab". Reports persist in a new **Reports** tab.
+  - **Share**: `POST /api/v1/chat/reports/{id}/share` returns a signed,
+    expiring (1–90 days) read-only link at `/shared/{token}`. It defaults to
+    the LP edition and sends `no-store`, `noindex`, `no-referrer` and a
+    strict CSP. Links are signed with `IMPACT_VISION_SHARE_HMAC_KEY` /
+    `IMPACT_VISION_HMAC_KEY`, or a random per-install secret (mode 0600) —
+    never the public development key, which would make links forgeable.
+    Deleting a report revokes its links.
+  - `/api/v1/chat/assess` only reads files from the uploads folder.
+  - `pipeline.save_bundle()` is shared by `assess_deal` and the web app.
 
 ### Added — v7 Wave 2: report design system & decision-first deliverables
 

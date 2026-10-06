@@ -798,8 +798,18 @@ impact-vision serve-web --open        # http://127.0.0.1:8787
 |-----|---------|
 | `/` | **Chat UI** — ChatGPT-style conversation with the full agent |
 | `/console` | **Tool console** — a form for every impact tool, generated from its schema |
+| `/shared/…` | **Read-only shared report** — signed, expiring link; no login needed |
 | `/docs` | OpenAPI explorer |
 | `/api/v1/*` | REST gateway |
+
+**No API key needed to start:** click **Analyze a pitch deck** (or drop a
+PDF/Word/Markdown file on the welcome screen). You get the IC verdict card in
+about a second, then **View report** opens the decision report full-screen
+with audience (full / IC / LP / regulator / public), language (English /
+繁體中文 / 简体中文) and theme switches, plus downloads (IC memo, Word, Excel,
+CSV). **Share…** creates a signed read-only link (LP or public edition by
+default, 7–90 days); deleting the report revokes it. Set
+`IMPACT_VISION_SHARE_HMAC_KEY` to keep links valid across machines.
 
 The chat UI runs the *same* agent runtime as the CLI — same tools, skills,
 slash commands and permission model — with streaming markdown replies,
