@@ -9,7 +9,23 @@ The SDK (`openharness.impact.sdk.ImpactVision`) wraps every agent tool
 behind a single typed Python class so you can embed it in any notebook,
 cron job, or internal platform.
 
-## 60-second workflow
+## No code: one command per deck
+
+```bash
+impact-vision demo                                  # three fictional sample decks, no setup
+impact-vision assess deck.pdf --open                # impact report, IC memo, DD report, .docx
+impact-vision assess memo.pdf --sector agriculture --audience lp -o reports/
+```
+
+The IC gate says **INSUFFICIENT EVIDENCE** when the deck simply lacks data
+(questions to ask), and **FAIL** only for negative findings. Terms are
+defined in the [glossary](glossary.md) and at the end of every report.
+
+In the agent or web chat, ask it to "screen this deck". The `assess_deal`
+tool runs the whole pipeline in one call and returns an `assessment_id`,
+which other tools (`impact_report`, `greenwashing_detect`, …) accept.
+
+## 60-second workflow (Python SDK)
 
 ```python
 from openharness.impact.sdk import ImpactVision
@@ -82,10 +98,12 @@ and over REST at `/api/v1/decision-workflow` and `/api/v1/regulatory-calendar`.
 
 ## Browser alternative
 
-Prefer a browser? `impact-vision serve-web` launches the **Web Console** plus
-REST API in one process at `http://127.0.0.1:8787` and exposes the full tool
-surface one click away. Every console invocation is persisted to
-`localStorage` so you can re-hydrate old runs without re-typing.
+Prefer a browser? `pip install "impact-vision[web]"`, then
+`impact-vision serve-web` serves the **chat UI** at `http://127.0.0.1:8787`
+(upload a deck and ask the agent to screen it), the tool-form console at
+`/console` and the REST API at `/api/v1`. The chat uses the fund tool
+profile: impact tools only, with no shell or file edits. See the
+[web chat guide](web-chat-guide.md).
 
 ## Configuring your fund
 

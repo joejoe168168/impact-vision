@@ -62,6 +62,10 @@ Key concepts Impact Vision helps with:
 > [Fund Manager Quick Reference](docs/fund-manager-guide.md) for a
 > Python-first 60-second SDK walkthrough (deal scoring, IC memo,
 > DD questionnaire, portfolio roll-up, LP calendar).
+>
+> New to the jargon (5D, NESTA, OPIM, SFDR …)? See the
+> [plain-language glossary](docs/glossary.md); every HTML report also ends
+> with definitions of the terms it uses.
 
 ## Quick Start (from scratch)
 
@@ -391,26 +395,11 @@ provenance and verification metadata in the Impact Vision output.
 > Check SBTi 1.5 °C alignment
 ```
 
-For product or process decisions, `lca_assessment` accepts a declared
-functional unit and boundary plus caller-supplied inventory flows and
-characterization factors. It reports hotspots and sensitivity without bundling
-licensed databases. The workflow covers goal and scope, life-cycle inventory,
-impact assessment, interpretation, and documented limitations.
+Lifecycle assessment (`lca_assessment`) — goal and scope, inventory, hotspots,
+sensitivity and life-cycle-management plans — is covered in
+[docs/climate-and-lca.md](docs/climate-and-lca.md).
 
-The same tool can turn hotspots into a life-cycle-management plan with owners,
-target metrics, due periods, evidence requirements, decision gates, and
-monitoring indicators. It can also combine environmental impacts with
-lifecycle cost and disaggregated social indicators without mixing their units.
-
-```
-> Run an LCA for this product using a cradle-to-grave boundary
-> Run sensitivity scenarios for recycled content, energy mix, and transport distance
-> Build an owner-assigned life-cycle-management plan from the top hotspots
-> Run an LCSA with lifecycle costs and worker/community indicators
-> Assess whether this LCA is ready for an investment or procurement decision
-```
-
-### Trust Infrastructure (v3): evidence governance, LP narrative & queries
+### Evidence, assurance & LP questions
 
 ```
 # Stakeholder voice
@@ -433,7 +422,7 @@ lifecycle cost and disaggregated social indicators without mixing their units.
 > Score exit-impact durability for Solar Co and build a 12-month exit impact plan
 ```
 
-### Consultant Engagements (v4 workspace)
+### Consultant engagements
 
 The v4 engagement suite is a single tool (`engagement_suite`) that covers
 scoping, data rooms, ToC/KPI design, reporting studios, training, public
@@ -526,6 +515,10 @@ impact-vision/
 │   │   ├── greenwashing.py            # Greenwashing detection (standard + Green Claims + FCA + NLP)
 │   │   ├── risk_opportunity.py        # Risk/opportunity (likelihood × severity)
 │   │   ├── storage.py                 # SQLite persistence for assessments
+│   │   ├── pipeline.py                # Document → full assessment → reports (assess / demo)
+│   │   ├── claim_metric_mapper.py     # Pitch quantities → IRIS+ metric IDs
+│   │   ├── glossary.py                # Plain-language glossary (docs + report appendix)
+│   │   ├── _paths.py                  # Bundled-data resolver (source checkout + wheel)
 │   │   │
 │   │   │   # --- Fund workflow (v0.8+) ---
 │   │   ├── fund_thesis.py             # Fund impact thesis, IC gate, adverse thresholds
@@ -597,6 +590,8 @@ impact-vision/
 │   │   └── sdk.py                     # High-level ImpactVision SDK facade
 │   │
 │   ├── tools/impact/                  # 48 LLM-callable impact agent tools (see "Tools" below)
+│   │   ├── assess_deal_tool.py        #   One-call deal screen → assessment_id
+│   │   └── merge.py · merged_tools.py #   Typed tool merges + deprecated aliases
 │   ├── api_gateway/router.py          # FastAPI REST API
 │   ├── web/                           # Browser surfaces (single-file, no build step)
 │   │   ├── chat_ui.py                 #   ChatGPT-style chat UI served at /
@@ -607,7 +602,7 @@ impact-vision/
 │   ├── dashboard/app.py               # Streamlit 6-tab dashboard
 │   ├── skills/bundled/content/        # Agent knowledge (markdown)
 │   ├── prompts/system_prompt.py       # Impact Vision persona + instructions
-│   └── cli.py                         # CLI (7 subcommand groups + serve-mcp / serve-web)
+│   └── cli.py                         # CLI (7 subcommand groups + demo / assess / dashboard / serve-*)
 ├── data/
 │   ├── raw/                           # IRIS+ Excel file (not committed)
 │   ├── processed/                     # JSON catalog cache (auto-generated)
@@ -618,6 +613,10 @@ impact-vision/
 │   ├── scoring_config.yaml            # Sector baselines + keyword boosts
 │   ├── sdg_keywords.yaml              # SDG keyword mappings for 20+ sectors
 │   ├── core_metric_set_per_sdg.yaml   # Curated SDG core metric set
+│   ├── core_metric_sets_by_sector.yaml # Core metric set per sector (gap analysis)
+│   ├── claim_metric_map.yaml          # Rules mapping pitch quantities to IRIS+ IDs
+│   ├── glossary.yaml                  # Plain-language glossary (source of docs/glossary.md)
+│   ├── sample_decks/                  # Fictional sample pitch decks for `impact-vision demo`
 │   ├── fund_thesis.*.yaml             # Default + 4 regional thesis packs
 │   └── i18n/                          # 6 languages (en/es/fr/pt/zh/ar)
 ├── docs/
@@ -625,6 +624,8 @@ impact-vision/
 │   ├── roadmap-v3.md / -v3-implementation.md
 │   ├── roadmap-v4.md                  # Consultant-led engagement suite
 │   ├── roadmap-updates-2026-07.md     # Current regulatory and implementation delta
+│   ├── roadmap-v7.md                  # Current roadmap: trust, ease of use, reports, standards
+│   ├── glossary.md · dd-checklist.md · climate-and-lca.md
 │   └── cursor-integration.md          # Cursor/VS Code MCP setup
 ├── examples/                          # Sample company, portfolio, MCP configs
 ├── tests/                             # Test suite (impact + v2 + v3 + v4)
@@ -633,70 +634,12 @@ impact-vision/
 
 ## DD Checklist
 
-The built-in due diligence checklist includes **122 questions** across **34 categories**, sourced from:
-
-- **GIIN Impact Toolkit** - The Impact Due Diligence Guide
-- **Pacific Community Ventures** - Impact DD Emerging Best Practices
-- **Seraf Toolbox** - Impact Investing Due Diligence Checklist
-- **Impact Management Project (IMP)** - Five Dimensions of Impact
-- **AFME / Neotas / OECD** - ESG Due Diligence frameworks
-- **Sector-specific**: 15 sectors including fintech, healthcare, agriculture, energy, education, manufacturing, transport, construction, tourism, retail, mining, media, professional services, waste management, and ICT
-
-Each addressed question is assessed using **NESTA Standards of Evidence**,
-from level 1 (narrative/anecdotal only) through level 3 (measured outcome
-data) to level 5 (rigorous evaluation — RCT, independent audit, causal
-attribution).
-
-Questions are organized into **34 categories** (18 core + 15 sector-specific + 1 SDG):
-
-<details>
-<summary><strong>Core Categories (18)</strong></summary>
-
-| Category | Qs | Covers |
-|----------|---:|--------|
-| Impact Thesis & Theory of Change | 4 | Mission, theory of change, business model alignment |
-| What (Outcomes) | 4 | Specific outcomes, positive/negative impacts, outcome data |
-| Who (Stakeholders) | 5 | Beneficiaries, underserved status, baseline, feedback |
-| How Much (Scale) | 5 | Reach, depth, duration, growth, quantitative metrics |
-| Contribution | 4 | Additionality, counterfactual, evidence, investor contribution |
-| Risk | 5 | Evidence risk, execution risk, external risk, mitigation, impact washing |
-| Measurement Systems | 6 | IMM systems, IRIS+ alignment, data frequency, third-party audit |
-| Governance/ESG | 5 | Board oversight, environmental/labor/ethics policies, incentives |
-| SDG Alignment | 1 | Specific goals and targets |
-| Negative Impact | 3 | Do-no-harm assessment, grievance mechanisms |
-| Exit Sustainability | 3 | Impact continuity, mission lock, acquirer risk |
-| Financial Sustainability | 5 | Revenue model, impact-return tension, grants dependency, pricing |
-| Team & Capability | 4 | Founder experience, community ties, key person risk |
-| Market & Context | 4 | Market size, regulation, systemic barriers, competition |
-| Product/Service Design | 4 | User-centered design, safety, privacy, affordability |
-| Supply Chain | 3 | ESG practices, forced/child labor risk, environmental footprint |
-| Stakeholder Voice | 3 | Feedback mechanisms, co-design, transparency |
-| Investor Alignment | 3 | Impact covenants, value-add beyond capital, portfolio fit |
-
-</details>
-
-<details>
-<summary><strong>Sector-Specific Categories (15 sectors)</strong></summary>
-
-| Sector | Qs | Covers |
-|--------|---:|--------|
-| Fintech | 5 | Over-indebtedness, client protection, effective interest rate, digital literacy, responsible AI |
-| Healthcare | 5 | Health regulations, patient safety, clinical efficacy, affordability, data privacy |
-| Agriculture | 5 | Farmer income, sustainable farming, climate resilience, food safety, land tenure |
-| Energy | 5 | CO2e avoided, energy access, e-waste, affordability, grid reliability |
-| Education | 5 | Learning outcomes, underserved learners, pedagogy, digital safety, employment |
-| Manufacturing | 2 | Circular economy, pollution prevention, worker safety |
-| Transport & Logistics | 2 | Emissions reduction, last-mile accessibility |
-| Construction | 3 | Green building standards, affordable housing, waste diversion |
-| Tourism | 2 | Cultural preservation, community benefit-sharing |
-| Retail | 3 | Ethical sourcing, plastic waste reduction, fair labor |
-| Mining & Extractives | 3 | Tailings management, community consent (FPIC), rehabilitation |
-| Media | 2 | Misinformation safeguards, digital inclusion |
-| Professional Services | 2 | Pro-bono access, diversity metrics |
-| Waste Management | 3 | Recycling rates, informal worker integration, hazardous waste |
-| ICT | 3 | E-waste, data sovereignty, digital divide |
-
-</details>
+**122 questions** across **34 categories** (18 core, 15 sector sets, SDG),
+drawn from the GIIN Impact Toolkit, Pacific Community Ventures, Seraf, the
+Impact Management Project and AFME/OECD ESG due diligence. Each answered question
+is graded on the NESTA standards of evidence (1 = narrative … 5 = rigorous
+evaluation). Only the company's own sector set is applied. Full category
+tables: [docs/dd-checklist.md](docs/dd-checklist.md).
 
 ## Frameworks & Standards
 

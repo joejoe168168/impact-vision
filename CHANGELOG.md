@@ -86,6 +86,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
   `npm install`. The README lists Node.js as a prerequisite for the
   terminal agent, documents the extras, and drops the NaxtClaude proxy from
   the default provider table.
+- **Plain-language layer (W1.7).** `data/glossary.yaml` (21 terms: 5D,
+  NESTA, IC gate, evidence-based/partial/estimated, SFDR, ESRS/VSME, ISSB,
+  OPIM, …) is the single source for the generated `docs/glossary.md` and a
+  new "Terms used in this report" appendix in every HTML impact report. The
+  appendix lists only terms that appear in the sections that audience sees.
+  README sections are named by task ("Evidence, assurance & LP questions"
+  instead of "Trust Infrastructure (v3)"). The DD category tables and the LCA
+  walkthrough moved to `docs/dd-checklist.md` and `docs/climate-and-lca.md`,
+  bringing the README from 1,030 to about 960 lines. The fund-manager guide
+  now opens with the no-code `demo` / `assess` path.
 
 ### Security
 

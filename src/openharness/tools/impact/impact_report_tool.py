@@ -2608,6 +2608,7 @@ _TOC_LABELS: dict[str, str] = {
     "sec-claims": "Impact claims",
     "sec-targets": "Targets",
     "sec-beneficiary": "Beneficiary feedback",
+    "sec-glossary": "Glossary",
 }
 _SECTION_ID_RE = re.compile(r'id="(executive-summary|sec-[a-z0-9-]+)"')
 
@@ -3002,6 +3003,12 @@ tr.dim-clickable:focus-visible, tr.sdg-clickable:focus-visible, .claim-header:fo
   color:var(--accent); }}
 .audience-bar button[aria-pressed="true"] {{ background:var(--accent); color:#fff; }}
 @media print {{ .audience-bar {{ display:none; }} }}
+.glossary summary {{ cursor:pointer; color:var(--text-secondary); font-size:0.9em; }}
+.glossary dl {{ display:grid; grid-template-columns:minmax(140px,220px) 1fr; gap:6px 16px; margin:12px 0 0; }}
+.glossary dt {{ font-weight:650; }}
+.glossary dd {{ margin:0; color:var(--text-secondary); font-size:0.92em; }}
+@media (max-width:640px) {{ .glossary dl {{ grid-template-columns:1fr; }} .glossary dd {{ margin-bottom:8px; }} }}
+@media print {{ .glossary details > summary {{ display:none; }} .glossary dl {{ display:grid; }} }}
 
 /* ---------- Executive tear sheet (Track D6) ---------- */
 .tear-sheet {{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
@@ -3752,6 +3759,13 @@ Plotly.newPlot('benchmark-chart', [
         sections.append(pathway_html)
 
     sections = _filter_sections_for_audience(sections, audience)
+    # Plain-language definitions for the terms that survived audience filtering.
+    from openharness.impact.glossary import render_glossary_html
+
+    visible_text = re.sub(r"<script.*?</script>|<style.*?</style>|<[^>]+>", " ", "\n".join(sections[1:]), flags=re.S)
+    glossary_html = render_glossary_html(visible_text)
+    if glossary_html:
+        sections.append(glossary_html)
     # Build the TOC from the sections actually rendered, in page order, so it
     # never links to a section that was skipped or filtered out.
     rendered = "\n".join(sections)
