@@ -6,6 +6,7 @@ Usage:
     python -m openharness.impact.mcp_server  # direct invocation
 """
 
+import contextlib
 import json
 import logging
 from pathlib import Path
@@ -1098,6 +1099,90 @@ async def guided_assessment(
     )
     result = await tool.execute(args, _get_tool_context())
     return result.output
+
+
+# ---------------------------------------------------------------------------
+# Registry-generated tools and playbook prompts (v7 W3.1)
+# ---------------------------------------------------------------------------
+
+
+def _generated_tool_fn(tool_name: str, input_model: Any):
+    """A coroutine whose signature mirrors *input_model*, so FastMCP publishes
+    the tool's real schema (types, enums, defaults and descriptions)."""
+    import inspect
+    from typing import Annotated
+
+    from pydantic import Field
+
+    params = []
+    for field_name, field in input_model.model_fields.items():
+        default = field.get_default(call_default_factory=True)
+        annotation = Annotated[field.annotation, Field(description=field.description or "")]
+        params.append(inspect.Parameter(field_name, inspect.Parameter.KEYWORD_ONLY,
+                                        default=default, annotation=annotation))
+
+    async def call(**kwargs: Any) -> str:
+        from openharness.impact.surfaces import run_tool
+
+        result = await run_tool(tool_name, kwargs, allow_paths=True)
+        if result["is_error"]:
+            raise ValueError(result["output"])
+        return result["output"]
+
+    call.__signature__ = inspect.Signature(params, return_annotation=str)  # type: ignore[attr-defined]
+    call.__name__ = tool_name
+    return call
+
+
+def _registered_tool_names() -> set[str]:
+    with contextlib.suppress(Exception):
+        return {t.name for t in mcp._tool_manager.list_tools()}
+    return set()
+
+
+def register_registry_tools() -> list[str]:
+    """Expose every fund-profile impact tool that has no hand-written wrapper above."""
+    from openharness.impact.surfaces import surface_tools
+
+    existing = _registered_tool_names()
+    added: list[str] = []
+    for tool in surface_tools():
+        if tool.name in existing:
+            continue
+        try:
+            mcp.add_tool(_generated_tool_fn(tool.name, tool.input_model),
+                         name=tool.name, description=tool.description)
+        except Exception as exc:  # noqa: BLE001 - one bad schema must not break the server
+            logger.warning("MCP: could not expose %s: %s", tool.name, exc)
+            continue
+        added.append(tool.name)
+    return added
+
+
+def register_playbook_prompts() -> list[str]:
+    """One MCP prompt per advisor playbook (deal screening, LP reporting, …)."""
+    from openharness.impact.surfaces import playbook_prompt
+    from openharness.impact.tool_advisor import PLAYBOOKS
+
+    names: list[str] = []
+    for playbook in PLAYBOOKS:
+        def make(pid: str):
+            def prompt(subject: str = "") -> str:
+                return playbook_prompt(pid, subject)
+            return prompt
+
+        try:
+            mcp.prompt(name=playbook.playbook_id, description=playbook.when_to_use)(
+                make(playbook.playbook_id))
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("MCP: could not register prompt %s: %s", playbook.playbook_id, exc)
+            continue
+        names.append(playbook.playbook_id)
+    return names
+
+
+GENERATED_TOOLS = register_registry_tools()
+PLAYBOOK_PROMPTS = register_playbook_prompts()
 
 
 # ---------------------------------------------------------------------------

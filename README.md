@@ -797,7 +797,7 @@ impact-vision serve-web --open        # http://127.0.0.1:8787
 | URL | Surface |
 |-----|---------|
 | `/` | **Chat UI** — ChatGPT-style conversation with the full agent |
-| `/console` | **Tool console** — typed forms for every REST endpoint |
+| `/console` | **Tool console** — a form for every impact tool, generated from its schema |
 | `/docs` | OpenAPI explorer |
 | `/api/v1/*` | REST gateway |
 
@@ -840,8 +840,10 @@ GitHub Actions runs import smoke, full tests, and ruff on every push/PR.
 
 ## MCP Server (Use with Claude, Cursor, VS Code)
 
-Impact Vision can run as an **MCP server**, exposing the full impact
-tool surface and 5 read-only resources to any MCP-compatible AI client.
+Impact Vision can run as an **MCP server**, exposing every impact tool
+(generated from the tool registry, with real typed schemas), a **prompt per
+playbook** (`deal_screening`, `lp_reporting`, `regulatory_compliance`, …)
+and 5 read-only resources to any MCP-compatible AI client.
 
 ```bash
 impact-vision serve-mcp                              # stdio (desktop clients)
@@ -884,15 +886,27 @@ uvicorn openharness.api_gateway.router:app --reload
 IMPACT_VISION_API_KEY=your-secret-key uvicorn openharness.api_gateway.router:app
 ```
 
-Key endpoints: `/api/v1/score`, `/api/v1/sdg-map`, `/api/v1/greenwashing`,
-`/api/v1/report`, `/api/v1/pipeline`, `/api/v1/batch`, and more.
-See the auto-generated OpenAPI docs at `/docs`.
+Every impact tool is one generic route, generated from the tool registry:
+
+```bash
+curl localhost:8000/api/v1/tools                       # list tools (add ?schemas=true for JSON schemas)
+curl -X POST localhost:8000/api/v1/tools/assess_deal \
+     -H 'Content-Type: application/json' \
+     -d '{"text": "We sell solar home systems in Kenya...", "company_name": "SunPath"}'
+```
+
+For safety, remote callers can't make the server read its own files or fetch
+URLs (`file_path`, `url`, `output_path`, …); send content inline, or set
+`IMPACT_VISION_API_ALLOW_PATHS=1` on a trusted single-user deployment. The
+older named endpoints (`/api/v1/score`, `/api/v1/report`, `/api/v1/batch`, …)
+remain, and `/api/v1/playbooks` lists the multi-tool workflows. See the
+OpenAPI docs at `/docs`.
 
 ## Roadmap
 
 Strategy and engineering plans live in [`docs/`](docs/):
 
-- [`docs/roadmap-v7.md`](docs/roadmap-v7.md) — **current**: trust fixes, effortless first run, decision-first reports, standards currency. Waves 0–1 shipped; Wave 2 in progress.
+- [`docs/roadmap-v7.md`](docs/roadmap-v7.md) — **current**: trust fixes, effortless first run, decision-first reports, standards currency. Waves 0–2 shipped; Wave 3 in progress.
 - [`docs/roadmap-v2.md`](docs/roadmap-v2.md) — Institutional-readiness plan: data contracts, investee collection, climate accounting, LP reporting, assurance, causal impact, and governed AI.
 - [`docs/roadmap-v3.md`](docs/roadmap-v3.md) / [`-v3-implementation.md`](docs/roadmap-v3-implementation.md) — Trust infrastructure. Shipped.
 - [`docs/roadmap-v4.md`](docs/roadmap-v4.md) — Consultant-led engagement suite. Backend shipped; frontend and paid-data wiring deferred.

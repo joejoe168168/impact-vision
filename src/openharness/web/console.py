@@ -376,7 +376,7 @@ async function discoverFromOpenAPI() {
     const paths = spec.paths || {};
     const found = [];
     for (const [path, methods] of Object.entries(paths)) {
-      if (!path.startsWith("/api/v1/")) continue;
+      if (!path.startsWith("/api/v1/") || path.includes("{")) continue;
       const m = methods.post || methods.put;
       if (!m) continue;
       const id = path.replace(/^\/api\/v1\//, "");
@@ -403,8 +403,29 @@ async function discoverFromOpenAPI() {
   } catch (e) {
     console.warn("OpenAPI discovery failed, using curated catalogue:", e);
     for (const t of TOOLS) SCHEMA_SOURCE[t.id] = "fallback";
-  } finally {
-    renderToolList();
+  }
+  await discoverFromRegistry(base);
+  renderToolList();
+}
+
+/* Every impact agent tool, generated from the tool registry (v7 W3.1):
+   GET /api/v1/tools?schemas=true -> one form per tool, POST /api/v1/tools/{name}. */
+async function discoverFromRegistry(base) {
+  try {
+    const token = document.getElementById("apiToken").value.trim();
+    const headers = token ? { "Authorization": "Bearer " + token } : {};
+    const res = await fetch(base + "/api/v1/tools?schemas=true", { headers });
+    if (!res.ok) throw new Error("tools " + res.status);
+    const data = await res.json();
+    TOOLS = TOOLS.filter(t => !t._registry);
+    for (const t of data.tools || []) {
+      const id = "tool:" + t.name;
+      TOOLS.push({ id, label: t.title, endpoint: "/api/v1/tools/" + t.name,
+                   desc: t.area + " · " + t.summary, schema: t.input_schema, _registry: true });
+      SCHEMA_SOURCE[id] = "registry";
+    }
+  } catch (e) {
+    console.warn("Tool registry discovery failed:", e);
   }
 }
 
@@ -445,7 +466,10 @@ function fieldsFromSchema(schema) {
   if (!schema || !schema.properties) return null;
   const required = new Set(schema.required || []);
   const fields = [];
-  for (const [k, prop] of Object.entries(schema.properties)) {
+  for (const [k, raw] of Object.entries(schema.properties)) {
+    const inner = raw.anyOf && raw.anyOf.find(p => p.type !== "null");
+    const prop = inner ? Object.assign({}, inner, { default: raw.default, title: raw.title,
+                                                    description: raw.description }) : raw;
     const title = prop.title || k;
     const desc = prop.description || "";
     const t = jsonTypeToField(prop);
@@ -461,6 +485,10 @@ function fieldsFromSchema(schema) {
 }
 
 function jsonTypeToField(prop) {
+  if (prop.anyOf) {   /* Optional[X] -> X */
+    const inner = prop.anyOf.find(p => p.type !== "null");
+    if (inner) prop = Object.assign({}, inner, { default: prop.default });
+  }
   if (prop.enum) return { t: "enum", hint: prop.enum.join("|") };
   const type = prop.type;
   if (type === "integer" || type === "number") return { t: "number", hint: type };
@@ -478,7 +506,10 @@ function renderFormFields(form, fields, preset) {
     const lbl = `<label class="${labelCls}" for="fld-${f.k}">${f.label}</label>`;
     const defVal = preset && preset[f.k] !== undefined
       ? (typeof preset[f.k] === "object" ? JSON.stringify(preset[f.k], null, 2) : String(preset[f.k]))
-      : (f.default !== undefined ? String(f.default) : "");
+      : (f.default === undefined || f.default === null ? ""
+         : typeof f.default === "object"
+           ? (Object.keys(f.default).length ? JSON.stringify(f.default) : "")
+           : String(f.default));
     let control;
     if (f.enum) {
       const opts = f.enum.map(v => `<option value="${escHtml(v)}"${String(v)===defVal?" selected":""}>${escHtml(v)}</option>`).join("");
@@ -547,7 +578,9 @@ function selectTool(id, preset) {
   document.getElementById("toolTitle").textContent = tool.label;
 
   const src = SCHEMA_SOURCE[id] || "fallback";
-  const badge = src === "openapi"
+  const badge = src === "registry"
+    ? `<span class="schema-badge openapi">tool registry</span>`
+    : src === "openapi"
     ? `<span class="schema-badge openapi">OpenAPI</span>`
     : `<span class="schema-badge fallback">fallback recipe</span>`;
   document.getElementById("toolDesc").innerHTML =

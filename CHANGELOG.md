@@ -20,6 +20,25 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Added — v7 Wave 3: one product, many surfaces
+
+- **Registry-generated surfaces (W3.1).** New `impact/surfaces.py` reads the
+  fund-profile tool registry once and feeds every surface.
+  - **REST**: `GET /api/v1/tools` (add `?schemas=true` for JSON schemas),
+    `GET`/`POST /api/v1/tools/{name}` runs any of the 48 impact tools with
+    pydantic validation (422 on bad input), and `GET /api/v1/playbooks`.
+    Remote callers cannot set `file_path`, `url`, `output_path`,
+    `output_dir` or `thesis_path` (the server would read its own files or
+    fetch URLs) unless `IMPACT_VISION_API_ALLOW_PATHS=1`. The OpenAPI version
+    now comes from the package instead of a hard-coded 0.16.0. New
+    `tool_complete` webhook event.
+  - **MCP**: every tool without a hand-written wrapper (25, including
+    `assess_deal`, `impact_advisor`, `engagement_suite` and `toc_builder`) is
+    registered with its real typed schema (enums, defaults, descriptions),
+    and each of the 10 advisor playbooks is an MCP prompt.
+  - **Console**: `/console` adds a schema-driven form for every registry
+    tool, labelled by task area, next to the existing named endpoints.
+
 ### Added — v7 Wave 2: report design system & decision-first deliverables
 
 - **Decision-first impact report (W2.1–W2.3).** New default HTML layout

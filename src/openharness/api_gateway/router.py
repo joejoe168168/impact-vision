@@ -5,7 +5,11 @@ Usage:
     uvicorn openharness.api_gateway.router:app --reload
 
 Endpoints (v1):
-    GET  /api/v1/health               - Health check
+    GET  /api/v1/health               - Health check (version + live tool count)
+    GET  /api/v1/tools                - Every impact tool with its JSON input schema
+    GET  /api/v1/tools/{name}         - One tool's schema
+    POST /api/v1/tools/{name}         - Run any impact tool (generated from the registry)
+    GET  /api/v1/playbooks            - Advisor playbooks (multi-tool workflows)
     POST /api/v1/score                - 5-Dimension impact scoring
     POST /api/v1/sdg-map              - SDG alignment mapping
     POST /api/v1/data-quality         - Metric data quality assessment
@@ -76,15 +80,21 @@ _CORS_ORIGINS = _parse_cors_origins(os.environ.get("IMPACT_VISION_CORS_ORIGINS")
 _CORS_ALLOW_CREDENTIALS = "*" not in _CORS_ORIGINS
 
 
+def _package_version() -> str:
+    from openharness.web.chat_api import _version
+
+    return _version()
+
+
 app = FastAPI(
     title="Impact Vision API",
     description=(
         "AI-powered impact measurement and SDG alignment API for "
-        "VC and impact investment funds. 26+ endpoints covering "
-        "5-Dimension scoring, SDG mapping, greenwashing detection, "
-        "pipeline management, and comprehensive impact reporting."
+        "VC and impact investment funds. Every impact agent tool is available at "
+        "POST /api/v1/tools/{name} (schemas at GET /api/v1/tools); the named "
+        "endpoints below are kept for existing integrations."
     ),
-    version="0.16.0",
+    version=_package_version(),
 )
 
 app.add_middleware(
@@ -271,7 +281,7 @@ class WebhookRegistration(BaseModel):
     url: str = Field(description="Webhook callback URL")
     events: list[str] = Field(
         default_factory=lambda: ["metric_update"],
-        description="Events: metric_update, score_change, threshold_breach, assessment_complete, alert_fired",
+        description="Events: metric_update, score_change, threshold_breach, assessment_complete, alert_fired, tool_complete",
     )
     company_name: str = ""
     secret: str = Field(
@@ -355,6 +365,53 @@ async def health():
         "engine": "impact-vision",
         "tools": len(impact_tools.__all__),
     }
+
+
+# ---------------------------------------------------------------------------
+# Registry-generated tool routes (v7 W3.1)
+# ---------------------------------------------------------------------------
+
+
+@app.get("/api/v1/tools", dependencies=[Depends(verify_api_key)])
+async def list_tools(schemas: bool = False):
+    from openharness.impact.surfaces import AREAS, tool_manifest
+
+    return {"tools": tool_manifest(include_schema=schemas), "areas": list(AREAS) + ["More"]}
+
+
+@app.get("/api/v1/tools/{name}", dependencies=[Depends(verify_api_key)])
+async def describe_tool(name: str):
+    from openharness.impact.surfaces import ToolNotFound, get_surface_tool, tool_entry
+
+    try:
+        return tool_entry(get_surface_tool(name))
+    except ToolNotFound:
+        raise HTTPException(status_code=404, detail=f"Unknown tool {name!r}; see GET /api/v1/tools")
+
+
+@app.post("/api/v1/tools/{name}", dependencies=[Depends(verify_api_key)])
+async def call_tool(name: str, payload: dict[str, Any] | None = None):
+    from openharness.impact.surfaces import PathFieldRejected, ToolNotFound, run_tool
+
+    try:
+        result = await run_tool(name, payload or {}, cwd=_get_tool_context().cwd)
+    except ToolNotFound:
+        raise HTTPException(status_code=404, detail=f"Unknown tool {name!r}; see GET /api/v1/tools")
+    except PathFieldRejected as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail=exc.errors(include_url=False))
+    if result["is_error"]:
+        raise HTTPException(status_code=400, detail=result["output"])
+    await _fire_webhooks("tool_complete", {"tool": name})
+    return result
+
+
+@app.get("/api/v1/playbooks", dependencies=[Depends(verify_api_key)])
+async def playbooks():
+    from openharness.impact.tool_advisor import list_playbooks
+
+    return {"playbooks": list_playbooks()}
 
 
 @app.post("/api/v1/score", dependencies=[Depends(verify_api_key)])
@@ -973,7 +1030,7 @@ async def register_webhook(reg: WebhookRegistration):
         "webhook_id": webhook_id,
         "url": reg.url,
         "events": reg.events,
-        "note": "Webhooks trigger on: assessment_complete, score_change, alert_fired, metric_update, threshold_breach",
+        "note": "Webhooks trigger on: assessment_complete, score_change, alert_fired, metric_update, threshold_breach, tool_complete",
     }
 
 
