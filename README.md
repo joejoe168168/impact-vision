@@ -232,7 +232,7 @@ Opens the six-tab dashboard at http://localhost:8501. `iv` is shorthand for
 
 ## Usage
 
-Impact Vision ships **53 impact agent tools** covering screening, diligence,
+Impact Vision ships **48 impact agent tools** covering screening, diligence,
 monitoring, reporting, assurance, and exit. Paste the examples below into the
 agent or the web chat UI; `impact_advisor` routes unfamiliar requests.
 
@@ -594,7 +594,7 @@ impact-vision/
 │   │   ├── mcp_server.py              # MCP server (FastMCP)
 │   │   └── sdk.py                     # High-level ImpactVision SDK facade
 │   │
-│   ├── tools/impact/                  # 53 LLM-callable impact agent tools (see "Tools" below)
+│   ├── tools/impact/                  # 48 LLM-callable impact agent tools (see "Tools" below)
 │   ├── api_gateway/router.py          # FastAPI REST API
 │   ├── web/                           # Browser surfaces (single-file, no build step)
 │   │   ├── chat_ui.py                 #   ChatGPT-style chat UI served at /
@@ -754,7 +754,7 @@ cross-references to IRIS+ metric IDs via the shared
 | | 3-pillar assurance bundle | HMAC-signed evidence graph + audit trail + workspace (v4) |
 | | AI governance (EU AI Act) | Model card + data lineage + human-oversight log + risk classification & obligations |
 
-### Agent Tools (53)
+### Agent Tools (48)
 
 All tools below are exposed through the default OpenHarness tool registry
 and `openharness.tools.impact`, so the interactive agent, web chat UI,
@@ -771,7 +771,7 @@ REST API, and MCP server see the same surface.
 
 | Tool | Description |
 |------|-------------|
-| `pitch_deck_analyze` | PDF/TXT/MD intake with impact-claim extraction + Company model |
+| `pitch_deck_analyze` | PDF/TXT/MD intake with impact-claim extraction + Company model; `action='compare_documents' / 'detect_changes' / 'verify_claims'` for multi-document checks |
 | `iris_catalog` | IRIS+ catalog search, browse, filter by SDG/theme |
 | `sdg_mapper` | SDG alignment scoring with theme inference and evidence chains |
 | `five_dimension_assess` | 5-Dimension assessment with additionality & counterfactual prompts |
@@ -784,8 +784,6 @@ REST API, and MCP server see the same surface.
 | Tool | Description |
 |------|-------------|
 | `dd_checklist` | 122-question DD checklist, document analysis, and targeted suggestions |
-| `document_analysis` | Multi-document comparison, change detection, claim verification |
-| `guided_assessment` | Step-by-step workflow with deal-stage templates |
 | `product_passport` | EU Digital Product Passport import and IRIS+/ESRS mapping |
 
 **Risk & credibility (3)**
@@ -805,14 +803,13 @@ REST API, and MCP server see the same surface.
 | `cross_reference` | Cross-framework metric lookup (59 mappings) |
 | `impact_report` | Interactive HTML reports + XLSX/CSV/JSON/text/PDF; `narrative_mode='narrative_prompt'` appends LLM narrative prompts (exec summary, key findings, impact narrative, case study) |
 | `impact_valuation` | IFVI/VBA monetary impact accounting: value factors → net monetary impact, benefit/cost ratio, impact multiple of money |
-| `lp_ddq_export` | LP DDQ responses in ILPA, GIIN, EDCI, SFDR formats |
 
 **Decision workflow — v5 (2)**
 
 | Tool | Description |
 |------|-------------|
 | `decision_workflow` | Quick screen, IC memo proof bundle, deal comparison, LP readiness, and context-driven impact target setting (`set_targets`) |
-| `regulatory_calendar` | Jurisdiction-specific reporting deadlines, ISSB S2 amendment summaries, and a market-wide milestone watch-list (ECGT, revised ESRS, ISSA 5000, EUDR, CSDDD, SFDR 2.0) |
+| `regulatory_calendar` | Jurisdiction-specific reporting deadlines, ISSB S2 amendment summaries, and a market-wide milestone watch-list (ECGT, revised ESRS, ISSA 5000, EUDR, CSDDD, SFDR 2.0); `action='radar_*'` is the review-gated regulatory-change radar |
 
 **Portfolio workflow (5)**
 
@@ -820,7 +817,7 @@ REST API, and MCP server see the same surface.
 |------|-------------|
 | `portfolio_analyze` | Batch analysis, capital-weighted roll-ups, benchmarking |
 | `portfolio_query` | Natural-language portfolio queries (`ApprovedDataPolicy`-gated) |
-| `pipeline` | 8-stage investment pipeline with transition tracking |
+| `pipeline` | 8-stage investment pipeline with transition tracking; `action='guided_*'` runs step-by-step assessments with deal-stage templates |
 | `monitoring` | Continuous monitoring, metric updates, alerts, re-assessment |
 | `trend_analysis` | Time-series metric trend analysis with trajectory projection |
 
@@ -828,8 +825,7 @@ REST API, and MCP server see the same surface.
 
 | Tool | Description |
 |------|-------------|
-| `beneficiary_feedback` | Import and analyze beneficiary feedback data |
-| `stakeholder_voice` | Lean Data templates + GDPR/PDPA consent + feedback↔claim links |
+| `stakeholder_voice` | Lean Data templates + GDPR/PDPA consent + feedback↔claim links; `action='feedback_import' / 'feedback_analyze'` for beneficiary feedback data |
 | `improvement_advisor` | LLM-guided improvement recs, peer insights, SDG opportunities |
 
 **Trust infrastructure — v3 (4)**
@@ -878,10 +874,9 @@ REST API, and MCP server see the same surface.
 | `contribution_tracker` | Pre-register and monitor contribution claims, evidence, staleness, and attribution inflation |
 | `carbon_credit_integrity` | ICVCM/VCMI carbon-credit and biodiversity-credit integrity screens |
 | `impact_linked_finance` | KPI credibility, payment-by-results verification, and carry/SAFI simulations |
-| `regulatory_radar` | Review-gated official-source change detection and portfolio applicability |
 | `dmrv_evidence` | Hash, anchor, summarise, and verify digital MRV evidence |
 | `survey_delivery` | Consent-gated WhatsApp, SMS, voice, and web survey delivery |
-| `ddq_responder` | ILPA DDQ 2.0 / PRI 2026 answer drafting from approved evidence only |
+| `ddq_responder` | ILPA DDQ 2.0 / PRI 2026 answer drafting from approved evidence only; `action='template_generate'` fills ILPA / GIIN / EDCI / SFDR DDQ templates |
 
 ## Streamlit Dashboard
 

@@ -111,17 +111,17 @@ def create_default_tool_registry(
     impact_tools: tuple[tuple[str, str], ...] = (
         ("impact.advisor_tool", "ImpactAdvisorTool"),
         ("impact.assess_deal_tool", "AssessDealTool"),
-        ("impact.beneficiary_feedback_tool", "BeneficiaryFeedbackTool"),
+        # beneficiary_feedback merged into stakeholder_voice (v7 W1.5; deprecated alias in developer profile)
         ("impact.iris_catalog_tool", "IrisCatalogTool"),
         ("impact.sdg_mapper_tool", "SdgMapperTool"),
         ("impact.five_dimension_assess_tool", "FiveDimensionAssessTool"),
         ("impact.gap_analysis_tool", "GapAnalysisTool"),
         ("impact.dd_checklist_tool", "DdChecklistTool"),
-        ("impact.document_analysis_tool", "DocumentAnalysisTool"),
+        # document_analysis merged into pitch_deck_analyze (v7 W1.5; deprecated alias in developer profile)
         ("impact.exclusion_screening_tool", "ExclusionScreeningTool"),
-        ("impact.pitch_deck_analyze_tool", "PitchDeckAnalyzeTool"),
+        ("impact.merged_tools", "PitchDeckAnalyzeTool"),  # v7 W1.5 merged tool
         ("impact.greenwashing_tool", "GreenwashingDetectorTool"),
-        ("impact.guided_assessment_tool", "GuidedAssessmentTool"),
+        # guided_assessment merged into pipeline (v7 W1.5; deprecated alias in developer profile)
         ("impact.hrdd_tool", "HRDDTool"),
         ("impact.impact_quantifier_tool", "ImpactQuantifierTool"),
         ("impact.impact_risk_opportunity_tool", "ImpactRiskOpportunityTool"),
@@ -133,14 +133,14 @@ def create_default_tool_registry(
         ("impact.cross_reference_tool", "CrossReferenceTool"),
         ("impact.data_quality_tool", "DataQualityTool"),
         ("impact.decision_workflow_tool", "DecisionWorkflowTool"),
-        ("impact.lp_ddq_export_tool", "LpDdqExportTool"),
+        # lp_ddq_export merged into ddq_responder (v7 W1.5; deprecated alias in developer profile)
         ("impact.metric_recommender_tool", "MetricRecommenderTool"),
         ("impact.monitoring_tool", "MonitoringTool"),
         # narrative merged into impact_report (narrative_mode + narrative_section)
-        ("impact.pipeline_tool", "PipelineTool"),
+        ("impact.merged_tools", "PipelineTool"),  # v7 W1.5 merged tool
         ("impact.portfolio_tool", "PortfolioTool"),
         ("impact.product_passport_tool", "ProductPassportTool"),
-        ("impact.regulatory_calendar_tool", "RegulatoryCalendarTool"),
+        ("impact.merged_tools", "RegulatoryCalendarTool"),  # v7 W1.5 merged tool
         ("impact.trend_analysis_tool", "TrendAnalysisTool"),
         # verification_prep merged into verification_workspace (prep actions)
         # v3 tools (0.15.0): trust infrastructure
@@ -151,7 +151,7 @@ def create_default_tool_registry(
         # greenwashing_reviewer merged into greenwashing_detect (action='review_claims')
         ("impact.lp_narrative_tool", "LPNarrativeTool"),
         ("impact.portfolio_query_tool", "PortfolioQueryTool"),
-        ("impact.stakeholder_voice_tool", "StakeholderVoiceTool"),
+        ("impact.merged_tools", "StakeholderVoiceTool"),  # v7 W1.5 merged tool
         ("impact.verification_workspace_tool", "VerificationWorkspaceTool"),
         # v4 tools (Wave 1): consultant engagement workspace
         ("impact.engagement_workspace_tool", "EngagementWorkspaceTool"),
@@ -166,14 +166,23 @@ def create_default_tool_registry(
         # v6 tools: comparable, assured, connected
         ("impact.carbon_credit_tool", "CarbonCreditIntegrityTool"),
         ("impact.contribution_tool", "ContributionTrackerTool"),
-        ("impact.ddq_responder_tool", "DDQResponderTool"),
+        ("impact.merged_tools", "DDQResponderTool"),  # v7 W1.5 merged tool
         ("impact.dmrv_tool", "DMRVEvidenceTool"),
         ("impact.impact_linked_finance_tool", "ImpactLinkedFinanceTool"),
-        ("impact.regulatory_radar_tool", "RegulatoryRadarTool"),
+        # regulatory_radar merged into regulatory_calendar (v7 W1.5; deprecated alias in developer profile)
         ("impact.survey_delivery_tool", "SurveyDeliveryTool"),
     )
     for module_name, class_name in impact_tools:
         _register_if_available(registry, module_name, class_name)
+
+    if profile == "developer":
+        # One-release compatibility for tool names merged in v7 W1.5.
+        try:
+            from openharness.tools.impact.merged_tools import DEPRECATED_TOOLS
+        except Exception:  # noqa: BLE001 - optional like every impact tool
+            DEPRECATED_TOOLS = {}
+        for alias_cls, _replacement in DEPRECATED_TOOLS.values():
+            registry.register(alias_cls())
 
     if mcp_manager is not None:
         from .list_mcp_resources_tool import ListMcpResourcesTool

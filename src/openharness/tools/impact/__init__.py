@@ -2,7 +2,6 @@
 
 from openharness.tools.impact.advisor_tool import ImpactAdvisorTool
 from openharness.tools.impact.ai_governance_tool import AIGovernanceTool
-from openharness.tools.impact.beneficiary_feedback_tool import BeneficiaryFeedbackTool
 from openharness.tools.impact.climate_scenario_tool import ClimateScenarioTool
 from openharness.tools.impact.carbon_credit_tool import CarbonCreditIntegrityTool
 from openharness.tools.impact.contribution_tool import ContributionTrackerTool
@@ -10,10 +9,8 @@ from openharness.tools.impact.cross_reference_tool import CrossReferenceTool
 from openharness.tools.impact.data_quality_tool import DataQualityTool
 from openharness.tools.impact.decision_workflow_tool import DecisionWorkflowTool
 from openharness.tools.impact.dd_checklist_tool import DdChecklistTool
-from openharness.tools.impact.ddq_responder_tool import DDQResponderTool
 from openharness.tools.impact.dmrv_tool import DMRVEvidenceTool
 from openharness.tools.impact.assess_deal_tool import AssessDealTool
-from openharness.tools.impact.document_analysis_tool import DocumentAnalysisTool
 from openharness.tools.impact.emission_factors_tool import EmissionFactorsTool
 from openharness.tools.impact.engagement_suite_tool import EngagementSuiteTool
 from openharness.tools.impact.engagement_workspace_tool import EngagementWorkspaceTool
@@ -21,6 +18,13 @@ from openharness.tools.impact.evidence_review_tool import EvidenceReviewTool
 from openharness.tools.impact.exclusion_screening_tool import ExclusionScreeningTool
 from openharness.tools.impact.exit_impact_tool import ExitImpactTool
 from openharness.tools.impact.esg_toolbox_tool import ESGToolboxTool
+from openharness.tools.impact.merged_tools import (
+    DDQResponderTool,
+    PipelineTool,
+    PitchDeckAnalyzeTool,
+    RegulatoryCalendarTool,
+    StakeholderVoiceTool,
+)
 from openharness.tools.impact.five_dimension_assess_tool import FiveDimensionAssessTool
 from openharness.tools.impact.framework_tool import FrameworkTool
 from openharness.tools.impact.gap_analysis_tool import GapAnalysisTool
@@ -28,7 +32,6 @@ from openharness.tools.impact.greenwashing_reviewer_tool import (
     GreenwashingReviewerTool as GreenwashingReviewerTool,
 )
 from openharness.tools.impact.greenwashing_tool import GreenwashingDetectorTool
-from openharness.tools.impact.guided_assessment_tool import GuidedAssessmentTool
 from openharness.tools.impact.hrdd_tool import HRDDTool
 from openharness.tools.impact.impact_quantifier_tool import ImpactQuantifierTool
 from openharness.tools.impact.impact_risk_opportunity_tool import ImpactRiskOpportunityTool
@@ -38,21 +41,15 @@ from openharness.tools.impact.impact_linked_finance_tool import ImpactLinkedFina
 from openharness.tools.impact.improvement_advisor_tool import ImprovementAdvisorTool
 from openharness.tools.impact.investee_portal_tool import InvesteePortalTool
 from openharness.tools.impact.iris_catalog_tool import IrisCatalogTool
-from openharness.tools.impact.lp_ddq_export_tool import LpDdqExportTool
 from openharness.tools.impact.lp_narrative_tool import LPNarrativeTool
 from openharness.tools.impact.lca_tool import LCAAssessmentTool
 from openharness.tools.impact.metric_recommender_tool import MetricRecommenderTool
 from openharness.tools.impact.monitoring_tool import MonitoringTool
 from openharness.tools.impact.narrative_tool import NarrativeTool as NarrativeTool
-from openharness.tools.impact.pipeline_tool import PipelineTool
-from openharness.tools.impact.pitch_deck_analyze_tool import PitchDeckAnalyzeTool
 from openharness.tools.impact.portfolio_query_tool import PortfolioQueryTool
 from openharness.tools.impact.portfolio_tool import PortfolioTool
 from openharness.tools.impact.product_passport_tool import ProductPassportTool
-from openharness.tools.impact.regulatory_calendar_tool import RegulatoryCalendarTool
-from openharness.tools.impact.regulatory_radar_tool import RegulatoryRadarTool
 from openharness.tools.impact.sdg_mapper_tool import SdgMapperTool
-from openharness.tools.impact.stakeholder_voice_tool import StakeholderVoiceTool
 from openharness.tools.impact.survey_delivery_tool import SurveyDeliveryTool
 from openharness.tools.impact.toc_builder_tool import ToCBuilderTool
 from openharness.tools.impact.trend_analysis_tool import TrendAnalysisTool
@@ -64,7 +61,6 @@ from openharness.tools.impact.verification_workspace_tool import VerificationWor
 __all__ = [
     "AIGovernanceTool",
     "AssessDealTool",
-    "BeneficiaryFeedbackTool",
     "ClimateScenarioTool",
     "CarbonCreditIntegrityTool",
     "ContributionTrackerTool",
@@ -74,7 +70,6 @@ __all__ = [
     "DdChecklistTool",
     "DDQResponderTool",
     "DMRVEvidenceTool",
-    "DocumentAnalysisTool",
     "EmissionFactorsTool",
     "EngagementSuiteTool",
     "EngagementWorkspaceTool",
@@ -86,7 +81,6 @@ __all__ = [
     "FrameworkTool",
     "GapAnalysisTool",
     "GreenwashingDetectorTool",
-    "GuidedAssessmentTool",
     "HRDDTool",
     "ImpactAdvisorTool",
     "ImpactQuantifierTool",
@@ -99,7 +93,6 @@ __all__ = [
     "IrisCatalogTool",
     "LPNarrativeTool",
     "LCAAssessmentTool",
-    "LpDdqExportTool",
     "MetricRecommenderTool",
     "MonitoringTool",
     "PipelineTool",
@@ -108,7 +101,6 @@ __all__ = [
     "PortfolioTool",
     "ProductPassportTool",
     "RegulatoryCalendarTool",
-    "RegulatoryRadarTool",
     "SdgMapperTool",
     "StakeholderVoiceTool",
     "SurveyDeliveryTool",

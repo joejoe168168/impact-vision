@@ -121,7 +121,7 @@ def test_advisor_tool_catalog_and_playbooks() -> None:
         )
     )
     assert not pb.is_error
-    assert "lp_ddq_export" in pb.output
+    assert "ddq_responder" in pb.output
 
     bad = asyncio.run(
         tool.execute(

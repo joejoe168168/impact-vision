@@ -61,6 +61,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
   actions by area with their keys. Unknown keys are rejected with the
   accepted list. The tool description now names the areas instead of
   "Tracks 3-10".
+- **Duplicate tools merged (W1.5, part 2).** A generic `tools/impact/merge.py`
+  folds one tool into another with a typed union schema and unchanged
+  behaviour. Each absorbed tool lives on as actions of the kept tool:
+  - `beneficiary_feedback` → `stakeholder_voice` (`feedback_*`)
+  - `lp_ddq_export` → `ddq_responder` (`template_*`;
+    `output_format` → `template_output_format`)
+  - `regulatory_radar` → `regulatory_calendar` (`radar_*`)
+  - `guided_assessment` → `pipeline` (`guided_*`)
+  - `document_analysis` → `pitch_deck_analyze` (`compare_documents`,
+    `detect_changes`, `verify_claims`; default `analyze`)
+
+  The old names stay registered for one release as `[Deprecated: …]` aliases
+  in the `developer` profile only. Impact tools: 53 → 48; fund profile:
+  62 → 57.
 
 ### Security
 

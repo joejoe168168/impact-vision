@@ -171,7 +171,7 @@ ENGAGEMENT_BUNDLES: dict[EngagementBundleType, EngagementBundle] = {
             "impact_risk_opportunity",
             "metric_recommender",
             "greenwashing_detect",
-            "beneficiary_feedback",
+            "stakeholder_voice",
         ],
         default_deliverables=[
             "IMM report",
@@ -238,7 +238,7 @@ ENGAGEMENT_BUNDLES: dict[EngagementBundleType, EngagementBundle] = {
             "data, with a Q&A workspace the consultant can defend line-by-line."
         ),
         bundled_tools=[
-            "lp_ddq_export",
+            "ddq_responder",
             "lp_narrative",
             "portfolio_query",
             "evidence_review",
@@ -302,7 +302,7 @@ ENGAGEMENT_BUNDLES: dict[EngagementBundleType, EngagementBundle] = {
             "framework_tool",
             "cross_reference",
             "data_quality",
-            "lp_ddq_export",
+            "ddq_responder",
         ],
         default_deliverables=[
             "Regulatory gap report",
@@ -324,7 +324,6 @@ ENGAGEMENT_BUNDLES: dict[EngagementBundleType, EngagementBundle] = {
         ),
         bundled_tools=[
             "stakeholder_voice",
-            "beneficiary_feedback",
         ],
         default_deliverables=[
             "Stakeholder voice report",

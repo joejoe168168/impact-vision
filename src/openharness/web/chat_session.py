@@ -60,6 +60,7 @@ _WRITE_TOOLS = {
     "notebook_edit",
     "impact_report",
     "lp_ddq_export",
+    "ddq_responder",
     "Write",
     "Edit",
     "NotebookEdit",

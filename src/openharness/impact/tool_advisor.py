@@ -96,9 +96,9 @@ TOOL_ROUTES: list[ToolRoute] = [
         keywords=["impact linked", "safi", "carry", "payment by results", "sustainability linked"],
     ),
     ToolRoute(
-        tool="regulatory_radar",
+        tool="regulatory_calendar",
         category="compliance",
-        summary="Detect official-source regulatory changes and portfolio impact.",
+        summary="Regulatory radar (action='radar_check' / 'radar_findings'): official-source changes and portfolio impact.",
         keywords=["regulatory change", "radar", "what changed", "standards update"],
     ),
     ToolRoute(
@@ -138,9 +138,9 @@ TOOL_ROUTES: list[ToolRoute] = [
         example="pitch_deck_analyze(file_path='deck.pdf')",
     ),
     ToolRoute(
-        tool="document_analysis",
+        tool="pitch_deck_analyze",
         category="intake",
-        summary="Extract impact-relevant content from arbitrary documents (reports, policies).",
+        summary="Compare several documents for one company (action='compare_documents' / 'detect_changes' / 'verify_claims').",
         keywords=["document", "report text", "extract", "policy document", "annual report"],
     ),
     ToolRoute(
@@ -157,9 +157,9 @@ TOOL_ROUTES: list[ToolRoute] = [
         ],
     ),
     ToolRoute(
-        tool="guided_assessment",
+        tool="pipeline",
         category="intake",
-        summary="Interactive step-by-step impact assessment when no documents are available.",
+        summary="Guided step-by-step impact assessment when no documents are available (action='guided_start').",
         keywords=[
             "guided",
             "step by step",
@@ -489,9 +489,9 @@ TOOL_ROUTES: list[ToolRoute] = [
         ],
     ),
     ToolRoute(
-        tool="beneficiary_feedback",
+        tool="stakeholder_voice",
         category="verification",
-        summary="Import and analyze beneficiary feedback datasets.",
+        summary="Import and analyze beneficiary feedback datasets (action='feedback_import' / 'feedback_analyze').",
         keywords=["beneficiary", "feedback", "csat", "nps", "customer voice"],
     ),
     # --- Reporting & LP -------------------------------------------------------
@@ -518,9 +518,9 @@ TOOL_ROUTES: list[ToolRoute] = [
         keywords=["lp narrative", "lp letter", "limited partner", "investor letter", "lp q&a"],
     ),
     ToolRoute(
-        tool="lp_ddq_export",
+        tool="ddq_responder",
         category="reporting",
-        summary="Export LP DDQ answers (ILPA/GIIN/EDCI/SFDR) to XLSX/CSV.",
+        summary="Fill LP DDQ templates (ILPA/GIIN/EDCI/SFDR) to XLSX/CSV (action='template_generate').",
         keywords=["ddq", "ilpa", "lp questionnaire", "ddq export", "due diligence questionnaire"],
     ),
     ToolRoute(
@@ -684,7 +684,8 @@ PLAYBOOKS: list[Playbook] = [
                 purpose="Produce audit-friendly LP narrative bound to verified data.",
             ),
             PlaybookStep(
-                tool="lp_ddq_export", purpose="Export ILPA/GIIN/EDCI/SFDR DDQ answers to XLSX."
+                tool="ddq_responder",
+                purpose="action='template_generate': ILPA/GIIN/EDCI/SFDR DDQ answers to XLSX.",
             ),
         ],
     ),
@@ -857,7 +858,8 @@ PLAYBOOKS: list[Playbook] = [
                 tool="stakeholder_voice", purpose="Lean Data surveys + consent + feedback quality."
             ),
             PlaybookStep(
-                tool="beneficiary_feedback", purpose="Import and analyze feedback datasets."
+                tool="stakeholder_voice",
+                purpose="action='feedback_import' / 'feedback_analyze' for feedback datasets.",
             ),
             PlaybookStep(tool="impact_data_quality", purpose="Score the collected data's quality."),
         ],
