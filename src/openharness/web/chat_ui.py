@@ -296,6 +296,7 @@ a:hover{text-decoration:underline}
 .rep .gate{margin:0;font-size:10.5px;padding:0 7px}
 .viewer{position:fixed;inset:0;z-index:90;background:var(--bg);display:none;flex-direction:column}
 .viewer.show{display:flex}
+.viewer [hidden]{display:none!important}
 .viewer-bar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--bg-elev)}
 .viewer-bar h3{margin:0 auto 0 0;font-size:15px;font-weight:600}
 .viewer-bar label{font-size:12.5px;color:var(--text-dim);display:flex;gap:6px;align-items:center}
@@ -1113,16 +1114,35 @@ function viewerParams() {
   return p.toString();
 }
 
+function viewerUrl() {
+  if (S.viewing.portfolio) {
+    const p = new URLSearchParams(); if ($('#vTheme').value) p.set('theme', $('#vTheme').value);
+    return '/api/v1/chat/portfolio/view?' + p.toString();
+  }
+  return '/api/v1/chat/reports/' + S.viewing.id + '/view?' + viewerParams();
+}
+
+function openPortfolio() {
+  S.viewing = {portfolio: true};
+  $('#viewerTitle').textContent = 'Portfolio home';
+  $$('.report-only').forEach((el) => { el.hidden = true; });
+  $('#shareBox').classList.remove('show');
+  $('#viewer').classList.add('show');
+  renderViewer();
+  $('#vClose').focus();
+}
+
 async function renderViewer() {
   const rep = S.viewing; if (!rep) return;
   const frame = $('#viewerFrame');
   try {
-    frame.srcdoc = await (await authed('/api/v1/chat/reports/' + rep.id + '/view?' + viewerParams())).text();
+    frame.srcdoc = await (await authed(viewerUrl())).text();
   } catch (e) { frame.srcdoc = '<p style="font:15px system-ui;margin:2rem">Could not load the report: ' + esc(e.message) + '</p>'; }
 }
 
 function openViewer(rep, share) {
   S.viewing = rep;
+  $$('.report-only').forEach((el) => { el.hidden = false; });
   $('#viewerTitle').textContent = (rep.summary && rep.summary.company) || rep.company;
   $('#shareBox').classList.remove('show');
   $('#viewer').classList.add('show');
@@ -1135,7 +1155,7 @@ function closeViewer() { $('#viewer').classList.remove('show'); S.viewing = null
 
 async function openViewerTab() {
   try {
-    const html = await (await authed('/api/v1/chat/reports/' + S.viewing.id + '/view?' + viewerParams())).text();
+    const html = await (await authed(viewerUrl())).text();
     window.open(URL.createObjectURL(new Blob([html], {type: 'text/html'})), '_blank', 'noopener');
   } catch (e) { toast('Could not open: ' + e.message); }
 }
@@ -1176,6 +1196,13 @@ function renderPanel() {
   const body = $('#panelBody');
   body.innerHTML = '';
   if (S.tab === 'reports') {
+    if (S.reports.length) {
+      const home = document.createElement('button');
+      home.className = 'btn'; home.style.cssText = 'width:100%;margin-bottom:8px';
+      home.textContent = 'Open portfolio home';
+      home.onclick = openPortfolio;
+      body.appendChild(home);
+    }
     if (!S.reports.length) {
       body.innerHTML = '<div class="empty">Analyze a pitch deck from the welcome screen — reports you create appear here.</div>';
       return;
@@ -1642,16 +1669,16 @@ _HTML = r"""<!DOCTYPE html>
 <div class="viewer" id="viewer" role="dialog" aria-modal="true" aria-labelledby="viewerTitle">
   <div class="viewer-bar">
     <h3 id="viewerTitle">Report</h3>
-    <label>Audience <select id="vAudience">
+    <label class="report-only">Audience <select id="vAudience">
       <option value="full">Full</option><option value="ic">Investment committee</option>
       <option value="lp">LP</option><option value="regulator">Regulator</option><option value="public">Public</option>
     </select></label>
-    <label>Language <select id="vLang">
+    <label class="report-only">Language <select id="vLang">
       <option value="en">English</option><option value="zh-HK">繁體中文</option><option value="zh-CN">简体中文</option>
     </select></label>
     <label>Theme <select id="vTheme"><option value="">Auto</option><option value="light">Light</option><option value="dark">Dark</option></select></label>
     <button class="btn" id="vOpen" type="button">Open in new tab</button>
-    <button class="btn primary" id="vShare" type="button">Share…</button>
+    <button class="btn primary report-only" id="vShare" type="button">Share…</button>
     <button class="btn" id="vClose" type="button" aria-label="Close report">Close</button>
   </div>
   <div class="sharebox" id="shareBox">

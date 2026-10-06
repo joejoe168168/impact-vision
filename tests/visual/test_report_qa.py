@@ -43,6 +43,16 @@ def pages(tmp_path_factory):
     }
     for name, html in variants.items():
         (out / f"variant_{name}.html").write_text(html, encoding="utf-8")
+    from openharness.impact.portfolio_home import (
+        build_portfolio_home,
+        record_from_bundle,
+        render_portfolio_home,
+    )
+
+    (out / "portfolio_home.html").write_text(
+        render_portfolio_home(build_portfolio_home([record_from_bundle(bundle)], fund_name="Fund")),
+        encoding="utf-8",
+    )
     (out / "portal.html").write_text(
         build_investee_portal(fund_name="Fund", company_name=bundle.company.name), encoding="utf-8"
     )

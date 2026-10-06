@@ -25,6 +25,11 @@ if str(REPO / "src") not in sys.path:
     sys.path.insert(0, str(REPO / "src"))
 
 from openharness.impact.investee_portal import build_investee_portal  # noqa: E402
+from openharness.impact.portfolio_home import (  # noqa: E402
+    build_portfolio_home,
+    record_from_bundle,
+    render_portfolio_home,
+)
 from openharness.impact.pipeline import (  # noqa: E402
     SAMPLE_DECKS,
     assess_file,
@@ -107,11 +112,18 @@ def main() -> int:
         variants.append(("Investee data portal", portal.relative_to(DEMO).as_posix()))
         extras[bundle.company.name] = variants
 
+    records = [record_from_bundle(b, link=f"{slugify(b.company.name)}/{slugify(b.company.name)}_impact_report.html")
+               for b in bundles]
+    home = DEMO / "portfolio_home.html"
+    home.write_text(render_portfolio_home(build_portfolio_home(records, fund_name=FUND)), encoding="utf-8")
+    print(f"[demo] wrote {home}")
+
     index = write_gallery(
         bundles, DEMO, extras=extras, title="Sample deliverables",
         intro=("Real, unedited output from Impact Vision for three fictional companies, generated "
                "offline from the PDF decks in data/sample_decks. Open any report in a browser; "
                "PDFs are A4 and print-ready."),
+        home_href="portfolio_home.html",
     )
     print(f"[demo] wrote {index}")
     return 0

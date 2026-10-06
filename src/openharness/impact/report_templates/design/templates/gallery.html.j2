@@ -23,6 +23,7 @@
 .gstat .sdg-badge { display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: 7px; 
   font-weight: 800; font-size: 1.2rem; margin-right: 4px; }
 .hero-intro { margin: 0 0 24px; max-width: 70ch; color: var(--ink-2); }
+.home-link { font-weight: 650; color: var(--link); text-decoration: underline; }
 </style>
 </head>
 <body>
@@ -38,6 +39,7 @@
   </div>
 </header>
 {% if intro %}<p class="hero-intro">{{ intro }}</p>{% endif %}
+{% if home_href %}<p class="hero-intro"><a class="home-link" href="{{ home_href }}">Open the portfolio home →</a> heat-map, pipeline, deadlines and evidence to review for all companies.</p>{% endif %}
 <div class="gallery">
 {% for c in cards %}
   <article class="gcard">

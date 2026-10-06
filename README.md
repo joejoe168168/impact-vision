@@ -29,8 +29,12 @@ No API key or setup is needed. Browse ready-made output in [`demo/`](demo/)
 
 <table>
 <tr>
-<td width="50%"><img src="docs/images/web-chat.png" alt="Browser chat UI with starter cards"><br><em><b>Browser chat</b> (<code>impact-vision serve-web</code>): attach a deck and ask the agent to screen it.</em></td>
+<td width="50%"><img src="docs/images/web-chat.png" alt="Browser chat UI with starter cards"><br><em><b>Browser chat</b> (<code>impact-vision serve-web</code>): <b>Analyze a pitch deck</b> works offline, no API key.</em></td>
 <td width="50%"><img src="docs/images/report-glance.png" alt="SDG wheel and impact pathway"><br><em><b>Impact at a glance</b>: SDG wheel of material goals and the impact pathway from the deck's own claims.</em></td>
+</tr>
+<tr>
+<td><img src="docs/images/web-report-viewer.png" alt="Report viewer with share link"><br><em><b>Report viewer</b> in the browser: switch edition, language and theme; <b>Share…</b> makes a signed read-only link.</em></td>
+<td><img src="docs/images/portfolio-home.png" alt="Portfolio home"><br><em><b>Portfolio home</b>: pipeline by IC gate, 5D/SDG heat-map, SFDR/CSRD/SB 253 deadlines and evidence to review.</em></td>
 </tr>
 <tr>
 <td><img src="docs/images/report-5d.png" alt="5 Dimensions with sector benchmark"><br><em><b>5 Dimensions</b> against the sector benchmark, with an evidence label per dimension.</em></td>
@@ -916,7 +920,7 @@ OpenAPI docs at `/docs`.
 
 Strategy and engineering plans live in [`docs/`](docs/):
 
-- [`docs/roadmap-v7.md`](docs/roadmap-v7.md) — **current**: trust fixes, effortless first run, decision-first reports, standards currency. Waves 0–2 shipped; Wave 3 in progress.
+- [`docs/roadmap-v7.md`](docs/roadmap-v7.md) — **current**: trust fixes, effortless first run, decision-first reports, standards currency. Waves 0–3 shipped; Wave 4 (standards currency) next.
 - [`docs/roadmap-v2.md`](docs/roadmap-v2.md) — Institutional-readiness plan: data contracts, investee collection, climate accounting, LP reporting, assurance, causal impact, and governed AI.
 - [`docs/roadmap-v3.md`](docs/roadmap-v3.md) / [`-v3-implementation.md`](docs/roadmap-v3-implementation.md) — Trust infrastructure. Shipped.
 - [`docs/roadmap-v4.md`](docs/roadmap-v4.md) — Consultant-led engagement suite. Backend shipped; frontend and paid-data wiring deferred.

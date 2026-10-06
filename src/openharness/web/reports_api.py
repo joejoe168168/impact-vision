@@ -6,6 +6,7 @@
 ``GET  /api/v1/chat/reports/{id}/view``            decision report HTML (audience/lang/theme)
 ``GET  /api/v1/chat/reports/{id}/files/{name}``    a deliverable (HTML, DOCX, XLSX, CSV, JSON)
 ``POST /api/v1/chat/reports/{id}/share``           signed, expiring read-only link
+``GET  /api/v1/chat/portfolio/view``               portfolio home across all saved reports (W3.4)
 ``GET  /shared/{token}``                           the shared report (no API key needed)
 
 Share links are HMAC-signed with ``IMPACT_VISION_SHARE_HMAC_KEY`` (or
@@ -133,6 +134,34 @@ def render_report(record: dict[str, Any], *, audience: str = "full", lang: str =
     return render_decision_report(data, audience=audience, lang=lang)
 
 
+def render_portfolio_page(*, jurisdictions: str = "EU,US,UK", fund_name: str = "Portfolio",
+                          theme: str = "") -> str:
+    """Portfolio home (W3.4) built from every saved report plus CRM pipeline rows."""
+    from openharness.impact.portfolio_home import build_portfolio_home, render_portfolio_home
+
+    records, seen = [], set()
+    for meta in list_reports(limit=500):  # newest first: keep the latest report per company
+        key = str(meta.get("company", "")).strip().lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        try:
+            records.append(load_report(meta["id"]))
+        except (OSError, ValueError, HTTPException):
+            continue
+    pipeline_rows: list[dict[str, Any]] = []
+    try:
+        from openharness.impact.storage import get_assessment_store
+
+        pipeline_rows = get_assessment_store().list_pipeline()
+    except Exception:  # noqa: BLE001 - the page works without the CRM table
+        pass
+    codes = [j.strip() for j in jurisdictions.split(",") if j.strip()][:8] or ["EU"]
+    view = build_portfolio_home(records, fund_name=fund_name[:120] or "Portfolio",
+                                jurisdictions=codes, pipeline_rows=pipeline_rows)
+    return render_portfolio_home(view, theme=theme)
+
+
 # ---------------------------------------------------------------- share tokens
 
 
@@ -255,6 +284,12 @@ def build_reports_router(*, auth_dependency: Any = None) -> Any:
         if name not in record.get("files", []):
             raise HTTPException(status_code=404, detail="File not found")
         return FileResponse(_report_path(report_id) / name, filename=name)
+
+    @router.get("/portfolio/view", dependencies=deps, response_class=HTMLResponse)
+    async def portfolio_view(jurisdictions: str = "EU,US,UK", fund_name: str = "Portfolio",
+                             theme: str = "") -> HTMLResponse:
+        return HTMLResponse(await asyncio.to_thread(
+            render_portfolio_page, jurisdictions=jurisdictions, fund_name=fund_name, theme=theme))
 
     @router.post("/reports/{report_id}/share", dependencies=deps)
     async def share(report_id: str, req: ShareRequest) -> dict[str, Any]:

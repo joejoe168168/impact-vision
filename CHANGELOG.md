@@ -68,6 +68,23 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
     `ID=value` lines. New `dashboard/forms.py` holds the testable helpers.
   - `/console` stays as the power-user tool runner (now generated from the
     registry, W3.1) rather than being retired.
+- **Portfolio home (W3.4).** New `impact/portfolio_home.py` and
+  `portfolio_home.html.j2` build one page per fund from saved assessments.
+  - Headline tiles: companies, average 5D, IC-ready, greenwashing flags,
+    deadlines in the next 90 days.
+  - Pipeline by IC gate, plus CRM stages when the AssessmentStore has them.
+  - A 5 Dimensions + material-SDG **heat-map**. It uses the validated
+    ordinal ramp, with black or white ink per step checked by axe in both
+    themes.
+  - **Regulatory deadlines** for the fund's jurisdictions (SFDR, CSRD/ESRS,
+    California SB 253/261, UK SDR, …).
+  - **Evidence to review**: AI-extracted claims under 50% confidence.
+  - **Needs attention**: stale (>180 days), data-limited and
+    greenwashing-flagged companies.
+  - In the web app: **Reports → Open portfolio home** (newest report per
+    company), served at `GET /api/v1/chat/portfolio/view`. The demo writes
+    `demo/portfolio_home.html`, which the gallery links to. It is covered by
+    the axe / responsive QA suite.
 
 ### Added — v7 Wave 2: report design system & decision-first deliverables
 

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en"{% if theme %} data-theme="{{ theme }}"{% endif %}>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ v.fund_name }} — portfolio home</title>
+<style>{{ css | safe }}
+.doc { max-width: 1180px; }
+.grid2 { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr)); margin-bottom: 18px; }
+.grid2 > .card { margin: 0; }
+.kpi .meter { margin-top: 8px; }
+.stack { display: flex; height: 26px; border-radius: 6px; overflow: hidden; gap: 2px; margin: 6px 0 12px; }
+.stack span { display: block; min-width: 2px; }
+.stack .good { background: var(--good); } .stack .warning { background: var(--warning); }
+.stack .critical { background: var(--critical); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 0.86rem; margin: 0; padding: 0; list-style: none; }
+.legend li { display: flex; align-items: center; gap: 6px; }
+.legend .sw { width: 10px; height: 10px; border-radius: 3px; }
+.sw.good { background: var(--good); } .sw.warning { background: var(--warning); } .sw.critical { background: var(--critical); }
+.table-wrap { position: relative; }  /* keeps .sr-only spans inside the scroller */
+table.heat { border-collapse: separate; border-spacing: 2px; width: 100%; font-size: 0.86rem; }
+table.heat th { font-weight: 600; color: var(--ink-2); font-size: 0.78rem; text-align: center; padding: 4px; vertical-align: bottom; }
+table.heat th.co { text-align: left; }
+table.heat td { text-align: center; padding: 7px 4px; border-radius: 4px; font-variant-numeric: tabular-nums; font-weight: 600; min-width: 46px; }
+table.heat td.co { text-align: left; font-weight: 600; background: none; white-space: nowrap; }
+table.heat td.co small { display: block; font-weight: 400; color: var(--ink-2); }
+table.heat td.na { color: var(--ink-2); font-weight: 400; background: var(--surface-2); }
+table.heat .gap { width: 10px; min-width: 10px; padding: 0; background: none; }
+.l1 { background: var(--lvl-1); color: var(--heat-ink-1); } .l2 { background: var(--lvl-2); color: var(--heat-ink-2); }
+.l3 { background: var(--lvl-3); color: var(--heat-ink-3); } .l4 { background: var(--lvl-4); color: var(--heat-ink-4); }
+.l5 { background: var(--lvl-5); color: var(--heat-ink-5); }
+/* ink per ramp step, checked with axe: white on --lvl-3 is 4.4:1, black is 4.8:1 */
+:root { --heat-ink-1: #000; --heat-ink-2: #000; --heat-ink-3: #000; --heat-ink-4: #fff; --heat-ink-5: #fff; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --heat-ink-1: #fff; --heat-ink-2: #fff; --heat-ink-3: #000; --heat-ink-4: #000; --heat-ink-5: #000; } }
+:root[data-theme="dark"] { --heat-ink-1: #fff; --heat-ink-2: #fff; --heat-ink-3: #000; --heat-ink-4: #000; --heat-ink-5: #000; }
+.sdg-h { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 6px; font-weight: 800; font-size: 0.85rem; }
+.ramp { display: flex; align-items: center; gap: 4px; font-size: 0.8rem; color: var(--ink-2); margin-top: 10px; }
+.ramp span.b { width: 22px; height: 10px; border-radius: 2px; }
+.list { list-style: none; margin: 0; padding: 0; }
+.list li { display: flex; gap: 12px; align-items: baseline; padding: 9px 0; border-top: 1px solid var(--border); }
+.list li:first-child { border-top: 0; }
+.list .when { flex: none; width: 92px; font-variant-numeric: tabular-nums; font-weight: 600; font-size: 0.88rem; }
+.list .what { flex: 1; min-width: 0; }
+.list .what small { display: block; color: var(--ink-2); }
+.days { flex: none; font-size: 0.78rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--surface-2); }
+.days.overdue { color: var(--critical-ink); } .days.due_soon { color: var(--warning-ink); }
+.q { font-size: 0.9rem; }
+.q blockquote { margin: 2px 0 0; color: var(--ink); font-style: normal; }
+.co-link { color: inherit; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+</style>
+</head>
+<body>
+<main class="doc">
+<header class="masthead">
+  <div class="ident">
+    <div class="monogram" aria-hidden="true">IV</div>
+    <div>
+      <p class="eyebrow">Portfolio home</p>
+      <h1>{{ v.fund_name }}</h1>
+      <p class="meta">As of {{ v.as_of }} · {{ v.companies | length }} companies · deadlines for {{ v.jurisdictions | join(', ') }}</p>
+    </div>
+  </div>
+</header>
+
+<section class="kpis" aria-label="Headline numbers">
+{% for k in v.kpis %}
+  <div class="tile kpi">
+    <p class="label">{{ k.label }}</p>
+    <p class="value">{{ k.value }}</p>
+    <p class="sub muted">{{ k.sub }}</p>
+    {% if k.meter is defined %}<div class="meter" aria-hidden="true"><div class="fill" style="width:{{ '%.0f' % k.meter }}%"></div></div>{% endif %}
+  </div>
+{% endfor %}
+</section>
+
+<div class="grid2">
+  <section class="card" id="sec-pipeline" aria-labelledby="h-pipeline">
+    <h2 id="h-pipeline">Pipeline by IC gate</h2>
+    <p class="lede">Where each assessed company stands against the fund thesis.</p>
+    {% if v.companies %}
+    <div class="stack" role="img" aria-label="{% for p in v.pipeline %}{{ p.label }}: {{ p.count }}{% if not loop.last %}, {% endif %}{% endfor %}">
+      {% for p in v.pipeline if p.count %}<span class="{{ p.tone }}" style="flex:{{ p.count }}"></span>{% endfor %}
+    </div>
+    {% endif %}
+    <ul class="legend">
+      {% for p in v.pipeline %}<li><span class="sw {{ p.tone }}"></span>{{ p.label }} <strong>{{ p.count }}</strong></li>{% endfor %}
+    </ul>
+    {% if v.stages %}
+    <p class="muted" style="margin:14px 0 4px;font-size:.86rem">CRM stages:
+      {% for stage, n in v.stages %}{{ stage }} ({{ n }}){% if not loop.last %} · {% endif %}{% endfor %}</p>
+    {% endif %}
+  </section>
+
+  <section class="card" id="sec-attention" aria-labelledby="h-attention">
+    <h2 id="h-attention">Needs attention</h2>
+    <p class="lede">Stale assessments, missing data and greenwashing flags.</p>
+    {% if v.attention %}
+    <ul class="list">
+      {% for a in v.attention %}<li><span class="pill {{ a.tone }}" style="flex:none">{{ a.company }}</span><span class="what">{{ a.reason }}</span></li>{% endfor %}
+    </ul>
+    {% else %}<p class="muted">Nothing flagged.</p>{% endif %}
+  </section>
+</div>
+
+<section class="card" id="sec-heatmap" aria-labelledby="h-heat">
+  <h2 id="h-heat">Impact heat-map</h2>
+  <p class="lede">5 Dimensions (1–5) and material SDG scores (0–100). Darker means stronger.</p>
+  {% if v.companies %}
+  <div class="table-wrap">
+  <table class="heat">
+    <caption class="sr-only">5 Dimensions and SDG scores per company</caption>
+    <thead><tr>
+      <th scope="col" class="co">Company</th><th scope="col">Gate</th>
+      {% for d in v.dim_labels %}<th scope="col">{{ d }}</th>{% endfor %}
+      <th class="gap" aria-hidden="true"></th>
+      {% for s in v.sdg_cols %}<th scope="col" title="SDG {{ s.goal }} — {{ s.name }}"><span class="sdg-h" style="background:{{ s.color }};color:{{ s.ink }}">{{ s.goal }}</span><span class="sr-only"> SDG {{ s.goal }} {{ s.name }}</span></th>{% endfor %}
+    </tr></thead>
+    <tbody>
+    {% for c in v.companies %}
+      <tr>
+        <td class="co">{% if c.link %}<a class="co-link" href="{{ c.link }}">{{ c.name }}</a>{% else %}{{ c.name }}{% endif %}<small>{{ c.meta }}</small></td>
+        <td style="background:none"><span class="pill {{ c.tone }}">{{ c.gate_label }}</span></td>
+        {% for d in c.dims %}{% if d.value is none %}<td class="na">—</td>{% else %}<td class="l{{ d.lvl }}">{{ '%.1f' % d.value }}</td>{% endif %}{% endfor %}
+        <td class="gap" aria-hidden="true"></td>
+        {% for s in c.sdgs %}{% if s.value is none %}<td class="na">—</td>{% else %}<td class="l{{ s.lvl }}">{{ '%.0f' % s.value }}</td>{% endif %}{% endfor %}
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <div class="ramp" aria-hidden="true">weaker {% for i in range(1, 6) %}<span class="b l{{ i }}"></span>{% endfor %} stronger</div>
+  {% else %}<p class="muted">No assessments yet — analyze a pitch deck to start.</p>{% endif %}
+</section>
+
+<div class="grid2">
+  <section class="card" id="sec-deadlines" aria-labelledby="h-deadlines">
+    <h2 id="h-deadlines">Regulatory deadlines</h2>
+    <p class="lede">Next 180 days for {{ v.jurisdictions | join(', ') }} (calendar-year reporting). Confirm applicability per fund.</p>
+    {% if v.deadlines %}
+    <ul class="list">
+      {% for d in v.deadlines %}
+      <li><span class="when">{{ d.due }}</span>
+        <span class="what">{{ d.title }}<small>{{ d.framework }} · {{ d.jurisdiction }}</small></span>
+        <span class="days {{ d.status }}">{% if d.days < 0 %}{{ -d.days }} d overdue{% else %}in {{ d.days }} d{% endif %}</span></li>
+      {% endfor %}
+    </ul>
+    {% if v.deadlines_total > v.deadlines|length %}<p class="muted" style="margin:10px 0 0;font-size:.86rem">+ {{ v.deadlines_total - v.deadlines|length }} more in the window — see the regulatory_calendar tool.</p>{% endif %}
+    {% else %}<p class="muted">No deadlines in the window.</p>{% endif %}
+  </section>
+
+  <section class="card" id="sec-review" aria-labelledby="h-review">
+    <h2 id="h-review">Evidence to review</h2>
+    <p class="lede">AI-extracted claims below {{ '%.0f' % 50 }}% confidence — confirm or correct before they reach LPs.{% if v.review_total > v.review|length %} Showing {{ v.review|length }} of {{ v.review_total }}.{% endif %}</p>
+    {% if v.review %}
+    <ul class="list">
+      {% for r in v.review %}
+      <li class="q"><span class="days">{{ '%.0f' % (r.confidence * 100) }}%</span>
+        <span class="what"><strong>{{ r.company }}</strong> · {{ r.category }}{% if r.nesta %} · NESTA {{ r.nesta }}{% endif %}<blockquote>“{{ r.text }}”</blockquote></span></li>
+      {% endfor %}
+    </ul>
+    {% else %}<p class="muted">No low-confidence extractions.</p>{% endif %}
+  </section>
+</div>
+
+<footer class="footer"><p style="margin:0">Generated by Impact Vision · scores are screening estimates, not assurance.</p></footer>
+</main>
+</body>
+</html>

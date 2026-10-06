@@ -37,6 +37,7 @@ SHOTS = [
     ("dd-report", f"{PIG}_dd_report.html", 1240, "light", None, 1100),
     ("investee-portal", f"{PIG}_investee_portal.html", 1240, "light", None, 1000),
     ("gallery", str(DEMO / "index.html"), 1240, "light", None, 1100),
+    ("portfolio-home", str(DEMO / "portfolio_home.html"), 1300, "light", None, 1250),
 ]
 
 

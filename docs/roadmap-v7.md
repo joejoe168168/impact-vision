@@ -220,6 +220,26 @@ click-to-filter in the evidence ledger.
 | W3.3 | **Position the other UIs.** Streamlit becomes the no-LLM portfolio dashboard (sector dropdown, metric picker by name instead of IRIS IDs, deck upload, `impact-vision dashboard` command). Retire `/console` once W3.1 makes the chat's tool cards cover it | `dashboard/app.py` | M |
 | W3.4 | **Portfolio home.** One page per fund: pipeline, portfolio 5D/SDG heat-map, deadlines (SB 253, ESRS, SFDR), evidence-review queue, and the companies whose data is stale | `portfolio_rollup.py`, `regulatory_calendar.py`, `evidence_workflow.py` | M |
 
+**Wave 3 status (2026-10-06):** done on branch `v7-wave3`.
+- **W3.1:** `impact/surfaces.py` feeds every surface. REST gets
+  `/api/v1/tools/{name}` with path/URL fields blocked for remote callers;
+  MCP exposes all 48 tools with typed schemas plus 10 playbook prompts; the
+  console builds a form per registry tool.
+- **W3.2:** offline "Analyze a pitch deck" in the web chat, a sandboxed
+  inline viewer with audience/language/theme switches, signed and
+  revocable share links, and a Reports tab.
+- **W3.3:** the Streamlit dashboard takes deck uploads and has pickers by
+  name.
+- **W3.4:** portfolio home.
+
+Deliberately different from the plan:
+- `/console` was kept (now generated) rather than retired.
+- The engagement view (deliverables, checklist, deadlines per engagement)
+  was not built. Deadlines live on the portfolio home, and the in-memory
+  engagement store needs persistence first.
+- The evidence-review queue on the portfolio home is derived from saved
+  reports, because `evidence_workflow.ReviewQueue` is not persisted.
+
 ### Wave 4 — Standards currency (weeks 2–10, parallel; one engineer)
 
 Implements §2. Order: ESRS/VSME law + VSME template → SFDR 2.0 EP variant +
