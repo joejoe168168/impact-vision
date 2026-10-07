@@ -224,6 +224,15 @@ def _normalize_openai_base_url(base_url: str | None) -> str | None:
     return urlunsplit((parts.scheme, parts.netloc, path, parts.query, parts.fragment))
 
 
+
+def _package_version() -> str:
+    try:
+        from importlib.metadata import version
+
+        return version("impact-vision")
+    except Exception:  # noqa: BLE001 - not installed (source checkout)
+        return "dev"
+
 class OpenAICompatibleClient:
     """Client for OpenAI-compatible APIs (DashScope, GitHub Models, etc.).
 
@@ -240,7 +249,7 @@ class OpenAICompatibleClient:
             kwargs["timeout"] = timeout
         # Some proxy endpoints block the default "OpenAI/Python" user-agent.
         # Use a neutral user-agent to avoid false-positive request blocking.
-        kwargs["default_headers"] = {"User-Agent": "impact-vision/0.14.0"}
+        kwargs["default_headers"] = {"User-Agent": f"impact-vision/{_package_version()}"}
         self._client = AsyncOpenAI(**kwargs)
 
     async def close(self) -> None:

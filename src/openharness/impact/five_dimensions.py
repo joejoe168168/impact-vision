@@ -304,12 +304,14 @@ def _score_dimension(
     gaps = [f"{mid} ({store.get(mid).name if store.get(mid) else mid})" for mid in gap_ids]
 
     if total_reported_dim > 0:
-        notes = f"Reporting {total_reported_dim} metrics ({len(matched_in_reference)} theme-specific, {available} available)"
+        notes = (f"{total_reported_dim} metric{'s' if total_reported_dim != 1 else ''} reported · "
+                 f"{len(matched_in_reference)} of {available} reference metrics")
         provenance = (
             "evidence-based" if total_reported_dim >= params["evidence_based_min_metrics"] else "partial"
         )
     else:
-        notes = f"Estimated from sector/description ({available} metrics available to track)"
+        notes = (f"Estimated from sector/description · {available} reference "
+                 f"metric{'s' if available != 1 else ''} to track")
         provenance = "estimated"
 
     return DimensionScore(

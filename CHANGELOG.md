@@ -11,6 +11,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Fixed
+- `/version` slash command reported "OpenHarness 0.1.6" (wrong package lookup);
+  it now prints the installed Impact Vision version. The OpenAI-compatible
+  client's `User-Agent` no longer hard-codes `impact-vision/0.14.0`.
+- Evidence ledger: fixed column widths so the claim text no longer collapses
+  to one word per line in the PDF.
+- 5 Dimensions notes read "1 metric reported · 1 of 16 reference metrics"
+  instead of "Reporting 1 metrics (1 theme-specific, 16 available)".
+- Report masthead keeps the generated date on one line on mobile.
+- zh-HK / zh-CN language note now says DD questions are shown in the original.
+
+### Docs
+- Removed four unused images from `docs/images/`; regenerated the demo bundle
+  and every screenshot (web chat now shows v0.17.1). Section screenshots that
+  are height-capped are cut at a row boundary, not mid-row.
+
 ## [0.17.1] - 2026-10-07 - Report styling pass
 
 Every deliverable in `demo/` was reviewed in the browser, in Word (via a

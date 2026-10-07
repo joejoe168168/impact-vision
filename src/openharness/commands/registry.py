@@ -261,10 +261,10 @@ def create_default_command_registry(
     async def _version_handler(_: str, context: CommandContext) -> CommandResult:
         del context
         try:
-            version = importlib.metadata.version("openharness")
+            version = importlib.metadata.version("impact-vision")
         except importlib.metadata.PackageNotFoundError:
-            version = "0.1.6"
-        return CommandResult(message=f"OpenHarness {version}")
+            version = "unknown (not installed)"
+        return CommandResult(message=f"Impact Vision {version}")
 
     async def _context_handler(_: str, context: CommandContext) -> CommandResult:
         settings = load_settings()

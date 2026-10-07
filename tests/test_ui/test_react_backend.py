@@ -132,7 +132,7 @@ async def test_backend_host_processes_command(tmp_path, monkeypatch):
         event.type == "transcript_item"
         and event.item
         and event.item.role == "system"
-        and "OpenHarness" in event.item.text
+        and "Impact Vision" in event.item.text
         for event in events
     )
     assert any(event.type == "state_snapshot" for event in events)

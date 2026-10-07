@@ -20,7 +20,7 @@
     <h1>{{ company.name }}</h1>
     <p class="meta">
       {{ [company.sector, company.geography] | select | join(' · ') }}
-      {%- if company.sector or company.geography %} · {% endif %}{{ t('generated', date=generated) }} · {{ t('standard', version=catalog_version) }}
+      {%- if company.sector or company.geography %} · {% endif %}<span class="nw">{{ t('generated', date=generated) }}</span> · <span class="nw">{{ t('standard', version=catalog_version) }}</span>
       {%- if source %} · {{ t('source', source=source) }}{% endif %}
     </p>
     <p class="notice">{{ notice }}{% if lang_note %} {{ lang_note }}{% endif %}</p>
@@ -161,7 +161,7 @@
   <h2 id="h-evidence">{{ icons.evidence | safe }}{{ t('sec_evidence') }}</h2>
   <p class="lede">{{ t('lede_evidence') }}</p>
   {% if evidence.claims %}
-  <div class="table-wrap"><table>
+  <div class="table-wrap"><table class="claims"><colgroup><col class="c-claim"><col class="c-type"><col class="c-level"><col class="c-sig"><col class="c-metric"></colgroup>
     <caption>{{ t('claims_caption', n=evidence.claims | length) }}</caption>
     <thead><tr><th scope="col">{{ t('col_claim') }}</th><th scope="col">{{ t('col_type') }}</th><th scope="col" class="num">{{ t('col_level') }}</th><th scope="col">{{ t('col_signals') }}</th><th scope="col">{{ t('col_metric') }}</th></tr></thead>
     <tbody>{% for c in evidence.claims %}<tr><td>{{ c.text }}</td><td>{{ c.category }}</td><td class="num"><span class="pips" role="img" aria-label="NESTA {{ c.level }}/5">{% for i in range(1, 6) %}<i class="{{ 'on lvl-' ~ c.level if i <= c.level else '' }}"></i>{% endfor %}</span></td><td>{% for sg in c.signals %}<span class="sig"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>{{ sg }}</span>{% else %}—{% endfor %}</td><td>{% for m in c.metric_rows %}<span class="mref"><b>{{ m.id }}</b>{% if m.name %} <small>{{ m.name }}</small>{% endif %}</span>{% else %}—{% endfor %}</td></tr>{% endfor %}</tbody>

@@ -210,6 +210,14 @@ section[id] { scroll-margin-top: 16px; }
 .sig { white-space: nowrap; margin: 0 4px 4px 0; }
 .mref { display: block; min-width: 13rem; font-variant-numeric: tabular-nums; }
 .mref + .mref { margin-top: 4px; }
+table.claims { table-layout: fixed; min-width: 640px; }
+table.claims col.c-claim { width: 38%; }
+table.claims col.c-type { width: 11%; }
+table.claims col.c-level { width: 11%; }
+table.claims col.c-sig { width: 20%; }
+table.claims col.c-metric { width: 20%; }
+table.claims .mref { min-width: 0; }
+.meta .nw { white-space: nowrap; }
 .mref small { display: block; color: var(--ink-2); font-size: 0.8rem; line-height: 1.3; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden;
   clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
@@ -373,7 +381,7 @@ details > summary { cursor: pointer; color: var(--link); font-size: 0.88rem; }
     <p class="eyebrow">Impact assessment</p>
     <h1>SunPath Energy Ltd</h1>
     <p class="meta">
-      energy · Kenya · Generated 2026-10-07 · IRIS+ 5.3c · Source: sunpath_solar.pdf    </p>
+      energy · Kenya · <span class="nw">Generated 2026-10-07</span> · <span class="nw">IRIS+ 5.3c</span> · Source: sunpath_solar.pdf    </p>
     <p class="notice">Confidential — prepared for internal investment and LP use.</p>
     <p class="ai-badges" aria-label="AI &amp; automation disclosure"><span class="chip ai"><span class="dot" aria-hidden="true"></span>Extracted by rules</span> <span class="chip ai"><span class="dot" aria-hidden="true"></span>3/21 scores estimated</span> </p>
   </div>
@@ -457,12 +465,12 @@ details > summary { cursor: pointer; color: var(--link); font-size: 0.88rem; }
   <h2 id="h-5d"><span class="h-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span>Five Dimensions of Impact</h2>
   <p class="lede">Scored 1–5. The tick shows the sector benchmark where one exists. <span class="chip partial"><span class="dot"></span>partial evidence</span></p>
   <div class="bars" role="img" aria-label="Five Dimensions of Impact: What 2.0, Who 1.8, How much 1.7, Contribution 1.5, Risk 1.2">
-    <div class="bl">What<span class="note">Reporting 1 metrics (1 theme-specific, 16 available)</span></div>
+    <div class="bl">What<span class="note">1 metric reported · 1 of 16 reference metrics</span></div>
     <div class="track" title="What: 2.0/5 · Benchmark 3.5">
       <div class="fill" style="width:40.0%"></div>
 <div class="bench" style="left:calc(70.0% - 1px)"></div>    </div>
     <div class="bv">2.0</div>
-    <div class="bl">Who<span class="note">Reporting 3 metrics (0 theme-specific, 1 available)</span></div>
+    <div class="bl">Who<span class="note">3 metrics reported · 0 of 1 reference metrics</span></div>
     <div class="track" title="Who: 1.8/5 · Benchmark 2.8">
       <div class="fill" style="width:36.0%"></div>
 <div class="bench" style="left:calc(55.99999999999999% - 1px)"></div>    </div>
@@ -477,7 +485,7 @@ details > summary { cursor: pointer; color: var(--link); font-size: 0.88rem; }
       <div class="fill" style="width:30.0%"></div>
 <div class="bench" style="left:calc(60.0% - 1px)"></div>    </div>
     <div class="bv">1.5</div>
-    <div class="bl">Risk<span class="note">Estimated from sector/description (4 metrics available to track) (adverse impact penalty -0.3)</span></div>
+    <div class="bl">Risk<span class="note">Estimated from sector/description · 4 reference metrics to track (adverse impact penalty -0.3)</span></div>
     <div class="track" title="Risk: 1.2/5 · Benchmark 3.2">
       <div class="fill" style="width:24.0%"></div>
 <div class="bench" style="left:calc(64.0% - 1px)"></div>    </div>
@@ -489,7 +497,7 @@ details > summary { cursor: pointer; color: var(--link); font-size: 0.88rem; }
     <div class="table-wrap"><table>
       <caption>Five Dimensions of Impact</caption>
       <thead><tr><th scope="col">Dimension</th><th scope="col" class="num">Score</th><th scope="col" class="num">Benchmark</th><th scope="col">Evidence</th><th scope="col">Notes</th></tr></thead>
-      <tbody><tr><th scope="row">What</th><td class="num">2.0</td><td class="num">3.5</td><td>partial evidence</td><td>Reporting 1 metrics (1 theme-specific, 16 available)</td></tr><tr><th scope="row">Who</th><td class="num">1.8</td><td class="num">2.8</td><td>evidence-based</td><td>Reporting 3 metrics (0 theme-specific, 1 available)</td></tr><tr><th scope="row">How much</th><td class="num">1.7</td><td class="num">3.0</td><td>estimated</td><td>OI4862 (Greenhouse Gas Emissions Reduced)</td></tr><tr><th scope="row">Contribution</th><td class="num">1.5</td><td class="num">3.0</td><td>estimated</td><td>OI9101 (Adaptation Needs Assessment)</td></tr><tr><th scope="row">Risk</th><td class="num">1.2</td><td class="num">3.2</td><td>estimated</td><td>Estimated from sector/description (4 metrics available to track) (adverse impact penalty -0.3)</td></tr></tbody>
+      <tbody><tr><th scope="row">What</th><td class="num">2.0</td><td class="num">3.5</td><td>partial evidence</td><td>1 metric reported · 1 of 16 reference metrics</td></tr><tr><th scope="row">Who</th><td class="num">1.8</td><td class="num">2.8</td><td>evidence-based</td><td>3 metrics reported · 0 of 1 reference metrics</td></tr><tr><th scope="row">How much</th><td class="num">1.7</td><td class="num">3.0</td><td>estimated</td><td>OI4862 (Greenhouse Gas Emissions Reduced)</td></tr><tr><th scope="row">Contribution</th><td class="num">1.5</td><td class="num">3.0</td><td>estimated</td><td>OI9101 (Adaptation Needs Assessment)</td></tr><tr><th scope="row">Risk</th><td class="num">1.2</td><td class="num">3.2</td><td>estimated</td><td>Estimated from sector/description · 4 reference metrics to track (adverse impact penalty -0.3)</td></tr></tbody>
     </table></div>
   </details>
 </section>
@@ -530,7 +538,7 @@ details > summary { cursor: pointer; color: var(--link); font-size: 0.88rem; }
 <section id="sec-evidence" class="card" aria-labelledby="h-evidence">
   <h2 id="h-evidence"><span class="h-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4M10 12h5M10 16h5"/></svg></span>Evidence ledger</h2>
   <p class="lede">Every claim found in the documents and every metric used in scoring.</p>
-  <div class="table-wrap"><table>
+  <div class="table-wrap"><table class="claims"><colgroup><col class="c-claim"><col class="c-type"><col class="c-level"><col class="c-sig"><col class="c-metric"></colgroup>
     <caption>Claims (9)</caption>
     <thead><tr><th scope="col">Claim</th><th scope="col">Type</th><th scope="col" class="num">NESTA level</th><th scope="col">Evidence</th><th scope="col">Metric</th></tr></thead>
     <tbody><tr><td>Around 25 million people in Kenya still light their homes with kerosene or have no electricity at all.</td><td>output</td><td class="num"><span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></td><td>—</td><td>—</td></tr><tr><td>We have connected 42,000 households across 14 counties, replacing kerosene lamps and reducing household energy spend by 30%.</td><td>outcome</td><td class="num"><span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></td><td>—</td><td><span class="mref"><b>PI7954</b> <small>Client Households: Total</small></span></td></tr><tr><td>Our systems avoided an estimated 20,000 tCO2e in 2024.</td><td>outcome</td><td class="num"><span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></td><td>—</td><td><span class="mref"><b>OI2764</b> <small>Greenhouse Gas Emissions Avoided</small></span></td></tr><tr><td>Repayment rates stay above 92% and we employ 310 staff, of whom 41% are women.</td><td>outcome</td><td class="num"><span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></td><td>—</td><td><span class="mref"><b>OI8869</b> <small>Permanent Employees: Total</small></span><span class="mref"><b>OI6213</b> <small>Full-time Employees: Female</small></span></td></tr><tr><td>Who we serve 62% of our customers live below the national poverty line according to the Poverty Probability Index, and 71% had no electricity before buying from us.</td><td>outcome</td><td class="num"><span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></td><td>—</td><td>—</td></tr><tr><td>A 2025 study by an independent evaluator compared customers with a matched control group and found 18% higher evening study hours for children and lower reported respiratory symptoms.</td><td>outcome</td><td class="num"><span class="pips" role="img" aria-label="NESTA 3/5"><i class="on lvl-3"></i><i class="on lvl-3"></i><i class="on lvl-3"></i><i class=""></i><i class=""></i></span></td><td><span class="sig"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Controlled evaluation</span></td><td>—</td></tr><tr><td>Over-indebtedness: we cap instalments at 10% of estimated household income and offer payment holidays after crop failures.</td><td>outcome</td><td class="num"><span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></td><td>—</td><td>—</td></tr><tr><td>Over the next three years we target 150,000 connected households and 80,000 tCO2e avoided per year, and we report against IRIS+, SDG 7/1/13 and the GOGLA impact metrics.</td><td>intent</td><td class="num"><span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></td><td>—</td><td>—</td></tr><tr><td>Our carbon methodology is verified by a third-party auditor under Gold Standard rules.</td><td>output</td><td class="num"><span class="pips" role="img" aria-label="NESTA 3/5"><i class="on lvl-3"></i><i class="on lvl-3"></i><i class="on lvl-3"></i><i class=""></i><i class=""></i></span></td><td><span class="sig"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Third-party verified</span></td><td>—</td></tr></tbody>

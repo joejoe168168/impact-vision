@@ -1,14 +1,14 @@
 Section,Metric,Value,Details,Numeric,Max,Unit
 Company,Name,SunPath Energy Ltd,,,,
-Company,Generated,2026-10-07T00:55:02Z,,,,
+Company,Generated,2026-10-07T01:08:41Z,,,,
 Company,AI disclosure,Automated analysis: produced by rules and a deterministic scoring model; no generative AI was used. 3 of 21 scores are estimated from document text rather than reported metrics. Review before relying on it.,,,,
 Company,Methodology,1.1.0,config 8fabf9b5a7e2,,,
 5D,Overall Grade,C,1.6/5.0,1.6,5,score
-5D,What,2.0/5.0,"Reporting 1 metrics (1 theme-specific, 16 available)",2.0,5,score
-5D,Who,1.8/5.0,"Reporting 3 metrics (0 theme-specific, 1 available)",1.8,5,score
+5D,What,2.0/5.0,1 metric reported · 1 of 16 reference metrics,2.0,5,score
+5D,Who,1.8/5.0,3 metrics reported · 0 of 1 reference metrics,1.8,5,score
 5D,How Much,1.7/5.0,"Scale=1.7, Depth=1.7, Duration=1.7",1.7,5,score
 5D,Contribution,1.5/5.0,"Depth=1.5, Duration=1.5",1.5,5,score
-5D,Risk,1.2/5.0,Estimated from sector/description (4 metrics available to track) (adverse impact penalty -0.3),1.2,5,score
+5D,Risk,1.2/5.0,Estimated from sector/description · 4 reference metrics to track (adverse impact penalty -0.3),1.2,5,score
 SDG,SDG 7,41.8/100,"medium | metrics: OI2764,PI7954",41.8,100,score
 SDG,SDG 13,36.7/100,medium | metrics: OI2764,36.7,100,score
 SDG,SDG 8,32.3/100,"medium | metrics: OI6213,OI8869",32.3,100,score

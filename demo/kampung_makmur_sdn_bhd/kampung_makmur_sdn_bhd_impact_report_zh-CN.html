@@ -210,6 +210,14 @@ section[id] { scroll-margin-top: 16px; }
 .sig { white-space: nowrap; margin: 0 4px 4px 0; }
 .mref { display: block; min-width: 13rem; font-variant-numeric: tabular-nums; }
 .mref + .mref { margin-top: 4px; }
+table.claims { table-layout: fixed; min-width: 640px; }
+table.claims col.c-claim { width: 38%; }
+table.claims col.c-type { width: 11%; }
+table.claims col.c-level { width: 11%; }
+table.claims col.c-sig { width: 20%; }
+table.claims col.c-metric { width: 20%; }
+table.claims .mref { min-width: 0; }
+.meta .nw { white-space: nowrap; }
 .mref small { display: block; color: var(--ink-2); font-size: 0.8rem; line-height: 1.3; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden;
   clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
@@ -373,8 +381,8 @@ details > summary { cursor: pointer; color: var(--link); font-size: 0.88rem; }
     <p class="eyebrow">影响评估</p>
     <h1>Kampung Makmur Sdn Bhd</h1>
     <p class="meta">
-      农业 · Malaysia · 生成日期 2026-10-07 · IRIS+ 5.3c · 来源：kampung_makmur_pig_farm.pdf    </p>
-    <p class="notice">机密——供内部投资及有限合伙人使用。 引用的声明、建议及行业风险以原文显示。</p>
+      农业 · Malaysia · <span class="nw">生成日期 2026-10-07</span> · <span class="nw">IRIS+ 5.3c</span> · 来源：kampung_makmur_pig_farm.pdf    </p>
+    <p class="notice">机密——供内部投资及有限合伙人使用。 引用的声明、尽职调查问题、建议及行业风险以原文显示。</p>
     <p class="ai-badges" aria-label="人工智能及自动化披露"><span class="chip ai"><span class="dot" aria-hidden="true"></span>以规则撷取</span> <span class="chip ai"><span class="dot" aria-hidden="true"></span>4/22 项评分为估算</span> </p>
   </div>
   </div>
@@ -457,12 +465,12 @@ details > summary { cursor: pointer; color: var(--link); font-size: 0.88rem; }
   <h2 id="h-5d"><span class="h-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span>影响力五个维度</h2>
   <p class="lede">评分 1–5。刻度线代表行业基准（如有）。 <span class="chip partial"><span class="dot"></span>部分证据</span></p>
   <div class="bars" role="img" aria-label="影响力五个维度: 什么 2.3, 谁 2.3, 多少 1.5, 贡献 1.3, 风险 1.3">
-    <div class="bl">什么<span class="note">Reporting 2 metrics (1 theme-specific, 25 available)</span></div>
+    <div class="bl">什么<span class="note">2 metrics reported · 1 of 25 reference metrics</span></div>
     <div class="track" title="什么: 2.3/5 · 基准 3.0">
       <div class="fill" style="width:46.0%"></div>
 <div class="bench" style="left:calc(60.0% - 1px)"></div>    </div>
     <div class="bv">2.3</div>
-    <div class="bl">谁<span class="note">Reporting 3 metrics (1 theme-specific, 10 available)</span></div>
+    <div class="bl">谁<span class="note">3 metrics reported · 1 of 10 reference metrics</span></div>
     <div class="track" title="谁: 2.3/5 · 基准 3.2">
       <div class="fill" style="width:46.0%"></div>
 <div class="bench" style="left:calc(64.0% - 1px)"></div>    </div>
@@ -477,7 +485,7 @@ details > summary { cursor: pointer; color: var(--link); font-size: 0.88rem; }
       <div class="fill" style="width:26.0%"></div>
 <div class="bench" style="left:calc(46.0% - 1px)"></div>    </div>
     <div class="bv">1.3</div>
-    <div class="bl">风险<span class="note">Estimated from sector/description (4 metrics available to track)</span></div>
+    <div class="bl">风险<span class="note">Estimated from sector/description · 4 reference metrics to track</span></div>
     <div class="track" title="风险: 1.3/5 · 基准 2.6">
       <div class="fill" style="width:26.0%"></div>
 <div class="bench" style="left:calc(52.0% - 1px)"></div>    </div>
@@ -489,7 +497,7 @@ details > summary { cursor: pointer; color: var(--link); font-size: 0.88rem; }
     <div class="table-wrap"><table>
       <caption>影响力五个维度</caption>
       <thead><tr><th scope="col">维度</th><th scope="col" class="num">评分</th><th scope="col" class="num">基准</th><th scope="col">证据</th><th scope="col">备注</th></tr></thead>
-      <tbody><tr><th scope="row">什么</th><td class="num">2.3</td><td class="num">3.0</td><td>部分证据</td><td>Reporting 2 metrics (1 theme-specific, 25 available)</td></tr><tr><th scope="row">谁</th><td class="num">2.3</td><td class="num">3.2</td><td>有证据</td><td>Reporting 3 metrics (1 theme-specific, 10 available)</td></tr><tr><th scope="row">多少</th><td class="num">1.5</td><td class="num">2.5</td><td>估算</td><td>OI5951 (Greenhouse Gas Emissions Mitigated)</td></tr><tr><th scope="row">贡献</th><td class="num">1.3</td><td class="num">2.3</td><td>估算</td><td>OI9101 (Adaptation Needs Assessment)</td></tr><tr><th scope="row">风险</th><td class="num">1.3</td><td class="num">2.6</td><td>估算</td><td>Estimated from sector/description (4 metrics available to track)</td></tr></tbody>
+      <tbody><tr><th scope="row">什么</th><td class="num">2.3</td><td class="num">3.0</td><td>部分证据</td><td>2 metrics reported · 1 of 25 reference metrics</td></tr><tr><th scope="row">谁</th><td class="num">2.3</td><td class="num">3.2</td><td>有证据</td><td>3 metrics reported · 1 of 10 reference metrics</td></tr><tr><th scope="row">多少</th><td class="num">1.5</td><td class="num">2.5</td><td>估算</td><td>OI5951 (Greenhouse Gas Emissions Mitigated)</td></tr><tr><th scope="row">贡献</th><td class="num">1.3</td><td class="num">2.3</td><td>估算</td><td>OI9101 (Adaptation Needs Assessment)</td></tr><tr><th scope="row">风险</th><td class="num">1.3</td><td class="num">2.6</td><td>估算</td><td>Estimated from sector/description · 4 reference metrics to track</td></tr></tbody>
     </table></div>
   </details>
 </section>
@@ -536,7 +544,7 @@ details > summary { cursor: pointer; color: var(--link); font-size: 0.88rem; }
 <section id="sec-evidence" class="card" aria-labelledby="h-evidence">
   <h2 id="h-evidence"><span class="h-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4M10 12h5M10 16h5"/></svg></span>证据清单</h2>
   <p class="lede">文件中找到的每项声明及评分所用的每项指标。</p>
-  <div class="table-wrap"><table>
+  <div class="table-wrap"><table class="claims"><colgroup><col class="c-claim"><col class="c-type"><col class="c-level"><col class="c-sig"><col class="c-metric"></colgroup>
     <caption>声明（10）</caption>
     <thead><tr><th scope="col">声明</th><th scope="col">类型</th><th scope="col" class="num">NESTA 级别</th><th scope="col">证据</th><th scope="col">指标</th></tr></thead>
     <tbody><tr><td>Since 2022 we have reduced antibiotic use by 62% through vaccination and group-housing, and replaced 100% of conventional slatted housing with deep-litter, enrichment-enabled pens benchmarked against the EU Welfare Quality protocol.</td><td>outcome</td><td class="num"><span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></td><td>—</td><td>—</td></tr><tr><td>Our biogas plant captures methane from manure lagoons and generates 1.8 GWh of electricity per year, replacing ~920 tonnes CO2e of grid emissions and cutting our grid electricity purchases by 74%.</td><td>outcome</td><td class="num"><span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></td><td>—</td><td><span class="mref"><b>OI2496</b> <small>Energy Generated for Use: Renewable</small></span><span class="mref"><b>OI2764</b> <small>Greenhouse Gas Emissions Avoided</small></span></td></tr><tr><td>Water withdrawal per kg of live weight dropped 31% versus our 2020 baseline, independently verified by SIRIM.</td><td>outcome</td><td class="num"><span class="pips" role="img" aria-label="NESTA 3/5"><i class="on lvl-3"></i><i class="on lvl-3"></i><i class="on lvl-3"></i><i class=""></i><i class=""></i></span></td><td><span class="sig"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>第三方核实</span><span class="sig"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>基线比较</span></td><td>—</td></tr><tr><td>We employ 142 staff, of whom 38% are women and 64% are from Kluang district; median wage is 42% above the Johor agricultural minimum and every worker is enrolled in SOCSO and EPF.</td><td>outcome</td><td class="num"><span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></td><td>—</td><td><span class="mref"><b>OI8869</b> <small>Permanent Employees: Total</small></span><span class="mref"><b>OI6213</b> <small>Full-time Employees: Female</small></span></td></tr><tr><td>We run an outgrower programme with 18 smallholder piggeries, supplying feed and veterinary support at wholesale cost; participating smallholders report average income uplifts of RM 1,850 per month (baseline: RM 900).</td><td>outcome</td><td class="num"><span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></td><td><span class="sig"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>基线比较</span></td><td><span class="mref"><b>PI9991</b> <small>Supplier Individuals: Smallholder</small></span></td></tr><tr><td>A 2024 randomized pilot with Universiti Putra Malaysia compared 120 outgrower households to a matched control group and found 23% higher household food-security scores and 17% higher child school attendance.</td><td>outcome</td><td class="num"><span class="pips" role="img" aria-label="NESTA 3/5"><i class="on lvl-3"></i><i class="on lvl-3"></i><i class="on lvl-3"></i><i class=""></i><i class=""></i></span></td><td><span class="sig"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>对照评估</span></td><td>—</td></tr><tr><td>Over the next five years we target: 45% reduction in Scope 1+2 emissions intensity (kg CO2e / kg live weight); 80% of breeding sows in group-housing &gt;= 10 weeks after weaning; 35 outgrower households onboarded; and a SBTi near-term target submission by 2027.</td><td>intent</td><td class="num"><span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></td><td>—</td><td>—</td></tr><tr><td>We are SEDEX-audited and have a 4-tier grievance mechanism.</td><td>output</td><td class="num"><span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></td><td><span class="sig"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>已审计</span></td><td>—</td></tr><tr><td>Risks we actively manage include: (i) ASF biosecurity - all farms are fenced, SPF breeding stock, shower-in/out protocol, quarterly third-party audit by the Department of Veterinary Services; (ii) nutrient run-off during monsoon - on-site retention ponds sized to 1-in-100-year storm, automated ammonia sensors; (iii) community odour - a covered-lagoon retrofit was completed in Q3 2025 and the formal complaints rate has dropped from 14 to 2 per year.</td><td>output</td><td class="num"><span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></td><td><span class="sig"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>已审计</span></td><td>—</td></tr><tr><td>We report against IRIS+, SDG 2/6/7/8/12/13, GRI standards, and have commissioned a first independent ESG audit for FY2026.</td><td>output</td><td class="num"><span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></td><td><span class="sig"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>已审计</span></td><td>—</td></tr></tbody>

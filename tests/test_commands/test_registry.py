@@ -437,7 +437,8 @@ async def test_version_context_and_share_commands(tmp_path: Path, monkeypatch):
 
     version_command, version_args = registry.lookup("/version")
     version_result = await version_command.handler(version_args, context)
-    assert "OpenHarness" in version_result.message
+    assert version_result.message.startswith("Impact Vision ")
+    assert "0.1.6" not in version_result.message
 
     context_command, context_args = registry.lookup("/context")
     context_result = await context_command.handler(context_args, context)

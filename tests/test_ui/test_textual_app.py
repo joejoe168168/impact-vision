@@ -54,7 +54,7 @@ async def test_textual_app_handles_commands(tmp_path, monkeypatch):
         await pilot.press("enter")
         await pilot.pause()
 
-    assert any("OpenHarness" in line for line in app.transcript_lines)
+    assert any("Impact Vision" in line for line in app.transcript_lines)
 
 
 @pytest.mark.asyncio

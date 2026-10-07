@@ -62,8 +62,19 @@ def capture(chat_url: str | None) -> list[Path]:
             if selector:
                 element = page.locator(selector)
                 box = element.bounding_box()
-                clip = {"x": box["x"] - 8, "y": box["y"] - 8, "width": box["width"] + 16,
-                        "height": min(box["height"] + 16, max_h or 10_000)}
+                height = box["height"] + 16
+                if max_h and height > max_h:
+                    # Cut at the last table row / block that fits, never mid-row.
+                    height = page.evaluate(
+                        """([sel, top, limit]) => {
+                            let best = 0;
+                            for (const el of document.querySelector(sel).querySelectorAll('tr, p, h2, h3')) {
+                                const b = el.getBoundingClientRect().bottom + window.scrollY - top;
+                                if (b <= limit && b > best) best = b;
+                            }
+                            return best;
+                        }""", [selector, box["y"] - 8, max_h]) + 12 or max_h
+                clip = {"x": box["x"] - 8, "y": box["y"] - 8, "width": box["width"] + 16, "height": height}
                 page.screenshot(path=str(out), clip=clip, full_page=True)
             else:
                 height = page.evaluate("document.documentElement.scrollHeight")

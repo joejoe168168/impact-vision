@@ -1,14 +1,14 @@
 Section,Metric,Value,Details,Numeric,Max,Unit
 Company,Name,BrightPath Finance,,,,
-Company,Generated,2026-10-07T00:55:04Z,,,,
+Company,Generated,2026-10-07T01:08:43Z,,,,
 Company,AI disclosure,Automated analysis: produced by rules and a deterministic scoring model; no generative AI was used. 3 of 21 scores are estimated from document text rather than reported metrics. Review before relying on it.,,,,
 Company,Methodology,1.1.0,config 8fabf9b5a7e2,,,
 5D,Overall Grade,C,1.7/5.0,1.7,5,score
-5D,What,1.5/5.0,"Reporting 2 metrics (0 theme-specific, 14 available)",1.5,5,score
-5D,Who,2.5/5.0,"Reporting 5 metrics (0 theme-specific, 6 available)",2.5,5,score
+5D,What,1.5/5.0,2 metrics reported · 0 of 14 reference metrics,1.5,5,score
+5D,Who,2.5/5.0,5 metrics reported · 0 of 6 reference metrics,2.5,5,score
 5D,How Much,1.8/5.0,"Scale=1.8, Depth=1.8, Duration=1.8",1.8,5,score
 5D,Contribution,1.5/5.0,"Depth=1.5, Duration=1.5",1.5,5,score
-5D,Risk,1.2/5.0,Estimated from sector/description (4 metrics available to track),1.2,5,score
+5D,Risk,1.2/5.0,Estimated from sector/description · 4 reference metrics to track,1.2,5,score
 SDG,SDG 1,42.7/100,medium | metrics: PI4060,42.7,100,score
 SDG,SDG 2,42.7/100,medium | metrics: PI4060,42.7,100,score
 SDG,SDG 5,37.8/100,"medium | metrics: OI1571,OI6213",37.8,100,score

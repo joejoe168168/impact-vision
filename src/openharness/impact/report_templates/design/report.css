@@ -102,6 +102,14 @@ section[id] { scroll-margin-top: 16px; }
 .sig { white-space: nowrap; margin: 0 4px 4px 0; }
 .mref { display: block; min-width: 13rem; font-variant-numeric: tabular-nums; }
 .mref + .mref { margin-top: 4px; }
+table.claims { table-layout: fixed; min-width: 640px; }
+table.claims col.c-claim { width: 38%; }
+table.claims col.c-type { width: 11%; }
+table.claims col.c-level { width: 11%; }
+table.claims col.c-sig { width: 20%; }
+table.claims col.c-metric { width: 20%; }
+table.claims .mref { min-width: 0; }
+.meta .nw { white-space: nowrap; }
 .mref small { display: block; color: var(--ink-2); font-size: 0.8rem; line-height: 1.3; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden;
   clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
