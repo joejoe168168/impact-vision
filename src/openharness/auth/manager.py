@@ -14,6 +14,8 @@ from openharness.config.settings import (
     default_auth_source_for_provider,
     display_label_for_profile,
     display_model_setting,
+    is_local_base_url,
+    resolve_auth_env_value,
 )
 from openharness.auth.storage import (
     clear_provider_credentials,
@@ -291,7 +293,12 @@ class AuthManager:
             auth_state = str(source_status.get("state", "missing"))
             if auth_source_uses_api_key(profile.auth_source):
                 storage_provider = credential_storage_provider_name(name, profile)
-                configured = bool(load_credential(storage_provider, "api_key")) or configured
+                configured = (
+                    bool(load_credential(storage_provider, "api_key"))
+                    or configured
+                    or resolve_auth_env_value(profile.auth_source) is not None
+                    or is_local_base_url(profile.base_url)
+                )
                 if not configured and name == active and getattr(self.settings, "api_key", ""):
                     configured = True
                 auth_state = "configured" if configured else "missing"

@@ -162,11 +162,11 @@ CLAUDE_MODEL_ALIAS_OPTIONS: tuple[tuple[str, str, str], ...] = (
 )
 
 _CLAUDE_ALIAS_TARGETS: dict[str, str] = {
-    "sonnet": "claude-sonnet-4-6",
-    "opus": "claude-opus-4-6",
+    "sonnet": "claude-sonnet-5-5",
+    "opus": "claude-opus-5-5",
     "haiku": "claude-haiku-4-5",
-    "sonnet[1m]": "claude-sonnet-4-6[1m]",
-    "opus[1m]": "claude-opus-4-6[1m]",
+    "sonnet[1m]": "claude-sonnet-5-5[1m]",
+    "opus[1m]": "claude-opus-5-5[1m]",
 }
 
 
@@ -194,14 +194,14 @@ def default_provider_profiles() -> dict[str, ProviderProfile]:
             provider="anthropic",
             api_format="anthropic",
             auth_source="anthropic_api_key",
-            default_model="claude-sonnet-4-6",
+            default_model="claude-sonnet-5-5",
         ),
         "claude-subscription": ProviderProfile(
             label="Claude Subscription",
             provider="anthropic_claude",
             api_format="anthropic",
             auth_source="claude_subscription",
-            default_model="claude-sonnet-4-6",
+            default_model="claude-sonnet-5-5",
         ),
         "openai-compatible": ProviderProfile(
             label="OpenAI-Compatible API",
@@ -249,7 +249,62 @@ def default_provider_profiles() -> dict[str, ProviderProfile]:
             base_url="https://api.naxtclaude.com/v1",
             credential_slot="naxtclaude",
         ),
+        # Pre-filled OpenAI-compatible endpoints: pick one, paste a key, done.
+        # Each keeps its key in its own slot, so switching never mixes keys.
+        **{
+            name: ProviderProfile(
+                label=label, provider=name, api_format="openai", auth_source=auth,
+                default_model=model, base_url=url, credential_slot=name,
+            )
+            for name, label, auth, model, url in _OPENAI_COMPATIBLE_PRESETS
+        },
     }
+
+
+# name, label, auth source, default model, base URL
+_OPENAI_COMPATIBLE_PRESETS: tuple[tuple[str, str, str, str, str], ...] = (
+    ("openai", "OpenAI", "openai_api_key", "gpt-5.4", "https://api.openai.com/v1"),
+    ("openrouter", "OpenRouter (any model, one key)", "openrouter_api_key",
+     "anthropic/claude-sonnet-5.5", "https://openrouter.ai/api/v1"),
+    ("deepseek", "DeepSeek", "deepseek_api_key", "deepseek-chat", "https://api.deepseek.com/v1"),
+    ("dashscope", "Alibaba Qwen (DashScope)", "dashscope_api_key", "qwen3-max",
+     "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"),
+    ("mistral", "Mistral", "mistral_api_key", "mistral-large-latest", "https://api.mistral.ai/v1"),
+    ("xai", "xAI (Grok)", "xai_api_key", "grok-4", "https://api.x.ai/v1"),
+    ("groq", "Groq", "groq_api_key", "llama-3.3-70b-versatile", "https://api.groq.com/openai/v1"),
+    ("together", "Together AI", "together_api_key", "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+     "https://api.together.xyz/v1"),
+    ("ollama", "Ollama (local, no key)", "ollama_api_key", "llama3.2", "http://localhost:11434/v1"),
+    ("custom", "Custom endpoint (OpenAI-compatible)", "custom_api_key", "", ""),
+)
+
+# Model suggestions shown in the settings pickers (free text is always allowed).
+PROFILE_MODEL_SUGGESTIONS: dict[str, tuple[str, ...]] = {
+    "claude-api": ("claude-sonnet-5-5", "claude-opus-5-5", "claude-fable-5-1", "claude-haiku-4-5"),
+    "claude-subscription": ("claude-sonnet-5-5", "claude-opus-5-5", "claude-haiku-4-5"),
+    "openai": ("gpt-5.4", "gpt-5", "gpt-4.1", "o4-mini"),
+    "openai-compatible": ("gpt-5.4", "gpt-5", "gpt-4.1", "o4-mini"),
+    "openrouter": ("anthropic/claude-sonnet-5.5", "anthropic/claude-opus-5.5", "openai/gpt-5.4",
+                   "google/gemini-2.5-pro", "deepseek/deepseek-chat", "qwen/qwen3-max"),
+    "deepseek": ("deepseek-chat", "deepseek-reasoner"),
+    "dashscope": ("qwen3-max", "qwen3.5-flash", "qwen-plus"),
+    "mistral": ("mistral-large-latest", "mistral-medium-latest", "mistral-small-latest"),
+    "xai": ("grok-4", "grok-3-mini"),
+    "groq": ("llama-3.3-70b-versatile", "openai/gpt-oss-120b", "qwen/qwen3-32b"),
+    "together": ("meta-llama/Llama-3.3-70B-Instruct-Turbo", "deepseek-ai/DeepSeek-V3",
+                 "Qwen/Qwen2.5-72B-Instruct-Turbo"),
+    "moonshot": ("kimi-k2.5", "kimi-k2-turbo-preview"),
+    "gemini": ("gemini-2.5-pro", "gemini-2.5-flash"),
+    "ollama": ("llama3.2", "qwen2.5", "mistral", "gemma3"),
+}
+
+
+def is_local_base_url(base_url: str | None) -> bool:
+    """True for endpoints on this machine (Ollama, LM Studio, vLLM), which need no key."""
+    from urllib.parse import urlsplit
+
+    host = (urlsplit(base_url or "").hostname or "").lower()
+    return host in {"localhost", "127.0.0.1", "::1", "0.0.0.0"} or host.endswith(".localhost")
 
 
 def builtin_provider_profile_names() -> set[str]:
@@ -362,6 +417,10 @@ def auth_source_env_var_candidates(auth_source: str) -> tuple[str, ...]:
         "openrouter_api_key": ("OPENHARNESS_OPENROUTER_API_KEY", "OPENROUTER_API_KEY"),
         "groq_api_key": ("OPENHARNESS_GROQ_API_KEY", "GROQ_API_KEY"),
         "mistral_api_key": ("OPENHARNESS_MISTRAL_API_KEY", "MISTRAL_API_KEY"),
+        "xai_api_key": ("OPENHARNESS_XAI_API_KEY", "XAI_API_KEY"),
+        "together_api_key": ("OPENHARNESS_TOGETHER_API_KEY", "TOGETHER_API_KEY"),
+        "ollama_api_key": ("OPENHARNESS_OLLAMA_API_KEY", "OLLAMA_API_KEY"),
+        "custom_api_key": ("OPENHARNESS_CUSTOM_API_KEY",),
     }
     return mapping.get(auth_source, ())
 
@@ -480,7 +539,7 @@ class Settings(BaseModel):
 
     # API configuration
     api_key: str = ""
-    model: str = "claude-sonnet-4-6"
+    model: str = "claude-sonnet-5-5"
     max_tokens: int = 16384
     base_url: str | None = None
     timeout: float = 30.0
@@ -743,6 +802,17 @@ class Settings(BaseModel):
                 auth_kind="api_key",
                 value=stored,
                 source=f"file:{storage_provider}",
+                state="configured",
+            )
+
+        if is_local_base_url(profile.base_url):
+            # Local servers (Ollama, LM Studio, vLLM) ignore the key but the
+            # OpenAI SDK insists on one.
+            return ResolvedAuth(
+                provider=provider or storage_provider,
+                auth_kind="api_key",
+                value="local-no-key",
+                source="local",
                 state="configured",
             )
 

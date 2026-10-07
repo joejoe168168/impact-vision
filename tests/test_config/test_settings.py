@@ -24,7 +24,7 @@ class TestSettings:
     def test_defaults(self):
         s = Settings()
         assert s.api_key == ""
-        assert s.model == "claude-sonnet-4-6"
+        assert s.model == "claude-sonnet-5-5"
         assert s.max_tokens == 16384
         assert s.timeout == 30.0
         assert s.max_turns == 200
@@ -523,7 +523,7 @@ class TestLoadSaveSettings:
 
         materialized = settings.materialize_active_profile()
 
-        assert materialized.model == "claude-opus-4-6"
+        assert materialized.model == "claude-opus-5-5"
 
     def test_claude_profile_normalizes_prefixed_model_name(self):
         settings = Settings(
@@ -593,7 +593,7 @@ class TestLoadSaveSettings:
 
         materialized = settings.materialize_active_profile()
 
-        assert materialized.model == "claude-opus-4-6"
+        assert materialized.model == "claude-opus-5-5"
 
     def test_resolve_auth_prefers_profile_scoped_credential_for_custom_compatible_profile(self, tmp_path: Path, monkeypatch):
         monkeypatch.setenv("OPENHARNESS_CONFIG_DIR", str(tmp_path))

@@ -11,6 +11,24 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Added
+- Pre-filled provider profiles: OpenAI, OpenRouter, DeepSeek, Alibaba Qwen
+  (DashScope), Mistral, xAI (Grok), Groq, Together AI, Ollama (local, no key)
+  and a Custom endpoint (any OpenAI-compatible URL). Each has its base URL,
+  a default model and model suggestions filled in, and keeps its key in its
+  own slot. Keys can also come from `OPENROUTER_API_KEY`, `DEEPSEEK_API_KEY`,
+  `XAI_API_KEY` and the other provider env vars.
+- Web Settings groups the profiles (Anthropic / Hosted / Subscriptions /
+  Local & custom), shows "add key" vs ✓, lists models for the chosen
+  provider and names the env var you can set instead of pasting a key.
+  `impact-vision setup` offers the same presets.
+- Endpoints on `localhost` (Ollama, LM Studio, vLLM) work without a key.
+
+### Changed
+- Claude defaults move to the 5.5 family: `sonnet` → `claude-sonnet-5-5`,
+  `opus` → `claude-opus-5-5`; new installs default to `claude-sonnet-5-5`.
+  A model you pinned explicitly is left as is.
+
 ### Fixed
 - `/version` slash command reported "OpenHarness 0.1.6" (wrong package lookup);
   it now prints the installed Impact Vision version. The OpenAI-compatible

@@ -133,7 +133,7 @@ async def test_model_command_persists(tmp_path: Path, monkeypatch):
 
     assert "opus" in result.message
     assert load_settings().resolve_profile()[1].last_model == "opus"
-    assert load_settings().model == "claude-opus-4-6"
+    assert load_settings().model == "claude-opus-5-5"
 
 
 @pytest.mark.asyncio
@@ -177,7 +177,7 @@ async def test_model_command_default_clears_profile_override(tmp_path: Path, mon
 
     assert "reset to default" in result.message
     assert load_settings().resolve_profile()[1].last_model == ""
-    assert load_settings().model == "claude-sonnet-4-6"
+    assert load_settings().model == "claude-sonnet-5-5"
 
 
 @pytest.mark.asyncio

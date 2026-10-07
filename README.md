@@ -153,10 +153,10 @@ impact-vision setup                                    # provider wizard; keys s
 
 | Provider | Setup choice | Best for |
 |----------|--------------|----------|
-| Anthropic | Anthropic-Compatible API | Highest-quality impact analysis |
-| OpenAI | OpenAI-Compatible API | General-purpose hosted analysis |
-| OpenRouter | OpenAI-Compatible API | Trying many hosted models, including free tiers |
-| Ollama | `impact-vision ollama-setup --model llama3.2` | Local, private, offline |
+| Anthropic | Anthropic-Compatible API (Claude Sonnet 5.5 by default) | Highest-quality impact analysis |
+| OpenAI, OpenRouter, DeepSeek, Qwen, Gemini, Kimi, Mistral, xAI, Groq, Together | Pre-filled profile: just paste a key | Hosted models; OpenRouter reaches most of them with one key |
+| Your own server | Custom endpoint (OpenAI-compatible) | vLLM, LiteLLM, LM Studio, an internal gateway |
+| Ollama | Ollama profile, or `impact-vision ollama-setup --model llama3.2` | Local, private, offline (no key) |
 
 Pick a model with reliable tool calling.
 

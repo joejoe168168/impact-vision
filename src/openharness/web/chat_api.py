@@ -130,7 +130,12 @@ def _provider_snapshot() -> dict[str, Any]:
     """Current provider profiles, active selection and model options."""
     from openharness.auth.manager import AuthManager
     from openharness.config import load_settings
-    from openharness.config.settings import CLAUDE_MODEL_ALIAS_OPTIONS
+    from openharness.config.settings import (
+        CLAUDE_MODEL_ALIAS_OPTIONS,
+        PROFILE_MODEL_SUGGESTIONS,
+        auth_source_env_var_candidates,
+        is_local_base_url,
+    )
 
     settings = load_settings()
     manager = AuthManager(settings)
@@ -150,6 +155,9 @@ def _provider_snapshot() -> dict[str, Any]:
             "base_url": info.get("base_url"),
             "model": info.get("model"),
             "uses_api_key": "api_key" in str(info.get("auth_source", "")),
+            "local": is_local_base_url(info.get("base_url")),
+            "key_env": (auth_source_env_var_candidates(str(info.get("auth_source", ""))) or ("",))[-1],
+            "models": list(PROFILE_MODEL_SUGGESTIONS.get(name, ())),
         }
         for name, info in statuses.items()
     ]
@@ -166,12 +174,7 @@ def _provider_snapshot() -> dict[str, Any]:
             {"value": value, "label": label, "description": description}
             for value, label, description in CLAUDE_MODEL_ALIAS_OPTIONS
         ],
-        "suggested_models": {
-            "openai": ["gpt-5.4", "gpt-5", "gpt-4.1", "o4-mini"],
-            "moonshot": ["kimi-k2.5", "kimi-k2-turbo-preview"],
-            "gemini": ["gemini-2.5-pro", "gemini-2.5-flash"],
-            "dashscope": ["qwen3.5-flash", "qwen3-max", "deepseek-r1"],
-        },
+        "suggested_models": {k: list(v) for k, v in PROFILE_MODEL_SUGGESTIONS.items()},
     }
 
 

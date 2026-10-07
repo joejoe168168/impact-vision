@@ -908,6 +908,14 @@ _AUTH_SOURCE_LABELS: dict[str, str] = {
     "moonshot_api_key": "Moonshot API key",
     "gemini_api_key": "Gemini API key",
     "naxtclaude_api_key": "NaxtClaude API key",
+    "openrouter_api_key": "OpenRouter API key",
+    "deepseek_api_key": "DeepSeek API key",
+    "mistral_api_key": "Mistral API key",
+    "xai_api_key": "xAI API key",
+    "groq_api_key": "Groq API key",
+    "together_api_key": "Together AI API key",
+    "ollama_api_key": "Ollama (no key needed)",
+    "custom_api_key": "Custom endpoint API key",
 }
 
 
@@ -1196,7 +1204,7 @@ def _ensure_preset_profile(
 
 def _specialize_setup_target(manager, target: str) -> str:
     """Expand a top-level family choice into a concrete workflow profile."""
-    from openharness.config.settings import default_auth_source_for_provider
+    from openharness.config.settings import builtin_provider_profile_names, default_auth_source_for_provider
 
     if target == "claude-api":
         choice = _select_from_menu(
@@ -1243,20 +1251,23 @@ def _specialize_setup_target(manager, target: str) -> str:
         choice = _select_from_menu(
             "Choose an OpenAI-compatible provider:",
             [
-                ("openai-compatible", "OpenAI official"),
-                ("openrouter", "OpenRouter"),
+                ("openai", "OpenAI"),
+                ("openrouter", "OpenRouter (any model, one key)"),
+                ("deepseek", "DeepSeek"),
+                ("dashscope", "Alibaba Qwen (DashScope)"),
+                ("mistral", "Mistral"),
+                ("xai", "xAI (Grok)"),
+                ("groq", "Groq"),
+                ("together", "Together AI"),
+                ("ollama", "Ollama (local, no key)"),
                 ("naxtclaude", "NaxtClaude"),
                 ("custom-openai", "Custom endpoint (any OpenAI-compatible API)"),
             ],
-            default_value="openai-compatible",
+            default_value="openai",
         )
-        if choice == "openai-compatible":
-            return choice
-        if choice == "openrouter":
-            default_url = "https://openrouter.ai/api/v1"
-            profile_name = "openrouter"
-            profile_label = "OpenRouter"
-        elif choice == "naxtclaude":
+        if choice in builtin_provider_profile_names():
+            return choice  # pre-filled: base URL and default model already set
+        if choice == "naxtclaude":
             default_url = "https://api.naxtclaude.com/v1"
             profile_name = "naxtclaude"
             profile_label = "NaxtClaude"
@@ -1292,12 +1303,19 @@ def _specialize_setup_target(manager, target: str) -> str:
 
 def _ensure_profile_auth(manager, profile_name: str) -> None:
     from openharness.auth.flows import ApiKeyFlow
-    from openharness.config.settings import auth_source_provider_name, auth_source_uses_api_key
+    from openharness.config.settings import (
+        auth_source_provider_name,
+        auth_source_uses_api_key,
+        is_local_base_url,
+    )
 
     profile = manager.list_profiles()[profile_name]
     if not auth_source_uses_api_key(profile.auth_source):
         _login_provider(auth_source_provider_name(profile.auth_source))
         return
+
+    if is_local_base_url(profile.base_url):
+        return  # local servers (Ollama, LM Studio, vLLM) need no key
 
     flow = ApiKeyFlow(
         provider=profile.provider,

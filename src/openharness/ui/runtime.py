@@ -136,7 +136,7 @@ def _resolve_api_client_from_settings(settings) -> SupportsStreamingMessages:
 
         copilot_model = (
             COPILOT_DEFAULT_MODEL
-            if settings.model in {"claude-sonnet-4-20250514", "claude-sonnet-4-6", "sonnet", "default"}
+            if settings.model in {"claude-sonnet-4-20250514", "claude-sonnet-4-6", "claude-sonnet-5-5", "sonnet", "default"}
             else settings.model
         )
         return CopilotClient(model=copilot_model)

@@ -103,18 +103,20 @@ If you have never run `impact-vision setup`, the first message will come back
 with *"No API credentials configured."* Fix it without leaving the browser:
 
 1. Click **Settings** (bottom-left).
-2. Pick a **Provider profile**. Eight are built in:
+2. Pick a **Provider profile**. They are grouped in the picker, and the hosted
+   ones come with the base URL and a default model already filled in, so you
+   only paste a key:
 
-   | Profile | Provider | Notes |
+   | Group | Profiles | Notes |
    |---|---|---|
-   | Anthropic-Compatible API | `anthropic` | Claude via API key |
-   | Claude Subscription | `anthropic_claude` | Claude.ai OAuth |
-   | OpenAI-Compatible API | `openai` | Also Ollama, vLLM, LiteLLM, OpenRouter, internal gateways |
-   | Codex Subscription | `openai_codex` | |
-   | GitHub Copilot | `copilot` | |
-   | Moonshot (Kimi) | `moonshot` | |
-   | Google Gemini | `gemini` | OpenAI-compatible endpoint |
-   | NaxtClaude | `naxtclaude` | |
+   | Anthropic Claude | Anthropic-Compatible API, Claude Subscription | Defaults to `claude-sonnet-5-5` |
+   | Hosted APIs | OpenAI, OpenRouter, DeepSeek, Alibaba Qwen (DashScope), Google Gemini, Moonshot (Kimi), Mistral, xAI (Grok), Groq, Together AI, NaxtClaude | Each keeps its key in its own slot |
+   | Subscriptions | Codex Subscription, GitHub Copilot | OAuth, no key |
+   | Local & custom | Ollama (local, no key), Custom endpoint (OpenAI-compatible), OpenAI-Compatible API | Any `localhost` URL needs no key |
+
+   A profile marked **— add key** has no key yet. Instead of pasting one you can
+   set the environment variable shown under the key field (for example
+   `OPENROUTER_API_KEY` or `DEEPSEEK_API_KEY`) before starting the server.
 
 3. Set the **Model** (the field autocompletes known model IDs).
 4. Set the **Base URL** if you are pointing at a non-default endpoint.
@@ -133,21 +135,40 @@ changing the provider.
 **Local model via Ollama**
 
 ```
-Provider profile : OpenAI-Compatible API
-Model            : qwen3.5:32b
+Provider profile : Ollama (local, no key)
+Model            : llama3.2        (any model you have pulled)
 API format       : openai
-Base URL         : http://localhost:11434/v1
-API key          : ollama          (any non-empty string)
+Base URL         : http://localhost:11434/v1   (pre-filled)
+API key          : (not needed)
 ```
 
 **Claude via API key**
 
 ```
 Provider profile : Anthropic-Compatible API
-Model            : claude-sonnet-4-6
+Model            : claude-sonnet-5-5
 API format       : anthropic
 Base URL         : (blank)
 API key          : sk-ant-...
+```
+
+**Any model through OpenRouter**
+
+```
+Provider profile : OpenRouter (any model, one key)
+Model            : anthropic/claude-sonnet-5.5   (or openai/gpt-5.4, deepseek/deepseek-chat, …)
+Base URL         : https://openrouter.ai/api/v1  (pre-filled)
+API key          : sk-or-...
+```
+
+**Your own server**
+
+```
+Provider profile : Custom endpoint (OpenAI-compatible)
+Model            : whatever your server serves
+API format       : openai          (or anthropic for an Anthropic-compatible gateway)
+Base URL         : https://llm.internal.example/v1
+API key          : your gateway key, if it needs one
 ```
 
 You can also configure everything from the terminal instead — `impact-vision
@@ -272,7 +293,7 @@ The ones you will reach for most:
 | Command | Use |
 |---|---|
 | `/help` | List everything |
-| `/model claude-opus-4-1` | Switch model mid-conversation |
+| `/model claude-opus-5-5` | Switch model mid-conversation |
 | `/permissions full_auto` | Stop being asked to approve every write |
 | `/cost`, `/usage` | Token spend so far |
 | `/compact` | Shrink a long conversation to keep context headroom |

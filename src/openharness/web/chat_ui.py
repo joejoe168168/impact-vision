@@ -1361,11 +1361,22 @@ async function openSettings() {
 function renderSettings(p) {
   const body = $('#settingsBody');
   const base = location.origin;
-  const opts = p.profiles.map((pr) =>
-    '<option value="' + esc(pr.name) + '"' + (pr.active ? ' selected' : '') + '>' +
-    esc(pr.label) + (pr.configured ? '' : '  — no key') + '</option>').join('');
-  const modelList = (p.claude_models || []).map((m) => '<option value="' + esc(m.value) + '">').join('') +
-    Object.values(p.suggested_models || {}).flat().map((m) => '<option value="' + esc(m) + '">').join('');
+  const GROUPS = [
+    ['Anthropic Claude', ['claude-api', 'claude-subscription']],
+    ['Hosted APIs', ['openai', 'openrouter', 'deepseek', 'dashscope', 'gemini', 'moonshot', 'mistral', 'xai', 'groq', 'together', 'naxtclaude']],
+    ['Subscriptions', ['codex', 'copilot']],
+    ['Local & custom', ['ollama', 'custom', 'openai-compatible']],
+  ];
+  const optFor = (pr) => '<option value="' + esc(pr.name) + '"' + (pr.active ? ' selected' : '') + '>' +
+    esc(pr.label) + (pr.configured ? '  ✓' : pr.uses_api_key ? '  — add key' : '') + '</option>';
+  const placed = new Set();
+  let opts = GROUPS.map(([label, names]) => {
+    const inner = names.map((n) => p.profiles.find((pr) => pr.name === n)).filter(Boolean)
+      .map((pr) => { placed.add(pr.name); return optFor(pr); }).join('');
+    return inner ? '<optgroup label="' + esc(label) + '">' + inner + '</optgroup>' : '';
+  }).join('');
+  const mine = p.profiles.filter((pr) => !placed.has(pr.name));
+  if (mine.length) opts += '<optgroup label="Your profiles">' + mine.map(optFor).join('') + '</optgroup>';
 
   body.innerHTML =
     '<div class="sec">Model provider</div>' +
@@ -1374,18 +1385,18 @@ function renderSettings(p) {
       '<select id="setProfile">' + opts + '</select></div>' +
     '<div class="row">' +
       '<div class="field"><label>Model</label>' +
-        '<input id="setModel" list="modelOptions" placeholder="e.g. claude-sonnet-4-6">' +
-        '<datalist id="modelOptions">' + modelList + '</datalist></div>' +
+        '<input id="setModel" list="modelOptions" placeholder="e.g. claude-sonnet-5-5">' +
+        '<datalist id="modelOptions"></datalist></div>' +
       '<div class="field"><label>API format</label>' +
         '<select id="setFormat">' +
           ['anthropic', 'openai', 'copilot'].map((f) => '<option value="' + f + '">' + f + '</option>').join('') +
         '</select></div>' +
     '</div>' +
     '<div class="field"><label>Base URL</label>' +
-      '<div class="desc">Point at any Anthropic- or OpenAI-compatible endpoint — Ollama, vLLM, LiteLLM, OpenRouter, an internal gateway. Leave blank for the provider default.</div>' +
+      '<div class="desc">Pre-filled for each provider. For your own server pick <b>Custom endpoint</b> and enter any OpenAI-compatible URL (vLLM, LiteLLM, LM Studio, an internal gateway); set API format to <code>anthropic</code> for Anthropic-compatible ones.</div>' +
       '<input id="setBaseUrl" placeholder="https://api.openai.com/v1"></div>' +
     '<div class="field"><label>API key</label>' +
-      '<div class="desc">Stored in the local credential store. Leave blank to keep the existing key.</div>' +
+      '<div class="desc" id="keyHint">Stored in the local credential store. Leave blank to keep the existing key.</div>' +
       '<input id="setApiKey" type="password" placeholder="sk-… (write-only)"></div>' +
     '<div class="modal-foot" style="padding:0;border:none;justify-content:flex-start">' +
       '<button class="btn primary" id="saveProvider">Save provider</button>' +
@@ -1415,9 +1426,22 @@ function renderSettings(p) {
       '· Workspace: <code>' + esc((S.bootstrap && S.bootstrap.workspace) || '') + '</code></div>';
 
   const active = p.profiles.find((pr) => pr.active) || {};
+  const claudeAliases = (p.claude_models || []).map((m) => m.value);
+  const fillProfile = (pr) => {
+    const models = (pr.models || []).concat(pr.api_format === 'anthropic' ? claudeAliases : []);
+    $('#modelOptions').innerHTML = models.map((m) => '<option value="' + esc(m) + '">').join('');
+    $('#setModel').placeholder = models.length ? 'e.g. ' + models[0] : 'model name';
+    $('#setBaseUrl').placeholder = pr.name === 'custom' ? 'https://your-server/v1' : 'provider default';
+    const env = pr.key_env ? ' Or set <code>' + esc(pr.key_env) + '</code> before starting.' : '';
+    $('#keyHint').innerHTML = pr.local
+      ? 'Not needed for a local server.'
+      : 'Stored in the local credential store' + (pr.configured ? ' — a key is already set; leave blank to keep it.' : '.') + env;
+    $('#setApiKey').disabled = !!pr.local;
+  };
   $('#setModel').value = p.model || '';
   $('#setBaseUrl').value = p.base_url || '';
   $('#setFormat').value = p.api_format || active.api_format || 'anthropic';
+  fillProfile(active);
   $('#setTheme').value = localStorage.getItem('iv_theme') || 'system';
   $('#setSend').value = localStorage.getItem('iv_send') || 'enter';
 
@@ -1427,6 +1451,7 @@ function renderSettings(p) {
     $('#setModel').value = pr.model || '';
     $('#setBaseUrl').value = pr.base_url || '';
     $('#setFormat').value = pr.api_format || 'anthropic';
+    fillProfile(pr);
   };
   $('#setTheme').onchange = () => { localStorage.setItem('iv_theme', $('#setTheme').value); applyTheme(); };
   $('#setSend').onchange = () => { localStorage.setItem('iv_send', $('#setSend').value); };
