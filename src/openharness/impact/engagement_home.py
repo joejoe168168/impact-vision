@@ -62,8 +62,10 @@ def build_engagement_home(engagements: Iterable[Any], *, today: date | None = No
             "status": eng.status.replace("_", " "), "active": is_active,
             "bundle": eng.bundle.replace("_", " "),
             "timeline": " → ".join(x for x in (eng.timeline_start, eng.timeline_end) if x),
-            "deliverable_pct": round(float(eng.deliverable_completion_pct or 0)),
-            "checklist_pct": round(float(eng.checklist_completion_pct or 0)),
+            # The model's completion properties are fractions (0-1).
+            "deliverable_pct": round(100 * float(eng.deliverable_completion_pct or 0)),
+            "checklist_pct": round(100 * float(eng.checklist_completion_pct or 0)) if eng.checklist else None,
+            "checklist_count": len(eng.checklist),
             "deliverables": [{"name": d.name, "state": d.state.replace("_", " "),
                               "tone": _STATE_TONE.get(d.state, ""), "owner": d.owner,
                               "due": d.due_date[:10]} for d in eng.deliverables],

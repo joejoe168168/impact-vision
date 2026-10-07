@@ -2,7 +2,8 @@
 
 Impact Vision is an open-source AI-powered impact measurement and SDG alignment agent for VC and impact investment funds, built on top of OpenHarness.
 
-Current release: **0.16.0 (Comparable, Assured & Connected)**. The v3 roadmap
+Current release: **0.17.0 (Trusted, Effortless & Beautiful)**, roadmap v7
+(`docs/roadmap-v7.md`), Waves 0–5. The v3 roadmap
 (`docs/roadmap-v3.md`) and engineering plan
 (`docs/roadmap-v3-implementation.md`) describe the strategic shift toward
 causal-style claims, stakeholder voice as evidence, governed AI, and an
@@ -145,7 +146,7 @@ The project has an explicit preference for a **short, newcomer-friendly
    first scroll?* If not, move it to `CHANGELOG.md`, `docs/`, or
    `ROADMAP.md`.
 
-The current `README.md` is ~846 lines; keep it at or below 850. If it
+The current `README.md` is ~849 lines; keep it at or below 850. If it
 grows past ~1000, trim before shipping.
 
 ## Engineering housekeeping (package rename status)
@@ -184,11 +185,11 @@ src/openharness/
 │   ├── database.py                # In-memory MetricStore with query API
 │   ├── sdg_taxonomy.py            # UN SDG 17 goals + 169 targets reference data
 │   ├── five_dimensions.py         # 5-Dimension scoring logic + additionality assessment
-│   ├── sdg_mapper.py              # SDG alignment scoring algorithm
+│   ├── sdg_mapper.py              # SDG alignment scoring (weights in data/methodology/v1.yaml)
 │   ├── gap_analysis.py            # Core Metric Set gap analysis
 │   ├── dd_checklist.py            # DD checklist engine (load YAML, analyze, suggest, evidence scoring)
 │   ├── benchmarks.py              # Sector benchmarks for 18 sectors (GIIN survey data)
-│   ├── greenwashing.py            # Greenwashing detection (standard + Green Claims + FCA + NLP)
+│   ├── greenwashing.py            # Greenwashing detection (standard + EU ECGT + UK FCA + NLP)
 │   ├── risk_opportunity.py        # Risk/opportunity with likelihood x severity matrix
 │   ├── storage.py                 # SQLite persistence layer for assessments & session history
 │   ├── evidence_graph.py          # v2 claim/metric/target/evidence graph

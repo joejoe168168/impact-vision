@@ -22,7 +22,7 @@ def _default_db_path() -> Path:
     """Resolve the default SQLite location.
 
     ``IMPACT_VISION_DB`` wins; an existing ``./data/impact_vision.db`` (the
-    pre-0.16.1 CWD-relative default) is kept so existing checkouts don't lose
+    pre-0.17.0 CWD-relative default) is kept so existing checkouts don't lose
     history; otherwise the store lives in ``~/.impact-vision/``, which works
     for installed wheels regardless of the working directory.
     """

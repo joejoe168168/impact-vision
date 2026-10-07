@@ -96,7 +96,9 @@ def methodology_appendix() -> list[tuple[str, str]]:
          f"(metrics tagged to {sdg.get('cross_cutting_min_goals')}+ goals count at "
          f"{sdg.get('cross_cutting_weight')} weight), up to {pts.get('inference')} from the business "
          f"description and up to {pts.get('theme')} from impact themes. High confidence needs "
-         f"≥{sdg['confidence_bands']['high']} points and at least one goal-specific metric."),
+         f"≥{sdg['confidence_bands']['high']} points and at least one goal-specific metric. "
+         f"Own-footprint metrics ({', '.join(sdg.get('operational_footprint_metrics', []))}) are "
+         "disclosure, not contribution, and count at the reduced weight."),
         ("Greenwashing",
          "Risk (0–100) weights claim–metric gaps ({:.0%}), missing negative impacts ({:.0%}), vague language "
          "({:.0%}), selective reporting ({:.0%}) and lack of verification ({:.0%}). Bands: {}.".format(

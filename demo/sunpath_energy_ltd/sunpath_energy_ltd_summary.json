@@ -9,21 +9,21 @@
   "five_d_evidence": "partial",
   "top_sdgs": [
     {
-      "goal": 8,
-      "name": "Decent Work and Economic Growth",
-      "score": 33.5,
-      "confidence": "medium"
-    },
-    {
       "goal": 7,
       "name": "Affordable and Clean Energy",
-      "score": 32.5,
+      "score": 41.8,
       "confidence": "medium"
     },
     {
-      "goal": 9,
-      "name": "Industry, Innovation and Infrastructure",
-      "score": 30.5,
+      "goal": 13,
+      "name": "Climate Action",
+      "score": 36.7,
+      "confidence": "medium"
+    },
+    {
+      "goal": 8,
+      "name": "Decent Work and Economic Growth",
+      "score": 32.3,
       "confidence": "medium"
     }
   ],
@@ -47,5 +47,10 @@
     "sunpath_energy_ltd_dd_questionnaire.docx",
     "sunpath_energy_ltd_data.xlsx",
     "sunpath_energy_ltd_data.csv"
-  ]
+  ],
+  "ai_disclosure": "Automated analysis: produced by rules and a deterministic scoring model; no generative AI was used. 3 of 21 scores are estimated from document text rather than reported metrics. Review before relying on it.",
+  "methodology": {
+    "methodology_version": "1.1.0",
+    "config_hash": "8fabf9b5a7e2"
+  }
 }

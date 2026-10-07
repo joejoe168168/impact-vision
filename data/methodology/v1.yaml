@@ -5,9 +5,12 @@
 # this file + data/scoring_config.yaml), so two reports are comparable only
 # when both match. Change a number => bump `version` and add a CHANGELOG
 # entry. Sector baselines and keyword boosts stay in scoring_config.yaml.
-version: "1.0.0"
-effective: "2026-10-06"
-as_of: "2026-10-06"
+version: "1.1.0"
+effective: "2026-10-07"
+as_of: "2026-10-07"
+# 1.1.0 (2026-10-07): own-operations footprint metrics no longer count as
+#   goal-specific SDG evidence (a fintech disclosing its Scope 1 is not
+#   contributing to SDG 13). 1.0.0 (2026-10-06): first versioned release.
 source: Impact Vision methodology (IMP Five Dimensions, IRIS+ 5.3c, UN SDG framework)
 
 five_dimensions:
@@ -53,6 +56,10 @@ sdg:
   no_catalog_metrics: {relevance_scale: 35, floor: 10}
   confidence_bands: {high: 50, medium: 20}
   evidence_based_min_specific_metrics: 3
+  # Disclosure of the company's own footprint, not a contribution to the goal:
+  # counted like cross-cutting metrics (reduced weight, never goal-specific).
+  # Avoided emissions (OI2764) and other outcome metrics stay full evidence.
+  operational_footprint_metrics: [OI4112, OI9604, OI1479, OI1697]
 
 greenwashing:
   scale: [0, 100]

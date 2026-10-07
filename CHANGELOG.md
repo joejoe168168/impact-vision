@@ -1,14 +1,5 @@
 # Changelog
 
-## [0.16.0] - 2026-07-19
-
-### Added
-
-- Implemented the v6 Comparable, Assured & Connected wave: regulatory currency, canonical concordance, digital tagging, ISSA 5000 readiness, and portfolio comparability.
-- Added contribution and target gates, impact-linked economics, integrity screens, nature/social-frontier methods, dMRV, burden reduction, CIDS, and governed regulatory/evaluation workflows.
-- Added the China SSE/SZSE reporting suite, climate calculators, mandatory-article scans, and approved-data-only ILPA/PRI DDQ drafting.
-- Registered seven v6 agent tools and reconciled the registry, public exports, advisor routing, and generated tool-list check at 51 tools.
-
 All notable changes to Impact Vision are recorded here. **This is the
 single source of truth for release history** — please do not duplicate
 version banners, "What's new" blocks, phase status tables, or
@@ -19,6 +10,49 @@ for documentation conventions.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
+
+## [0.17.0] - 2026-10-07 - "Trusted, Effortless & Beautiful"
+
+Roadmap v7 (`docs/roadmap-v7.md`), Waves 0–5 plus follow-ups, shipped as one
+release. The 0.16.1 / 0.16.2 / 0.18 / 0.19 increments planned in the roadmap
+were folded into it. Highlights:
+
+- **Trust fixes:** claims kept as evidence, sector-aware DD, plausible SDG
+  scores, an insufficient-evidence verdict instead of false negatives, and
+  escaped user text.
+- **First run:** `impact-vision demo` / `assess`, `assess_deal` +
+  `assessment_id`, the fund tool profile, and lean installs with extras.
+- **Reports:** a decision-first report on one design system, five audiences,
+  zh-HK / zh-CN, Chromium PDF, IC memo `.docx`, accessibility CI, and
+  XLSX/JSON/CSV exports.
+- **Surfaces:** REST / MCP / console generated from the tool registry; the
+  web app with deck analysis, report viewer, share links, portfolio home and
+  engagement view.
+- **Standards currency (Oct 2026):** revised ESRS / VSME law, SFDR 2.0
+  variants, UK SRS, Hong Kong profile + taxonomy, AI-provenance disclosure on
+  every output, ISSA / HKSSA 5000, ECGT, SB 253 alert.
+- **Platform:** sourced YAML knowledge with a freshness gate, a versioned
+  methodology stamp, persistent consultant state, a real extraction
+  benchmark gate, the `impact_vision` import path, and generated docs.
+
+Upgrade notes:
+- **Scores move (methodology 1.1.0).** The per-SDG core metric sets were
+  rebuilt. Previously about half the IDs pointed at the wrong IRIS+ metric:
+  "GHG emissions avoided" was listed as `OI4112` (Scope 1), and
+  "renewable energy generated" as `OI1479`. Own-footprint metrics (Scope 1/2
+  GHG, water consumed) and footprint-only sentences no longer count as SDG 13
+  contribution.
+  - Effect on the samples: the solar company now leads with SDG 7, and the
+    microfinance lender with SDG 1 instead of SDG 13.
+  - Reports carry the new methodology version and hash, so earlier reports are
+    distinguishable.
+- Assurance packs default to ISSA 5000 for periods from 2026-12-15.
+- `roadmap_v2`, `questionnaire_v2` and `frameworks.sfdr_v2` are deprecated
+  shims, to be removed in 0.18.
+- `ImpactVision()` uses the LLM extractor when `OPENAI_API_KEY` is set
+  (`IMPACT_VISION_EXTRACTOR=regex` keeps it deterministic).
+- Consultant state is written to `~/.impact-vision/state.db`
+  (`IMPACT_VISION_STATE_STORE=memory` disables it).
 
 ### Added — follow-ups after Wave 5
 
@@ -34,6 +68,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ### Fixed
 
+- **Engagement view completion percentages** showed 0% because the model
+  fractions were not scaled. Engagements without a checklist now say so.
+- **Demo and screenshots regenerated.** The README shows the engagement view
+  and SDG alignment. `scripts/capture_screenshots.py --seed-web` makes the
+  web-app shots reproducible.
 - **Data-room bundle defaults cite correctly labelled IRIS+ IDs.**
   - `OI4112` was used as "beneficiaries"; it is Scope 1 GHG.
   - `PD5833` was used as "GHG"; it is affordable housing.
@@ -1228,6 +1267,15 @@ sources and the five corrections to the original §2 table.
 - Logic audit now reports `492` Python files scanned, `24` API routes,
   `71` tools, `0` CORS wildcard findings, `2` remaining test-only
   `datetime.utcnow()` occurrences, and `0` syntax errors.
+
+## [0.16.0] - 2026-07-19
+
+### Added
+
+- Implemented the v6 Comparable, Assured & Connected wave: regulatory currency, canonical concordance, digital tagging, ISSA 5000 readiness, and portfolio comparability.
+- Added contribution and target gates, impact-linked economics, integrity screens, nature/social-frontier methods, dMRV, burden reduction, CIDS, and governed regulatory/evaluation workflows.
+- Added the China SSE/SZSE reporting suite, climate calculators, mandatory-article scans, and approved-data-only ILPA/PRI DDQ drafting.
+- Registered seven v6 agent tools and reconciled the registry, public exports, advisor routing, and generated tool-list check at 51 tools.
 
 ## [0.15.0] - 2026-05-01 - "Trust Infrastructure"
 

@@ -2,7 +2,8 @@
 
 Impact Vision is an open-source AI-powered impact measurement and SDG alignment agent for VC and impact investment funds, built on top of OpenHarness.
 
-Current release: **0.16.0 (Comparable, Assured & Connected)**. The v3 roadmap
+Current release: **0.17.0 (Trusted, Effortless & Beautiful)**, roadmap v7
+(`docs/roadmap-v7.md`), Waves 0–5. The v3 roadmap
 (`docs/roadmap-v3.md`) and engineering plan
 (`docs/roadmap-v3-implementation.md`) describe the strategic shift toward
 causal-style claims, stakeholder voice as evidence, governed AI, and an
@@ -21,7 +22,7 @@ module. Progress so far:
   `engagement_workspace` agent tool.
 - **Wave 2 / Track 2 — Theory of Change + KPI framework builder** (shipped).
   `impact.engagements.toc_builder` wraps the existing v3 `toc_graph`
-  renderer and the 59-concept cross-reference map into a consultant-facing
+  renderer and the 61-concept cross-reference map into a consultant-facing
   ToC canvas, an 11-rule logic-chain validator (missing assumptions, weak
   causal links, unmeasured outcomes, risk blind spots, equity lens), and
   a multi-framework KPI generator, exposed through the `toc_builder`
@@ -48,8 +49,9 @@ module. Progress so far:
     (`CopilotOutput` + `CopilotReviewQueue`), deterministic challenge
     mode, client-safe answer mode bound to approved evidence only,
     prefix-based meeting-note ingestion.
-  - `engagements.regulatory` (Track 9) — 8 jurisdiction profiles
-    (EU / UK / US / Singapore / Switzerland / Canada / Japan / Australia),
+  - `engagements.regulatory` (Track 9) — 10 jurisdiction profiles
+    (EU / UK / US / Singapore / Switzerland / Canada / Japan / Australia /
+    CN / HK),
     SFDR + UK SDR classifiers, deadline calendar, regulator-facing
     narrative composer.
   - `engagements.verification_bundle` (Track 10) — BlueMark-style
@@ -63,8 +65,8 @@ module. Progress so far:
 2. `pitch_deck_analyze` extracts text, identifies impact claims, maps to IRIS+/SDGs, runs DD checklist, auto-extracts a Company model
 3. Agent presents gaps and asks the most important unanswered DD questions (with NESTA evidence levels)
 4. Deeper scoring via `sdg_mapper`, `five_dimension_assess`, `gap_analysis` with sector benchmarks
-5. `cross_reference` tool maps metrics across all 10 frameworks
-6. Greenwashing detection (standard + EU Green Claims + UK FCA + NLP) and regulatory compliance checks
+5. `cross_reference` tool maps metrics across all 22 framework modules
+6. Greenwashing detection (standard + EU ECGT green claims + UK FCA + NLP) and regulatory compliance checks
 7. `impact_report` generates the final assessment (HTML with Plotly charts, XLSX, CSV, JSON)
 
 ## v3 Trust Infrastructure (since 0.15.0)
@@ -128,9 +130,11 @@ The project has an explicit preference for a **short, newcomer-friendly
 
 5. **Tool / CLI / architecture sections must be kept current.** When you
    add or remove an agent tool, CLI subcommand, or top-level package,
-   update the matching `README.md` table and architecture tree. Tool
-   count references in the `README.md` (currently **48**) must match
-   `openharness.tools.impact.__all__`.
+   update the README's grouped "Agent Tools" summary (every tool listed once)
+   and architecture tree, then run `python scripts/build_tool_reference.py`
+   to regenerate `docs/reference/tools.md`. `tests/test_docs_counts.py`
+   fails when a number quoted in `README.md` / `CLAUDE.md` (tool count,
+   currently **48**; crosswalk concepts; DD questions; …) drifts from the code.
 
 6. **Frameworks & Standards is a single consolidated table.** Do not
    split it back into "Core / ESG / Regulatory / Greenwashing /
@@ -142,26 +146,34 @@ The project has an explicit preference for a **short, newcomer-friendly
    first scroll?* If not, move it to `CHANGELOG.md`, `docs/`, or
    `ROADMAP.md`.
 
-The current `README.md` is ~850 lines; keep it at or below that. If it
+The current `README.md` is ~849 lines; keep it at or below 850. If it
 grows past ~1000, trim before shipping.
 
-## Engineering housekeeping (deferred refactor)
+## Engineering housekeeping (package rename status)
 
-**Package rename**: the project is `impact-vision` (pyproject) but the
-importable package is still `openharness` and carries many unused HKUDS-era
-sub-packages (`swarm`, `vim`, `coordinator`, `engine`, `themes`, `ui`,
-`bridge`, `frontend/terminal`). They inflate the wheel and the import-time
-attack surface. Plan:
+**`impact_vision` is the supported import path** (v7 W5.5). Every
+`impact_vision.*` module is the same object as its `openharness.impact.*`
+implementation (plus `impact_vision.tools` / `.cli` / `.web` /
+`.api_gateway` / `.dashboard`), and the console scripts point at
+`impact_vision.cli:app`. Write new docs and examples against `impact_vision`.
 
-1. Add a top-level `impact_vision` namespace that re-exports everything in
-   `openharness.impact.*` (keep `openharness` as a deprecated alias).
-2. Trim `[tool.hatch.build.targets.wheel.force-include]` to ship only
-   `impact/`, `tools/impact/`, `api_gateway/`, `prompts/`, `cli.py`.
-3. Delete the unused submodules in a separate PR once downstream callers
-   (Streamlit dashboard, examples) have been updated.
+Still deferred, to land with the 0.18 shim removal:
 
-This is intentionally **not** done in the same PR as the Phase-11
-correctness fixes to keep the diff readable.
+1. Physically move the code under `src/impact_vision/` and turn `openharness`
+   into the alias (the reverse of today).
+2. `channels/` and `vim/` are already excluded from the wheel. `themes`,
+   `voice`, `bridge` and `keybindings` are still imported by the slash-command
+   registry / TUI, so make those imports lazy before dropping them.
+3. Remove the deprecated shims: `roadmap_v2`, `questionnaire_v2`,
+   `frameworks.sfdr_v2`.
+
+**Knowledge, methodology and state (v7 Wave 5):** reference data lives in
+sourced YAML under `data/` (`regulatory/`, `standards_registry.yaml`,
+`benchmarks.yaml`, `concordance.yaml`, `methodology/v1.yaml`).
+`scripts/check_knowledge.py` fails CI on rows not re-verified in 180 days.
+Never hard-code a regulatory date, weight or benchmark in Python: add it to
+the YAML with `as_of` / `source_url`. Consultant state persists through
+`impact.state_store` (SQLite by default; tests use the memory backend).
 
 ## Project Structure
 
@@ -173,11 +185,11 @@ src/openharness/
 │   ├── database.py                # In-memory MetricStore with query API
 │   ├── sdg_taxonomy.py            # UN SDG 17 goals + 169 targets reference data
 │   ├── five_dimensions.py         # 5-Dimension scoring logic + additionality assessment
-│   ├── sdg_mapper.py              # SDG alignment scoring algorithm
+│   ├── sdg_mapper.py              # SDG alignment scoring (weights in data/methodology/v1.yaml)
 │   ├── gap_analysis.py            # Core Metric Set gap analysis
 │   ├── dd_checklist.py            # DD checklist engine (load YAML, analyze, suggest, evidence scoring)
 │   ├── benchmarks.py              # Sector benchmarks for 18 sectors (GIIN survey data)
-│   ├── greenwashing.py            # Greenwashing detection (standard + Green Claims + FCA + NLP)
+│   ├── greenwashing.py            # Greenwashing detection (standard + EU ECGT + UK FCA + NLP)
 │   ├── risk_opportunity.py        # Risk/opportunity with likelihood x severity matrix
 │   ├── storage.py                 # SQLite persistence layer for assessments & session history
 │   ├── evidence_graph.py          # v2 claim/metric/target/evidence graph
@@ -186,7 +198,11 @@ src/openharness/
 │   ├── metric_records.py          # v2 canonical MetricRecord contract + helpers
 │   ├── investee_collection.py     # v2 questionnaire schema + submission lifecycle
 │   ├── climate_accounting.py      # v2 Scope 1/2 GHG inventory calculator
-│   ├── roadmap_v2.py              # v2 institutional-readiness helpers
+│   ├── roadmap_v2.py              # DEPRECATED shim (W5.4) → ai_review / disclosure_packs / report_governance / …
+│   ├── knowledge.py               # v7 W5.1: YAML knowledge loader + freshness gate
+│   ├── benchmark_provider.py      # v7 W5.1: one provider over data/benchmarks.yaml
+│   ├── methodology.py             # v7 W5.2: versioned scoring methodology + stamp
+│   ├── state_store.py             # v7 W5.3: tenant-scoped SQLite/Postgres/memory state
 │   ├── emission_factors.py        # v3 versioned emission factors + sensitivity
 │   ├── stakeholder_voice.py       # v3 Lean Data templates + consent + claim linking
 │   ├── evidence_workflow.py       # v3 AI extraction review queue + policies
@@ -195,6 +211,7 @@ src/openharness/
 │   ├── greenwashing_reviewer.py   # v3 per-claim explainable greenwashing review
 │   ├── portfolio_nlq.py           # v3 NL query engine + ApprovedDataPolicy
 │   ├── exit_impact.py             # v3 OPIM P8 exit-impact scoring + plan
+│   ├── ai_provenance.py           # v7 W4: AI/automation disclosure on every output (AI Act Art 50)
 │   ├── engagements/               # v4 W1+W2: consultant workspace + ToC builder
 │   │   ├── models.py              # Engagement / Deliverable / Checklist / Override
 │   │   ├── bundles.py             # 12 productised engagement bundles (§4a)
@@ -213,7 +230,7 @@ src/openharness/
 │   │   └── workspace.py           # In-memory store + audit-trail integration
 │   ├── report_templates/          # Jinja2-based HTML report template engine
 │   │   └── html_template.py       # Shared CSS, header/footer, SDG colors
-│   └── frameworks/                # ESG/sustainability frameworks (10 frameworks)
+│   └── frameworks/                # ESG/sustainability frameworks (22 framework modules)
 │       ├── sasb.py                # SASB industry-specific materiality (17 industries)
 │       ├── gri.py                 # GRI Universal + Topic Standards (34 standards)
 │       ├── tcfd.py                # TCFD / IFRS S2 climate disclosure (4 pillars)
@@ -224,8 +241,9 @@ src/openharness/
 │       ├── issb_ifrs_s1.py        # ISSB IFRS S1 General Requirements
 │       ├── issb_ifrs_s2.py        # ISSB IFRS S2 Climate Disclosures
 │       ├── esrs.py                # EU CSRD/ESRS Double Materiality (11 standards)
+│       ├── hk_taxonomy.py         # v7 W4: Hong Kong Taxonomy eligibility/alignment screen
 │       ├── ifc_opim.py            # IFC Operating Principles for Impact Management
-│       └── cross_reference.py     # 59 cross-framework metric mappings
+│       └── cross_reference.py     # 61 cross-framework metric mappings
 ├── tools/impact/                  # Agent tools for LLM orchestration
 │   ├── pitch_deck_analyze_tool.py # PDF/TXT/MD intake + full pipeline + Company extraction
 │   ├── dd_checklist_tool.py       # DD question list/analyze/suggest
@@ -234,7 +252,7 @@ src/openharness/
 │   ├── five_dimension_assess_tool.py  # 5-Dimension assessment + additionality
 │   ├── gap_analysis_tool.py       # Gap analysis vs Core Metrics
 │   ├── impact_report_tool.py      # Report generation (HTML/CSV/JSON/text/XLSX)
-│   ├── framework_tool.py          # Multi-framework ESG assessment (10 frameworks)
+│   ├── framework_tool.py          # Multi-framework ESG assessment (22 framework modules)
 │   ├── cross_reference_tool.py    # Cross-framework metric lookup
 │   ├── data_quality_tool.py       # Metric data quality assessment
 │   ├── metric_recommender_tool.py # IRIS+ metric recommendation engine
@@ -303,7 +321,7 @@ scoring (levels 1-5) for assessing evidence quality.
 
 ## Cross-Reference Mapping
 
-59 concepts mapped across IRIS+, GRI, EDCI, SFDR PAI, TCFD, SASB, ESRS, and ISSB.
+61 concepts mapped across IRIS+, GRI, EDCI, SFDR PAI, TCFD, SASB, ESRS, and ISSB.
 Enables lookup in any direction (e.g., "what GRI disclosure corresponds to
 IRIS+ OI4112?").
 

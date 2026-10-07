@@ -26,6 +26,7 @@ h3.small { margin: 16px 0 6px; }
 table.dl { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
 table.dl th, table.dl td { text-align: left; padding: 6px 8px; border-top: 1px solid var(--border); }
 table.dl th { color: var(--ink-2); font-weight: 600; }
+table.dl td.due { white-space: nowrap; font-variant-numeric: tabular-nums; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 </style>
 </head>
@@ -61,7 +62,7 @@ table.dl th { color: var(--ink-2); font-weight: 600; }
     </div>
     <div class="bars">
       <span>Deliverables final</span><div class="bar" role="img" aria-label="{{ e.deliverable_pct }}%"><span style="width:{{ e.deliverable_pct }}%"></span></div><span>{{ e.deliverable_pct }}%</span>
-      <span>Checklist done</span><div class="bar" role="img" aria-label="{{ e.checklist_pct }}%"><span style="width:{{ e.checklist_pct }}%"></span></div><span>{{ e.checklist_pct }}%</span>
+      {% if e.checklist_pct is not none %}<span>Checklist done</span><div class="bar" role="img" aria-label="{{ e.checklist_pct }}%"><span style="width:{{ e.checklist_pct }}%"></span></div><span>{{ e.checklist_pct }}% of {{ e.checklist_count }}</span>{% else %}<span>Checklist</span><span class="muted">none yet</span><span></span>{% endif %}
     </div>
     <h3 class="small">Next due{% if e.overdue %} · {{ e.overdue }} overdue{% endif %}</h3>
     {% if e.upcoming %}
@@ -78,7 +79,7 @@ table.dl th { color: var(--ink-2); font-weight: 600; }
     <div class="table-wrap"><table class="dl">
       <caption class="sr-only">Deliverables for {{ e.name }}</caption>
       <thead><tr><th scope="col">Deliverable</th><th scope="col">State</th><th scope="col">Owner</th><th scope="col">Due</th></tr></thead>
-      <tbody>{% for d in e.deliverables %}<tr><td>{{ d.name }}</td><td><span class="pill {{ d.tone }}">{{ d.state }}</span></td><td>{{ d.owner or '—' }}</td><td>{{ d.due or '—' }}</td></tr>{% endfor %}</tbody>
+      <tbody>{% for d in e.deliverables %}<tr><td>{{ d.name }}</td><td><span class="pill {{ d.tone }}">{{ d.state }}</span></td><td>{{ d.owner or '—' }}</td><td class="due">{{ d.due or '—' }}</td></tr>{% endfor %}</tbody>
     </table></div>
     {% endif %}
   </section>

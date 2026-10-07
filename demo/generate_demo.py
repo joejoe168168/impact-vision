@@ -24,6 +24,7 @@ REPO = DEMO.parent
 if str(REPO / "src") not in sys.path:
     sys.path.insert(0, str(REPO / "src"))
 
+from openharness.impact.engagement_home import build_engagement_home, render_engagement_home  # noqa: E402
 from openharness.impact.investee_portal import build_investee_portal  # noqa: E402
 from openharness.impact.portfolio_home import (  # noqa: E402
     build_portfolio_home,
@@ -77,6 +78,42 @@ def write(path: Path, html: str, pdf: bool) -> list[tuple[str, Path]]:
     return out
 
 
+def demo_engagements(bundles):  # noqa: ANN001, ANN201
+    """A consultant workspace with one engagement per sample company.
+
+    Due dates are relative to today so the page always shows a realistic mix
+    of overdue, due-soon and finished work.
+    """
+    from datetime import date, timedelta
+
+    from openharness.impact.engagements.workspace import EngagementWorkspace
+
+    today = date.today()
+    d = lambda days: (today + timedelta(days=days)).isoformat()  # noqa: E731
+    ws = EngagementWorkspace()
+    done_share = [0.6, 0.35, 0.15]  # share of each checklist already completed
+    plans = [  # (bundle, [(deliverable, owner, due offset, states to walk)])
+        ("dd_mid", [("IC memo", "Analyst", -3, ["in_progress", "draft"]),
+                    ("DD questionnaire to founders", "Associate", 5, ["in_progress", "draft", "client_review"]),
+                    ("Impact thesis fit note", "Partner", -20, ["in_progress", "draft", "client_review", "final"])]),
+        ("dd_light", [("Screening report", "Analyst", -10, ["in_progress", "draft", "client_review", "final"]),
+                      ("Follow-up data request", "Associate", 9, ["in_progress"])]),
+        ("annual_impact_report", [("LP impact report section", "Impact lead", 21, ["in_progress"]),
+                                  ("Beneficiary survey (Lean Data)", "Impact lead", 40, [])]),
+    ]
+    for bundle, (bundle_id, deliverables), share in zip(bundles, plans, done_share):
+        eng = ws.create_engagement(name=f"{bundle.company.name}", client_name=FUND, bundle_id=bundle_id,
+                                   timeline_start=d(-30), timeline_end=d(45), owner="Impact team")
+        ws.transition_engagement(eng.engagement_id, "active", actor="demo")
+        for item in eng.checklist[: round(share * len(eng.checklist))]:
+            ws.update_checklist_item(eng.engagement_id, item.item_id, status="completed", actor="demo")
+        for name, owner, offset, states in deliverables:
+            item = ws.add_deliverable(eng.engagement_id, name=name, owner=owner, due_date=d(offset))
+            for state in states:
+                ws.transition_deliverable(eng.engagement_id, item.deliverable_id, state, actor="demo")
+    return ws
+
+
 def main() -> int:
     clean()
     pdf = pdf_available()
@@ -117,6 +154,10 @@ def main() -> int:
     home = DEMO / "portfolio_home.html"
     home.write_text(render_portfolio_home(build_portfolio_home(records, fund_name=FUND)), encoding="utf-8")
     print(f"[demo] wrote {home}")
+    engagements = DEMO / "engagements.html"
+    engagements.write_text(render_engagement_home(build_engagement_home(
+        demo_engagements(bundles).list_engagements(), title=f"{FUND} — engagements")), encoding="utf-8")
+    print(f"[demo] wrote {engagements}")
 
     index = write_gallery(
         bundles, DEMO, extras=extras, title="Sample deliverables",

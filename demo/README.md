@@ -19,18 +19,31 @@ Each company folder has:
 | `*_ic_memo.html` / `.pdf` / `.docx` | **Investment-committee memo**: IC gate, thesis fit, 5D, SDGs, DD and greenwashing. |
 | `*_dd_report.html` | **DD questionnaire helper**: risk-ranked areas and the questions to send. |
 | `*_dd_questionnaire.docx` | The DD questionnaire as an editable Word file. |
-| `*_data.xlsx` / `*_data.csv` | **Data exports**: every score and reported metric as numbers, with a Methodology sheet. |
+| `*_data.xlsx` / `*_data.csv` | **Data exports**: every score and reported metric as numbers, with Methodology and AI-provenance sheets. |
 | `*_summary.json` | The headline numbers, for pipelines. |
 
 The pig farm also has the **LP** and **public** editions, a forced **dark**
 theme, a **white-label** edition, **繁體中文 (zh-HK)** and **简体中文
 (zh-CN)** reports, and the offline **investee data portal**.
 
+Fund-level pages: **[`portfolio_home.html`](portfolio_home.html)** (pipeline,
+5D/SDG heat-map, regulatory deadlines, evidence to review) and
+**[`engagements.html`](engagements.html)** (a sample consultant workspace with
+deliverables, checklist progress and due dates; dates are relative to the day
+the demo was generated).
+
+Every report carries an **AI & automation disclosure** and the **scoring
+methodology version** (currently 1.1.0) with a config hash.
+
 Regenerate everything (PDFs need the `[pdf]` extra or `IMPACT_VISION_CHROMIUM`):
 
 ```bash
 python demo/generate_demo.py
 python scripts/capture_screenshots.py   # refresh docs/images and demo/screenshots
+# web-chat / report-viewer shots: seed a throwaway web home, serve it, capture
+python scripts/capture_screenshots.py --seed-web /tmp/iv-web
+IMPACT_VISION_WEB_HOME=/tmp/iv-web impact-vision serve-web --port 8788 &
+python scripts/capture_screenshots.py --chat-url http://127.0.0.1:8788/
 ```
 
 `pig_farm_profile.json` is the input profile used by the regression tests.

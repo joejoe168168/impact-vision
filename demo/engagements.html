@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Meridian Impact Partners (fictional) — portfolio home</title>
+<title>Meridian Impact Partners (fictional) — engagements — Impact Vision</title>
 <style>/* Impact Vision design tokens (v7 W2.1) — one source for every deliverable.
  *
  * Chart colours follow the validated data-viz palette (series-1 blue, series-2
@@ -350,48 +350,27 @@ details > summary { cursor: pointer; color: var(--link); font-size: 0.88rem; }
 }
 
 .doc { max-width: 1180px; }
-.grid2 { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr)); margin-bottom: 18px; }
-.grid2 > .card { margin: 0; }
-.kpi .meter { margin-top: 8px; }
-.stack { display: flex; height: 26px; border-radius: 6px; overflow: hidden; gap: 2px; margin: 6px 0 12px; }
-.stack span { display: block; min-width: 2px; }
-.stack .good { background: var(--good); } .stack .warning { background: var(--warning); }
-.stack .critical { background: var(--critical); }
-.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 0.86rem; margin: 0; padding: 0; list-style: none; }
-.legend li { display: flex; align-items: center; gap: 6px; }
-.legend .sw { width: 10px; height: 10px; border-radius: 3px; }
-.sw.good { background: var(--good); } .sw.warning { background: var(--warning); } .sw.critical { background: var(--critical); }
-.table-wrap { position: relative; }  /* keeps .sr-only spans inside the scroller */
-table.heat { border-collapse: separate; border-spacing: 2px; width: 100%; font-size: 0.86rem; }
-table.heat th { font-weight: 600; color: var(--ink-2); font-size: 0.78rem; text-align: center; padding: 4px; vertical-align: bottom; }
-table.heat th.co { text-align: left; }
-table.heat td { text-align: center; padding: 7px 4px; border-radius: 4px; font-variant-numeric: tabular-nums; font-weight: 600; min-width: 46px; }
-table.heat td.co { text-align: left; font-weight: 600; background: none; white-space: nowrap; }
-table.heat td.co small { display: block; font-weight: 400; color: var(--ink-2); }
-table.heat td.na { color: var(--ink-2); font-weight: 400; background: var(--surface-2); }
-table.heat .gap { width: 10px; min-width: 10px; padding: 0; background: none; }
-.l1 { background: var(--lvl-1); color: var(--heat-ink-1); } .l2 { background: var(--lvl-2); color: var(--heat-ink-2); }
-.l3 { background: var(--lvl-3); color: var(--heat-ink-3); } .l4 { background: var(--lvl-4); color: var(--heat-ink-4); }
-.l5 { background: var(--lvl-5); color: var(--heat-ink-5); }
-/* ink per ramp step, checked with axe: white on --lvl-3 is 4.4:1, black is 4.8:1 */
-:root { --heat-ink-1: #000; --heat-ink-2: #000; --heat-ink-3: #000; --heat-ink-4: #fff; --heat-ink-5: #fff; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --heat-ink-1: #fff; --heat-ink-2: #fff; --heat-ink-3: #000; --heat-ink-4: #000; --heat-ink-5: #000; } }
-:root[data-theme="dark"] { --heat-ink-1: #fff; --heat-ink-2: #fff; --heat-ink-3: #000; --heat-ink-4: #000; --heat-ink-5: #000; }
-.sdg-h { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 6px; font-weight: 800; font-size: 0.85rem; }
-.ramp { display: flex; align-items: center; gap: 4px; font-size: 0.8rem; color: var(--ink-2); margin-top: 10px; }
-.ramp span.b { width: 22px; height: 10px; border-radius: 2px; }
+.eng-grid { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr)); }
+.eng-grid > .card { margin: 0; }
+.eng-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+.eng-head h2 { margin: 0; font-size: 1.15rem; }
+.eng-head p { margin: 2px 0 0; color: var(--ink-2); font-size: 0.88rem; }
+.bars { display: grid; grid-template-columns: max-content 1fr max-content; gap: 6px 10px; align-items: center; margin: 14px 0; font-size: 0.86rem; }
+.bar { height: 8px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+.bar span { display: block; height: 100%; background: var(--brand); }
 .list { list-style: none; margin: 0; padding: 0; }
-.list li { display: flex; gap: 12px; align-items: baseline; padding: 9px 0; border-top: 1px solid var(--border); }
+.list li { display: flex; gap: 12px; align-items: baseline; padding: 8px 0; border-top: 1px solid var(--border); font-size: 0.9rem; }
 .list li:first-child { border-top: 0; }
-.list .when { flex: none; width: 92px; font-variant-numeric: tabular-nums; font-weight: 600; font-size: 0.88rem; }
+.list .when { flex: none; width: 96px; white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 600; }
 .list .what { flex: 1; min-width: 0; }
 .list .what small { display: block; color: var(--ink-2); }
 .days { flex: none; font-size: 0.78rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--surface-2); }
 .days.overdue { color: var(--critical-ink); } .days.due_soon { color: var(--warning-ink); }
-.q { font-size: 0.9rem; }
-.q blockquote { margin: 2px 0 0; color: var(--ink); font-style: normal; }
-.co-link { color: inherit; }
+h3.small { margin: 16px 0 6px; }
+table.dl { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+table.dl th, table.dl td { text-align: left; padding: 6px 8px; border-top: 1px solid var(--border); }
+table.dl th { color: var(--ink-2); font-weight: 600; }
+table.dl td.due { white-space: nowrap; font-variant-numeric: tabular-nums; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 </style>
 </head>
@@ -401,154 +380,102 @@ table.heat .gap { width: 10px; min-width: 10px; padding: 0; background: none; }
   <div class="ident">
     <div class="monogram" aria-hidden="true">IV</div>
     <div>
-      <p class="eyebrow">Portfolio home</p>
-      <h1>Meridian Impact Partners (fictional)</h1>
-      <p class="meta">As of 2026-10-07 · 3 companies · deadlines for EU, US, UK, HK</p>
+      <p class="eyebrow">Consultant workspace</p>
+      <h1>Meridian Impact Partners (fictional) — engagements</h1>
+      <p class="meta">As of 2026-10-07 · 3 engagements</p>
     </div>
   </div>
 </header>
 
 <section class="kpis" aria-label="Headline numbers">
-  <div class="tile kpi">
-    <p class="label">Companies</p>
-    <p class="value">3</p>
-    <p class="sub muted">assessed</p>
-  </div>
-  <div class="tile kpi">
-    <p class="label">Average 5D</p>
-    <p class="value">1.7</p>
-    <p class="sub muted">out of 5</p>
-<div class="meter" aria-hidden="true"><div class="fill" style="width:33%"></div></div>  </div>
-  <div class="tile kpi">
-    <p class="label">IC-ready</p>
-    <p class="value">0/3</p>
-    <p class="sub muted">3 need data</p>
-  </div>
-  <div class="tile kpi">
-    <p class="label">Greenwashing flags</p>
-    <p class="value">0</p>
-    <p class="sub muted">risk ≥ 60/100</p>
-  </div>
-  <div class="tile kpi">
-    <p class="label">Deadlines ≤ 90 days</p>
-    <p class="value">1</p>
-    <p class="sub muted">0 overdue</p>
-  </div>
+  <div class="tile kpi"><p class="label">Active engagements</p><p class="value">3</p><p class="sub">3 in total</p></div>
+  <div class="tile kpi"><p class="label">In client review</p><p class="value">1</p><p class="sub">deliverables awaiting sign-off</p></div>
+  <div class="tile kpi"><p class="label">Overdue</p><p class="value">1</p><p class="sub">deliverables + checklist items</p></div>
+  <div class="tile kpi"><p class="label">Due in 14 days</p><p class="value">2</p><p class="sub">active engagements</p></div>
 </section>
 
-<div class="grid2">
-  <section class="card" id="sec-pipeline" aria-labelledby="h-pipeline">
-    <h2 id="h-pipeline">Pipeline by IC gate</h2>
-    <p class="lede">Where each assessed company stands against the fund thesis.</p>
-    <div class="stack" role="img" aria-label="IC-ready: 0, Conditional: 0, Needs data: 3, Do not proceed: 0">
-<span class="warning" style="flex:3"></span>    </div>
-    <ul class="legend">
-<li><span class="sw good"></span>IC-ready <strong>0</strong></li><li><span class="sw warning"></span>Conditional <strong>0</strong></li><li><span class="sw warning"></span>Needs data <strong>3</strong></li><li><span class="sw critical"></span>Do not proceed <strong>0</strong></li>    </ul>
-  </section>
-
-  <section class="card" id="sec-attention" aria-labelledby="h-attention">
-    <h2 id="h-attention">Needs attention</h2>
-    <p class="lede">Stale assessments, missing data and greenwashing flags.</p>
+<div class="eng-grid">
+  <section class="card" aria-labelledby="h-eng_a09054993d73">
+    <div class="eng-head">
+      <div>
+        <h2 id="h-eng_a09054993d73">BrightPath Finance</h2>
+        <p>Meridian Impact Partners (fictional) · annual impact report · 2026-09-07 → 2026-11-21</p>
+      </div>
+      <span class="pill good">active</span>
+    </div>
+    <div class="bars">
+      <span>Deliverables final</span><div class="bar" role="img" aria-label="0%"><span style="width:0%"></span></div><span>0%</span>
+<span>Checklist done</span><div class="bar" role="img" aria-label="17%"><span style="width:17%"></span></div><span>17% of 6</span>    </div>
+    <h3 class="small">Next due</h3>
     <ul class="list">
-<li><span class="pill critical" style="flex:none">California SB 253</span><span class="what">California SB 253 GHG emissions report due 2026-11-10 — 34 days away</span></li><li><span class="pill warning" style="flex:none">BrightPath Finance</span><span class="what">Held back by missing data, not by a negative finding</span></li><li><span class="pill warning" style="flex:none">Kampung Makmur Sdn Bhd</span><span class="what">Held back by missing data, not by a negative finding</span></li><li><span class="pill warning" style="flex:none">SunPath Energy Ltd</span><span class="what">Held back by missing data, not by a negative finding</span></li>    </ul>
+      <li><span class="when">2026-10-28</span>
+        <span class="what">LP impact report section<small>Deliverable · Impact lead</small></span>
+        <span class="days ">in 21d</span></li>
+      <li><span class="when">2026-11-16</span>
+        <span class="what">Beneficiary survey (Lean Data)<small>Deliverable · Impact lead</small></span>
+        <span class="days ">in 40d</span></li>
+    </ul>
+    <h3 class="small">Deliverables (5 open)</h3>
+    <div class="table-wrap"><table class="dl">
+      <caption class="sr-only">Deliverables for BrightPath Finance</caption>
+      <thead><tr><th scope="col">Deliverable</th><th scope="col">State</th><th scope="col">Owner</th><th scope="col">Due</th></tr></thead>
+      <tbody><tr><td>LP narrative</td><td><span class="pill ">planned</span></td><td>Impact team</td><td class="due">—</td></tr><tr><td>Public annual report</td><td><span class="pill ">planned</span></td><td>Impact team</td><td class="due">—</td></tr><tr><td>Portfolio rollup</td><td><span class="pill ">planned</span></td><td>Impact team</td><td class="due">—</td></tr><tr><td>LP impact report section</td><td><span class="pill ">in progress</span></td><td>Impact lead</td><td class="due">2026-10-28</td></tr><tr><td>Beneficiary survey (Lean Data)</td><td><span class="pill ">planned</span></td><td>Impact lead</td><td class="due">2026-11-16</td></tr></tbody>
+    </table></div>
+  </section>
+  <section class="card" aria-labelledby="h-eng_d8f3f72f4587">
+    <div class="eng-head">
+      <div>
+        <h2 id="h-eng_d8f3f72f4587">Kampung Makmur Sdn Bhd</h2>
+        <p>Meridian Impact Partners (fictional) · dd mid · 2026-09-07 → 2026-11-21</p>
+      </div>
+      <span class="pill good">active</span>
+    </div>
+    <div class="bars">
+      <span>Deliverables final</span><div class="bar" role="img" aria-label="17%"><span style="width:17%"></span></div><span>17%</span>
+<span>Checklist done</span><div class="bar" role="img" aria-label="60%"><span style="width:60%"></span></div><span>60% of 20</span>    </div>
+    <h3 class="small">Next due · 1 overdue</h3>
+    <ul class="list">
+      <li><span class="when">2026-10-04</span>
+        <span class="what">IC memo<small>Deliverable · Analyst</small></span>
+        <span class="days overdue">3d late</span></li>
+      <li><span class="when">2026-10-12</span>
+        <span class="what">DD questionnaire to founders<small>Deliverable · Associate</small></span>
+        <span class="days due_soon">in 5d</span></li>
+    </ul>
+    <h3 class="small">Deliverables (5 open)</h3>
+    <div class="table-wrap"><table class="dl">
+      <caption class="sr-only">Deliverables for Kampung Makmur Sdn Bhd</caption>
+      <thead><tr><th scope="col">Deliverable</th><th scope="col">State</th><th scope="col">Owner</th><th scope="col">Due</th></tr></thead>
+      <tbody><tr><td>DD-Mid memo</td><td><span class="pill ">planned</span></td><td>Impact team</td><td class="due">—</td></tr><tr><td>KPI term-sheet annex</td><td><span class="pill ">planned</span></td><td>Impact team</td><td class="due">—</td></tr><tr><td>Risk/opportunity register</td><td><span class="pill ">planned</span></td><td>Impact team</td><td class="due">—</td></tr><tr><td>IC memo</td><td><span class="pill ">draft</span></td><td>Analyst</td><td class="due">2026-10-04</td></tr><tr><td>DD questionnaire to founders</td><td><span class="pill warning">client review</span></td><td>Associate</td><td class="due">2026-10-12</td></tr><tr><td>Impact thesis fit note</td><td><span class="pill good">final</span></td><td>Partner</td><td class="due">2026-09-17</td></tr></tbody>
+    </table></div>
+  </section>
+  <section class="card" aria-labelledby="h-eng_3f9cc48fdfe9">
+    <div class="eng-head">
+      <div>
+        <h2 id="h-eng_3f9cc48fdfe9">SunPath Energy Ltd</h2>
+        <p>Meridian Impact Partners (fictional) · dd light · 2026-09-07 → 2026-11-21</p>
+      </div>
+      <span class="pill good">active</span>
+    </div>
+    <div class="bars">
+      <span>Deliverables final</span><div class="bar" role="img" aria-label="25%"><span style="width:25%"></span></div><span>25%</span>
+<span>Checklist done</span><div class="bar" role="img" aria-label="33%"><span style="width:33%"></span></div><span>33% of 9</span>    </div>
+    <h3 class="small">Next due</h3>
+    <ul class="list">
+      <li><span class="when">2026-10-16</span>
+        <span class="what">Follow-up data request<small>Deliverable · Associate</small></span>
+        <span class="days due_soon">in 9d</span></li>
+    </ul>
+    <h3 class="small">Deliverables (3 open)</h3>
+    <div class="table-wrap"><table class="dl">
+      <caption class="sr-only">Deliverables for SunPath Energy Ltd</caption>
+      <thead><tr><th scope="col">Deliverable</th><th scope="col">State</th><th scope="col">Owner</th><th scope="col">Due</th></tr></thead>
+      <tbody><tr><td>DD-Light memo</td><td><span class="pill ">planned</span></td><td>Impact team</td><td class="due">—</td></tr><tr><td>Red-flag summary</td><td><span class="pill ">planned</span></td><td>Impact team</td><td class="due">—</td></tr><tr><td>Screening report</td><td><span class="pill good">final</span></td><td>Analyst</td><td class="due">2026-09-27</td></tr><tr><td>Follow-up data request</td><td><span class="pill ">in progress</span></td><td>Associate</td><td class="due">2026-10-16</td></tr></tbody>
+    </table></div>
   </section>
 </div>
 
-<section class="card" id="sec-heatmap" aria-labelledby="h-heat">
-  <h2 id="h-heat">Impact heat-map</h2>
-  <p class="lede">5 Dimensions (1–5) and material SDG scores (0–100). Darker means stronger.</p>
-  <div class="table-wrap">
-  <table class="heat">
-    <caption class="sr-only">5 Dimensions and SDG scores per company</caption>
-    <thead><tr>
-      <th scope="col" class="co">Company</th><th scope="col">Gate</th>
-<th scope="col">What</th><th scope="col">Who</th><th scope="col">How much</th><th scope="col">Contribution</th><th scope="col">Risk</th>      <th class="gap" aria-hidden="true"></th>
-<th scope="col" title="SDG 1 — No Poverty"><span class="sdg-h" style="background:#E5243B;color:#0b0b0b">1</span><span class="sr-only"> SDG 1 No Poverty</span></th><th scope="col" title="SDG 2 — Zero Hunger"><span class="sdg-h" style="background:#DDA63A;color:#0b0b0b">2</span><span class="sr-only"> SDG 2 Zero Hunger</span></th><th scope="col" title="SDG 5 — Gender Equality"><span class="sdg-h" style="background:#FF3A21;color:#0b0b0b">5</span><span class="sr-only"> SDG 5 Gender Equality</span></th><th scope="col" title="SDG 7 — Affordable and Clean Energy"><span class="sdg-h" style="background:#FCC30B;color:#0b0b0b">7</span><span class="sr-only"> SDG 7 Affordable and Clean Energy</span></th><th scope="col" title="SDG 8 — Decent Work and Economic Growth"><span class="sdg-h" style="background:#A21942;color:#ffffff">8</span><span class="sr-only"> SDG 8 Decent Work and Economic Growth</span></th><th scope="col" title="SDG 13 — Climate Action"><span class="sdg-h" style="background:#3F7E44;color:#ffffff">13</span><span class="sr-only"> SDG 13 Climate Action</span></th>    </tr></thead>
-    <tbody>
-      <tr>
-        <td class="co"><a class="co-link" href="brightpath_finance/brightpath_finance_impact_report.html">BrightPath Finance</a><small>fintech · Sub-Saharan Africa</small></td>
-        <td style="background:none"><span class="pill warning">Needs data</span></td>
-<td class="l2">1.5</td><td class="l3">2.5</td><td class="l2">1.8</td><td class="l2">1.5</td><td class="l2">1.2</td>        <td class="gap" aria-hidden="true"></td>
-<td class="l3">43</td><td class="l3">43</td><td class="l2">38</td><td class="l2">25</td><td class="l2">37</td><td class="l2">20</td>      </tr>
-      <tr>
-        <td class="co"><a class="co-link" href="kampung_makmur_sdn_bhd/kampung_makmur_sdn_bhd_impact_report.html">Kampung Makmur Sdn Bhd</a><small>agriculture · Malaysia</small></td>
-        <td style="background:none"><span class="pill warning">Needs data</span></td>
-<td class="l3">2.3</td><td class="l3">2.3</td><td class="l2">1.5</td><td class="l2">1.3</td><td class="l2">1.3</td>        <td class="gap" aria-hidden="true"></td>
-<td class="l2">25</td><td class="l3">42</td><td class="l1">10</td><td class="l3">43</td><td class="l2">32</td><td class="l3">42</td>      </tr>
-      <tr>
-        <td class="co"><a class="co-link" href="sunpath_energy_ltd/sunpath_energy_ltd_impact_report.html">SunPath Energy Ltd</a><small>energy · Kenya</small></td>
-        <td style="background:none"><span class="pill warning">Needs data</span></td>
-<td class="l2">2.0</td><td class="l2">1.8</td><td class="l2">1.7</td><td class="l2">1.5</td><td class="l2">1.2</td>        <td class="gap" aria-hidden="true"></td>
-<td class="l2">28</td><td class="l2">25</td><td class="l1">13</td><td class="l3">42</td><td class="l2">32</td><td class="l2">37</td>      </tr>
-    </tbody>
-  </table>
-  </div>
-  <div class="ramp" aria-hidden="true">weaker <span class="b l1"></span><span class="b l2"></span><span class="b l3"></span><span class="b l4"></span><span class="b l5"></span> stronger</div>
-</section>
-
-<div class="grid2">
-  <section class="card" id="sec-deadlines" aria-labelledby="h-deadlines">
-    <h2 id="h-deadlines">Regulatory deadlines</h2>
-    <p class="lede">Next 180 days for EU, US, UK, HK (calendar-year reporting). Confirm applicability per fund.</p>
-    <ul class="list">
-      <li><span class="when">2026-11-10</span>
-        <span class="what">California SB 253 GHG emissions report<small>California SB 253 · US</small></span>
-        <span class="days due_soon">in 34 d</span></li>
-      <li><span class="when">2027-01-30</span>
-        <span class="what">CSRD scope determination (Omnibus I)<small>CSRD/ESRS (Omnibus I) · EU</small></span>
-        <span class="days upcoming">in 115 d</span></li>
-      <li><span class="when">2027-01-30</span>
-        <span class="what">ESPR / Digital Product Passport applicability screen<small>ESPR · EU</small></span>
-        <span class="days upcoming">in 115 d</span></li>
-      <li><span class="when">2027-01-30</span>
-        <span class="what">SDR label selection<small>FCA SDR · UK</small></span>
-        <span class="days upcoming">in 115 d</span></li>
-      <li><span class="when">2027-01-30</span>
-        <span class="what">Article 6 / 8 / 9 classification<small>SFDR · EU</small></span>
-        <span class="days upcoming">in 115 d</span></li>
-      <li><span class="when">2027-03-31</span>
-        <span class="what">CBAM embedded-emissions declaration<small>CBAM · EU</small></span>
-        <span class="days upcoming">in 175 d</span></li>
-      <li><span class="when">2027-03-31</span>
-        <span class="what">Value-chain human-rights &amp; environmental due diligence<small>CSDDD (Omnibus I) · EU</small></span>
-        <span class="days upcoming">in 175 d</span></li>
-      <li><span class="when">2027-03-31</span>
-        <span class="what">Double-materiality assessment<small>CSRD/ESRS · EU</small></span>
-        <span class="days upcoming">in 175 d</span></li>
-      <li><span class="when">2027-03-31</span>
-        <span class="what">California SB 261 climate-risk report (enforcement stayed)<small>California SB 261 · US</small></span>
-        <span class="days upcoming">in 175 d</span></li>
-      <li><span class="when">2027-03-31</span>
-        <span class="what">Battery passport &amp; carbon-footprint readiness<small>EU Battery Regulation · EU</small></span>
-        <span class="days upcoming">in 175 d</span></li>
-    </ul>
-<p class="muted" style="margin:10px 0 0;font-size:.86rem">+ 5 more in the window — see the regulatory_calendar tool.</p>  </section>
-
-  <section class="card" id="sec-review" aria-labelledby="h-review">
-    <h2 id="h-review">Evidence to review</h2>
-    <p class="lede">AI-extracted claims below 50% confidence, plus pending items in the review queues — confirm or correct before they reach LPs. Showing 8 of 24.</p>
-    <ul class="list">
-      <li class="q"><span class="days">25%</span>
-        <span class="what"><strong>SunPath Energy Ltd</strong> · output · NESTA 3<blockquote>“Our carbon methodology is verified by a third-party auditor under Gold Standard rules.”</blockquote></span></li>
-      <li class="q"><span class="days">30%</span>
-        <span class="what"><strong>BrightPath Finance</strong> · outcome · NESTA 2<blockquote>“We serve 45,000 clients (PI4060: 45,000), 68% of them women.”</blockquote></span></li>
-      <li class="q"><span class="days">30%</span>
-        <span class="what"><strong>BrightPath Finance</strong> · outcome · NESTA 2<blockquote>“We employ 180 permanent staff (OI8869: 180), including 85 women (OI6213: 85) and 12 female managers (OI1571: 12).”</blockquote></span></li>
-      <li class="q"><span class="days">30%</span>
-        <span class="what"><strong>BrightPath Finance</strong> · outcome · NESTA 2<blockquote>“Revenue grew 32% last year (FP4761: 32%).”</blockquote></span></li>
-      <li class="q"><span class="days">30%</span>
-        <span class="what"><strong>BrightPath Finance</strong> · outcome · NESTA 2<blockquote>“Portfolio at risk over 30 days is 3.1%.”</blockquote></span></li>
-      <li class="q"><span class="days">30%</span>
-        <span class="what"><strong>BrightPath Finance</strong> · outcome · NESTA 2<blockquote>“Our own footprint is 120 tCO2e (OI1479: 120 tCO2e), of which 80 tCO2e are direct Scope 1 emissions (OI4112: 80 tCO2e).”</blockquote></span></li>
-      <li class="q"><span class="days">30%</span>
-        <span class="what"><strong>Kampung Makmur Sdn Bhd</strong> · outcome · NESTA 2<blockquote>“Since 2022 we have reduced antibiotic use by 62% through vaccination and group-housing, and replaced 100% of conventional slatted housing with deep-litter, enrichment-enabled pens…”</blockquote></span></li>
-      <li class="q"><span class="days">30%</span>
-        <span class="what"><strong>Kampung Makmur Sdn Bhd</strong> · outcome · NESTA 2<blockquote>“Our biogas plant captures methane from manure lagoons and generates 1.8 GWh of electricity per year, replacing ~920 tonnes CO2e of grid emissions and cutting our grid electricity…”</blockquote></span></li>
-    </ul>
-  </section>
-</div>
-
-<footer class="footer"><p style="margin:0">Generated by Impact Vision · scores are screening estimates, not assurance. Machine-generated by rules and deterministic scoring; no generative AI. Review before relying on it.</p></footer>
+<footer class="footer"><p style="margin:0">Generated by Impact Vision · engagements are saved in the state store and survive restarts.</p></footer>
 </main>
 </body>
 </html>

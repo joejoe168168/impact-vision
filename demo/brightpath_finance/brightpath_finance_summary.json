@@ -4,42 +4,42 @@
   "geography": "Sub-Saharan Africa",
   "gate": "INSUFFICIENT EVIDENCE",
   "recommendation": "Not IC-ready: the failed checks reflect missing evidence, not negative findings. Collect the missing metrics and DD answers, then re-screen.",
-  "five_d_score": 1.8,
+  "five_d_score": 1.7,
   "five_d_grade": "C",
   "five_d_evidence": "partial",
   "top_sdgs": [
     {
-      "goal": 13,
-      "name": "Climate Action",
-      "score": 66.0,
-      "confidence": "high"
-    },
-    {
-      "goal": 10,
-      "name": "Reduced Inequalities",
-      "score": 41.9,
+      "goal": 1,
+      "name": "No Poverty",
+      "score": 42.7,
       "confidence": "medium"
     },
     {
       "goal": 2,
       "name": "Zero Hunger",
-      "score": 41.0,
+      "score": 42.7,
+      "confidence": "medium"
+    },
+    {
+      "goal": 5,
+      "name": "Gender Equality",
+      "score": 37.8,
       "confidence": "medium"
     }
   ],
-  "greenwashing_risk": 58.9,
+  "greenwashing_risk": 57.1,
   "greenwashing_class": "Moderate Risk",
   "dd_coverage_pct": 43.4,
-  "claims": 4,
+  "claims": 5,
   "reported_metrics": {
     "PI4060": "45,000",
-    "OI1479": "120 tCO2e",
     "OI8869": "180",
+    "OI1479": "120 tCO2e",
+    "OI4112": "80 tCO2e",
     "OI6213": "85",
     "OI1571": "12",
     "OI1075": "7",
-    "FP4761": "32%",
-    "OI4112": "80 tCO2e"
+    "FP4761": "32%"
   },
   "files": [
     "brightpath_finance_impact_report.html",
@@ -51,5 +51,10 @@
     "brightpath_finance_dd_questionnaire.docx",
     "brightpath_finance_data.xlsx",
     "brightpath_finance_data.csv"
-  ]
+  ],
+  "ai_disclosure": "Automated analysis: produced by rules and a deterministic scoring model; no generative AI was used. 3 of 21 scores are estimated from document text rather than reported metrics. Review before relying on it.",
+  "methodology": {
+    "methodology_version": "1.1.0",
+    "config_hash": "8fabf9b5a7e2"
+  }
 }

@@ -38,6 +38,7 @@ SHOTS = [
     ("investee-portal", f"{PIG}_investee_portal.html", 1240, "light", None, 1000),
     ("gallery", str(DEMO / "index.html"), 1240, "light", None, 1100),
     ("portfolio-home", str(DEMO / "portfolio_home.html"), 1300, "light", None, 1250),
+    ("engagements", str(DEMO / "engagements.html"), 1300, "light", None, 1000),
 ]
 
 
@@ -78,9 +79,37 @@ def capture(chat_url: str | None) -> list[Path]:
             out = OUT / "web-chat.png"
             page.screenshot(path=str(out))
             written.append(out)
+            # Report viewer: needs at least one saved report in the web app's home
+            # (python scripts/capture_screenshots.py --seed-web <dir> prepares one).
+            page.click("#togglePanel")  # the right panel starts collapsed
+            page.wait_for_timeout(300)
+            page.click(".panel-tabs button[data-tab=reports]")
+            page.wait_for_timeout(500)
+            if page.locator(".rep").count():
+                page.locator(".rep").first.click()
+                page.wait_for_timeout(2500)
+                out = OUT / "web-report-viewer.png"
+                page.screenshot(path=str(out))
+                written.append(out)
         browser.close()
     written.append(pdf_contact_sheet())
     return written
+
+
+def seed_web(home: Path) -> None:
+    """Fill a fresh web-app home with the three sample-deck reports."""
+    import sys
+
+    os.environ["IMPACT_VISION_WEB_HOME"] = str(home)
+    os.environ.setdefault("IMPACT_VISION_DB", str(home / "impact_vision.db"))
+    sys.path.insert(0, str(REPO / "src"))
+    from openharness.impact.pipeline import SAMPLE_DECKS, sample_deck_path
+    from openharness.web.reports_api import create_report
+
+    home.mkdir(parents=True, exist_ok=True)
+    for key in SAMPLE_DECKS:
+        record = create_report(sample_deck_path(key))
+        print(f"[seed] {record.get('company')} -> {home}")
 
 
 def pdf_contact_sheet() -> Path:
@@ -109,7 +138,13 @@ def pdf_contact_sheet() -> Path:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--chat-url", help="URL of a running `impact-vision serve-web` to capture")
+    parser.add_argument("--seed-web", metavar="DIR",
+                        help="Create sample reports in a fresh web-app home DIR, then exit "
+                             "(start serve-web with IMPACT_VISION_WEB_HOME=DIR to capture it)")
     args = parser.parse_args()
+    if args.seed_web:
+        seed_web(Path(args.seed_web))
+        return 0
     files = capture(args.chat_url)
     DEMO_SHOTS.mkdir(exist_ok=True)
     for f in files:

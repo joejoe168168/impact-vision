@@ -1,29 +1,31 @@
 Section,Metric,Value,Details,Numeric,Max,Unit
 Company,Name,BrightPath Finance,,,,
-Company,Generated,2026-10-06T10:36:51Z,,,,
-5D,Overall Grade,C,1.8/5.0,1.8,5,score
-5D,What,1.8/5.0,"Reporting 2 metrics (0 theme-specific, 14 available)",1.8,5,score
+Company,Generated,2026-10-07T00:37:40Z,,,,
+Company,AI disclosure,Automated analysis: produced by rules and a deterministic scoring model; no generative AI was used. 3 of 21 scores are estimated from document text rather than reported metrics. Review before relying on it.,,,,
+Company,Methodology,1.1.0,config 8fabf9b5a7e2,,,
+5D,Overall Grade,C,1.7/5.0,1.7,5,score
+5D,What,1.5/5.0,"Reporting 2 metrics (0 theme-specific, 14 available)",1.5,5,score
 5D,Who,2.5/5.0,"Reporting 5 metrics (0 theme-specific, 6 available)",2.5,5,score
 5D,How Much,1.8/5.0,"Scale=1.8, Depth=1.8, Duration=1.8",1.8,5,score
 5D,Contribution,1.5/5.0,"Depth=1.5, Duration=1.5",1.5,5,score
-5D,Risk,1.5/5.0,Estimated from sector/description (4 metrics available to track),1.5,5,score
-SDG,SDG 13,66.0/100,"high | metrics: OI1479,OI4112,PI4060",66.0,100,score
-SDG,SDG 10,41.9/100,"medium | metrics: OI1571,OI6213,PI4060",41.9,100,score
-SDG,SDG 2,41.0/100,medium | metrics: PI4060,41.0,100,score
-SDG,SDG 1,39.8/100,medium | metrics: PI4060,39.8,100,score
-SDG,SDG 5,39.5/100,"medium | metrics: OI1571,OI6213",39.5,100,score
-SDG,SDG 8,39.5/100,"medium | metrics: OI1571,OI6213,OI8869",39.5,100,score
-SDG,SDG 9,38.5/100,"medium | metrics: OI8869,PI4060",38.5,100,score
-SDG,SDG 6,32.0/100,medium | metrics: PI4060,32.0,100,score
-SDG,SDG 7,32.0/100,medium | metrics: PI4060,32.0,100,score
-SDG,SDG 3,24.8/100,medium | metrics: PI4060,24.8,100,score
-SDG,SDG 16,22.5/100,medium | metrics: ,22.5,100,score
-SDG,SDG 4,20.0/100,medium | metrics: PI4060,20.0,100,score
-SDG,SDG 11,18.0/100,low | metrics: PI4060,18.0,100,score
-SDG,SDG 15,17.5/100,low | metrics: ,17.5,100,score
-SDG,SDG 12,10.0/100,low | metrics: ,10.0,100,score
-SDG,SDG 14,10.0/100,low | metrics: ,10.0,100,score
-Greenwashing,Risk score,58.9/100,Moderate Risk,58.9,100,risk
+5D,Risk,1.2/5.0,Estimated from sector/description (4 metrics available to track),1.2,5,score
+SDG,SDG 1,42.7/100,medium | metrics: PI4060,42.7,100,score
+SDG,SDG 2,42.7/100,medium | metrics: PI4060,42.7,100,score
+SDG,SDG 5,37.8/100,"medium | metrics: OI1571,OI6213",37.8,100,score
+SDG,SDG 8,37.3/100,"medium | metrics: OI6213,OI8869",37.3,100,score
+SDG,SDG 9,35.5/100,"medium | metrics: OI8869,PI4060",35.5,100,score
+SDG,SDG 10,35.2/100,medium | metrics: PI4060,35.2,100,score
+SDG,SDG 6,28.0/100,medium | metrics: PI4060,28.0,100,score
+SDG,SDG 3,27.7/100,medium | metrics: PI4060,27.7,100,score
+SDG,SDG 16,27.5/100,medium | metrics: ,27.5,100,score
+SDG,SDG 7,25.0/100,medium | metrics: ,25.0,100,score
+SDG,SDG 15,22.5/100,medium | metrics: ,22.5,100,score
+SDG,SDG 13,20.3/100,"medium | metrics: OI1479,OI4112",20.3,100,score
+SDG,SDG 4,18.0/100,low | metrics: PI4060,18.0,100,score
+SDG,SDG 11,15.0/100,low | metrics: ,15.0,100,score
+SDG,SDG 12,15.0/100,low | metrics: ,15.0,100,score
+SDG,SDG 14,15.0/100,low | metrics: ,15.0,100,score
+Greenwashing,Risk score,57.1/100,Moderate Risk,57.1,100,risk
 Gap,Coverage,47.1%,,47.1,100,%
 Gap,FP2635,MISSING,Non-Performing Loans (Portfolio at Risk): 30 Days,,,
 Gap,OD4091,MISSING,Social and Environmental Targets,,,
@@ -43,6 +45,7 @@ Gap,OI6213,85,Full-time Employees: Female,85.0,,
 Gap,OI8869,180,Permanent Employees: Total,180.0,,
 Gap,PI4060,"45,000",Client Individuals: Total,45000.0,,
 Claim,outcome,"We serve 45,000 clients (PI4060: 45,000), 68% of them women.",metrics: PI4060,,,
+Claim,outcome,"We employ 180 permanent staff (OI8869: 180), including 85 women (OI6213: 85) and 12 female managers (OI1571: 12).",metrics: OI8869,,,
 Claim,outcome,Revenue grew 32% last year (FP4761: 32%).,metrics: ,,,
 Claim,outcome,Portfolio at risk over 30 days is 3.1%.,metrics: ,,,
-Claim,outcome,"Our own footprint is 120 tCO2e (OI1479: 120 tCO2e), of which 80 tCO2e are direct Scope 1 emissions (OI4112: 80 tCO2e).",metrics: OI1479,,,
+Claim,outcome,"Our own footprint is 120 tCO2e (OI1479: 120 tCO2e), of which 80 tCO2e are direct Scope 1 emissions (OI4112: 80 tCO2e).","metrics: OI1479,OI4112",,,

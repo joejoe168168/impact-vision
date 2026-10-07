@@ -1,7 +1,7 @@
 # Impact Vision — Roadmap v7.0
 
 **Date:** 2026-10-06
-**Status:** Planning — "Trusted, Effortless & Beautiful"
+**Status:** Released as 0.17.0 (2026-10-07) — "Trusted, Effortless & Beautiful"
 **Audience:** product, engineering, fund managers, consultants, LPs
 **Builds on:** `roadmap-v6.md`, `roadmap-v6-implementation.md`,
 `roadmap-updates-2026-07.md` (all still valid for the capability backlog)
@@ -405,6 +405,11 @@ Not done / deferred:
 | **0.17.0 "Effortless"** | +8 wks (early Dec 2026) | Wave 1 + W2.1/W2.2 on the impact report + W2.4 PDF + SFDR 2.0 EP variant + ISSA 5000/HKSSA framing (ahead of 2026-12-15) |
 | **0.18.0 "Beautiful"** | +12 wks (Jan 2027) | Rest of Wave 2 (audiences, zh-HK/zh-CN, a11y CI, exports) + W3.1/W3.2 |
 | **0.19.0 "Durable"** | +16 wks (Feb 2027) | Wave 5 + W3.3/W3.4 + EFRAG/ISSB taxonomy re-sync + ILPA template if final |
+
+**Released (2026-10-07):** Waves 0–5 shipped together as **0.17.0
+"Trusted, Effortless & Beautiful"** instead of the four increments above.
+**0.18.0** removes the deprecated shims and physically moves the code to
+`impact_vision`.
 
 Re-run the regulatory scan (§2) monthly via `regulatory_radar`, and publish the
 deltas as `docs/roadmap-updates-YYYY-MM.md`.

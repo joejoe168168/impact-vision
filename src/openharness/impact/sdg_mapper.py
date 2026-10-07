@@ -291,6 +291,7 @@ def map_sdg_alignment(
     params = _sdg()
     pts = params["max_points"]
     cross_min, cross_w = params["cross_cutting_min_goals"], params["cross_cutting_weight"]
+    footprint = set(params.get("operational_footprint_metrics", []) or [])
     material_at = params["material_relevance"]
     target_goals = goals or list(range(1, 18))
     reported_ids = set(company.reported_metrics.keys())
@@ -337,8 +338,11 @@ def map_sdg_alignment(
         # Cross-cutting metrics (tagged to many goals, e.g. "Client
         # Individuals: Total") count at reduced weight and cannot on their own
         # establish high confidence for a goal.
+        # Own-operations footprint metrics (Scope 1/2 GHG, water consumed) are
+        # disclosure, not contribution: they also count at the reduced weight.
         specific_matched = {
-            mid for mid in matched_metric_ids if goal_breadth.get(mid, 0) < cross_min
+            mid for mid in matched_metric_ids
+            if goal_breadth.get(mid, 0) < cross_min and mid not in footprint
         }
         goal_prefix = f"{goal_num}."
         # Targets / evidence chain still use the broad set so we surface every

@@ -53,6 +53,15 @@ def pages(tmp_path_factory):
         render_portfolio_home(build_portfolio_home([record_from_bundle(bundle)], fund_name="Fund")),
         encoding="utf-8",
     )
+    from openharness.impact.engagement_home import build_engagement_home, render_engagement_home
+    from openharness.impact.engagements.workspace import EngagementWorkspace
+
+    ws = EngagementWorkspace()
+    eng = ws.create_engagement(name="Fund I DD", client_name="Acme Capital", bundle_id="dd_light")
+    ws.add_deliverable(eng.engagement_id, name="IC memo", owner="analyst", due_date="2026-01-15")
+    (out / "engagements.html").write_text(
+        render_engagement_home(build_engagement_home(ws.list_engagements())), encoding="utf-8"
+    )
     (out / "portal.html").write_text(
         build_investee_portal(fund_name="Fund", company_name=bundle.company.name), encoding="utf-8"
     )

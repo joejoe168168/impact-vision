@@ -9,21 +9,21 @@
   "five_d_evidence": "partial",
   "top_sdgs": [
     {
+      "goal": 7,
+      "name": "Affordable and Clean Energy",
+      "score": 43.3,
+      "confidence": "medium"
+    },
+    {
       "goal": 2,
       "name": "Zero Hunger",
-      "score": 35.0,
+      "score": 41.7,
       "confidence": "medium"
     },
     {
       "goal": 13,
       "name": "Climate Action",
-      "score": 35.0,
-      "confidence": "medium"
-    },
-    {
-      "goal": 8,
-      "name": "Decent Work and Economic Growth",
-      "score": 33.5,
+      "score": 41.7,
       "confidence": "medium"
     }
   ],
@@ -48,5 +48,10 @@
     "kampung_makmur_sdn_bhd_dd_questionnaire.docx",
     "kampung_makmur_sdn_bhd_data.xlsx",
     "kampung_makmur_sdn_bhd_data.csv"
-  ]
+  ],
+  "ai_disclosure": "Automated analysis: produced by rules and a deterministic scoring model; no generative AI was used. 4 of 22 scores are estimated from document text rather than reported metrics. Review before relying on it.",
+  "methodology": {
+    "methodology_version": "1.1.0",
+    "config_hash": "8fabf9b5a7e2"
+  }
 }

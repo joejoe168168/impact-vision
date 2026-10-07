@@ -479,9 +479,36 @@ def _has_inflected(text_lower: str, term: str) -> bool:
     return re.search(rf"(?<![\w-]){re.escape(term)}{suffix}(?![\w-])", text_lower) is not None
 
 
+_FOOTPRINT_SENTENCE = re.compile(
+    r"\b(scope\s*[123]|our (?:own )?(?:carbon |ghg |operational )?(?:footprint|emissions)|"
+    r"operational (?:footprint|emissions))\b",
+    re.IGNORECASE,
+)
+_MITIGATION_WORDS = re.compile(
+    r"\b(avoid\w*|reduc\w*|displac\w*|abat\w*|replac\w*|renewable|clean energy|decarboni[sz]\w*|"
+    r"solar|biogas|sequest\w*|net[- ]zero)\b",
+    re.IGNORECASE,
+)
+
+
+def _without_footprint_disclosures(text: str) -> str:
+    """Drop sentences that only disclose the company's own footprint.
+
+    "Our own footprint is 120 tCO2e … Scope 1 emissions" is ESG disclosure,
+    not a climate-mitigation business: it must not add the Climate Mitigation
+    theme or SDG 13 hints to a fintech. Sentences that also describe
+    mitigation ("avoided 920 t CO2e", "replacing diesel") are kept.
+    """
+    sentences = re.split(r"(?<=[.!?])\s+", text)
+    return " ".join(
+        s for s in sentences
+        if not (_FOOTPRINT_SENTENCE.search(s) and not _MITIGATION_WORDS.search(s))
+    )
+
+
 def _detect_themes(text: str) -> list[str]:
-    """Detect impact themes from document text."""
-    text_lower = text.lower()
+    """Detect impact themes from document text (own-footprint disclosures ignored)."""
+    text_lower = _without_footprint_disclosures(text).lower()
     themes: list[str] = []
     for keyword, theme_list in SECTOR_THEME_MAP.items():
         if _has_term(text_lower, keyword):
@@ -534,7 +561,7 @@ def _detect_sdg_goals(text: str, claims: list[ImpactClaim]) -> set[int]:
         "ocean": [14], "marine": [14],
         "forest": [15], "biodiversity": [15], "land": [15],
     }
-    text_lower = text.lower()
+    text_lower = _without_footprint_disclosures(text).lower()
     for keyword, sdg_list in theme_sdg_hints.items():
         if _has_inflected(text_lower, keyword):
             goals.update(sdg_list)

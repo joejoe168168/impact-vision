@@ -37,6 +37,10 @@ No API key or setup is needed. Browse ready-made output in [`demo/`](demo/)
 <td><img src="docs/images/portfolio-home.png" alt="Portfolio home"><br><em><b>Portfolio home</b>: pipeline by IC gate, 5D/SDG heat-map, SFDR/CSRD/SB 253 deadlines and evidence to review.</em></td>
 </tr>
 <tr>
+<td><img src="docs/images/engagements.png" alt="Engagement view"><br><em><b>Engagements</b>: deliverables, checklist progress and what is overdue or due soon, saved across restarts.</em></td>
+<td><img src="docs/images/report-sdg.png" alt="SDG alignment"><br><em><b>SDG alignment</b>: material goals only, scored from goal-specific evidence.</em></td>
+</tr>
+<tr>
 <td><img src="docs/images/report-5d.png" alt="5 Dimensions with sector benchmark"><br><em><b>5 Dimensions</b> against the sector benchmark, with an evidence label per dimension.</em></td>
 <td><img src="docs/images/report-evidence.png" alt="Evidence ledger"><br><em><b>Evidence ledger</b>: every claim with its NESTA level, verification signals and mapped IRIS+ metric.</em></td>
 </tr>
@@ -85,6 +89,9 @@ browser chat or the `assess_deal` agent tool. Impact Vision will:
    - DD questionnaire (HTML/Word);
    - JSON summary;
    - XLSX / CSV / iXBRL exports.
+
+   Every output states how AI and automation were used and carries the
+   scoring methodology version, so two reports are comparable at a glance.
 
 > **Using Impact Vision in a fund?** The
 > [fund-manager guide](docs/fund-manager-guide.md) starts with the no-code
@@ -467,25 +474,18 @@ impact-vision/
 │   │   ├── gap_analysis.py            # Core Metric Set coverage analysis
 │   │   ├── dd_checklist.py            # DD question engine + NESTA evidence scoring
 │   │   ├── benchmarks.py              # Sector benchmarks for 18 sectors
-│   │   ├── greenwashing.py            # Greenwashing detection (standard + Green Claims + FCA + NLP)
+│   │   ├── greenwashing.py            # Greenwashing detection (standard + EU ECGT + UK FCA + NLP)
 │   │   ├── risk_opportunity.py        # Risk/opportunity (likelihood × severity)
 │   │   ├── storage.py                 # SQLite persistence for assessments
 │   │   ├── pipeline.py                # Document → full assessment → reports (assess / demo)
 │   │   ├── claim_metric_mapper.py     # Pitch quantities → IRIS+ metric IDs
-│   │   ├── glossary.py                # Plain-language glossary (docs + report appendix)
-│   │   ├── _paths.py                  # Bundled-data resolver (source checkout + wheel)
+│   │   ├── glossary.py · _paths.py    # Plain-language glossary; bundled-data resolver
 │   │   │
 │   │   │   # --- Fund workflow (v0.8+) ---
-│   │   ├── fund_thesis.py             # Fund impact thesis, IC gate, adverse thresholds
+│   │   ├── fund_thesis.py · deal_gate.py   # Fund thesis, IC gate, pass/warn/fail scorecard
 │   │   ├── ic_memo.py                 # IC memo rendering (MD/HTML/DOCX/PPTX)
-│   │   ├── deal_gate.py               # Deal scorecard (pass/warn/fail gate)
-│   │   ├── portfolio_rollup.py        # Capital-weighted portfolio roll-up
-│   │   ├── lp_calendar.py             # 12-month LP reporting calendar
-│   │   ├── tenancy.py                 # Multi-tenant + RBAC
-│   │   ├── plugins.py                 # Entry-point plug-in discovery
-│   │   ├── signed_feed.py             # Hash-chained LP report feed (HMAC)
-│   │   ├── lp_portal.py               # ILPA-compatible LP portal
-│   │   ├── marketplace.py             # Thesis marketplace (publish/subscribe)
+│   │   ├── portfolio_rollup.py · lp_calendar.py · lp_portal.py · signed_feed.py
+│   │   ├── tenancy.py · plugins.py · marketplace.py   # RBAC, plug-ins, thesis marketplace
 │   │   │
 │   │   │   # --- Scientific rigor + primary data (v0.14.0) ---
 │   │   ├── extractors/                # Pluggable claim extractors (regex/LLM)
@@ -500,7 +500,6 @@ impact-vision/
 │   │   ├── assurance.py · csrd_wizard.py · issb_reporting.py · soc2_checklist.py
 │   │   ├── audit_trail.py             # Hash-chained lifecycle events
 │   │   ├── i18n.py · fx.py · regulatory_packs.py · branding.py
-│   │   │
 │   │   │   # --- v2 institutional backbone (v0.13+) ---
 │   │   ├── metric_records.py          # Canonical MetricRecord contract
 │   │   ├── investee_collection.py     # Questionnaire schema + submission lifecycle
@@ -508,17 +507,23 @@ impact-vision/
 │   │   ├── lca.py                      # LCA/LCSA, lifecycle costs, social hotspots, LCM plans
 │   │   ├── evidence_graph.py          # Claim↔metric↔target↔evidence lineage
 │   │   ├── standards_registry.py      # Versioned standards metadata
-│   │   ├── roadmap_v2.py              # Collection / disclosure / assurance helpers
+│   │   ├── ai_review.py · disclosure_packs.py · report_governance.py  # (ex-roadmap_v2)
 │   │   │
 │   │   │   # --- v3 Trust Infrastructure (v0.15.0) ---
-│   │   ├── emission_factors.py        # Versioned factors + sensitivity/provenance bands
-│   │   ├── stakeholder_voice.py       # Lean Data + GDPR/PDPA consent
+│   │   ├── emission_factors.py · stakeholder_voice.py  # Versioned factors; Lean Data + consent
 │   │   ├── evidence_workflow.py       # AI extraction review queue
 │   │   ├── verification_workspace.py  # Assurer workspace + findings
-│   │   ├── lp_narrative.py            # LP narrative + Q&A (approved-data only)
-│   │   ├── greenwashing_reviewer.py   # Per-claim explainable review
+│   │   ├── lp_narrative.py · greenwashing_reviewer.py  # LP Q&A (approved data); per-claim review
 │   │   ├── portfolio_nlq.py           # NL portfolio queries + ApprovedDataPolicy
 │   │   ├── exit_impact.py             # OPIM Principle 8 exit-impact scoring + learning context
+│   │   │
+│   │   │   # --- v7 trust, currency & platform (0.17.0) ---
+│   │   ├── knowledge.py               # Sourced YAML knowledge + 180-day freshness gate
+│   │   ├── methodology.py             # Versioned scoring weights; version + hash on every output
+│   │   ├── ai_provenance.py           # AI / automation disclosure on every output (AI Act Art 50)
+│   │   ├── state_store.py             # Persistent consultant state (SQLite / Postgres)
+│   │   ├── benchmark_provider.py      # One provider over data/benchmarks.yaml
+│   │   ├── portfolio_home.py · engagement_home.py  # Fund and engagement web pages
 │   │   │
 │   │   │   # --- v4 Engagement Suite (latest) ---
 │   │   ├── engagements/
@@ -535,11 +540,10 @@ impact-vision/
 │   │   │   └── verification_bundle.py # 3-pillar signed assurance bundle (HMAC)
 │   │   │
 │   │   ├── report_templates/          # Jinja2-based HTML report templates
-│   │   ├── frameworks/                # 20+ ESG/sustainability frameworks
-│   │   │   ├── sasb.py · gri.py · tcfd.py · sfdr_pai.py · edci.py
-│   │   │   ├── unpri.py · theory_of_change.py · issb_ifrs_s1.py · issb_ifrs_s2.py
-│   │   │   ├── esrs.py · ifc_opim.py · pcaf.py · sbti.py · eu_taxonomy.py
-│   │   │   ├── tnfd.py · cdp.py
+│   │   ├── frameworks/                # 22 ESG/sustainability framework modules
+│   │   │   ├── sasb.py · gri.py · tcfd.py · sfdr_pai.py · sfdr_recast.py · edci.py · unpri.py
+│   │   │   ├── issb_ifrs_s1.py · issb_ifrs_s2.py · esrs.py · vsme.py · hk_taxonomy.py
+│   │   │   ├── ifc_opim.py · pcaf.py · sbti.py · eu_taxonomy.py · tnfd.py · cdp.py · …
 │   │   │   └── cross_reference.py     # 61 cross-framework metric mappings
 │   │   ├── mcp_server.py              # MCP server (FastMCP)
 │   │   └── sdk.py                     # High-level ImpactVision SDK facade
@@ -552,6 +556,7 @@ impact-vision/
 │   │   ├── chat_ui.py                 #   ChatGPT-style chat UI served at /
 │   │   ├── chat_api.py                #   WebSocket + sessions / provider / uploads
 │   │   ├── chat_session.py            #   One agent runtime per conversation
+│   │   ├── reports_api.py             #   Reports, share links, portfolio home, engagements
 │   │   ├── console.py                 #   Tool-form console served at /console
 │   │   └── app.py                     #   Mounts everything onto the REST gateway
 │   ├── dashboard/app.py               # Streamlit 6-tab dashboard
@@ -562,29 +567,27 @@ impact-vision/
 │   ├── raw/                           # IRIS+ Excel file (not committed)
 │   ├── processed/                     # JSON catalog cache (auto-generated)
 │   ├── dd_checklist.yaml              # 122 DD questions / 34 categories
-│   ├── esrs_simplified_2026.yaml      # Revised-ESRS screening fixture with provenance metadata
-│   ├── issb_s2_amendments.yaml        # Issued IFRS S2 amendments and effective dates
-│   ├── standard_articles/             # Article-level standards/regulatory summaries
+│   ├── regulatory/                    # Watch-list, jurisdictions, packs, SFDR 2.0 facts (sourced)
+│   ├── methodology/v1.yaml            # Every scoring weight and threshold (versioned)
+│   ├── standards_registry.yaml · benchmarks.yaml · concordance.yaml · hk_taxonomy.yaml
+│   ├── esrs_simplified_2026.yaml      # Revised ESRS (Reg 2026/1563) screening rows
 │   ├── scoring_config.yaml            # Sector baselines + keyword boosts
 │   ├── sdg_keywords.yaml              # SDG keyword mappings for 20+ sectors
-│   ├── core_metric_set_per_sdg.yaml   # Curated SDG core metric set
-│   ├── core_metric_sets_by_sector.yaml # Core metric set per sector (gap analysis)
+│   ├── core_metric_set_per_sdg.yaml · core_metric_sets_by_sector.yaml  # Curated core sets
 │   ├── claim_metric_map.yaml          # Rules mapping pitch quantities to IRIS+ IDs
 │   ├── glossary.yaml                  # Plain-language glossary (source of docs/glossary.md)
 │   ├── sample_decks/                  # Fictional sample pitch decks for `impact-vision demo`
 │   ├── fund_thesis.*.yaml             # Default + 4 regional thesis packs
 │   └── i18n/                          # 6 languages (en/es/fr/pt/zh/ar)
 ├── docs/
-│   ├── fund-manager-guide.md          # Python SDK walkthrough for funds
-│   ├── roadmap-v3.md / -v3-implementation.md
-│   ├── roadmap-v4.md                  # Consultant-led engagement suite
-│   ├── roadmap-updates-2026-07.md     # Current regulatory and implementation delta
-│   ├── roadmap-v7.md                  # Current roadmap: trust, ease of use, reports, standards
+│   ├── fund-manager-guide.md          # Web-first task recipes for funds and consultants
+│   ├── reference/tools.md             # Generated list of all 48 tools
+│   ├── roadmap-v7.md                  # Current roadmap (released as 0.17.0); older: v3, v4, v6
 │   ├── glossary.md · dd-checklist.md · climate-and-lca.md
 │   └── cursor-integration.md          # Cursor/VS Code MCP setup
 ├── examples/                          # Sample company, portfolio, MCP configs
 ├── tests/                             # Test suite (impact + v2 + v3 + v4)
-└── .github/workflows/ci.yml           # Import smoke + tests + ruff
+└── .github/workflows/ci.yml           # Import smoke, tests, ruff, knowledge + extraction gates
 ```
 
 ## DD Checklist
