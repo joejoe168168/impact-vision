@@ -91,9 +91,52 @@ def capture(chat_url: str | None) -> list[Path]:
                 out = OUT / "web-report-viewer.png"
                 page.screenshot(path=str(out))
                 written.append(out)
+        written.append(cli_shot(browser))
         browser.close()
     written.append(pdf_contact_sheet())
     return written
+
+
+def cli_shot(browser) -> Path:  # noqa: ANN001
+    """`impact-vision assess` on a sample deck, rendered as a terminal window.
+
+    Runs the real command offline (no API key) in a temp folder so the printed
+    paths are short, then screenshots the output in a terminal-style frame.
+    """
+    import html
+    import subprocess
+    import sys
+    import tempfile
+
+    deck = REPO / "data" / "sample_decks" / "sunpath_solar.pdf"
+    with tempfile.TemporaryDirectory() as tmp:
+        shutil.copy2(deck, Path(tmp) / deck.name)
+        cmd = [sys.executable, "-m", "openharness", "assess", deck.name, "-o", "reports"]
+        env = dict(os.environ, COLUMNS="100", PYTHONPATH=str(REPO / "src"))
+        out = subprocess.run(cmd, cwd=tmp, env=env, capture_output=True, text=True, timeout=300).stdout
+    body = html.escape(out.rstrip())
+    body = body.replace("INSUFFICIENT EVIDENCE", '<b class="amber">INSUFFICIENT EVIDENCE</b>')
+    body = "\n".join(
+        f'<span class="dim">{line[:18]}</span>{line[18:]}' if line.startswith("  ") and ":" in line[:18] else line
+        for line in body.splitlines()
+    )
+    page_html = f"""<!doctype html><meta charset="utf-8"><style>
+body{{margin:0;background:#e9e8e3;padding:28px;font-family:system-ui,sans-serif}}
+.win{{max-width:1020px;background:#0f1115;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.25);overflow:hidden}}
+.bar{{background:#1c1f26;padding:10px 14px;display:flex;gap:8px;align-items:center;color:#9aa0a6;font-size:13px}}
+.bar i{{width:12px;height:12px;border-radius:50%;display:inline-block}}
+pre{{margin:0;padding:18px 22px 22px;color:#e6e6e6;font:15px/1.55 ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap}}
+.p{{color:#7ee787}} .dim{{color:#9aa0a6}} .amber{{color:#f2c14e}}
+</style><div class="win"><div class="bar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i>
+<i style="background:#28c840"></i><span style="margin-left:8px">impact-vision — no API key</span></div>
+<pre><span class="p">$</span> impact-vision assess {deck.name} -o reports
+{body}</pre></div>"""
+    page = browser.new_page(viewport={"width": 1080, "height": 600}, device_scale_factor=1.5)
+    page.set_content(page_html)
+    out_path = OUT / "cli-assess.png"
+    page.locator(".win").screenshot(path=str(out_path))
+    page.close()
+    return out_path
 
 
 def seed_web(home: Path) -> None:

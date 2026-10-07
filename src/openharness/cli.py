@@ -128,7 +128,7 @@ def assess_cmd(
     out_dir: Path = typer.Option(Path("impact-vision-output"), "--out-dir", "-o", help="Output folder"),
     as_json: bool = typer.Option(False, "--json", help="Print the summary as JSON"),
     open_report: bool = typer.Option(False, "--open", help="Open the impact report in a browser"),
-    pdf: bool = typer.Option(False, "--pdf", help="Also write PDFs of the impact report and IC memo ([pdf] extra)"),
+    pdf: bool = typer.Option(False, "--pdf", help="Also write PDFs of the impact report and IC memo (\\[pdf] extra)"),
     lang: str = typer.Option("en", "--lang", help="Report language: en, zh-HK (Traditional), zh-CN (Simplified)"),
 ) -> None:
     """Assess one pitch deck / memo and write the impact report, IC memo and DD report.

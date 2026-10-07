@@ -61,7 +61,7 @@ No API key or setup is needed. Browse ready-made output in [`demo/`](demo/)
 <td><img src="docs/images/gallery.png" alt="Results gallery"><br><em><b>Results gallery</b> produced by <code>impact-vision demo</code>.</em></td>
 </tr>
 <tr>
-<td><img src="docs/images/agent-greeting.png" alt="Terminal agent"><br><em><b>Terminal agent</b> with the full impact toolkit.</em></td>
+<td><img src="docs/images/cli-assess.png" alt="impact-vision assess in a terminal"><br><em><b>One command, no API key</b>: <code>impact-vision assess deck.pdf</code> writes every deliverable.</em></td>
 <td><img src="docs/images/report-mobile.png" alt="Report on a phone" width="45%"><br><em>Every report works on a <b>phone</b>.</em></td>
 </tr>
 </table>
