@@ -202,6 +202,17 @@ section[id] { scroll-margin-top: 16px; }
   background: var(--series-1); margin-right: 6px; vertical-align: -1px; }
 .legend .key.bench { width: 2px; height: 14px; background: var(--ink-2); border-radius: 1px; }
 .legend .key.threshold { width: 0; height: 14px; border-left: 2px solid var(--critical); border-radius: 0; background: none; }
+.legend .key.over { background: var(--warning); }
+/* A component at or above the finding threshold: status colour plus a ▲ marker (never colour alone). */
+.bars .fill.over { background: var(--warning); }
+.over-flag { color: var(--warning-ink); font-size: 0.75em; }
+/* Evidence ledger: signal pills never break mid-label; mapped metrics show their names. */
+.sig { white-space: nowrap; margin: 0 4px 4px 0; }
+.mref { display: block; min-width: 13rem; font-variant-numeric: tabular-nums; }
+.mref + .mref { margin-top: 4px; }
+.mref small { display: block; color: var(--ink-2); font-size: 0.8rem; line-height: 1.3; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
 /* Tables ------------------------------------------------------------------ */
 .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
@@ -508,7 +519,7 @@ details > summary { cursor: pointer; color: var(--link); font-size: 0.88rem; }
     <div class="bv">28</div>
   </div>
   <div class="axis-row" aria-hidden="true"><span></span><span class="ticks"><span style="left:0%">0</span><span style="left:20%">20</span><span style="left:40%">40</span><span style="left:60%">60</span><span style="left:80%">80</span><span style="left:100%">100</span></span><span></span></div>
-<p class="small muted" style="margin:12px 0 0">Other goals (context only): 6, 3, 7, 15, 13, 4, 11, 12, 14</p>  <details class="twin"><summary>Show as table</summary>
+<p class="small muted" style="margin:12px 0 0">Other goals (context only): 3, 4, 6, 7, 11, 12, 13, 14, 15</p>  <details class="twin"><summary>Show as table</summary>
     <div class="table-wrap"><table>
       <caption>SDG alignment</caption>
       <thead><tr><th scope="col">Goal</th><th scope="col" class="num">Score</th><th scope="col">Confidence</th><th scope="col">Matched metrics</th></tr></thead>
@@ -523,7 +534,7 @@ details > summary { cursor: pointer; color: var(--link); font-size: 0.88rem; }
   <div class="table-wrap"><table>
     <caption>Claims (5)</caption>
     <thead><tr><th scope="col">Claim</th><th scope="col">Type</th><th scope="col" class="num">NESTA level</th><th scope="col">Evidence</th><th scope="col">Metric</th></tr></thead>
-    <tbody><tr><td>We serve 45,000 clients (PI4060: 45,000), 68% of them women.</td><td>outcome</td><td class="num"><span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></td><td>—</td><td>PI4060</td></tr><tr><td>We employ 180 permanent staff (OI8869: 180), including 85 women (OI6213: 85) and 12 female managers (OI1571: 12).</td><td>outcome</td><td class="num"><span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></td><td>—</td><td>OI8869</td></tr><tr><td>Revenue grew 32% last year (FP4761: 32%).</td><td>outcome</td><td class="num"><span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></td><td>—</td><td>—</td></tr><tr><td>Portfolio at risk over 30 days is 3.1%.</td><td>outcome</td><td class="num"><span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></td><td>—</td><td>—</td></tr><tr><td>Our own footprint is 120 tCO2e (OI1479: 120 tCO2e), of which 80 tCO2e are direct Scope 1 emissions (OI4112: 80 tCO2e).</td><td>outcome</td><td class="num"><span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></td><td>—</td><td>OI1479, OI4112</td></tr></tbody>
+    <tbody><tr><td>We serve 45,000 clients (PI4060: 45,000), 68% of them women.</td><td>outcome</td><td class="num"><span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></td><td>—</td><td><span class="mref"><b>PI4060</b> <small>Client Individuals: Total</small></span></td></tr><tr><td>We employ 180 permanent staff (OI8869: 180), including 85 women (OI6213: 85) and 12 female managers (OI1571: 12).</td><td>outcome</td><td class="num"><span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></td><td>—</td><td><span class="mref"><b>OI8869</b> <small>Permanent Employees: Total</small></span></td></tr><tr><td>Revenue grew 32% last year (FP4761: 32%).</td><td>outcome</td><td class="num"><span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></td><td>—</td><td>—</td></tr><tr><td>Portfolio at risk over 30 days is 3.1%.</td><td>outcome</td><td class="num"><span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></td><td>—</td><td>—</td></tr><tr><td>Our own footprint is 120 tCO2e (OI1479: 120 tCO2e), of which 80 tCO2e are direct Scope 1 emissions (OI4112: 80 tCO2e).</td><td>outcome</td><td class="num"><span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></td><td>—</td><td><span class="mref"><b>OI1479</b> <small>Greenhouse Gas Emissions: Total</small></span><span class="mref"><b>OI4112</b> <small>Greenhouse Gas Emissions: Direct (Scope 1)</small></span></td></tr></tbody>
   </table></div>
   <div class="table-wrap" style="margin-top:16px"><table>
     <caption>Metrics (8)</caption>
@@ -537,23 +548,23 @@ details > summary { cursor: pointer; color: var(--link); font-size: 0.88rem; }
   <p class="lede">Components of the 0–100 risk score. At 60 or above risk is a finding; below it mostly reflects missing data.</p>
   <div class="bars" role="img" aria-label="Greenwashing review: Claims without metrics 40, Missing negative impacts 90, Vague language 27, Selective reporting 75, No verification 70">
     <div class="bl">Claims without metrics</div>
-    <div class="track" title="Claims without metrics: 40/100"><div class="fill" style="width:40.0%"></div><div class="threshold" style="left:60%"></div></div>
+    <div class="track" title="Claims without metrics: 40/100"><div class="fill" style="width:40.0%"></div><div class="threshold" style="left:60.0%"></div></div>
     <div class="bv">40</div>
     <div class="bl">Missing negative impacts</div>
-    <div class="track" title="Missing negative impacts: 90/100"><div class="fill" style="width:90.0%"></div><div class="threshold" style="left:60%"></div></div>
-    <div class="bv">90</div>
+    <div class="track" title="Missing negative impacts: 90/100"><div class="fill over" style="width:90.0%"></div><div class="threshold" style="left:60.0%"></div></div>
+    <div class="bv">90 <span class="over-flag" title="At or above the threshold">▲</span></div>
     <div class="bl">Vague language</div>
-    <div class="track" title="Vague language: 27/100"><div class="fill" style="width:27.0%"></div><div class="threshold" style="left:60%"></div></div>
+    <div class="track" title="Vague language: 27/100"><div class="fill" style="width:27.0%"></div><div class="threshold" style="left:60.0%"></div></div>
     <div class="bv">27</div>
     <div class="bl">Selective reporting</div>
-    <div class="track" title="Selective reporting: 75/100"><div class="fill" style="width:75.0%"></div><div class="threshold" style="left:60%"></div></div>
-    <div class="bv">75</div>
+    <div class="track" title="Selective reporting: 75/100"><div class="fill over" style="width:75.0%"></div><div class="threshold" style="left:60.0%"></div></div>
+    <div class="bv">75 <span class="over-flag" title="At or above the threshold">▲</span></div>
     <div class="bl">No verification</div>
-    <div class="track" title="No verification: 70/100"><div class="fill" style="width:70.0%"></div><div class="threshold" style="left:60%"></div></div>
-    <div class="bv">70</div>
+    <div class="track" title="No verification: 70/100"><div class="fill over" style="width:70.0%"></div><div class="threshold" style="left:60.0%"></div></div>
+    <div class="bv">70 <span class="over-flag" title="At or above the threshold">▲</span></div>
   </div>
   <div class="axis-row" aria-hidden="true"><span></span><span class="ticks"><span style="left:0%">0</span><span style="left:20%">20</span><span style="left:40%">40</span><span style="left:60%">60</span><span style="left:80%">80</span><span style="left:100%">100</span></span><span></span></div>
-  <p class="legend"><span><span class="key"></span>Risk component (0–100)</span><span><span class="key threshold"></span>Finding threshold (60)</span></p>
+  <p class="legend"><span><span class="key"></span>Risk component (0–100)</span><span><span class="key over"></span>▲ At or above the threshold</span><span><span class="key threshold"></span>Finding threshold (60)</span></p>
 <p class="small" style="margin:12px 0 0"><strong>Flags:</strong> Missing negative-impact metrics for sector; Reporting appears to cherry-pick positive metrics; No evidence of third-party verification or auditing</p></section>
 
 <section id="sec-risks" class="card" aria-labelledby="h-risks">
@@ -585,7 +596,7 @@ details > summary { cursor: pointer; color: var(--link); font-size: 0.88rem; }
   <h3 class="small" id="ai-disclosure">AI &amp; automation disclosure</h3>
   <p class="small">Automated analysis: produced by rules and a deterministic scoring model; no generative AI was used. 3 of 21 scores are estimated from document text rather than reported metrics. Review before relying on it.</p>
   <div class="table-wrap"><table class="small">
-    <caption>AI &amp; automation disclosure</caption>
+    <caption class="sr-only">AI &amp; automation disclosure</caption>
     <tbody><tr><th scope="row">Claim extraction</th><td>rules</td></tr><tr><th scope="row">Score calculation</th><td>deterministic model</td></tr><tr><th scope="row">Metric / SDG tagging</th><td>rules</td></tr><tr><th scope="row">Narrative drafting</th><td>not used</td></tr></tbody>
   </table></div>
   <p class="small muted">Disclosed under the EU AI Act Art 50 transparency rules.</p>

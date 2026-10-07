@@ -201,6 +201,17 @@ section[id] { scroll-margin-top: 16px; }
   background: var(--series-1); margin-right: 6px; vertical-align: -1px; }
 .legend .key.bench { width: 2px; height: 14px; background: var(--ink-2); border-radius: 1px; }
 .legend .key.threshold { width: 0; height: 14px; border-left: 2px solid var(--critical); border-radius: 0; background: none; }
+.legend .key.over { background: var(--warning); }
+/* A component at or above the finding threshold: status colour plus a ▲ marker (never colour alone). */
+.bars .fill.over { background: var(--warning); }
+.over-flag { color: var(--warning-ink); font-size: 0.75em; }
+/* Evidence ledger: signal pills never break mid-label; mapped metrics show their names. */
+.sig { white-space: nowrap; margin: 0 4px 4px 0; }
+.mref { display: block; min-width: 13rem; font-variant-numeric: tabular-nums; }
+.mref + .mref { margin-top: 4px; }
+.mref small { display: block; color: var(--ink-2); font-size: 0.8rem; line-height: 1.3; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
 /* Tables ------------------------------------------------------------------ */
 .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
@@ -395,10 +406,10 @@ table.dl td.due { white-space: nowrap; font-variant-numeric: tabular-nums; }
 </section>
 
 <div class="eng-grid">
-  <section class="card" aria-labelledby="h-eng_a09054993d73">
+  <section class="card" aria-labelledby="h-eng_e9a6559e695e">
     <div class="eng-head">
       <div>
-        <h2 id="h-eng_a09054993d73">BrightPath Finance</h2>
+        <h2 id="h-eng_e9a6559e695e">BrightPath Finance</h2>
         <p>Meridian Impact Partners (fictional) · annual impact report · 2026-09-07 → 2026-11-21</p>
       </div>
       <span class="pill good">active</span>
@@ -422,10 +433,10 @@ table.dl td.due { white-space: nowrap; font-variant-numeric: tabular-nums; }
       <tbody><tr><td>LP narrative</td><td><span class="pill ">planned</span></td><td>Impact team</td><td class="due">—</td></tr><tr><td>Public annual report</td><td><span class="pill ">planned</span></td><td>Impact team</td><td class="due">—</td></tr><tr><td>Portfolio rollup</td><td><span class="pill ">planned</span></td><td>Impact team</td><td class="due">—</td></tr><tr><td>LP impact report section</td><td><span class="pill ">in progress</span></td><td>Impact lead</td><td class="due">2026-10-28</td></tr><tr><td>Beneficiary survey (Lean Data)</td><td><span class="pill ">planned</span></td><td>Impact lead</td><td class="due">2026-11-16</td></tr></tbody>
     </table></div>
   </section>
-  <section class="card" aria-labelledby="h-eng_d8f3f72f4587">
+  <section class="card" aria-labelledby="h-eng_55f0bb3d59c6">
     <div class="eng-head">
       <div>
-        <h2 id="h-eng_d8f3f72f4587">Kampung Makmur Sdn Bhd</h2>
+        <h2 id="h-eng_55f0bb3d59c6">Kampung Makmur Sdn Bhd</h2>
         <p>Meridian Impact Partners (fictional) · dd mid · 2026-09-07 → 2026-11-21</p>
       </div>
       <span class="pill good">active</span>
@@ -449,10 +460,10 @@ table.dl td.due { white-space: nowrap; font-variant-numeric: tabular-nums; }
       <tbody><tr><td>DD-Mid memo</td><td><span class="pill ">planned</span></td><td>Impact team</td><td class="due">—</td></tr><tr><td>KPI term-sheet annex</td><td><span class="pill ">planned</span></td><td>Impact team</td><td class="due">—</td></tr><tr><td>Risk/opportunity register</td><td><span class="pill ">planned</span></td><td>Impact team</td><td class="due">—</td></tr><tr><td>IC memo</td><td><span class="pill ">draft</span></td><td>Analyst</td><td class="due">2026-10-04</td></tr><tr><td>DD questionnaire to founders</td><td><span class="pill warning">client review</span></td><td>Associate</td><td class="due">2026-10-12</td></tr><tr><td>Impact thesis fit note</td><td><span class="pill good">final</span></td><td>Partner</td><td class="due">2026-09-17</td></tr></tbody>
     </table></div>
   </section>
-  <section class="card" aria-labelledby="h-eng_3f9cc48fdfe9">
+  <section class="card" aria-labelledby="h-eng_d92931445024">
     <div class="eng-head">
       <div>
-        <h2 id="h-eng_3f9cc48fdfe9">SunPath Energy Ltd</h2>
+        <h2 id="h-eng_d92931445024">SunPath Energy Ltd</h2>
         <p>Meridian Impact Partners (fictional) · dd light · 2026-09-07 → 2026-11-21</p>
       </div>
       <span class="pill good">active</span>

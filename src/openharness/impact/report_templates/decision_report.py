@@ -386,7 +386,7 @@ def _sdg(data: dict[str, Any], lang: str = "en") -> dict[str, Any]:
         "color": SDG_COLORS.get(int(a["goal"]), "#888888"),
         "ink": sdg_text_colour(int(a["goal"])),
     }
-    return {"material": [to_row(a) for a in material[:8]], "other": [int(a["goal"]) for a in other]}
+    return {"material": [to_row(a) for a in material[:8]], "other": sorted(int(a["goal"]) for a in other)}
 
 
 def _metric_names() -> dict[str, str]:
@@ -410,6 +410,8 @@ def _evidence(data: dict[str, Any], t) -> dict[str, Any]:  # type: ignore[no-unt
             "metrics": c.get("mapped_metrics") or [],
         })
     names = _metric_names()
+    for c in claims:  # show what each mapped ID is, not just the code
+        c["metric_rows"] = [{"id": m, "name": names.get(m, "")} for m in c["metrics"]]
     metrics = []
     for metric_id, value in sorted((data.get("company") or {}).get("reported_metrics", {}).items()):
         text = str(value)
@@ -430,12 +432,17 @@ def _greenwashing(data: dict[str, Any], t) -> dict[str, Any] | None:  # type: ig
     if not gw:
         return None
     subs = gw.get("sub_scores") or {k: gw.get(k) for k in _GW_COMPONENTS}
+    from openharness.impact.methodology import section
+
+    threshold = float(section("greenwashing").get("flag_threshold", 60))
     return {
+        "threshold": threshold,
         "score": float(gw.get("overall_score") or 0),
         "classification": t(f"gwc_{gw.get('classification', '')}"),
         "components": [
-            {"label": t(f"gw_{k}"), "value": float(subs.get(k) or 0)} for k in _GW_COMPONENTS
-            if subs.get(k) is not None
+            {"label": t(f"gw_{k}"), "value": float(subs.get(k) or 0),
+             "over": float(subs.get(k) or 0) >= threshold}
+            for k in _GW_COMPONENTS if subs.get(k) is not None
         ],
         "flags": [str(f).split(":", 1)[-1].strip() for f in gw.get("flags") or []],
     }
@@ -489,15 +496,34 @@ def _norm(text: str) -> str:
     return re.sub(r"[^a-z0-9]+", " ", text.lower()).strip()[:70]
 
 
+def _stems(text: str) -> set[str]:
+    return {w.rstrip("s") for w in re.findall(r"[a-z0-9]+", text.lower()) if len(w) > 3}
+
+
+_IRIS_ID = re.compile(r"\b([A-Z]{2}\d{4})\b(?!\s*\()")
+
+
 def _actions(data: dict[str, Any], spec: ReportSpec, t) -> list[dict[str, str]]:  # type: ignore[no-untyped-def]
     seen: set[str] = set()
+    kept: list[set[str]] = []
     out: list[dict[str, str]] = []
+    names = _metric_names()
 
     def add(text: str, area: str) -> None:
         key = _norm(text)
-        if text and key not in seen:
-            seen.add(key)
-            out.append({"text": text.strip(), "area": t(area)})
+        if not text or key in seen:
+            return
+        stems = _stems(text)
+        # Near-duplicates ("Start with: X, Y" vs "Priority missing metrics: X (..), Y (..)"):
+        # skip when most of this action's words already appear in an earlier one.
+        if stems and any(len(stems & prev) / len(stems) >= 0.6 or (prev and len(stems & prev) / len(prev) >= 0.6)
+                         for prev in kept):
+            return
+        seen.add(key)
+        kept.append(stems)
+        text = _IRIS_ID.sub(lambda m: f"{m.group(1)} ({names[m.group(1)]})" if m.group(1) in names else m.group(1),
+                            text.strip())
+        out.append({"text": text, "area": t(area)})
 
     for rec in (data.get("gap_analysis") or {}).get("recommendations", []):
         add(rec, "area_metrics")

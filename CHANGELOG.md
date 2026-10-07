@@ -11,6 +11,45 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [0.17.1] - 2026-10-07 - Report styling pass
+
+Every deliverable in `demo/` was reviewed in the browser, in Word (via a
+LibreOffice render) and in Excel, and the issues found were fixed at the
+source.
+
+### Fixed
+- **Broken `--warning` token in the IC memo and DD report.** The shared
+  stylesheet aliased `--warning` to itself, which made it invalid.
+  Warning-coloured callouts, tiles and bars had been rendering black or
+  transparent.
+- **IC memo tones.** Data-gap checks show an amber "Needs data" instead of
+  a red FAIL. The callout reads "Evidence to collect before IC" rather than
+  "Blocking failures". The recommendation is green only for a pass. The gate
+  tile counts "need data".
+- **IC memo Word file.** It used to contain literal `**asterisks**` and
+  pipe-text tables. It now has real bold/italic runs, Word tables with shaded
+  headers, brand headings and a page-numbered footer. The DD questionnaire
+  `.docx` shares the same house style.
+- **Grade colours** use the ink tokens: the C-grade yellow was 1.9:1
+  contrast.
+
+### Changed
+- **Decision report.**
+  - The evidence ledger names every mapped IRIS+ metric, and its evidence
+    pills no longer wrap.
+  - Greenwashing components at or over the finding threshold are drawn in
+    the warning colour, with a ▲ marker and legend entry.
+  - Near-duplicate action-plan rows are merged, and bare IRIS+ IDs are named.
+  - "Other goals" are sorted.
+- **Shared styles.** Flat token bars instead of gradients. Tile accents only
+  when the tile carries a status. Pills never wrap. Callout lists sit inside
+  the box.
+- **DD report** dimension tags are readable ("How much", not `HOW_MUCH`).
+- **Investee portal** sits in a centred 820px column with token colours
+  (dark-mode safe) and focus rings.
+- **Demo and screenshots regenerated.** The visual QA covers the
+  engagements page.
+
 ## [0.17.0] - 2026-10-07 - "Trusted, Effortless & Beautiful"
 
 Roadmap v7 (`docs/roadmap-v7.md`), Waves 0–5 plus follow-ups, shipped as one

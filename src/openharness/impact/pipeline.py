@@ -490,7 +490,7 @@ def write_gallery(
     page = _env().get_template("gallery.html.j2").render(
         css=design_css(),
         title=title,
-        subtitle=f"{len(bundles)} assessment(s) generated offline",
+        subtitle=f"{len(bundles)} assessment{'s' if len(bundles) != 1 else ''} generated offline",
         intro=intro,
         home_href=home_href,
         cards=cards,

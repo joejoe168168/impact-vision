@@ -115,6 +115,7 @@ EN: dict[str, str] = {
     "gw_verification": "No verification",
     "legend_component": "Risk component (0–100)",
     "legend_threshold": "Finding threshold (60)",
+    "legend_over": "At or above the threshold",
     "flags": "Flags",
     # risks & actions
     "sec_risks": "Risks and opportunities",
@@ -309,6 +310,7 @@ ZH_HK: dict[str, str] = {
     'gw_verification': '未經核實',
     'legend_component': '風險組成（0–100）',
     'legend_threshold': '發現門檻（60）',
+    'legend_over': '達到或超過門檻',
     'flags': '警示',
     'sec_risks': '風險與機遇',
     'risks_disclosed': '文件中披露',
@@ -500,6 +502,7 @@ ZH_CN: dict[str, str] = {
     'gw_verification': '未经核实',
     'legend_component': '风险组成（0–100）',
     'legend_threshold': '发现门槛（60）',
+    'legend_over': '达到或超过门槛',
     'flags': '警示',
     'sec_risks': '风险与机遇',
     'risks_disclosed': '文件中披露',

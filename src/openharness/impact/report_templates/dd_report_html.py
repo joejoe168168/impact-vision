@@ -377,8 +377,9 @@ def render_dd_questionnaire_html(
                     f'<div class="q-head">'
                     f'<span class="q-num">{q_idx}.</span>'
                     f'<span class="q-id">{escape(q.id or "")}</span>'
-                    f'<span class="q-dim">{escape((q.dimension or "—").title())}</span>'
-                    f'</div>'
+                    + (f'<span class="q-dim">{escape(q.dimension.replace("_", " ").capitalize())}</span>'
+                       if q.dimension else "")
+                    + '</div>'
                     f'<div class="q-text">{escape(q.question)}</div>'
                     f'{follow}'
                     f'{evidence_html}'
@@ -685,6 +686,9 @@ def render_dd_questionnaire_docx(
     p.parent.mkdir(parents=True, exist_ok=True)
 
     doc = Document()
+    from openharness.impact.ic_memo import docx_house_style
+
+    docx_house_style(doc, f"Impact Vision · DD questionnaire · {company_name}")
 
     # --- Cover block ----------------------------------------------------
     doc.add_heading("Impact DD — Questionnaire Helper", level=0)

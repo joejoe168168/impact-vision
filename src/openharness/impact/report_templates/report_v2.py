@@ -43,7 +43,8 @@ REPORT_CSS_V2 = r"""
   --primary: var(--brand); --primary-light: var(--surface-2); --primary-dark: var(--brand);
   --accent: var(--series-1); --accent-light: var(--series-1-wash);
   --success: var(--good); --success-light: var(--good-wash); --success-dark: var(--good-ink);
-  --warning: var(--warning); --warning-light: var(--warning-wash); --warning-dark: var(--warning-ink);
+  /* --warning itself comes from tokens.css; aliasing it to itself made it invalid. */
+  --warning-light: var(--warning-wash); --warning-dark: var(--warning-ink);
   --danger: var(--critical-ink); --danger-light: var(--critical-wash); --danger-dark: var(--critical-ink);
   --neutral: var(--ink-2); --neutral-light: var(--surface-2);
   --bg: var(--page);
@@ -129,8 +130,9 @@ main, .memo-main { min-width: 0; }
   box-shadow: var(--shadow-sm); position: relative; overflow: hidden;
 }
 .kpi-tile::before {
+  /* A coloured edge only when the tile carries a status (pass / warn / fail). */
   content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
-  background: var(--accent);
+  background: transparent;
 }
 .kpi-tile.pass::before { background: var(--success); }
 .kpi-tile.warn::before { background: var(--warning); }
@@ -181,11 +183,11 @@ h3 { color: var(--text); font-size: 1.02em; margin: 18px 0 8px; font-weight: 650
   font-size: 0.72em; color: var(--text-muted); margin-top: 6px;
   text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;
 }
-.grade-A { color: var(--success); }
-.grade-B { color: #558b2f; }
-.grade-C { color: #f9a825; }
-.grade-D { color: #e65100; }
-.grade-F { color: var(--danger); }
+/* Grades are text: they wear the ink tokens (AA contrast in light and dark), never fill colours. */
+.grade-A, .grade-B { color: var(--good-ink); }
+.grade-C { color: var(--warning-ink); }
+.grade-D { color: var(--serious-ink); }
+.grade-F { color: var(--critical-ink); }
 
 /* ---------- Tables ---------- */
 table.data {
@@ -205,19 +207,20 @@ table.data tbody tr:hover td { background: var(--primary-light); }
 
 /* ---------- Progress bars ---------- */
 .bar-track {
-  background: #eceff1; border-radius: 6px; height: 10px; width: 100%; overflow: hidden;
+  background: var(--border); border-radius: 999px; height: 8px; width: 100%; overflow: hidden;
 }
-.bar-fill { height: 100%; border-radius: 6px; transition: width 0.4s ease; }
-.bar-fill.blue   { background: linear-gradient(90deg, var(--accent), var(--accent-light)); }
-.bar-fill.green  { background: linear-gradient(90deg, #43a047, #66bb6a); }
-.bar-fill.orange { background: linear-gradient(90deg, #ef6c00, #ffa726); }
-.bar-fill.red    { background: linear-gradient(90deg, var(--danger), #ef5350); }
-.bar-fill.coverage { background: linear-gradient(90deg, var(--primary), var(--accent)); }
+/* Flat fills from the status / brand tokens (no gradients: they read as decoration). */
+.bar-fill { height: 100%; border-radius: 999px; transition: width 0.4s ease; }
+.bar-fill.blue, .bar-fill.coverage { background: var(--primary); }
+.bar-fill.green  { background: var(--success); }
+.bar-fill.orange { background: var(--warning); }
+.bar-fill.red    { background: var(--danger); }
 
 /* ---------- Status pills ---------- */
 .pill {
   display: inline-block; padding: 3px 10px; border-radius: var(--radius-pill);
   font-size: 0.72em; font-weight: 650; text-transform: uppercase; letter-spacing: 0.04em;
+  white-space: nowrap;
 }
 .pill.pass { background: var(--success-light); color: var(--success-dark); }
 .pill.warn { background: var(--warning-light); color: var(--warning-dark); }
@@ -233,6 +236,8 @@ table.data tbody tr:hover td { background: var(--primary-light); }
 .callout.warn   { border-color: var(--warning); background: var(--warning-light); }
 .callout.danger { border-color: var(--danger);  background: var(--danger-light); }
 .callout.ok     { border-color: var(--success); background: var(--success-light); }
+.callout ul, .callout ol { margin: 6px 0 0; padding-left: 1.25em; }
+.callout li { margin: 2px 0; }
 
 /* ---------- Footer ---------- */
 .footer {

@@ -12,6 +12,8 @@ the output directly or pipe it through `pandoc` to their preferred format.
 
 from __future__ import annotations
 
+import re
+
 from datetime import date
 from html import escape
 from pathlib import Path
@@ -236,12 +238,126 @@ def render_ic_memo_markdown(
     return "\n".join(out)
 
 
-def render_ic_memo_docx(markdown: str, path: str | Path) -> Path:
-    """Render an IC memo as a .docx file.
+_DOCX_INLINE = re.compile(r"(\*\*[^*]+\*\*|\*[^*\s][^*]*\*|`[^`]+`)")
+_DOCX_BRAND = "1C5CAB"
 
-    Requires `python-docx`. If not installed, raises ImportError with a clear
-    install hint. Heading detection is intentionally simple — production GPs
-    will pipe the markdown through pandoc for richer formatting.
+
+def _docx_runs(paragraph, text: str, *, size: float | None = None, color: str | None = None,
+               italic: bool = False) -> None:  # noqa: ANN001
+    """Add *text* to *paragraph*, turning **bold**, *italic* and `code` into real runs."""
+    from docx.shared import Pt, RGBColor
+
+    for part in _DOCX_INLINE.split(text):
+        if not part:
+            continue
+        if part.startswith("**") and part.endswith("**"):
+            run = paragraph.add_run(part[2:-2])
+            run.bold = True
+        elif part.startswith("`") and part.endswith("`"):
+            run = paragraph.add_run(part[1:-1])
+            run.font.name = "Consolas"
+        elif part.startswith("*") and part.endswith("*") and len(part) > 2:
+            run = paragraph.add_run(part[1:-1])
+            run.italic = True
+        else:
+            run = paragraph.add_run(part)
+        if italic:
+            run.italic = True
+        if size:
+            run.font.size = Pt(size)
+        if color:
+            run.font.color.rgb = RGBColor.from_string(color)
+
+
+def _docx_shade(cell, fill: str) -> None:  # noqa: ANN001
+    from docx.oxml import OxmlElement
+    from docx.oxml.ns import qn
+
+    shading = OxmlElement("w:shd")
+    shading.set(qn("w:val"), "clear")
+    shading.set(qn("w:color"), "auto")
+    shading.set(qn("w:fill"), fill)
+    cell._tc.get_or_add_tcPr().append(shading)
+
+
+def _docx_table(doc, rows: list[list[str]]) -> None:  # noqa: ANN001
+    """A Markdown table as a real Word table: shaded bold header, light grid."""
+    from docx.shared import Pt
+
+    header, body = rows[0], rows[1:]
+    table = doc.add_table(rows=1, cols=len(header))
+    table.style = "Table Grid"
+    for i, text in enumerate(header):
+        cell = table.rows[0].cells[i]
+        cell.text = ""
+        _docx_runs(cell.paragraphs[0], text.replace("**", ""), size=9.5)
+        for run in cell.paragraphs[0].runs:
+            run.bold = True
+        _docx_shade(cell, "E8EEF7")
+    for row in body:
+        cells = table.add_row().cells
+        for i, text in enumerate(row[: len(header)]):
+            cells[i].text = ""
+            _docx_runs(cells[i].paragraphs[0], text, size=9.5)
+    for row in table.rows:
+        for cell in row.cells:
+            for p in cell.paragraphs:
+                p.paragraph_format.space_after = Pt(1)
+    doc.add_paragraph()
+
+
+def _docx_page_footer(doc, label: str) -> None:  # noqa: ANN001
+    """'label · Page N' in the footer (a PAGE field Word fills in)."""
+    from docx.oxml import OxmlElement
+    from docx.oxml.ns import qn
+    from docx.shared import Pt, RGBColor
+
+    p = doc.sections[0].footer.paragraphs[0]
+    run = p.add_run(f"{label} · Page ")
+    run.font.size = Pt(8)
+    run.font.color.rgb = RGBColor(0x6B, 0x6B, 0x6B)
+    field = p.add_run()
+    for tag, attr in (("w:fldChar", {"w:fldCharType": "begin"}),
+                      ("w:instrText", None), ("w:fldChar", {"w:fldCharType": "end"})):
+        el = OxmlElement(tag)
+        if attr:
+            for k, v in attr.items():
+                el.set(qn(k), v)
+        else:
+            el.set(qn("xml:space"), "preserve")
+            el.text = "PAGE"
+        field._r.append(el)
+    field.font.size = Pt(8)
+
+
+def docx_house_style(doc, footer_label: str) -> None:  # noqa: ANN001
+    """Shared Word look for every .docx deliverable: margins, Calibri, brand
+    headings and a page-numbered footer."""
+    from docx.shared import Cm, Pt, RGBColor
+
+    section = doc.sections[0]
+    section.left_margin = section.right_margin = Cm(2.2)
+    section.top_margin = section.bottom_margin = Cm(2.0)
+    normal = doc.styles["Normal"]
+    normal.font.name = "Calibri"
+    normal.font.size = Pt(10.5)
+    normal.paragraph_format.space_after = Pt(4)
+    for name, size in (("Title", 22), ("Heading 1", 14), ("Heading 2", 12), ("Heading 3", 11)):
+        style = doc.styles[name]
+        style.font.name = "Calibri"
+        style.font.size = Pt(size)
+        style.font.bold = True
+        style.font.color.rgb = RGBColor.from_string("111111" if name == "Title" else _DOCX_BRAND)
+    _docx_page_footer(doc, footer_label)
+
+
+def render_ic_memo_docx(markdown: str, path: str | Path) -> Path:
+    """Render an IC memo (Markdown) as a formatted Word document.
+
+    Headings in the brand colour, **bold** / *italic* / `code` as real runs,
+    Markdown tables as Word tables with a shaded header, a page-numbered
+    footer, and the closing disclosure lines in small grey italics.
+    Requires ``python-docx`` (the ``[office]`` extra).
     """
     try:
         from docx import Document  # type: ignore
@@ -252,23 +368,44 @@ def render_ic_memo_docx(markdown: str, path: str | Path) -> Path:
         ) from exc
 
     doc = Document()
-    for line in markdown.splitlines():
+    docx_house_style(doc, "Impact Vision · IC memo")
+
+    lines = markdown.splitlines()
+    i = 0
+    after_rule = False
+    while i < len(lines):
+        line = lines[i].rstrip()
+        if line.startswith("|"):
+            rows = []
+            while i < len(lines) and lines[i].startswith("|"):
+                cells = [c.strip() for c in lines[i].strip().strip("|").split("|")]
+                if not all(re.fullmatch(r":?-{2,}:?", c) for c in cells if c):
+                    rows.append(cells)
+                i += 1
+            if rows:
+                _docx_table(doc, rows)
+            continue
+        i += 1
+        if not line.strip():
+            continue
+        if line.strip() == "---":
+            after_rule = True
+            continue
         if line.startswith("# "):
-            doc.add_heading(line[2:], level=0)
+            doc.add_heading(line[2:].replace("**", ""), level=0)
         elif line.startswith("## "):
-            doc.add_heading(line[3:], level=1)
+            doc.add_heading(line[3:].replace("**", ""), level=1)
         elif line.startswith("### "):
-            doc.add_heading(line[4:], level=2)
+            doc.add_heading(line[4:].replace("**", ""), level=2)
         elif line.startswith("- "):
-            doc.add_paragraph(line[2:], style="List Bullet")
+            _docx_runs(doc.add_paragraph(style="List Bullet"), line[2:])
         elif line.startswith("> "):
-            doc.add_paragraph(line[2:], style="Intense Quote")
-        elif line.startswith("|"):
-            # leave tables as plain text — pandoc / a richer renderer handles
-            # actual table layout. Avoid silent formatting bugs.
-            doc.add_paragraph(line)
+            _docx_runs(doc.add_paragraph(style="Intense Quote"), line[2:])
+        elif after_rule:
+            # Closing disclosure / provenance lines: small, grey, italic.
+            _docx_runs(doc.add_paragraph(), line.strip("*"), size=8.5, color="6B6B6B", italic=True)
         else:
-            doc.add_paragraph(line)
+            _docx_runs(doc.add_paragraph(), line)
 
     p = Path(path)
     p.parent.mkdir(parents=True, exist_ok=True)
@@ -338,9 +475,21 @@ def render_ic_memo_pptx(
     return p
 
 
-def _status_pill(status: str) -> str:
+def _status_pill(status: str, *, data_gap: bool = False) -> str:
+    if data_gap and status.lower() in {"fail", "warn"}:
+        # Missing evidence is not a negative finding: amber "needs data", never red FAIL.
+        return '<span class="pill warn">Needs data</span>'
     cls = {"pass": "pass", "warn": "warn", "fail": "fail"}.get(status.lower(), "na")
     return f'<span class="pill {cls}">{escape(status.upper())}</span>'
+
+
+def _rec_tone(scorecard: Any) -> str:
+    """Callout tone for the recommendation: green only when the deal passes."""
+    if scorecard.overall_status == "pass":
+        return "ok"
+    if scorecard.overall_status == "warn" or getattr(scorecard, "evidence_status", "") == "insufficient":
+        return "warn"
+    return "danger"
 
 
 def _gw_kind(score: float | None) -> tuple[str, str]:
@@ -419,7 +568,10 @@ def render_ic_memo_html(
             "value": "NOT READY" if insufficient else scorecard.display_status,
             "sub": ("insufficient evidence · " if insufficient else "")
             + f"{len(scorecard.checks)} checks · "
-            f"{len(scorecard.blocking_failures)} fail / {len(scorecard.warnings_list)} warn",
+            + (f"{len(scorecard.blocking_failures)} need data"
+               if getattr(scorecard, "evidence_status", "") == "insufficient"
+               else f"{len(scorecard.blocking_failures)} fail")
+            + f" / {len(scorecard.warnings_list)} warn",
             "kind": gate_kind,
         }
     )
@@ -545,7 +697,7 @@ def render_ic_memo_html(
         '<section class="card" id="sdg"><h2 class="section-title">SDG alignment (top 5)</h2>'
     ]
     if sdgs:
-        pills = " ".join(sdg_swatch(a.goal, a.score) for a in sdgs[:8])
+        pills = " ".join(sdg_swatch(a.goal, a.score) for a in sdgs[:5])
         sdg_html.append(f'<p class="section-lede">{pills}</p>')
         rows = "".join(
             f"<tr><td>SDG {a.goal} — {escape(a.goal_name)}</td>"
@@ -665,7 +817,7 @@ def render_ic_memo_html(
     # --- Section: IC Gate detail -----------------------------------
     gate_rows = "".join(
         f"<tr><td>{escape(c.name)}</td>"
-        f"<td>{_status_pill(c.status)}</td>"
+        f"<td>{_status_pill(c.status, data_gap=getattr(c, 'data_gap', False))}</td>"
         f"<td>{escape(str(c.actual))}</td>"
         f"<td>{escape(str(c.threshold))}</td>"
         f'<td style="font-size:0.88em;color:var(--text-secondary)">{escape(c.message)}</td></tr>'
@@ -679,9 +831,16 @@ def render_ic_memo_html(
     ]
     if scorecard.blocking_failures:
         items = "".join(f"<li>{escape(m)}</li>" for m in scorecard.blocking_failures)
-        gate_html.append(
-            f'<div class="callout danger"><b>Blocking failures</b><ul>{items}</ul></div>'
-        )
+        if getattr(scorecard, "evidence_status", "sufficient") == "insufficient":
+            gate_html.append(
+                '<div class="callout warn"><b>Evidence to collect before IC</b> '
+                "(missing data, not negative findings)"
+                f"<ul>{items}</ul></div>"
+            )
+        else:
+            gate_html.append(
+                f'<div class="callout danger"><b>Blocking failures</b><ul>{items}</ul></div>'
+            )
     if scorecard.warnings_list:
         items = "".join(f"<li>{escape(m)}</li>" for m in scorecard.warnings_list)
         gate_html.append(f'<div class="callout warn"><b>Warnings</b><ul>{items}</ul></div>')
@@ -719,7 +878,7 @@ def render_ic_memo_html(
     rec_html = (
         '<section class="card" id="rec">'
         '<h2 class="section-title">Recommendation</h2>'
-        f'<div class="callout ok" style="font-size:1.02em"><b>{scorecard.display_status}</b> '
+        f'<div class="callout {_rec_tone(scorecard)}" style="font-size:1.02em"><b>{scorecard.display_status}</b> '
         f"— {escape(scorecard.recommendation)}</div>"
         "</section>"
     )

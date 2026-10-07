@@ -94,6 +94,17 @@ section[id] { scroll-margin-top: 16px; }
   background: var(--series-1); margin-right: 6px; vertical-align: -1px; }
 .legend .key.bench { width: 2px; height: 14px; background: var(--ink-2); border-radius: 1px; }
 .legend .key.threshold { width: 0; height: 14px; border-left: 2px solid var(--critical); border-radius: 0; background: none; }
+.legend .key.over { background: var(--warning); }
+/* A component at or above the finding threshold: status colour plus a ▲ marker (never colour alone). */
+.bars .fill.over { background: var(--warning); }
+.over-flag { color: var(--warning-ink); font-size: 0.75em; }
+/* Evidence ledger: signal pills never break mid-label; mapped metrics show their names. */
+.sig { white-space: nowrap; margin: 0 4px 4px 0; }
+.mref { display: block; min-width: 13rem; font-variant-numeric: tabular-nums; }
+.mref + .mref { margin-top: 4px; }
+.mref small { display: block; color: var(--ink-2); font-size: 0.8rem; line-height: 1.3; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
 /* Tables ------------------------------------------------------------------ */
 .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }

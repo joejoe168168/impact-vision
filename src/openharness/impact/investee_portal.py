@@ -221,6 +221,8 @@ def _pai_section() -> PortalSection:
 
 
 _PORTAL_CSS = """
+.portal{max-width:820px;margin:0 auto;padding:24px 16px 48px;}
+.portal .report-hero{border-radius:14px;}
 .portal-intro{background:var(--primary-light,#e3f2fd);border-left:4px solid var(--primary,#1565c0);
   padding:14px 18px;border-radius:8px;margin:16px 0;}
 fieldset.portal-section{border:1px solid var(--border,#d0d7de);border-radius:12px;padding:18px 20px;margin:18px 0;}
@@ -228,21 +230,22 @@ fieldset.portal-section>legend{font-weight:700;font-size:1.1rem;padding:0 8px;}
 .portal-q{margin:14px 0;padding:12px 0;border-bottom:1px solid var(--border,#eee);}
 .portal-q:last-child{border-bottom:none;}
 .portal-q label{display:block;font-weight:600;margin-bottom:4px;}
-.portal-q .req{color:#c62828;margin-left:3px;}
-.portal-q input,.portal-q select,.portal-q textarea{width:100%;max-width:520px;padding:8px 10px;
-  border:1px solid var(--border,#c0c7d0);border-radius:8px;font:inherit;}
+.portal-q .req{color:var(--critical-ink,#b3261e);margin-left:3px;}
+.portal-q input,.portal-q select,.portal-q textarea{width:100%;max-width:560px;padding:9px 11px;
+  border:1px solid var(--border,#c0c7d0);border-radius:8px;font:inherit;background:var(--surface,#fff);color:var(--ink,inherit);}
+.portal-q input:focus,.portal-q select:focus,.portal-q textarea:focus{outline:2px solid var(--brand,#1c5cab);outline-offset:1px;}
 .portal-q textarea{min-height:80px;}
 .portal-q .why{font-size:0.85em;color:var(--text-secondary,#5f6368);margin-top:4px;}
 .portal-q .plain{font-size:0.8em;color:var(--text-secondary,#5f6368);font-style:italic;}
 .portal-q .unit{font-size:0.8em;color:var(--text-secondary,#5f6368);margin-left:6px;}
-.portal-q .field-error{color:#c62828;font-size:0.82em;margin-top:4px;display:none;}
-.portal-q.invalid input,.portal-q.invalid select,.portal-q.invalid textarea{border-color:#c62828;}
+.portal-q .field-error{color:var(--critical-ink,#b3261e);font-size:0.82em;margin-top:4px;display:none;}
+.portal-q.invalid input,.portal-q.invalid select,.portal-q.invalid textarea{border-color:var(--critical-ink,#b3261e);}
 .portal-actions{margin:24px 0;display:flex;gap:12px;flex-wrap:wrap;align-items:center;}
 .portal-btn{background:var(--primary,#1565c0);color:var(--brand-ink,#fff);border:none;padding:10px 20px;border-radius:8px;
   font-weight:600;cursor:pointer;}
-.portal-btn.secondary{background:#fff;color:var(--primary,#1565c0);border:1px solid var(--primary,#1565c0);}
+.portal-btn.secondary{background:var(--surface,#fff);color:var(--primary,#1565c0);border:1px solid var(--primary,#1565c0);}
 #portal-status{font-size:0.9em;}
-.portal-progress{height:8px;background:#eceff1;border-radius:99px;overflow:hidden;margin:8px 0 0;}
+.portal-progress{height:8px;background:var(--border,#e3e3e0);border-radius:99px;overflow:hidden;margin:8px 0 0;}
 .portal-progress>span{display:block;height:100%;background:var(--success,#2e7d32);width:0;transition:width .2s;}
 """
 
@@ -402,6 +405,7 @@ def build_investee_portal(
     )
 
     body_parts: list[str] = [
+        '<div class="portal">',
         '<div class="report-hero"><h1>Impact &amp; ESG data request</h1>'
         f"<p>Prepared for {html.escape(company_name) or 'your company'} by {fund}.</p></div>",
         '<div class="portal-intro">'
@@ -429,6 +433,7 @@ def build_investee_portal(
         "</div>"
     )
     body_parts.append("</form>")
+    body_parts.append("</div>")
 
     extra_head = f"<style>{_PORTAL_CSS}</style><script defer>{_PORTAL_JS}</script>"
     return wrap_document(

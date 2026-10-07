@@ -164,7 +164,7 @@
   <div class="table-wrap"><table>
     <caption>{{ t('claims_caption', n=evidence.claims | length) }}</caption>
     <thead><tr><th scope="col">{{ t('col_claim') }}</th><th scope="col">{{ t('col_type') }}</th><th scope="col" class="num">{{ t('col_level') }}</th><th scope="col">{{ t('col_signals') }}</th><th scope="col">{{ t('col_metric') }}</th></tr></thead>
-    <tbody>{% for c in evidence.claims %}<tr><td>{{ c.text }}</td><td>{{ c.category }}</td><td class="num"><span class="pips" role="img" aria-label="NESTA {{ c.level }}/5">{% for i in range(1, 6) %}<i class="{{ 'on lvl-' ~ c.level if i <= c.level else '' }}"></i>{% endfor %}</span></td><td>{% for sg in c.signals %}<span class="sig"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>{{ sg }}</span>{% else %}—{% endfor %}</td><td>{{ c.metrics | join(', ') or '—' }}</td></tr>{% endfor %}</tbody>
+    <tbody>{% for c in evidence.claims %}<tr><td>{{ c.text }}</td><td>{{ c.category }}</td><td class="num"><span class="pips" role="img" aria-label="NESTA {{ c.level }}/5">{% for i in range(1, 6) %}<i class="{{ 'on lvl-' ~ c.level if i <= c.level else '' }}"></i>{% endfor %}</span></td><td>{% for sg in c.signals %}<span class="sig"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>{{ sg }}</span>{% else %}—{% endfor %}</td><td>{% for m in c.metric_rows %}<span class="mref"><b>{{ m.id }}</b>{% if m.name %} <small>{{ m.name }}</small>{% endif %}</span>{% else %}—{% endfor %}</td></tr>{% endfor %}</tbody>
   </table></div>
   {% else %}<p class="muted">{{ t('no_claims') }}</p>{% endif %}
   {% if evidence.metrics %}
@@ -183,12 +183,12 @@
   <div class="bars" role="img" aria-label="{{ t('sec_gw') }}: {% for c in greenwashing.components %}{{ c.label }} {{ '%.0f' % c.value }}{% if not loop.last %}, {% endif %}{% endfor %}">
     {% for c in greenwashing.components %}
     <div class="bl">{{ c.label }}</div>
-    <div class="track" title="{{ c.label }}: {{ '%.0f' % c.value }}/100"><div class="fill" style="width:{{ c.value | pct(100) }}%"></div><div class="threshold" style="left:60%"></div></div>
-    <div class="bv">{{ '%.0f' % c.value }}</div>
+    <div class="track" title="{{ c.label }}: {{ '%.0f' % c.value }}/100"><div class="fill{{ ' over' if c.over }}" style="width:{{ c.value | pct(100) }}%"></div><div class="threshold" style="left:{{ greenwashing.threshold | pct(100) }}%"></div></div>
+    <div class="bv">{{ '%.0f' % c.value }}{% if c.over %} <span class="over-flag" title="{{ t('legend_over') }}">▲</span>{% endif %}</div>
     {% endfor %}
   </div>
   <div class="axis-row" aria-hidden="true"><span></span><span class="ticks">{% for v in range(0, 101, 20) %}<span style="left:{{ v }}%">{{ v }}</span>{% endfor %}</span><span></span></div>
-  <p class="legend"><span><span class="key"></span>{{ t('legend_component') }}</span><span><span class="key threshold"></span>{{ t('legend_threshold') }}</span></p>
+  <p class="legend"><span><span class="key"></span>{{ t('legend_component') }}</span>{% if greenwashing.components | selectattr('over') | list %}<span><span class="key over"></span>▲ {{ t('legend_over') }}</span>{% endif %}<span><span class="key threshold"></span>{{ t('legend_threshold') }}</span></p>
   {% if greenwashing.flags %}<p class="small" style="margin:12px 0 0"><strong>{{ t('flags') }}:</strong> {{ greenwashing.flags | join('; ') }}</p>{% endif %}
 </section>
 
@@ -248,7 +248,7 @@
   <h3 class="small" id="ai-disclosure">{{ t('ai_title') }}</h3>
   <p class="small">{{ ai.disclosure }}</p>
   <div class="table-wrap"><table class="small">
-    <caption>{{ t('ai_title') }}</caption>
+    <caption class="sr-only">{{ t('ai_title') }}</caption>
     <tbody>{% for label, value in ai.rows %}<tr><th scope="row">{{ label }}</th><td>{{ value }}</td></tr>{% endfor %}</tbody>
   </table></div>
   <p class="small muted">{{ t('ai_reg') }}</p>
