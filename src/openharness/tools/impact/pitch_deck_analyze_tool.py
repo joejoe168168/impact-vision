@@ -732,23 +732,24 @@ def _extract_company_model(
 
 
 _SECTOR_KEYWORDS: dict[str, tuple[str, ...]] = {
-    "Financial Services": ("fintech", "microfinance", "banking", "lending", "loan", "loans",
+    "Financial Services": ("金融", "貸款", "贷款", "小額", "小额", "fintech", "microfinance", "banking", "lending", "loan", "loans",
                            "borrower", "borrowers", "insurance", "payment", "payments", "credit"),
-    "Healthcare": ("health", "healthcare", "medical", "pharmaceutical", "clinic", "clinics",
+    "Healthcare": ("醫療", "医疗", "診所", "诊所", "醫院", "医院", "病人", "安老", "養老", "养老", "護理", "护理", "長者", "长者", "health", "healthcare", "medical", "pharmaceutical", "clinic", "clinics",
                    "hospital", "telemedicine", "patient", "patients"),
-    "Education": ("education", "edtech", "school", "schools", "university", "learning",
+    "Education": ("教育", "學生", "学生", "學校", "学校", "教師", "教师", "education", "edtech", "school", "schools", "university", "learning",
                   "student", "students", "teacher", "teachers", "curriculum"),
-    "Agriculture": ("agriculture", "agricultural", "agritech", "farming", "farm", "farms",
+    "Agriculture": ("農業", "农业", "農民", "农民", "農場", "农场", "agriculture", "agricultural", "agritech", "farming", "farm", "farms",
                     "farmer", "farmers", "smallholder", "smallholders", "crop", "crops",
                     "livestock", "pig", "pigs", "swine", "piggery", "piggeries", "hog", "hogs",
                     "sow", "sows", "poultry", "cattle", "dairy", "outgrower", "harvest",
                     "veterinary", "feed"),
-    "Energy": ("energy", "solar", "wind", "renewable", "electricity", "cleantech", "mini-grid",
-               "off-grid", "grid"),
+    "Energy": ("太陽能", "太阳能", "能源", "電力", "电力", "energy", "solar", "wind", "renewable", "electricity", "cleantech", "mini-grid",
+               "off-grid", "grid", "heat pump", "heat pumps", "gas boiler", "gas boilers", "heating",
+               "retrofit", "retrofits", "energy efficiency", "insulation", "battery", "batteries"),
     # "app" / "platform" alone don't make a tech company: most decks have an app.
     "Technology": ("software", "saas", "technology company", "tech company", "cybersecurity",
                    "data platform", "ai platform", "developer"),
-    "Waste Management": ("recycling", "recycled", "recycle", "circular", "circularity", "waste",
+    "Waste Management": ("回收", "循環", "循环", "廢物", "废物", "堆填", "recycling", "recycled", "recycle", "circular", "circularity", "waste",
                          "landfill", "upcycling", "upcycled", "take-back", "resale",
                          "second-hand", "secondhand", "reuse", "reused", "textile", "textiles",
                          "e-waste", "compost", "composting"),
@@ -756,8 +757,9 @@ _SECTOR_KEYWORDS: dict[str, tuple[str, ...]] = {
                "clothing", "e-commerce", "consumer brand"),
     "Manufacturing": ("manufacturing", "manufacturer", "factory", "factories", "production line"),
     "Tourism": ("tourism", "tourist", "tourists", "hotel", "hotels", "hospitality", "ecotourism"),
-    "Real Estate": ("real estate", "property", "affordable housing", "construction",
-                    "housing units"),
+    "Real Estate": ("real estate", "property", "properties", "affordable housing", "construction",
+                    "housing units", "housing", "homes", "rental", "tenant", "tenants", "landlord",
+                    "landlords", "房屋", "住房"),
     "Water & Sanitation": ("sanitation", "drinking water", "water treatment", "wash",
                            "wastewater", "water utility"),
     "Transportation": ("transport", "mobility", "logistics", "fleet"),
@@ -780,6 +782,9 @@ def _detect_sector(text: str) -> str:
     for sector, keywords in _SECTOR_KEYWORDS.items():
         score = 0
         for kw in keywords:
+            if not kw.isascii():  # CJK: no word boundaries
+                score += text_lower.count(kw) + opening.count(kw)
+                continue
             pattern = rf"(?<![\w-]){re.escape(kw)}(?![\w-])"
             score += len(re.findall(pattern, text_lower)) + len(re.findall(pattern, opening))
         if score > best_score:
@@ -887,6 +892,14 @@ def _detect_geography(text: str) -> str:
         "South Asia": ["south asia", "subcontinent"],
         "Latin America": ["latin america", "latam", "central america"],
         "Middle East": ["middle east", "mena", "gulf states"],
+        "Netherlands": ["netherlands", "the dutch", "amsterdam", "rotterdam"],
+        "Germany": ["germany", "berlin", "munich"],
+        "France": ["france", "paris", "lyon"],
+        "Spain": ["spain", "madrid", "barcelona"],
+        "Italy": ["italy", "milan", "rome"],
+        "Belgium": ["belgium", "brussels"],
+        "Ireland": ["ireland", "dublin"],
+        "Nordics": ["sweden", "denmark", "finland", "norway", "stockholm", "copenhagen"],
         "Europe": ["europe", "european union"],
         "North America": ["united states", "usa", "canada"],
         "Pacific": ["pacific island", "oceania"],

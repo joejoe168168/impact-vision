@@ -1,41 +1,41 @@
 Section,Metric,Value,Details,Numeric,Max,Unit
 Company,Name,BrightPath Finance,,,,
-Company,Generated,2026-10-07T01:08:43Z,,,,
-Company,AI disclosure,Automated analysis: produced by rules and a deterministic scoring model; no generative AI was used. 3 of 21 scores are estimated from document text rather than reported metrics. Review before relying on it.,,,,
-Company,Methodology,1.1.0,config 8fabf9b5a7e2,,,
+Company,Generated,2026-10-08T15:56:25Z,,,,
+Company,AI disclosure,Automated analysis: produced by rules and a deterministic scoring model; no generative AI was used. 2 of 21 scores are estimated from document text rather than reported metrics. Review before relying on it.,,,,
+Company,Methodology,1.2.0,config ae3e77ecaccf,,,
 5D,Overall Grade,C,1.7/5.0,1.7,5,score
 5D,What,1.5/5.0,2 metrics reported · 0 of 14 reference metrics,1.5,5,score
 5D,Who,2.5/5.0,5 metrics reported · 0 of 6 reference metrics,2.5,5,score
-5D,How Much,1.8/5.0,"Scale=1.8, Depth=1.8, Duration=1.8",1.8,5,score
+5D,How Much,2.0/5.0,"Scale=2.0, Depth=2.0, Duration=2.0",2.0,5,score
 5D,Contribution,1.5/5.0,"Depth=1.5, Duration=1.5",1.5,5,score
 5D,Risk,1.2/5.0,Estimated from sector/description · 4 reference metrics to track,1.2,5,score
-SDG,SDG 1,42.7/100,medium | metrics: PI4060,42.7,100,score
-SDG,SDG 2,42.7/100,medium | metrics: PI4060,42.7,100,score
 SDG,SDG 5,37.8/100,"medium | metrics: OI1571,OI6213",37.8,100,score
+SDG,SDG 1,37.7/100,medium | metrics: PI4060,37.7,100,score
 SDG,SDG 8,37.3/100,"medium | metrics: OI6213,OI8869",37.3,100,score
 SDG,SDG 9,35.5/100,"medium | metrics: OI8869,PI4060",35.5,100,score
-SDG,SDG 10,35.2/100,medium | metrics: PI4060,35.2,100,score
-SDG,SDG 6,28.0/100,medium | metrics: PI4060,28.0,100,score
-SDG,SDG 3,27.7/100,medium | metrics: PI4060,27.7,100,score
-SDG,SDG 16,27.5/100,medium | metrics: ,27.5,100,score
-SDG,SDG 7,25.0/100,medium | metrics: ,25.0,100,score
-SDG,SDG 15,22.5/100,medium | metrics: ,22.5,100,score
+SDG,SDG 2,35.2/100,medium | metrics: PI4060,35.2,100,score
+SDG,SDG 10,32.7/100,medium | metrics: PI4060,32.7,100,score
+SDG,SDG 15,25.0/100,medium | metrics: ,25.0,100,score
 SDG,SDG 13,20.3/100,"medium | metrics: OI1479,OI4112",20.3,100,score
+SDG,SDG 16,20.0/100,medium | metrics: ,20.0,100,score
 SDG,SDG 4,18.0/100,low | metrics: PI4060,18.0,100,score
+SDG,SDG 6,18.0/100,low | metrics: PI4060,18.0,100,score
+SDG,SDG 3,17.7/100,low | metrics: PI4060,17.7,100,score
+SDG,SDG 7,15.0/100,low | metrics: ,15.0,100,score
 SDG,SDG 11,15.0/100,low | metrics: ,15.0,100,score
 SDG,SDG 12,15.0/100,low | metrics: ,15.0,100,score
 SDG,SDG 14,15.0/100,low | metrics: ,15.0,100,score
-Greenwashing,Risk score,57.1/100,Moderate Risk,57.1,100,risk
+Greenwashing,Risk score,48.0/100,Moderate Risk,48.0,100,risk
 Gap,Coverage,47.1%,,47.1,100,%
 Gap,FP2635,MISSING,Non-Performing Loans (Portfolio at Risk): 30 Days,,,
-Gap,OD4091,MISSING,Social and Environmental Targets,,,
 Gap,OD8350,MISSING,Client Model,,,
-Gap,OI1582,MISSING,Wage Equity,,,
-Gap,OI4724,MISSING,Workers Earning a Living Wage or Higher,,,
-Gap,OI4732,MISSING,Social and Environmental Performance Reporting,,,
 Gap,OI4753,MISSING,Client Protection Policy,,,
 Gap,OI5049,MISSING,Client Feedback System,,,
 Gap,PI9319,MISSING,Client Retention Rate,,,
+Gap,OI4724,MISSING,Workers Earning a Living Wage or Higher,,,
+Gap,OI1582,MISSING,Wage Equity,,,
+Gap,OD4091,MISSING,Social and Environmental Targets,,,
+Gap,OI4732,MISSING,Social and Environmental Performance Reporting,,,
 Gap,FP4761,32%,Revenue Growth,32.0,,%
 Gap,OI1075,7,Board of Directors: Total,7.0,,
 Gap,OI1479,120 tCO2e,Greenhouse Gas Emissions: Total,120.0,,tCO2e

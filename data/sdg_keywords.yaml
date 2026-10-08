@@ -81,7 +81,8 @@ keyword_sdg_map:
   justice: [[16, 0.6]]
   # Corporate governance is not SDG 16 (peace, justice, institutions).
   governance: [[16, 0.2]]
-  partnership: [[17, 0.5]]
+  # SDG 17 is global partnerships for development, not any business partner.
+  partnership: [[17, 0.3]]
   rural: [[1, 0.4], [2, 0.3], [11, 0.3]]
   smallholder: [[1, 0.5], [2, 0.6]]
   pollution: [[6, 0.3], [13, 0.4], [14, 0.3], [15, 0.3]]

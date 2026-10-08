@@ -84,7 +84,7 @@ Impact Vision → http://127.0.0.1:8787
   · OpenAPI:      http://127.0.0.1:8787/docs
   · REST API:     http://127.0.0.1:8787/api/v1/*
   · Workspace:    /Users/you/funds/q3
-  · Auth:         open (local use)
+  · Auth:         local only (other sites and hosts are refused)
 ```
 
 ### The workspace matters
@@ -312,8 +312,11 @@ the browser.
 The web chat starts every conversation in the **fund** tool profile: the impact
 tools plus safe helpers (read and search files, web search/fetch, ask you a
 question). Shell commands, file edits, git worktrees, schedulers and
-sub-agents are not available. Set `IMPACT_VISION_TOOL_PROFILE=developer`
-before `impact-vision serve-web` to restore the full coding-agent toolset.
+sub-agents are not available, and file reads are confined to the workspace and
+upload folders, so text hidden in a document can't make the agent read other
+files on the machine. `full_auto` can't be switched on over the web API. Set
+`IMPACT_VISION_TOOL_PROFILE=developer` before `impact-vision serve-web` to
+restore the full coding-agent toolset.
 
 Tools still act on the machine hosting the server. In the default permission mode every mutating
 tool triggers an **Allow / Deny** dialog showing the tool name and why it needs
@@ -418,8 +421,12 @@ print(asyncio.run(ask("Which IRIS+ metrics fit off-grid solar?")))
 
 ## 10. Running it for a team
 
-The defaults are built for `localhost`. Before exposing the server to anyone
-else, do all of the following.
+The defaults are built for `localhost` and are safe there: without a key the
+server only answers requests addressed to a local host name (`127.0.0.1`,
+`localhost`), refuses cross-site requests and WebSocket handshakes from other
+web pages, and sends no CORS headers. Binding to another address without a key
+(`--host 0.0.0.0`) prints a one-time login URL with a generated token. Before
+exposing the server to anyone else, do all of the following.
 
 **1. Require a token.**
 
@@ -428,15 +435,20 @@ export IMPACT_VISION_API_KEY="$(openssl rand -hex 24)"
 impact-vision serve-web --host 0.0.0.0
 ```
 
-Every REST call then needs `Authorization: Bearer <key>`, and the WebSocket
-handshake needs `?token=<key>`. In the browser, open **Settings → Server &
+Every REST call then needs `Authorization: Bearer <key>`; the browser sends
+the WebSocket token as a subprotocol (`?token=<key>` also works). With a key
+set, any `Host` name is accepted (put it behind your domain). In the browser, open **Settings → Server &
 REST API → Bearer token**, paste the key, and the page reconnects with it.
 
-**2. Restrict CORS.**
+**2. Allow other origins only if you need them.** CORS is same-origin by
+default. A separate dashboard on another domain needs:
 
 ```bash
 export IMPACT_VISION_CORS_ORIGINS="https://impact.yourfund.com"
 ```
+
+To reach a key-less server through a name other than `localhost` (e.g. a VM's
+hostname on your own network), list it: `IMPACT_VISION_ALLOWED_HOSTS=ivbox.local`.
 
 **3. Terminate TLS in front of it.** Put nginx, Caddy or a cloud load balancer
 ahead of uvicorn and make sure it forwards WebSocket upgrades:
@@ -481,8 +493,11 @@ at *Default* so writes require an explicit approval.
 | Variable | Default | Effect |
 |---|---|---|
 | `IMPACT_VISION_API_KEY` | *(unset)* | Require a bearer token on REST and WebSocket |
-| `IMPACT_VISION_CORS_ORIGINS` | `*` | Comma-separated allowed origins |
-| `IMPACT_VISION_UPLOAD_DIR` | `<workspace>/.impact-vision/uploads` | Where uploads land |
+| `IMPACT_VISION_CORS_ORIGINS` | *(unset: same-origin only)* | Comma-separated allowed origins |
+| `IMPACT_VISION_ALLOWED_HOSTS` | *(unset: local names only)* | Extra `Host` names a key-less server answers (`*` = any) |
+| `IMPACT_VISION_WEB_ALLOW_FULL_AUTO` | *(unset)* | Allow `full_auto` sessions to be created over the web API |
+| `IMPACT_VISION_FUND_DOMICILE` | *(unset)* | Fund jurisdiction(s) for portfolio-home deadlines, e.g. `HK` or `EU,UK` |
+| `IMPACT_VISION_UPLOAD_DIR` | `~/.openharness/web-uploads` | Where uploads land (pdf, docx, pptx, xlsx, csv, txt, md, json, yaml, images) |
 | `IMPACT_VISION_MAX_UPLOAD_MB` | `64` | Per-file upload limit |
 | `IMPACT_VISION_DOWNLOAD_ROOTS` | *(unset)* | Extra directories downloads may serve from |
 | `IMPACT_VISION_WEB_HOME` | `~/.openharness` | Base directory for stored transcripts |
@@ -496,7 +511,7 @@ at *Default* so writes require an explicit approval.
 ~/.openharness/settings.json          provider, model, permission mode
 ~/.openharness/web-chat/<id>.json     browser conversation transcripts
 ~/.openharness/data/sessions/         engine-level session snapshots
-<workspace>/.impact-vision/uploads/   files uploaded from the browser
+~/.openharness/web-uploads/          files uploaded from the browser
 ```
 
 ### Browser-local settings

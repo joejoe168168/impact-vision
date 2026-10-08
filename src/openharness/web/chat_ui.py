@@ -686,7 +686,7 @@ function renderTranscript(rows) {
 }
 
 const STARTERS = [
-  ['Analyze a pitch deck', 'Drop or choose a PDF, Word, Markdown or text file. Works offline — you get the IC verdict, the decision report and the data in about a second.', pickDeck],
+  ['Analyze a pitch deck', 'Drop a PDF, Word, PowerPoint or text file — or several about one company. Works offline — you get the IC verdict, the decision report and the data in about a second.', pickDeck],
   ['Score a company on the 5 Dimensions', 'Run an IMP 5-Dimension impact assessment for a company I describe.'],
   ['Map a company to the SDGs', 'Map this company to UN SDG goals and targets, with IRIS+ metrics for each.'],
   ['Screen a report for greenwashing', 'Check this sustainability report for vague or unverifiable impact claims.'],

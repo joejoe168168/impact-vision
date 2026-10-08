@@ -61,6 +61,7 @@ _GEO_JURISDICTIONS: dict[str, tuple[str, ...]] = {
     "european union": ("EU",), "germany": ("EU",), "france": ("EU",), "netherlands": ("EU",),
     "spain": ("EU",), "italy": ("EU",), "ireland": ("EU",), "sweden": ("EU",), "denmark": ("EU",),
     "belgium": ("EU",), "portugal": ("EU",), "finland": ("EU",), "austria": ("EU",), "poland": ("EU",),
+    "nordics": ("EU",),
 }
 
 

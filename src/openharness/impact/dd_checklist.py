@@ -154,6 +154,7 @@ def load_checklist(path: str | Path | None = None) -> list[DDQuestion]:
             priority=q_data.get("priority", "medium"),
             keywords=q_data.get("keywords", []),
             follow_up=q_data.get("follow_up"),
+            ask=q_data.get("ask", "company"),
         ))
 
     _checklist_cache = questions

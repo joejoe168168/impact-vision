@@ -11,7 +11,78 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [0.17.2] - 2026-10-08 - Secure & honest (roadmap v8 Wave 0)
+
+The post-v7 review found that the local server could be driven by any web
+page, that missing data was scored as greenwashing, and that advice did not
+generalise beyond the three sample decks. This release fixes all three. See
+`docs/roadmap-v8.md` §4 Wave 0.
+
+### Security
+- **Secure by default (W0.1).** Without `IMPACT_VISION_API_KEY` the server
+  refuses requests whose `Host` isn't local (stops DNS rebinding) and
+  cross-site state-changing requests / WebSocket handshakes (Origin check).
+  CORS is same-origin by default (was `*`); opt in with
+  `IMPACT_VISION_CORS_ORIGINS`. Binding beyond loopback without a key mints
+  a one-time launch token. The WebSocket token can travel as a subprotocol
+  and is compared in constant time.
+- Repointing a provider profile that holds a saved key now requires the key
+  again, so a changed endpoint can never receive the old key.
+- **Guarded routes (W0.2).** Legacy `/api/v1/pitch-deck` and
+  `/api/v1/decision-workflow` refuse server paths/URLs like
+  `/api/v1/tools/*`; deck URL fetches re-validate every redirect; webhooks
+  must target public addresses.
+- **Contained agent (W0.3).** Web "fund" sessions may read only the
+  workspace and upload folders (kept across permission changes);
+  `full_auto` can't be set over the web API. Uploads go to the web home
+  (`~/.openharness/web-uploads`) with a document-type allow-list; downloads
+  serve report/document types only and never hidden files.
+
+### Changed — methodology 1.2.0
+- **Absence is not a finding (W0.4).** Missing verification, missing
+  negative-impact metrics or few metrics can no longer make a greenwashing
+  finding: without a conduct signal (vague, unquantified claims) the score
+  is capped below the finding threshold and labelled an evidence gap.
+  Disclosed risk controls and accreditations count. One finding threshold
+  (60) and pass line (40) in `data/methodology/v1.yaml`, used by the gate,
+  verdict engine, portfolio home and display; IC-gate defaults moved there
+  with a written rationale.
+- **Whole document (W0.5).** Scorers read the full document minus
+  problem / market / team / ask sections instead of the first 1,000
+  characters; problem statements no longer cost Risk. 5D is clamped to
+  1–5. SDG keywords match whole words; own-emissions disclosure is no
+  longer SDG 13, corporate governance no longer SDG 16, a business
+  partnership no longer SDG 17; financial inclusion leads with SDG 1;
+  geography no longer raises relevance. Spanish, French, Portuguese and new
+  Chinese keyword maps are now used.
+- **Relevant advice (W0.6).** Metric suggestions are ranked by sector core
+  set, themes, goal specificity and document wording (they were
+  alphabetical); generic metrics tagged to most themes no longer appear as
+  dimension gaps. Unknown sectors get the universal core set instead of the
+  microfinance default; technology, retail, tourism and transport sets added.
+
 ### Added
+- Word (`.docx`) and PowerPoint (`.pptx`) decks; several files about one
+  company are assessed together (CLI `assess_files`, web drag-and-drop).
+- Web "Correct and re-run": fix the company name, sector, geography or
+  stage on a result card and re-score the same files.
+- Sector/geography detection: waste & circular, retail & fashion,
+  manufacturing, tourism, housing, heat pumps; Hong Kong, Singapore, UK, EU
+  countries and more, including Chinese place names.
+- Portfolio-home deadlines follow the fund's domicile
+  (`IMPACT_VISION_FUND_DOMICILE`) plus where its companies operate.
+- DD questions for the investment team (`ask: fund`) are no longer sent to
+  founders or counted in coverage.
+- Ten golden decks across sectors, regions and Chinese
+  (`tests/golden_decks/`, `tests/test_v8_golden_decks.py`).
+- Pre-filled provider profiles (see below) and Claude 5.5 defaults.
+
+### Fixed
+- `/health` alias; "122 questions" in the DD tool text; one AI disclosure
+  per report (the footer links to the appendix); same gate label in the
+  web panel and card.
+
+### Added (provider presets)
 - Pre-filled provider profiles: OpenAI, OpenRouter, DeepSeek, Alibaba Qwen
   (DashScope), Mistral, xAI (Grok), Groq, Together AI, Ollama (local, no key)
   and a Custom endpoint (any OpenAI-compatible URL). Each has its base URL,
@@ -42,7 +113,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ### Docs
 - Removed four unused images from `docs/images/`; regenerated the demo bundle
-  and every screenshot (web chat now shows v0.17.1). Section screenshots that
+  and every screenshot. Section screenshots that
   are height-capped are cut at a row boundary, not mid-row.
 
 ## [0.17.1] - 2026-10-07 - Report styling pass

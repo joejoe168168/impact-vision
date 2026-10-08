@@ -4,7 +4,7 @@
   "geography": "Kenya",
   "gate": "INSUFFICIENT EVIDENCE",
   "recommendation": "Not IC-ready: the failed checks reflect missing evidence, not negative findings. Collect the missing metrics and DD answers, then re-screen.",
-  "five_d_score": 1.6,
+  "five_d_score": 1.8,
   "five_d_grade": "C",
   "five_d_evidence": "partial",
   "top_sdgs": [
@@ -21,15 +21,15 @@
       "confidence": "medium"
     },
     {
-      "goal": 8,
-      "name": "Decent Work and Economic Growth",
-      "score": 32.3,
+      "goal": 5,
+      "name": "Gender Equality",
+      "score": 30.2,
       "confidence": "medium"
     }
   ],
-  "greenwashing_risk": 46.0,
-  "greenwashing_class": "Moderate Risk",
-  "dd_coverage_pct": 39.5,
+  "greenwashing_risk": 34.0,
+  "greenwashing_class": "Substantive with Gaps",
+  "dd_coverage_pct": 41.7,
   "claims": 9,
   "reported_metrics": {
     "PI7954": "42,000",
@@ -48,9 +48,9 @@
     "sunpath_energy_ltd_data.xlsx",
     "sunpath_energy_ltd_data.csv"
   ],
-  "ai_disclosure": "Automated analysis: produced by rules and a deterministic scoring model; no generative AI was used. 3 of 21 scores are estimated from document text rather than reported metrics. Review before relying on it.",
+  "ai_disclosure": "Automated analysis: produced by rules and a deterministic scoring model; no generative AI was used. 2 of 21 scores are estimated from document text rather than reported metrics. Review before relying on it.",
   "methodology": {
-    "methodology_version": "1.1.0",
-    "config_hash": "8fabf9b5a7e2"
+    "methodology_version": "1.2.0",
+    "config_hash": "ae3e77ecaccf"
   }
 }

@@ -315,7 +315,8 @@ def _score_dimension(
     from openharness.impact.metric_relevance import rank_metrics
 
     # Most relevant first (sector core set, themes, goal-specific), not A→Z.
-    gap_ids = rank_metrics(reference_set - reported_ids, company, store, limit=10)
+    gap_ids = rank_metrics(reference_set - reported_ids, company, store, limit=10,
+                           relevant_only=company is not None)
     gaps = [f"{mid} ({store.get(mid).name if store.get(mid) else mid})" for mid in gap_ids]
 
     if total_reported_dim > 0:

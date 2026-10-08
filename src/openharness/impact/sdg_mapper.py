@@ -154,7 +154,15 @@ def _get_sector_sdg_relevance() -> dict[str, dict[int, float]]:
     return result
 
 
+_LANGUAGE_KEYWORD_FILES = ("es", "fr", "pt", "zh")
+_keyword_map_cache: dict[str, list[tuple[int, float]]] | None = None
+
+
 def _get_keyword_sdg_map() -> dict[str, list[tuple[int, float]]]:
+    """English keywords plus the es / fr / pt / zh maps (documents can be in any of them)."""
+    global _keyword_map_cache
+    if _keyword_map_cache is not None:
+        return _keyword_map_cache
     config = _load_sdg_keywords_config()
     raw = config.get("keyword_sdg_map")
     if not raw or not isinstance(raw, dict):
@@ -162,6 +170,17 @@ def _get_keyword_sdg_map() -> dict[str, list[tuple[int, float]]]:
     result: dict[str, list[tuple[int, float]]] = {}
     for keyword, pairs in raw.items():
         result[str(keyword)] = [(int(p[0]), float(p[1])) for p in pairs]
+    for lang in _LANGUAGE_KEYWORD_FILES:
+        path = data_path(f"sdg_keywords_{lang}.yaml")
+        if not path.exists():
+            continue
+        try:
+            extra = (yaml.safe_load(path.read_text(encoding="utf-8")) or {}).get("keyword_sdg_map") or {}
+        except (OSError, yaml.YAMLError):
+            continue
+        for keyword, pairs in extra.items():
+            result.setdefault(str(keyword).lower(), [(int(p[0]), float(p[1])) for p in pairs])
+    _keyword_map_cache = result
     return result
 
 
@@ -188,7 +207,12 @@ def _keyword_present(text: str, keyword: str) -> bool:
     Plain substring matching let "land" fire on "Thailand" / "island" and
     "carbon" on "carbonated" (methodology 1.2.0).
     """
-    return re.search(r"\b" + re.escape(keyword) + r"(?:s|es|ed|ing)?\b", text) is not None
+    if not keyword.isascii():
+        # CJK has no word boundaries; accented Latin words still get them.
+        if any("\u3000" <= ch <= "\u9fff" or "\uf900" <= ch <= "\ufaff" for ch in keyword):
+            return keyword in text
+    # Hyphenated compounds don't count: "air-to-water heat pump" is not SDG 6.
+    return re.search(r"(?<![\w-])" + re.escape(keyword) + r"(?:s|es|ed|ing)?(?![\w-])", text) is not None
 
 
 def _keyword_in_context(text: str, keyword: str) -> bool:
@@ -203,7 +227,8 @@ def _keyword_in_context(text: str, keyword: str) -> bool:
         end = min(len(text), idx + len(keyword) + _CONTEXT_WINDOW_SIZE)
         window = text[start:end]
         words = window.split()
-        if len(words) >= 5:
+        # CJK text has no spaces: a window of real prose is enough.
+        if len(words) >= 5 or (not keyword.isascii() and len(window.strip()) >= 20):
             return True
         idx = text.find(keyword, idx + len(keyword))
     return False

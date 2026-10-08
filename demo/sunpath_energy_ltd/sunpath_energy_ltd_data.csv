@@ -1,46 +1,45 @@
 Section,Metric,Value,Details,Numeric,Max,Unit
 Company,Name,SunPath Energy Ltd,,,,
-Company,Generated,2026-10-07T01:08:41Z,,,,
-Company,AI disclosure,Automated analysis: produced by rules and a deterministic scoring model; no generative AI was used. 3 of 21 scores are estimated from document text rather than reported metrics. Review before relying on it.,,,,
-Company,Methodology,1.1.0,config 8fabf9b5a7e2,,,
-5D,Overall Grade,C,1.6/5.0,1.6,5,score
-5D,What,2.0/5.0,1 metric reported · 1 of 16 reference metrics,2.0,5,score
-5D,Who,1.8/5.0,3 metrics reported · 0 of 1 reference metrics,1.8,5,score
+Company,Generated,2026-10-08T15:56:23Z,,,,
+Company,AI disclosure,Automated analysis: produced by rules and a deterministic scoring model; no generative AI was used. 2 of 21 scores are estimated from document text rather than reported metrics. Review before relying on it.,,,,
+Company,Methodology,1.2.0,config ae3e77ecaccf,,,
+5D,Overall Grade,C,1.8/5.0,1.8,5,score
+5D,What,2.5/5.0,1 metric reported · 1 of 16 reference metrics,2.5,5,score
+5D,Who,2.5/5.0,3 metrics reported · 0 of 1 reference metrics,2.5,5,score
 5D,How Much,1.7/5.0,"Scale=1.7, Depth=1.7, Duration=1.7",1.7,5,score
 5D,Contribution,1.5/5.0,"Depth=1.5, Duration=1.5",1.5,5,score
-5D,Risk,1.2/5.0,Estimated from sector/description · 4 reference metrics to track (adverse impact penalty -0.3),1.2,5,score
+5D,Risk,1.0/5.0,Estimated from sector/description · 4 reference metrics to track,1.0,5,score
 SDG,SDG 7,41.8/100,"medium | metrics: OI2764,PI7954",41.8,100,score
 SDG,SDG 13,36.7/100,medium | metrics: OI2764,36.7,100,score
-SDG,SDG 8,32.3/100,"medium | metrics: OI6213,OI8869",32.3,100,score
-SDG,SDG 1,27.5/100,medium | metrics: ,27.5,100,score
+SDG,SDG 5,30.2/100,medium | metrics: OI6213,30.2,100,score
+SDG,SDG 1,30.0/100,medium | metrics: ,30.0,100,score
+SDG,SDG 8,27.3/100,"medium | metrics: OI6213,OI8869",27.3,100,score
 SDG,SDG 9,26.5/100,medium | metrics: OI8869,26.5,100,score
-SDG,SDG 2,25.0/100,medium | metrics: ,25.0,100,score
 SDG,SDG 11,20.0/100,medium | metrics: ,20.0,100,score
-SDG,SDG 6,17.5/100,low | metrics: ,17.5,100,score
-SDG,SDG 15,17.5/100,low | metrics: ,17.5,100,score
-SDG,SDG 3,15.0/100,low | metrics: ,15.0,100,score
-SDG,SDG 5,12.7/100,low | metrics: OI6213,12.7,100,score
+SDG,SDG 2,17.5/100,low | metrics: ,17.5,100,score
+SDG,SDG 3,10.0/100,low | metrics: ,10.0,100,score
 SDG,SDG 4,10.0/100,low | metrics: ,10.0,100,score
+SDG,SDG 6,10.0/100,low | metrics: ,10.0,100,score
 SDG,SDG 10,10.0/100,low | metrics: ,10.0,100,score
 SDG,SDG 12,10.0/100,low | metrics: ,10.0,100,score
+SDG,SDG 15,10.0/100,low | metrics: ,10.0,100,score
 SDG,SDG 16,10.0/100,low | metrics: ,10.0,100,score
-SDG,SDG 14,7.5/100,low | metrics: ,7.5,100,score
-Greenwashing,Risk score,46.0/100,Moderate Risk,46.0,100,risk
+Greenwashing,Risk score,34.0/100,Substantive with Gaps,34.0,100,risk
 Gap,Coverage,17.6%,,17.6,100,%
+Gap,PI5842,MISSING,Energy Generated for Sale: Renewable,,,
+Gap,PD1504,MISSING,Energy Capacity of Products Sold,,,
+Gap,OI5049,MISSING,Client Feedback System,,,
+Gap,PI2822,MISSING,Client Individuals: Provided New Access,,,
+Gap,OI3757,MISSING,Occupational Injuries,,,
+Gap,PI4060,MISSING,Client Individuals: Total,,,
+Gap,OI4724,MISSING,Workers Earning a Living Wage or Higher,,,
+Gap,OI1479,MISSING,Greenhouse Gas Emissions: Total,,,
+Gap,OI1582,MISSING,Wage Equity,,,
+Gap,OI4112,MISSING,Greenhouse Gas Emissions: Direct (Scope 1),,,
 Gap,OD4091,MISSING,Social and Environmental Targets,,,
 Gap,OI1075,MISSING,Board of Directors: Total,,,
-Gap,OI1479,MISSING,Greenhouse Gas Emissions: Total,,,
 Gap,OI1571,MISSING,Full-time Employees: Female Managers,,,
-Gap,OI1582,MISSING,Wage Equity,,,
-Gap,OI3757,MISSING,Occupational Injuries,,,
-Gap,OI4112,MISSING,Greenhouse Gas Emissions: Direct (Scope 1),,,
-Gap,OI4724,MISSING,Workers Earning a Living Wage or Higher,,,
 Gap,OI4732,MISSING,Social and Environmental Performance Reporting,,,
-Gap,OI5049,MISSING,Client Feedback System,,,
-Gap,PD1504,MISSING,Energy Capacity of Products Sold,,,
-Gap,PI2822,MISSING,Client Individuals: Provided New Access,,,
-Gap,PI4060,MISSING,Client Individuals: Total,,,
-Gap,PI5842,MISSING,Energy Generated for Sale: Renewable,,,
 Gap,OI2764,"20,000 tCO2e",Greenhouse Gas Emissions Avoided,20000.0,,tCO2e
 Gap,OI6213,127 (derived: 41% of 310),Full-time Employees: Female,127.0,,(derived: 41% of 310)
 Gap,OI8869,310,Permanent Employees: Total,310.0,,

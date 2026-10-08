@@ -1,7 +1,7 @@
 # Impact Vision — Roadmap v8.0
 
 **Date:** 2026-10-08
-**Status:** Draft for review
+**Status:** Wave 0 released as 0.17.2 (2026-10-08); Waves 1–5 in progress
 **Audience:** product, engineering, fund managers, consultants, LPs, verifiers
 **Builds on:** `roadmap-v7.md` (released as 0.17.0/0.17.1). The v6 capability
 backlog stays valid for anything not superseded here.
@@ -196,6 +196,27 @@ Effort: S ≤ 3 days, M ≤ 2 weeks, L ≤ 4 weeks.
 **Exit criterion:** an unauthenticated cross-origin page can't read or change
 anything. The edtech deck is no longer a FAIL. No golden output recommends a
 metric from another sector.
+
+**Wave 0 status (2026-10-08):** done and released as **0.17.2**.
+- **W0.1–W0.3:** `api_gateway/security.py` adds the Host allow-list, Origin
+  check and same-origin CORS. The launch token, the provider re-key rule,
+  guarded legacy routes, redirect-checked URL fetches, public-only
+  webhooks, upload/download allow-lists and fund-profile file confinement
+  are covered by `tests/test_v8_security.py`.
+- **W0.4–W0.6:** methodology **1.2.0**.
+- **W0.7:** `.docx` / `.pptx`, multi-file assess, the web "Correct and
+  re-run" form, applicability-filtered deadlines, `ask: fund` DD
+  questions, and the small fixes.
+- **W0.8:** ten golden decks, including one in Chinese
+  (`tests/test_v8_golden_decks.py`).
+
+Two things were found and fixed along the way:
+- The es/fr/pt SDG keyword files were never loaded; zh was added.
+- Metrics tagged to most IRIS+ themes (e.g. OI9101, 27 themes) matched
+  every company.
+
+Still true, and the reason for Wave 1: every deck except the greenwasher is
+"INSUFFICIENT EVIDENCE", and 5D still mostly measures disclosure.
 
 ### Wave 1 — Methodology 2.0: measure impact (weeks 2–10)
 

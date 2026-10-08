@@ -37,7 +37,8 @@ def _load(path: str) -> tuple[dict[str, Any], str]:
     digest = hashlib.sha256(raw)
     # Sector baselines / keyword boosts and the SDG keyword map shape scores
     # too, so they are part of the hash.
-    for extra in ("scoring_config.yaml", "sdg_keywords.yaml"):
+    for extra in ("scoring_config.yaml", "sdg_keywords.yaml", "sdg_keywords_es.yaml", "sdg_keywords_fr.yaml",
+                  "sdg_keywords_pt.yaml", "sdg_keywords_zh.yaml"):
         extra_path = data_path(extra)
         if extra_path.exists():
             digest.update(extra_path.read_bytes())

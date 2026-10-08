@@ -9,27 +9,27 @@
   "five_d_evidence": "partial",
   "top_sdgs": [
     {
-      "goal": 1,
-      "name": "No Poverty",
-      "score": 42.7,
-      "confidence": "medium"
-    },
-    {
-      "goal": 2,
-      "name": "Zero Hunger",
-      "score": 42.7,
-      "confidence": "medium"
-    },
-    {
       "goal": 5,
       "name": "Gender Equality",
       "score": 37.8,
       "confidence": "medium"
+    },
+    {
+      "goal": 1,
+      "name": "No Poverty",
+      "score": 37.7,
+      "confidence": "medium"
+    },
+    {
+      "goal": 8,
+      "name": "Decent Work and Economic Growth",
+      "score": 37.3,
+      "confidence": "medium"
     }
   ],
-  "greenwashing_risk": 57.1,
+  "greenwashing_risk": 48.0,
   "greenwashing_class": "Moderate Risk",
-  "dd_coverage_pct": 43.4,
+  "dd_coverage_pct": 43.1,
   "claims": 5,
   "reported_metrics": {
     "PI4060": "45,000",
@@ -52,9 +52,9 @@
     "brightpath_finance_data.xlsx",
     "brightpath_finance_data.csv"
   ],
-  "ai_disclosure": "Automated analysis: produced by rules and a deterministic scoring model; no generative AI was used. 3 of 21 scores are estimated from document text rather than reported metrics. Review before relying on it.",
+  "ai_disclosure": "Automated analysis: produced by rules and a deterministic scoring model; no generative AI was used. 2 of 21 scores are estimated from document text rather than reported metrics. Review before relying on it.",
   "methodology": {
-    "methodology_version": "1.1.0",
-    "config_hash": "8fabf9b5a7e2"
+    "methodology_version": "1.2.0",
+    "config_hash": "ae3e77ecaccf"
   }
 }

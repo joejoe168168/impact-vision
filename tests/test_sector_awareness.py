@@ -34,7 +34,8 @@ def test_auto_sector_infers_from_text():
 
 
 def test_sector_none_keeps_legacy_behaviour():
-    all_q = load_checklist()
+    # Every company-facing question; fund-side ones (ask: fund) are listed separately.
+    all_q = [q for q in load_checklist() if q.ask != "fund"]
     assert analyze_document_coverage(PIG_TEXT).total_questions == len(all_q)
     assert analyze_document_coverage(PIG_TEXT, sector="agriculture").total_questions < len(all_q)
 
