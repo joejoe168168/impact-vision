@@ -84,6 +84,13 @@ def web_chat_dir() -> Path:
     return target
 
 
+def _fund_read_roots(opts: "SessionOptions") -> list[Path]:
+    """Folders a fund-profile web session may read: the workspace and uploads."""
+    from openharness.web.chat_api import uploads_dir
+
+    return [Path(opts.cwd or os.getcwd()), uploads_dir()]
+
+
 def _now() -> float:
     return time.time()
 
@@ -207,6 +214,7 @@ class ChatSession:
                     extra_skill_dirs=opts.extra_skill_dirs or None,
                     extra_plugin_roots=opts.extra_plugin_roots or None,
                     tool_profile=opts.tool_profile,
+                    confine_to=_fund_read_roots(opts) if (opts.tool_profile or "fund") == "fund" else None,
                 )
                 await start_runtime(self._bundle)
             except SystemExit as exc:

@@ -111,7 +111,14 @@ class QueryEngine:
         self._max_turns = None if max_turns is None else max(1, int(max_turns))
 
     def set_permission_checker(self, checker: PermissionChecker) -> None:
-        """Update the active permission checker for future turns."""
+        """Update the active permission checker for future turns.
+
+        A mode change (``/permissions``, ``/plan``) builds a fresh checker; the
+        session's file confinement carries over so it can't be dropped that way.
+        """
+        previous = getattr(self._permission_checker, "confine_to", None)
+        if previous and not getattr(checker, "confine_to", None):
+            checker = type(checker)(checker._settings, confine_to=previous)  # noqa: SLF001
         self._permission_checker = checker
 
     def _build_coordinator_context_message(self) -> ConversationMessage | None:

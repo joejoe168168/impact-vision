@@ -5,10 +5,11 @@ from __future__ import annotations
 from datetime import datetime
 
 
-def test_api_cors_wildcard_does_not_allow_credentials() -> None:
+def test_api_cors_defaults_to_same_origin_only() -> None:
     from openharness.api_gateway.router import _CORS_ALLOW_CREDENTIALS, _parse_cors_origins, app
 
-    assert _parse_cors_origins(None) == ["*"]
+    # v8 W0.1: no wildcard by default; a hostile page must not read responses.
+    assert _parse_cors_origins(None) == []
     assert _parse_cors_origins("https://a.example, https://b.example") == [
         "https://a.example",
         "https://b.example",
@@ -18,7 +19,7 @@ def test_api_cors_wildcard_does_not_allow_credentials() -> None:
     cors_middleware = next(
         middleware for middleware in app.user_middleware if middleware.cls.__name__ == "CORSMiddleware"
     )
-    assert cors_middleware.kwargs["allow_origins"] == ["*"]
+    assert cors_middleware.kwargs["allow_origins"] == []
     assert cors_middleware.kwargs["allow_credentials"] is False
 
 

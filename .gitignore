@@ -75,3 +75,6 @@ demo/.cache/
 
 # Local assessment store (created at runtime, never shipped)
 data/impact_vision.db
+
+# Local Impact Vision state (uploads, reports) if run with a workspace here
+.impact-vision/

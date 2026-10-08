@@ -189,6 +189,7 @@ async def build_runtime(
     extra_skill_dirs: Iterable[str | Path] | None = None,
     extra_plugin_roots: Iterable[str | Path] | None = None,
     tool_profile: str | None = None,
+    confine_to: Iterable[str | Path] | None = None,
 ) -> RuntimeBundle:
     """Build the shared runtime for an OpenHarness session."""
     settings_overrides: dict[str, Any] = {
@@ -284,7 +285,9 @@ async def build_runtime(
     engine = QueryEngine(
         api_client=resolved_api_client,
         tool_registry=tool_registry,
-        permission_checker=PermissionChecker(settings.permission),
+        permission_checker=PermissionChecker(
+            settings.permission, confine_to=[Path(p) for p in confine_to] if confine_to else None
+        ),
         cwd=cwd,
         model=settings.model,
         system_prompt=system_prompt_text,

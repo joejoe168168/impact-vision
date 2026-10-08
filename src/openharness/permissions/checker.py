@@ -5,6 +5,7 @@ from __future__ import annotations
 import fnmatch
 import logging
 from dataclasses import dataclass
+from pathlib import Path
 
 from openharness.config.settings import PermissionSettings
 from openharness.permissions.modes import PermissionMode
@@ -57,8 +58,11 @@ class PathRule:
 class PermissionChecker:
     """Evaluate tool usage against the configured permission mode and rules."""
 
-    def __init__(self, settings: PermissionSettings) -> None:
+    def __init__(self, settings: PermissionSettings, *, confine_to: list[Path] | None = None) -> None:
         self._settings = settings
+        # When set (the web "fund" profile), file access outside these roots is
+        # refused outright, so a prompt-injected document can't read other files.
+        self._confine_to = [Path(root).expanduser().resolve() for root in confine_to or []]
         # Parse path rules from settings
         self._path_rules: list[PathRule] = []
         for rule in getattr(settings, "path_rules", []):
@@ -71,6 +75,10 @@ class PermissionChecker:
                     "Skipping path rule with missing, empty, or non-string 'pattern' field: %r",
                     rule,
                 )
+
+    @property
+    def confine_to(self) -> list[Path]:
+        return list(self._confine_to)
 
     def evaluate(
         self,
@@ -96,6 +104,13 @@ class PermissionChecker:
                                 f"(matched built-in pattern '{pattern}')"
                             ),
                         )
+
+        if file_path and self._confine_to and not _within(file_path, self._confine_to):
+            return PermissionDecision(
+                allowed=False,
+                reason=(f"Access denied: {file_path} is outside the workspace and upload folders "
+                        "this session may read."),
+            )
 
         # Explicit tool deny list
         if tool_name in self._settings.denied_tools:
@@ -154,6 +169,20 @@ class PermissionChecker:
             requires_confirmation=True,
             reason=reason,
         )
+
+
+def _within(file_path: str, roots: list[Path]) -> bool:
+    try:
+        target = Path(file_path).expanduser().resolve()
+    except (OSError, RuntimeError):
+        return False
+    for root in roots:
+        try:
+            target.relative_to(root)
+            return True
+        except ValueError:
+            continue
+    return False
 
 
 def _policy_match_paths(file_path: str) -> tuple[str, ...]:

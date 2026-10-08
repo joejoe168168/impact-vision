@@ -885,24 +885,11 @@ class _UrlFetchError(Exception):
 _URL_MAX_BYTES = 50 * 1024 * 1024  # 50 MB cap on remote document size
 
 
-def _fetch_url_text(url: str) -> str:
-    """Fetch a URL and return decoded text with SSRF / size guardrails.
-
-    The original implementation passed any URL straight to ``urlopen`` with no
-    scheme allow-list, no host filtering and no size cap, which made the tool a
-    classic SSRF vector when mounted via MCP/HTTP. This wrapper enforces:
-
-    * scheme must be ``http`` or ``https``;
-    * host must not resolve to a private/loopback/link-local address;
-    * response is capped at ``_URL_MAX_BYTES``;
-    * binary content (e.g. ``application/pdf``) is rejected with a clear
-      message that asks the caller to download the file locally and use
-      ``file_path`` instead.
-    """
+def _ensure_public_url(url: str) -> None:
+    """Reject non-http(s) URLs and hosts that resolve to non-public addresses."""
     import ipaddress
     import socket
     from urllib.parse import urlparse
-    from urllib.request import Request, urlopen
 
     parsed = urlparse(url)
     scheme = (parsed.scheme or "").lower()
@@ -939,8 +926,37 @@ def _fetch_url_text(url: str) -> str:
                 f"address {ip_str}."
             )
 
+
+def _fetch_url_text(url: str) -> str:
+    """Fetch a URL and return decoded text with SSRF / size guardrails.
+
+    The original implementation passed any URL straight to ``urlopen`` with no
+    scheme allow-list, no host filtering and no size cap, which made the tool a
+    classic SSRF vector when mounted via MCP/HTTP. This wrapper enforces:
+
+    * scheme must be ``http`` or ``https``;
+    * host must not resolve to a private/loopback/link-local address, and
+      neither may any redirect target;
+    * response is capped at ``_URL_MAX_BYTES``;
+    * binary content (e.g. ``application/pdf``) is rejected with a clear
+      message that asks the caller to download the file locally and use
+      ``file_path`` instead.
+    """
+    from urllib.request import HTTPRedirectHandler, Request, build_opener
+
+    class _CheckedRedirect(HTTPRedirectHandler):
+        # Every hop is re-validated, so a public URL can't redirect to
+        # localhost or a private address (SSRF).
+        max_redirections = 5
+
+        def redirect_request(self, req, fp, code, msg, headers, newurl):  # noqa: D401
+            _ensure_public_url(newurl)
+            return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+    _ensure_public_url(url)
+
     request = Request(url, headers={"User-Agent": "impact-vision/1.0"})
-    with urlopen(request, timeout=10) as response:  # noqa: S310 - validated above
+    with build_opener(_CheckedRedirect).open(request, timeout=10) as response:  # noqa: S310 - validated above
         content_type = (response.headers.get("Content-Type") or "").lower()
         if "pdf" in content_type or content_type.startswith(("application/octet-stream", "image/", "video/", "audio/")):
             raise _UrlFetchError(

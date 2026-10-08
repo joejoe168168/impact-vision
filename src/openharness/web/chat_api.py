@@ -83,9 +83,25 @@ class ProviderUpdate(BaseModel):
 # ---------------------------------------------------------------------------
 
 
+# Documents a fund user uploads; anything else (executables, archives,
+# scripts) is refused.
+UPLOAD_EXTENSIONS = frozenset({
+    ".pdf", ".docx", ".pptx", ".xlsx", ".xls", ".csv", ".txt", ".md", ".json",
+    ".yaml", ".yml", ".png", ".jpg", ".jpeg",
+})
+# What the artifacts panel may download from the workspace.
+DOWNLOAD_EXTENSIONS = UPLOAD_EXTENSIONS | {".html", ".htm", ".svg", ".zip", ".docm", ".xml", ".xbrl"}
+
+
 def uploads_dir() -> Path:
-    """Return (and create) the workspace folder that receives browser uploads."""
-    root = Path(os.environ.get("IMPACT_VISION_UPLOAD_DIR", Path.cwd() / ".impact-vision" / "uploads"))
+    """Return (and create) the folder that receives browser uploads.
+
+    It lives in the web home (``~/.openharness/web-uploads`` by default), not
+    in the working directory, so confidential decks never land in a git
+    checkout.
+    """
+    default = Path(os.environ.get("IMPACT_VISION_WEB_HOME", Path.home() / ".openharness")) / "web-uploads"
+    root = Path(os.environ.get("IMPACT_VISION_UPLOAD_DIR", default))
     root.mkdir(parents=True, exist_ok=True)
     return root
 
@@ -114,9 +130,13 @@ def _resolve_download(raw_path: str) -> Path:
         raise HTTPException(status_code=400, detail="Invalid path") from exc
     if not target.is_file():
         raise HTTPException(status_code=404, detail="File not found")
+    if target.suffix.lower() not in DOWNLOAD_EXTENSIONS:
+        raise HTTPException(status_code=403, detail="Only report and document files can be downloaded")
     for root in _download_roots():
         with contextlib.suppress(ValueError):
-            target.relative_to(root)
+            relative = target.relative_to(root)
+            if any(part.startswith(".") for part in relative.parts[:-1]) or relative.name.startswith("."):
+                continue  # hidden files and folders (.git, .env, .openharness) are never served
             return target
     raise HTTPException(status_code=403, detail="Path is outside the served workspace")
 
@@ -191,6 +211,25 @@ def _apply_provider_update(update: ProviderUpdate) -> dict[str, Any]:
     if profile_name not in profiles:
         raise HTTPException(status_code=400, detail=f"Unknown provider profile: {profile_name}")
 
+    # Repointing a profile that already holds a key would send that key to the
+    # new endpoint. Require the key to be re-entered with the new URL, unless
+    # the new endpoint is on this machine (local servers need no key).
+    from openharness.auth.storage import load_credential
+    from openharness.config.settings import is_local_base_url
+
+    current = profiles[profile_name]
+    new_url = (update.base_url or "").strip() or None if update.base_url is not None else current.base_url
+    if (
+        (new_url or None) != (current.base_url or None)
+        and not update.api_key
+        and not is_local_base_url(new_url)
+        and load_credential(credential_storage_provider_name(profile_name, current), "api_key")
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="Changing the endpoint of a profile with a saved key: re-enter the API key for the new endpoint.",
+        )
+
     changes: dict[str, Any] = {}
     if update.model:
         changes["last_model"] = update.model
@@ -264,6 +303,13 @@ def build_chat_router(*, auth_dependency: Any = None) -> APIRouter:
 
     @router.post("/sessions", dependencies=deps)
     async def create_session(req: NewSessionRequest) -> dict[str, Any]:
+        if (req.permission_mode or "").strip().lower() == "full_auto" and os.environ.get(
+            "IMPACT_VISION_WEB_ALLOW_FULL_AUTO", ""
+        ).strip().lower() not in {"1", "true", "yes"}:
+            raise HTTPException(
+                status_code=403,
+                detail="full_auto can't be enabled over the web API (set IMPACT_VISION_WEB_ALLOW_FULL_AUTO=1 on a trusted machine).",
+            )
         manager = get_session_manager()
         _apply_default_options(manager.default_options)
         overrides = {
@@ -319,7 +365,13 @@ def build_chat_router(*, auth_dependency: Any = None) -> APIRouter:
         saved: list[dict[str, Any]] = []
         target_dir = uploads_dir()
         for item in files:
-            payload = await item.read()
+            suffix = Path(item.filename or "").suffix.lower()
+            if suffix not in UPLOAD_EXTENSIONS:
+                raise HTTPException(
+                    status_code=415,
+                    detail=f"{item.filename}: only {', '.join(sorted(UPLOAD_EXTENSIONS))} files can be uploaded",
+                )
+            payload = await item.read(_MAX_UPLOAD_BYTES + 1)
             if len(payload) > _MAX_UPLOAD_BYTES:
                 raise HTTPException(
                     status_code=413,
@@ -363,12 +415,18 @@ def build_chat_ws_router() -> APIRouter:
 
     @router.websocket("/ws/chat")
     async def chat_socket(websocket: WebSocket, session: str | None = None, token: str | None = None) -> None:
-        expected = os.environ.get("IMPACT_VISION_API_KEY", "")
-        if expected and token != expected:
+        from openharness.api_gateway.security import token_matches
+
+        # Browsers can't set headers on a WebSocket, so the UI offers the token
+        # as a subprotocol ("iv", "bearer.<token>") to keep it out of URLs and
+        # access logs. ``?token=`` still works for older clients.
+        offered = [p.strip() for p in websocket.headers.get("sec-websocket-protocol", "").split(",") if p.strip()]
+        supplied = next((p[len("bearer."):] for p in offered if p.startswith("bearer.")), None) or token
+        if not token_matches(supplied):
             await websocket.close(code=4401, reason="Invalid or missing API key")
             return
 
-        await websocket.accept()
+        await websocket.accept(subprotocol="iv" if "iv" in offered else None)
         manager = get_session_manager()
         chat = manager.get_or_create(session)
         _apply_default_options(manager.default_options)

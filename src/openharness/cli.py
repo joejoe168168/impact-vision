@@ -291,15 +291,21 @@ def serve_web(
             raise typer.Exit(1)
         os.chdir(target)
 
+    from openharness.api_gateway.security import ensure_launch_token
+
     url = f"http://{host}:{port}"
+    launch_token = ensure_launch_token(host)
     secured = bool(os.environ.get("IMPACT_VISION_API_KEY"))
     print(f"Impact Vision → {url}")
+    if launch_token:
+        print("  · Bound beyond this machine, so a one-time token was generated.")
+        print(f"    Open: {url}/?token={launch_token}")
     print(f"  · Chat UI:      {url}/")
     print(f"  · Tool console: {url}/console")
     print(f"  · OpenAPI:      {url}/docs")
     print(f"  · REST API:     {url}/api/v1/*")
     print(f"  · Workspace:    {Path.cwd()}")
-    print(f"  · Auth:         {'bearer token required' if secured else 'open (local use)'}")
+    print(f"  · Auth:         {'bearer token required' if secured else 'local only (other sites and hosts are refused)'}")
 
     if open_browser:
         import threading

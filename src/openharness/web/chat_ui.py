@@ -376,6 +376,16 @@ const S = {
 
 const token = () => localStorage.getItem('iv_token') || '';
 const setToken = (v) => v ? localStorage.setItem('iv_token', v) : localStorage.removeItem('iv_token');
+// A launch URL like http://host:8787/?token=… logs this browser in once,
+// then the token is dropped from the address bar.
+(() => {
+  const q = new URLSearchParams(location.search);
+  if (q.get('token')) {
+    setToken(q.get('token'));
+    q.delete('token');
+    history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '') + location.hash);
+  }
+})();
 
 async function api(path, opts) {
   const o = Object.assign({headers: {}}, opts || {});
@@ -711,8 +721,8 @@ function connect(sessionId) {
   const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
   const params = new URLSearchParams();
   if (sessionId) params.set('session', sessionId);
-  if (token()) params.set('token', token());
-  const ws = new WebSocket(proto + '//' + location.host + '/ws/chat?' + params.toString());
+  const ws = new WebSocket(proto + '//' + location.host + '/ws/chat?' + params.toString(),
+    token() ? ['iv', 'bearer.' + token()] : undefined);
   S.ws = ws;
 
   ws.onopen = () => { S.reconnectDelay = 500; setConn(true); };

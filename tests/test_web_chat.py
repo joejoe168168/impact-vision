@@ -224,11 +224,18 @@ def test_upload_lands_in_the_workspace(client):
 def test_upload_filename_is_sanitised(client):
     response = client.post(
         "/api/v1/chat/uploads",
-        files={"files": ("../../etc/passwd", b"nope", "text/plain")},
+        files={"files": ("../../etc/passwd.txt", b"nope", "text/plain")},
     )
     saved = response.json()["files"][0]
     assert ".." not in saved["stored_name"]
-    assert Path(saved["path"]).parent.name == "uploads"
+    from openharness.web.chat_api import uploads_dir
+
+    assert Path(saved["path"]).parent == uploads_dir()
+
+
+def test_upload_refuses_non_document_types(client):
+    response = client.post("/api/v1/chat/uploads", files={"files": ("tool.exe", b"MZ", "application/octet-stream")})
+    assert response.status_code == 415
 
 
 def test_download_refuses_paths_outside_the_workspace(client, tmp_path):

@@ -42,7 +42,6 @@ import asyncio
 import hashlib
 import logging
 import os
-import secrets
 import time
 import uuid
 from pathlib import Path
@@ -67,17 +66,26 @@ from openharness.impact.models import Company
 from openharness.impact.sdg_mapper import map_sdg_alignment
 from openharness.tools.impact.common import infer_themes, normalize_metric_map, normalize_sdg_goals
 
+from openharness.api_gateway.security import (
+    LocalGuardMiddleware,
+    configured_api_key,
+    parse_origins,
+    token_matches,
+)
+
 logger = logging.getLogger(__name__)
 
 
 def _parse_cors_origins(raw: str | None) -> list[str]:
-    """Parse comma-separated CORS origins, defaulting to local/dev openness."""
-    origins = [item.strip() for item in (raw or "").split(",") if item.strip()]
-    return origins or ["*"]
+    """Parse comma-separated CORS origins. Empty = same-origin only (v8 W0.1).
+
+    ``*`` is still accepted when set explicitly, but never with credentials.
+    """
+    return parse_origins(raw)
 
 
 _CORS_ORIGINS = _parse_cors_origins(os.environ.get("IMPACT_VISION_CORS_ORIGINS"))
-_CORS_ALLOW_CREDENTIALS = "*" not in _CORS_ORIGINS
+_CORS_ALLOW_CREDENTIALS = bool(_CORS_ORIGINS) and "*" not in _CORS_ORIGINS
 
 
 def _package_version() -> str:
@@ -97,6 +105,7 @@ app = FastAPI(
     version=_package_version(),
 )
 
+app.add_middleware(LocalGuardMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_CORS_ORIGINS,
@@ -114,7 +123,29 @@ for _middleware in app.user_middleware:
 # Authentication (API Key)
 # ---------------------------------------------------------------------------
 
-_API_KEY = os.environ.get("IMPACT_VISION_API_KEY", "")
+
+def _reject_server_paths(**fields: Any) -> None:
+    """Legacy routes get the same rule as /api/v1/tools/*: no server paths/URLs."""
+    from openharness.impact.surfaces import ALLOW_PATHS_ENV, _allow_paths
+
+    blocked = sorted(name for name, value in fields.items() if value)
+    if blocked and not _allow_paths(None):
+        raise HTTPException(
+            status_code=400,
+            detail=(f"{', '.join(blocked)} cannot be set over this API (the server would read "
+                    f"its own files/URLs). Send the content inline, or set {ALLOW_PATHS_ENV}=1 "
+                    "on a trusted single-user deployment."),
+        )
+
+
+async def _ensure_webhook_target(url: str) -> None:
+    from openharness.utils.network_guard import NetworkGuardError, ensure_public_http_url
+
+    try:
+        await ensure_public_http_url(url)
+    except NetworkGuardError as exc:
+        raise HTTPException(status_code=400, detail=f"Webhook URL refused: {exc}") from exc
+
 _bearer_scheme = HTTPBearer(auto_error=False)
 
 
@@ -122,13 +153,13 @@ async def verify_api_key(
     request: Request,
     credentials: HTTPAuthorizationCredentials | None = Depends(_bearer_scheme),
 ) -> None:
-    """Verify API key if IMPACT_VISION_API_KEY env var is set."""
-    if not _API_KEY:
+    """Verify the bearer token when IMPACT_VISION_API_KEY is set (read per request)."""
+    if not configured_api_key():
         return
     if request.url.path == "/api/v1/health":
         return
     token = credentials.credentials if credentials else request.headers.get("x-api-key", "")
-    if not token or not secrets.compare_digest(token, _API_KEY):
+    if not token_matches(token):
         raise HTTPException(status_code=401, detail="Invalid or missing API key")
 
 
@@ -343,7 +374,8 @@ async def _fire_webhooks(event: str, payload: dict) -> None:
             ).hexdigest()
             headers["X-Webhook-Signature"] = sig
         try:
-            async with httpx.AsyncClient(timeout=10) as client:
+            await _ensure_webhook_target(wh["url"])  # DNS may have changed since registration
+            async with httpx.AsyncClient(timeout=10, follow_redirects=False) as client:
                 await client.post(wh["url"], json=body, headers=headers)
         except Exception as exc:
             logger.warning("Webhook delivery failed for %s: %s", wh["url"], exc)
@@ -718,6 +750,7 @@ async def decision_workflow_endpoint(req: DecisionWorkflowRequest):
         DecisionWorkflowTool,
     )
 
+    _reject_server_paths(thesis_path=req.thesis_path)
     tool = DecisionWorkflowTool()
     args = DecisionWorkflowInput(
         action=req.action,  # type: ignore[arg-type]
@@ -773,6 +806,7 @@ async def analyze_pitch_deck(req: dict[str, Any]):
         PitchDeckAnalyzeTool,
     )
 
+    _reject_server_paths(file_path=req.get("file_path"), url=req.get("url"))
     tool = PitchDeckAnalyzeTool()
     args = PitchDeckAnalyzeInput(
         file_path=req.get("file_path", ""),
@@ -1015,6 +1049,7 @@ async def survey_delivery_webhook(channel_id: str, request: SurveyWebhookRequest
 
 @app.post("/api/v1/webhook", dependencies=[Depends(verify_api_key)])
 async def register_webhook(reg: WebhookRegistration):
+    await _ensure_webhook_target(reg.url)
     webhook_id = str(uuid.uuid4())
     _webhooks.append(
         {
