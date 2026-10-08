@@ -4,6 +4,11 @@ source: Impact Vision offline benchmark snapshot
 source_note: 'One file for every benchmark the engine uses (W5.1). sector_5d rows cite their published source; kpi,
   peer_percentiles and sample_observations are illustrative seed distributions (data_status: illustrative) until
   a licensed feed is connected through BenchmarkProvider.'
+# v8 W1.8: GIIN and the other cited reports do not publish 1–5 Five Dimensions
+# scores. five_d_avg values are Impact Vision priors informed by those reports
+# (sample sizes and context come from them); they are illustrative until the
+# W2.6 calibration study replaces them with company-level distributions.
+sector_5d_status: illustrative_prior
 sector_5d:
 - sector: Financial Services
   sample_note: Microfinance / fintech impact funds; n≈74 (GIIN 2023)

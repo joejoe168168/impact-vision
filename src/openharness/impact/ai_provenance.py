@@ -19,6 +19,7 @@ sheet, the CSV and the JSON export, so every format says the same thing.
 
 from __future__ import annotations
 
+from pathlib import Path as Path_
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field, computed_field
@@ -215,8 +216,147 @@ def ai_provenance_dict(data: dict[str, Any]) -> dict[str, Any]:
     return ai_provenance_for_report(data).model_dump(mode="json")
 
 
+# --------------------------------------------------------------------------- machine-readable marking
+# AI Act Art 50(2) and the Commission's Code of Practice on marking AI-generated
+# content (final 2026-06-10) expect a machine-readable mark, not only a visible
+# label. We use the IPTC Digital Source Type vocabulary, which C2PA and the
+# major platforms read: "algorithmicMedia" for a deterministic rules engine,
+# "compositeWithTrainedAlgorithmicMedia" when an LLM extracted, tagged or drafted.
+IPTC_DST = "http://cv.iptc.org/newscodes/digitalsourcetype/"
+
+
+def machine_marking(prov: AIProvenance | None = None) -> dict[str, Any]:
+    """One machine-readable marking record for HTML / PDF / DOCX / XLSX / JSON."""
+    try:
+        from importlib.metadata import version
+
+        generator = f"Impact Vision {version('impact-vision')}"
+    except Exception:  # noqa: BLE001 - source checkout
+        generator = "Impact Vision"
+    uses_llm = bool(prov and prov.ai_generated)
+    kind = "compositeWithTrainedAlgorithmicMedia" if uses_llm else "algorithmicMedia"
+    return {
+        "digital_source_type": IPTC_DST + kind,
+        "generator": generator,
+        "ai_generated": uses_llm,
+        "machine_generated": True,
+        "human_reviewed": bool(prov and prov.human_reviewed),
+        "disclosure": prov.disclosure if prov else GENERIC_DISCLOSURE,
+        "regulation": AI_ACT_REFERENCE,
+    }
+
+
+def html_marking(marking: dict[str, Any]) -> str:
+    """``<meta>`` tags plus schema.org JSON-LD for a document's ``<head>``."""
+    import html as _html
+    import json as _json
+
+    ld = {
+        "@context": "https://schema.org",
+        "@type": "Report",
+        "creator": {"@type": "SoftwareApplication", "name": marking["generator"]},
+        "digitalSourceType": marking["digital_source_type"],
+        "description": marking["disclosure"],
+    }
+    esc = _html.escape
+    ld_json = _json.dumps(ld).replace("</", "<\\/")
+    return (
+        f'<meta name="generator" content="{esc(marking["generator"])}">\n'
+        f'<meta name="iptc:digitalsourcetype" content="{esc(marking["digital_source_type"])}">\n'
+        f'<meta name="ai-disclosure" content="{esc(marking["disclosure"])}">\n'
+        f'<script type="application/ld+json" id="ai-marking">{ld_json}</script>\n'
+    )
+
+
+def mark_html(document: str, marking: dict[str, Any]) -> str:
+    """Insert the marking into an HTML document's ``<head>`` (once)."""
+    if 'id="ai-marking"' in document:
+        return document
+    tags = html_marking(marking)
+    if "</head>" in document:
+        return document.replace("</head>", tags + "</head>", 1)
+    return tags + document
+
+
+def marking_from_html(document: str) -> dict[str, Any] | None:
+    """Read the marking back from an HTML document (used when printing to PDF)."""
+    import html as _html
+    import re as _re
+
+    meta = dict(_re.findall(r'<meta name="(iptc:digitalsourcetype|ai-disclosure|generator)" content="([^"]*)"',
+                            document or ""))
+    if "iptc:digitalsourcetype" not in meta:
+        return None
+    return {
+        "digital_source_type": _html.unescape(meta["iptc:digitalsourcetype"]),
+        "disclosure": _html.unescape(meta.get("ai-disclosure", GENERIC_DISCLOSURE)),
+        "generator": _html.unescape(meta.get("generator", "Impact Vision")),
+        "regulation": AI_ACT_REFERENCE,
+    }
+
+
+def mark_pdf(path: Any, marking: dict[str, Any]) -> None:
+    """Document info + XMP (Iptc4xmpExt:DigitalSourceType) on a PDF, in place."""
+    try:
+        import pymupdf
+    except ImportError:  # pragma: no cover - core dependency
+        return
+    from xml.sax.saxutils import escape as xesc
+
+    doc = pymupdf.open(str(path))
+    meta = dict(doc.metadata or {})
+    meta.update({"creator": marking["generator"], "producer": marking["generator"],
+                 "subject": marking["disclosure"][:500],
+                 "keywords": f"digitalsourcetype={marking['digital_source_type']}; {marking['regulation']}"})
+    doc.set_metadata(meta)
+    xmp = (
+        '<x:xmpmeta xmlns:x="adobe:ns:meta/"><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">'
+        '<rdf:Description rdf:about="" xmlns:Iptc4xmpExt="http://iptc.org/std/Iptc4xmpExt/2008-02-29/" '
+        'xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xmp="http://ns.adobe.com/xap/1.0/">'
+        f'<Iptc4xmpExt:DigitalSourceType>{xesc(marking["digital_source_type"])}</Iptc4xmpExt:DigitalSourceType>'
+        f'<xmp:CreatorTool>{xesc(marking["generator"])}</xmp:CreatorTool>'
+        f'<dc:description><rdf:Alt><rdf:li xml:lang="x-default">{xesc(marking["disclosure"])}</rdf:li>'
+        "</rdf:Alt></dc:description></rdf:Description></rdf:RDF></x:xmpmeta>"
+    )
+    doc.set_xml_metadata(xmp)
+    doc.saveIncr() if doc.can_save_incrementally() else doc.save(str(path) + ".tmp")
+    doc.close()
+    tmp = Path_(str(path) + ".tmp")
+    if tmp.exists():
+        tmp.replace(str(path))
+
+
+def mark_docx(document: Any, marking: dict[str, Any] | None = None) -> None:
+    """Core properties on a python-docx Document."""
+    marking = marking or machine_marking()
+    props = document.core_properties
+    props.comments = marking["disclosure"][:255]
+    props.keywords = f"digitalsourcetype={marking['digital_source_type']}"[:255]
+    props.category = "Machine-generated (EU AI Act Art 50 disclosure in comments)"
+    if not props.author or props.author in {"python-docx", ""}:
+        props.author = marking["generator"]
+
+
+def mark_xlsx(workbook: Any, marking: dict[str, Any] | None = None) -> None:
+    """Document properties on an openpyxl Workbook."""
+    marking = marking or machine_marking()
+    props = workbook.properties
+    props.creator = marking["generator"]
+    props.description = marking["disclosure"]
+    props.keywords = f"digitalsourcetype={marking['digital_source_type']}"
+    props.category = "Machine-generated (EU AI Act Art 50)"
+
+
 __all__ = [
     "AI_ACT_REFERENCE",
+    "IPTC_DST",
+    "html_marking",
+    "machine_marking",
+    "mark_docx",
+    "mark_html",
+    "mark_pdf",
+    "mark_xlsx",
+    "marking_from_html",
     "GENERIC_DISCLOSURE",
     "ai_provenance_for_assessment",
     "AIMethod",

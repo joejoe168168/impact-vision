@@ -90,8 +90,10 @@ def build_engagement_home(engagements: Iterable[Any], *, today: date | None = No
 def render_engagement_home(view: dict[str, Any], *, theme: str = "") -> str:
     from openharness.impact.report_templates.decision_report import _env, design_css
 
-    return _env().get_template("engagements.html.j2").render(
-        v=view, css=design_css(), theme=theme if theme in {"light", "dark"} else "")
+    from openharness.impact.ai_provenance import machine_marking, mark_html
+
+    return mark_html(_env().get_template("engagements.html.j2").render(
+        v=view, css=design_css(), theme=theme if theme in {"light", "dark"} else ""), machine_marking())
 
 
 __all__ = ["build_engagement_home", "render_engagement_home"]

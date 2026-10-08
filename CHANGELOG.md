@@ -35,6 +35,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
   buzzwords change nothing, a comparison group narrows the range and nets
   out deadweight (`tests/test_v8_methodology2.py`).
 
+### Added — standards (roadmap v8 Wave 4)
+- **Machine-readable AI marking (EU AI Act Art 50, ahead of 2026-12-02).**
+  Every output carries the IPTC Digital Source Type (`algorithmicMedia` for
+  the rules engine, `compositeWithTrainedAlgorithmicMedia` when an LLM
+  extracted, tagged or drafted): HTML `<meta>` + schema.org JSON-LD
+  (report, IC memo, DD report, portfolio and engagement pages), PDF document
+  info + XMP `Iptc4xmpExt:DigitalSourceType`, Word and Excel core
+  properties, and `ai_marking` in `summary.json`.
+
+### Changed
+- The 5D "sector benchmark" is labelled an illustrative prior: GIIN
+  publishes no Five Dimensions scores (W1.8, first step).
+
 ### Fixed
 - NESTA levels were described wrongly (an RCT is level 3, causality, not
   level 5). Comparison groups, matched comparisons and 對照研究 / 对照组 are

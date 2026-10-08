@@ -405,6 +405,9 @@ def docx_house_style(doc, footer_label: str) -> None:  # noqa: ANN001
     headings and a page-numbered footer."""
     from docx.shared import Cm, Pt, RGBColor
 
+    from openharness.impact.ai_provenance import mark_docx
+
+    mark_docx(doc)  # machine-readable AI Act marking in the core properties
     section = doc.sections[0]
     section.left_margin = section.right_margin = Cm(2.2)
     section.top_margin = section.bottom_margin = Cm(2.0)

@@ -245,8 +245,10 @@ def render_portfolio_home(view: dict[str, Any], *, theme: str = "") -> str:
         c["monogram"] = monogram(c["name"])
     for col in view["sdg_cols"]:
         col["color"], col["ink"] = SDG_COLORS.get(col["goal"], "#888"), sdg_text_colour(col["goal"])
-    return _env().get_template("portfolio_home.html.j2").render(
-        v=view, css=design_css(), theme=theme if theme in {"light", "dark"} else "")
+    from openharness.impact.ai_provenance import machine_marking, mark_html
+
+    return mark_html(_env().get_template("portfolio_home.html.j2").render(
+        v=view, css=design_css(), theme=theme if theme in {"light", "dark"} else ""), machine_marking())
 
 
 __all__ = ["build_portfolio_home", "record_from_bundle", "render_portfolio_home"]

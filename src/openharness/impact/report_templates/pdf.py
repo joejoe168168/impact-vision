@@ -76,6 +76,11 @@ def html_to_pdf(html: str, out_path: str | Path) -> tuple[Path, str]:
     for engine, render in (("chromium", _chromium), ("weasyprint", _weasyprint)):
         try:
             render(html, out)
+            from openharness.impact.ai_provenance import mark_pdf, marking_from_html
+
+            marking = marking_from_html(html)
+            if marking:
+                mark_pdf(out, marking)  # document info + XMP DigitalSourceType
             return out, engine
         except ImportError:
             continue

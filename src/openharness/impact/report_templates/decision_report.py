@@ -858,7 +858,9 @@ def render_decision_report(data: dict[str, Any], *, audience: str | None = None,
         body = env.get_template("report.html.j2").render(
             css=design_css(), glossary_html=Markup(glossary), **view
         )
-    return body
+    from openharness.impact.ai_provenance import ai_provenance_for_report, machine_marking, mark_html
+
+    return mark_html(body, machine_marking(ai_provenance_for_report(data)))
 
 
 __all__ = [

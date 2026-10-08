@@ -235,6 +235,9 @@ def build_workbook(data: dict):  # type: ignore[no-untyped-def]
     from openpyxl.styles import Font
 
     wb = Workbook()
+    from openharness.impact.ai_provenance import ai_provenance_for_report, machine_marking, mark_xlsx
+
+    mark_xlsx(wb, machine_marking(ai_provenance_for_report(data)))
     company = data.get("company", {}) or {}
     decision = data.get("decision") or {}
     fd = data.get("five_dimensions") or {}

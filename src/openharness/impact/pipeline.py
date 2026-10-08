@@ -40,7 +40,7 @@ class AssessmentBundle:
 
     def summary(self) -> dict[str, Any]:
         """Compact, JSON-safe headline numbers."""
-        from openharness.impact.ai_provenance import ai_provenance_for_report
+        from openharness.impact.ai_provenance import ai_provenance_for_report, machine_marking
 
         fd = self.assessment.five_dimensions
         top = [
@@ -75,6 +75,7 @@ class AssessmentBundle:
             "reported_metrics": dict(self.company.reported_metrics),
             "files": [Path(p).name for p in self.files],
             "ai_disclosure": ai_provenance_for_report(self.report_data).disclosure,
+            "ai_marking": machine_marking(ai_provenance_for_report(self.report_data)),
             "methodology": self.assessment.methodology,
         }
 
@@ -402,9 +403,12 @@ def write_deliverables(
     report.write_text(render_decision_report(bundle.report_data, lang=lang), encoding="utf-8")
     files.append(report)
 
+    from openharness.impact.ai_provenance import ai_provenance_for_report, machine_marking, mark_html
+
+    marking = machine_marking(ai_provenance_for_report(bundle.report_data))
     memo = out / f"{stem}_ic_memo.html"
     memo.write_text(
-        render_ic_memo_html(
+        mark_html(render_ic_memo_html(
             bundle.assessment,
             bundle.scorecard,
             bundle.thesis,
@@ -412,19 +416,19 @@ def write_deliverables(
             greenwashing_score=bundle.greenwashing.overall_score,
             greenwashing_classification=bundle.greenwashing.classification,
             expected_impact=bundle.report_data.get("expected_impact"),
-        ),
+        ), marking),
         encoding="utf-8",
     )
     files.append(memo)
 
     dd_path = out / f"{stem}_dd_report.html"
     dd_path.write_text(
-        render_dd_report_html(
+        mark_html(render_dd_report_html(
             bundle.dd,
             company_name=bundle.company.name,
             document_label=bundle.source_label,
             reviewer="Impact Vision",
-        ),
+        ), marking),
         encoding="utf-8",
     )
     files.append(dd_path)
