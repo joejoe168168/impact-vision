@@ -704,7 +704,7 @@ function renderTranscript(rows) {
 }
 
 const STARTERS = [
-  ['Analyze a pitch deck', 'Drop a PDF, Word, PowerPoint or text file — or several about one company. Works offline — you get the IC verdict, the decision report and the data in about a second.', pickDeck],
+  ['Analyze a pitch deck', 'Drop a PDF, Word, PowerPoint or text file — or several about one company, plus an Excel/CSV of KPIs. Works offline — you get the IC verdict, the decision report and the data in about a second.', pickDeck],
   ['Score a company on the 5 Dimensions', 'Run an IMP 5-Dimension impact assessment for a company I describe.'],
   ['Map a company to the SDGs', 'Map this company to UN SDG goals and targets, with IRIS+ metrics for each.'],
   ['Screen a report for greenwashing', 'Check this sustainability report for vague or unverifiable impact claims.'],
@@ -1045,7 +1045,7 @@ async function uploadFiles(fileList) {
 /* ---------------------------------------------------------------------
    Reports: analyze a deck offline, view inline, share read-only (W3.2)
    ------------------------------------------------------------------- */
-const DECK_EXT = /\.(pdf|md|markdown|txt|docx|pptx)$/i;
+const DECK_EXT = /\.(pdf|md|markdown|txt|docx|pptx|csv|xlsx)$/i;
 const GATE_TONE = (g) => /PASS|READY/.test(g) ? 'ok' : /FAIL/.test(g) ? 'bad' : 'warn';
 const FILE_LABEL = [['_impact_report.html', 'Report HTML'], ['_ic_memo.html', 'IC memo'], ['_ic_memo.docx', 'IC memo .docx'],
   ['_dd_report.html', 'DD report'], ['_dd_questionnaire.docx', 'DD questions .docx'], ['_data.xlsx', 'Data .xlsx'],

@@ -2,7 +2,7 @@
 
 Impact Vision is an open-source AI-powered impact measurement and SDG alignment agent for VC and impact investment funds, built on top of OpenHarness.
 
-Current release: **0.17.2 (Secure & honest — roadmap v8 Wave 0)**, after roadmap v7
+Current release: **0.18.0 (Measured — roadmap v8)**, after roadmap v7
 (`docs/roadmap-v7.md`), Waves 0–5. **Next: roadmap v8** (`docs/roadmap-v8.md`)
 — secure by default, Methodology 2.0, evidence-aware extraction, company
 lifecycle. The v3 roadmap
@@ -159,15 +159,15 @@ implementation (plus `impact_vision.tools` / `.cli` / `.web` /
 `.api_gateway` / `.dashboard`), and the console scripts point at
 `impact_vision.cli:app`. Write new docs and examples against `impact_vision`.
 
-Still deferred, to land with the 0.18 shim removal:
+The deprecated shims (`roadmap_v2`, `questionnaire_v2`, `frameworks.sfdr_v2`)
+were removed in 0.18; import from the modules they re-exported. Still
+deferred (roadmap v8 W5.1):
 
 1. Physically move the code under `src/impact_vision/` and turn `openharness`
    into the alias (the reverse of today).
 2. `channels/` and `vim/` are already excluded from the wheel. `themes`,
    `voice`, `bridge` and `keybindings` are still imported by the slash-command
    registry / TUI, so make those imports lazy before dropping them.
-3. Remove the deprecated shims: `roadmap_v2`, `questionnaire_v2`,
-   `frameworks.sfdr_v2`.
 
 **Knowledge, methodology and state (v7 Wave 5):** reference data lives in
 sourced YAML under `data/` (`regulatory/`, `standards_registry.yaml`,
@@ -200,7 +200,10 @@ src/openharness/
 │   ├── metric_records.py          # v2 canonical MetricRecord contract + helpers
 │   ├── investee_collection.py     # v2 questionnaire schema + submission lifecycle
 │   ├── climate_accounting.py      # v2 Scope 1/2 GHG inventory calculator
-│   ├── roadmap_v2.py              # DEPRECATED shim (W5.4) → ai_review / disclosure_packs / report_governance / …
+│   ├── ai_review.py · disclosure_packs.py · report_governance.py  # ex-roadmap_v2 helpers
+│   ├── expected_impact.py         # v8: methodology 2.0 — expected impact, ranges, gate 2.0
+│   ├── company_record.py          # v8: stages, expected vs actual, review & IC decisions
+│   ├── metric_import.py           # v8: Excel / CSV KPI import
 │   ├── knowledge.py               # v7 W5.1: YAML knowledge loader + freshness gate
 │   ├── benchmark_provider.py      # v7 W5.1: one provider over data/benchmarks.yaml
 │   ├── methodology.py             # v7 W5.2: versioned scoring methodology + stamp

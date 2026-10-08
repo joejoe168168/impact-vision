@@ -418,14 +418,34 @@ def assess_files(paths: list[str | Path], **kwargs: Any) -> AssessmentBundle:
     Each file becomes a ``# <file name>`` section of one combined text, so the
     evidence in any of them counts.
     """
-    files = [Path(p) for p in paths]
+    from openharness.impact.metric_import import SPREADSHEET_SUFFIXES, import_metrics
+
+    all_files = [Path(p) for p in paths]
+    sheets = [f for f in all_files if f.suffix.lower() in SPREADSHEET_SUFFIXES]
+    files = [f for f in all_files if f not in sheets]
+    if not files:
+        raise ValueError("Add a pitch deck or impact report next to the spreadsheet: the metrics need a company to "
+                         "belong to.")
+    imports = [import_metrics(f) for f in sheets]
+    if imports:
+        # Spreadsheet KPIs are reported figures (v8 W3.5); explicit kwargs still win.
+        merged: dict[str, Any] = {}
+        for imp in imports:
+            merged.update(imp.metrics)
+        merged.update(kwargs.get("reported_metrics") or {})
+        kwargs["reported_metrics"] = merged
+    kwargs.setdefault("source_label", " + ".join(f.name for f in all_files))
     if len(files) == 1:
-        return assess_file(files[0], **kwargs)
-    parts = [f"# {f.name}\n\n{read_document(f)}" for f in files]
-    kwargs.setdefault("source_label", " + ".join(f.name for f in files))
-    bundle = assess_document("\n\n".join(parts), **kwargs)
-    for f in files:
-        attach_citations(bundle, read_document_pages(f), source_file=f.name)
+        bundle = assess_file(files[0], **kwargs)
+    else:
+        parts = [f"# {f.name}\n\n{read_document(f)}" for f in files]
+        bundle = assess_document("\n\n".join(parts), **kwargs)
+        for f in files:
+            attach_citations(bundle, read_document_pages(f), source_file=f.name)
+    if imports:
+        bundle.report_data["metric_import"] = [
+            {"source": imp.source, "rows": imp.rows, "matched": sorted(imp.metrics), "unmatched": imp.unmatched[:20],
+             "series": {k: v for k, v in imp.series.items() if len(v) > 1}} for imp in imports]
     return bundle
 
 

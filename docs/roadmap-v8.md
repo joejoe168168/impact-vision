@@ -1,7 +1,7 @@
 # Impact Vision — Roadmap v8.0
 
 **Date:** 2026-10-08
-**Status:** Wave 0 released as 0.17.2 (2026-10-08); Wave 1 core landed on main; Waves 2–5 in progress
+**Status:** 0.17.2 (Wave 0) and 0.18.0 (first pass of Waves 1–5) released 2026-10-08. See "Progress (2026-10-08)" in §5 for what remains
 **Audience:** product, engineering, fund managers, consultants, LPs, verifiers
 **Builds on:** `roadmap-v7.md` (released as 0.17.0/0.17.1). The v6 capability
 backlog stays valid for anything not superseded here.
@@ -310,6 +310,59 @@ Every row carries `as_of` and `source_url`, and the freshness gate runs
 ---
 
 ## 5. Build order & releases
+
+### Progress (2026-10-08)
+
+**Released**
+- **0.17.2:** Wave 0 complete.
+- **0.18.0:**
+  - **W1:** Methodology 2.0 — W1.1–W1.3, W1.5, W1.7, W1.10; W1.8 relabelled.
+  - **W2:**
+    - W2.2: page citations.
+    - W2.4 partly: 13 golden decks across sectors, regions and zh.
+    - W2.5: perturbation tests.
+  - **W3:**
+    - W3.1: the company record.
+    - W3.2 partly: correct and re-run.
+    - W3.3: comments and IC decisions.
+    - W3.4 core: expected vs actual.
+    - W3.5 partly: Excel/CSV import.
+  - **W4:** AI Act machine-readable marking.
+  - **W5:**
+    - W5.1 partly: shims removed.
+    - W5.2 partly: lazy imports.
+    - W5.4 partly: migrations and history.
+    - W5.5: Ed25519.
+    - W5.7: release pipeline and gates.
+
+**Still to do**
+- **Methodology:**
+  - W1.4: investor contribution, which needs fund data.
+  - W1.6: negative impacts by severity × likelihood.
+  - W1.9: per-claim greenwashing 2.0.
+- **Evidence and evaluation:**
+  - W2.1: a deeper extraction pass.
+  - W2.3: pluggable OCR/layout models.
+  - W2.4: grow the held-out set to 30+ decks.
+  - W2.6: the expert calibration study. It needs 2–3 practitioners to rate
+    50–100 decks.
+  - W2.7: cross-provider agent evals. These need API keys.
+- **Lifecycle:**
+  - W3.4: investee-portal linkage and reminders.
+  - W3.5: CRM, Drive and data-room connectors, and the ILPA export once the
+    template is final in Jan 2027.
+  - W3.6: LP report and exit built from the record.
+  - W3.7: full zh body localisation.
+- **Standards (Wave 4):** the dated items in §2.1 are scheduled for when each
+  text is final.
+- **Platform:**
+  - W5.1: physically move the code to `src/impact_vision` and remove the
+    unused coding-agent scaffolding.
+  - W5.3: OIDC/tenancy.
+  - W5.4: persist the remaining stateful tools.
+  - W5.6: the authenticated MCP server on the 2026-07-28 spec.
+- **Release setup:** the first PyPI release needs a one-time trusted-publisher
+  setup on PyPI.
 
 | Release | Target | Contents |
 |---|---|---|

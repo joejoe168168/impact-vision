@@ -101,20 +101,11 @@ def test_postgres_backend_round_trip() -> None:  # pragma: no cover - optional
     store.delete("t", "k", "x")
 
 
-def test_retired_module_shims_still_import_with_deprecation() -> None:
+def test_retired_module_shims_are_gone() -> None:
+    """The roadmap_v2 / questionnaire_v2 / sfdr_v2 shims were removed in 0.18 (v8 W5.1)."""
     import importlib
-    import sys
 
-    for old, new, name in [
-        ("openharness.impact.roadmap_v2", "openharness.impact.investee_collection", "issue_collection_link"),
-        ("openharness.impact.roadmap_v2", "openharness.impact.report_governance", "build_lp_export_bundle"),
-        ("openharness.impact.questionnaire_v2", "openharness.impact.questionnaire_branching", "__all__"),
-        ("openharness.impact.frameworks.sfdr_v2", "openharness.impact.frameworks.sfdr_recast", "classify_sfdr_v2"),
-    ]:
-        sys.modules.pop(old, None)
-        with pytest.warns(DeprecationWarning):
-            legacy = importlib.import_module(old)
-        assert getattr(legacy, name) is getattr(importlib.import_module(new), name)
-    from openharness.impact.regulatory_calendar import DISCLOSURE_PROFILES
-
-    assert importlib.import_module("openharness.impact.roadmap_v2").JURISDICTION_PROFILES is DISCLOSURE_PROFILES
+    for old in ("openharness.impact.roadmap_v2", "openharness.impact.questionnaire_v2",
+                "openharness.impact.frameworks.sfdr_v2"):
+        with pytest.raises(ModuleNotFoundError):
+            importlib.import_module(old)

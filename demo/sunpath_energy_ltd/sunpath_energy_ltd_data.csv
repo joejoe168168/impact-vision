@@ -1,6 +1,6 @@
 Section,Metric,Value,Details,Numeric,Max,Unit
 Company,Name,SunPath Energy Ltd,,,,
-Company,Generated,2026-10-08T19:53:04Z,,,,
+Company,Generated,2026-10-08T20:03:48Z,,,,
 Company,AI disclosure,Automated analysis: produced by rules and a deterministic scoring model; no generative AI was used. 2 of 21 scores are estimated from document text rather than reported metrics. Review before relying on it.,,,,
 Company,Methodology,1.2.0,config ae3e77ecaccf,,,
 5D,Overall Grade,C,1.8/5.0,1.8,5,score

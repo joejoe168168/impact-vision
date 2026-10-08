@@ -11,6 +11,55 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [0.18.0] - 2026-10-08 - Measured (roadmap v8 Waves 1–5, first pass)
+
+Scores now say how much impact, for whom and how sure we are; a company is
+followed from first deck to exit; every claim cites its page; and the
+project ships like a product (PyPI/Docker pipeline, security gates).
+`docs/roadmap-v8.md` lists what is done and what remains.
+
+### Added — company record (roadmap v8 Wave 3)
+- **Company record:** every assessment is filed on the company (pipeline
+  stages sourcing → screening → DD → IC → invested → monitoring → exited).
+  Expected impact before investment is kept as the expectation; assessments
+  after investment are actuals, compared with it (within / below / above
+  the expected range, variance %). Comments, corrections and IC approvals or
+  declines (a reviewer name is required) are attributed and time-stamped.
+- Web **Companies** tab and company view; `/api/v1/chat/companies…` API.
+- **Portfolio home** splits portfolio from pipeline and totals expected
+  impact in natural units; per-company Impact P50 and Evidence columns.
+- **Excel / CSV KPI import:** drop a spreadsheet next to the deck; IRIS+ IDs
+  or metric names become reported metrics (latest period wins, series kept,
+  unmatched labels listed).
+- **Page citations:** every claim from a PDF or PowerPoint carries its page /
+  slide, shown in the evidence ledger (24/24 on the sample decks).
+
+### Added — platform (roadmap v8 Wave 5)
+- Versioned SQLite migrations (`PRAGMA user_version`); assessment history is
+  kept instead of overwritten.
+- **Ed25519-signed assurance manifests** (`[assurance]` extra): verifiers
+  check with the public key and cannot forge; HMAC remains the fallback.
+- `import openharness.impact` 1.6 s → 0.6 s (lazy tool loading).
+- CI: Python 3.11/3.12/3.13, coverage floor 85 % for the impact engine, mypy
+  on the v8 modules, pip-audit and bandit gates, weekly knowledge-freshness
+  run. `release.yml` publishes tags to PyPI (trusted publishing) and GHCR;
+  `Dockerfile` runs `serve-web` as a non-root user.
+
+### Removed
+- The deprecated `roadmap_v2`, `questionnaire_v2` and `frameworks.sfdr_v2`
+  shims; import from the modules they re-exported.
+
+### Security
+- The legacy report header rendered company names with Jinja autoescape off
+  (XSS); the claim verifier fetched document-supplied URLs without the SSRF
+  guard. Both fixed; `utils/safe_fetch.py` is the one place that fetches
+  untrusted URLs (every redirect re-checked).
+
+### Fixed
+- Company names from lowercase title words ("— Seed pitch") and Chinese
+  titles; the installed wheel no longer needs numpy (methodology 2.0 uses
+  the standard library).
+
 ### Added — methodology 2.0 (roadmap v8 Wave 1)
 - **Expected impact with ranges.** `impact/expected_impact.py` reads the
   reported quantities (people reached, depth of change, tCO2e avoided, the

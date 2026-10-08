@@ -14,37 +14,59 @@ from openharness.impact.investee_collection import (
     review_collection_submission,
 )
 from openharness.impact.models import DimensionTags, Metric, MetricRecord
-from openharness.impact.roadmap_v2 import (
+from openharness.impact.ai_review import (
     AIExtractionReview,
-    PCAFPosition,
-    ReportPublication,
-    SourceLinkedAnswer,
-    answer_portfolio_query,
-    autofill_sfdr_pai,
-    build_climate_coverage_dashboard,
-    build_collection_tracker,
-    build_esrs_disclosure_pack,
-    build_immutable_report_manifest,
-    build_issb_disclosure_pack,
-    build_lp_export_bundle,
     build_review_queue,
-    calculate_carbon_intensity,
-    calculate_difference_in_differences,
-    calculate_pcaf_financed_emissions,
     decide_ai_extraction,
-    estimate_scope3_proxy,
-    explore_framework_crosswalk,
-    generate_counterfactual_questions,
     harmonize_uploaded_metrics,
-    issue_collection_link,
-    monitor_regulatory_change,
-    preview_csv_metric_import,
-    run_control_checks,
+)
+from openharness.impact.climate_accounting import (
+    build_climate_coverage_dashboard,
+    calculate_carbon_intensity,
+    estimate_scope3_proxy,
+)
+from openharness.impact.contribution import (
+    calculate_difference_in_differences,
+    generate_counterfactual_questions,
     run_contribution_analysis,
-    run_rule_pack_tests,
     score_evidence_strength,
+)
+from openharness.impact.disclosure_packs import (
+    SourceLinkedAnswer,
+    autofill_sfdr_pai,
+    build_esrs_disclosure_pack,
+    build_issb_disclosure_pack,
+)
+from openharness.impact.frameworks.cross_reference import (
+    explore_framework_crosswalk,
+)
+from openharness.impact.frameworks.pcaf import (
+    PCAFPosition,
+    calculate_pcaf_financed_emissions,
+)
+from openharness.impact.investee_collection import (
+    build_collection_tracker,
+    issue_collection_link,
+    preview_csv_metric_import,
+)
+from openharness.impact.portfolio_nlq import (
+    answer_portfolio_query,
+)
+from openharness.impact.regulatory_calendar import (
     select_jurisdiction_profile,
+)
+from openharness.impact.regulatory_radar import (
+    monitor_regulatory_change,
+)
+from openharness.impact.report_governance import (
+    ReportPublication,
+    build_immutable_report_manifest,
+    build_lp_export_bundle,
+    run_control_checks,
     transition_report_publication,
+)
+from openharness.impact.standards_registry import (
+    run_rule_pack_tests,
 )
 
 

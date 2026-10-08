@@ -75,13 +75,15 @@ browser chat or the `assess_deal` agent tool. Impact Vision will:
    spotting third-party verification, audits and controlled evaluations.
 2. **Map the numbers to IRIS+ metrics** (787 in the catalogue), e.g.
    "920 tonnes CO2e avoided" → OI2764.
-3. **Score the 5 Dimensions of Impact** and **material SDGs** against sector
-   benchmarks.
+3. **Estimate expected impact with a range** (people reached × depth of
+   change × duration, P10–P50–P90 by evidence level), then score the 5
+   Dimensions of Impact and material SDGs.
 4. **Run sector-specific impact due diligence** (122 questions from GIIN, PCV,
    Seraf, IMP and AFME) and list what to ask the founders.
 5. **Review greenwashing risk** claim by claim.
-6. **Apply your fund's IC gate**, separating *insufficient evidence* (data to
-   collect) from *negative findings*.
+6. **Give a verdict**: *Ready for IC*, *Evidence plan required* (with what to
+   collect first) or *Fails thesis* — only for something found, never for
+   missing data.
 7. **Write the deliverables**:
    - decision-first impact report (HTML/PDF), in IC, LP, public and regulator
      editions;
@@ -268,9 +270,10 @@ and `input_plan` asks only for unresolved fields.
 > Export the assessment as XLSX for our LP report
 ```
 
-Reports open with the **decision**: a verdict card (Proceed / Conditional /
-Not IC-ready — insufficient evidence / Do not proceed) with its reasons, four
-headline tiles and *what would change our mind*. Then come:
+Reports open with the **decision**: a verdict card (Ready for IC / Evidence
+plan required / Fails thesis) with its reasons, four headline tiles and *what
+would change our mind*. Then come:
+- **Expected impact**: P10–P50–P90 per outcome and what drives the range;
 - **Impact at a glance**: SDG wheel and impact pathway;
 - the **5 Dimensions** against sector benchmarks and the **material SDGs**;
 - an **evidence ledger** of every claim and metric;
@@ -507,7 +510,7 @@ impact-vision/
 │   │   ├── lca.py                      # LCA/LCSA, lifecycle costs, social hotspots, LCM plans
 │   │   ├── evidence_graph.py          # Claim↔metric↔target↔evidence lineage
 │   │   ├── standards_registry.py      # Versioned standards metadata
-│   │   ├── ai_review.py · disclosure_packs.py · report_governance.py  # (ex-roadmap_v2)
+│   │   ├── expected_impact.py · company_record.py  # methodology 2.0 · pipeline → exit
 │   │   │
 │   │   │   # --- v3 Trust Infrastructure (v0.15.0) ---
 │   │   ├── emission_factors.py · stakeholder_voice.py  # Versioned factors; Lean Data + consent
@@ -719,15 +722,10 @@ CSV). **Share…** creates a signed read-only link (LP or public edition by
 default, 7–90 days); deleting the report revokes it. Set
 `IMPACT_VISION_SHARE_HMAC_KEY` to keep links valid across machines.
 
-The chat UI runs the *same* agent runtime as the CLI — same tools, skills,
-slash commands and permission model — with streaming markdown replies,
-collapsible tool-call cards, drag-and-drop file upload for pitch decks and
-data rooms, a downloadable artifacts panel, a conversation history sidebar,
-and in-browser provider/model/API-key settings so you can point it at Claude,
-OpenAI, Ollama or any compatible endpoint without touching a config file.
-
-Both surfaces are **single self-contained HTML files** — no build step, no JS
-framework, no CDN.
+The chat UI runs the same agent as the CLI (tools, skills, permissions) with
+streaming replies, tool cards, uploads, a **Companies** tab (stage, expected
+vs actual, IC approvals) and provider settings (Claude, OpenAI, OpenRouter,
+DeepSeek, Ollama or any compatible endpoint). No build step, no CDN.
 
 **→ Full walkthrough: [`docs/web-chat-guide.md`](docs/web-chat-guide.md)**
 
