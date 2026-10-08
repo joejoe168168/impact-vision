@@ -75,8 +75,46 @@
 {% elif section == 'mind' %}
 <section id="sec-mind" class="card" aria-labelledby="h-mind">
   <h2 id="h-mind">{{ icons.mind | safe }}{{ t('sec_mind') }}</h2>
-  <p class="lede">{{ t('lede_mind') }}</p>
+  <p class="lede">{{ t('lede_mind_plan') if mind_is_plan else t('lede_mind') }}</p>
   <ol class="mind">{% for m in mind %}<li><span class="what">{{ m.what }}</span><span class="why">{{ m.why }}</span></li>{% endfor %}</ol>
+</section>
+
+{% elif section == 'impact' %}
+<section id="sec-impact" class="card" aria-labelledby="h-impact">
+  <h2 id="h-impact">{{ icons.impact | safe }}{{ t('sec_impact') }}</h2>
+  <p class="lede">{{ t('lede_impact') }}</p>
+  <div class="eq-row">
+    <div class="eq"><p class="label">{{ t('eq_title') }}</p><p class="value">{{ impact.eq.score }}<small>/100</small></p><p class="sub">{{ impact.eq.sub }}</p></div>
+    {% if impact.completeness is not none %}<div class="eq"><p class="label">{{ t('completeness') }}</p><p class="value">{{ '%.0f' % impact.completeness }}<small>%</small></p><p class="sub">{{ t('completeness_sub') }}</p></div>{% endif %}
+  </div>
+  {% if impact.rows %}
+  {% for r in impact.rows %}
+  <div class="outcome">
+    <h3>{{ r.kind }}{% if r.stakeholder and r.kind != t('impact_climate') %} · {{ r.stakeholder }}{% endif %}</h3>
+    <p class="headline"><b>{{ r.p50 }}</b> {{ r.unit }}</p>
+    <div class="range" role="img" aria-label="{{ t('impact_range', p10=r.p10, p50=r.p50, p90=r.p90) }}">
+      <span class="band" style="left:{{ r.bar.left }}%;width:{{ r.bar.width }}%"></span>
+      <span class="mid" style="left:{{ r.bar.mid }}%"></span>
+    </div>
+    <p class="range-labels"><span>P10 {{ r.p10 }}</span><span>P50 {{ r.p50 }}</span><span>P90 {{ r.p90 }}</span></p>
+    <p class="small muted">{{ r.spread }}{% if r.per_m %} · {{ r.per_m }}{% endif %}</p>
+    <div class="two-col">
+      <div>
+        <h4>{{ t('impact_factors') }}</h4>
+        <table class="small factors"><caption class="sr-only">{{ t('impact_factors') }}</caption>
+          <tbody>{% for f in r.factors %}<tr><th scope="row">{{ f.name }}</th><td class="num">{{ f.value }}</td><td class="muted">{{ f.why }}</td></tr>{% endfor %}</tbody>
+        </table>
+      </div>
+      <div>
+        <h4>{{ t('impact_drivers') }}</h4>
+        <ul class="drivers">{% for d in r.drivers[:3] %}<li><span>{{ d.name }}</span><span class="track" aria-hidden="true"><span style="width:{{ d.share }}%"></span></span><b>{{ d.share }}%</b></li>{% endfor %}</ul>
+        <p class="quote small">“{{ r.source }}”<span class="pips" role="img" aria-label="NESTA {{ r.level }}/5">{% for i in range(1, 6) %}<i class="{{ 'on lvl-' ~ r.level if i <= r.level else '' }}"></i>{% endfor %}</span></p>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+  {% else %}<p class="muted">{{ t('impact_none') }}</p>{% endif %}
+  {% if impact.targets %}<h4>{{ t('impact_targets') }}</h4><ul class="small">{% for x in impact.targets[:3] %}<li>{{ x }}</li>{% endfor %}</ul>{% endif %}
 </section>
 
 {% elif section == 'glance' %}

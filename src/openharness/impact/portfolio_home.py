@@ -23,8 +23,11 @@ from typing import Any, Iterable
 DIMENSIONS = (("what", "What"), ("who", "Who"), ("how_much", "How much"),
               ("contribution", "Contribution"), ("risk", "Risk"))
 GATE_ORDER = ("PASS", "WARN", "INSUFFICIENT EVIDENCE", "FAIL")
-GATE_LABEL = {"PASS": "IC-ready", "WARN": "Conditional", "INSUFFICIENT EVIDENCE": "Needs data",
+GATE_LABEL = {"PASS": "IC-ready", "WARN": "Conditional", "INSUFFICIENT EVIDENCE": "Evidence plan",
               "FAIL": "Do not proceed"}
+# Methodology 2.0 gate labels map onto the same four buckets.
+GATE_ALIAS = {"READY FOR IC": "PASS", "EVIDENCE PLAN REQUIRED": "INSUFFICIENT EVIDENCE",
+              "FAILS THESIS": "FAIL"}
 GATE_TONE = {"PASS": "good", "WARN": "warning", "INSUFFICIENT EVIDENCE": "warning", "FAIL": "critical"}
 REVIEW_CONFIDENCE = 0.5
 _QUEUE_LABELS = {"regulatory_radar": "Regulatory radar", "ddq_drafts": "DDQ drafts"}
@@ -119,7 +122,7 @@ def build_portfolio_home(
         s, data = r.get("summary") or {}, r.get("report_data") or {}
         fd = data.get("five_dimensions") or {}
         sdg_scores = {int(a["goal"]): a.get("score") for a in data.get("sdg_alignments") or []}
-        gate = s.get("gate") or "—"
+        gate = GATE_ALIAS.get(s.get("gate") or "", s.get("gate") or "—")
         created = _when(r.get("created_at") or data.get("generated_at"))
         age = (now - created).days if created else None
         companies.append({
@@ -146,7 +149,8 @@ def build_portfolio_home(
                               "tone": "warning"})
         if gate == "INSUFFICIENT EVIDENCE":
             attention.append({"company": companies[-1]["name"],
-                              "reason": "Held back by missing data, not by a negative finding", "tone": "warning"})
+                              "reason": "Evidence plan required: held back by missing data, not a negative finding",
+                              "tone": "warning"})
         if (s.get("greenwashing_risk") or 0) >= _gw_flag():
             attention.append({"company": companies[-1]["name"],
                               "reason": f"Greenwashing risk {s['greenwashing_risk']:.0f}/100 — review claims",
@@ -183,7 +187,7 @@ def build_portfolio_home(
             {"label": "Average 5D", "value": f"{sum(five_d) / len(five_d):.1f}" if five_d else "—",
              "sub": "out of 5", "meter": (sum(five_d) / len(five_d) / 5 * 100) if five_d else 0},
             {"label": "IC-ready", "value": f"{gate_counts['PASS']}/{len(companies)}",
-             "sub": f"{gate_counts['INSUFFICIENT EVIDENCE']} need data"},
+             "sub": f"{gate_counts['INSUFFICIENT EVIDENCE']} on an evidence plan"},
             {"label": "Greenwashing flags", "value": str(sum(1 for v in gw if v >= _gw_flag())),
              "sub": f"risk ≥ {_gw_flag():g}/100"},
             {"label": "Deadlines ≤ 90 days",

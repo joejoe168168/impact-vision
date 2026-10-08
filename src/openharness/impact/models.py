@@ -573,7 +573,12 @@ class ImpactClaim(BaseModel):
         default=1,
         ge=1,
         le=5,
-        description="NESTA-inspired evidence strength (1=narrative only, 2=correlation, 3=causation shown, 4=independent evaluation, 5=RCT/meta-analysis)",
+        description=(
+            "NESTA Standards of Evidence: 1 = a clear account of what you do and why it matters; "
+            "2 = data showing change (before/after, correlation); 3 = causality shown with a "
+            "comparison or control group (incl. RCTs); 4 = independent replication / evaluation; "
+            "5 = manualised and replicated at scale"
+        ),
     )
     negation_detected: bool = Field(
         default=False,

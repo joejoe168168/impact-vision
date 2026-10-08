@@ -218,6 +218,32 @@ table.claims col.c-sig { width: 20%; }
 table.claims col.c-metric { width: 20%; }
 table.claims .mref { min-width: 0; }
 .meta .nw { white-space: nowrap; }
+
+/* Expected impact (methodology 2.0) */
+.eq-row { display: flex; gap: 12px; flex-wrap: wrap; margin: 4px 0 14px; }
+.eq-row .eq { flex: 1 1 180px; border: 1px solid var(--grid); border-radius: 10px; padding: 10px 14px; }
+.eq-row .label { margin: 0; color: var(--ink-2); font-size: 0.82rem; }
+.eq-row .value { margin: 2px 0; font-size: 1.5rem; font-weight: 700; }
+.eq-row .value small, .outcome .headline small { font-size: 0.8rem; color: var(--ink-2); font-weight: 500; }
+.eq-row .sub { margin: 0; color: var(--ink-2); font-size: 0.82rem; }
+.outcome { border-top: 1px solid var(--grid); padding-top: 12px; margin-top: 12px; }
+.outcome h3 { margin: 0 0 2px; font-size: 1rem; }
+.outcome h4 { margin: 12px 0 6px; font-size: 0.86rem; color: var(--ink-2); }
+.outcome .headline { margin: 0 0 8px; font-size: 1rem; }
+.outcome .headline b { font-size: 1.6rem; }
+.range { position: relative; height: 14px; background: var(--surface-2); border-radius: 999px; }
+.range .band { position: absolute; top: 0; bottom: 0; background: var(--brand); opacity: 0.35; border-radius: 999px; }
+.range .mid { position: absolute; top: -3px; bottom: -3px; width: 3px; margin-left: -1.5px; background: var(--brand); border-radius: 2px; }
+.range-labels { display: flex; justify-content: space-between; margin: 4px 0 0; font-size: 0.8rem; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+table.factors th { white-space: nowrap; }
+table.factors td.num { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.drivers { list-style: none; margin: 0; padding: 0; }
+.drivers li { display: grid; grid-template-columns: minmax(8rem, 1fr) 2fr 3rem; gap: 8px; align-items: center; font-size: 0.86rem; padding: 3px 0; }
+.drivers .track { height: 8px; background: var(--surface-2); border-radius: 999px; overflow: hidden; }
+.drivers .track span { display: block; height: 100%; background: var(--warning); }
+.drivers b { text-align: right; font-variant-numeric: tabular-nums; }
+.outcome .quote { color: var(--ink-2); margin-top: 10px; }
+@media print { .range .band, .range .mid, .drivers .track span { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
 .mref small { display: block; color: var(--ink-2); font-size: 0.8rem; line-height: 1.3; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden;
   clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
@@ -387,28 +413,33 @@ details > summary { cursor: pointer; color: var(--link); font-size: 0.88rem; }
   </div>
   </div>
   <div style="display:flex;flex-direction:column;align-items:flex-end;gap:10px">
-<span class="pill warning">未可提交</span>  </div>
+<span class="pill warning">證據計劃</span>  </div>
 </header>
 
 <nav class="card no-print" aria-label="目錄">
   <p class="small muted" style="margin:0 0 6px"><strong>目錄</strong></p>
-  <p class="small" style="margin:0"><a href="#sec-verdict">建議</a> · <a href="#sec-mind">甚麼會改變我們的判斷</a> · <a href="#sec-glance">影響一覽</a> · <a href="#sec-5d">影響力五個維度</a> · <a href="#sec-sdg">可持續發展目標對應</a> · <a href="#sec-evidence">證據清單</a> · <a href="#sec-greenwashing">漂綠審查</a> · <a href="#sec-risks">風險與機遇</a> · <a href="#sec-actions">行動計劃</a> · <a href="#sec-appendix">方法及釋義</a></p>
+  <p class="small" style="margin:0"><a href="#sec-verdict">建議</a> · <a href="#sec-mind">甚麼會改變我們的判斷</a> · <a href="#sec-impact">預期影響</a> · <a href="#sec-glance">影響一覽</a> · <a href="#sec-5d">影響力五個維度</a> · <a href="#sec-sdg">可持續發展目標對應</a> · <a href="#sec-evidence">證據清單</a> · <a href="#sec-greenwashing">漂綠審查</a> · <a href="#sec-risks">風險與機遇</a> · <a href="#sec-actions">行動計劃</a> · <a href="#sec-appendix">方法及釋義</a></p>
 </nav>
 
 <section id="sec-verdict" class="card verdict warning" aria-labelledby="h-verdict">
   <h2 id="h-verdict" class="small muted" style="margin:0 0 6px;font-size:0.82rem">建議</h2>
   <p class="status">
     <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="10.5" stroke-width="1.6"/><path d="M12 7v6" /><path d="M12 16.5v.5" /></svg>
-    <strong>未可提交投資委員會——證據不足</strong>
+    <strong>需要證據計劃</strong>
   </p>
-<p style="margin:0">未通過的項目反映證據不足，並非負面發現。請收集缺失的指標及盡職調查答案後重新評估。</p>  <ul class="why" aria-label="原因"><li>五個維度總分 1.8 (最低 2.5) (資料缺失)</li><li>首要可持續發展目標評分 43.3 (最低 60) (資料缺失)</li><li>盡職調查覆蓋率 41.7 (最低 70) (資料缺失)</li></ul>
-<p class="confidence">可信度：部分有證據——部分評分僅依據少量已報告指標。</p></section>
+<p style="margin:0">這不是負面發現：以下證據計劃按對結論影響大小列出需要收集的資料。</p>  <ul class="why" aria-label="原因"><li>18% of core metrics reported (needs 40%)</li></ul>
+<p class="confidence">證據質素: 63/100 · 良好</p></section>
 
 <section class="kpis" aria-label="重點數字">
   <div class="tile">
-    <p class="label">影響力五個維度評分</p>
-    <p class="value">1.8<small>/5</small></p>
-<div class="meter" aria-hidden="true"><div class="fill " style="width:36.0%"></div></div>    <p class="sub">等級 C · 部分證據</p>
+    <p class="label">預期影響</p>
+    <p class="value">62</p>
+    <p class="sub">按深度加權的人年 · P10 26 – P90 140</p>
+  </div>
+  <div class="tile">
+    <p class="label">證據質素</p>
+    <p class="value">63<small>/100</small></p>
+<div class="meter" aria-hidden="true"><div class="fill good" style="width:63.0%"></div><div class="tick" style="left:60%"></div></div>    <p class="sub">良好 · 核心指標 18%</p>
   </div>
   <div class="tile">
     <p class="label">首要可持續發展目標</p>
@@ -420,18 +451,67 @@ details > summary { cursor: pointer; color: var(--link); font-size: 0.88rem; }
     <p class="value">38<small>/100</small></p>
 <div class="meter" aria-hidden="true"><div class="fill good" style="width:38.0%"></div><div class="tick" style="left:60%"></div></div>    <p class="sub">實質但有缺口 · 發現門檻 60</p>
   </div>
-  <div class="tile">
-    <p class="label">證據</p>
-    <p class="value">10 項聲明</p>
-<div class="mix" title="按 NESTA 證據級別劃分的聲明（1→5）" aria-label="按 NESTA 證據級別劃分的聲明（1→5）: 2×8 3×2 "><span class="lvl-2" style="flex:8" title="NESTA 2: 8"></span><span class="lvl-3" style="flex:2" title="NESTA 3: 2"></span></div>    <p class="sub">5 項 IRIS+ 指標 · 盡職調查覆蓋 42%</p>
-  </div>
 </section>
 
 <section id="sec-mind" class="card" aria-labelledby="h-mind">
   <h2 id="h-mind"><span class="h-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0-3.5 10.9V16h7v-2.1A6 6 0 0 0 12 3z"/><path d="M9.5 19h5M10.5 21.5h3"/></svg></span>甚麼會改變我們的判斷</h2>
-  <p class="lede">最能影響本評估的三項證據。</p>
-  <ol class="mind"><li><span class="what">回答：Does the company have a clearly defined theory of change that links its activities to intended outcomes?</span><span class="why">文件未有回答的高優先盡職調查問題。</span></li><li><span class="what">回答：Is the impact embedded in the core business model, or is it peripheral/CSR-adjacent?</span><span class="why">文件未有回答的高優先盡職調查問題。</span></li></ol>
+  <p class="lede">最能收窄範圍的證據，按次序排列。</p>
+  <ol class="mind"><li><span class="what">Report the sector&#39;s core metrics: Payments to Supplier Individuals: Smallholder, Water Withdrawn, Waste Produced: Total.</span><span class="why">Only 18% of the core set is reported.</span></li></ol>
 </section>
+
+<section id="sec-impact" class="card" aria-labelledby="h-impact">
+  <h2 id="h-impact"><span class="h-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l5-5 4 3 8-9"/><path d="M15 6h5v5"/></svg></span>預期影響</h2>
+  <p class="lede">改變有多大、惠及誰，以及我們有多確定。覆蓋 × 深度 × 持續年期，扣除本來就會發生的部分，按公司的貢獻比例及成功機會加權。範圍取決於每個數字背後的證據。</p>
+  <div class="eq-row">
+    <div class="eq"><p class="label">證據質素</p><p class="value">63<small>/100</small></p><p class="sub">良好 · NESTA 2/3 · 經第三方核實</p></div>
+<div class="eq"><p class="label">數據完整度</p><p class="value">18<small>%</small></p><p class="sub">已報告的行業核心指標</p></div>  </div>
+  <div class="outcome">
+    <h3>人 · 住戶</h3>
+    <p class="headline"><b>62</b> 按深度加權的人年</p>
+    <div class="range" role="img" aria-label="P10 26 · P50 62 · P90 140">
+      <span class="band" style="left:24.4%;width:51.199999999999996%"></span>
+      <span class="mid" style="left:50.6%"></span>
+    </div>
+    <p class="range-labels"><span>P10 26</span><span>P50 62</span><span>P90 140</span></p>
+    <p class="small muted">不確定性中等：P90 是 P10 的 5.4 倍</p>
+    <div class="two-col">
+      <div>
+        <h4>計算組成</h4>
+        <table class="small factors"><caption class="sr-only">計算組成</caption>
+          <tbody><tr><th scope="row">覆蓋人數</th><td class="num">120</td><td class="muted">報告 120 住戶（NESTA 3）</td></tr><tr><th scope="row">改變深度</th><td class="num">31%</td><td class="muted">報告改變 31%（NESTA 3）</td></tr><tr><th scope="row">持續年期</th><td class="num">3</td><td class="muted">農業的一般年期</td></tr><tr><th scope="row">扣除本來會發生的部分</th><td class="num">100%</td><td class="muted">已由對照組扣除</td></tr><tr><th scope="row">貢獻比例</th><td class="num">70%</td><td class="muted">歸功於企業的比例</td></tr><tr><th scope="row">成功機會</th><td class="num">80%</td><td class="muted">證據等級 3</td></tr></tbody>
+        </table>
+      </div>
+      <div>
+        <h4>不確定性的主要來源</h4>
+        <ul class="drivers"><li><span>持續年期</span><span class="track" aria-hidden="true"><span style="width:57%"></span></span><b>57%</b></li><li><span>覆蓋人數</span><span class="track" aria-hidden="true"><span style="width:21%"></span></span><b>21%</b></li><li><span>貢獻比例</span><span class="track" aria-hidden="true"><span style="width:12%"></span></span><b>12%</b></li></ul>
+        <p class="quote small">“A 2024 randomized pilot with Universiti Putra Malaysia compared 120 outgrower households to a matched control group and found 23% higher household food-security scores and 17% higher child school attendance.”<span class="pips" role="img" aria-label="NESTA 3/5"><i class="on lvl-3"></i><i class="on lvl-3"></i><i class="on lvl-3"></i><i class=""></i><i class=""></i></span></p>
+      </div>
+    </div>
+  </div>
+  <div class="outcome">
+    <h3>氣候</h3>
+    <p class="headline"><b>850</b> 噸二氧化碳當量</p>
+    <div class="range" role="img" aria-label="P10 300 · P50 850 · P90 2,300">
+      <span class="band" style="left:22.1%;width:55.800000000000004%"></span>
+      <span class="mid" style="left:50.5%"></span>
+    </div>
+    <p class="range-labels"><span>P10 300</span><span>P50 850</span><span>P90 2,300</span></p>
+    <p class="small muted">不確定性高：P90 是 P10 的 7.6 倍</p>
+    <div class="two-col">
+      <div>
+        <h4>計算組成</h4>
+        <table class="small factors"><caption class="sr-only">計算組成</caption>
+          <tbody><tr><th scope="row">每年噸數</th><td class="num">920</td><td class="muted">報告 920 tCO2e（NESTA 2）</td></tr><tr><th scope="row">持續年期</th><td class="num">3</td><td class="muted">農業的一般年期</td></tr><tr><th scope="row">扣除本來會發生的部分</th><td class="num">70%</td><td class="muted">沒有對照組：約 30% 本來就會發生</td></tr><tr><th scope="row">貢獻比例</th><td class="num">70%</td><td class="muted">歸功於企業的比例</td></tr><tr><th scope="row">成功機會</th><td class="num">65%</td><td class="muted">證據等級 2</td></tr></tbody>
+        </table>
+      </div>
+      <div>
+        <h4>不確定性的主要來源</h4>
+        <ul class="drivers"><li><span>每年噸數</span><span class="track" aria-hidden="true"><span style="width:41%"></span></span><b>41%</b></li><li><span>持續年期</span><span class="track" aria-hidden="true"><span style="width:41%"></span></span><b>41%</b></li><li><span>貢獻比例</span><span class="track" aria-hidden="true"><span style="width:9%"></span></span><b>9%</b></li></ul>
+        <p class="quote small">“Our biogas plant captures methane from manure lagoons and generates 1.8 GWh of electricity per year, replacing ~920 tonnes CO2e of grid emissions and cutting our grid electricity purchases by 74%.”<span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></p>
+      </div>
+    </div>
+  </div>
+<h4>已列明的目標（日後與實際結果比較）</h4><ul class="small"><li>Over the next five years we target: 45% reduction in Scope 1+2 emissions intensity (kg CO2e / kg live weight); 80% of breeding sows in group-housing &gt;= 10 weeks after weaning; 35 outgrower households onboarded; and a SBTi near-term target submission by 2027.</li></ul></section>
 
 <section id="sec-glance" class="card" aria-labelledby="h-glance">
   <h2 id="h-glance"><span class="h-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5V12l6 6"/></svg></span>影響一覽</h2>
@@ -605,7 +685,7 @@ details > summary { cursor: pointer; color: var(--link); font-size: 0.88rem; }
 <section id="sec-appendix" class="card" aria-labelledby="h-appendix">
   <h2 id="h-appendix"><span class="h-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h10l4 4v12H5z"/><path d="M9 12h6M9 16h4"/></svg></span>方法及釋義</h2>
   <h3 class="small">本報告的編製方法</h3>
-  <ul class="small"><li>從文件擷取聲明，並按 NESTA 證據標準評級；只有在單位及語境明確時，才把數量對應至 IRIS+ 指標編號。</li><li>影響力五個維度評分（1–5）在有已報告指標時以指標為依據，否則以文件文字估算；證據標籤會註明。</li><li>可持續發展目標評分（0–100）結合目標專屬指標覆蓋、業務推斷及影響主題；跨領域指標權重較低。</li><li>漂綠風險權重：聲明欠缺指標（30%）、遺漏負面影響（20%）、措辭含糊（20%）、選擇性報告（15%）及未經核實（15%）。</li><li>投資委員會關卡套用基金論點的門檻；因資料缺失而未通過的項目列為證據不足，而非負面發現。</li><li>評分採用方法 v1.2.0（設定 ae3e77ecaccf）；兩者相同的報告才可直接比較。</li></ul>
+  <ul class="small"><li>從文件擷取聲明，並按 NESTA 證據標準評級；只有在單位及語境明確時，才把數量對應至 IRIS+ 指標編號。</li><li>影響力五個維度評分（1–5）在有已報告指標時以指標為依據，否則以文件文字估算；證據標籤會註明。</li><li>可持續發展目標評分（0–100）結合目標專屬指標覆蓋、業務推斷及影響主題；跨領域指標權重較低。</li><li>漂綠風險權重：聲明欠缺指標（30%）、遺漏負面影響（20%）、措辭含糊（20%）、選擇性報告（15%）及未經核實（15%）。</li><li>投資委員會關卡套用基金論點的門檻；因資料缺失而未通過的項目列為證據不足，而非負面發現。</li><li>評分採用方法 v1.2.0（設定 ae3e77ecaccf）；兩者相同的報告才可直接比較。</li><li>預期影響（方法 2.0.0，illustrative）：覆蓋 × 深度 × 年期 × (1 − 無謂部分) × 貢獻比例 × 成功機會；每個因素的分佈取決於其 NESTA 證據等級；以 4000 次固定種子蒙地卡羅模擬得出 P10/P50/P90。證據質素及數據完整度另行列出，不會乘入影響值。</li></ul>
   <h3 class="small" id="ai-disclosure">人工智能及自動化披露</h3>
   <p class="small">自動化分析：由規則及確定性評分模型產生，未有使用生成式人工智能。 22 項評分中有 3 項是根據文件文字估算，而非已報告指標。 依賴前請先審閱。</p>
   <div class="table-wrap"><table class="small">

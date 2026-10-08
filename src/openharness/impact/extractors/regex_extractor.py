@@ -65,7 +65,10 @@ _EVIDENCE_SIGNALS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("controlled_evaluation", re.compile(
         r"\brandomi[sz]ed\b|\bRCTs?\b|\bcontrol\s+group\b|\bcounterfactual\b|"
         r"\bquasi[\s-]experimental\b|\bdifference[\s-]in[\s-]differences?\b|"
-        r"\bmatched\s+(?:control|comparison)\b",
+        r"\bmatched\s+(?:control|comparison)\b|\bcomparison\s+group\b|"
+        r"\b(?:versus|vs\.?|compared\s+(?:to|with)|than)\s+(?:a\s+|the\s+)?comparison\s+"
+        r"(?:schools?|villages?|households?|clinics?|farms?|areas?|sites?|districts?|firms?)\b|"
+        r"\bcontrol\s+(?:schools?|villages?|arm|sites?|districts?)\b|對照組|对照组|對照研究|对照研究",
         re.IGNORECASE,
     )),
     ("baseline_comparison", re.compile(

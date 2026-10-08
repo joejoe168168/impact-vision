@@ -31,7 +31,8 @@ def test_first_screen_is_decision_first(pig_data):
     html = render_decision_report(pig_data)
     order = [html.index(marker) for marker in ('id="sec-verdict"', 'class="kpis"', 'id="sec-mind"', 'id="sec-5d"')]
     assert order == sorted(order)
-    assert "Not IC-ready" in html  # pig farm is data-light, not a negative finding
+    # Pig farm is data-light, not a negative finding: methodology 2.0 asks for an evidence plan.
+    assert "Evidence plan required" in html
     assert "missing data" in html
 
 

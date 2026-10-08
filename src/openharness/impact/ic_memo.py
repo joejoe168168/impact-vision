@@ -41,6 +41,68 @@ def _fmt_score(x: float) -> str:
     return f"{x:.1f}/5"
 
 
+def _gate2(expected_impact: dict | None) -> dict | None:
+    """Methodology 2.0 gate, unless IMPACT_VISION_METHODOLOGY_VERSION=1."""
+    from openharness.impact.expected_impact import methodology_mode
+
+    gate = (expected_impact or {}).get("gate")
+    return gate if gate and methodology_mode() == "2" else None
+
+
+_GATE2_REC = {
+    "ready": "Expected impact is quantified and the evidence is good enough for the investment committee.",
+    "evidence_plan": "Not a negative finding: collect the evidence below, biggest effect on the answer first.",
+    "fails_thesis": "Something found in the documents fails the fund's thesis.",
+}
+
+
+def _sig2(value: float) -> str:
+    from openharness.impact.report_templates.decision_report import _sig
+
+    return _sig(value)
+
+
+def _impact_markdown(expected_impact: dict) -> list[str]:
+    out = ["## Expected impact (methodology 2.0)"]
+    eq = expected_impact.get("evidence_quality") or {}
+    comp = expected_impact.get("data_completeness_pct")
+    out.append(f"- **Evidence quality**: {eq.get('score', 0)}/100 ({eq.get('label', '')})"
+               + (f" · **data completeness** {comp:.0f}%" if comp is not None else ""))
+    for o in expected_impact.get("outcomes") or []:
+        out.append(f"- **{o['kind'].title()}** ({o['stakeholder']}): P50 **{_sig2(o['p50'])}** {o['unit']} "
+                   f"(P10 {_sig2(o['p10'])} – P90 {_sig2(o['p90'])}; {o['uncertainty']} uncertainty)")
+    if not expected_impact.get("outcomes"):
+        out.append("- No quantified outcome in the documents yet.")
+    plan = expected_impact.get("evidence_plan") or []
+    if plan:
+        out.append("")
+        out.append("**Evidence plan**")
+        out += [f"{i}. {item['action']} — {item['why']}" for i, item in enumerate(plan[:3], 1)]
+    out.append("")
+    return out
+
+
+def _impact_html(expected_impact: dict) -> str:
+    eq = expected_impact.get("evidence_quality") or {}
+    comp = expected_impact.get("data_completeness_pct")
+    rows = "".join(
+        f"<tr><td>{escape(o['kind'].title())} · {escape(o['stakeholder'])}</td>"
+        f"<td class='num'><b>{_sig2(o['p50'])}</b></td><td class='num'>{_sig2(o['p10'])} – {_sig2(o['p90'])}</td>"
+        f"<td>{escape(o['unit'])}</td><td>{escape(o['uncertainty'])}</td></tr>"
+        for o in expected_impact.get("outcomes") or [])
+    table = (f"<table class='data'><thead><tr><th>Outcome</th><th>P50</th><th>P10 – P90</th><th>Unit</th>"
+             f"<th>Uncertainty</th></tr></thead><tbody>{rows}</tbody></table>" if rows else
+             "<div class='callout warn'>No quantified outcome in the documents yet.</div>")
+    plan = "".join(f"<li><b>{escape(i['action'])}</b> <span class='muted'>{escape(i['why'])}</span></li>"
+                   for i in (expected_impact.get("evidence_plan") or [])[:3])
+    return (
+        "<section class='card' id='impact2'><h2 class='section-title'>Expected impact</h2>"
+        f"<p>Evidence quality <b>{eq.get('score', 0)}/100</b> ({escape(str(eq.get('label', '')))})"
+        + (f" · data completeness <b>{comp:.0f}%</b>" if comp is not None else "") + "</p>"
+        + table + (f"<h3>Evidence plan</h3><ol>{plan}</ol>" if plan else "") + "</section>"
+    )
+
+
 def render_ic_memo_markdown(
     assessment: Assessment,
     scorecard: DealScorecard,
@@ -53,6 +115,7 @@ def render_ic_memo_markdown(
     verdict_card: Any | None = None,
     proof_appendix: Any | None = None,
     target_conditions: list[TargetCondition] | None = None,
+    expected_impact: dict | None = None,
 ) -> str:
     """Build a Markdown IC memo string."""
     company = assessment.company
@@ -68,10 +131,17 @@ def render_ic_memo_markdown(
     out.append(f"- **Sector**: {company.sector or 'n/a'}")
     if deal_size_eur_m is not None:
         out.append(f"- **Proposed deal size**: EUR {deal_size_eur_m:.1f}m")
-    out.append(
-        f"- **IC gate result**: **{scorecard.display_status}** — {scorecard.recommendation}"
-    )
+    gate2 = _gate2(expected_impact)
+    if gate2:
+        out.append(f"- **IC gate result**: **{gate2['label']}** — {_GATE2_REC[gate2['state']]}")
+        out.append(f"- **Fund thesis checks**: {scorecard.display_status}")
+    else:
+        out.append(
+            f"- **IC gate result**: **{scorecard.display_status}** — {scorecard.recommendation}"
+        )
     out.append("")
+    if expected_impact:
+        out += _impact_markdown(expected_impact)
 
     out.append("## 1. Impact Thesis Fit")
     if thesis and not thesis.is_default:
@@ -521,6 +591,7 @@ def render_ic_memo_html(
     verdict_card: Any | None = None,
     proof_appendix: Any | None = None,
     target_conditions: list[TargetCondition] | None = None,
+    expected_impact: dict | None = None,
 ) -> str:
     """Render the IC memo as a self-contained, print-ready HTML document.
 
@@ -542,12 +613,13 @@ def render_ic_memo_html(
         meta.append(("Geography", company.geography))
     if deal_size_eur_m is not None:
         meta.append(("Deal size", f"EUR {deal_size_eur_m:.1f}m"))
-    meta.append(("IC gate", scorecard.display_status))
+    gate2 = _gate2(expected_impact)
+    meta.append(("IC gate", gate2["label"] if gate2 else scorecard.display_status))
 
     hero = render_hero(
         eyebrow="Investment Committee Memo",
         title=escape(company.name or "Unnamed Company"),
-        subtitle=escape(scorecard.recommendation or ""),
+        subtitle=escape(_GATE2_REC[gate2["state"]] if gate2 else (scorecard.recommendation or "")),
         meta=meta,
         tags=(company.impact_themes or [])[:6],
     )
@@ -561,20 +633,34 @@ def render_ic_memo_html(
     if scorecard.evidence_status == "insufficient":
         gate_kind = "warn"
     insufficient = scorecard.evidence_status == "insufficient"
-    kpis.append(
-        {
+    if gate2:
+        eq = (expected_impact or {}).get("evidence_quality") or {}
+        kpis.append({
             "label": "IC Gate",
-            # "INSUFFICIENT EVIDENCE" doesn't fit a tile; the sub-line says why.
-            "value": "NOT READY" if insufficient else scorecard.display_status,
-            "sub": ("insufficient evidence · " if insufficient else "")
-            + f"{len(scorecard.checks)} checks · "
-            + (f"{len(scorecard.blocking_failures)} need data"
-               if getattr(scorecard, "evidence_status", "") == "insufficient"
-               else f"{len(scorecard.blocking_failures)} fail")
-            + f" / {len(scorecard.warnings_list)} warn",
-            "kind": gate_kind,
-        }
-    )
+            "value": {"ready": "READY", "evidence_plan": "EVIDENCE PLAN", "fails_thesis": "FAILS"}[gate2["state"]],
+            "sub": f"evidence quality {eq.get('score', 0)}/100 · thesis checks: {scorecard.display_status.lower()}",
+            "kind": {"ready": "pass", "evidence_plan": "warn", "fails_thesis": "fail"}[gate2["state"]],
+        })
+        head = (expected_impact or {}).get("outcomes") or []
+        if head:
+            kpis.append({"label": "Expected impact", "value": _sig2(head[0]["p50"]),
+                         "sub": f"{head[0]['unit']} · P10 {_sig2(head[0]['p10'])} – P90 {_sig2(head[0]['p90'])}",
+                         "kind": "neutral"})
+    else:
+        kpis.append(
+            {
+                "label": "IC Gate",
+                # "INSUFFICIENT EVIDENCE" doesn't fit a tile; the sub-line says why.
+                "value": "NOT READY" if insufficient else scorecard.display_status,
+                "sub": ("insufficient evidence · " if insufficient else "")
+                + f"{len(scorecard.checks)} checks · "
+                + (f"{len(scorecard.blocking_failures)} need data"
+                   if getattr(scorecard, "evidence_status", "") == "insufficient"
+                   else f"{len(scorecard.blocking_failures)} fail")
+                + f" / {len(scorecard.warnings_list)} warn",
+                "kind": gate_kind,
+            }
+        )
     if fd:
         kpis.append(
             {
@@ -878,12 +964,17 @@ def render_ic_memo_html(
     rec_html = (
         '<section class="card" id="rec">'
         '<h2 class="section-title">Recommendation</h2>'
-        f'<div class="callout {_rec_tone(scorecard)}" style="font-size:1.02em"><b>{scorecard.display_status}</b> '
-        f"— {escape(scorecard.recommendation)}</div>"
-        "</section>"
+        + (f'<div class="callout {"ok" if gate2["state"] == "ready" else "danger" if gate2["state"] == "fails_thesis" else "warn"}" '
+           f'style="font-size:1.02em"><b>{escape(gate2["label"])}</b> — {escape(_GATE2_REC[gate2["state"]])}</div>'
+           f'<p class="muted">Fund thesis checks: {escape(scorecard.display_status)}</p>'
+           if gate2 else
+           f'<div class="callout {_rec_tone(scorecard)}" style="font-size:1.02em"><b>{scorecard.display_status}</b> '
+           f"— {escape(scorecard.recommendation)}</div>")
+        + "</section>"
     )
 
     toc_items = [
+        *([("impact2", "Expected impact")] if expected_impact else []),
         ("thesis-fit", "1. Thesis fit"),
         ("five-d", "2. 5-Dimension"),
         ("sdg", "3. SDG alignment"),
@@ -902,6 +993,7 @@ def render_ic_memo_html(
         '<div class="memo-main">'
         f"{hero}"
         f"{render_kpi_strip(kpis)}"
+        f"{_impact_html(expected_impact) if expected_impact else ''}"
         f"{''.join(thesis_html)}"
         f"{''.join(five_d_html)}"
         f"{''.join(sdg_html)}"

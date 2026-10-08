@@ -66,7 +66,7 @@ class DDQuestionMatch(BaseModel):
     relevant_text_snippets: list[str] = Field(default_factory=list)
     evidence_level: int = Field(
         default=1, ge=1, le=5,
-        description="NESTA Standards of Evidence level (1=narrative, 5=RCT/causal)",
+        description="NESTA Standards of Evidence level (1=account of the logic, 2=data showing change, 3=causality via comparison/control group, 4=independent replication, 5=replicated at scale)",
     )
     evidence_label: str = ""
 

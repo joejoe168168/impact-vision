@@ -218,6 +218,32 @@ table.claims col.c-sig { width: 20%; }
 table.claims col.c-metric { width: 20%; }
 table.claims .mref { min-width: 0; }
 .meta .nw { white-space: nowrap; }
+
+/* Expected impact (methodology 2.0) */
+.eq-row { display: flex; gap: 12px; flex-wrap: wrap; margin: 4px 0 14px; }
+.eq-row .eq { flex: 1 1 180px; border: 1px solid var(--grid); border-radius: 10px; padding: 10px 14px; }
+.eq-row .label { margin: 0; color: var(--ink-2); font-size: 0.82rem; }
+.eq-row .value { margin: 2px 0; font-size: 1.5rem; font-weight: 700; }
+.eq-row .value small, .outcome .headline small { font-size: 0.8rem; color: var(--ink-2); font-weight: 500; }
+.eq-row .sub { margin: 0; color: var(--ink-2); font-size: 0.82rem; }
+.outcome { border-top: 1px solid var(--grid); padding-top: 12px; margin-top: 12px; }
+.outcome h3 { margin: 0 0 2px; font-size: 1rem; }
+.outcome h4 { margin: 12px 0 6px; font-size: 0.86rem; color: var(--ink-2); }
+.outcome .headline { margin: 0 0 8px; font-size: 1rem; }
+.outcome .headline b { font-size: 1.6rem; }
+.range { position: relative; height: 14px; background: var(--surface-2); border-radius: 999px; }
+.range .band { position: absolute; top: 0; bottom: 0; background: var(--brand); opacity: 0.35; border-radius: 999px; }
+.range .mid { position: absolute; top: -3px; bottom: -3px; width: 3px; margin-left: -1.5px; background: var(--brand); border-radius: 2px; }
+.range-labels { display: flex; justify-content: space-between; margin: 4px 0 0; font-size: 0.8rem; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+table.factors th { white-space: nowrap; }
+table.factors td.num { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.drivers { list-style: none; margin: 0; padding: 0; }
+.drivers li { display: grid; grid-template-columns: minmax(8rem, 1fr) 2fr 3rem; gap: 8px; align-items: center; font-size: 0.86rem; padding: 3px 0; }
+.drivers .track { height: 8px; background: var(--surface-2); border-radius: 999px; overflow: hidden; }
+.drivers .track span { display: block; height: 100%; background: var(--warning); }
+.drivers b { text-align: right; font-variant-numeric: tabular-nums; }
+.outcome .quote { color: var(--ink-2); margin-top: 10px; }
+@media print { .range .band, .range .mid, .drivers .track span { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
 .mref small { display: block; color: var(--ink-2); font-size: 0.8rem; line-height: 1.3; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden;
   clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
@@ -392,14 +418,19 @@ details > summary { cursor: pointer; color: var(--link); font-size: 0.88rem; }
 
 <nav class="card no-print" aria-label="Contents">
   <p class="small muted" style="margin:0 0 6px"><strong>Contents</strong></p>
-  <p class="small" style="margin:0"><a href="#sec-glance">Impact at a glance</a> · <a href="#sec-5d">Five Dimensions of Impact</a> · <a href="#sec-sdg">SDG alignment</a> · <a href="#sec-evidence">Evidence ledger</a> · <a href="#sec-risks">Risks and opportunities</a> · <a href="#sec-appendix">Methodology and definitions</a></p>
+  <p class="small" style="margin:0"><a href="#sec-impact">Expected impact</a> · <a href="#sec-glance">Impact at a glance</a> · <a href="#sec-5d">Five Dimensions of Impact</a> · <a href="#sec-sdg">SDG alignment</a> · <a href="#sec-evidence">Evidence ledger</a> · <a href="#sec-risks">Risks and opportunities</a> · <a href="#sec-appendix">Methodology and definitions</a></p>
 </nav>
 
 <section class="kpis" aria-label="Headline numbers">
   <div class="tile">
-    <p class="label">5 Dimensions score</p>
-    <p class="value">1.8<small>/5</small></p>
-<div class="meter" aria-hidden="true"><div class="fill " style="width:36.0%"></div></div>    <p class="sub">Grade C · partial evidence</p>
+    <p class="label">Expected impact</p>
+    <p class="value">62</p>
+    <p class="sub">depth-weighted person-years · P10 26 – P90 140</p>
+  </div>
+  <div class="tile">
+    <p class="label">Evidence quality</p>
+    <p class="value">63<small>/100</small></p>
+<div class="meter" aria-hidden="true"><div class="fill good" style="width:63.0%"></div><div class="tick" style="left:60%"></div></div>    <p class="sub">good · 18% core metrics</p>
   </div>
   <div class="tile">
     <p class="label">Top SDG</p>
@@ -412,6 +443,60 @@ details > summary { cursor: pointer; color: var(--link); font-size: 0.88rem; }
 <div class="mix" title="Claims by NESTA evidence level (1→5)" aria-label="Claims by NESTA evidence level (1→5): 2×8 3×2 "><span class="lvl-2" style="flex:8" title="NESTA 2: 8"></span><span class="lvl-3" style="flex:2" title="NESTA 3: 2"></span></div>    <p class="sub">5 IRIS+ metrics</p>
   </div>
 </section>
+
+<section id="sec-impact" class="card" aria-labelledby="h-impact">
+  <h2 id="h-impact"><span class="h-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l5-5 4 3 8-9"/><path d="M15 6h5v5"/></svg></span>Expected impact</h2>
+  <p class="lede">How much change, for whom, and how sure we are. Reach × depth × duration, less what would have happened anyway, credited to the company and weighted by the chance it happens. Ranges come from the evidence behind each figure.</p>
+  <div class="eq-row">
+    <div class="eq"><p class="label">Evidence quality</p><p class="value">63<small>/100</small></p><p class="sub">good · NESTA 2/3 · third-party verified</p></div>
+<div class="eq"><p class="label">Data completeness</p><p class="value">18<small>%</small></p><p class="sub">of the sector&#39;s core metrics reported</p></div>  </div>
+  <div class="outcome">
+    <h3>People · households</h3>
+    <p class="headline"><b>62</b> depth-weighted person-years</p>
+    <div class="range" role="img" aria-label="P10 26 · P50 62 · P90 140">
+      <span class="band" style="left:24.4%;width:51.199999999999996%"></span>
+      <span class="mid" style="left:50.6%"></span>
+    </div>
+    <p class="range-labels"><span>P10 26</span><span>P50 62</span><span>P90 140</span></p>
+    <p class="small muted">moderate uncertainty: P90 is ×5.4 the P10</p>
+    <div class="two-col">
+      <div>
+        <h4>What goes into it</h4>
+        <table class="small factors"><caption class="sr-only">What goes into it</caption>
+          <tbody><tr><th scope="row">Reach</th><td class="num">120</td><td class="muted">120 households reported (NESTA 3)</td></tr><tr><th scope="row">Depth of change</th><td class="num">31%</td><td class="muted">31% change reported (NESTA 3)</td></tr><tr><th scope="row">Duration (years)</th><td class="num">3</td><td class="muted">typical for agriculture</td></tr><tr><th scope="row">Without deadweight</th><td class="num">100%</td><td class="muted">netted out by the comparison group</td></tr><tr><th scope="row">Attribution</th><td class="num">70%</td><td class="muted">share credited to the enterprise</td></tr><tr><th scope="row">Probability of success</th><td class="num">80%</td><td class="muted">evidence level 3</td></tr></tbody>
+        </table>
+      </div>
+      <div>
+        <h4>What drives the uncertainty</h4>
+        <ul class="drivers"><li><span>Duration (years)</span><span class="track" aria-hidden="true"><span style="width:57%"></span></span><b>57%</b></li><li><span>Reach</span><span class="track" aria-hidden="true"><span style="width:21%"></span></span><b>21%</b></li><li><span>Attribution</span><span class="track" aria-hidden="true"><span style="width:12%"></span></span><b>12%</b></li></ul>
+        <p class="quote small">“A 2024 randomized pilot with Universiti Putra Malaysia compared 120 outgrower households to a matched control group and found 23% higher household food-security scores and 17% higher child school attendance.”<span class="pips" role="img" aria-label="NESTA 3/5"><i class="on lvl-3"></i><i class="on lvl-3"></i><i class="on lvl-3"></i><i class=""></i><i class=""></i></span></p>
+      </div>
+    </div>
+  </div>
+  <div class="outcome">
+    <h3>Climate</h3>
+    <p class="headline"><b>850</b> tCO2e</p>
+    <div class="range" role="img" aria-label="P10 300 · P50 850 · P90 2,300">
+      <span class="band" style="left:22.1%;width:55.800000000000004%"></span>
+      <span class="mid" style="left:50.5%"></span>
+    </div>
+    <p class="range-labels"><span>P10 300</span><span>P50 850</span><span>P90 2,300</span></p>
+    <p class="small muted">wide uncertainty: P90 is ×7.6 the P10</p>
+    <div class="two-col">
+      <div>
+        <h4>What goes into it</h4>
+        <table class="small factors"><caption class="sr-only">What goes into it</caption>
+          <tbody><tr><th scope="row">Tonnes per year</th><td class="num">920</td><td class="muted">920 tCO2e reported (NESTA 2)</td></tr><tr><th scope="row">Duration (years)</th><td class="num">3</td><td class="muted">typical for agriculture</td></tr><tr><th scope="row">Without deadweight</th><td class="num">70%</td><td class="muted">no comparison group: ~30% would have happened anyway</td></tr><tr><th scope="row">Attribution</th><td class="num">70%</td><td class="muted">share credited to the enterprise</td></tr><tr><th scope="row">Probability of success</th><td class="num">65%</td><td class="muted">evidence level 2</td></tr></tbody>
+        </table>
+      </div>
+      <div>
+        <h4>What drives the uncertainty</h4>
+        <ul class="drivers"><li><span>Tonnes per year</span><span class="track" aria-hidden="true"><span style="width:41%"></span></span><b>41%</b></li><li><span>Duration (years)</span><span class="track" aria-hidden="true"><span style="width:41%"></span></span><b>41%</b></li><li><span>Attribution</span><span class="track" aria-hidden="true"><span style="width:9%"></span></span><b>9%</b></li></ul>
+        <p class="quote small">“Our biogas plant captures methane from manure lagoons and generates 1.8 GWh of electricity per year, replacing ~920 tonnes CO2e of grid emissions and cutting our grid electricity purchases by 74%.”<span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></p>
+      </div>
+    </div>
+  </div>
+<h4>Targets stated (to compare with actual results later)</h4><ul class="small"><li>Over the next five years we target: 45% reduction in Scope 1+2 emissions intensity (kg CO2e / kg live weight); 80% of breeding sows in group-housing &gt;= 10 weeks after weaning; 35 outgrower households onboarded; and a SBTi near-term target submission by 2027.</li></ul></section>
 
 <section id="sec-glance" class="card" aria-labelledby="h-glance">
   <h2 id="h-glance"><span class="h-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5V12l6 6"/></svg></span>Impact at a glance</h2>
@@ -552,7 +637,7 @@ details > summary { cursor: pointer; color: var(--link); font-size: 0.88rem; }
 <section id="sec-appendix" class="card" aria-labelledby="h-appendix">
   <h2 id="h-appendix"><span class="h-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h10l4 4v12H5z"/><path d="M9 12h6M9 16h4"/></svg></span>Methodology and definitions</h2>
   <h3 class="small">How this report was produced</h3>
-  <ul class="small"><li>Claims are extracted from the documents and graded on the NESTA standards of evidence; quantities are mapped to IRIS+ metric IDs only when unit and context are unambiguous.</li><li>Five Dimensions scores (1–5) come from reported metrics where available and from document text otherwise; the evidence label says which.</li><li>SDG scores (0–100) combine goal-specific metric coverage, inference from the business and impact themes; cross-cutting metrics count at reduced weight.</li><li>Scores use methodology v1.2.0 (config ae3e77ecaccf); reports are comparable only when both match.</li></ul>
+  <ul class="small"><li>Claims are extracted from the documents and graded on the NESTA standards of evidence; quantities are mapped to IRIS+ metric IDs only when unit and context are unambiguous.</li><li>Five Dimensions scores (1–5) come from reported metrics where available and from document text otherwise; the evidence label says which.</li><li>SDG scores (0–100) combine goal-specific metric coverage, inference from the business and impact themes; cross-cutting metrics count at reduced weight.</li><li>Scores use methodology v1.2.0 (config ae3e77ecaccf); reports are comparable only when both match.</li><li>Expected impact (methodology 2.0.0, illustrative): reach × depth × duration × (1 − deadweight) × attribution × probability of success; each factor&#39;s spread follows its NESTA evidence level; 4000 seeded Monte Carlo draws give P10/P50/P90. Evidence quality and data completeness are reported separately, never multiplied in.</li></ul>
   <h3 class="small" id="ai-disclosure">AI &amp; automation disclosure</h3>
   <p class="small">Automated analysis: produced by rules and a deterministic scoring model; no generative AI was used. 3 of 22 scores are estimated from document text rather than reported metrics. Review before relying on it.</p>
   <div class="table-wrap"><table class="small">

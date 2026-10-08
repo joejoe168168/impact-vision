@@ -1028,7 +1028,7 @@ async function uploadFiles(fileList) {
    Reports: analyze a deck offline, view inline, share read-only (W3.2)
    ------------------------------------------------------------------- */
 const DECK_EXT = /\.(pdf|md|markdown|txt|docx|pptx)$/i;
-const GATE_TONE = (g) => /PASS/.test(g) ? 'ok' : /FAIL/.test(g) ? 'bad' : 'warn';
+const GATE_TONE = (g) => /PASS|READY/.test(g) ? 'ok' : /FAIL/.test(g) ? 'bad' : 'warn';
 const FILE_LABEL = [['_impact_report.html', 'Report HTML'], ['_ic_memo.html', 'IC memo'], ['_ic_memo.docx', 'IC memo .docx'],
   ['_dd_report.html', 'DD report'], ['_dd_questionnaire.docx', 'DD questions .docx'], ['_data.xlsx', 'Data .xlsx'],
   ['_data.csv', 'Data .csv'], ['_summary.json', 'Summary .json']];

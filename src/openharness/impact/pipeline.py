@@ -48,12 +48,22 @@ class AssessmentBundle:
             for a in self.assessment.sdg_alignments
             if a.material
         ][:3]
+        from openharness.impact.expected_impact import headline, methodology_mode
+
+        v2 = self.report_data.get("expected_impact") or {}
+        gate2 = v2.get("gate") or {}
+        use_v2 = bool(gate2) and methodology_mode() == "2"
+        plan = gate2.get("plan") or []
         return {
             "company": self.company.name,
             "sector": self.company.sector,
             "geography": self.company.geography,
-            "gate": self.scorecard.display_status,
-            "recommendation": self.scorecard.recommendation,
+            "gate": gate2["label"].upper() if use_v2 else self.scorecard.display_status,
+            "recommendation": ((plan[0]["action"] if plan else "; ".join(gate2.get("reasons", [])))
+                               if use_v2 else self.scorecard.recommendation),
+            "thesis_gate": self.scorecard.display_status,
+            "expected_impact": headline(v2),
+            "evidence_quality": (v2.get("evidence_quality") or {}).get("score"),
             "five_d_score": round(fd.overall_score, 2) if fd else None,
             "five_d_grade": fd.overall_grade if fd else None,
             "five_d_evidence": fd.overall_provenance if fd else None,
@@ -298,6 +308,20 @@ def assess_document(
     from openharness.impact.report_templates.decision_report import decision_from_scorecard
 
     report_data["decision"] = decision_from_scorecard(scorecard, dd=dd)
+    # Methodology 2.0 (v8 Wave 1): expected impact with ranges, evidence
+    # quality as its own axis, gate 2.0 and a quantitative evidence plan.
+    from openharness.impact.expected_impact import assess_expected_impact
+
+    report_data["expected_impact"] = assess_expected_impact(
+        assessment.impact_claims,
+        company.assessment_text or text,
+        sector=company.sector,
+        company_name=company.name,
+        data_completeness_pct=gap_result.get("coverage_percentage"),
+        greenwashing=gw,
+        v1_checks=report_data["decision"].get("checks", []),
+        missing_metrics=[m["name"] for m in gap_result.get("missing", [])[:5]],
+    )
     fd = report_data["five_dimensions"]
     if fd and company.sector:
         scores = {k: fd[k]["score"] for k in ("what", "who", "how_much", "contribution", "risk")}
@@ -387,6 +411,7 @@ def write_deliverables(
             dd_coverage_pct=bundle.dd.coverage_pct,
             greenwashing_score=bundle.greenwashing.overall_score,
             greenwashing_classification=bundle.greenwashing.classification,
+            expected_impact=bundle.report_data.get("expected_impact"),
         ),
         encoding="utf-8",
     )
@@ -420,6 +445,7 @@ def write_deliverables(
             files.append(Path(render_ic_memo(
                 bundle.assessment, bundle.scorecard, bundle.thesis,
                 output_format="docx", path=out / f"{stem}_ic_memo.docx",
+                expected_impact=bundle.report_data.get("expected_impact"),
             )))
         except ImportError:
             pass  # python-docx is optional ([office] extra)
@@ -491,19 +517,26 @@ def sample_deck_path(key: str) -> Path:
     return data_path("sample_decks", SAMPLE_DECKS[key][0])
 
 
+def _impact_line(h: dict[str, Any]) -> str:
+    return (f"{h['p50']:,.0f} {h['unit']} (P10 {h['p10']:,.0f} – P90 {h['p90']:,.0f}, "
+            f"{h['uncertainty']} uncertainty)")
+
+
 def format_summary(bundle: AssessmentBundle) -> str:
     """Plain-text headline for terminals."""
     s = bundle.summary()
     sdgs = ", ".join(f"SDG {t['goal']} ({t['score']:.0f})" for t in s["top_sdgs"]) or "none material"
     lines = [
         f"{s['company']}  ·  {s['sector'] or 'sector unknown'}  ·  {s['geography'] or 'geography unknown'}",
-        f"  IC gate:        {s['gate']}",
-        f"                  {s['recommendation']}",
-        f"  5D score:       {s['five_d_score']}/5 (grade {s['five_d_grade']}, {s['five_d_evidence']})",
-        f"  Top SDGs:       {sdgs}",
-        f"  Greenwashing:   {s['greenwashing_risk']:.0f}/100 ({s['greenwashing_class']})",
-        f"  DD coverage:    {s['dd_coverage_pct']:.0f}%",
-        f"  Evidence:       {s['claims']} claims, {len(s['reported_metrics'])} IRIS+ metrics",
+        f"  IC gate:          {s['gate']}",
+        f"                    {s['recommendation']}",
+        *([f"  Expected impact:  {_impact_line(s['expected_impact'])}"] if s.get("expected_impact") else []),
+        *([f"  Evidence quality: {s['evidence_quality']}/100"] if s.get("evidence_quality") is not None else []),
+        f"  5D score:         {s['five_d_score']}/5 (grade {s['five_d_grade']}, {s['five_d_evidence']})",
+        f"  Top SDGs:         {sdgs}",
+        f"  Greenwashing:     {s['greenwashing_risk']:.0f}/100 ({s['greenwashing_class']})",
+        f"  DD coverage:      {s['dd_coverage_pct']:.0f}%",
+        f"  Evidence:         {s['claims']} claims, {len(s['reported_metrics'])} IRIS+ metrics",
     ]
     return "\n".join(lines)
 

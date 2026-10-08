@@ -44,26 +44,26 @@ class ReportSpec:
 
 
 SPECS: dict[str, ReportSpec] = {
-    "full": ReportSpec("full", ("verdict", "kpis", "mind", "glance", "five_d", "sdg", "evidence", "greenwashing",
+    "full": ReportSpec("full", ("verdict", "kpis", "mind", "impact", "glance", "five_d", "sdg", "evidence", "greenwashing",
                                 "risks", "actions", "targets", "feedback", "appendix"), True, True),
-    "ic": ReportSpec("ic", ("verdict", "kpis", "mind", "glance", "five_d", "sdg", "evidence", "greenwashing",
+    "ic": ReportSpec("ic", ("verdict", "kpis", "mind", "impact", "glance", "five_d", "sdg", "evidence", "greenwashing",
                             "risks", "actions", "appendix"), True, True),
-    "lp": ReportSpec("lp", ("kpis", "glance", "five_d", "sdg", "evidence", "targets", "feedback", "risks",
+    "lp": ReportSpec("lp", ("kpis", "impact", "glance", "five_d", "sdg", "evidence", "targets", "feedback", "risks",
                             "appendix"), False, False),
-    "regulator": ReportSpec("regulator", ("kpis", "evidence", "greenwashing", "five_d", "sdg",
+    "regulator": ReportSpec("regulator", ("kpis", "impact", "evidence", "greenwashing", "five_d", "sdg",
                                           "risks", "appendix"), False, True),
-    "public": ReportSpec("public", ("kpis", "glance", "sdg", "five_d", "evidence", "feedback", "appendix"),
+    "public": ReportSpec("public", ("kpis", "impact", "glance", "sdg", "five_d", "evidence", "feedback", "appendix"),
                          False, False),
 }
 
 SECTION_IDS = {
-    "verdict": "sec-verdict", "mind": "sec-mind", "glance": "sec-glance", "five_d": "sec-5d", "sdg": "sec-sdg",
+    "verdict": "sec-verdict", "mind": "sec-mind", "impact": "sec-impact", "glance": "sec-glance", "five_d": "sec-5d", "sdg": "sec-sdg",
     "evidence": "sec-evidence", "greenwashing": "sec-greenwashing", "risks": "sec-risks",
     "actions": "sec-actions", "targets": "sec-targets", "feedback": "sec-feedback",
     "appendix": "sec-appendix",
 }
 SECTION_TITLES = {
-    "verdict": "sec_verdict", "mind": "sec_mind", "glance": "sec_glance", "five_d": "sec_5d", "sdg": "sec_sdg",
+    "verdict": "sec_verdict", "mind": "sec_mind", "impact": "sec_impact", "glance": "sec_glance", "five_d": "sec_5d", "sdg": "sec_sdg",
     "evidence": "sec_evidence", "greenwashing": "sec_gw", "risks": "sec_risks",
     "actions": "sec_actions", "targets": "sec_targets", "feedback": "sec_feedback",
     "appendix": "sec_appendix",
@@ -174,7 +174,20 @@ def _check_text(check: dict[str, Any], t=None) -> str:  # type: ignore[no-untype
     return f"{label} {actual:.1f} ({bound} {threshold:g})" if isinstance(threshold, (int, float)) else label
 
 
-def _verdict(decision: dict[str, Any] | None, fd: dict | None, t) -> dict[str, Any]:  # type: ignore[no-untyped-def]
+def _verdict(decision: dict[str, Any] | None, fd: dict | None, t,  # type: ignore[no-untyped-def]
+             gate2: dict[str, Any] | None = None, eq: dict[str, Any] | None = None) -> dict[str, Any]:
+    if gate2 and decision is not None:
+        # Gate 2.0: Ready / Evidence plan required / Fails thesis.
+        state = gate2["state"]
+        tone = {"ready": "good", "evidence_plan": "warning"}.get(state, "critical")
+        return {
+            "tone": tone,
+            "label": t(f"verdict2_{state}"),
+            "icon": _ICON.get(tone, _ICON["neutral"]),
+            "recommendation": t(f"rec2_{state}"),
+            "reasons": list(gate2.get("reasons") or [])[:3],
+            "confidence": (t("eq_title") + f": {eq['score']}/100 · " + t(f"eq_{eq['label']}")) if eq else "",
+        }
     if not decision:
         tone, label, recommendation, reasons = "neutral", t("verdict_unknown"), "", []
     else:
@@ -212,6 +225,7 @@ def _verdict(decision: dict[str, Any] | None, fd: dict | None, t) -> dict[str, A
 # --------------------------------------------------------------------------- graphics
 
 _SECTION_ICONS = {
+    "impact": '<path d="M3 17l5-5 4 3 8-9"/><path d="M15 6h5v5"/>',
     "mind": '<path d="M12 3a6 6 0 0 0-3.5 10.9V16h7v-2.1A6 6 0 0 0 12 3z"/><path d="M9.5 19h5M10.5 21.5h3"/>',
     "glance": '<circle cx="12" cy="12" r="8.5"/><path d="M12 3.5V12l6 6"/>',
     "five_d": '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
@@ -464,7 +478,95 @@ def _risks(data: dict[str, Any]) -> dict[str, list[str]]:
     return {"disclosed": disclosed, "sector": sector[:6], "opportunities": opportunities[:6]}
 
 
+def _sig(value: float) -> str:
+    """Two significant figures: a range shouldn't look more precise than it is."""
+    if value <= 0:
+        return "0"
+    if value < 10:
+        return f"{value:.1f}".rstrip("0").rstrip(".")
+    digits = 2 - len(str(int(value)))
+    return f"{round(value, digits):,.0f}"
+
+
+def _factor_value(name: str, median: float) -> str:
+    if name in {"Reach", "Tonnes per year"}:
+        return f"{median:,.0f}"
+    if name == "Duration (years)":
+        return f"{median:g}"
+    return f"{median:.0%}"
+
+
+def _who(noun: str, lang: str) -> str:
+    from openharness.impact.report_templates.design.strings import STAKEHOLDERS_ZH_CN, STAKEHOLDERS_ZH_HK
+
+    table = {"zh-HK": STAKEHOLDERS_ZH_HK, "zh-CN": STAKEHOLDERS_ZH_CN}.get(lang)
+    return table.get(noun, noun) if table else noun
+
+
+def _impact(data: dict[str, Any], t, lang: str = "en") -> dict[str, Any] | None:  # type: ignore[no-untyped-def]
+    """Methodology 2.0 block for the 'Expected impact' section (v8 Wave 1)."""
+    import math
+
+    def why(f: dict[str, Any]) -> str:
+        args = dict(f.get("why_args") or {})
+        if "who" in args:
+            args["who"] = _who(str(args["who"]), lang)
+        if "sector" in args:
+            args["sector"] = SECTOR_NAMES.get(lang, {}).get(args["sector"], args["sector"])
+        return t(f["why_key"], **args) if f.get("why_key") else f.get("why", "")
+
+    block = data.get("expected_impact")
+    if not block:
+        return None
+    rows = []
+    for o in block.get("outcomes", []):
+        lo, mid, hi = max(o["p10"], 1e-9), max(o["p50"], 1e-9), max(o["p90"], 1e-9)
+        a, b = math.log10(lo) - 0.35, math.log10(hi) + 0.35
+        pos = lambda v: round((math.log10(max(v, 1e-9)) - a) / (b - a) * 100, 1)  # noqa: E731
+        per = o.get("per_usd_1m")
+        rows.append({
+            "kind": t(f"impact_{o['kind']}"),
+            "unit": t(f"impact_unit_{o['kind']}"),
+            "stakeholder": (o.get("stakeholder_raw") if lang != "en" and not str(o.get("stakeholder_raw", "")).isascii()
+                            else _who(o.get("stakeholder", ""), lang)),
+            "p10": _sig(o["p10"]), "p50": _sig(o["p50"]), "p90": _sig(o["p90"]),
+            "bar": {"left": pos(lo), "width": max(1.0, pos(hi) - pos(lo)), "mid": pos(mid)},
+            "spread": t("impact_spread", uncertainty=t(f"unc_{o['uncertainty']}"), spread=o.get("spread") or "—"),
+            "factors": [{"name": t(f"factor_{f['name']}"), "value": _factor_value(f["name"], f["median"]),
+                         "why": why(f)} for f in o.get("factors", [])],
+            "drivers": [{"name": t(f"factor_{d['factor']}"), "share": round(d["share"] * 100)}
+                        for d in o.get("drivers", [])],
+            "per_m": t("impact_per_m", p50=_sig(per["p50"]), p10=_sig(per["p10"]), p90=_sig(per["p90"])) if per else "",
+            "source": o.get("source", ""),
+            "level": o.get("evidence_level", 1),
+        })
+    eq = block.get("evidence_quality") or {}
+    levels = sorted(set(eq.get("levels") or []))
+    return {
+        "rows": rows,
+        "eq": {"score": eq.get("score", 0), "label": t(f"eq_{eq.get('label', 'weak')}"),
+               "sub": t("eq_sub", label=t(f"eq_{eq.get('label', 'weak')}"),
+                        levels="/".join(str(x) for x in levels) or "—",
+                        verified=t("eq_verified") if eq.get("verified") else "")},
+        "completeness": block.get("data_completeness_pct"),
+        "targets": block.get("targets") or [],
+        "methodology": block.get("methodology") or {},
+    }
+
+
+def _v2_gate(data: dict[str, Any]) -> dict[str, Any] | None:
+    from openharness.impact.expected_impact import methodology_mode
+
+    gate = (data.get("expected_impact") or {}).get("gate")
+    return gate if gate and methodology_mode() == "2" else None
+
+
 def _mind(data: dict[str, Any], five_d: dict | None, decision: dict | None, t) -> list[dict[str, str]]:  # type: ignore[no-untyped-def]
+    gate2 = _v2_gate(data)
+    plan = (data.get("expected_impact") or {}).get("evidence_plan") or []
+    if gate2 and plan:
+        # Methodology 2.0: the evidence that narrows the range most, in order.
+        return [{"what": item["action"], "why": item["why"]} for item in plan[:3]]
     items: list[dict[str, str]] = []
     gaps = data.get("gap_analysis") or {}
     if five_d:
@@ -541,7 +643,19 @@ def _actions(data: dict[str, Any], spec: ReportSpec, t) -> list[dict[str, str]]:
 
 def _kpis(view: dict[str, Any], spec: ReportSpec, decision: dict | None, t) -> list[dict[str, str]]:  # type: ignore[no-untyped-def]
     tiles = []
-    if view["five_d"]:
+    impact = view.get("impact")
+    if impact and impact["rows"]:
+        # Methodology 2.0 leads: how much change, and how sure we are.
+        top = impact["rows"][0]
+        tiles.append({"label": t("kpi_impact"), "value": top["p50"], "unit": "",
+                      "sub": t("kpi_impact_sub", unit=top["unit"], p10=top["p10"], p90=top["p90"])})
+        comp = impact.get("completeness")
+        tiles.append({"label": t("kpi_eq"), "value": str(impact["eq"]["score"]), "unit": "/100",
+                      "sub": t("kpi_eq_sub", label=impact["eq"]["label"],
+                               completeness=f"{comp:.0f}" if comp is not None else "—"),
+                      "meter": {"pct": impact["eq"]["score"], "tone": "good" if impact["eq"]["score"] >= 60
+                                else "warning", "tick": 60}})
+    elif view["five_d"]:
         fd = view["five_d"]
         tiles.append({"label": t("kpi_5d"), "value": f"{fd['overall']:.1f}", "unit": "/5",
                       "sub": t("kpi_5d_sub", grade=fd["grade"], evidence=t(fd["provenance"])),
@@ -559,6 +673,8 @@ def _kpis(view: dict[str, Any], spec: ReportSpec, decision: dict | None, t) -> l
         tiles.append({"label": t("kpi_gw"), "value": f"{gw['score']:.0f}", "unit": "/100",
                       "sub": f"{gw['classification']} · {t('tile_threshold')}",
                       "meter": {"pct": gw["score"], "tone": tone, "tick": 60}})
+    if len(tiles) >= 4:
+        return tiles[:4]
     ev = view["evidence"]
     dd = (decision or {}).get("dd_coverage_pct") if spec.show_gate else None
     tiles.append({
@@ -654,6 +770,7 @@ def build_view(data: dict[str, Any], *, audience: str | None = None, lang: str =
         "targets": (data.get("target_tracking") or {}).get("targets", []),
         "feedback": data.get("beneficiary_feedback"),
     }
+    view["impact"] = _impact(data, t, lang)
     view["ai"] = _ai(data, t)
     view["evidence_mix"] = _evidence_mix(data)
     view["pathway"] = _pathway(data, t)
@@ -662,8 +779,12 @@ def build_view(data: dict[str, Any], *, audience: str | None = None, lang: str =
         view["sdg"]["material"], center_label=t("wheel_center"), title=t("sec_sdg")
     )
     view["icons"] = {key: section_icon(key) for key in _SECTION_ICONS}
-    view["verdict"] = _verdict(decision, data.get("five_dimensions"), t)
-    if decision:
+    gate2 = _v2_gate(data) if decision else None
+    view["verdict"] = _verdict(decision, data.get("five_dimensions"), t, gate2,
+                               (data.get("expected_impact") or {}).get("evidence_quality"))
+    if decision and gate2:
+        view["pill"] = {"tone": view["verdict"]["tone"], "label": t(f"pill2_{gate2['state']}")}
+    elif decision:
         insufficient = decision.get("evidence_status") == "insufficient"
         view["pill"] = {
             "tone": view["verdict"]["tone"],
@@ -674,6 +795,7 @@ def build_view(data: dict[str, Any], *, audience: str | None = None, lang: str =
         view["pill"] = None
     view["kpis"] = _kpis(view, spec, decision, t)
     view["mind"] = _mind(data, view["five_d"], decision, t)
+    view["mind_is_plan"] = bool(_v2_gate(data) and (data.get("expected_impact") or {}).get("evidence_plan"))
     view["actions"] = _actions(data, spec, t)
     from openharness.impact.methodology import methodology_stamp, section
 
@@ -691,12 +813,20 @@ def build_view(data: dict[str, Any], *, audience: str | None = None, lang: str =
     stamp = data.get("methodology") or methodology_stamp()
     view["methodology_stamp"] = stamp
     view["methodology"].append(t("method_version", version=stamp["methodology_version"], hash=stamp["config_hash"]))
+    if view["impact"]:
+        from openharness.impact.expected_impact import params as v2_params
+
+        m2 = view["impact"]["methodology"]
+        view["methodology"].append(t("method_v2", version=m2.get("methodology_version", "2"),
+                                     status=m2.get("status", ""),
+                                     draws=(v2_params().get("monte_carlo") or {}).get("draws", 4000)))
 
     present = {
         "verdict": decision is not None,
         "kpis": bool(view["kpis"]),
         "glance": bool(view["sdg"]["material"]) or any(st["items"] for st in view["pathway"][1:]),
         "mind": bool(view["mind"]),
+        "impact": view["impact"] is not None,
         "five_d": view["five_d"] is not None,
         "sdg": bool(view["sdg"]["material"] or view["sdg"]["other"]),
         "evidence": bool(view["evidence"]["claims"] or view["evidence"]["metrics"]),

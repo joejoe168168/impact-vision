@@ -1,0 +1,127 @@
+# Impact Vision methodology 2.0 (roadmap v8 Wave 1) — expected impact.
+#
+# v1 scores (5D 1–5, SDG 0–100) describe how much a company *discloses*.
+# 2.0 adds what an investment committee needs: how much change, for how many
+# people or tonnes, how sure we are, and what would move the answer.
+#
+#   expected impact = reach × depth × duration × (1 − deadweight)
+#                     × attribution × probability of success
+#
+# Every factor is a distribution, not a point. Its spread follows the NESTA
+# evidence level of the claim it comes from; a Monte Carlo run gives
+# P10 / P50 / P90 for each headline number. Evidence quality and data
+# completeness are reported next to impact, never blended into it.
+#
+# Every number below is a documented assumption, labelled "illustrative" until
+# the expert calibration study (roadmap W2.6) replaces it.
+version: "2.0.0"
+effective: "2026-10-08"
+as_of: "2026-10-08"
+status: illustrative   # parameters not yet calibrated against expert ratings
+source: >-
+  Impact Vision methodology 2.0. Structure follows the Impact Multiple of Money
+  (Addy, Chorengel, Collins & Etzel, 2019) and IMP's five dimensions; evidence
+  levels are the NESTA Standards of Evidence (Puttick & Ludlow, 2013).
+source_url: https://www.nesta.org.uk/toolkit/standards-of-evidence/
+
+monte_carlo:
+  draws: 4000
+  # Seeded from the inputs, so the same document always gives the same range.
+  percentiles: [10, 50, 90]
+
+# NESTA level → how far a reported figure may be from the truth (lognormal
+# sigma: 0.8 ≈ ×2.2 either way at 1σ) and the chance the outcome happens as
+# described (IMP "Risk": evidence and execution risk).
+evidence_levels:
+  1: {label: "Account of the logic", sigma: 0.8, p_success: 0.50}
+  2: {label: "Data showing change", sigma: 0.5, p_success: 0.65}
+  3: {label: "Causality shown (comparison or control group)", sigma: 0.3, p_success: 0.80}
+  4: {label: "Independent replication or evaluation", sigma: 0.2, p_success: 0.88}
+  5: {label: "Replicated at scale", sigma: 0.12, p_success: 0.93}
+# Third-party verification of a figure tightens it one notch.
+verified_sigma_factor: 0.7
+
+# Change that would have happened anyway. A comparison or control group nets
+# it out already (level ≥ 3); otherwise this prior applies (mean, sigma).
+deadweight:
+  netted_from_level: 3
+  default: {mean: 0.30, sigma: 0.5}
+
+# Share of the change credited to the enterprise (not partners, government or
+# the market). Investor attribution (ownership share) is applied on top when a
+# fund records its stake.
+attribution: {mean: 0.70, sigma: 0.25}
+
+# Years a typical outcome lasts, by theme (mean, sigma). Used when the
+# document does not state a duration.
+duration_years:
+  energy: {mean: 5, sigma: 0.4}
+  education: {mean: 3, sigma: 0.5}
+  healthcare: {mean: 2, sigma: 0.5}
+  agriculture: {mean: 3, sigma: 0.5}
+  fintech: {mean: 2, sigma: 0.5}
+  real estate: {mean: 10, sigma: 0.4}
+  water: {mean: 5, sigma: 0.4}
+  waste management: {mean: 1, sigma: 0.3}
+  retail: {mean: 1, sigma: 0.3}
+  default: {mean: 2, sigma: 0.6}
+
+# Depth of change (fraction) when the document reports reach but no change.
+# Deliberately low and wide: an unmeasured change is the largest uncertainty
+# and the evidence plan says so.
+depth_unknown: {mean: 0.10, sigma: 1.0}
+
+# Evidence quality (0–100) = 20 × the reach-weighted NESTA level of the
+# outcomes, +10 when any figure is third-party verified, capped at 100.
+evidence_quality:
+  per_level: 20
+  verified_bonus: 10
+  bands:
+    - {min: 80, label: "strong"}
+    - {min: 60, label: "good"}
+    - {min: 40, label: "moderate"}
+    - {min: 0, label: "weak"}
+
+# Gate 2.0 — three states instead of pass / fail.
+gate:
+  ready:
+    min_evidence_quality: 60
+    min_data_completeness: 40
+    require_quantified_outcome: true
+  rationale:
+    ready: >-
+      Ready when at least one outcome is quantified, evidence quality is
+      "good" (most figures backed by data showing change, or better) and
+      at least 40% of the sector's core metrics are reported.
+    evidence_plan: >-
+      Everything that is neither ready nor failing gets an evidence plan: the
+      inputs that drive most of the uncertainty, and how to close them.
+    fails_thesis: >-
+      Fails only on something found, not something missing: a greenwashing
+      finding, an exclusion or forbidden sector.
+
+# Approximate FX to USD, only to express impact "per US$1m raised". Not for
+# any financial calculation. Re-verify with the knowledge refresh.
+fx_to_usd:
+  as_of: "2026-10-08"
+  source_url: https://www.imf.org/external/np/fin/data/param_rms_mth.aspx
+  USD: 1.0
+  EUR: 1.08
+  GBP: 1.27
+  HKD: 0.128
+  SGD: 0.74
+  CNY: 0.14
+  JPY: 0.0067
+  AUD: 0.66
+  MYR: 0.21
+  KES: 0.0077
+  INR: 0.012
+  COP: 0.00024
+  PHP: 0.017
+  IDR: 0.000062
+
+# Lognormal sigma → plain words in the report.
+uncertainty_words:
+  - {max: 0.35, label: "narrow"}
+  - {max: 0.7, label: "moderate"}
+  - {max: 99, label: "wide"}

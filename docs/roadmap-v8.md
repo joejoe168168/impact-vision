@@ -1,7 +1,7 @@
 # Impact Vision — Roadmap v8.0
 
 **Date:** 2026-10-08
-**Status:** Wave 0 released as 0.17.2 (2026-10-08); Waves 1–5 in progress
+**Status:** Wave 0 released as 0.17.2 (2026-10-08); Wave 1 core landed on main; Waves 2–5 in progress
 **Audience:** product, engineering, fund managers, consultants, LPs, verifiers
 **Builds on:** `roadmap-v7.md` (released as 0.17.0/0.17.1). The v6 capability
 backlog stays valid for anything not superseded here.
@@ -237,6 +237,21 @@ version.
 | W1.9 | **Greenwashing 2.0.** Per claim: specificity × evidence level × materiality, built on `greenwashing_reviewer`. Company score = worst material claims, not an average of absences. Keep the ECGT/UCPD legal checks | `greenwashing.py`, `greenwashing_reviewer.py` | M |
 | W1.10 | **Portfolio aggregation.** Natural units weighted by capital × attribution. Never average ordinal scores. SDG contribution is weighted by impact, not by number of metrics | `portfolio_tool.py:369`, `fund_analytics.py:9` | M |
 | W1.11 | **Alignment.** IRIS+ CMS strategic goals (and the coming revision). SFDR 2.0 pre-defined KPIs. Ex-ante targets are stored so W3 can show expected vs actual (Impact Frontiers performance-reporting norms) | `core_metric_set_per_sdg.yaml`, `sfdr2` | S |
+
+**Wave 1 status (2026-10-08):**
+- Done:
+  - W1.1: two axes plus completeness.
+  - W1.2: outcomes read from claims, as a company-level reach, depth and
+    tCO2e bundle.
+  - W1.3: IMM-style expected impact, people and climate, per US$1m.
+  - W1.5: seeded Monte Carlo producing P10/P50/P90, with variance drivers.
+  - W1.7: Gate 2.0 in the report, IC memo, CLI, web and portfolio home.
+- Partly done:
+  - W1.4: enterprise contribution comes in through deadweight netting by
+    evidence level. Investor contribution needs the fund's data (W3).
+  - W1.11: targets are kept as ex-ante commitments.
+- Still to do: W1.6, W1.8, W1.9 and W1.10. All parameters stay
+  "illustrative" until the W2.6 calibration study.
 
 ### Wave 2 — Evidence, extraction & evaluation (weeks 3–12, parallel)
 

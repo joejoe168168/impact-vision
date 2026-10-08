@@ -110,6 +110,32 @@ table.claims col.c-sig { width: 20%; }
 table.claims col.c-metric { width: 20%; }
 table.claims .mref { min-width: 0; }
 .meta .nw { white-space: nowrap; }
+
+/* Expected impact (methodology 2.0) */
+.eq-row { display: flex; gap: 12px; flex-wrap: wrap; margin: 4px 0 14px; }
+.eq-row .eq { flex: 1 1 180px; border: 1px solid var(--grid); border-radius: 10px; padding: 10px 14px; }
+.eq-row .label { margin: 0; color: var(--ink-2); font-size: 0.82rem; }
+.eq-row .value { margin: 2px 0; font-size: 1.5rem; font-weight: 700; }
+.eq-row .value small, .outcome .headline small { font-size: 0.8rem; color: var(--ink-2); font-weight: 500; }
+.eq-row .sub { margin: 0; color: var(--ink-2); font-size: 0.82rem; }
+.outcome { border-top: 1px solid var(--grid); padding-top: 12px; margin-top: 12px; }
+.outcome h3 { margin: 0 0 2px; font-size: 1rem; }
+.outcome h4 { margin: 12px 0 6px; font-size: 0.86rem; color: var(--ink-2); }
+.outcome .headline { margin: 0 0 8px; font-size: 1rem; }
+.outcome .headline b { font-size: 1.6rem; }
+.range { position: relative; height: 14px; background: var(--surface-2); border-radius: 999px; }
+.range .band { position: absolute; top: 0; bottom: 0; background: var(--brand); opacity: 0.35; border-radius: 999px; }
+.range .mid { position: absolute; top: -3px; bottom: -3px; width: 3px; margin-left: -1.5px; background: var(--brand); border-radius: 2px; }
+.range-labels { display: flex; justify-content: space-between; margin: 4px 0 0; font-size: 0.8rem; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+table.factors th { white-space: nowrap; }
+table.factors td.num { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.drivers { list-style: none; margin: 0; padding: 0; }
+.drivers li { display: grid; grid-template-columns: minmax(8rem, 1fr) 2fr 3rem; gap: 8px; align-items: center; font-size: 0.86rem; padding: 3px 0; }
+.drivers .track { height: 8px; background: var(--surface-2); border-radius: 999px; overflow: hidden; }
+.drivers .track span { display: block; height: 100%; background: var(--warning); }
+.drivers b { text-align: right; font-variant-numeric: tabular-nums; }
+.outcome .quote { color: var(--ink-2); margin-top: 10px; }
+@media print { .range .band, .range .mid, .drivers .track span { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
 .mref small { display: block; color: var(--ink-2); font-size: 0.8rem; line-height: 1.3; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden;
   clip: rect(0 0 0 0); white-space: nowrap; border: 0; }

@@ -11,6 +11,35 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Added — methodology 2.0 (roadmap v8 Wave 1)
+- **Expected impact with ranges.** `impact/expected_impact.py` reads the
+  reported quantities (people reached, depth of change, tCO2e avoided, the
+  funding ask) from the claims, skipping problem statements and keeping
+  targets apart, and computes reach × depth × duration × (1 − deadweight) ×
+  attribution × probability of success. Every factor's spread follows the
+  NESTA level of the claim behind it; a seeded Monte Carlo gives
+  P10 / P50 / P90 in depth-weighted person-years and tCO2e (and per US$1m
+  raised when the ask is stated). Parameters, all labelled illustrative
+  until calibrated, are in `data/methodology/v2.yaml`.
+- **Evidence quality (0–100)** and **data completeness** are reported next
+  to impact, never multiplied in.
+- **Gate 2.0:** Ready for IC / Evidence plan required / Fails thesis.
+  Failing needs something found (a greenwashing finding, an exclusion); an
+  evidence plan lists the inputs that drive most of the uncertainty and how
+  to close them. The report verdict, KPI tiles, "What would change our
+  mind", a new "Expected impact" section (all audiences, en / zh-HK /
+  zh-CN), the IC memo (HTML and Word), the CLI summary, the web card and the
+  portfolio home all use it. `IMPACT_VISION_METHODOLOGY_VERSION=1` restores
+  the v1 verdict.
+- Perturbation and gaming tests (W2.5): scaling reach scales impact,
+  buzzwords change nothing, a comparison group narrows the range and nets
+  out deadweight (`tests/test_v8_methodology2.py`).
+
+### Fixed
+- NESTA levels were described wrongly (an RCT is level 3, causality, not
+  level 5). Comparison groups, matched comparisons and 對照研究 / 对照组 are
+  now recognised as level 3 evidence.
+
 ## [0.17.2] - 2026-10-08 - Secure & honest (roadmap v8 Wave 0)
 
 The post-v7 review found that the local server could be driven by any web
