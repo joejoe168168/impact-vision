@@ -3,8 +3,8 @@
 The 5D, SDG and greenwashing scorers read every weight and threshold from
 ``data/methodology/v1.yaml``. :func:`methodology_stamp` returns the
 ``methodology_version`` plus a ``config_hash`` (SHA-256 over the methodology
-file and ``data/scoring_config.yaml``, which holds sector baselines and keyword
-boosts). Every output carries this stamp, so two reports are comparable only
+file, ``data/scoring_config.yaml`` (sector baselines, keyword boosts) and
+``data/sdg_keywords.yaml``). Every output carries this stamp, so two reports are comparable only
 when both values match.
 
 Set ``IMPACT_VISION_METHODOLOGY`` to a YAML path to run a custom methodology;
@@ -35,9 +35,12 @@ def _methodology_path() -> Path:
 def _load(path: str) -> tuple[dict[str, Any], str]:
     raw = Path(path).read_bytes()
     digest = hashlib.sha256(raw)
-    scoring = data_path("scoring_config.yaml")
-    if scoring.exists():
-        digest.update(scoring.read_bytes())
+    # Sector baselines / keyword boosts and the SDG keyword map shape scores
+    # too, so they are part of the hash.
+    for extra in ("scoring_config.yaml", "sdg_keywords.yaml"):
+        extra_path = data_path(extra)
+        if extra_path.exists():
+            digest.update(extra_path.read_bytes())
     return (yaml.safe_load(raw.decode("utf-8")) or {}), digest.hexdigest()
 
 

@@ -5,9 +5,16 @@
 # this file + data/scoring_config.yaml), so two reports are comparable only
 # when both match. Change a number => bump `version` and add a CHANGELOG
 # entry. Sector baselines and keyword boosts stay in scoring_config.yaml.
-version: "1.1.0"
-effective: "2026-10-07"
-as_of: "2026-10-07"
+version: "1.2.0"
+effective: "2026-10-08"
+as_of: "2026-10-08"
+# 1.2.0 (2026-10-08, v8 W0.4–W0.5): missing data alone can no longer make a
+#   greenwashing finding (needs a conduct signal: vague, unquantified claims);
+#   disclosed risk controls and accreditations count; one finding threshold
+#   used by gate, verdict and display; IC-gate defaults moved here with their
+#   rationale; 5D clamped to its 1–5 scale; the whole document (not the first
+#   1,000 characters) feeds 5D; geography no longer raises SDG relevance and a
+#   self-claimed goal counts as material but not as strong inference.
 # 1.1.0 (2026-10-07): own-operations footprint metrics no longer count as
 #   goal-specific SDG evidence (a fintech disclosing its Scope 1 is not
 #   contributing to SDG 13). 1.0.0 (2026-10-06): first versioned release.
@@ -15,6 +22,8 @@ source: Impact Vision methodology (IMP Five Dimensions, IRIS+ 5.3c, UN SDG frame
 
 five_dimensions:
   scale: [1, 5]
+  # Scores (dimensions and overall) never leave the scale, penalties included.
+  score_floor: 1.0
   # score = coverage_of_theme_reference_set * metric_scale + report_bonus + extra_bonus
   metric_scale: 4.5
   report_bonus: 0.5
@@ -55,6 +64,12 @@ sdg:
   unlinked_goal_metric_cap: 10
   no_catalog_metrics: {relevance_scale: 35, floor: 10}
   confidence_bands: {high: 50, medium: 20}
+  # A goal the company claims is treated as material (relevance 0.5) but no
+  # longer as strong inference (was 0.7): claiming is intent, not evidence.
+  claimed_goal_relevance: 0.5
+  # Naming a region used to add up to +0.3 relevance to SDG 1/2. Location is
+  # context, not contribution: scaled to 0.
+  geography_boost_scale: 0.0
   evidence_based_min_specific_metrics: 3
   # Disclosure of the company's own footprint, not a contribution to the goal:
   # counted like cross-cutting metrics (reduced weight, never goal-specific).
@@ -69,10 +84,46 @@ greenwashing:
     specificity: 0.20
     selectivity: 0.15
     verification: 0.15
+  # Component flags (e.g. NO_VERIFICATION) fire above this.
   flag_threshold: 60
-  classification:   # first band whose max the risk score does not exceed
+  # The overall score is a *finding* at or above this, a data gap below.
+  # Gate, verdict and every display use this one number.
+  finding_threshold: 60
+  # At or below this the gate passes the greenwashing check outright.
+  pass_max: 40
+  # Absence is a plan, not a verdict: "no verification", "missing negatives"
+  # and "few metrics" describe missing data. Unless a conduct signal (vague,
+  # unquantified claims) is also above the flag threshold, the overall score
+  # is capped just below the finding threshold and labelled an evidence gap.
+  conduct_components: [specificity]
+  absence_cap: 59
+  # Risks the company discloses in its own words ("we cap loans at…",
+  # "medical waste goes to a licensed contractor") reduce the omission and
+  # selectivity components: at least `min_hits` control phrases => factor.
+  disclosed_controls: {min_hits: 2, omission_factor: 0.6, selectivity_relief: 15}
+  classification:   # half-open bands: score < max (last band includes 100)
     - {max: 20, label: "Genuine Impact Leader"}
     - {max: 40, label: "Substantive with Gaps"}
     - {max: 60, label: "Moderate Risk"}
     - {max: 80, label: "High Risk"}
     - {max: 100, label: "Probable Greenwashing"}
+
+# Default IC gate (a fund's own thesis file overrides any of these).
+gate:
+  min_5d_overall: 2.5
+  min_top_sdg_score: 60
+  min_dd_coverage_pct: 70
+  max_greenwashing_score: 40
+  rationale:
+    min_5d_overall: >-
+      2.5 is the midpoint of the 1–5 scale: below it, at least one dimension
+      rests on text inference rather than reported metrics.
+    min_top_sdg_score: >-
+      60 of 100 needs goal-specific metric evidence (description and themes
+      alone give at most 40), so the lead SDG is evidenced, not asserted.
+    min_dd_coverage_pct: >-
+      70% of the sector-filtered DD checklist answered is the coverage an IC
+      memo needs before residual questions can go to confirmatory DD.
+    max_greenwashing_score: >-
+      40 is the top of "Substantive with Gaps": above it, claims outrun
+      evidence enough that an IC should see the evidence plan first.

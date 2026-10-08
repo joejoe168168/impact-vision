@@ -172,8 +172,8 @@ def _sector_core_sets() -> dict:
 def core_set_for_sector(sector: str | None) -> tuple[set[str], str]:
     """Return ``(core metric IDs, basis)`` for a company's sector.
 
-    ``basis`` is the canonical sector whose set was used, or ``"default"``
-    when the sector is unknown (the historical one-size-fits-all set).
+    ``basis`` is the canonical sector whose set was used, or ``"universal"``
+    when the sector is unknown (cross-cutting metrics only, v8 W0.6).
     """
     from openharness.tools.impact.common import normalize_sector
 
@@ -182,6 +182,8 @@ def core_set_for_sector(sector: str | None) -> tuple[set[str], str]:
     sector_ids = (cfg.get("sectors") or {}).get(key)
     if sector_ids:
         return set(cfg.get("universal") or []) | set(sector_ids), key
+    if cfg.get("universal"):
+        return set(cfg["universal"]), "universal"
     return set(cfg.get("default") or CORE_METRIC_SET_IDS), "default"
 
 
@@ -218,6 +220,16 @@ def analyze_gaps(
             })
         else:
             missing_metrics.append(info)
+
+    # Most relevant first: the sector's own metrics, then the universal set,
+    # each ranked by theme / goal specificity / document wording (v8 W0.6).
+    from openharness.impact.metric_relevance import rank_metrics
+
+    universal = set((_sector_core_sets().get("universal") or []))
+    by_id = {info["id"]: info for info in missing_metrics}
+    order = rank_metrics([i for i in by_id if i not in universal], company, store) + rank_metrics(
+        [i for i in by_id if i in universal], company, store)
+    missing_metrics = [by_id[i] for i in order]
 
     total = len(target_set)
     reported_count = len(reported_metrics)

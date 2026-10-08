@@ -7,16 +7,18 @@
 #
 # Each sector set = `universal` (cross-cutting workforce, governance, climate
 # and target-setting metrics every company should report) + the sector list
-# below. Sectors not listed here fall back to `default`, which reproduces the
-# historical CORE_METRIC_SET_IDS so existing reports don't shift.
+# below. Sectors not listed here get `universal` only (v8 W0.6): the old
+# `default` list was microfinance-flavoured and told a fashion start-up to
+# adopt a "Client Protection Policy". `default` is kept only for callers that
+# ask for it by name.
 #
 # Keys are canonical engine sectors (see normalize_sector in
 # tools/impact/common.py). Every ID must exist in the IRIS+ 5.3c catalog —
 # tests/test_sector_awareness.py enforces this.
 
-version: "1.0"
+version: "1.1"
 source: "GIIN IRIS+ 5.3c catalog; curated per sector (Impact Vision v7 W0.3)"
-as_of: "2026-10-06"
+as_of: "2026-10-08"
 
 universal:
   - OI8869   # Permanent Employees: Total
@@ -127,3 +129,24 @@ sectors:
     - PI5926   # Waste Reductions from Products Sold
     - OI1346   # Waste Produced: Hazardous Waste
     - OI3757   # Occupational Injuries
+  technology:
+    - PI4060   # Client Individuals: Total
+    - PI2822   # Client Individuals: Provided New Access
+    - OI5049   # Client Feedback System
+    - OI8825   # Energy Purchased: Total
+  retail:
+    - OI4328   # Recycled Materials
+    - OI6709   # Waste Produced: Total
+    - OI2535   # Waste Disposed: Recycled/Reused
+    - PI5926   # Waste Reductions from Products Sold
+    - OI3757   # Occupational Injuries
+  tourism:
+    - OI8825   # Energy Purchased: Total
+    - OI0263   # Water Withdrawn
+    - OI6709   # Waste Produced: Total
+    - OI3757   # Occupational Injuries
+  transport:
+    - PI4060   # Client Individuals: Total
+    - OI8825   # Energy Purchased: Total
+    - OI3757   # Occupational Injuries
+    - OI9266   # Fatal Occupational Injuries

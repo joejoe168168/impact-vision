@@ -320,6 +320,10 @@ class Company(BaseModel):
 
     name: str
     description: str = ""
+    # v8 W0.5: the whole source document minus problem/market/team/ask
+    # sections; what the scorers read. Not serialised (it can be long and is
+    # rebuilt from the document).
+    assessment_text: str = Field(default="", exclude=True, repr=False)
     sector: str = Field(
         default="",
         description=(

@@ -26,9 +26,12 @@ class VerdictCard(BaseModel):
 
 
 def classify_greenwashing(score: float) -> GreenwashingVerdict:
-    if score < 30:
+    """pass ≤ pass_max < caution < finding threshold ≤ fail (methodology YAML)."""
+    from openharness.impact.greenwashing import finding_threshold, pass_max
+
+    if score <= pass_max():
         return "pass"
-    if score <= 70:
+    if score < finding_threshold():
         return "caution"
     return "fail"
 

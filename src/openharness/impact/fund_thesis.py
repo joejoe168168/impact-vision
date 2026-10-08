@@ -23,11 +23,20 @@ import yaml
 from pydantic import BaseModel, Field, model_validator
 
 
+def _gate_default(key: str, fallback: float) -> float:
+    """Default IC-gate threshold from the methodology YAML (v8 W0.4)."""
+    from openharness.impact.methodology import section
+
+    return float(section("gate").get(key, fallback))
+
+
 class ICGate(BaseModel):
-    min_5d_overall: float = 2.5
-    min_dd_coverage_pct: float = 70.0
-    min_top_sdg_score: float = 60.0
-    max_greenwashing_score: float = 40.0
+    # Defaults (and their written rationale) live in data/methodology/*.yaml;
+    # a fund's thesis file overrides any of them.
+    min_5d_overall: float = Field(default_factory=lambda: _gate_default("min_5d_overall", 2.5))
+    min_dd_coverage_pct: float = Field(default_factory=lambda: _gate_default("min_dd_coverage_pct", 70.0))
+    min_top_sdg_score: float = Field(default_factory=lambda: _gate_default("min_top_sdg_score", 60.0))
+    max_greenwashing_score: float = Field(default_factory=lambda: _gate_default("max_greenwashing_score", 40.0))
     exclusion_must_pass: bool = True
     required_sectors: list[str] = Field(default_factory=list)
     forbidden_sectors: list[str] = Field(default_factory=list)

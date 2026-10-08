@@ -138,6 +138,7 @@ def assess_document(
     from openharness.impact.gap_analysis import analyze_gaps
     from openharness.impact.sdg_mapper import generate_sdg_gap_recommendations
     from openharness.impact.sdk import ImpactVision
+    from openharness.impact.text_sections import scoring_text
     from openharness.tools.impact.impact_report_tool import _infer_opportunities_and_risks
     from openharness.tools.impact.pitch_deck_analyze_tool import (
         _detect_sdg_goals,
@@ -165,6 +166,8 @@ def assess_document(
     )
     company = assessment.company
     company.description = description or text[:1000]
+    # Scorers read the whole document minus problem/market/team/ask sections.
+    company.assessment_text = scoring_text(text) if not description else ""
     company.sdg_claims = list(sdg_claims) if sdg_claims is not None else list(inferred.sdg_claims)
     # IDs the document cites explicitly ("PI4060: 45,000") beat mapped values.
     explicit = dict(inferred.reported_metrics)

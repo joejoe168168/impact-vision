@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+import re
+
+from openharness.impact.text_sections import company_text
+
 from pathlib import Path
 
 import yaml
@@ -178,6 +182,15 @@ def _keyword_not_negated(text: str, keyword: str) -> bool:
 _CONTEXT_WINDOW_SIZE = 80
 
 
+def _keyword_present(text: str, keyword: str) -> bool:
+    """Whole-word match allowing simple inflections ("emission" → "emissions").
+
+    Plain substring matching let "land" fire on "Thailand" / "island" and
+    "carbon" on "carbonated" (methodology 1.2.0).
+    """
+    return re.search(r"\b" + re.escape(keyword) + r"(?:s|es|ed|ing)?\b", text) is not None
+
+
 def _keyword_in_context(text: str, keyword: str) -> bool:
     """Verify that a keyword appears in a substantive context window.
 
@@ -219,7 +232,7 @@ def _infer_sdg_from_description(company: Company) -> dict[int, float]:
     """Infer SDG relevance from company description and sector."""
     from openharness.tools.impact.common import keyword_match_with_context, normalize_sector
 
-    text = f"{company.description} {company.sector} {' '.join(company.impact_themes)}".lower()
+    text = f"{company_text(company)} {company.sector} {' '.join(company.impact_themes)}".lower()
     inferred: dict[int, float] = {}
 
     sector_relevance = _get_sector_sdg_relevance()
@@ -235,19 +248,21 @@ def _infer_sdg_from_description(company: Company) -> dict[int, float]:
 
     keyword_map = _get_keyword_sdg_map()
     for keyword, sdg_list in keyword_map.items():
-        if keyword in text and _keyword_not_negated(text, keyword) and _keyword_in_context(text, keyword):
+        if _keyword_present(text, keyword) and _keyword_not_negated(text, keyword) and _keyword_in_context(text, keyword):
             for goal, relevance in sdg_list:
                 inferred[goal] = max(inferred.get(goal, 0), relevance)
 
-    if company.geography:
+    geo_scale = float(_sdg().get("geography_boost_scale", 1.0))
+    if company.geography and geo_scale > 0:
         geo_lower = company.geography.lower()
         for geo_key, sdg_boosts in _GEO_SDG_BOOST.items():
             if geo_key in geo_lower:
                 for goal, boost in sdg_boosts.items():
-                    inferred[goal] = min(1.0, inferred.get(goal, 0) + boost)
+                    inferred[goal] = min(1.0, inferred.get(goal, 0) + boost * geo_scale)
 
+    claimed = float(_sdg().get("claimed_goal_relevance", 0.7))
     for goal_num in company.sdg_claims:
-        inferred[goal_num] = max(inferred.get(goal_num, 0), 0.7)
+        inferred[goal_num] = max(inferred.get(goal_num, 0), claimed)
 
     return inferred
 
@@ -468,10 +483,13 @@ def generate_sdg_gap_recommendations(
         unmatched = goal_metric_ids - reported_ids
 
         if unmatched and len(matched) < 3:
-            top_missing = sorted(unmatched)[:3]
+            from openharness.impact.metric_relevance import metric_label, rank_metrics
+
+            # Goal-specific, sector- and theme-relevant metrics first (was A→Z).
+            top_missing = rank_metrics(unmatched, company, store, goal=goal_num, limit=3)
             recs.append(
-                f"Report metrics {', '.join(top_missing)} to strengthen SDG {goal_num} evidence "
-                f"({len(matched)}/{len(goal_metric_ids)} currently tracked)"
+                f"Report {'; '.join(metric_label(m, store) for m in top_missing)} to strengthen "
+                f"SDG {goal_num} evidence ({len(matched)}/{len(goal_metric_ids)} currently tracked)"
             )
 
         if alignment.provenance == "estimated":

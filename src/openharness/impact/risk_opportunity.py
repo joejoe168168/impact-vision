@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from openharness.impact.text_sections import company_text
+
 from openharness.impact.models import Company
 
 _DEFAULTS_RISK_RULES: dict[str, dict[str, str]] = {
@@ -71,7 +73,7 @@ _RISK_MATRIX: dict[tuple[str, str], str] = {
 def assess_impact_risk_opportunity(company: Company) -> dict:
     """Return structured risk/opportunity assessment for a company."""
     risk_rules, opp_rules = _load_rules()
-    text = f"{company.sector} {company.description} {' '.join(company.impact_themes)}".lower()
+    text = f"{company.sector} {company_text(company)} {' '.join(company.impact_themes)}".lower()
 
     risks: list[dict] = []
     opportunities: list[dict] = []

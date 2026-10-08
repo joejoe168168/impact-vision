@@ -19,6 +19,8 @@ directly — the SDK simply removes the orchestration boilerplate.
 """
 from __future__ import annotations
 
+from openharness.impact.text_sections import scoring_text
+
 from datetime import date
 from pathlib import Path
 from typing import Any
@@ -135,6 +137,7 @@ class ImpactVision:
             sector=sector or "",
             geography=geography or country or extracted_geography or "",
             description=text[:1000],
+            assessment_text=scoring_text(text),
             impact_themes=impact_themes or [],
         )
         # Surface extracted claims on the company for downstream tooling.

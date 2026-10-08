@@ -14,7 +14,7 @@ def test_methodology_stamp_on_models_and_outputs() -> None:
     from openharness.impact.report_templates.decision_report import render_decision_report
 
     stamp = methodology_stamp()
-    assert stamp["methodology_version"] == "1.1.0" and len(stamp["config_hash"]) == 12
+    assert stamp["methodology_version"] == "1.2.0" and len(stamp["config_hash"]) == 12
     bundle = assess_file(sample_deck_path("solar"))
     assert bundle.assessment.methodology == stamp
     assert bundle.assessment.five_dimensions.methodology == stamp
@@ -26,7 +26,7 @@ def test_methodology_stamp_on_models_and_outputs() -> None:
     assert json.loads(to_json(data))["methodology"] == stamp
     assert stamp["config_hash"] in to_csv(data)
     summary = {r[0].value: r[1].value for r in build_workbook(data)["Summary"].iter_rows(min_row=4)}
-    assert summary["Methodology version"] == "1.1.0"
+    assert summary["Methodology version"] == "1.2.0"
 
 
 def test_appendix_is_generated_from_yaml(tmp_path, monkeypatch) -> None:

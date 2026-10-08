@@ -38,10 +38,11 @@ def _company(name: str = "Solar Co", metrics: dict[str, str] | None = None) -> C
 
 
 def test_verdict_thresholds_are_pass_caution_fail() -> None:
-    assert classify_greenwashing(29.9) == "pass"
-    assert classify_greenwashing(30.0) == "caution"
-    assert classify_greenwashing(70.0) == "caution"
-    assert classify_greenwashing(70.1) == "fail"
+    # Methodology 1.2.0: pass ≤ pass_max (40) < caution < finding threshold (60) ≤ fail.
+    assert classify_greenwashing(40.0) == "pass"
+    assert classify_greenwashing(40.1) == "caution"
+    assert classify_greenwashing(59.9) == "caution"
+    assert classify_greenwashing(60.0) == "fail"
 
     score = GreenwashingScore(
         overall_score=72,

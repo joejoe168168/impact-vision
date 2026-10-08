@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from openharness.impact.text_sections import company_text
+
 import logging
 from pathlib import Path
 
@@ -164,7 +166,7 @@ def assess_additionality(company: Company) -> dict:
     Returns a dict with additionality_score (0-5), signals found, and
     a counterfactual prompt for human review.
     """
-    text = f"{company.description} {company.sector} {' '.join(company.impact_themes)}".lower()
+    text = f"{company_text(company)} {company.sector} {' '.join(company.impact_themes)}".lower()
     signals: list[str] = []
     for phrase in _ADDITIONALITY_PHRASES:
         if phrase in text and _keyword_not_negated(text, phrase):
@@ -197,7 +199,7 @@ def _infer_baseline(company: Company) -> dict[str, float]:
     """Infer baseline 5D scores from sector and description keywords."""
     from openharness.tools.impact.common import keyword_match_with_context, normalize_sector
 
-    text = f"{company.description} {company.sector} {' '.join(company.impact_themes)}".lower()
+    text = f"{company_text(company)} {company.sector} {' '.join(company.impact_themes)}".lower()
     baseline: dict[str, float] = {"what": 0.5, "who": 0.5, "how_much": 0.5, "contribution": 0.5, "risk": 0.5}
 
     sector_baselines = _get_sector_baselines()
@@ -225,6 +227,15 @@ def _infer_baseline(company: Company) -> dict[str, float]:
     return {dim: min(high, max(low, val)) for dim, val in baseline.items()}
 
 
+def _combined_provenance(*parts: "DimensionScore") -> str:
+    kinds = {getattr(p, "provenance", "estimated") for p in parts}
+    if kinds == {"evidence-based"}:
+        return "evidence-based"
+    if kinds & {"evidence-based", "partial"}:
+        return "partial"
+    return "estimated"
+
+
 def _grade_from_score(score: float) -> str:
     for band in _fd()["grade_bands"]:
         if score >= band["min"]:
@@ -239,6 +250,7 @@ def _score_dimension(
     store: MetricStore,
     theme: str | None,
     baseline_score: float = 0.5,
+    company: Company | None = None,
 ) -> DimensionScore:
     """Score a single dimension combining reported metrics and inferred baseline."""
     all_dim_metrics = store.filter_by_dimension(field_name.replace("how_much_", ""))
@@ -300,7 +312,10 @@ def _score_dimension(
     if len(matched_in_reference) < _get_min_metrics_threshold() and score > cap:
         score = cap
 
-    gap_ids = sorted(reference_set - reported_ids)[:10]
+    from openharness.impact.metric_relevance import rank_metrics
+
+    # Most relevant first (sector core set, themes, goal-specific), not A→Z.
+    gap_ids = rank_metrics(reference_set - reported_ids, company, store, limit=10)
     gaps = [f"{mid} ({store.get(mid).name if store.get(mid) else mid})" for mid in gap_ids]
 
     if total_reported_dim > 0:
@@ -345,7 +360,7 @@ def _compute_negative_impact_penalty(company: Company) -> float:
     "free of forced labor" or "without harmful side effects" is not penalised
     as if it acknowledged those harms.
     """
-    text = f"{company.description} {company.sector} {' '.join(company.impact_themes)}".lower()
+    text = f"{company_text(company)} {company.sector} {' '.join(company.impact_themes)}".lower()
     adverse_count = sum(
         1 for p in _ADVERSE_IMPACT_PATTERNS
         if p in text and _keyword_not_negated(text, p)
@@ -391,11 +406,13 @@ def assess_five_dimensions(
     for display_name, field_name, baseline_key in dim_fields:
         scores[field_name] = _score_dimension(
             display_name, field_name, reported_ids, store, theme,
-            baseline_score=baseline.get(baseline_key, 0.5),
+            baseline_score=baseline.get(baseline_key, 0.5), company=company,
         )
 
-    how_much_depth = _score_dimension("How Much (Depth)", "how_much_depth", reported_ids, store, theme, baseline.get("how_much", 0.5))
-    how_much_duration = _score_dimension("How Much (Duration)", "how_much_duration", reported_ids, store, theme, baseline.get("how_much", 0.5))
+    how_much_depth = _score_dimension("How Much (Depth)", "how_much_depth", reported_ids, store, theme,
+                                      baseline.get("how_much", 0.5), company=company)
+    how_much_duration = _score_dimension("How Much (Duration)", "how_much_duration", reported_ids, store, theme,
+                                         baseline.get("how_much", 0.5), company=company)
 
     how_much_combined = DimensionScore(
         dimension="How Much",
@@ -411,7 +428,7 @@ def assess_five_dimensions(
 
     contribution_duration = _score_dimension(
         "Contribution (Duration)", "contribution_duration", reported_ids, store, theme,
-        baseline.get("contribution", 0.5),
+        baseline.get("contribution", 0.5), company=company,
     )
 
     contribution_combined = DimensionScore(
@@ -449,6 +466,18 @@ def assess_five_dimensions(
         if how_much_combined.score > cap:
             how_much_combined.score = cap
             how_much_combined.notes += f" (capped: report ≥{MIN_METRICS_FOR_ABOVE_BASELINE} metrics to unlock higher scores)"
+
+    # Combined dimensions inherit provenance from their parts (they used to
+    # default to "estimated" even with metrics reported).
+    how_much_combined.provenance = _combined_provenance(
+        scores["how_much_scale"], how_much_depth, how_much_duration)
+    contribution_combined.provenance = _combined_provenance(
+        scores["contribution_depth"], contribution_duration)
+
+    # v8 W0.5: scores never leave the published 1–5 scale, penalties included.
+    floor = float(_fd().get("score_floor", 0.5))
+    for dim_score in (scores["what"], scores["who"], how_much_combined, contribution_combined, scores["risk"]):
+        dim_score.score = round(min(5.0, max(floor, dim_score.score)), 1)
 
     overall = round(
         (scores["what"].score + scores["who"].score + how_much_combined.score + contribution_combined.score + scores["risk"].score) / 5.0,

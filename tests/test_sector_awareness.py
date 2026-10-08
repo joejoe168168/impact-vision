@@ -11,7 +11,7 @@ from openharness.impact.dd_checklist import (
     filter_questions_for_sector,
     load_checklist,
 )
-from openharness.impact.gap_analysis import CORE_METRIC_SET_IDS, analyze_gaps, core_set_for_sector
+from openharness.impact.gap_analysis import analyze_gaps, core_set_for_sector
 from openharness.impact.models import Company
 from openharness.tools.impact.impact_report_tool import _infer_opportunities_and_risks
 
@@ -46,7 +46,8 @@ def test_core_sets_are_sector_specific_and_valid():
     assert "FP3021" not in ag  # Revenue from Grants and Donations
     assert "PI9991" in ag
     unknown, basis = core_set_for_sector("")
-    assert basis == "default" and unknown == CORE_METRIC_SET_IDS
+    # v8 W0.6: unknown sector → universal metrics only (no microfinance default).
+    assert basis == "universal" and "OI4753" not in unknown and "OD4091" in unknown
 
     store = get_metric_store()
     cfg = yaml.safe_load(data_path("core_metric_sets_by_sector.yaml").read_text())

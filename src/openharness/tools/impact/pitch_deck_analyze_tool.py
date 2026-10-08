@@ -745,7 +745,17 @@ _SECTOR_KEYWORDS: dict[str, tuple[str, ...]] = {
                     "veterinary", "feed"),
     "Energy": ("energy", "solar", "wind", "renewable", "electricity", "cleantech", "mini-grid",
                "off-grid", "grid"),
-    "Technology": ("software", "saas", "app", "digital", "technology", "platform"),
+    # "app" / "platform" alone don't make a tech company: most decks have an app.
+    "Technology": ("software", "saas", "technology company", "tech company", "cybersecurity",
+                   "data platform", "ai platform", "developer"),
+    "Waste Management": ("recycling", "recycled", "recycle", "circular", "circularity", "waste",
+                         "landfill", "upcycling", "upcycled", "take-back", "resale",
+                         "second-hand", "secondhand", "reuse", "reused", "textile", "textiles",
+                         "e-waste", "compost", "composting"),
+    "Retail": ("retail", "retailer", "retailers", "fashion", "apparel", "garment", "garments",
+               "clothing", "e-commerce", "consumer brand"),
+    "Manufacturing": ("manufacturing", "manufacturer", "factory", "factories", "production line"),
+    "Tourism": ("tourism", "tourist", "tourists", "hotel", "hotels", "hospitality", "ecotourism"),
     "Real Estate": ("real estate", "property", "affordable housing", "construction",
                     "housing units"),
     "Water & Sanitation": ("sanitation", "drinking water", "water treatment", "wash",
@@ -842,14 +852,33 @@ def _detect_geography(text: str) -> str:
     import re
     text_lower = text[:5000].lower()
     geo_patterns: dict[str, list[str]] = {
+        "Hong Kong": ["hong kong", "kowloon", "kwai chung", "sha tin", "tsuen wan", "new territories",
+                      "hksar", "香港", "九龍", "新界"],
+        "Singapore": ["singapore", "新加坡"],
+        "Philippines": ["philippines", "manila", "菲律賓", "菲律宾"],
+        "Thailand": ["thailand", "bangkok", "泰國", "泰国"],
+        "Bangladesh": ["bangladesh", "dhaka"],
+        "Pakistan": ["pakistan", "karachi", "lahore"],
+        "Japan": ["japan", "tokyo", "osaka", "日本"],
+        "United Kingdom": ["united kingdom", "england", "scotland", "wales", "london", "manchester"],
+        "Uganda": ["uganda", "kampala"],
+        "Tanzania": ["tanzania", "dar es salaam"],
+        "Rwanda": ["rwanda", "kigali"],
+        "Ghana": ["ghana", "accra"],
+        "Ethiopia": ["ethiopia", "addis ababa"],
+        "Egypt": ["egypt", "cairo"],
+        "Peru": ["peru", "lima"],
+        "Chile": ["chile", "santiago"],
+        "Argentina": ["argentina", "buenos aires"],
         "Sub-Saharan Africa": ["sub-saharan", "east africa", "west africa", "central africa", "southern africa"],
         "Kenya": ["kenya", "nairobi"],
         "Nigeria": ["nigeria", "lagos", "abuja"],
         "South Africa": ["south africa", "johannesburg", "cape town"],
         "India": ["india", "mumbai", "delhi", "bangalore", "hyderabad"],
-        "China": ["china", "beijing", "shanghai", "shenzhen"],
-        "Indonesia": ["indonesia", "jakarta"],
-        "Malaysia": ["malaysia", "kuala lumpur"],
+        "China": ["mainland china", "china", "beijing", "shanghai", "shenzhen", "guangzhou", "中國", "中国",
+                  "北京", "上海", "深圳", "广州", "廣州"],
+        "Indonesia": ["indonesia", "jakarta", "印尼", "印度尼西亞"],
+        "Malaysia": ["malaysia", "kuala lumpur", "johor", "馬來西亞", "马来西亚"],
         "Vietnam": ["vietnam", "ho chi minh"],
         "Brazil": ["brazil", "são paulo", "sao paulo"],
         "Colombia": ["colombia", "bogotá", "bogota"],
@@ -864,8 +893,15 @@ def _detect_geography(text: str) -> str:
     }
     best_geo = ""
     best_count = 0
+    def _mentioned(kw: str) -> bool:
+        # Whole words for Latin names ("lima" must not match "climate");
+        # CJK names have no word boundaries, so they match as substrings.
+        if kw.isascii():
+            return re.search(r"(?<![\w-])" + re.escape(kw) + r"(?![\w-])", text_lower) is not None
+        return kw in text_lower
+
     for region, keywords in geo_patterns.items():
-        count = sum(1 for kw in keywords if kw in text_lower)
+        count = sum(1 for kw in keywords if _mentioned(kw))
         if count > best_count:
             best_count = count
             best_geo = region

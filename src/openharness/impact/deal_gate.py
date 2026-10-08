@@ -91,8 +91,14 @@ class DealScorecard(BaseModel):
         return self.overall_status.upper()
 
 
-# Greenwashing composite at which risk is a finding rather than a data gap
-# (the "High Risk" band in greenwashing._classify).
+def greenwashing_finding_threshold() -> float:
+    """Composite at which risk is a finding rather than a data gap (methodology YAML)."""
+    from openharness.impact.greenwashing import finding_threshold
+
+    return finding_threshold()
+
+
+# Kept for importers; the live value comes from the methodology YAML.
 GREENWASHING_FINDING_THRESHOLD = 60.0
 
 
@@ -188,7 +194,7 @@ def evaluate_deal(
                 message=f"Risk {greenwashing_score:.1f} vs. max {gate.max_greenwashing_score}",
                 # Below "High Risk" the score is driven by missing metrics;
                 # at or above it, claims outrun evidence — a finding.
-                data_gap=greenwashing_score < GREENWASHING_FINDING_THRESHOLD,
+                data_gap=greenwashing_score < greenwashing_finding_threshold(),
             )
         )
 

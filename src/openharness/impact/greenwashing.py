@@ -17,6 +17,8 @@ Extended with NLP-enhanced signals:
 
 from __future__ import annotations
 
+from openharness.impact.text_sections import company_text
+
 import re
 from typing import Any, Literal
 
@@ -208,6 +210,8 @@ _VERIFICATION_KEYWORDS = {
     "audit", "audited", "verified", "third-party", "third party",
     "assurance", "certification", "certified", "independently verified",
     "external review", "iso 14001", "b corp", "fair trade",
+    "accredited", "accreditation", "gold standard", "verra", "safecare",
+    "sirim", "sedex", "fairtrade", "rainforest alliance", "iso 9001", "iso 27001",
 }
 
 _MEASUREMENT_KEYWORDS = {
@@ -237,7 +241,16 @@ class GreenwashingScore(BaseModel):
 
     flags: list[str] = Field(default_factory=list)
     recommendations: list[str] = Field(default_factory=list)
+    # v8 W0.4: True when the score is driven by missing data rather than by
+    # anything the company said; such a score is capped below the finding
+    # threshold and reads as "evidence gap", never as greenwashing.
+    evidence_gap: bool = False
+    disclosed_controls: int = 0
     methodology: dict[str, str] = Field(default_factory=lambda: _gw_stamp())
+
+    @property
+    def is_finding(self) -> bool:
+        return self.overall_score >= finding_threshold()
 
 
 def _gw_stamp() -> dict[str, str]:
@@ -251,6 +264,33 @@ def _gw() -> dict:
     from openharness.impact.methodology import section
 
     return section("greenwashing")
+
+
+def finding_threshold() -> float:
+    """Overall score at which greenwashing risk is a finding (methodology YAML)."""
+    return float(_gw().get("finding_threshold", 60))
+
+
+def pass_max() -> float:
+    """Overall score at or below which the greenwashing check passes outright."""
+    return float(_gw().get("pass_max", 40))
+
+
+# Phrases that show a company names and manages its own risks. Counted on the
+# whole document, word-boundary aware.
+_CONTROL_PHRASES = (
+    "risks we manage", "risk management", "we manage", "mitigat", "safeguard", "grievance",
+    "complaints mechanism", "complaint mechanism", "do no harm", "licensed contractor",
+    "take-back", "take back", "recycl", "landfill", "over-indebtedness", "overindebtedness",
+    "repayment capacity", "loan cap", "we cap", "data privacy", "data protection", "consent",
+    "child safeguarding", "health and safety", "incident", "whistleblow", "code of conduct",
+    "e-waste", "end-of-life", "disposal", "waste contractor",
+)
+
+
+def _count_controls(text: str) -> int:
+    lowered = text.lower()
+    return sum(1 for phrase in _CONTROL_PHRASES if phrase in lowered)
 
 
 def _canonical_metric_ids(raw: Any) -> set[str]:
@@ -270,7 +310,7 @@ def assess_greenwashing(
     claims: list[dict[str, Any]] | None = None,
 ) -> GreenwashingScore:
     """Run greenwashing risk assessment for a company."""
-    text = f"{company.description} {' '.join(company.impact_themes)}".lower()
+    text = f"{company_text(company)} {' '.join(company.impact_themes)}".lower()
     if claims:
         # Extracted claim sentences are part of the evidence base — a
         # truncated description must not hide "independently verified by …".
@@ -278,11 +318,19 @@ def assess_greenwashing(
         text = f"{text} {claim_text.lower()}"
     metrics = _canonical_metric_ids(company.reported_metrics.keys())
 
+    gw = _gw()
+    controls = _count_controls(text)
+    relief = gw.get("disclosed_controls", {})
+    has_controls = controls >= int(relief.get("min_hits", 2))
+
     gap_score = _score_claim_metric_gap(company, metrics)
     omission_score = _score_adverse_omission(company, metrics)
     specificity_score = _score_specificity(text, claims)
-    selectivity_score = _score_selectivity(company, metrics)
+    selectivity_score = _score_selectivity(company, metrics, text)
     verification_score = _score_verification(text, metrics, claims)
+    if has_controls:
+        omission_score *= float(relief.get("omission_factor", 0.6))
+        selectivity_score = max(0.0, selectivity_score - float(relief.get("selectivity_relief", 15)))
 
     w = _gw()["weights"]
     weights = {
@@ -296,7 +344,17 @@ def assess_greenwashing(
         + selectivity_score * weights["selectivity"]
         + verification_score * weights["verification"]
     )
-    overall = round(min(100, max(0, overall)), 1)
+    overall = min(100, max(0, overall))
+    components = {"claim_metric_gap": gap_score, "adverse_omission": omission_score,
+                  "specificity": specificity_score, "selectivity": selectivity_score,
+                  "verification": verification_score}
+    conduct = [components[c] for c in gw.get("conduct_components", ["specificity"]) if c in components]
+    evidence_gap = False
+    if overall >= finding_threshold() and not any(v > gw["flag_threshold"] for v in conduct):
+        overall = min(overall, float(gw.get("absence_cap", finding_threshold() - 1)))
+        evidence_gap = True
+    # Whole numbers: what is shown is exactly what is classified and gated.
+    overall = float(round(overall))
 
     classification = _classify(overall)
     flags = _generate_flags(gap_score, omission_score, specificity_score, selectivity_score, verification_score)
@@ -312,6 +370,8 @@ def assess_greenwashing(
         verification=round(verification_score, 1),
         flags=flags,
         recommendations=recommendations,
+        evidence_gap=evidence_gap,
+        disclosed_controls=controls,
     )
 
 
@@ -425,7 +485,7 @@ def _score_specificity(text: str, claims: list[dict[str, Any]] | None) -> float:
     return max(0, min(100, score))
 
 
-def _score_selectivity(company: Company, metrics: set[str]) -> float:
+def _score_selectivity(company: Company, metrics: set[str], text: str = "") -> float:
     """Score: is reporting balanced or only positive metrics?"""
     if not metrics:
         return 60.0
@@ -441,7 +501,7 @@ def _score_selectivity(company: Company, metrics: set[str]) -> float:
     has_risk_language = any(
         "risk" in str(v).lower() or "negative" in str(v).lower()
         for v in company.reported_metrics.values()
-    )
+    ) or _count_controls(text) > 0
 
     total = len(metrics)
 
@@ -490,8 +550,8 @@ def _score_verification(
 
 def _classify(score: float) -> str:
     bands = _gw()["classification"]
-    for band in bands:
-        if score <= band["max"]:
+    for band in bands[:-1]:
+        if score < band["max"]:
             return band["label"]
     return bands[-1]["label"]
 
@@ -512,6 +572,31 @@ def _generate_flags(gap: float, omission: float, specificity: float, selectivity
     return flags
 
 
+def _adverse_recommendation(company: Company) -> str:
+    """Name the sector's own negative-impact metrics instead of a generic list."""
+    from openharness.tools.impact.common import normalize_sector
+
+    sector = normalize_sector(company.sector or "") or "default"
+    ids = _ADVERSE_METRICS_BY_SECTOR.get(sector, _ADVERSE_METRICS_BY_SECTOR["default"])
+    names: list[str] = []
+    try:
+        from openharness.impact.database import get_metric_store
+
+        store = get_metric_store()
+    except Exception:  # pragma: no cover - catalog optional
+        store = None
+    for metric_id in ids:
+        if metric_id.startswith("CUSTOM:"):
+            names.append(metric_id.split(":", 1)[1].replace("_", " "))
+            continue
+        metric = store.get(metric_id) if store is not None else None
+        names.append(f"{metric.name} ({metric_id})" if metric is not None else metric_id)
+        if len(names) == 3:
+            break
+    label = sector if sector != "default" else "this business"
+    return f"Report the negative impacts that matter for {label}, e.g. {'; '.join(names[:3])}"
+
+
 def _generate_recommendations(
     gap: float, omission: float, specificity: float, selectivity: float, verification: float,
     company: Company,
@@ -520,8 +605,7 @@ def _generate_recommendations(
     if gap > 40:
         recs.append("Map each SDG claim to at least one IRIS+ metric with reported data")
     if omission > 40:
-        sector = company.sector or "general"
-        recs.append(f"Report adverse-impact metrics appropriate for {sector} sector (e.g., GHG emissions, client protection)")
+        recs.append(_adverse_recommendation(company))
     if specificity > 40:
         recs.append("Replace aspirational language with concrete, quantified outcome statements")
     if selectivity > 40:

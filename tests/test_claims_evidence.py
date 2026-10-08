@@ -54,7 +54,9 @@ def test_sdk_assessment_carries_claims_and_lowers_verification_risk():
     assert len(assessment.impact_claims) >= 5
 
     # A short description hides the verification sentences; the claims don't.
+    # (Since v8 the scorers read the whole document, so blank that too.)
     assessment.company.description = "Integrated pig farm with biogas."
+    assessment.company.assessment_text = ""
     without = assess_greenwashing(assessment.company)
     with_claims = iv.screen_greenwashing(assessment)
     assert with_claims.verification < without.verification

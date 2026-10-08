@@ -28,7 +28,10 @@ GATE_LABEL = {"PASS": "IC-ready", "WARN": "Conditional", "INSUFFICIENT EVIDENCE"
 GATE_TONE = {"PASS": "good", "WARN": "warning", "INSUFFICIENT EVIDENCE": "warning", "FAIL": "critical"}
 REVIEW_CONFIDENCE = 0.5
 _QUEUE_LABELS = {"regulatory_radar": "Regulatory radar", "ddq_drafts": "DDQ drafts"}
-GREENWASHING_FLAG = 60
+def _gw_flag() -> float:
+    from openharness.impact.greenwashing import finding_threshold
+
+    return finding_threshold()
 
 
 def _when(value: Any) -> datetime | None:
@@ -115,7 +118,7 @@ def build_portfolio_home(
         if gate == "INSUFFICIENT EVIDENCE":
             attention.append({"company": companies[-1]["name"],
                               "reason": "Held back by missing data, not by a negative finding", "tone": "warning"})
-        if (s.get("greenwashing_risk") or 0) >= GREENWASHING_FLAG:
+        if (s.get("greenwashing_risk") or 0) >= _gw_flag():
             attention.append({"company": companies[-1]["name"],
                               "reason": f"Greenwashing risk {s['greenwashing_risk']:.0f}/100 — review claims",
                               "tone": "critical"})
@@ -152,8 +155,8 @@ def build_portfolio_home(
              "sub": "out of 5", "meter": (sum(five_d) / len(five_d) / 5 * 100) if five_d else 0},
             {"label": "IC-ready", "value": f"{gate_counts['PASS']}/{len(companies)}",
              "sub": f"{gate_counts['INSUFFICIENT EVIDENCE']} need data"},
-            {"label": "Greenwashing flags", "value": str(sum(1 for v in gw if v >= GREENWASHING_FLAG)),
-             "sub": f"risk ≥ {GREENWASHING_FLAG}/100"},
+            {"label": "Greenwashing flags", "value": str(sum(1 for v in gw if v >= _gw_flag())),
+             "sub": f"risk ≥ {_gw_flag():g}/100"},
             {"label": "Deadlines ≤ 90 days",
              "value": str(sum(1 for d in deadlines if d["days"] <= 90)),
              "sub": f"{sum(1 for d in deadlines if d['status'] == 'overdue')} overdue"},
