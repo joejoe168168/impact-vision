@@ -106,13 +106,14 @@ table.heat .gap { width: 10px; min-width: 10px; padding: 0; background: none; }
 
 <section class="card" id="sec-heatmap" aria-labelledby="h-heat">
   <h2 id="h-heat">Impact heat-map</h2>
-  <p class="lede">5 Dimensions (1–5) and material SDG scores (0–100). Darker means stronger.</p>
+  <p class="lede">Stage, expected impact (P50, natural units) and evidence quality, then 5 Dimensions (1–5) and material SDG scores (0–100). Darker means stronger.</p>
   {% if v.companies %}
   <div class="table-wrap">
   <table class="heat">
     <caption class="sr-only">5 Dimensions and SDG scores per company</caption>
     <thead><tr>
-      <th scope="col" class="co">Company</th><th scope="col">Gate</th>
+      <th scope="col" class="co">Company</th><th scope="col">Stage</th><th scope="col">Gate</th>
+      <th scope="col" title="Expected impact, P50">Impact P50</th><th scope="col" title="Evidence quality (0–100)">Evidence</th>
       {% for d in v.dim_labels %}<th scope="col">{{ d }}</th>{% endfor %}
       <th class="gap" aria-hidden="true"></th>
       {% for s in v.sdg_cols %}<th scope="col" title="SDG {{ s.goal }} — {{ s.name }}"><span class="sdg-h" style="background:{{ s.color }};color:{{ s.ink }}">{{ s.goal }}</span><span class="sr-only"> SDG {{ s.goal }} {{ s.name }}</span></th>{% endfor %}
@@ -121,7 +122,10 @@ table.heat .gap { width: 10px; min-width: 10px; padding: 0; background: none; }
     {% for c in v.companies %}
       <tr>
         <td class="co">{% if c.link %}<a class="co-link" href="{{ c.link }}">{{ c.name }}</a>{% else %}{{ c.name }}{% endif %}<small>{{ c.meta }}</small></td>
+        <td style="background:none">{{ c.stage_label or '—' }}</td>
         <td style="background:none"><span class="pill {{ c.tone }}">{{ c.gate_label }}</span></td>
+        <td style="background:none" class="num" title="{{ c.impact_unit }}">{{ c.impact_text }}</td>
+        <td style="background:none" class="num">{{ c.eq if c.eq is not none else '—' }}</td>
         {% for d in c.dims %}{% if d.value is none %}<td class="na">—</td>{% else %}<td class="l{{ d.lvl }}">{{ '%.1f' % d.value }}</td>{% endif %}{% endfor %}
         <td class="gap" aria-hidden="true"></td>
         {% for s in c.sdgs %}{% if s.value is none %}<td class="na">—</td>{% else %}<td class="l{{ s.lvl }}">{{ '%.0f' % s.value }}</td>{% endif %}{% endfor %}

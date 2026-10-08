@@ -9,9 +9,9 @@
     "kind": "people",
     "unit": "depth-weighted person-years",
     "stakeholder": "households",
-    "p10": 7996.530718139498,
-    "p50": 21384.180350319635,
-    "p90": 53903.80604270776,
+    "p10": 8280.529977182092,
+    "p50": 21497.418442805687,
+    "p90": 56519.68126963391,
     "uncertainty": "wide"
   },
   "evidence_quality": 57,
@@ -60,6 +60,15 @@
     "sunpath_energy_ltd_data.csv"
   ],
   "ai_disclosure": "Automated analysis: produced by rules and a deterministic scoring model; no generative AI was used. 2 of 21 scores are estimated from document text rather than reported metrics. Review before relying on it.",
+  "ai_marking": {
+    "digital_source_type": "http://cv.iptc.org/newscodes/digitalsourcetype/algorithmicMedia",
+    "generator": "Impact Vision 0.17.2",
+    "ai_generated": false,
+    "machine_generated": true,
+    "human_reviewed": false,
+    "disclosure": "Automated analysis: produced by rules and a deterministic scoring model; no generative AI was used. 2 of 21 scores are estimated from document text rather than reported metrics. Review before relying on it.",
+    "regulation": "EU AI Act Art 50 transparency (Regulation (EU) 2024/1689 as amended by Regulation (EU) 2026/1744)"
+  },
   "methodology": {
     "methodology_version": "1.2.0",
     "config_hash": "ae3e77ecaccf"

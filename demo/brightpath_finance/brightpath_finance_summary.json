@@ -9,9 +9,9 @@
     "kind": "people",
     "unit": "depth-weighted person-years",
     "stakeholder": "clients",
-    "p10": 2707.932198812352,
-    "p50": 8709.511492611131,
-    "p90": 29772.678501296326,
+    "p10": 2660.902969056617,
+    "p50": 9032.479243613889,
+    "p90": 29542.621335105538,
     "uncertainty": "wide"
   },
   "evidence_quality": 40,
@@ -64,6 +64,15 @@
     "brightpath_finance_data.csv"
   ],
   "ai_disclosure": "Automated analysis: produced by rules and a deterministic scoring model; no generative AI was used. 2 of 21 scores are estimated from document text rather than reported metrics. Review before relying on it.",
+  "ai_marking": {
+    "digital_source_type": "http://cv.iptc.org/newscodes/digitalsourcetype/algorithmicMedia",
+    "generator": "Impact Vision 0.17.2",
+    "ai_generated": false,
+    "machine_generated": true,
+    "human_reviewed": false,
+    "disclosure": "Automated analysis: produced by rules and a deterministic scoring model; no generative AI was used. 2 of 21 scores are estimated from document text rather than reported metrics. Review before relying on it.",
+    "regulation": "EU AI Act Art 50 transparency (Regulation (EU) 2024/1689 as amended by Regulation (EU) 2026/1744)"
+  },
   "methodology": {
     "methodology_version": "1.2.0",
     "config_hash": "ae3e77ecaccf"

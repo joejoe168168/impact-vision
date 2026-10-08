@@ -26,7 +26,8 @@ def records():
 def test_view_summarises_the_portfolio(records):
     v = build_portfolio_home(records, fund_name="Fund I", today=TODAY)
     kpis = {k["label"]: k["value"] for k in v["kpis"]}
-    assert kpis["Companies"] == "3"
+    assert kpis["Portfolio · pipeline"] == "0 · 3"  # nothing invested yet: all three are pipeline
+    assert kpis["Expected impact"] != "—"
     assert sum(p["count"] for p in v["pipeline"]) == 3
     assert [c["name"] for c in v["companies"]] == sorted(c["name"] for c in v["companies"])
     assert all(len(c["dims"]) == 5 and len(c["sdgs"]) == len(v["sdg_cols"]) for c in v["companies"])

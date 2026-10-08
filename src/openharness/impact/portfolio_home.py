@@ -125,8 +125,16 @@ def build_portfolio_home(
         gate = GATE_ALIAS.get(s.get("gate") or "", s.get("gate") or "—")
         created = _when(r.get("created_at") or data.get("generated_at"))
         age = (now - created).days if created else None
+        name = s.get("company") or r.get("company", "")
+        stage = _stage_of(name)
+        ei = s.get("expected_impact") or {}
         companies.append({
-            "name": s.get("company") or r.get("company", ""),
+            "name": name,
+            "stage": stage, "stage_label": STAGE_LABELS.get(stage, stage.replace("_", " ").title() if stage else ""),
+            "invested": stage in {"invested", "monitoring", "exited"},
+            "impact": ei, "impact_text": (f"{_sig(ei['p50'])}" if ei.get("p50") is not None else "—"),
+            "impact_unit": ei.get("unit", ""),
+            "eq": s.get("evidence_quality"),
             "meta": " · ".join(x for x in (s.get("sector"), s.get("geography")) if x),
             "link": r.get("link", ""),
             "gate": gate, "gate_label": GATE_LABEL.get(gate, gate.title()), "tone": GATE_TONE.get(gate, ""),
@@ -170,6 +178,15 @@ def build_portfolio_home(
         if d["statutory"] and 0 <= d["days"] <= 60:
             attention.insert(0, {"company": d["framework"], "tone": "critical",
                                  "reason": f"{d['title']} due {d['due']} — {d['days']} days away"})
+    # W1.10: portfolio impact in natural units (summed P50s per unit, invested
+    # companies when there are any) — never an average of ordinal scores.
+    invested = [c for c in companies if c["invested"]]
+    basis = invested or companies
+    totals: dict[str, float] = {}
+    for c in basis:
+        if c["impact"].get("p50") is not None:
+            totals[c["impact_unit"]] = totals.get(c["impact_unit"], 0.0) + float(c["impact"]["p50"])
+    head_unit = "depth-weighted person-years" if "depth-weighted person-years" in totals else next(iter(totals), "")
     five_d = [c["five_d"] for c in companies if isinstance(c["five_d"], (int, float))]
     gw = [c["greenwashing"] for c in companies if isinstance(c["greenwashing"], (int, float))]
     gate_counts = {g: sum(1 for c in companies if c["gate"] == g) for g in GATE_ORDER}
@@ -183,9 +200,11 @@ def build_portfolio_home(
         "as_of": today.isoformat(),
         "jurisdictions": list(jurisdictions),
         "kpis": [
-            {"label": "Companies", "value": str(len(companies)), "sub": "assessed"},
-            {"label": "Average 5D", "value": f"{sum(five_d) / len(five_d):.1f}" if five_d else "—",
-             "sub": "out of 5", "meter": (sum(five_d) / len(five_d) / 5 * 100) if five_d else 0},
+            {"label": "Portfolio · pipeline", "value": f"{len(invested)} · {len(companies) - len(invested)}",
+             "sub": "invested · being assessed"},
+            {"label": "Expected impact", "value": _sig(totals[head_unit]) if head_unit else "—",
+             "sub": (f"{head_unit} · sum of {'portfolio' if invested else 'pipeline'} P50s" if head_unit
+                     else "no quantified outcomes yet")},
             {"label": "IC-ready", "value": f"{gate_counts['PASS']}/{len(companies)}",
              "sub": f"{gate_counts['INSUFFICIENT EVIDENCE']} on an evidence plan"},
             {"label": "Greenwashing flags", "value": str(sum(1 for v in gw if v >= _gw_flag())),
@@ -199,6 +218,7 @@ def build_portfolio_home(
                      for g in GATE_ORDER],
         "stages": sorted(stages.items(), key=lambda kv: -kv[1]),
         "companies": companies,
+        "impact_totals": [{"unit": u, "p50": _sig(v)} for u, v in totals.items()],
         "dim_labels": [label for _, label in DIMENSIONS],
         "sdg_cols": [{"goal": g, "name": sdg_goals[g]} for g in sdg_cols],
         "deadlines": deadlines[:10],
@@ -207,6 +227,28 @@ def build_portfolio_home(
         "review_total": len(review),
         "attention": attention,
     }
+
+
+STAGE_LABELS = {"sourcing": "Sourcing", "screening": "Screening", "dd_in_progress": "Due diligence",
+                "ic_review": "IC review", "invested": "Invested", "monitoring": "Monitoring", "exited": "Exited",
+                "passed": "Passed"}
+
+
+def _stage_of(name: str) -> str:
+    """The company's lifecycle stage from the company record (best effort)."""
+    try:
+        from openharness.impact.storage import get_assessment_store
+
+        entry = get_assessment_store().get_pipeline_entry(name)
+    except Exception:  # noqa: BLE001 - the page renders without the record
+        return ""
+    return str((entry or {}).get("pipeline_stage") or "")
+
+
+def _sig(value: float) -> str:
+    from openharness.impact.report_templates.decision_report import _sig as sig
+
+    return sig(float(value))
 
 
 def _deadlines(jurisdictions: Iterable[str], today: date, window: int) -> list[dict[str, Any]]:

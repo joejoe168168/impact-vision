@@ -9,9 +9,9 @@
     "kind": "people",
     "unit": "depth-weighted person-years",
     "stakeholder": "households",
-    "p10": 26.164050593507138,
-    "p50": 62.27925133356387,
-    "p90": 142.39091740001425,
+    "p10": 25.729510937276,
+    "p50": 61.12003746777919,
+    "p90": 142.4780349901277,
     "uncertainty": "moderate"
   },
   "evidence_quality": 63,
@@ -61,6 +61,15 @@
     "kampung_makmur_sdn_bhd_data.csv"
   ],
   "ai_disclosure": "Automated analysis: produced by rules and a deterministic scoring model; no generative AI was used. 3 of 22 scores are estimated from document text rather than reported metrics. Review before relying on it.",
+  "ai_marking": {
+    "digital_source_type": "http://cv.iptc.org/newscodes/digitalsourcetype/algorithmicMedia",
+    "generator": "Impact Vision 0.17.2",
+    "ai_generated": false,
+    "machine_generated": true,
+    "human_reviewed": false,
+    "disclosure": "Automated analysis: produced by rules and a deterministic scoring model; no generative AI was used. 3 of 22 scores are estimated from document text rather than reported metrics. Review before relying on it.",
+    "regulation": "EU AI Act Art 50 transparency (Regulation (EU) 2024/1689 as amended by Regulation (EU) 2026/1744)"
+  },
   "methodology": {
     "methodology_version": "1.2.0",
     "config_hash": "ae3e77ecaccf"
