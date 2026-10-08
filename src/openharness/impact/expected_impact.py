@@ -315,25 +315,39 @@ def _factors(inp: OutcomeInputs, primary: Figure, *, climate: bool) -> list[Fact
 
 
 def _simulate(factors: list[Factor], seed_text: str) -> dict[str, Any]:
-    import numpy as np
+    """Seeded Monte Carlo over lognormal factors (standard library only: the
+    core install has no numpy)."""
+    import random
+    import statistics
 
     cfg = params().get("monte_carlo") or {}
     # Seeded from the model inputs only: the same figures always give the same
     # range, and rewording the document (buzzwords) can't move it.
     key = seed_text.rsplit("|", 1)[-1] + "|" + "|".join(f"{f.name}:{f.median:.6g}:{f.sigma:.4g}" for f in factors)
-    seed = int(hashlib.sha256(key.encode("utf-8")).hexdigest()[:8], 16)
-    rng = np.random.default_rng(seed)
+    rng = random.Random(int(hashlib.sha256(key.encode("utf-8")).hexdigest()[:8], 16))
     n = int(cfg.get("draws", 4000))
-    total = np.ones(n)
+    total = [1.0] * n
     log_vars: dict[str, float] = {}
     for f in factors:
-        draw = f.median * np.exp(rng.normal(0.0, f.sigma, n)) if f.sigma > 0 else np.full(n, f.median)
+        if f.sigma > 0:
+            draw = [f.median * math.exp(rng.gauss(0.0, f.sigma)) for _ in range(n)]
+        else:
+            draw = [f.median] * n
         if f.cap is not None:
-            draw = np.minimum(draw, f.cap)
-        total *= draw
-        log_vars[f.name] = float(np.var(np.log(np.maximum(draw, 1e-12))))
+            draw = [min(x, f.cap) for x in draw]
+        total = [t * x for t, x in zip(total, draw)]
+        logs = [math.log(max(x, 1e-12)) for x in draw]
+        log_vars[f.name] = statistics.pvariance(logs) if f.sigma > 0 else 0.0
+    ordered = sorted(total)
+
+    def pct(q: float) -> float:
+        # Linear interpolation between order statistics (same as numpy's default).
+        pos = (len(ordered) - 1) * q / 100.0
+        lo, hi = math.floor(pos), math.ceil(pos)
+        return ordered[lo] + (ordered[hi] - ordered[lo]) * (pos - lo)
+
     pcts = [int(x) for x in cfg.get("percentiles", [10, 50, 90])]
-    values = {f"p{q}": float(np.percentile(total, q)) for q in pcts}
+    values = {f"p{q}": float(pct(q)) for q in pcts}
     var_total = sum(log_vars.values()) or 1.0
     drivers = sorted(((k, v / var_total) for k, v in log_vars.items() if v > 0), key=lambda kv: -kv[1])
     sigma_total = math.sqrt(sum(log_vars.values()))
