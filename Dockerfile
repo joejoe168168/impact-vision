@@ -13,6 +13,9 @@ WORKDIR /app
 COPY pyproject.toml README.md LICENSE* ./
 COPY src ./src
 COPY data ./data
+# The wheel bundles the terminal UI sources (force-include in pyproject.toml).
+COPY frontend/terminal/package.json frontend/terminal/tsconfig.json ./frontend/terminal/
+COPY frontend/terminal/src ./frontend/terminal/src
 RUN pip install ".[web,office,assurance]" && rm -rf /root/.cache
 
 USER iv
