@@ -98,7 +98,7 @@ class LocalGuardMiddleware:
     def __init__(self, app: Callable[..., Awaitable[Any]]) -> None:
         self.app = app
 
-    async def __call__(self, scope: dict, receive: Callable, send: Callable) -> None:
+    async def __call__(self, scope: dict[str, Any], receive: Callable[..., Any], send: Callable[..., Any]) -> None:
         if scope["type"] not in {"http", "websocket"}:
             await self.app(scope, receive, send)
             return

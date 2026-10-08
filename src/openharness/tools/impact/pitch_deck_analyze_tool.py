@@ -936,44 +936,12 @@ _URL_MAX_BYTES = 50 * 1024 * 1024  # 50 MB cap on remote document size
 
 def _ensure_public_url(url: str) -> None:
     """Reject non-http(s) URLs and hosts that resolve to non-public addresses."""
-    import ipaddress
-    import socket
-    from urllib.parse import urlparse
+    from openharness.utils.safe_fetch import UnsafeUrlError, ensure_public_url
 
-    parsed = urlparse(url)
-    scheme = (parsed.scheme or "").lower()
-    if scheme not in ("http", "https"):
-        raise _UrlFetchError(
-            f"Only http(s) URLs are allowed, got scheme '{scheme or 'none'}'."
-        )
-    host = parsed.hostname
-    if not host:
-        raise _UrlFetchError("URL is missing a host component.")
-
-    # Block private/loopback/link-local hosts. We resolve the hostname rather
-    # than relying on the literal so attackers can't hide behind DNS labels.
     try:
-        infos = socket.getaddrinfo(host, None)
-    except socket.gaierror as e:
-        raise _UrlFetchError(f"DNS lookup failed for '{host}': {e}") from e
-    for info in infos:
-        ip_str = info[4][0]
-        try:
-            ip = ipaddress.ip_address(ip_str)
-        except ValueError:
-            continue
-        if (
-            ip.is_private
-            or ip.is_loopback
-            or ip.is_link_local
-            or ip.is_reserved
-            or ip.is_multicast
-            or ip.is_unspecified
-        ):
-            raise _UrlFetchError(
-                f"Refusing to fetch '{host}' which resolves to non-public "
-                f"address {ip_str}."
-            )
+        ensure_public_url(url)
+    except UnsafeUrlError as exc:
+        raise _UrlFetchError(str(exc)) from exc
 
 
 def _fetch_url_text(url: str) -> str:
@@ -991,21 +959,13 @@ def _fetch_url_text(url: str) -> str:
       message that asks the caller to download the file locally and use
       ``file_path`` instead.
     """
-    from urllib.request import HTTPRedirectHandler, Request, build_opener
+    from openharness.utils.safe_fetch import UnsafeUrlError, open_public
 
-    class _CheckedRedirect(HTTPRedirectHandler):
-        # Every hop is re-validated, so a public URL can't redirect to
-        # localhost or a private address (SSRF).
-        max_redirections = 5
-
-        def redirect_request(self, req, fp, code, msg, headers, newurl):  # noqa: D401
-            _ensure_public_url(newurl)
-            return super().redirect_request(req, fp, code, msg, headers, newurl)
-
-    _ensure_public_url(url)
-
-    request = Request(url, headers={"User-Agent": "impact-vision/1.0"})
-    with build_opener(_CheckedRedirect).open(request, timeout=10) as response:  # noqa: S310 - validated above
+    try:
+        response_cm = open_public(url, timeout=10)
+    except UnsafeUrlError as exc:
+        raise _UrlFetchError(str(exc)) from exc
+    with response_cm as response:
         content_type = (response.headers.get("Content-Type") or "").lower()
         if "pdf" in content_type or content_type.startswith(("application/octet-stream", "image/", "video/", "audio/")):
             raise _UrlFetchError(

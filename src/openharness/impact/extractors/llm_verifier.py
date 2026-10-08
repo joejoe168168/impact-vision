@@ -42,18 +42,22 @@ _DEFAULT_SYSTEM_PROMPT = (
 )
 
 
+def _ua() -> str:
+    from openharness.utils.safe_fetch import user_agent
+
+    return user_agent()
+
+
 UrlFetcher = Callable[[str, float], str]
 """A callable ``fetcher(url, timeout_seconds) -> raw_html_or_text``."""
 
 
 def _default_fetcher(url: str, timeout: float = 15.0) -> str:
-    """Plain-text GET with a 1 MB cap and a UA header."""
-    req = _urllib_request.Request(
-        url, headers={"User-Agent": "impact-vision/0.14 (verifier)"}
-    )
-    with _urllib_request.urlopen(req, timeout=timeout) as resp:  # noqa: S310
-        body = resp.read(1_000_000)
-    return body.decode("utf-8", errors="replace")
+    """Plain-text GET with a 1 MB cap. Source URLs can come from documents, so
+    only public http(s) addresses are fetched, redirects included (SSRF)."""
+    from openharness.utils.safe_fetch import fetch_public_text
+
+    return fetch_public_text(url, timeout=timeout, max_bytes=1_000_000)
 
 
 @dataclass
@@ -136,11 +140,11 @@ class LLMSourceVerifier:
             headers={
                 "Content-Type": "application/json",
                 "Authorization": f"Bearer {api_key}",
-                "User-Agent": "impact-vision/0.14",
+                "User-Agent": _ua(),
             },
             method="POST",
         )
-        with _urllib_request.urlopen(req, timeout=self.timeout) as resp:  # noqa: S310
+        with _urllib_request.urlopen(req, timeout=self.timeout) as resp:  # noqa: S310  # nosec B310 - configured LLM endpoint
             body = resp.read().decode("utf-8", errors="replace")
         data = json.loads(body)
         choices = data.get("choices") or []

@@ -856,7 +856,7 @@ def render_decision_report(data: dict[str, Any], *, audience: str | None = None,
         from markupsafe import Markup
 
         body = env.get_template("report.html.j2").render(
-            css=design_css(), glossary_html=Markup(glossary), **view
+            css=design_css(), glossary_html=Markup(glossary), **view  # nosec B704 - glossary HTML is escaped term by term
         )
     from openharness.impact.ai_provenance import ai_provenance_for_report, machine_marking, mark_html
 

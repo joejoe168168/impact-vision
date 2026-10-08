@@ -175,11 +175,11 @@ class LLMClaimExtractor:
             headers={
                 "Content-Type": "application/json",
                 "Authorization": f"Bearer {api_key}",
-                "User-Agent": "impact-vision/0.14",
+                "User-Agent": __import__("openharness.utils.safe_fetch", fromlist=["user_agent"]).user_agent(),
             },
             method="POST",
         )
-        with _urllib_request.urlopen(req, timeout=self.timeout) as resp:  # noqa: S310 — trusted base_url
+        with _urllib_request.urlopen(req, timeout=self.timeout) as resp:  # noqa: S310  # nosec B310 - configured LLM endpoint
             body = resp.read().decode("utf-8", errors="replace")
         data = json.loads(body)
         choices = data.get("choices") or []

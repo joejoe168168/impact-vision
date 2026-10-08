@@ -395,7 +395,7 @@ class FeedbackEvidenceLink(BaseModel):
 
 def _feedback_node_id(theme: str) -> str:
     cleaned = "".join(ch.lower() if ch.isalnum() else "-" for ch in theme).strip("-") or "theme"
-    digest = hashlib.sha1(theme.encode("utf-8")).hexdigest()[:8]
+    digest = hashlib.sha1(theme.encode("utf-8"), usedforsecurity=False).hexdigest()[:8]
     return f"feedback:{cleaned}-{digest}"
 
 

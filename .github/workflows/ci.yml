@@ -25,7 +25,30 @@ jobs:
         run: python scripts/check_imports.py --registry
 
   test:
-    name: Tests
+    name: Tests (Python ${{ matrix.python }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install dependencies
+        run: pip install -e ".[dev]"
+      - name: Run tests (coverage floor for the impact engine)
+        run: pytest tests/ -q --tb=short --cov=openharness.impact --cov-fail-under=85
+      - name: Knowledge freshness gate (every row sourced; re-verified within 180 days)
+        run: python scripts/check_knowledge.py
+      - name: Generated tool reference is current
+        run: python scripts/build_tool_reference.py --check
+      - name: Extraction benchmark gate (blocking; deterministic regex extractor)
+        run: python -m openharness.impact.extraction_eval --extractor regex --summary
+
+  typecheck:
+    name: Type check (v8 modules)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -34,14 +57,28 @@ jobs:
           python-version: "3.11"
       - name: Install dependencies
         run: pip install -e ".[dev]"
-      - name: Run tests
-        run: pytest tests/ -q --tb=short
-      - name: Knowledge freshness gate (every row sourced; re-verified within 180 days)
-        run: python scripts/check_knowledge.py
-      - name: Generated tool reference is current
-        run: python scripts/build_tool_reference.py --check
-      - name: Extraction benchmark gate (blocking; deterministic regex extractor)
-        run: python -m openharness.impact.extraction_eval --extractor regex --summary
+      - name: mypy (new and security-critical modules are kept clean)
+        run: >-
+          mypy --ignore-missing-imports
+          src/openharness/impact/expected_impact.py src/openharness/impact/metric_relevance.py
+          src/openharness/impact/text_sections.py src/openharness/api_gateway/security.py
+
+  security:
+    name: Dependency & code security audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[web,office,assurance]" pip-audit bandit
+      - name: pip-audit (known vulnerabilities in installed dependencies)
+        run: pip-audit --progress-spinner off --skip-editable
+      - name: bandit (medium+ severity, product code)
+        run: bandit -q -ll -r src/openharness/impact src/openharness/web src/openharness/api_gateway
 
   lint:
     name: Lint

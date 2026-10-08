@@ -1,0 +1,77 @@
+name: Release
+
+# Tag vX.Y.Z → PyPI (trusted publishing) + a Docker image on GHCR.
+# One-time setup on PyPI: add this repository as a trusted publisher for the
+# `impact-vision` project (workflow `release.yml`, environment `pypi`).
+on:
+  push:
+    tags: ["v*.*.*"]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build sdist + wheel
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Version in pyproject matches the tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          grep -q "^version = \"$tag\"" pyproject.toml || { echo "pyproject version != $tag"; exit 1; }
+      - name: Build
+        run: pip install build && python -m build
+      - name: Smoke-test the wheel outside the repo
+        run: |
+          python -m venv /tmp/v && /tmp/v/bin/pip install dist/*.whl
+          cd /tmp && /tmp/v/bin/python "$GITHUB_WORKSPACE/scripts/wheel_smoke.py"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  pypi:
+    name: Publish to PyPI
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
+
+  docker:
+    name: Docker image (GHCR)
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=raw,value=latest
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}

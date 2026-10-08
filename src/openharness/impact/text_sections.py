@@ -74,7 +74,8 @@ def _heading(line: str, *, after_blank: bool) -> str | None:
 
 def split_sections(text: str) -> list[Section]:
     sections: list[Section] = []
-    heading, buffer = "", []
+    heading: str = ""
+    buffer: list[str] = []
     previous_blank = True
     for line in (text or "").splitlines():
         found = _heading(line, after_blank=previous_blank)

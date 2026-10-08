@@ -13,7 +13,6 @@ import json
 import re
 from dataclasses import dataclass
 from typing import Any
-from urllib.request import urlopen
 
 from openharness.impact.toolbox.models import ToolboxSourceProfile
 
@@ -30,8 +29,9 @@ class ExtractedToolSummary:
 
 def fetch_text(url: str, timeout: int = 20) -> str:
     """Fetch a public text resource with a small stdlib-only dependency surface."""
-    with urlopen(url, timeout=timeout) as response:  # noqa: S310 - maintainer-triggered public fetch helper
-        return response.read().decode("utf-8", errors="replace")
+    from openharness.utils.safe_fetch import fetch_public_text
+
+    return fetch_public_text(url, timeout=timeout, max_bytes=5_000_000)
 
 
 def extract_landing_tools(html: str) -> list[ExtractedToolSummary]:

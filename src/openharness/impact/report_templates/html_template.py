@@ -83,8 +83,8 @@ _HEADER_TEMPLATE = """\
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Impact Report: {{ company_name }}</title>
 <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
-<style>{{ css }}</style>
-{{ extra_css }}
+<style>{{ css | safe }}</style>
+{{ extra_css | safe }}
 </head>
 <body>
 <div class="report-header">
@@ -117,7 +117,8 @@ def _get_jinja_env() -> Any:
     """Get or create a Jinja2 environment."""
     if not HAS_JINJA2:
         return None
-    return Environment(loader=BaseLoader(), autoescape=False)
+    # Autoescape on: company names and themes come from uploaded documents.
+    return Environment(loader=BaseLoader(), autoescape=True)
 
 
 def render_header(data: dict) -> str:

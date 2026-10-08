@@ -1,0 +1,10 @@
+.git
+.venv
+.claude
+node_modules
+frontend/terminal/node_modules
+demo
+docs/images
+**/__pycache__
+*.pyc
+.impact-vision

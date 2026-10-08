@@ -197,3 +197,31 @@ def test_mode_change_keeps_confinement(tmp_path):
     engine._permission_checker = PermissionChecker(PermissionSettings(), confine_to=[tmp_path])  # noqa: SLF001
     engine.set_permission_checker(PermissionChecker(PermissionSettings()))
     assert engine._permission_checker.confine_to == [tmp_path.resolve()]  # noqa: SLF001
+
+
+# ------------------------------------------------- found by the bandit gate (W5.7)
+
+
+def test_legacy_report_header_escapes_company_text():
+    from openharness.impact.report_templates.html_template import render_header
+
+    html = render_header({"company": {"name": "<script>alert(1)</script>", "impact_themes": ["<b>x</b>"]}})
+    assert "<script>alert" not in html and "&lt;script&gt;" in html
+    assert "<style>" in html  # the trusted CSS still renders
+
+
+def test_shared_fetcher_refuses_private_targets_and_schemes():
+    from openharness.utils.safe_fetch import UnsafeUrlError, ensure_public_url
+
+    for bad in ("http://169.254.169.254/latest/meta-data", "http://localhost:8787/", "ftp://example.com/x",
+                "file:///etc/passwd"):
+        with pytest.raises(UnsafeUrlError):
+            ensure_public_url(bad)
+
+
+def test_verifier_fetches_through_the_safe_fetcher(monkeypatch):
+    from openharness.impact.extractors import llm_verifier
+
+    with pytest.raises(Exception) as exc:
+        llm_verifier._default_fetcher("http://127.0.0.1:22/")
+    assert "non-public" in str(exc.value)

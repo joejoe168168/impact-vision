@@ -34,7 +34,7 @@ def build_lp_export_bundle(
     """Build an LP bundle with source index, evidence hashes, and optional EDCI attachment."""
     manifest = {ref: hashlib.sha256(ref.encode("utf-8")).hexdigest() for ref in source_refs}
     return LPExportBundle(
-        bundle_id=f"lp_{hashlib.sha1(json.dumps(source_refs, sort_keys=True).encode()).hexdigest()[:10]}",
+        bundle_id=f"lp_{hashlib.sha1(json.dumps(source_refs, sort_keys=True).encode(), usedforsecurity=False).hexdigest()[:10]}",
         formats=formats,
         source_index=source_refs,
         evidence_manifest=manifest,

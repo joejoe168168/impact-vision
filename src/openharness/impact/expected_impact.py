@@ -265,7 +265,8 @@ class Factor:
 
 
 def _level_cfg(level: int) -> dict[str, Any]:
-    return (params().get("evidence_levels") or {}).get(level) or (params().get("evidence_levels") or {}).get(1)
+    levels: dict[int, dict[str, Any]] = params().get("evidence_levels") or {}
+    return levels.get(level) or levels[1]
 
 
 def _sigma(fig: Figure) -> float:
@@ -291,8 +292,8 @@ def _factors(inp: OutcomeInputs, primary: Figure, *, climate: bool) -> list[Fact
             du = p["depth_unknown"]
             factors.append(Factor("Depth of change", du["mean"], du["sigma"],
                                   "no change measured: an assumed 10%", cap=1.0, why_key="why_depth_assumed"))
-    dur = (p.get("duration_years") or {})
-    d = dur.get(inp.sector) or dur.get("default")
+    dur: dict[str, dict[str, float]] = p.get("duration_years") or {}
+    d = dur.get(inp.sector) or dur["default"]
     factors.append(Factor("Duration (years)", d["mean"], d["sigma"], f"typical for {inp.sector or 'this sector'}",
                           why_key="why_duration", why_args={"sector": inp.sector or "-"}))
     evidence_level = (inp.depth.level if (inp.depth is not None and not climate) else primary.level)
@@ -344,7 +345,7 @@ def _simulate(factors: list[Factor], seed_text: str) -> dict[str, Any]:
 def _words(sigma: float) -> str:
     for band in params().get("uncertainty_words") or []:
         if sigma <= band["max"]:
-            return band["label"]
+            return str(band["label"])
     return "wide"
 
 
@@ -459,7 +460,7 @@ def _evidence_plan(inp: OutcomeInputs, outcomes: list[dict[str, Any]], eq: dict[
                          "why": f"Moves evidence from level {level} to 3, nets out deadweight and narrows the "
                                 f"range (now ×{people['spread']} from P10 to P90)." if people["spread"] else
                                 f"Moves evidence from level {level} to 3."})
-        if not people["verified"] and top == "Reach":
+        if not people["verified"] and top == "Reach" and inp.reach is not None:
             plan.append({"action": f"Have the headline reach figure ({int(inp.reach.value):,} "
                                    f"{people['stakeholder']}) verified by a third party.",
                          "why": "Reach drives most of the remaining uncertainty."})
@@ -481,7 +482,8 @@ def _share(outcome: dict[str, Any], factor: str) -> str:
 
 
 def _all_drivers(outcome: dict[str, Any]) -> list[dict[str, Any]]:
-    return outcome.get("drivers", [])
+    drivers: list[dict[str, Any]] = outcome.get("drivers", [])
+    return drivers
 
 
 def _gate(outcomes: list[dict[str, Any]], eq: dict[str, Any], completeness: float | None,

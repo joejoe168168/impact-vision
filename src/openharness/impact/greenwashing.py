@@ -1141,7 +1141,7 @@ def _check_climatebert_available() -> bool:
     try:
         from transformers import AutoConfig
 
-        AutoConfig.from_pretrained(
+        AutoConfig.from_pretrained(  # nosec B615 - local_files_only: availability probe, no download
             "climatebert/distilroberta-base-climate-detector",
             local_files_only=True,
         )
