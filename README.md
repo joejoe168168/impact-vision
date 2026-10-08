@@ -9,7 +9,7 @@ Built on [OpenHarness](https://github.com/HKUDS/OpenHarness), with GIIN's IRIS+
 catalogue, the UN SDGs, the 5 Dimensions of Impact and 20+ ESG and regulatory
 frameworks (ISSB, ESRS/VSME, SFDR, TCFD, SASB, GRI, PCAF, SBTi, EU Taxonomy,
 TNFD, CDP, TISFD, 2X, SBTN). Release notes: [CHANGELOG.md](CHANGELOG.md) ·
-roadmap: [docs/roadmap-v7.md](docs/roadmap-v7.md).
+roadmap: [docs/roadmap-v8.md](docs/roadmap-v8.md).
 
 ![Decision-first impact report: verdict, headline numbers and what would change our mind](docs/images/report-overview.png)
 
@@ -582,7 +582,7 @@ impact-vision/
 ├── docs/
 │   ├── fund-manager-guide.md          # Web-first task recipes for funds and consultants
 │   ├── reference/tools.md             # Generated list of all 48 tools
-│   ├── roadmap-v7.md                  # Current roadmap (released as 0.17.0); older: v3, v4, v6
+│   ├── roadmap-v8.md                  # Current roadmap (credibility + lifecycle); older: v7, v6, v4, v3
 │   ├── glossary.md · dd-checklist.md · climate-and-lca.md
 │   └── cursor-integration.md          # Cursor/VS Code MCP setup
 ├── examples/                          # Sample company, portfolio, MCP configs
@@ -824,7 +824,8 @@ OpenAPI docs at `/docs`.
 
 Strategy and engineering plans live in [`docs/`](docs/):
 
-- [`docs/roadmap-v7.md`](docs/roadmap-v7.md) — **current**: trust fixes, effortless first run, decision-first reports, standards currency. Waves 0–3 shipped; Wave 4 (standards currency) next.
+- [`docs/roadmap-v8.md`](docs/roadmap-v8.md) — **current**: secure by default, Methodology 2.0 (expected impact with ranges), evidence-aware extraction, the company lifecycle, 2027 standards.
+- [`docs/roadmap-v7.md`](docs/roadmap-v7.md) — trust fixes, effortless first run, decision-first reports, standards currency. Shipped as 0.17.
 - [`docs/roadmap-v2.md`](docs/roadmap-v2.md) — Institutional-readiness plan: data contracts, investee collection, climate accounting, LP reporting, assurance, causal impact, and governed AI.
 - [`docs/roadmap-v3.md`](docs/roadmap-v3.md) / [`-v3-implementation.md`](docs/roadmap-v3-implementation.md) — Trust infrastructure. Shipped.
 - [`docs/roadmap-v4.md`](docs/roadmap-v4.md) — Consultant-led engagement suite. Backend shipped; frontend and paid-data wiring deferred.
