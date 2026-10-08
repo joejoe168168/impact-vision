@@ -36,6 +36,9 @@ class DDQuestion(BaseModel):
     priority: str = "medium"
     keywords: list[str] = Field(default_factory=list)
     follow_up: str | None = None
+    # "fund": a question for the investment team (mandate fit, the investor's
+    # own additionality); never sent to founders or counted in coverage.
+    ask: str = "company"
 
 
 class DDChecklistResult(BaseModel):
@@ -44,6 +47,8 @@ class DDChecklistResult(BaseModel):
     total_questions: int
     addressed: list[DDQuestionMatch] = Field(default_factory=list)
     unanswered: list[DDQuestion] = Field(default_factory=list)
+    fund_questions: list[DDQuestion] = Field(
+        default_factory=list, description="Questions for the investment team, not the company")
     coverage_pct: float = 0.0
     high_priority_gaps: list[DDQuestion] = Field(default_factory=list)
     avg_evidence_level: float = Field(
@@ -242,6 +247,9 @@ def analyze_document_coverage(
         cat_set = set(categories)
         questions = [q for q in questions if q.category in cat_set]
 
+    fund_questions = [q for q in questions if q.ask == "fund"]
+    questions = [q for q in questions if q.ask != "fund"]
+
     text_lower = document_text.lower()
     sentences = _rough_sentences(text_lower)
 
@@ -309,6 +317,7 @@ def analyze_document_coverage(
         total_questions=total,
         addressed=addressed,
         unanswered=unanswered,
+        fund_questions=fund_questions,
         coverage_pct=coverage,
         high_priority_gaps=high_gaps,
         avg_evidence_level=avg_ev,

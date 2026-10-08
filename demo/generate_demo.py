@@ -28,6 +28,7 @@ from openharness.impact.engagement_home import build_engagement_home, render_eng
 from openharness.impact.investee_portal import build_investee_portal  # noqa: E402
 from openharness.impact.portfolio_home import (  # noqa: E402
     build_portfolio_home,
+    jurisdictions_for,
     record_from_bundle,
     render_portfolio_home,
 )
@@ -152,7 +153,10 @@ def main() -> int:
     records = [record_from_bundle(b, link=f"{slugify(b.company.name)}/{slugify(b.company.name)}_impact_report.html")
                for b in bundles]
     home = DEMO / "portfolio_home.html"
-    home.write_text(render_portfolio_home(build_portfolio_home(records, fund_name=FUND)), encoding="utf-8")
+    # The demo fund is Hong Kong-domiciled; portfolio markets add their own calendars.
+    jurisdictions = jurisdictions_for(records, "HK")
+    home.write_text(render_portfolio_home(build_portfolio_home(records, fund_name=FUND, jurisdictions=jurisdictions)),
+                    encoding="utf-8")
     print(f"[demo] wrote {home}")
     engagements = DEMO / "engagements.html"
     engagements.write_text(render_engagement_home(build_engagement_home(

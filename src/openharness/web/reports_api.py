@@ -97,13 +97,16 @@ def list_reports(limit: int = 50) -> list[dict[str, Any]]:
     return rows[:limit]
 
 
-def create_report(source: Path, *, name: str = "", sector: str = "", geography: str = "",
-                  label: str = "") -> dict[str, Any]:
-    """Run the offline pipeline on *source* and store the result as a report."""
-    from openharness.impact.pipeline import assess_file, save_bundle, write_deliverables
+def create_report(source: Path | list[Path], *, name: str = "", sector: str = "", geography: str = "",
+                  stage: str = "", label: str = "") -> dict[str, Any]:
+    """Run the offline pipeline on *source* (one file or several) and store the report."""
+    from openharness.impact.pipeline import assess_files, save_bundle, write_deliverables
 
-    bundle = assess_file(source, name=name, sector=sector, geography=geography,
-                         source_label=label or source.name)
+    sources = list(source) if isinstance(source, (list, tuple)) else [source]
+    source = sources[0]
+    label = label or " + ".join(s.name for s in sources)
+    bundle = assess_files(sources, name=name, sector=sector, geography=geography, stage=stage,
+                          source_label=label)
     report_id = secrets.token_hex(8)
     folder = reports_dir() / report_id
     files = write_deliverables(bundle, folder)
@@ -118,6 +121,9 @@ def create_report(source: Path, *, name: str = "", sector: str = "", geography: 
         "company": bundle.company.name,
         "source": label or source.name,
         "assessment_id": assessment_id,
+        # Kept so the report can be corrected and re-run on the same files.
+        "inputs": {"stored_names": [s.name for s in sources], "name": name, "sector": sector,
+                   "geography": geography, "stage": stage},
         "summary": bundle.summary(),
         "files": [p.name for p in files],
         "report_data": bundle.report_data,
@@ -136,7 +142,7 @@ def render_report(record: dict[str, Any], *, audience: str = "full", lang: str =
     return render_decision_report(data, audience=audience, lang=lang)
 
 
-def render_portfolio_page(*, jurisdictions: str = "EU,US,UK", fund_name: str = "Portfolio",
+def render_portfolio_page(*, jurisdictions: str = "auto", fund_name: str = "Portfolio",
                           theme: str = "") -> str:
     """Portfolio home (W3.4) built from every saved report plus CRM pipeline rows."""
     from openharness.impact.portfolio_home import build_portfolio_home, render_portfolio_home
@@ -158,7 +164,14 @@ def render_portfolio_page(*, jurisdictions: str = "EU,US,UK", fund_name: str = "
         pipeline_rows = get_assessment_store().list_pipeline()
     except Exception:  # noqa: BLE001 - the page works without the CRM table
         pass
-    codes = [j.strip() for j in jurisdictions.split(",") if j.strip()][:8] or ["EU"]
+    if jurisdictions.strip().lower() in {"", "auto"}:
+        # The fund's domicile (IMPACT_VISION_FUND_DOMICILE, e.g. "HK") plus where
+        # the portfolio companies operate — not a fixed EU/US/UK list.
+        from openharness.impact.portfolio_home import jurisdictions_for
+
+        codes = jurisdictions_for(records, os.environ.get("IMPACT_VISION_FUND_DOMICILE", ""))[:8]
+    else:
+        codes = [j.strip() for j in jurisdictions.split(",") if j.strip()][:8]
     try:
         from openharness.impact.evidence_workflow import list_review_queues
 
@@ -230,10 +243,13 @@ def read_share_token(token: str, *, now: float | None = None) -> dict[str, Any]:
 
 
 class AssessRequest(BaseModel):
-    stored_name: str = Field(..., description="File name returned by POST /api/v1/chat/uploads")
+    stored_name: str = Field("", description="File name returned by POST /api/v1/chat/uploads")
+    stored_names: list[str] = Field(default_factory=list,
+                                    description="Several uploads about one company, assessed together")
     name: str = ""
     sector: str = ""
     geography: str = ""
+    stage: str = ""
 
 
 class ShareRequest(BaseModel):
@@ -263,13 +279,19 @@ def build_reports_router(*, auth_dependency: Any = None) -> Any:
 
     @router.post("/assess", dependencies=deps)
     async def assess(req: AssessRequest) -> dict[str, Any]:
-        source = (uploads_dir() / _safe_filename(req.stored_name)).resolve()
-        if source.parent != uploads_dir().resolve() or not source.is_file():
-            raise HTTPException(status_code=404, detail="Upload not found — upload the file first")
-        label = re.sub(r"^\d{8}-\d{6}-", "", source.name)
+        names = [n for n in ([req.stored_name] + list(req.stored_names)) if n]
+        if not names:
+            raise HTTPException(status_code=422, detail="Pass stored_name or stored_names")
+        sources = []
+        for stored in dict.fromkeys(names):
+            source = (uploads_dir() / _safe_filename(stored)).resolve()
+            if source.parent != uploads_dir().resolve() or not source.is_file():
+                raise HTTPException(status_code=404, detail="Upload not found — upload the file first")
+            sources.append(source)
+        label = " + ".join(re.sub(r"^\d{8}-\d{6}-", "", s.name) for s in sources)
         try:
-            return await asyncio.to_thread(create_report, source, name=req.name, sector=req.sector,
-                                           geography=req.geography, label=label)
+            return await asyncio.to_thread(create_report, sources, name=req.name, sector=req.sector,
+                                           geography=req.geography, stage=req.stage, label=label)
         except ValueError as exc:  # unsupported type, empty text
             raise HTTPException(status_code=422, detail=str(exc)) from exc
 
@@ -301,7 +323,7 @@ def build_reports_router(*, auth_dependency: Any = None) -> Any:
         return FileResponse(_report_path(report_id) / name, filename=name)
 
     @router.get("/portfolio/view", dependencies=deps, response_class=HTMLResponse)
-    async def portfolio_view(jurisdictions: str = "EU,US,UK,HK", fund_name: str = "Portfolio",
+    async def portfolio_view(jurisdictions: str = "auto", fund_name: str = "Portfolio",
                              theme: str = "") -> HTMLResponse:
         return HTMLResponse(await asyncio.to_thread(
             render_portfolio_page, jurisdictions=jurisdictions, fund_name=fund_name, theme=theme))

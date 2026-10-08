@@ -52,6 +52,34 @@ def _lvl(value: float | None, top: float) -> int:
     return max(1, min(5, int(-(-float(value) * 5 // top))))  # ceil into 1..5
 
 
+# Geography (as detected or entered) → statutory calendar jurisdictions.
+_GEO_JURISDICTIONS: dict[str, tuple[str, ...]] = {
+    "hong kong": ("HK",), "china": ("CN",), "mainland china": ("CN",), "singapore": ("SG",),
+    "japan": ("JP",), "australia": ("AU",), "united kingdom": ("UK",), "uk": ("UK",),
+    "england": ("UK",), "scotland": ("UK",), "united states": ("US",), "usa": ("US",),
+    "north america": ("US", "CA"), "canada": ("CA",), "switzerland": ("CH",), "europe": ("EU",),
+    "european union": ("EU",), "germany": ("EU",), "france": ("EU",), "netherlands": ("EU",),
+    "spain": ("EU",), "italy": ("EU",), "ireland": ("EU",), "sweden": ("EU",), "denmark": ("EU",),
+    "belgium": ("EU",), "portugal": ("EU",), "finland": ("EU",), "austria": ("EU",), "poland": ("EU",),
+}
+
+
+def jurisdictions_for(records: Iterable[dict[str, Any]], domicile: str | Iterable[str] = "") -> list[str]:
+    """Calendars that apply: the fund's domicile plus where portfolio companies operate.
+
+    A Kenya-only portfolio of a fund with no domicile set gets no statutory
+    calendar (instead of California SB 253).
+    """
+    codes: list[str] = []
+    raw = [domicile] if isinstance(domicile, str) else list(domicile)
+    for item in raw:
+        codes += [c.strip().upper() for c in str(item).split(",") if c.strip()]
+    for record in records:
+        geo = str((record.get("summary") or {}).get("geography", "")).strip().lower()
+        codes += list(_GEO_JURISDICTIONS.get(geo, ()))
+    return list(dict.fromkeys(codes))
+
+
 def record_from_bundle(bundle: Any, *, link: str = "") -> dict[str, Any]:
     """Adapt a pipeline ``AssessmentBundle`` to a portfolio-home record."""
     return {"company": bundle.company.name, "created_at": time.time(), "summary": bundle.summary(),

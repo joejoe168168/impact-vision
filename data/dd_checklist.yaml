@@ -82,6 +82,7 @@ questions:
     phase: screening
     dimension: what
     priority: high
+    ask: fund   # for the investment team / IC memo, not the founders
     keywords: ["fund mandate", "investment thesis", "alignment", "strategic fit"]
 
   - id: IT04
@@ -249,6 +250,7 @@ questions:
     phase: deep_diligence
     dimension: contribution
     priority: medium
+    ask: fund   # for the investment team / IC memo, not the founders
     keywords: ["capital additionality", "investor contribution", "catalytic", "concessionary"]
 
   # ===== RISK =====
@@ -640,6 +642,7 @@ questions:
     phase: deep_diligence
     dimension: contribution
     priority: medium
+    ask: fund   # for the investment team / IC memo, not the founders
     keywords: ["value-add", "technical assistance", "mentoring", "network", "beyond capital", "support"]
 
   - id: IA03
@@ -648,6 +651,7 @@ questions:
     phase: screening
     dimension: null
     priority: medium
+    ask: fund   # for the investment team / IC memo, not the founders
     keywords: ["portfolio", "strategy", "thesis", "mandate", "allocation", "fit"]
 
   # ---- SECTOR-SPECIFIC: FINTECH / FINANCIAL INCLUSION ----

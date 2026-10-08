@@ -59,7 +59,7 @@ table.heat .gap { width: 10px; min-width: 10px; padding: 0; background: none; }
     <div>
       <p class="eyebrow">Portfolio home</p>
       <h1>{{ v.fund_name }}</h1>
-      <p class="meta">As of {{ v.as_of }} · {{ v.companies | length }} companies · deadlines for {{ v.jurisdictions | join(', ') }}</p>
+      <p class="meta">As of {{ v.as_of }} · {{ v.companies | length }} {{ 'company' if v.companies | length == 1 else 'companies' }}{% if v.jurisdictions %} · deadlines for {{ v.jurisdictions | join(', ') }}{% endif %}</p>
     </div>
   </div>
 </header>
@@ -137,7 +137,7 @@ table.heat .gap { width: 10px; min-width: 10px; padding: 0; background: none; }
 <div class="grid2">
   <section class="card" id="sec-deadlines" aria-labelledby="h-deadlines">
     <h2 id="h-deadlines">Regulatory deadlines</h2>
-    <p class="lede">Next 180 days for {{ v.jurisdictions | join(', ') }} (calendar-year reporting). Confirm applicability per fund.</p>
+    {% if v.jurisdictions %}<p class="lede">Next 180 days for {{ v.jurisdictions | join(', ') }} (calendar-year reporting) — the fund's domicile plus where its companies operate. Confirm applicability per fund.</p>{% endif %}
     {% if v.deadlines %}
     <ul class="list">
       {% for d in v.deadlines %}
@@ -147,7 +147,8 @@ table.heat .gap { width: 10px; min-width: 10px; padding: 0; background: none; }
       {% endfor %}
     </ul>
     {% if v.deadlines_total > v.deadlines|length %}<p class="muted" style="margin:10px 0 0;font-size:.86rem">+ {{ v.deadlines_total - v.deadlines|length }} more in the window — see the regulatory_calendar tool.</p>{% endif %}
-    {% else %}<p class="muted">No deadlines in the window.</p>{% endif %}
+    {% elif v.jurisdictions %}<p class="muted">No deadlines in the window.</p>
+    {% else %}<p class="muted">No statutory calendar applies to where these companies operate. Set the fund's domicile (<code>IMPACT_VISION_FUND_DOMICILE=HK</code>) to see fund-level obligations.</p>{% endif %}
   </section>
 
   <section class="card" id="sec-review" aria-labelledby="h-review">

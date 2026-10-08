@@ -20,7 +20,7 @@ from typing import Any
 
 from openharness.impact.models import Assessment, Company
 
-SUPPORTED_SUFFIXES = (".pdf", ".txt", ".md", ".markdown")
+SUPPORTED_SUFFIXES = (".pdf", ".txt", ".md", ".markdown", ".docx", ".pptx")
 AUDIENCES = ("full", "ic", "lp", "regulator", "public")
 
 
@@ -95,8 +95,65 @@ def reflow_pdf_text(text: str) -> str:
     return "\n".join(out)
 
 
+def _office_missing(kind: str) -> ValueError:
+    return ValueError(f"Reading {kind} files needs the office extra: pip install 'impact-vision[office]'")
+
+
+def _read_docx(path: Path) -> str:
+    """Paragraphs (headings as markdown ``#`` lines, so sections are found) and tables."""
+    try:
+        import docx  # type: ignore[import-not-found]
+    except ImportError as exc:  # pragma: no cover - optional extra
+        raise _office_missing("Word") from exc
+    document = docx.Document(str(path))
+    lines: list[str] = []
+    for para in document.paragraphs:
+        text = para.text.strip()
+        if not text:
+            lines.append("")
+            continue
+        style = (para.style.name or "").lower() if para.style is not None else ""
+        if style.startswith("heading") or style == "title":
+            lines += ["", f"# {text}"]
+        elif style.startswith("list"):
+            lines.append(f"- {text}")
+        else:
+            lines.append(text)
+    for table in document.tables:
+        lines.append("")
+        for row in table.rows:
+            cells = [c.text.strip() for c in row.cells]
+            lines.append(" | ".join(dict.fromkeys(c for c in cells if c)))
+    return "\n".join(lines).strip()
+
+
+def _read_pptx(path: Path) -> str:
+    """One section per slide: the title as a heading, then the text frames."""
+    try:
+        from pptx import Presentation  # type: ignore[import-not-found]
+    except ImportError as exc:  # pragma: no cover - optional extra
+        raise _office_missing("PowerPoint") from exc
+    lines: list[str] = []
+    for slide in Presentation(str(path)).slides:
+        title = slide.shapes.title.text.strip() if slide.shapes.title is not None and slide.shapes.title.has_text_frame else ""
+        if title:
+            lines += ["", f"# {title}"]
+        for shape in slide.shapes:
+            if shape == slide.shapes.title or not getattr(shape, "has_text_frame", False):
+                continue
+            for para in shape.text_frame.paragraphs:
+                text = "".join(run.text for run in para.runs).strip()
+                if text:
+                    lines.append(text)
+        if getattr(slide, "has_notes_slide", False) and slide.notes_slide.notes_text_frame is not None:
+            notes = slide.notes_slide.notes_text_frame.text.strip()
+            if notes:
+                lines.append(notes)
+    return "\n".join(lines).strip()
+
+
 def read_document(path: str | Path) -> str:
-    """Return the text of a PDF / TXT / Markdown document."""
+    """Return the text of a PDF / Word / PowerPoint / TXT / Markdown document."""
     p = Path(path)
     if not p.is_file():
         raise FileNotFoundError(f"No such file: {p}")
@@ -106,6 +163,10 @@ def read_document(path: str | Path) -> str:
 
         text, _pages = _extract_pdf_text(p)
         return reflow_pdf_text(text)
+    if suffix == ".docx":
+        return _read_docx(p)
+    if suffix == ".pptx":
+        return _read_pptx(p)
     if suffix in SUPPORTED_SUFFIXES:
         return p.read_text(encoding="utf-8", errors="replace")
     raise ValueError(
@@ -126,6 +187,7 @@ def assess_document(
     source_label: str = "Source document",
     audience: str = "full",
     theme: str = "",
+    stage: str = "",
 ) -> AssessmentBundle:
     """Run the full no-LLM assessment chain on one document.
 
@@ -165,6 +227,10 @@ def assess_document(
         impact_themes=impact_themes if impact_themes is not None else inferred.impact_themes,
     )
     company = assessment.company
+    if stage:
+        stage_key = stage.strip().lower().replace(" ", "-")
+        if stage_key in {"pre-seed", "seed", "series-a", "series-b", "growth", "mature"}:
+            company.stage = stage_key  # type: ignore[assignment]
     company.description = description or text[:1000]
     # Scorers read the whole document minus problem/market/team/ask sections.
     company.assessment_text = scoring_text(text) if not description else ""
@@ -258,6 +324,20 @@ def assess_file(path: str | Path, **kwargs: Any) -> AssessmentBundle:
     p = Path(path)
     kwargs.setdefault("source_label", p.name)
     return assess_document(read_document(p), **kwargs)
+
+
+def assess_files(paths: list[str | Path], **kwargs: Any) -> AssessmentBundle:
+    """Assess several documents about one company (deck + impact report + …) together.
+
+    Each file becomes a ``# <file name>`` section of one combined text, so the
+    evidence in any of them counts.
+    """
+    files = [Path(p) for p in paths]
+    if len(files) == 1:
+        return assess_file(files[0], **kwargs)
+    parts = [f"# {f.name}\n\n{read_document(f)}" for f in files]
+    kwargs.setdefault("source_label", " + ".join(f.name for f in files))
+    return assess_document("\n\n".join(parts), **kwargs)
 
 
 def slugify(name: str) -> str:

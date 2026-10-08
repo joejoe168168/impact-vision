@@ -285,6 +285,12 @@ a:hover{text-decoration:underline}
 .rstat .k{font-size:11.5px;color:var(--text-dim)} .rstat .v{font-size:18px;font-weight:650;line-height:1.3}
 .rstat .v small{font-size:12px;color:var(--text-faint);font-weight:500}
 .ractions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.rcard .rerun{margin-top:12px;border-top:1px solid var(--border);padding-top:10px;font-size:13px}
+.rcard .rerun summary{cursor:pointer;color:var(--text-dim)}
+.rerun-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:10px 0}
+.rerun-grid label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--text-dim)}
+.rerun-grid input,.rerun-grid select{font:inherit;font-size:13px;padding:6px 8px;border:1px solid var(--border);
+  border-radius:7px;background:var(--bg);color:var(--text)}
 .ractions .dl{font-size:12px;padding:4px 9px;border:1px solid var(--border);border-radius:7px;color:var(--text-dim)}
 .ractions .dl:hover{border-color:var(--accent);color:var(--accent)}
 .rcard .busy{display:flex;gap:10px;align-items:center;color:var(--text-dim);font-size:13.5px;margin-top:10px}
@@ -1021,7 +1027,7 @@ async function uploadFiles(fileList) {
 /* ---------------------------------------------------------------------
    Reports: analyze a deck offline, view inline, share read-only (W3.2)
    ------------------------------------------------------------------- */
-const DECK_EXT = /\.(pdf|md|markdown|txt|docx)$/i;
+const DECK_EXT = /\.(pdf|md|markdown|txt|docx|pptx)$/i;
 const GATE_TONE = (g) => /PASS/.test(g) ? 'ok' : /FAIL/.test(g) ? 'bad' : 'warn';
 const FILE_LABEL = [['_impact_report.html', 'Report HTML'], ['_ic_memo.html', 'IC memo'], ['_ic_memo.docx', 'IC memo .docx'],
   ['_dd_report.html', 'DD report'], ['_dd_questionnaire.docx', 'DD questions .docx'], ['_data.xlsx', 'Data .xlsx'],
@@ -1050,26 +1056,64 @@ function monogramOf(name) {
 }
 
 async function analyzeFiles(fileList) {
-  const f = Array.from(fileList || [])[0];
-  if (!f) return;
-  if (!DECK_EXT.test(f.name)) { toast('Use a PDF, Word, Markdown or text file'); return; }
+  // Every deck-type file dropped together is one company: deck + impact report + …
+  const files = Array.from(fileList || []).filter((f) => DECK_EXT.test(f.name));
+  if (!files.length) { toast('Use a PDF, Word, PowerPoint, Markdown or text file'); return; }
   const welcome = $('.welcome', thread()); if (welcome) welcome.remove();
   const card = document.createElement('div');
   card.className = 'rcard';
   card.innerHTML = '<div class="rhead"><div class="mono">…</div><div><h4></h4><div class="rmeta"></div></div></div>' +
-    '<div class="busy"><span class="spin"></span><span>Reading the deck and scoring it…</span></div>';
-  $('h4', card).textContent = f.name;
-  $('.rmeta', card).textContent = fmtSize(f.size);
+    '<div class="busy"><span class="spin"></span><span>Reading the documents and scoring them…</span></div>';
+  $('h4', card).textContent = files.map((f) => f.name).join(' + ');
+  $('.rmeta', card).textContent = fmtSize(files.reduce((n, f) => n + f.size, 0));
   thread().appendChild(card); scrollDown(true);
   try {
-    const fd = new FormData(); fd.append('files', f, f.name);
+    const fd = new FormData(); files.forEach((f) => fd.append('files', f, f.name));
     const up = await api('/uploads', {method: 'POST', body: fd});
-    const rep = await api('/assess', {method: 'POST', body: JSON.stringify({stored_name: up.files[0].stored_name})});
+    const stored = up.files.map((x) => x.stored_name);
+    const rep = await api('/assess', {method: 'POST', body: JSON.stringify({stored_names: stored})});
     fillReportCard(card, rep);
     S.reports.unshift(rep); renderPanel();
   } catch (e) {
     $('.busy', card).textContent = 'Analysis failed: ' + e.message;
   }
+}
+
+const STAGES = ['', 'pre-seed', 'seed', 'series-a', 'series-b', 'growth', 'mature'];
+const SECTORS = ['', 'agriculture', 'education', 'energy', 'fintech', 'healthcare', 'manufacturing', 'real estate',
+  'retail', 'technology', 'tourism', 'transport', 'waste management', 'water'];
+
+function rerunForm(card, rep) {
+  // Detection got the sector or place wrong? Correct it and re-score the same files.
+  const inputs = rep.inputs || {};
+  const s = rep.summary || {};
+  const box = document.createElement('details');
+  box.className = 'rerun';
+  box.innerHTML = '<summary>Correct and re-run</summary><div class="rerun-grid">' +
+    '<label>Company<input data-k="name"></label>' +
+    '<label>Sector<select data-k="sector">' + SECTORS.map((x) => '<option value="' + x + '">' + (x || 'auto-detect') + '</option>').join('') + '</select></label>' +
+    '<label>Geography<input data-k="geography" placeholder="e.g. Hong Kong"></label>' +
+    '<label>Stage<select data-k="stage">' + STAGES.map((x) => '<option value="' + x + '">' + (x || 'not set') + '</option>').join('') + '</select></label>' +
+    '</div><button class="btn primary" data-act="rerun">Re-score</button>';
+  $('[data-k=name]', box).value = inputs.name || s.company || '';
+  $('[data-k=sector]', box).value = SECTORS.includes(inputs.sector || s.sector) ? (inputs.sector || s.sector) : '';
+  $('[data-k=geography]', box).value = inputs.geography || s.geography || '';
+  $('[data-k=stage]', box).value = inputs.stage || '';
+  box.querySelector('[data-act=rerun]').onclick = async () => {
+    const body = {stored_names: inputs.stored_names || []};
+    box.querySelectorAll('[data-k]').forEach((el) => { body[el.dataset.k] = el.value.trim(); });
+    if (!body.stored_names.length) { toast('The original files are no longer available'); return; }
+    const busy = document.createElement('div'); busy.className = 'busy';
+    busy.innerHTML = '<span class="spin"></span><span>Re-scoring…</span>';
+    card.appendChild(busy);
+    try {
+      const next = await api('/assess', {method: 'POST', body: JSON.stringify(body)});
+      fillReportCard(card, next);
+      S.reports.unshift(next); renderPanel();
+      toast('Re-scored with your corrections');
+    } catch (e) { busy.textContent = 'Re-run failed: ' + e.message; }
+  };
+  card.appendChild(box);
 }
 
 function fillReportCard(card, rep) {
@@ -1098,6 +1142,7 @@ function fillReportCard(card, rep) {
     esc(Object.keys(s.reported_metrics || {}).length) + '<small> metrics</small>';
   card.querySelector('[data-act=view]').onclick = () => openViewer(rep);
   card.querySelector('[data-act=share]').onclick = () => openViewer(rep, true);
+  rerunForm(card, rep);
   card.querySelector('[data-act=ask]').onclick = () => {
     $('#input').value = 'Use assessment_id ' + rep.assessment_id + ' (' + (s.company || '') +
       '). Explain the verdict and draft the three most important questions for the founders.';
@@ -1242,7 +1287,7 @@ function renderPanel() {
       el.innerHTML = '<div style="flex:1;min-width:0"><div class="fname"></div><div class="fmeta"></div></div><span class="gate"></span>';
       $('.fname', el).textContent = s.company || r.company;
       $('.fmeta', el).textContent = new Date((r.created_at || 0) * 1000).toLocaleString();
-      const g = $('.gate', el); g.textContent = (s.gate || '').replace('INSUFFICIENT EVIDENCE', 'NOT READY'); g.classList.add(GATE_TONE(s.gate || ''));
+      const g = $('.gate', el); g.textContent = s.gate || ''; g.classList.add(GATE_TONE(s.gate || ''));
       el.onclick = () => openViewer(r);
       el.onkeydown = (e) => { if (e.key === 'Enter') openViewer(r); };
       body.appendChild(el);

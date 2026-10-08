@@ -156,7 +156,7 @@ async def verify_api_key(
     """Verify the bearer token when IMPACT_VISION_API_KEY is set (read per request)."""
     if not configured_api_key():
         return
-    if request.url.path == "/api/v1/health":
+    if request.url.path in {"/api/v1/health", "/health"}:
         return
     token = credentials.credentials if credentials else request.headers.get("x-api-key", "")
     if not token_matches(token):
@@ -386,6 +386,7 @@ async def _fire_webhooks(event: str, payload: dict) -> None:
 # ---------------------------------------------------------------------------
 
 
+@app.get("/health", include_in_schema=False)
 @app.get("/api/v1/health")
 async def health():
     import openharness.tools.impact as impact_tools
