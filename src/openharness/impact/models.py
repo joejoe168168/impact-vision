@@ -562,6 +562,7 @@ class ImpactClaim(BaseModel):
 
     text: str = Field(description="The claim text as found in the document")
     source_page: int | None = None
+    source_file: str = Field(default="", description="File the claim came from (multi-file assessments)")
     mapped_metrics: list[str] = Field(
         default_factory=list,
         description="IRIS+ metric IDs this claim maps to",

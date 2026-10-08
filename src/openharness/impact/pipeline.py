@@ -163,6 +163,65 @@ def _read_pptx(path: Path) -> str:
     return "\n".join(lines).strip()
 
 
+def read_document_pages(path: str | Path) -> list[tuple[int, str]]:
+    """``[(page, text)]`` for PDFs (pages) and PowerPoint (slides); [] otherwise."""
+    p = Path(path)
+    suffix = p.suffix.lower()
+    if suffix == ".pdf":
+        from openharness.tools.impact.pitch_deck_analyze_tool import _extract_pdf_text
+
+        _text, pages = _extract_pdf_text(p)
+        return [(int(pg["page"]), str(pg.get("text", ""))) for pg in pages if int(pg.get("page", 0)) > 0]
+    if suffix == ".pptx":
+        try:
+            from pptx import Presentation  # type: ignore[import-not-found]
+        except ImportError:
+            return []
+        out = []
+        for i, slide in enumerate(Presentation(str(p)).slides, 1):
+            texts = [para_text for shape in slide.shapes if getattr(shape, "has_text_frame", False)
+                     for para_text in (shape.text_frame.text,)]
+            out.append((i, "\n".join(texts)))
+        return out
+    return []
+
+
+def _norm(text: str) -> str:
+    import re
+
+    text = re.sub(r"-\s*\n\s*", "", text or "")  # hyphenation across lines
+    return re.sub(r"\s+", " ", text).strip().lower()
+
+
+def attach_citations(bundle: "AssessmentBundle", pages: list[tuple[int, str]], source_file: str = "") -> int:
+    """Give each claim the page (or slide) it was read from (v8 W2.2).
+
+    Returns how many claims were located. Matching uses the first 60 normalised
+    characters of the claim, then a shorter prefix, so line wrapping and
+    hyphenation in the PDF don't break it.
+    """
+    if not pages:
+        return 0
+    normed = [(page, _norm(text)) for page, text in pages]
+    found = 0
+    for claim, row in zip(bundle.assessment.impact_claims, bundle.report_data.get("impact_claims") or []):
+        if claim.source_page:
+            continue
+        needle = _norm(claim.text)
+        for size in (60, 35):
+            probe = needle[:size]
+            hit = next((page for page, text in normed if probe and probe in text), None)
+            if hit is not None:
+                claim.source_page = hit
+                row["source_page"] = hit
+                if source_file:
+                    claim.source_file = source_file
+                    row["source_file"] = source_file
+                found += 1
+                break
+    return found
+
+
 def read_document(path: str | Path) -> str:
     """Return the text of a PDF / Word / PowerPoint / TXT / Markdown document."""
     p = Path(path)
@@ -345,10 +404,12 @@ def assess_document(
 
 
 def assess_file(path: str | Path, **kwargs: Any) -> AssessmentBundle:
-    """Read *path* and run :func:`assess_document` on it."""
+    """Read *path* and run :func:`assess_document` on it; claims get page citations."""
     p = Path(path)
     kwargs.setdefault("source_label", p.name)
-    return assess_document(read_document(p), **kwargs)
+    bundle = assess_document(read_document(p), **kwargs)
+    attach_citations(bundle, read_document_pages(p))
+    return bundle
 
 
 def assess_files(paths: list[str | Path], **kwargs: Any) -> AssessmentBundle:
@@ -362,7 +423,10 @@ def assess_files(paths: list[str | Path], **kwargs: Any) -> AssessmentBundle:
         return assess_file(files[0], **kwargs)
     parts = [f"# {f.name}\n\n{read_document(f)}" for f in files]
     kwargs.setdefault("source_label", " + ".join(f.name for f in files))
-    return assess_document("\n\n".join(parts), **kwargs)
+    bundle = assess_document("\n\n".join(parts), **kwargs)
+    for f in files:
+        attach_citations(bundle, read_document_pages(f), source_file=f.name)
+    return bundle
 
 
 def slugify(name: str) -> str:

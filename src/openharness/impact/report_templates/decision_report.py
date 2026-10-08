@@ -422,6 +422,8 @@ def _evidence(data: dict[str, Any], t) -> dict[str, Any]:  # type: ignore[no-unt
             "level": int(c.get("evidence_strength") or 1),
             "signals": [t(f"signal_{s}") for s in signals],
             "metrics": c.get("mapped_metrics") or [],
+            "cite": (f"{c.get('source_file')} " if c.get("source_file") else "")
+                    + (t("cite_page", page=c["source_page"]) if c.get("source_page") else ""),
         })
     names = _metric_names()
     for c in claims:  # show what each mapped ID is, not just the code
