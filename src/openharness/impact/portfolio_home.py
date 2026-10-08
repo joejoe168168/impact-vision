@@ -187,7 +187,6 @@ def build_portfolio_home(
         if c["impact"].get("p50") is not None:
             totals[c["impact_unit"]] = totals.get(c["impact_unit"], 0.0) + float(c["impact"]["p50"])
     head_unit = "depth-weighted person-years" if "depth-weighted person-years" in totals else next(iter(totals), "")
-    five_d = [c["five_d"] for c in companies if isinstance(c["five_d"], (int, float))]
     gw = [c["greenwashing"] for c in companies if isinstance(c["greenwashing"], (int, float))]
     gate_counts = {g: sum(1 for c in companies if c["gate"] == g) for g in GATE_ORDER}
     stages: dict[str, int] = {}
