@@ -207,8 +207,9 @@ class AssessmentStore:
                 "evidence_quality", "period", "stage", "source")
         conn = self._get_conn()
         cur = conn.execute(
-            f"INSERT INTO outcome_records (company_name, {', '.join(cols)}, created_at) "
-            f"VALUES (?, {', '.join('?' for _ in cols)}, ?)",
+            "INSERT INTO outcome_records (company_name, assessment_id, record_kind, outcome, unit, stakeholder, "
+            "reach, p10, p50, p90, evidence_quality, period, stage, source, created_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (company_name, *(record.get(c) for c in cols), now),
         )
         conn.commit()
