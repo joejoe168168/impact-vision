@@ -7,7 +7,6 @@ import logging
 from pathlib import Path
 from typing import Any
 
-import openpyxl
 
 from openharness.impact.models import DimensionTags, JointImpactIndicators, Metric
 from openharness.impact._paths import data_path
@@ -241,6 +240,8 @@ def load_catalog_from_excel(excel_path: str | Path) -> list[Metric]:
         raise FileNotFoundError(f"IRIS+ catalog not found: {path}")
 
     logger.info("Loading IRIS+ catalog from %s", path)
+    import openpyxl  # lazy: only needed when loading the Excel catalog
+
     wb = openpyxl.load_workbook(str(path), read_only=True, data_only=True)
 
     if CATALOG_SHEET not in wb.sheetnames:
@@ -268,6 +269,8 @@ def load_catalog_from_excel(excel_path: str | Path) -> list[Metric]:
 def load_glossary_from_excel(excel_path: str | Path) -> dict[str, str]:
     """Load glossary terms from the IRIS+ catalog Excel."""
     path = Path(excel_path)
+    import openpyxl  # lazy: only needed when loading the Excel catalog
+
     wb = openpyxl.load_workbook(str(path), read_only=True, data_only=True)
     if GLOSSARY_SHEET not in wb.sheetnames:
         wb.close()

@@ -51,7 +51,9 @@ tui = ["textual>=0.80.0"]
 office = ["python-docx>=1.1.0", "python-pptx>=0.6.23"]
 # PDF export via headless Chromium: then run `playwright install chromium`
 pdf = ["playwright>=1.40"]
-all = ["impact-vision[web,dashboard,tui,office]"]
+# Ed25519-signed assurance manifests and report feeds (verifiable, not forgeable)
+assurance = ["cryptography>=42.0"]
+all = ["impact-vision[web,dashboard,tui,office,assurance]"]
 dev = [
     "impact-vision[all]",
     "pexpect>=4.9.0",

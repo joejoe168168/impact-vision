@@ -1,62 +1,83 @@
-"""Impact-specific tools for IRIS+ metrics, SDG alignment, and impact assessment."""
+"""Impact-specific tools for IRIS+ metrics, SDG alignment, and impact assessment.
 
-from openharness.tools.impact.advisor_tool import ImpactAdvisorTool
-from openharness.tools.impact.ai_governance_tool import AIGovernanceTool
-from openharness.tools.impact.climate_scenario_tool import ClimateScenarioTool
-from openharness.tools.impact.carbon_credit_tool import CarbonCreditIntegrityTool
-from openharness.tools.impact.contribution_tool import ContributionTrackerTool
-from openharness.tools.impact.cross_reference_tool import CrossReferenceTool
-from openharness.tools.impact.data_quality_tool import DataQualityTool
-from openharness.tools.impact.decision_workflow_tool import DecisionWorkflowTool
-from openharness.tools.impact.dd_checklist_tool import DdChecklistTool
-from openharness.tools.impact.dmrv_tool import DMRVEvidenceTool
-from openharness.tools.impact.assess_deal_tool import AssessDealTool
-from openharness.tools.impact.emission_factors_tool import EmissionFactorsTool
-from openharness.tools.impact.engagement_suite_tool import EngagementSuiteTool
-from openharness.tools.impact.engagement_workspace_tool import EngagementWorkspaceTool
-from openharness.tools.impact.evidence_review_tool import EvidenceReviewTool
-from openharness.tools.impact.exclusion_screening_tool import ExclusionScreeningTool
-from openharness.tools.impact.exit_impact_tool import ExitImpactTool
-from openharness.tools.impact.esg_toolbox_tool import ESGToolboxTool
-from openharness.tools.impact.merged_tools import (
-    DDQResponderTool,
-    PipelineTool,
-    PitchDeckAnalyzeTool,
-    RegulatoryCalendarTool,
-    StakeholderVoiceTool,
-)
-from openharness.tools.impact.five_dimension_assess_tool import FiveDimensionAssessTool
-from openharness.tools.impact.framework_tool import FrameworkTool
-from openharness.tools.impact.gap_analysis_tool import GapAnalysisTool
-from openharness.tools.impact.greenwashing_reviewer_tool import (
-    GreenwashingReviewerTool as GreenwashingReviewerTool,
-)
-from openharness.tools.impact.greenwashing_tool import GreenwashingDetectorTool
-from openharness.tools.impact.hrdd_tool import HRDDTool
-from openharness.tools.impact.impact_quantifier_tool import ImpactQuantifierTool
-from openharness.tools.impact.impact_risk_opportunity_tool import ImpactRiskOpportunityTool
-from openharness.tools.impact.impact_report_tool import ImpactReportTool
-from openharness.tools.impact.impact_valuation_tool import ImpactValuationTool
-from openharness.tools.impact.impact_linked_finance_tool import ImpactLinkedFinanceTool
-from openharness.tools.impact.improvement_advisor_tool import ImprovementAdvisorTool
-from openharness.tools.impact.investee_portal_tool import InvesteePortalTool
-from openharness.tools.impact.iris_catalog_tool import IrisCatalogTool
-from openharness.tools.impact.lp_narrative_tool import LPNarrativeTool
-from openharness.tools.impact.lca_tool import LCAAssessmentTool
-from openharness.tools.impact.metric_recommender_tool import MetricRecommenderTool
-from openharness.tools.impact.monitoring_tool import MonitoringTool
-from openharness.tools.impact.narrative_tool import NarrativeTool as NarrativeTool
-from openharness.tools.impact.portfolio_query_tool import PortfolioQueryTool
-from openharness.tools.impact.portfolio_tool import PortfolioTool
-from openharness.tools.impact.product_passport_tool import ProductPassportTool
-from openharness.tools.impact.sdg_mapper_tool import SdgMapperTool
-from openharness.tools.impact.survey_delivery_tool import SurveyDeliveryTool
-from openharness.tools.impact.toc_builder_tool import ToCBuilderTool
-from openharness.tools.impact.trend_analysis_tool import TrendAnalysisTool
-from openharness.tools.impact.verification_prep_tool import (
-    VerificationPrepTool as VerificationPrepTool,
-)
-from openharness.tools.impact.verification_workspace_tool import VerificationWorkspaceTool
+Tool classes are imported lazily (PEP 562): ``from openharness.tools.impact
+import SdgMapperTool`` still works, but importing this package (or one helper
+module such as ``tools.impact.common`` from the core engine) no longer loads
+all 60 tool modules. That cut ``import openharness.impact`` from ~1.6 s.
+"""
+
+from __future__ import annotations
+
+import importlib
+from typing import Any
+
+_TOOL_MODULES: dict[str, str] = {
+    "ImpactAdvisorTool": "advisor_tool",
+    "AIGovernanceTool": "ai_governance_tool",
+    "ClimateScenarioTool": "climate_scenario_tool",
+    "CarbonCreditIntegrityTool": "carbon_credit_tool",
+    "ContributionTrackerTool": "contribution_tool",
+    "CrossReferenceTool": "cross_reference_tool",
+    "DataQualityTool": "data_quality_tool",
+    "DecisionWorkflowTool": "decision_workflow_tool",
+    "DdChecklistTool": "dd_checklist_tool",
+    "DMRVEvidenceTool": "dmrv_tool",
+    "AssessDealTool": "assess_deal_tool",
+    "EmissionFactorsTool": "emission_factors_tool",
+    "EngagementSuiteTool": "engagement_suite_tool",
+    "EngagementWorkspaceTool": "engagement_workspace_tool",
+    "EvidenceReviewTool": "evidence_review_tool",
+    "ExclusionScreeningTool": "exclusion_screening_tool",
+    "ExitImpactTool": "exit_impact_tool",
+    "ESGToolboxTool": "esg_toolbox_tool",
+    "DDQResponderTool": "merged_tools",
+    "PipelineTool": "merged_tools",
+    "PitchDeckAnalyzeTool": "merged_tools",
+    "RegulatoryCalendarTool": "merged_tools",
+    "StakeholderVoiceTool": "merged_tools",
+    "FiveDimensionAssessTool": "five_dimension_assess_tool",
+    "FrameworkTool": "framework_tool",
+    "GapAnalysisTool": "gap_analysis_tool",
+    "GreenwashingReviewerTool": "greenwashing_reviewer_tool",
+    "GreenwashingDetectorTool": "greenwashing_tool",
+    "HRDDTool": "hrdd_tool",
+    "ImpactQuantifierTool": "impact_quantifier_tool",
+    "ImpactRiskOpportunityTool": "impact_risk_opportunity_tool",
+    "ImpactReportTool": "impact_report_tool",
+    "ImpactValuationTool": "impact_valuation_tool",
+    "ImpactLinkedFinanceTool": "impact_linked_finance_tool",
+    "ImprovementAdvisorTool": "improvement_advisor_tool",
+    "InvesteePortalTool": "investee_portal_tool",
+    "IrisCatalogTool": "iris_catalog_tool",
+    "LPNarrativeTool": "lp_narrative_tool",
+    "LCAAssessmentTool": "lca_tool",
+    "MetricRecommenderTool": "metric_recommender_tool",
+    "MonitoringTool": "monitoring_tool",
+    "NarrativeTool": "narrative_tool",
+    "PortfolioQueryTool": "portfolio_query_tool",
+    "PortfolioTool": "portfolio_tool",
+    "ProductPassportTool": "product_passport_tool",
+    "SdgMapperTool": "sdg_mapper_tool",
+    "SurveyDeliveryTool": "survey_delivery_tool",
+    "ToCBuilderTool": "toc_builder_tool",
+    "TrendAnalysisTool": "trend_analysis_tool",
+    "VerificationPrepTool": "verification_prep_tool",
+    "VerificationWorkspaceTool": "verification_workspace_tool",
+}
+
+
+def __getattr__(name: str) -> Any:
+    module = _TOOL_MODULES.get(name)
+    if module is None:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    value = getattr(importlib.import_module(f"{__name__}.{module}"), name)
+    globals()[name] = value
+    return value
+
+
+def __dir__() -> list[str]:
+    return sorted(set(globals()) | set(_TOOL_MODULES))
+
 
 __all__ = [
     "AIGovernanceTool",

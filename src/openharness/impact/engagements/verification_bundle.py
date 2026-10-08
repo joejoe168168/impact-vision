@@ -293,6 +293,11 @@ class AssuranceManifest(BaseModel):
         default="",
         description="'development-default' when signed with the public dev key (not tamper-evident).",
     )
+    public_key_pem: str = Field(
+        default="",
+        description="Ed25519 public key (signature_algorithm='ed25519'): anyone can verify, nobody but "
+        "the key holder can sign.",
+    )
 
 
 class AssuranceBundle(BaseModel):
@@ -340,7 +345,11 @@ def build_assurance_bundle(
 
     from openharness.impact.signed_feed import key_env_var, resolve_signing_key
 
-    secret_key, is_dev = resolve_signing_key("assurance", secret_key)
+    from openharness.impact.signed_feed import ed25519_env_var, get_ed25519_signer
+
+    ed = None if secret_key else get_ed25519_signer("assurance")
+    if ed is None:
+        secret_key, is_dev = resolve_signing_key("assurance", secret_key)
 
     pillar_hashes = {
         "mandate": _hash_payload(mandate.model_dump(mode="json")),
@@ -348,13 +357,25 @@ def build_assurance_bundle(
         "reporting": _hash_payload(reporting.model_dump(mode="json")),
     }
     manifest_body = _hash_payload(pillar_hashes)
-    signature = hmac.new(secret_key, manifest_body.encode("utf-8"), hashlib.sha256).hexdigest()
-    manifest = AssuranceManifest(
-        engagement_id=engagement_id,
-        pillar_hashes=pillar_hashes,  # type: ignore[arg-type]
-        signature=signature,
-        key_id="development-default" if is_dev else f"env:{key_env_var('assurance')}",
-    )
+    if ed is not None:
+        # Ed25519 (v8 W5.5): the manifest carries the public key, so an external
+        # verifier can check it without being able to forge one.
+        manifest = AssuranceManifest(
+            engagement_id=engagement_id,
+            pillar_hashes=pillar_hashes,  # type: ignore[arg-type]
+            signature_algorithm="ed25519",
+            signature=ed.sign(manifest_body.encode("utf-8")),
+            key_id=f"env:{ed25519_env_var('assurance')}",
+            public_key_pem=ed.public_key_pem(),
+        )
+    else:
+        signature = hmac.new(secret_key, manifest_body.encode("utf-8"), hashlib.sha256).hexdigest()
+        manifest = AssuranceManifest(
+            engagement_id=engagement_id,
+            pillar_hashes=pillar_hashes,  # type: ignore[arg-type]
+            signature=signature,
+            key_id="development-default" if is_dev else f"env:{key_env_var('assurance')}",
+        )
     return AssuranceBundle(
         engagement_id=engagement_id,
         mandate=mandate,
@@ -368,13 +389,17 @@ def verify_assurance_bundle(
     bundle: AssuranceBundle,
     *,
     secret_key: bytes | None = None,
+    public_key_pem: str | None = None,
 ) -> bool:
-    """Recompute hashes / signature and verify the bundle is untampered."""
+    """Recompute hashes / signature and verify the bundle is untampered.
+
+    Ed25519 manifests verify with the public key they carry (pass
+    ``public_key_pem`` to pin the key you trust instead); HMAC manifests need
+    the shared secret.
+    """
     import hmac
 
-    from openharness.impact.signed_feed import resolve_signing_key
-
-    secret_key, _ = resolve_signing_key("assurance", secret_key)
+    from openharness.impact.signed_feed import resolve_signing_key, verify_ed25519
 
     expected_hashes = {
         "mandate": _hash_payload(bundle.mandate.model_dump(mode="json")),
@@ -384,6 +409,10 @@ def verify_assurance_bundle(
     if expected_hashes != bundle.manifest.pillar_hashes:
         return False
     manifest_body = _hash_payload(expected_hashes)
+    if bundle.manifest.signature_algorithm == "ed25519":
+        key = public_key_pem or bundle.manifest.public_key_pem
+        return bool(key) and verify_ed25519(manifest_body.encode("utf-8"), bundle.manifest.signature, key)
+    secret_key, _ = resolve_signing_key("assurance", secret_key)
     expected_sig = hmac.new(secret_key, manifest_body.encode("utf-8"), hashlib.sha256).hexdigest()
     return hmac.compare_digest(expected_sig, bundle.manifest.signature)
 

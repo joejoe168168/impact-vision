@@ -67,6 +67,93 @@ class HMACSigner:
         return hmac.compare_digest(expected, signature)
 
 
+@dataclass
+class Ed25519Signer:
+    """Asymmetric signer (v8 W5.5): only the private key can sign, anyone with
+    the published public key can verify — so a verifier can't forge, unlike
+    HMAC. Needs the ``cryptography`` package (``[assurance]`` extra)."""
+
+    private_key: Any
+    id: str = "ed25519"
+
+    @classmethod
+    def from_material(cls, raw: bytes | str) -> "Ed25519Signer":
+        """PEM private key, or a base64 / hex 32-byte seed."""
+        import base64
+        import binascii
+
+        from cryptography.hazmat.primitives import serialization
+        from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+
+        data = raw.encode("utf-8") if isinstance(raw, str) else raw
+        if b"PRIVATE KEY" in data:
+            return cls(serialization.load_pem_private_key(data, password=None))
+        text = data.strip()
+        for decode in (binascii.unhexlify, base64.b64decode):
+            try:
+                seed = decode(text)
+            except (binascii.Error, ValueError):
+                continue
+            if len(seed) == 32:
+                return cls(Ed25519PrivateKey.from_private_bytes(seed))
+        raise SigningKeyError("Ed25519 key must be a PEM private key or a 32-byte seed (hex or base64)")
+
+    @classmethod
+    def generate(cls) -> "Ed25519Signer":
+        from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+
+        return cls(Ed25519PrivateKey.generate())
+
+    def public_key_pem(self) -> str:
+        from cryptography.hazmat.primitives import serialization
+
+        return self.private_key.public_key().public_bytes(
+            serialization.Encoding.PEM, serialization.PublicFormat.SubjectPublicKeyInfo).decode("ascii")
+
+    def private_key_pem(self) -> str:
+        from cryptography.hazmat.primitives import serialization
+
+        return self.private_key.private_bytes(
+            serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8,
+            serialization.NoEncryption()).decode("ascii")
+
+    def sign(self, message: bytes) -> str:
+        return self.private_key.sign(message).hex()
+
+    def verify(self, message: bytes, signature: str) -> bool:
+        return verify_ed25519(message, signature, self.public_key_pem())
+
+
+def verify_ed25519(message: bytes, signature: str, public_key_pem: str) -> bool:
+    """Check an Ed25519 signature with only the public key (what a verifier holds)."""
+    from cryptography.exceptions import InvalidSignature
+    from cryptography.hazmat.primitives import serialization
+
+    try:
+        key = serialization.load_pem_public_key(public_key_pem.encode("ascii"))
+        key.verify(bytes.fromhex(signature), message)  # type: ignore[union-attr]
+        return True
+    except (InvalidSignature, ValueError, TypeError):
+        return False
+
+
+def ed25519_env_var(purpose: str) -> str:
+    return f"IMPACT_VISION_{purpose.upper()}_ED25519_KEY"
+
+
+def get_ed25519_signer(purpose: str) -> Ed25519Signer | None:
+    """The Ed25519 signer for *purpose* when a key is configured, else None.
+
+    ``IMPACT_VISION_<PURPOSE>_ED25519_KEY`` → ``IMPACT_VISION_ED25519_KEY`` →
+    a key file at ``IMPACT_VISION_ED25519_KEY_FILE``.
+    """
+    raw = os.environ.get(ed25519_env_var(purpose)) or os.environ.get("IMPACT_VISION_ED25519_KEY")
+    path = os.environ.get("IMPACT_VISION_ED25519_KEY_FILE")
+    if not raw and path and os.path.exists(path):
+        raw = open(path, "rb").read()  # noqa: SIM115 - small key file
+    return Ed25519Signer.from_material(raw) if raw else None
+
+
 # --- Signing keys -----------------------------------------------------------
 #
 # Every signer resolves its key from the environment. The built-in development
