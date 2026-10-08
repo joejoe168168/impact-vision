@@ -500,8 +500,17 @@ def save_bundle(bundle: AssessmentBundle, *, source_label: str = "") -> str:
             "impact_claims": [c.model_dump(mode="json") for c in a.impact_claims],
             "dd_coverage_pct": bundle.dd.coverage_pct,
             "gate": bundle.scorecard.model_dump(mode="json"),
+            "expected_impact": bundle.report_data.get("expected_impact"),
         },
+        new_version=True,
     )
+    # v8 W3: file it on the company record (stage, expected vs actual).
+    try:
+        from openharness.impact.company_record import record_assessment
+
+        record_assessment(bundle, str(row_id))
+    except Exception:  # noqa: BLE001 - the assessment is saved even if the record update fails
+        pass
     return str(row_id)
 
 

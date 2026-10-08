@@ -319,6 +319,24 @@ a:hover{text-decoration:underline}
 .modal{background:var(--bg-elev);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);
   width:100%;max-width:560px;max-height:86vh;display:flex;flex-direction:column;overflow:hidden}
 .modal.wide{max-width:660px}
+.modal.xwide{max-width:860px}
+.co-meta{font-size:12.5px;color:var(--text-dim);margin:0 0 12px}
+.co-sec{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text-dim);margin:16px 0 6px}
+.co-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.co-row select,.co-row input,.co-add textarea,.co-add select,.co-add input{font:inherit;font-size:13px;padding:6px 8px;
+  border:1px solid var(--border);border-radius:7px;background:var(--bg);color:var(--text)}
+.co-table{width:100%;border-collapse:collapse;font-size:13px}
+.co-table th,.co-table td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--border-soft);vertical-align:top}
+.co-table th{color:var(--text-dim);font-weight:500;font-size:12px}
+.co-table td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+.co-ev{list-style:none;margin:0;padding:0;font-size:13px}
+.co-ev li{padding:7px 0;border-bottom:1px solid var(--border-soft)}
+.co-ev .k{display:inline-block;font-size:11px;font-weight:600;padding:1px 7px;border-radius:999px;background:var(--bg-sunken);margin-right:6px}
+.co-ev .k.approval{color:#1a7f37}.co-ev .k.decline{color:#b42318}
+.co-ev small{color:var(--text-dim)}
+.co-add{display:grid;gap:8px;margin-top:8px}
+.co-add textarea{min-height:64px;resize:vertical}
+.co-status.within{color:#1a7f37}.co-status.below{color:#b42318}.co-status.above{color:#1f6feb}
 .modal-head{padding:16px 20px 12px;border-bottom:1px solid var(--border-soft);display:flex;align-items:center;gap:10px}
 .modal-head h3{margin:0;font-size:16px;font-weight:600;flex:1}
 .modal-body{padding:18px 20px;overflow-y:auto}
@@ -1256,6 +1274,116 @@ async function loadArtifacts() {
   } catch (e) { /* non-fatal */ }
 }
 
+/* ---------------------------------------------------------------------
+   Company record (v8 W3): pipeline → invested → exited, expected vs actual
+   ------------------------------------------------------------------- */
+const STAGE_LABEL = {sourcing: 'Sourcing', screening: 'Screening', dd_in_progress: 'Due diligence', ic_review: 'IC review',
+  invested: 'Invested', monitoring: 'Monitoring', exited: 'Exited', passed: 'Passed'};
+const fmtN = (v) => v == null ? '—' : (Math.abs(v) >= 100 ? Math.round(v).toLocaleString() : Number(v).toFixed(1));
+
+async function renderCompanies(body) {
+  body.innerHTML = '<div class="empty">Loading…</div>';
+  try {
+    const data = await api('/companies');
+    const rows = data.companies || [];
+    body.innerHTML = '';
+    if (!rows.length) {
+      body.innerHTML = '<div class="empty">Every deck you analyze is filed here as a company: screening → IC → invested → monitoring.</div>';
+      return;
+    }
+    [['Portfolio', rows.filter((r) => r.portfolio)], ['Pipeline', rows.filter((r) => !r.portfolio)]].forEach(([label, list]) => {
+      if (!list.length) return;
+      const h = document.createElement('div'); h.className = 'co-sec'; h.textContent = label + ' · ' + list.length;
+      body.appendChild(h);
+      list.forEach((c) => {
+        const el = document.createElement('div');
+        el.className = 'rep'; el.setAttribute('role', 'button'); el.tabIndex = 0;
+        el.innerHTML = '<div style="flex:1;min-width:0"><div class="fname"></div><div class="fmeta"></div></div><span class="gate"></span>';
+        $('.fname', el).textContent = c.company;
+        const ei = c.expected_impact;
+        $('.fmeta', el).textContent = [STAGE_LABEL[c.stage] || c.stage, ei ? fmtN(ei.p50) + ' ' + ei.unit : ''].filter(Boolean).join(' · ');
+        const g = $('.gate', el); g.textContent = c.gate || ''; g.classList.add(GATE_TONE(c.gate || ''));
+        el.onclick = () => openCompany(c.company);
+        el.onkeydown = (e) => { if (e.key === 'Enter') openCompany(c.company); };
+        body.appendChild(el);
+      });
+    });
+  } catch (e) { body.innerHTML = '<div class="empty">Could not load companies: ' + esc(e.message) + '</div>'; }
+}
+
+async function openCompany(name) {
+  $('#companyOverlay').classList.add('show');
+  $('#coTitle').textContent = name;
+  $('#coBody').innerHTML = '<div class="empty">Loading…</div>';
+  try { renderCompany(await api('/companies/' + encodeURIComponent(name))); }
+  catch (e) { $('#coBody').innerHTML = '<div class="empty">' + esc(e.message) + '</div>'; }
+}
+
+function renderCompany(t) {
+  const body = $('#coBody');
+  const ev = (t.expected_vs_actual || []).map((r) => {
+    const e = r.expected, a = r.actual;
+    const cls = /within/.test(r.status) ? 'within' : /below/.test(r.status) ? 'below' : /above/.test(r.status) ? 'above' : '';
+    return '<tr><td>' + esc(r.outcome) + '<br><small>' + esc(r.unit) + '</small></td>' +
+      '<td class="num">' + (e ? fmtN(e.p50) + '<br><small>' + fmtN(e.p10) + ' – ' + fmtN(e.p90) + '</small>' : '—') + '</td>' +
+      '<td class="num">' + (a ? fmtN(a.p50) + '<br><small>' + esc(a.period || '') + '</small>' : '—') + '</td>' +
+      '<td><span class="co-status ' + cls + '">' + esc(r.status || '') + '</span>' +
+      (r.variance_pct != null ? '<br><small>' + (r.variance_pct > 0 ? '+' : '') + r.variance_pct + '% vs expected</small>' : '') + '</td></tr>';
+  }).join('');
+  const assess = (t.assessments || []).slice().reverse().map((a) => {
+    const rep = S.reports.find((r) => String(r.assessment_id) === String(a.id));
+    const ei = a.expected_impact;
+    return '<tr><td>' + esc((a.created_at || '').slice(0, 10)) + '</td><td>' + esc(a.source || '') + '</td>' +
+      '<td>' + esc(a.gate || '') + '</td><td class="num">' + (a.evidence_quality == null ? '—' : a.evidence_quality + '/100') + '</td>' +
+      '<td class="num">' + (ei ? fmtN(ei.p50) : '—') + '</td>' +
+      '<td>' + (rep ? '<button class="btn" data-rep="' + esc(rep.id) + '">View</button>' : '') + '</td></tr>';
+  }).join('');
+  const events = (t.events || []).slice().reverse().map((e) =>
+    '<li><span class="k ' + esc(e.kind) + '">' + esc(e.kind) + '</span>' + esc(e.text || (e.kind === 'stage' ? '→ ' + (STAGE_LABEL[e.target] || e.target) : '')) +
+    '<br><small>' + esc(e.author || 'unknown') + ' · ' + esc((e.created_at || '').replace('T', ' ').slice(0, 16)) + '</small></li>').join('');
+  const decision = t.ic_decision ? ' · IC ' + (t.ic_decision.kind === 'approval' ? 'approved' : 'declined') + ' by ' + t.ic_decision.author : '';
+  body.innerHTML =
+    '<p class="co-meta"></p>' +
+    '<div class="co-sec">Stage</div><div class="co-row"><select id="coStage">' +
+      (t.stages || []).map((s) => '<option value="' + esc(s) + '">' + esc(STAGE_LABEL[s] || s) + '</option>').join('') +
+    '</select><input id="coWhy" placeholder="Why (optional)" style="flex:1;min-width:160px"><button class="btn" id="coMove">Move</button></div>' +
+    '<div class="co-sec">Expected vs actual</div>' +
+    (ev ? '<table class="co-table"><thead><tr><th>Outcome</th><th>Expected at IC (P50, P10–P90)</th><th>Actual</th><th>Status</th></tr></thead><tbody>' + ev + '</tbody></table>'
+        : '<div class="empty">No quantified outcome yet. Actual results are recorded from assessments made once the company is invested.</div>') +
+    '<div class="co-sec">Assessments</div>' +
+    (assess ? '<table class="co-table"><thead><tr><th>Date</th><th>Source</th><th>Verdict</th><th>Evidence</th><th>Impact P50</th><th></th></tr></thead><tbody>' + assess + '</tbody></table>'
+            : '<div class="empty">No assessments on file.</div>') +
+    '<div class="co-sec">Review & decisions</div>' +
+    '<div class="co-add"><div class="co-row"><select id="coKind"><option value="comment">Comment</option><option value="correction">Correction</option>' +
+      '<option value="approval">IC approval</option><option value="decline">IC decline</option></select>' +
+      '<input id="coAuthor" placeholder="Your name" style="flex:1;min-width:140px"></div>' +
+      '<textarea id="coText" placeholder="What did you check or decide, and why?"></textarea>' +
+      '<div class="co-row"><button class="btn primary" id="coSave">Add to record</button></div></div>' +
+    (events ? '<ul class="co-ev" style="margin-top:10px">' + events + '</ul>' : '');
+  $('.co-meta', body).textContent = [t.sector, t.geography, STAGE_LABEL[t.stage] || t.stage].filter(Boolean).join(' · ') + decision;
+  $('#coStage').value = t.stage || 'screening';
+  try { $('#coAuthor').value = localStorage.getItem('iv_author') || ''; } catch (e) { /* storage blocked */ }
+  body.querySelectorAll('[data-rep]').forEach((b) => {
+    b.onclick = () => { const rep = S.reports.find((r) => r.id === b.dataset.rep); if (rep) { $('#companyOverlay').classList.remove('show'); openViewer(rep); } };
+  });
+  $('#coMove').onclick = async () => {
+    try {
+      renderCompany(await api('/companies/' + encodeURIComponent(t.company) + '/stage', {method: 'POST',
+        body: JSON.stringify({stage: $('#coStage').value, actor: $('#coAuthor').value.trim(), rationale: $('#coWhy').value.trim()})}));
+      toast('Stage updated'); if (S.tab === 'companies') renderPanel();
+    } catch (e) { toast('Could not move: ' + e.message); }
+  };
+  $('#coSave').onclick = async () => {
+    const author = $('#coAuthor').value.trim();
+    try { localStorage.setItem('iv_author', author); } catch (e) { /* storage blocked */ }
+    try {
+      renderCompany(await api('/companies/' + encodeURIComponent(t.company) + '/events', {method: 'POST',
+        body: JSON.stringify({kind: $('#coKind').value, author, text: $('#coText').value.trim()})}));
+      toast('Added to the record');
+    } catch (e) { toast(e.message); }
+  };
+}
+
 function renderPanel() {
   $$('.panel-tabs button').forEach((b) => b.classList.toggle('on', b.dataset.tab === S.tab));
   const body = $('#panelBody');
@@ -1294,6 +1422,7 @@ function renderPanel() {
     });
     return;
   }
+  if (S.tab === 'companies') { renderCompanies(body); return; }
   if (S.tab === 'artifacts') {
     if (!S.artifacts.length) {
       body.innerHTML = '<div class="empty">Files the agent writes during this conversation appear here.</div>';
@@ -1575,6 +1704,7 @@ async function boot() {
   };
   $('#openSettings').onclick = openSettings;
   $('#settingsClose').onclick = () => $('#settingsOverlay').classList.remove('show');
+  $('#coClose').onclick = () => $('#companyOverlay').classList.remove('show');
   $('#settingsOverlay').onclick = (e) => { if (e.target.id === 'settingsOverlay') e.currentTarget.classList.remove('show'); };
   $('#railSearch').oninput = (e) => { S.filter = e.target.value; renderSessions(); };
   $('#attachBtn').onclick = () => $('#fileInput').click();
@@ -1615,6 +1745,7 @@ async function boot() {
     if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'o') { e.preventDefault(); newChat(); }
     if (e.key === 'Escape') {
       if ($('#viewer').classList.contains('show')) { closeViewer(); return; }
+      if ($('#companyOverlay').classList.contains('show')) { $('#companyOverlay').classList.remove('show'); return; }
       if ($('#settingsOverlay').classList.contains('show')) $('#settingsOverlay').classList.remove('show');
       else if (S.busy) S.ws && S.ws.send(JSON.stringify({type: 'cancel'}));
     }
@@ -1736,6 +1867,7 @@ _HTML = r"""<!DOCTYPE html>
     <div class="panel-head">Workspace</div>
     <div class="panel-tabs">
       <button data-tab="reports">Reports</button>
+      <button data-tab="companies">Companies</button>
       <button data-tab="artifacts" class="on">Artifacts</button>
       <button data-tab="tasks">Tasks</button>
     </div>
@@ -1749,6 +1881,14 @@ _HTML = r"""<!DOCTYPE html>
     <div class="modal-head"><h3 id="promptTitle">Permission required</h3></div>
     <div class="modal-body" id="promptBody"></div>
     <div class="modal-foot" id="promptFoot"></div>
+  </div>
+</div>
+
+<!-- ============ company record (v8 W3) ============ -->
+<div class="overlay" id="companyOverlay">
+  <div class="modal xwide" role="dialog" aria-modal="true" aria-labelledby="coTitle">
+    <div class="modal-head"><h3 id="coTitle">Company</h3><button class="icon-btn" id="coClose" aria-label="Close">✕</button></div>
+    <div class="modal-body" id="coBody"></div>
   </div>
 </div>
 

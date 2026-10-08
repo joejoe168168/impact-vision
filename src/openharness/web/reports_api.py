@@ -252,6 +252,20 @@ class AssessRequest(BaseModel):
     stage: str = ""
 
 
+class StageRequest(BaseModel):
+    stage: str
+    actor: str = ""
+    rationale: str = ""
+
+
+class EventRequest(BaseModel):
+    kind: str = Field("comment", description="comment | approval | decline | correction")
+    author: str = ""
+    text: str = ""
+    target: str = ""
+    assessment_id: str = ""
+
+
 class ShareRequest(BaseModel):
     audience: str = Field("lp", description="full | ic | lp | regulator | public")
     lang: str = "en"
@@ -327,6 +341,43 @@ def build_reports_router(*, auth_dependency: Any = None) -> Any:
                              theme: str = "") -> HTMLResponse:
         return HTMLResponse(await asyncio.to_thread(
             render_portfolio_page, jurisdictions=jurisdictions, fund_name=fund_name, theme=theme))
+
+    # -- company record (v8 W3): pipeline → invested → exited -----------
+    @router.get("/companies", dependencies=deps)
+    async def companies() -> dict[str, Any]:
+        from openharness.impact.company_record import list_companies
+
+        return {"companies": await asyncio.to_thread(list_companies)}
+
+    @router.get("/companies/{name}", dependencies=deps)
+    async def company(name: str) -> dict[str, Any]:
+        from openharness.impact.company_record import company_timeline
+
+        timeline = await asyncio.to_thread(company_timeline, name)
+        if not timeline["stage"] and not timeline["assessments"]:
+            raise HTTPException(status_code=404, detail="No such company on record")
+        return timeline
+
+    @router.post("/companies/{name}/stage", dependencies=deps)
+    async def company_stage(name: str, req: StageRequest) -> dict[str, Any]:
+        from openharness.impact.company_record import set_stage
+
+        try:
+            return await asyncio.to_thread(set_stage, name, req.stage, actor=req.actor[:120],
+                                           rationale=req.rationale[:2000])
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    @router.post("/companies/{name}/events", dependencies=deps)
+    async def company_event(name: str, req: EventRequest) -> dict[str, Any]:
+        from openharness.impact.company_record import add_event
+
+        try:
+            return await asyncio.to_thread(add_event, name, req.kind, author=req.author[:120],
+                                           text=req.text[:5000], target=req.target[:200],
+                                           assessment_id=req.assessment_id[:40])
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     @router.get("/engagements", dependencies=deps)
     async def engagements_list() -> dict[str, Any]:

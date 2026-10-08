@@ -120,3 +120,17 @@ def test_fund_side_questions_are_not_asked_of_founders(bundles):
     asked = {q.id for q in dd.unanswered} | {m.question.id for m in dd.addressed}
     assert not asked & {"IT03", "IA03", "CO04", "IA02"}
     assert {q.id for q in dd.fund_questions} >= {"IT03", "IA03"}
+
+
+@pytest.mark.parametrize("name,company", [
+    ("loopwear_hk.md", "LoopWear Limited"), ("hearthstone_housing_uk.md", "Hearthstone Homes Ltd"),
+    ("jaldhara_irrigation_in.md", "Jaldhara Agritech"), ("yikang_eldercare_hk.md", "頤康長者護理"),
+])
+def test_company_names_are_read_from_titles(bundles, name, company):
+    assert bundles[name].company.name == company
+
+
+def test_lowercase_title_words_still_give_a_name():
+    from openharness.impact.pipeline import assess_document
+
+    assert assess_document("# Sunlit Homes — Seed pitch\n\nSunlit Homes sells lanterns.").company.name == "Sunlit Homes"

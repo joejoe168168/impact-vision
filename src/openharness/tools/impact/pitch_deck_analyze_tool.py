@@ -697,7 +697,10 @@ def _extract_company_model(
         # Legal-entity suffix anywhere near the top: "Kampung Makmur Sdn Bhd".
         r"\b((?:[A-Z][\w&'.-]*[ \t]+){0,5}(?:Sdn\.?[ \t]*Bhd|Pte\.?[ \t]*Ltd|Ltd|Limited|Inc|LLC|PLC|GmbH|S\.A\.|Co\.,?[ \t]*Ltd)\.?)",
         # Title line: "BrightPath Finance — Growth Round Investor Memo".
-        r"^[ \t#]*([A-Z][\w&'.-]*(?:[ \t]+[A-Z][\w&'.-]*){0,4})[ \t]+[\u2014\u2013|-][ \t]+[^\n]*\b(?:Pitch|Investor|Memo|Deck|Overview)\b",
+        r"^[ \t#]*([A-Z][\w&'.-]*(?:[ \t]+[A-Z][\w&'.-]*){0,4})[ \t]+[\u2014\u2013|-][ \t]+[^\n]*\b"
+        r"(?i:pitch|investor|memo|deck|overview|round|raise|seed|series|teaser|one-pager|executive summary)\b",
+        # Chinese title line: "# 頤康長者護理 — A輪融資簡報".
+        r"^[ \t#]*([\u4e00-\u9fff][\u4e00-\u9fff\w]{1,15})[ \t]*[\u2014\u2013|-]",
         # Opening sentence: "Kampung Makmur is a 3,000-sow integrated pig farm".
         r"^[ \t]*((?:[A-Z][\w&'.-]*)(?:[ \t]+[A-Z][\w&'.-]*){0,5})[ \t]+(?:is|are)[ \t]+(?:a|an|the)\b",
     ]

@@ -129,6 +129,47 @@ CREATE INDEX IF NOT EXISTS idx_alerts_ack ON monitoring_alerts(acknowledged);
 """
 
 
+# v8 W3.1 / W5.4: the company record. Expected impact at the time of a
+# decision vs actual results reported later, plus comments, approvals and
+# corrections — all keyed by company like the pipeline table.
+_SCHEMA_V2 = """
+CREATE TABLE IF NOT EXISTS outcome_records (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    company_name TEXT NOT NULL,
+    assessment_id TEXT DEFAULT '',
+    record_kind TEXT NOT NULL,          -- expected | actual
+    outcome TEXT NOT NULL,              -- people | climate
+    unit TEXT DEFAULT '',
+    stakeholder TEXT DEFAULT '',
+    reach REAL,
+    p10 REAL, p50 REAL, p90 REAL,
+    evidence_quality REAL,
+    period TEXT DEFAULT '',
+    stage TEXT DEFAULT '',
+    source TEXT DEFAULT '',
+    created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_outcomes_company ON outcome_records(company_name);
+
+CREATE TABLE IF NOT EXISTS company_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    company_name TEXT NOT NULL,
+    kind TEXT NOT NULL,                 -- comment | approval | decline | correction | stage
+    author TEXT DEFAULT '',
+    target TEXT DEFAULT '',             -- what it is about: a claim, a score, a section
+    text TEXT DEFAULT '',
+    assessment_id TEXT DEFAULT '',
+    created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_events_company ON company_events(company_name);
+"""
+
+# Ordered migrations: (user_version after applying, SQL). Never edit an applied
+# step; append a new one.
+MIGRATIONS: tuple[tuple[int, str], ...] = ((1, _SCHEMA), (2, _SCHEMA_V2))
+SCHEMA_VERSION = MIGRATIONS[-1][0]
+
+
 class AssessmentStore:
     """SQLite-backed store for company assessments and session history."""
 
@@ -145,9 +186,61 @@ class AssessmentStore:
         return self._local.conn
 
     def _ensure_schema(self) -> None:
+        """Apply pending migrations in order (PRAGMA user_version tracks them)."""
         conn = self._get_conn()
-        conn.executescript(_SCHEMA)
+        current = int(conn.execute("PRAGMA user_version").fetchone()[0])
+        for version, sql in MIGRATIONS:
+            if version > current:
+                conn.executescript(sql)
+                conn.execute(f"PRAGMA user_version = {int(version)}")
+                current = version
         conn.commit()
+
+    @property
+    def schema_version(self) -> int:
+        return int(self._get_conn().execute("PRAGMA user_version").fetchone()[0])
+
+    # ----------------------------------------------------- company record (v8 W3)
+    def add_outcome_record(self, company_name: str, record: dict) -> int:
+        now = datetime.now(timezone.utc).isoformat()
+        cols = ("assessment_id", "record_kind", "outcome", "unit", "stakeholder", "reach", "p10", "p50", "p90",
+                "evidence_quality", "period", "stage", "source")
+        conn = self._get_conn()
+        cur = conn.execute(
+            f"INSERT INTO outcome_records (company_name, {', '.join(cols)}, created_at) "
+            f"VALUES (?, {', '.join('?' for _ in cols)}, ?)",
+            (company_name, *(record.get(c) for c in cols), now),
+        )
+        conn.commit()
+        return int(cur.lastrowid or 0)
+
+    def list_outcome_records(self, company_name: str) -> list[dict]:
+        rows = self._get_conn().execute(
+            "SELECT * FROM outcome_records WHERE company_name = ? ORDER BY created_at, id", (company_name,)
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    def add_company_event(self, company_name: str, kind: str, *, author: str = "", target: str = "",
+                          text: str = "", assessment_id: str = "") -> int:
+        now = datetime.now(timezone.utc).isoformat()
+        conn = self._get_conn()
+        cur = conn.execute(
+            "INSERT INTO company_events (company_name, kind, author, target, text, assessment_id, created_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)", (company_name, kind, author, target, text, assessment_id, now))
+        conn.commit()
+        return int(cur.lastrowid or 0)
+
+    def list_company_events(self, company_name: str) -> list[dict]:
+        rows = self._get_conn().execute(
+            "SELECT * FROM company_events WHERE company_name = ? ORDER BY created_at, id", (company_name,)
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    def list_assessments_for(self, company_name: str) -> list[dict]:
+        rows = self._get_conn().execute(
+            "SELECT * FROM assessments WHERE company_name = ? ORDER BY created_at, id", (company_name,)
+        ).fetchall()
+        return [_row_to_assessment(r) for r in rows]
 
     def save_assessment(
         self,
@@ -158,12 +251,17 @@ class AssessmentStore:
         gap_analysis: dict | None = None,
         greenwashing: dict | None = None,
         metadata: dict | None = None,
+        new_version: bool = False,
     ) -> int:
-        """Save or update a company assessment. Returns the row ID."""
+        """Save or update a company assessment. Returns the row ID.
+
+        ``new_version=True`` always inserts a new row, so the company record
+        keeps its history (v8 W3: expected at IC vs actual later).
+        """
         now = datetime.now(timezone.utc).isoformat()
         conn = self._get_conn()
 
-        existing = conn.execute(
+        existing = None if new_version else conn.execute(
             "SELECT id FROM assessments WHERE company_name = ? ORDER BY created_at DESC LIMIT 1",
             (company_name,),
         ).fetchone()
