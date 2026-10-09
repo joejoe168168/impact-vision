@@ -69,7 +69,7 @@ jobs:
           src/impact_vision/impact/identity.py src/impact_vision/api_gateway/oidc.py
           src/impact_vision/impact/annual_monitoring.py src/impact_vision/impact/doc_parsers.py
           src/impact_vision/impact/contribution_split.py src/impact_vision/impact/doc_structure.py
-          src/impact_vision/impact/heldout_eval.py
+          src/impact_vision/impact/heldout_eval.py src/impact_vision/impact/calibration.py
 
   security:
     name: Dependency & code security audit

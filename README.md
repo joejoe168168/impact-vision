@@ -442,11 +442,11 @@ impact-vision catalog search "climate"
 impact-vision framework list | scan "company description" | xref OI4112
 
 # Due-diligence checklist (122 questions / 34 categories)
-impact-vision dd list [--category "What (Outcomes)"]
-impact-vision dd categories
+impact-vision dd list [--category "What (Outcomes)"] · dd categories
 impact-vision dd analyze "text or /path/to/doc.txt"
 impact-vision monitoring request "SunPath" --period 2026 --email cfo@… | remind   # annual results
 impact-vision connect docs folder|gdrive|sharepoint [--assess] · connect deals affinity|dealcloud  # docs/connectors.md
+impact-vision calibrate packet decks/*.pdf --out study · calibrate analyze study   # expert calibration
 
 # Service surfaces
 impact-vision serve-mcp                                  # MCP server (stdio)

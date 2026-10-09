@@ -76,6 +76,7 @@ cron_app = typer.Typer(name="cron", help="Manage cron scheduler and jobs")
 catalog_app = typer.Typer(name="catalog", help="Manage the IRIS+ metric catalog")
 framework_app = typer.Typer(name="framework", help="ESG/sustainability framework tools")
 dd_app = typer.Typer(name="dd", help="Impact due diligence checklist tools")
+calibrate_app = typer.Typer(name="calibrate", help="Expert calibration study: rating packets and analysis")
 connect_app = typer.Typer(name="connect", help="Read-only connectors: data room, Drive, SharePoint, Affinity, DealCloud")
 monitoring_app = typer.Typer(name="monitoring", help="Annual results requests and reminders (portfolio companies)")
 
@@ -90,6 +91,7 @@ app.add_typer(framework_app)
 app.add_typer(dd_app)
 app.add_typer(monitoring_app)
 app.add_typer(connect_app)
+app.add_typer(calibrate_app)
 
 
 # ---- dashboard: Streamlit portfolio dashboard ----
@@ -343,6 +345,28 @@ def serve_web(
 
 
 # ---- mcp subcommands ----
+
+
+@calibrate_app.command("packet")
+def calibrate_packet(
+    decks: list[str] = typer.Argument(..., help="Deck files (PDF, DOCX, PPTX, MD, TXT)"),
+    out: str = typer.Option("calibration-packet", help="Output folder"),
+    raters: str = typer.Option("A,B,C", help="Rater IDs, comma-separated"),
+) -> None:
+    """Build a blind rating packet; engine_scores.csv stays with the coordinator."""
+    from impact_vision.impact.calibration import build_packet
+
+    info = build_packet(decks, out, raters=[r.strip() for r in raters.split(",") if r.strip()])
+    print(f"{info['decks']} decks → {info['folder']}. Send decks/, GUIDE.md and one ratings_<rater>.csv to "
+          "each rater; keep engine_scores.csv.")
+
+
+@calibrate_app.command("analyze")
+def calibrate_analyze(packet: str = typer.Argument("calibration-packet", help="Packet folder with filled sheets")) -> None:
+    """Agreement (Krippendorff's α), engine vs consensus, and fitted evidence weights."""
+    from impact_vision.impact.calibration import analyse, to_markdown
+
+    print(to_markdown(analyse(packet)))
 
 
 @connect_app.command("docs")
