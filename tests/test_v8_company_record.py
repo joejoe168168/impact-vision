@@ -101,3 +101,22 @@ def test_every_assessment_is_kept_as_history():
     save_bundle(_bundle("12,000"))
     save_bundle(_bundle("13,000"))
     assert len(company_timeline("Sunlit Homes")["assessments"]) == 2
+
+
+def test_exit_assessment_and_lp_report_from_the_record():
+    from impact_vision.impact.company_record import exit_assessment, lp_report_view, render_lp_report
+
+    save_bundle(_bundle("12,000"))
+    set_stage("Sunlit Homes", "invested", actor="IC")
+    save_bundle(_bundle("2,000"))
+    out = exit_assessment("Sunlit Homes")
+    assert 0 <= out["score"]["residual_score"] <= 100
+    assert any(r["risk_id"].startswith("under-") for r in out["risks"])  # actual below the IC range
+    assert [f["period"] for f in out["follow_ups"]] == ["12m", "24m", "36m"]
+    view = lp_report_view("Test Fund")
+    assert view["companies"][0]["company"] == "Sunlit Homes" and view["totals"]
+    html = render_lp_report(view)
+    assert "Expected vs actual" in html and "below the expected range" in html
+    assert 'name="iptc:digitalsourcetype"' in html
+    with pytest.raises(ValueError):
+        exit_assessment("Nobody")

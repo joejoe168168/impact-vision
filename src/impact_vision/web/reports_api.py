@@ -368,6 +368,22 @@ def build_reports_router(*, auth_dependency: Any = None) -> Any:
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
 
+    @router.post("/companies/{name}/exit", dependencies=deps)
+    async def company_exit(name: str) -> dict[str, Any]:
+        from impact_vision.impact.company_record import exit_assessment
+
+        try:
+            return await asyncio.to_thread(exit_assessment, name)
+        except ValueError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+    @router.get("/portfolio/lp-report", dependencies=deps, response_class=HTMLResponse)
+    async def lp_report(fund_name: str = "Portfolio", theme: str = "") -> HTMLResponse:
+        from impact_vision.impact.company_record import lp_report_view, render_lp_report
+
+        view = await asyncio.to_thread(lp_report_view, fund_name[:120] or "Portfolio")
+        return HTMLResponse(render_lp_report(view, theme=theme))
+
     @router.post("/companies/{name}/events", dependencies=deps)
     async def company_event(name: str, req: EventRequest) -> dict[str, Any]:
         from impact_vision.impact.company_record import add_event

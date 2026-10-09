@@ -1188,9 +1188,10 @@ function viewerParams() {
 }
 
 function viewerUrl() {
-  if (S.viewing.portfolio || S.viewing.engagements) {
+  if (S.viewing.portfolio || S.viewing.engagements || S.viewing.lp) {
     const p = new URLSearchParams(); if ($('#vTheme').value) p.set('theme', $('#vTheme').value);
-    return '/api/v1/chat/' + (S.viewing.engagements ? 'engagements' : 'portfolio') + '/view?' + p.toString();
+    const page = S.viewing.engagements ? 'engagements/view' : S.viewing.lp ? 'portfolio/lp-report' : 'portfolio/view';
+    return '/api/v1/chat/' + page + '?' + p.toString();
   }
   return '/api/v1/chat/reports/' + S.viewing.id + '/view?' + viewerParams();
 }
@@ -1198,6 +1199,16 @@ function viewerUrl() {
 function openEngagements() {
   S.viewing = {engagements: true};
   $('#viewerTitle').textContent = 'Engagements';
+  $$('.report-only').forEach((el) => { el.hidden = true; });
+  $('#shareBox').classList.remove('show');
+  $('#viewer').classList.add('show');
+  renderViewer();
+  $('#vClose').focus();
+}
+
+function openLpReport() {
+  S.viewing = {lp: true};
+  $('#viewerTitle').textContent = 'LP impact report';
   $$('.report-only').forEach((el) => { el.hidden = true; });
   $('#shareBox').classList.remove('show');
   $('#viewer').classList.add('show');
@@ -1287,6 +1298,12 @@ async function renderCompanies(body) {
     const data = await api('/companies');
     const rows = data.companies || [];
     body.innerHTML = '';
+    if (rows.some((r) => r.portfolio)) {
+      const lp = document.createElement('button');
+      lp.className = 'btn'; lp.style.cssText = 'width:100%;margin-bottom:8px';
+      lp.textContent = 'Open LP report'; lp.onclick = openLpReport;
+      body.appendChild(lp);
+    }
     if (!rows.length) {
       body.innerHTML = '<div class="empty">Every deck you analyze is filed here as a company: screening → IC → invested → monitoring.</div>';
       return;
@@ -1347,6 +1364,7 @@ function renderCompany(t) {
     '<div class="co-sec">Stage</div><div class="co-row"><select id="coStage">' +
       (t.stages || []).map((s) => '<option value="' + esc(s) + '">' + esc(STAGE_LABEL[s] || s) + '</option>').join('') +
     '</select><input id="coWhy" placeholder="Why (optional)" style="flex:1;min-width:160px"><button class="btn" id="coMove">Move</button></div>' +
+    (['invested', 'monitoring', 'exited'].includes(t.stage) ? '<div class="co-row" style="margin-top:8px"><button class="btn" id="coExit">Exit assessment (OPIM 8)</button><span id="coExitOut" style="font-size:13px"></span></div>' : '') +
     '<div class="co-sec">Expected vs actual</div>' +
     (ev ? '<table class="co-table"><thead><tr><th>Outcome</th><th>Expected at IC (P50, P10–P90)</th><th>Actual</th><th>Status</th></tr></thead><tbody>' + ev + '</tbody></table>'
         : '<div class="empty">No quantified outcome yet. Actual results are recorded from assessments made once the company is invested.</div>') +
@@ -1366,6 +1384,16 @@ function renderCompany(t) {
   body.querySelectorAll('[data-rep]').forEach((b) => {
     b.onclick = () => { const rep = S.reports.find((r) => r.id === b.dataset.rep); if (rep) { $('#companyOverlay').classList.remove('show'); openViewer(rep); } };
   });
+  if ($('#coExit')) $('#coExit').onclick = async () => {
+    $('#coExitOut').textContent = ' Scoring…';
+    try {
+      const r = await api('/companies/' + encodeURIComponent(t.company) + '/exit', {method: 'POST', body: '{}'});
+      const sc = r.score;
+      $('#coExitOut').textContent = ' Residual impact ' + sc.residual_score + '/100 (' + sc.band + ') · ' + r.risks.length + ' durability risks' +
+        (sc.recommendations && sc.recommendations.length ? ' — ' + sc.recommendations[0] : '');
+      renderCompany(await api('/companies/' + encodeURIComponent(t.company)));
+    } catch (e) { $('#coExitOut').textContent = ' ' + e.message; }
+  };
   $('#coMove').onclick = async () => {
     try {
       renderCompany(await api('/companies/' + encodeURIComponent(t.company) + '/stage', {method: 'POST',

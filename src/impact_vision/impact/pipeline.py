@@ -594,6 +594,7 @@ def save_bundle(bundle: AssessmentBundle, *, source_label: str = "") -> str:
             "dd_coverage_pct": bundle.dd.coverage_pct,
             "gate": bundle.scorecard.model_dump(mode="json"),
             "expected_impact": bundle.report_data.get("expected_impact"),
+            "negative_impacts": bundle.report_data.get("negative_impacts"),
         },
         new_version=True,
     )
