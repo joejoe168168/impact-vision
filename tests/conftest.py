@@ -23,5 +23,6 @@ def _isolated_assessment_db(tmp_path, monkeypatch):
 
     monkeypatch.setenv("IMPACT_VISION_DB", str(tmp_path / "impact_vision.db"))
     monkeypatch.setattr(storage, "_global_store", None)
+    monkeypatch.setattr(storage, "_tenant_stores", {})
     yield
     storage._global_store = None

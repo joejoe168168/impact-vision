@@ -26,20 +26,12 @@ def _default_db_path() -> Path:
     history; otherwise the store lives in ``~/.impact-vision/``, which works
     for installed wheels regardless of the working directory.
     """
-    from impact_vision.impact.identity import DEFAULT_TENANT, current_tenant, tenant_home
-
     env = os.environ.get("IMPACT_VISION_DB")
     if env:
-        path = Path(env).expanduser()
-    elif _LEGACY_DB_PATH.is_file():
-        path = _LEGACY_DB_PATH
-    else:
-        path = Path.home() / ".impact-vision" / "impact_vision.db"
-    if current_tenant() == DEFAULT_TENANT:
-        return path
-    folder = tenant_home(path.parent)  # each tenant gets its own database (v8 W5.3)
-    folder.mkdir(parents=True, exist_ok=True)
-    return folder / path.name
+        return Path(env).expanduser()
+    if _LEGACY_DB_PATH.is_file():
+        return _LEGACY_DB_PATH
+    return Path.home() / ".impact-vision" / "impact_vision.db"
 
 
 _SCHEMA = """
@@ -776,11 +768,27 @@ def _row_to_pipeline(row: sqlite3.Row) -> dict:
 
 
 _global_store: AssessmentStore | None = None
+_tenant_stores: dict[tuple[str, str], AssessmentStore] = {}
 
 
 def get_assessment_store(db_path: str | Path | None = None) -> AssessmentStore:
-    """Get the global AssessmentStore singleton (lazy-initialized)."""
+    """The store for the current tenant (lazy-initialized).
+
+    The default tenant uses the global database; any other tenant gets its own
+    file under ``<db folder>/tenants/<tenant>/`` (v8 W5.3).
+    """
+    from impact_vision.impact.identity import DEFAULT_TENANT, current_tenant, tenant_home
+
     global _global_store
     if _global_store is None:
         _global_store = AssessmentStore(db_path)
-    return _global_store
+    tenant = current_tenant()
+    if db_path or tenant == DEFAULT_TENANT:
+        return _global_store
+    base = Path(_global_store._db_path)
+    store = _tenant_stores.get((str(base), tenant))
+    if store is None:
+        folder = tenant_home(base.parent, tenant)
+        folder.mkdir(parents=True, exist_ok=True)
+        store = _tenant_stores[(str(base), tenant)] = AssessmentStore(folder / base.name)
+    return store

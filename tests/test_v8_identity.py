@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import time
+from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 import jwt
@@ -124,12 +125,15 @@ def test_state_store_and_paths_are_tenant_scoped(tmp_path):
 
 
 def test_assessment_db_is_per_tenant(monkeypatch, tmp_path):
-    from impact_vision.impact.storage import _default_db_path
+    from impact_vision.impact import storage
 
-    monkeypatch.setenv("IMPACT_VISION_DB", str(tmp_path / "iv.db"))
-    assert _default_db_path() == tmp_path / "iv.db"
+    monkeypatch.setattr(storage, "_global_store", storage.AssessmentStore(tmp_path / "iv.db"))
+    storage.get_assessment_store().upsert_pipeline_entry("Shared Co", pipeline_stage="screening")
     with acting_as(Identity(sub="x", tenant_id="fund-a.org", auth="oidc")):
-        assert _default_db_path() == tmp_path / "tenants" / "fund-a.org" / "iv.db"
+        mine = storage.get_assessment_store()
+        assert Path(mine._db_path) == tmp_path / "tenants" / "fund-a.org" / "iv.db"
+        assert mine.get_pipeline_entry("Shared Co") is None
+    assert storage.get_assessment_store().get_pipeline_entry("Shared Co")
 
 
 def test_local_mode_is_unchanged(monkeypatch):
