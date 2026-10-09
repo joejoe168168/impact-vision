@@ -67,6 +67,8 @@ def test_wheel_excludes_unused_subpackages() -> None:
     from pathlib import Path
 
     cfg = tomllib.loads((Path(__file__).resolve().parents[1] / "pyproject.toml").read_text())
-    wheel = cfg["tool"]["hatch"]["build"]["targets"]["wheel"]
-    assert {"src/impact_vision/channels", "src/impact_vision/vim"} <= set(wheel["exclude"])
+    root = Path(__file__).resolve().parents[1]
+    # v8 W5.1: the unused chat-channel gateway, vim helpers and ohmo are gone.
+    for gone in ("src/impact_vision/channels", "src/impact_vision/vim", "ohmo"):
+        assert not (root / gone).exists(), gone
     assert cfg["project"]["scripts"]["impact-vision"] == "impact_vision.cli:app"

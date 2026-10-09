@@ -5,7 +5,7 @@ from pathlib import Path
 
 
 LOGGER_METHODS = {"debug", "info", "warning", "error", "exception", "critical"}
-SCAN_ROOTS = ("src/impact_vision", "ohmo", "scripts")
+SCAN_ROOTS = ("src/impact_vision", "scripts")
 
 
 def _iter_python_files(repo_root: Path) -> list[Path]:

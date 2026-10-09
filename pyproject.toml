@@ -70,9 +70,6 @@ iv = "impact_vision.cli:app"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/impact_vision", "src/openharness"]
-# W5.5: HKUDS-era sub-packages with no runtime importers stay out of the wheel
-# (kept in the source tree for the tests / ohmo gateway that still use them).
-exclude = ["src/impact_vision/channels", "src/impact_vision/vim"]
 
 [tool.hatch.build]
 exclude = [

@@ -163,9 +163,11 @@ openharness` still runs. Short names from 0.17 resolve too:
 docs and tests against `impact_vision`. Config stays in `~/.openharness/` and
 `OPENHARNESS_*` env vars (renaming would orphan users' settings and keys).
 
-Still deferred (roadmap v8 W5.1): `channels/` and `vim/` are excluded from the
-wheel; `themes`, `voice`, `bridge` and `keybindings` are still imported by the
-slash-command registry / TUI, so make those imports lazy before dropping them.
+The unused chat-channel gateway (`channels/`), `vim/` and the `ohmo/` gateway
+were removed in 0.19. `swarm/` and `coordinator/` stay: they power sub-agents
+and teams in the opt-in developer tool profile and plugin-defined agents (the
+fund profile never exposes them). `themes`, `voice`, `bridge` and
+`keybindings` back TUI slash commands.
 
 **Knowledge, methodology and state (v7 Wave 5):** reference data lives in
 sourced YAML under `data/` (`regulatory/`, `standards_registry.yaml`,

@@ -25,9 +25,6 @@ PACKAGES_REQUIRING_INIT = [
     "api",
     "auth",
     "bridge",
-    "channels",
-    "channels/bus",
-    "channels/impl",
     "commands",
     "config",
     "coordinator",
@@ -56,7 +53,6 @@ PACKAGES_REQUIRING_INIT = [
     "tools/impact",
     "ui",
     "utils",
-    "vim",
     "voice",
 ]
 

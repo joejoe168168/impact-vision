@@ -1,2 +1,0 @@
-"""ohmo gateway package."""
-

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from datetime import datetime
 
 
 def test_api_cors_defaults_to_same_origin_only() -> None:
@@ -21,16 +20,6 @@ def test_api_cors_defaults_to_same_origin_only() -> None:
     )
     assert cors_middleware.kwargs["allow_origins"] == []
     assert cors_middleware.kwargs["allow_credentials"] is False
-
-
-def test_mochat_synthetic_event_uses_timezone_aware_utc() -> None:
-    from impact_vision.channels.impl.mochat import _make_synthetic_event
-
-    event = _make_synthetic_event("msg-1", "user-1", "hello", {}, "group-1", "conv-1")
-
-    timestamp = datetime.fromisoformat(event["timestamp"])
-    assert timestamp.tzinfo is not None
-    assert timestamp.utcoffset().total_seconds() == 0
 
 
 def test_optional_channel_helpers_are_importable_and_safe() -> None:
