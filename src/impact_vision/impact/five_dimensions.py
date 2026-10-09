@@ -213,15 +213,26 @@ def _infer_baseline(company: Company) -> dict[str, float]:
                 for dim, val in scores.items():
                     baseline[dim] = max(baseline[dim], val)
 
+    from impact_vision.impact.expected_impact import methodology_mode
+
+    evidence_only = methodology_mode() == "2"
     for keyword, boosts in _get_keyword_boosts().items():
         if keyword_match_with_context(text, keyword):
             for dim, val in boosts.items():
+                if evidence_only and dim == "contribution":
+                    continue  # v8 W1.4: words like "sustainable" or "innovation" are not contribution
                 baseline[dim] = baseline[dim] + val
 
-    additionality = assess_additionality(company)
-    for step in _fd()["additionality_boosts"]:
-        if additionality["signal_count"] >= step["min_signals"]:
-            baseline["contribution"] += step["boost"]
+    if evidence_only:
+        # Contribution comes from the evidence design (comparison group, baseline), not adjectives.
+        from impact_vision.impact.contribution_split import enterprise_boost
+
+        baseline["contribution"] += enterprise_boost(company_text(company))
+    else:
+        additionality = assess_additionality(company)
+        for step in _fd()["additionality_boosts"]:
+            if additionality["signal_count"] >= step["min_signals"]:
+                baseline["contribution"] += step["boost"]
 
     low, high = _fd()["baseline_clamp"]
     return {dim: min(high, max(low, val)) for dim, val in baseline.items()}

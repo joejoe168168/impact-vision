@@ -467,6 +467,16 @@ def _greenwashing(data: dict[str, Any], t) -> dict[str, Any] | None:  # type: ig
     }
 
 
+def _contribution(data: dict[str, Any], t) -> dict[str, Any] | None:  # type: ignore[no-untyped-def]
+    split = data.get("contribution_split")
+    if not split:
+        return None
+    sig = {s["signal"] for s in split["enterprise"].get("signals") or []}
+    design = t("cs_design_comparison" if "controlled_evaluation" in sig else
+               "cs_design_baseline" if "baseline_comparison" in sig else "cs_design_none")
+    return {**split, "design": design}
+
+
 def _risks(data: dict[str, Any]) -> dict[str, list[str]]:
     analysis = data.get("impact_analysis") or {}
     risks = analysis.get("risks") or []
@@ -800,6 +810,7 @@ def build_view(data: dict[str, Any], *, audience: str | None = None, lang: str =
         "greenwashing": _greenwashing(data, t) if spec.show_greenwashing else None,
         "risks": _risks(data),
         "negatives": data.get("negative_impacts"),
+        "contribution": _contribution(data, t),
         "targets": (data.get("target_tracking") or {}).get("targets", []),
         "feedback": data.get("beneficiary_feedback"),
     }

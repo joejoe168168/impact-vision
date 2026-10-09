@@ -14,9 +14,12 @@
 #
 # Every number below is a documented assumption, labelled "illustrative" until
 # the expert calibration study (roadmap W2.6) replaces it.
-version: "2.0.0"
-effective: "2026-10-08"
-as_of: "2026-10-08"
+version: "2.1.0"
+effective: "2026-10-09"
+as_of: "2026-10-09"
+# 2.1.0 (2026-10-09, W1.4): the 5D Contribution baseline counts evidence design
+#   (comparison group +0.6, baseline +0.3; contribution_rubric.yaml) instead of
+#   adjectives; the report shows enterprise and investor contribution apart.
 status: illustrative   # parameters not yet calibrated against expert ratings
 source: >-
   Impact Vision methodology 2.0. Structure follows the Impact Multiple of Money

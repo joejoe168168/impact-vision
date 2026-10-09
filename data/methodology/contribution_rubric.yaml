@@ -1,0 +1,55 @@
+# Contribution rubric (roadmap v8 W1.4). Only evidence counts; adjectives score 0.
+#
+# Enterprise contribution: how much of the outcome would not have happened
+# anyway, read from the evidence design (comparison group, baseline).
+# Investor contribution: the four strategies of the Impact Frontiers /
+# IMP investor-contribution classification. Each channel is levelled
+#   0  not stated, or only adjectives
+#   1  stated with a specific action
+#   2  committed in a document (term sheet, agreement, budget, board seat)
+#   3  delivered, with logged evidence (contribution tool / company record)
+# Text alone can reach level 2; level 3 needs logged evidence.
+as_of: "2026-10-09"
+source: "Impact Frontiers / Impact Management Project, investor contribution strategies; GIIN IRIS+ 'Contribution' dimension"
+source_url: https://impactfrontiers.org/norms/investment-classification/
+status: illustrative
+
+enterprise:
+  signals:
+    controlled_evaluation: {points: 0.6, label: "comparison or control group"}
+    baseline_comparison: {points: 0.3, label: "compared with a baseline"}
+  evidence_level_score: {1: 10, 2: 30, 3: 60, 4: 80, 5: 95}
+
+adjectives: [catalytic, catalyst, additional, additionality, transformative, transformational, game-changing,
+             groundbreaking, pioneering, unique, novel, impactful, systemic change, first-of-kind]
+
+investor:
+  - id: signal
+    label: "Signal that impact matters"
+    level1: ['\bimpact (?:thesis|objectives?|targets?|kpis?)\b.{0,40}\b(?:agreed|set|defined|tracked)\b',
+             '\bimpact (?:kpis?|metrics) (?:agreed|reported) (?:with|to) (?:us|the fund|investors)\b']
+    level2: ['\bimpact (?:covenants?|clauses?|side letters?|terms?)\b.{0,40}\b(?:term sheet|shareholders?.? agreement|SHA|loan agreement|investment agreement)\b',
+             '\bimpact[- ]linked (?:pricing|interest|ratchet|carry|coupon|margin)\b',
+             '\b(?:ESG|E&S|impact) action plan\b.{0,30}\bconditions? (?:precedent|of (?:disbursement|investment))\b']
+  - id: engage
+    label: "Engage actively"
+    level1: ['\btechnical assistance\b', '\bTA (?:facility|programme|program)\b', '\bcapacity[- ]building\b',
+             '\b(?:introductions?|help) (?:to|with) (?:customers|distributors|partners|offtakers)\b']
+    level2: ['\bboard (?:seat|observer|director)\b',
+             '\b(?:TA|technical assistance) (?:budget|facility|grant) of (?:USD|US\$|\$|EUR|€|£|HK\$)\s?[\d.,]+',
+             '(?:USD|US\$|\$|EUR|€|£)\s?[\d.,]+\s?(?:k|m|million)?\s(?:of|in|for) technical assistance']
+  - id: grow
+    label: "Grow new or undersupplied capital markets"
+    level1: ['\b(?:frontier|nascent|undersupplied|underserved) (?:capital |credit )?markets?\b',
+             '\bfew (?:other )?(?:investors|lenders|funders)\b']
+    level2: ['\bfirst (?:institutional|equity|external|commercial|foreign) (?:investor|capital|funding|round|lender|loan)\b',
+             '\bno other (?:investors?|lenders?|funders?)\b',
+             '\b(?:crowds? in|crowding in|unlock(?:s|ed)?|mobili[sz](?:e|es|ed|ing))\s(?:a further\s)?(?:USD|US\$|\$|EUR|€|£)\s?[\d.,]+',
+             '\bco-?invest(?:ment|ors)? of (?:USD|US\$|\$|EUR|€|£)\s?[\d.,]+']
+  - id: flexible
+    label: "Provide flexible capital"
+    level1: ['\b(?:patient|long[- ]tenor|flexible) (?:capital|terms|debt|equity)\b', '\bgrace period\b']
+    level2: ['\bfirst[- ]loss\b', '\bconcessional\b', '\bbelow[- ]market (?:rate|interest|terms|pricing)\b',
+             '\bsubordinated\b', '\b\d+[- ]year (?:tenor|maturity|grace period)\b',
+             '\brevenue[- ]based (?:financing|repayment|loan)\b', '\blocal[- ]currency (?:loan|lending|debt|financing)\b',
+             '\bguarantee (?:facility|of (?:USD|\$|EUR|€))']

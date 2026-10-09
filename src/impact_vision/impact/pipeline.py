@@ -391,6 +391,12 @@ def assess_document(
         negative=report_data["negative_impacts"],
         claims_review=gw_dump.get("claims_review"),
     )
+    # v8 W1.4: enterprise vs investor contribution, on evidence only. The
+    # investor half reads the whole text (terms usually sit in "The ask").
+    from impact_vision.impact.contribution_split import contribution_split
+
+    report_data["contribution_split"] = contribution_split(
+        company.assessment_text or text, report_data["expected_impact"], investor_text=text)
     fd = report_data["five_dimensions"]
     if fd and company.sector:
         scores = {k: fd[k]["score"] for k in ("what", "who", "how_much", "contribution", "risk")}

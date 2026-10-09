@@ -164,6 +164,19 @@
       <tbody>{% for r in five_d.rows %}<tr><th scope="row">{{ r.label }}</th><td class="num">{{ '%.1f' % r.score }}</td><td class="num">{{ '%.1f' % r.benchmark if r.benchmark is not none else '—' }}</td><td>{{ t(r.provenance) }}</td><td>{{ r.sentence }}</td></tr>{% endfor %}</tbody>
     </table></div>
   </details>
+  {% if contribution %}
+  <h3 style="margin-top:20px">{{ t('cs_title') }}</h3>
+  <div class="kpis">
+    <div class="tile"><p class="label">{{ t('cs_enterprise') }}</p><p class="value">{{ contribution.enterprise.score }}<small>/100</small></p>
+      <p class="sub">{{ t('cs_enterprise_sub', level=contribution.enterprise.evidence_level, design=contribution.design) }}</p>
+      {% for s in contribution.enterprise.signals[:1] %}<p class="sub"><small class="muted">“{{ s.quote }}”</small></p>{% endfor %}</div>
+    <div class="tile"><p class="label">{{ t('cs_investor') }}</p><p class="value">{{ contribution.investor.score }}<small>/100</small></p>
+      {% set shown = contribution.investor.channels | selectattr('level') | list %}
+      {% if shown %}<ul class="sub" style="margin:4px 0 0;padding-left:18px">{% for c in shown %}<li>{{ t('cs_ch_' ~ c.id) }} · {{ t('cs_level', level=c.level) }}{% if c.quote %}<br><small class="muted">“{{ c.quote }}”</small>{% endif %}</li>{% endfor %}</ul>
+      {% else %}<p class="sub">{{ t('cs_investor_none') }}</p>{% endif %}</div>
+  </div>
+  {% if contribution.investor.adjectives_ignored %}<p class="small muted">{{ t('cs_adjectives', words=contribution.investor.adjectives_ignored | join(', ')) }}</p>{% endif %}
+  {% endif %}
 </section>
 
 {% elif section == 'sdg' %}
