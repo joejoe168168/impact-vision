@@ -53,7 +53,7 @@ from impact_vision.impact.tenancy import (
 SESSION_COOKIE = "iv_session"
 FLOW_COOKIE = "iv_oidc"
 SESSION_SECONDS = 8 * 3600
-PUBLIC_PREFIXES = ("/auth/", "/shared/", "/api/v1/health", "/health", "/favicon")
+PUBLIC_PREFIXES = ("/auth/", "/shared/", "/portal/", "/api/v1/health", "/health", "/favicon")
 _ALGS = {"RS256", "RS384", "RS512", "PS256", "PS384", "PS512", "ES256", "ES384"}
 
 # (method or "*", path prefix, permission) — first match wins.

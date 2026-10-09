@@ -229,6 +229,14 @@ def get_state_store() -> StateStore:
     return store if tenant == DEFAULT_TENANT else TenantGuard(store, tenant)  # type: ignore[return-value]
 
 
+def raw_state_store() -> StateStore:
+    """The underlying store, without the tenant guard: only for cross-tenant indexes
+    that are themselves keyed by a secret (e.g. a portal link's hash)."""
+    get_state_store()
+    assert _STORE is not None
+    return _STORE
+
+
 def set_state_store(store: StateStore | None) -> None:
     """Install a store (or ``None`` to re-resolve from the environment)."""
     global _STORE
@@ -243,5 +251,6 @@ __all__ = [
     "StateStore",
     "default_state_path",
     "get_state_store",
+    "raw_state_store",
     "set_state_store",
 ]

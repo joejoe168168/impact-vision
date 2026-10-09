@@ -575,7 +575,7 @@ def write_deliverables(
     return files
 
 
-def save_bundle(bundle: AssessmentBundle, *, source_label: str = "") -> str:
+def save_bundle(bundle: AssessmentBundle, *, source_label: str = "", period: str = "") -> str:
     """Persist *bundle* in the AssessmentStore; returns the shared ``assessment_id``."""
     from impact_vision.impact.storage import get_assessment_store
 
@@ -602,7 +602,7 @@ def save_bundle(bundle: AssessmentBundle, *, source_label: str = "") -> str:
     try:
         from impact_vision.impact.company_record import record_assessment
 
-        record_assessment(bundle, str(row_id))
+        record_assessment(bundle, str(row_id), period=period)
     except Exception:  # noqa: BLE001 - the assessment is saved even if the record update fails
         pass
     return str(row_id)

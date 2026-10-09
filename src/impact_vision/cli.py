@@ -76,6 +76,7 @@ cron_app = typer.Typer(name="cron", help="Manage cron scheduler and jobs")
 catalog_app = typer.Typer(name="catalog", help="Manage the IRIS+ metric catalog")
 framework_app = typer.Typer(name="framework", help="ESG/sustainability framework tools")
 dd_app = typer.Typer(name="dd", help="Impact due diligence checklist tools")
+monitoring_app = typer.Typer(name="monitoring", help="Annual results requests and reminders (portfolio companies)")
 
 app.add_typer(mcp_app)
 app.add_typer(plugin_app)
@@ -86,6 +87,7 @@ app.add_typer(cron_app)
 app.add_typer(catalog_app)
 app.add_typer(framework_app)
 app.add_typer(dd_app)
+app.add_typer(monitoring_app)
 
 
 # ---- dashboard: Streamlit portfolio dashboard ----
@@ -339,6 +341,49 @@ def serve_web(
 
 
 # ---- mcp subcommands ----
+
+
+@monitoring_app.command("request")
+def monitoring_request(
+    company: str = typer.Argument(..., help="Company name as on the record"),
+    period: str = typer.Option(..., help="Reporting year, e.g. 2026"),
+    email: str = typer.Option("", help="Contact at the company (gets reminders)"),
+    due: str = typer.Option("", help="Due date (ISO); default 31 March of the next year"),
+    base_url: str = typer.Option("http://127.0.0.1:8788", help="Where serve-web is reachable"),
+) -> None:
+    """Create the yearly results request and print the private portal link."""
+    from impact_vision.impact.annual_monitoring import create_request
+
+    try:
+        made = create_request(company, period, due=due, contact_email=email, created_by="cli")
+    except ValueError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        raise typer.Exit(1) from None
+    print(f"{base_url.rstrip('/')}/portal/{made['token']}")
+    print(f"Due {made['due']}. Send the link to the company; it is shown once.", file=sys.stderr)
+
+
+@monitoring_app.command("remind")
+def monitoring_remind(
+    dry_run: bool = typer.Option(False, "--dry-run", help="List who would be reminded; send nothing"),
+    base_url: str = typer.Option("", help="Portal base URL to mention in the email"),
+) -> None:
+    """Send due reminders by email (IMPACT_VISION_SMTP_*) and webhook. Run daily from cron."""
+    import asyncio
+
+    from impact_vision.impact.annual_monitoring import send_reminders
+
+    def webhook(event: str, payload: dict) -> None:
+        from impact_vision.api_gateway.router import _fire_webhooks
+
+        asyncio.run(_fire_webhooks(event, payload))
+
+    done = send_reminders(base_url=base_url, dry_run=dry_run, webhook=None if dry_run else webhook)
+    if not done:
+        print("No reminders due.")
+    for r in done:
+        print(f"{r['company']} {r['period']}: {r['days_left']} days left · email {r['email']}"
+              + (f" · webhook {r['webhook']}" if r["webhook"] else ""))
 
 
 mcp_token_app = typer.Typer(name="token", help="Bearer tokens for `serve-mcp --transport http`")

@@ -31,7 +31,7 @@ from pathlib import Path
 from typing import Any
 
 try:
-    from fastapi import APIRouter, Depends, HTTPException
+    from fastapi import APIRouter, Depends, HTTPException, Request
     from fastapi.responses import FileResponse, HTMLResponse
 except ImportError as _exc:  # pragma: no cover - optional
     APIRouter = None  # type: ignore[assignment]
@@ -193,6 +193,28 @@ def _engagement_workspace():  # noqa: ANN202
     from impact_vision.tools.impact.engagement_workspace_tool import _workspace
 
     return _workspace()
+
+
+class MonitoringRequest(BaseModel):
+    period: str = Field(..., description="Reporting year, e.g. 2026")
+    due: str = Field("", description="ISO date; default 31 March of the next year")
+    contact_email: str = Field("", description="Who gets reminders at the company")
+
+
+_PORTAL_HEADERS = {
+    "Cache-Control": "private, no-store",
+    # Not no-referrer: browsers then send "Origin: null" on the form post and
+    # the cross-origin guard refuses it. same-origin still keeps the token
+    # out of any other site's logs.
+    "Referrer-Policy": "same-origin",
+    "X-Robots-Tag": "noindex, nofollow",
+    "X-Content-Type-Options": "nosniff",
+    "Content-Security-Policy": ("default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; "
+                                "form-action 'self'; frame-ancestors 'none'"),
+}
+_PORTAL_GONE = ("<!doctype html><meta charset=utf-8><title>Link unavailable</title>"
+                "<p style='font:16px system-ui;margin:3rem'>This link is invalid or has been replaced. "
+                "Ask your investor for a new one.</p>")
 
 
 # ---------------------------------------------------------------- share tokens
@@ -385,6 +407,30 @@ def build_reports_router(*, auth_dependency: Any = None) -> Any:
         except ValueError as exc:
             raise HTTPException(status_code=404, detail=str(exc)) from exc
 
+    @router.post("/companies/{name}/monitoring", dependencies=deps)
+    async def company_monitoring_request(name: str, req: MonitoringRequest, request: Request) -> dict[str, Any]:
+        from impact_vision.impact.annual_monitoring import create_request
+        from impact_vision.impact.identity import current_identity
+
+        try:
+            made = await asyncio.to_thread(create_request, name, req.period.strip(), due=req.due.strip(),
+                                           contact_email=req.contact_email[:200],
+                                           created_by=current_identity().email or current_identity().sub)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        url = str(request.base_url).rstrip("/") + "/portal/" + made["token"]
+        return {"company": name, "period": made["period"], "due": made["due"], "portal_url": url,
+                "note": "Send this link to the company. It is shown once; only its hash is stored."}
+
+    @router.get("/companies/{name}/monitoring", dependencies=deps)
+    async def company_monitoring(name: str) -> dict[str, Any]:
+        from impact_vision.impact.annual_monitoring import list_requests, variance_explanations
+
+        rows = await asyncio.to_thread(list_requests, name)
+        keep = ("period", "due", "status", "contact_email", "created_at", "submitted_at", "reminders")
+        return {"requests": [{k: r.get(k) for k in keep} for r in rows],
+                "variance": await asyncio.to_thread(variance_explanations, name)}
+
     @router.get("/portfolio/lp-report", dependencies=deps, response_class=HTMLResponse)
     async def lp_report(fund_name: str = "Portfolio", theme: str = "") -> HTMLResponse:
         from impact_vision.impact.company_record import lp_report_view, render_lp_report
@@ -428,6 +474,36 @@ def build_reports_router(*, auth_dependency: Any = None) -> Any:
 
 def build_shared_router() -> Any:
     router = APIRouter()
+
+    @router.get("/portal/{token}", response_class=HTMLResponse, include_in_schema=False)
+    async def portal_form(token: str) -> HTMLResponse:
+        from impact_vision.impact.annual_monitoring import render_portal, resolve_token
+
+        found = await asyncio.to_thread(resolve_token, token)
+        if not found:
+            return HTMLResponse(_PORTAL_GONE, status_code=404, headers=_PORTAL_HEADERS)
+        return HTMLResponse(render_portal(found[1]), headers=_PORTAL_HEADERS)
+
+    @router.post("/portal/{token}", response_class=HTMLResponse, include_in_schema=False)
+    async def portal_submit(token: str, request: Request) -> HTMLResponse:
+        from urllib.parse import parse_qs
+
+        from impact_vision.impact.annual_monitoring import render_portal, resolve_token, submit_response
+
+        found = await asyncio.to_thread(resolve_token, token)
+        if not found:
+            return HTMLResponse(_PORTAL_GONE, status_code=404, headers=_PORTAL_HEADERS)
+        raw = (await request.body())[:64_000].decode("utf-8", "replace")
+        if request.headers.get("content-type", "").startswith("application/json"):
+            values = {k: str(v) for k, v in (json.loads(raw or "{}") or {}).items()}
+        else:
+            values = {k: v[0] for k, v in parse_qs(raw).items()}
+        try:
+            await asyncio.to_thread(submit_response, token, values)
+        except (ValueError, PermissionError) as exc:
+            return HTMLResponse(render_portal(found[1], values=values, error=str(exc)), status_code=400,
+                                headers=_PORTAL_HEADERS)
+        return HTMLResponse(render_portal(found[1], done=True), headers=_PORTAL_HEADERS)
 
     @router.get("/shared/{token}", response_class=HTMLResponse, include_in_schema=False)
     async def shared(token: str) -> HTMLResponse:

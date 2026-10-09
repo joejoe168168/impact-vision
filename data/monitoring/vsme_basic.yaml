@@ -1,0 +1,12 @@
+# VSME Basic Module datapoints asked in the annual monitoring request (v8 W3.4).
+# A small, investor-relevant subset; the full module is longer.
+as_of: "2026-10-09"
+source: "EFRAG Voluntary Sustainability Reporting Standard for non-listed SMEs (VSME), Dec 2024; Commission Recommendation on the VSME, Jul 2025"
+source_url: https://www.efrag.org/en/projects/voluntary-reporting-standard-for-smes-vsme
+status: illustrative
+datapoints:
+  - {id: energy_mwh, ref: "VSME B3", label: "Total energy consumption", unit: "MWh"}
+  - {id: scope1_t, ref: "VSME B3", label: "Gross Scope 1 GHG emissions", unit: "tCO2e"}
+  - {id: scope2_t, ref: "VSME B3", label: "Gross location-based Scope 2 GHG emissions", unit: "tCO2e"}
+  - {id: employees, ref: "VSME B8", label: "Employees (headcount) at year end", unit: "people"}
+  - {id: accidents, ref: "VSME B9", label: "Recordable work-related accidents", unit: "count"}

@@ -1365,6 +1365,10 @@ function renderCompany(t) {
       (t.stages || []).map((s) => '<option value="' + esc(s) + '">' + esc(STAGE_LABEL[s] || s) + '</option>').join('') +
     '</select><input id="coWhy" placeholder="Why (optional)" style="flex:1;min-width:160px"><button class="btn" id="coMove">Move</button></div>' +
     (['invested', 'monitoring', 'exited'].includes(t.stage) ? '<div class="co-row" style="margin-top:8px"><button class="btn" id="coExit">Exit assessment (OPIM 8)</button><span id="coExitOut" style="font-size:13px"></span></div>' : '') +
+    (['invested', 'monitoring'].includes(t.stage) ? '<div class="co-sec">Annual results</div><div class="co-row">' +
+      '<input id="coYear" placeholder="Year" value="' + (new Date().getFullYear() - 1) + '" style="width:80px">' +
+      '<input id="coEmail" type="email" placeholder="Company contact email (for reminders)" style="flex:1;min-width:180px">' +
+      '<button class="btn" id="coAsk">Request results</button></div><div id="coAskOut" style="font-size:13px;margin-top:6px"></div>' : '') +
     '<div class="co-sec">Expected vs actual</div>' +
     (ev ? '<table class="co-table"><thead><tr><th>Outcome</th><th>Expected at IC (P50, P10–P90)</th><th>Actual</th><th>Status</th></tr></thead><tbody>' + ev + '</tbody></table>'
         : '<div class="empty">No quantified outcome yet. Actual results are recorded from assessments made once the company is invested.</div>') +
@@ -1384,6 +1388,30 @@ function renderCompany(t) {
   body.querySelectorAll('[data-rep]').forEach((b) => {
     b.onclick = () => { const rep = S.reports.find((r) => r.id === b.dataset.rep); if (rep) { $('#companyOverlay').classList.remove('show'); openViewer(rep); } };
   });
+  if ($('#coAsk')) {
+    const out = $('#coAskOut');
+    const showStatus = async () => {
+      try {
+        const m = await api('/companies/' + encodeURIComponent(t.company) + '/monitoring');
+        const reqs = (m.requests || []).map((r) => esc(r.period) + ': ' + esc(r.status) + (r.status === 'open' ? ' (due ' + esc(r.due) + ')' : '')).join(' · ');
+        const why = (m.variance || []).map((v) => '<li>' + esc(v.outcome) + ': ' + esc(v.status) +
+          (v.drivers.length ? ' — ' + esc(v.drivers.join('; ')) : '') +
+          (v.company_explanation ? '<br><small>Company: “' + esc(v.company_explanation) + '”</small>' : '') + '</li>').join('');
+        if (!out.dataset.link) out.innerHTML = (reqs ? 'Requests: ' + reqs : '') + (why ? '<ul class="co-ev">' + why + '</ul>' : '');
+      } catch (e) { /* older server */ }
+    };
+    showStatus();
+    $('#coAsk').onclick = async () => {
+      try {
+        const r = await api('/companies/' + encodeURIComponent(t.company) + '/monitoring', {method: 'POST',
+          body: JSON.stringify({period: $('#coYear').value.trim(), contact_email: $('#coEmail').value.trim()})});
+        out.dataset.link = '1';
+        out.innerHTML = 'Send this private link to the company (shown once, due ' + esc(r.due) + '):<br>' +
+          '<input readonly style="width:100%;margin-top:4px" value="' + esc(r.portal_url) + '">';
+        $('input', out).select();
+      } catch (e) { out.textContent = e.message; }
+    };
+  }
   if ($('#coExit')) $('#coExit').onclick = async () => {
     $('#coExitOut').textContent = ' Scoring…';
     try {

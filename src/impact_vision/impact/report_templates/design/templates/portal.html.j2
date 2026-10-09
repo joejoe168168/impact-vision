@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>{{ r.company }} — {{ r.period }} impact results</title>
+<style>{{ css | safe }}
+.doc { max-width: 760px; }
+form .q { margin: 0 0 18px; }
+form label { display: block; font-weight: 600; margin-bottom: 6px; }
+form .ref { font-weight: 400; color: var(--muted); font-size: 13px; }
+form input[type=text], form input[type=number], form select, form textarea {
+  width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px;
+  background: var(--surface); color: var(--ink); font: inherit; }
+form textarea { min-height: 96px; }
+form .check { display: flex; gap: 10px; align-items: center; font-weight: 400; }
+.submit { padding: 12px 20px; border: 0; border-radius: 8px; background: var(--brand); color: var(--page); font: inherit; font-weight: 600; cursor: pointer; }
+.error { border-left: 4px solid var(--critical-ink); padding: 10px 14px; background: var(--surface-2); margin-bottom: 16px; }
+</style>
+</head>
+<body>
+<main class="doc">
+<header class="masthead">
+  <div class="ident">
+    <div class="monogram" aria-hidden="true">{{ r.company[:2] | upper }}</div>
+    <div>
+      <p class="eyebrow">Annual impact results · {{ r.period }}</p>
+      <h1>{{ r.company }}</h1>
+      <p class="meta">Due {{ r.due }}{% if done %} · received, thank you{% endif %}</p>
+    </div>
+  </div>
+</header>
+<section class="card">
+{% if done %}
+  <h2>Thank you</h2>
+  <p class="lede">Your {{ r.period }} results have been received. Your investor will follow up if anything needs clarifying.</p>
+{% else %}
+  <p class="lede">Your investor asks for these figures once a year. They are compared with the plan agreed at investment. Give your best figures and say how you know them; estimates are fine if you say so.</p>
+  {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+  <form method="post">
+  {% for q in r.questions %}
+    <div class="q">
+    {% if q.type == 'checkbox' %}
+      <label class="check"><input type="checkbox" name="{{ q.id }}" {% if values.get(q.id) %}checked{% endif %}> {{ q.label }}</label>
+    {% else %}
+      <label for="q-{{ q.id }}">{{ q.label }}{% if q.required %} *{% endif %}{% if q.ref %} <span class="ref">{{ q.ref }}</span>{% endif %}</label>
+      {% if q.type == 'select' %}
+      <select id="q-{{ q.id }}" name="{{ q.id }}">{% for k, label in q.options.items() %}<option value="{{ k }}" {% if values.get(q.id) == k %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+      {% elif q.type == 'textarea' %}
+      <textarea id="q-{{ q.id }}" name="{{ q.id }}">{{ values.get(q.id, '') }}</textarea>
+      {% else %}
+      <input id="q-{{ q.id }}" name="{{ q.id }}" type="{{ 'text' if q.type == 'text' else 'text' }}" {% if q.type == 'number' %}inputmode="decimal"{% endif %} value="{{ values.get(q.id, '') }}" {% if q.required %}required{% endif %}>
+      {% endif %}
+    {% endif %}
+    </div>
+  {% endfor %}
+    <button class="submit" type="submit">Send results</button>
+  </form>
+{% endif %}
+</section>
+</main>
+</body>
+</html>

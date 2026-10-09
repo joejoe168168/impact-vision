@@ -439,14 +439,13 @@ impact-vision catalog stats
 impact-vision catalog search "climate"
 
 # ESG / sustainability frameworks
-impact-vision framework list
-impact-vision framework scan "company description"
-impact-vision framework xref OI4112
+impact-vision framework list | scan "company description" | xref OI4112
 
 # Due-diligence checklist (122 questions / 34 categories)
 impact-vision dd list [--category "What (Outcomes)"]
 impact-vision dd categories
 impact-vision dd analyze "text or /path/to/doc.txt"
+impact-vision monitoring request "SunPath" --period 2026 --email cfo@… | remind   # annual results
 
 # Service surfaces
 impact-vision serve-mcp                                  # MCP server (stdio)
