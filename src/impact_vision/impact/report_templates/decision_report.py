@@ -769,6 +769,7 @@ def build_view(data: dict[str, Any], *, audience: str | None = None, lang: str =
         "evidence": _evidence(data, t),
         "greenwashing": _greenwashing(data, t) if spec.show_greenwashing else None,
         "risks": _risks(data),
+        "negatives": data.get("negative_impacts"),
         "targets": (data.get("target_tracking") or {}).get("targets", []),
         "feedback": data.get("beneficiary_feedback"),
     }
@@ -833,7 +834,7 @@ def build_view(data: dict[str, Any], *, audience: str | None = None, lang: str =
         "sdg": bool(view["sdg"]["material"] or view["sdg"]["other"]),
         "evidence": bool(view["evidence"]["claims"] or view["evidence"]["metrics"]),
         "greenwashing": view["greenwashing"] is not None,
-        "risks": any(view["risks"].values()),
+        "risks": any(view["risks"].values()) or bool((view.get("negatives") or {}).get("items")),
         "actions": bool(view["actions"]),
         "targets": bool(view["targets"]),
         "feedback": bool(view["feedback"]),

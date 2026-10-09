@@ -385,6 +385,7 @@ def assess_expected_impact(
     greenwashing: Any = None,
     v1_checks: Iterable[dict[str, Any]] = (),
     missing_metrics: Iterable[str] = (),
+    negative: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Methodology 2.0 result block stored in ``report_data['expected_impact']``."""
     claims = list(claims)
@@ -403,6 +404,11 @@ def assess_expected_impact(
                                      unit="tCO2e", per_usd=inp.ask_usd))
     eq = evidence_quality(inp, claims)
     plan = _evidence_plan(inp, outcomes, eq, data_completeness_pct, list(missing_metrics))
+    if negative:
+        # W1.6: material negative impacts with no disclosed control are questions to ask.
+        from impact_vision.impact.negative_impacts import plan_items
+
+        plan = (plan[:3] + plan_items(negative, 1) + plan[3:])[:4]
     gate = _gate(outcomes, eq, data_completeness_pct, greenwashing, list(v1_checks), plan)
     return {
         "methodology": stamp(),

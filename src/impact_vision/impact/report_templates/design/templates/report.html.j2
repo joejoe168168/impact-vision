@@ -233,6 +233,15 @@
 {% elif section == 'risks' %}
 <section id="sec-risks" class="card" aria-labelledby="h-risks">
   <h2 id="h-risks">{{ icons.risks | safe }}{{ t('sec_risks') }}</h2>
+  {% if negatives and negatives['items'] %}
+  <h3 class="small">{{ t('neg_title') }}</h3>
+  <p class="lede">{{ t('neg_lede') }}</p>
+  <div class="table-wrap"><table class="neg">
+    <caption class="sr-only">{{ t('neg_title') }}</caption>
+    <thead><tr><th scope="col">{{ t('col_neg_impact') }}</th><th scope="col" class="num">{{ t('col_severity') }}</th><th scope="col" class="num">{{ t('col_likelihood') }}</th><th scope="col">{{ t('col_materiality') }}</th><th scope="col">{{ t('col_control') }}</th></tr></thead>
+    <tbody>{% for r in negatives['items'] %}<tr><td>{{ r.impact }}<br><small class="muted">{{ r.stakeholder }}{% if r.pai %} · {{ r.pai }}{% endif %}</small></td><td class="num">{{ r.severity }}/3</td><td class="num">{{ r.likelihood }}/3</td><td><span class="pill {{ 'critical' if r.band == 'high' and not r.controlled else 'warning' if r.band == 'high' or r.band == 'medium' else '' }}">{{ r.score }}/9 · {{ t('band_' ~ r.band) }}</span></td><td>{% if r.controlled %}{{ t('neg_controlled') }}{% for q in r.evidence %}<br><small class="muted">“{{ q }}”</small>{% endfor %}{% else %}<span class="muted">{{ t('neg_uncontrolled') }}</span>{% endif %}</td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% endif %}
   <div class="two-col">
     <div>
       {% if risks.disclosed %}<h3 class="small">{{ t('risks_disclosed') }}</h3>

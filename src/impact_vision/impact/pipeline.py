@@ -355,7 +355,8 @@ def assess_document(
         "sdg_alignment": sdg_dicts,  # executive summary reads the singular key
         "gap_analysis": gap_result,
         "greenwashing": gw_dump,
-        "impact_analysis": _infer_opportunities_and_risks(company, text),
+        # Problem / market sections describe the world, not the company's risks (v8).
+        "impact_analysis": _infer_opportunities_and_risks(company, company.assessment_text or text),
         "impact_claims": [c.model_dump() for c in assessment.impact_claims],
         "audience": audience,
         "theme": theme,
@@ -371,7 +372,9 @@ def assess_document(
     # Methodology 2.0 (v8 Wave 1): expected impact with ranges, evidence
     # quality as its own axis, gate 2.0 and a quantitative evidence plan.
     from impact_vision.impact.expected_impact import assess_expected_impact
+    from impact_vision.impact.negative_impacts import assess_negative_impacts
 
+    report_data["negative_impacts"] = assess_negative_impacts(company.sector, company.assessment_text or text)
     report_data["expected_impact"] = assess_expected_impact(
         assessment.impact_claims,
         company.assessment_text or text,
@@ -381,6 +384,7 @@ def assess_document(
         greenwashing=gw,
         v1_checks=report_data["decision"].get("checks", []),
         missing_metrics=[m["name"] for m in gap_result.get("missing", [])[:5]],
+        negative=report_data["negative_impacts"],
     )
     fd = report_data["five_dimensions"]
     if fd and company.sector:

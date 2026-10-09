@@ -1,0 +1,71 @@
+# Material negative impacts by sector (roadmap v8 W1.6).
+#
+# Scored the way ESRS 1 §3.4 scores impact materiality for negative impacts:
+#   severity  1–3  (scale × scope × how hard to remedy, collapsed to three steps)
+#   likelihood 1–3 (base rate for the business model)
+#   materiality = severity × likelihood (1–9); ≥ 6 is material.
+# A control the company discloses in its own words lowers likelihood by one
+# step (never below 1). The list prompts diligence; it is not a finding.
+# `pai` points to the SFDR PAI indicator where one applies; `dnsh` to the EU
+# Taxonomy environmental objective at stake.
+as_of: "2026-10-09"
+source: "ESRS 1 (Delegated Reg. (EU) 2023/2772, revised 2026/1563) §3.4 impact materiality; SFDR RTS Annex I PAI; sector practice"
+source_url: https://eur-lex.europa.eu/eli/reg_del/2023/2772/oj
+status: illustrative
+
+sectors:
+  energy:
+    - {id: ewaste, impact: "End-of-life batteries and panels become hazardous e-waste", stakeholder: "communities, environment", severity: 2, likelihood: 3, dnsh: circular_economy, controls: ["take-back", "take back", "recycl", "e-waste", "end-of-life", "battery collection"]}
+    - {id: overindebt, impact: "Pay-as-you-go customers fall into arrears or lose the asset", stakeholder: "low-income customers", severity: 2, likelihood: 2, controls: ["over-indebtedness", "repayment", "affordab", "lock-out policy", "grace period", "loan cap"]}
+    - {id: labour_supply, impact: "Forced or child labour in the polysilicon / mineral supply chain", stakeholder: "supply-chain workers", severity: 3, likelihood: 2, pai: "PAI 10 (UNGC/OECD violations)", controls: ["supply chain due diligence", "supplier audit", "traceab", "uflpa", "conflict minerals", "responsible sourcing"]}
+  agriculture:
+    - {id: water, impact: "Water abstraction stresses local sources", stakeholder: "communities, ecosystems", severity: 2, likelihood: 2, pai: "PAI 6 / 8 (water)", dnsh: water, controls: ["water withdrawal", "water use per", "drip", "rainwater", "recycled water"]}
+    - {id: pollution, impact: "Manure, run-off or pesticides pollute soil and water", stakeholder: "communities, ecosystems", severity: 3, likelihood: 2, dnsh: pollution, controls: ["run-off", "lagoon", "biogas", "manure management", "integrated pest", "buffer strip", "wastewater treat"]}
+    - {id: amr, impact: "Antibiotic overuse drives antimicrobial resistance", stakeholder: "public health", severity: 3, likelihood: 2, controls: ["antibiotic", "veterinary protocol", "stewardship"]}
+    - {id: deforestation, impact: "Land conversion or deforestation in the supply base", stakeholder: "ecosystems", severity: 3, likelihood: 1, pai: "PAI 7 (biodiversity-sensitive areas)", dnsh: biodiversity, controls: ["deforestation-free", "no deforestation", "eudr", "land-use policy"]}
+  livestock:
+    - {id: pollution, impact: "Manure and effluent pollute soil and water", stakeholder: "communities, ecosystems", severity: 3, likelihood: 3, dnsh: pollution, controls: ["lagoon", "biogas", "manure management", "effluent", "wastewater treat"]}
+    - {id: amr, impact: "Antibiotic overuse drives antimicrobial resistance", stakeholder: "public health", severity: 3, likelihood: 2, controls: ["antibiotic", "veterinary protocol", "stewardship"]}
+    - {id: welfare, impact: "Poor animal welfare", stakeholder: "animals", severity: 2, likelihood: 2, controls: ["welfare", "enrichment", "stocking density", "group-housing"]}
+  fintech:
+    - {id: overindebt, impact: "Clients become over-indebted", stakeholder: "borrowers", severity: 3, likelihood: 2, controls: ["over-indebtedness", "repayment capacity", "loan cap", "affordab", "credit bureau", "client protection"]}
+    - {id: pricing, impact: "Opaque or abusive pricing and collection practices", stakeholder: "borrowers", severity: 2, likelihood: 2, controls: ["transparent pricing", "total cost", "apr", "smart campaign", "client protection", "complaints"]}
+    - {id: data, impact: "Misuse or breach of clients' personal and financial data", stakeholder: "clients", severity: 2, likelihood: 2, controls: ["data protection", "data privacy", "consent", "encrypt", "iso 27001"]}
+  healthcare:
+    - {id: quality, impact: "Clinical errors or substandard care", stakeholder: "patients", severity: 3, likelihood: 2, controls: ["accredit", "safecare", "clinical governance", "quality audit", "protocol"]}
+    - {id: waste, impact: "Medical waste mishandled", stakeholder: "communities, staff", severity: 2, likelihood: 2, dnsh: pollution, controls: ["medical waste", "licensed contractor", "incinerat", "sharps"]}
+    - {id: access, impact: "User fees exclude the poorest patients", stakeholder: "low-income patients", severity: 2, likelihood: 2, controls: ["sliding scale", "subsid", "insurance", "nhif", "free care", "waiver"]}
+    - {id: data, impact: "Breach of patients' health data", stakeholder: "patients", severity: 2, likelihood: 2, controls: ["data protection", "data privacy", "consent", "encrypt", "iso 27001"]}
+  education:
+    - {id: data, impact: "Children's personal data collected or shared without safeguards", stakeholder: "students", severity: 2, likelihood: 2, controls: ["data protection", "data privacy", "consent", "child safeguarding", "encrypt"]}
+    - {id: safeguarding, impact: "Child safeguarding failures", stakeholder: "students", severity: 3, likelihood: 1, controls: ["safeguarding", "background check", "code of conduct"]}
+    - {id: equity, impact: "Benefits concentrate on better-off learners, widening gaps", stakeholder: "disadvantaged learners", severity: 2, likelihood: 2, controls: ["girls", "low-income", "scholarship", "cash transfer", "targeting", "offline"]}
+  water:
+    - {id: quality, impact: "Unsafe water delivered", stakeholder: "households", severity: 3, likelihood: 1, controls: ["tested", "laboratory", "water quality", "national standard"]}
+    - {id: affordability, impact: "Tariffs unaffordable for the poorest", stakeholder: "low-income households", severity: 2, likelihood: 2, controls: ["price cap", "capped at", "affordab", "lifeline tariff"]}
+    - {id: depletion, impact: "Source depletion or brine/reject-water discharge", stakeholder: "ecosystems, communities", severity: 2, likelihood: 2, dnsh: water, controls: ["reject water", "brine", "aquifer", "recharge", "reused"]}
+  real estate:
+    - {id: displacement, impact: "Evictions or displacement of existing residents", stakeholder: "tenants, communities", severity: 3, likelihood: 2, controls: ["no-fault eviction", "evictions", "resettlement", "arrears support"]}
+    - {id: safety, impact: "Building or fire-safety failures", stakeholder: "residents", severity: 3, likelihood: 1, controls: ["fire-safety", "fire safety", "building safety", "accredited assessor"]}
+    - {id: carbon, impact: "High operational and embodied carbon", stakeholder: "climate", severity: 2, likelihood: 2, pai: "PAI 17–18 (real estate energy)", dnsh: climate_mitigation, controls: ["epc", "energy rating", "heat pump", "embodied carbon", "net zero"]}
+  waste management:
+    - {id: landfill, impact: "Residual waste still goes to landfill or incineration", stakeholder: "environment, communities", severity: 2, likelihood: 3, dnsh: circular_economy, controls: ["landfill", "waste-to-energy", "diversion rate", "fibre-to-fibre"]}
+    - {id: workers, impact: "Unsafe conditions for sorting and informal workers", stakeholder: "workers", severity: 2, likelihood: 2, controls: ["health and safety", "ppe", "living wage", "formal employment", "ngo partnership"]}
+  retail:
+    - {id: supply_labour, impact: "Labour abuses in garment and product supply chains", stakeholder: "supply-chain workers", severity: 3, likelihood: 2, pai: "PAI 10 (UNGC/OECD violations)", controls: ["supplier audit", "code of conduct", "living wage", "traceab", "sedex"]}
+    - {id: packaging, impact: "Packaging and unsold stock become waste", stakeholder: "environment", severity: 1, likelihood: 3, dnsh: circular_economy, controls: ["packaging", "take-back", "resale", "recycl"]}
+  technology:
+    - {id: data, impact: "Misuse or breach of users' personal data", stakeholder: "users", severity: 2, likelihood: 2, controls: ["data protection", "data privacy", "consent", "encrypt", "iso 27001", "gdpr"]}
+    - {id: exclusion, impact: "Digital-only service excludes users without devices or skills", stakeholder: "excluded users", severity: 1, likelihood: 2, controls: ["offline", "ussd", "agent network", "assisted"]}
+  transport:
+    - {id: safety, impact: "Road safety incidents", stakeholder: "drivers, public", severity: 3, likelihood: 2, controls: ["road safety", "driver training", "telematics", "incident"]}
+    - {id: emissions, impact: "Air pollution and GHG from vehicles", stakeholder: "communities, climate", severity: 2, likelihood: 2, pai: "PAI 1–3 (GHG)", controls: ["electric", "ev ", "euro 6", "emission standard"]}
+  manufacturing:
+    - {id: pollution, impact: "Air, water or hazardous-waste pollution", stakeholder: "communities, environment", severity: 3, likelihood: 2, dnsh: pollution, controls: ["hazardous waste", "effluent", "iso 14001", "emission control"]}
+    - {id: workers, impact: "Occupational injuries", stakeholder: "workers", severity: 2, likelihood: 2, controls: ["health and safety", "iso 45001", "ppe", "ltifr"]}
+  tourism:
+    - {id: community, impact: "Crowding, price rises or displacement in host communities", stakeholder: "local communities", severity: 2, likelihood: 2, controls: ["community benefit", "local hiring", "revenue sharing", "community consultation"]}
+    - {id: environment, impact: "Pressure on water, waste and fragile ecosystems", stakeholder: "ecosystems", severity: 2, likelihood: 2, dnsh: biodiversity, controls: ["water use", "waste", "protected area", "carrying capacity"]}
+  default:
+    - {id: workers, impact: "Poor working conditions or wages for staff and contractors", stakeholder: "workers", severity: 2, likelihood: 1, controls: ["living wage", "health and safety", "grievance", "code of conduct"]}
+    - {id: data, impact: "Misuse of personal data", stakeholder: "customers", severity: 1, likelihood: 2, controls: ["data protection", "data privacy", "consent"]}
