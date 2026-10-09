@@ -9,6 +9,22 @@ from pydantic import BaseModel, Field, field_validator
 from impact_vision.impact._util import _now, _safe_div
 from impact_vision.impact.disclosure_packs import DisclosureStatus
 
+
+def resolve_scope3_method(requested: str | None = None) -> str:
+    """The Scope 3 method to use: argument, then IMPACT_VISION_GHG_SCOPE3_METHOD, then the
+    default in data/methodology/ghg.yaml. Only methods listed there are accepted."""
+    import os
+
+    import yaml
+
+    from impact_vision.impact._paths import data_path
+
+    cfg = (yaml.safe_load(data_path("methodology/ghg.yaml").read_text(encoding="utf-8")) or {}).get("scope3", {})
+    method = (requested or os.environ.get("IMPACT_VISION_GHG_SCOPE3_METHOD", "") or cfg.get("default", "")).strip()
+    if method not in (cfg.get("methods") or {}):
+        raise ValueError(f"Unknown Scope 3 method {method!r}; available: {', '.join(cfg.get('methods') or {})}")
+    return method
+
 Scope = Literal["scope1", "scope2"]
 Scope2Method = Literal["location_based", "market_based"]
 CertificateStatus = Literal["valid", "invalid", "pending", "unknown"]
@@ -104,6 +120,7 @@ class GHGInventory(BaseModel):
     scope2_by_category: dict[str, float] = Field(default_factory=dict)
     scope3_by_category: dict[str, float] = Field(default_factory=dict)
     scope3_tco2e: float = 0.0
+    scope3_method: str = ""  # which Scope 3 method produced the figures (data/methodology/ghg.yaml)
     total_carbon_footprint_location_based_tco2e: float = 0.0
     total_carbon_footprint_market_based_tco2e: float = 0.0
     annual_revenue_million_cny: float | None = Field(default=None, ge=0)
@@ -271,6 +288,7 @@ def calculate_ghg_inventory(
     annual_revenue_million_cny: float | None = None,
     scope3_categories: dict[int, dict] | None = None,
     historical_years: list[dict] | None = None,
+    scope3_method: str | None = None,
 ) -> GHGInventory:
     """Calculate a Scope 1/2 inventory, with optional OHESG-style extensions.
 
@@ -421,9 +439,11 @@ def calculate_ghg_inventory(
             )
         comparable = three_year_comparison(comparison_rows)["years"]
 
+    method = resolve_scope3_method(scope3_method) if scope3_categories else ""
     return GHGInventory(
         company_name=company_name,
         reporting_period=reporting_period,
+        scope3_method=method,
         results=results,
         scope1_tco2e=scope1,
         scope2_location_based_tco2e=scope2_location,

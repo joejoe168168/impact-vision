@@ -923,6 +923,23 @@ def framework_scan_cmd(
     print(f"ToC: {toc['coverage_pct']}% alignment ({toc['addressed']}/{toc['total_principles']})")
 
 
+@framework_app.command("hkfrs-s1")
+def framework_hkfrs_s1(
+    path: str = typer.Argument(..., help="Sustainability / annual report (PDF, DOCX, MD, TXT)"),
+    lang: str = typer.Option("en", help="en or zh-HK (labels)"),
+) -> None:
+    """HKFRS S1 gap check for a report (English or Traditional Chinese)."""
+    from impact_vision.impact.frameworks.hkfrs_s1 import hkfrs_s1_gap, to_text
+    from impact_vision.impact.pipeline import read_document
+
+    try:
+        text = read_document(path)
+    except (FileNotFoundError, ValueError) as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        raise typer.Exit(1) from None
+    print(to_text(hkfrs_s1_gap(text, lang=lang)))
+
+
 @framework_app.command("xref")
 def framework_xref_cmd(
     metric_id: str = typer.Argument(..., help="Metric ID to look up cross-references for"),

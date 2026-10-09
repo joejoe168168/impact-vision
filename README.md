@@ -439,7 +439,7 @@ impact-vision catalog stats
 impact-vision catalog search "climate"
 
 # ESG / sustainability frameworks
-impact-vision framework list | scan "company description" | xref OI4112
+impact-vision framework list | scan "company description" | xref OI4112 | hkfrs-s1 report.pdf
 
 # Due-diligence checklist (122 questions / 34 categories)
 impact-vision dd list [--category "What (Outcomes)"] · dd categories

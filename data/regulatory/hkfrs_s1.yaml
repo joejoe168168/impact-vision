@@ -1,0 +1,97 @@
+# HKFRS S1 gap checklist (roadmap v8 Wave 4). HKFRS S1 is identical to IFRS S1
+# (HKICPA, December 2024; effective 2025-08-01), so paragraph numbers follow
+# IFRS S1. Cues are what a report that meets the requirement usually says; a
+# match is a pointer to check, not a compliance opinion.
+as_of: "2026-10-09"
+source: "HKICPA HKFRS S1 (full alignment with IFRS S1, effective 1 August 2025); IFRS S1 paragraphs"
+source_url: https://www.hkicpa.org.hk/en/News/News%20Release/20240916_HKFRS%20S1_S2
+status: illustrative
+hkex_note: >-
+  HKEX already requires climate disclosures based on IFRS S2 (LargeCap issuers in full for financial years from
+  2026-01-01). HKEX expects to consult on full HKFRS S1/S2 adoption in 2027. A gap closed now is one fewer at
+  that point.
+requirements:
+  - id: gov_body
+    pillar: governance
+    ref: "¶26–27(a)"
+    title: Governance body that oversees sustainability-related risks and opportunities
+    zh: 監察可持續發展相關風險及機遇的管治機構
+    cues: ['\bboard\b.{0,60}\b(?:oversee|oversight|responsib)', 'committee.{0,40}(?:sustainab|esg|climate)', '(?:sustainab\w*|esg|climate|risk) committee', '董事會.{0,20}(?:監察|監督|負責)', '(?:可持續發展|ESG).{0,10}委員會']
+  - id: gov_management
+    pillar: governance
+    ref: "¶27(b)"
+    title: Management's role, controls and procedures
+    zh: 管理層的角色、監控及程序
+    cues: ['\bmanagement\b.{0,60}\b(?:role|responsib|report)', '(?:chief|head of) (?:sustainability|esg|risk)', '管理層.{0,20}(?:角色|職責|負責)']
+  - id: strat_risks_opps
+    pillar: strategy
+    ref: "¶30–31"
+    title: Sustainability-related risks and opportunities, with time horizons
+    zh: 可持續發展相關風險及機遇（包括時間範圍）
+    cues: ['\b(?:short|medium|long)[- ]term\b', '\btime horizons?\b', '(?:風險|機遇).{0,30}(?:短期|中期|長期)', '(?:短期|中期|長期).{0,30}(?:風險|機遇)', '時間範圍']
+  - id: strat_value_chain
+    pillar: strategy
+    ref: "¶32"
+    title: Effects on the business model and value chain
+    zh: 對業務模式及價值鏈的影響
+    cues: ['\bvalue chain\b', '\bbusiness model\b', '\bsupply chain\b', '價值鏈', '業務模式', '供應鏈']
+  - id: strat_decisions
+    pillar: strategy
+    ref: "¶33"
+    title: Effects on strategy and decision-making, including transition plans
+    zh: 對策略及決策的影響（包括轉型計劃）
+    cues: ['\btransition plan\b', '\bstrategy\b.{0,60}\b(?:respond|address|adapt)', '轉型計劃', '策略.{0,20}(?:應對|回應)']
+  - id: strat_financial
+    pillar: strategy
+    ref: "¶34–40"
+    title: Current and anticipated effects on financial position, performance and cash flows
+    zh: 對財務狀況、財務表現及現金流量的現時及預期影響
+    cues: ['\bfinancial (?:position|performance|effects?)\b', '\bcash flows?\b', '\bcapital expenditure\b', '財務狀況', '財務表現', '現金流']
+  - id: strat_resilience
+    pillar: strategy
+    ref: "¶41–42"
+    title: Resilience of strategy and business model
+    zh: 策略及業務模式的韌性
+    cues: ['\bresilien', '\bscenario analysis\b', '\bstress test', '韌性', '情景分析', '壓力測試']
+  - id: risk_process
+    pillar: risk_management
+    ref: "¶43–44"
+    title: Processes to identify, assess, prioritise and monitor risks and opportunities, and integration with overall risk management
+    zh: 識別、評估、排序及監察風險及機遇的程序，以及與整體風險管理的結合
+    cues: ['\b(?:identify|assess|prioriti[sz]e|monitor)\w*\b.{0,40}\brisks?\b', '\brisk register\b', '\benterprise risk management\b', '風險管理(?:程序|流程|框架)', '(?:識別|評估).{0,10}風險']
+  - id: metrics_disclosed
+    pillar: metrics_targets
+    ref: "¶45–50"
+    title: Metrics, including those required by an applicable HKFRS / industry metrics
+    zh: 指標（包括適用準則及行業指標）
+    cues: ['\bmetrics?\b', '\bkpis?\b', '\bscope [123]\b', '\btco2e\b', '指標', '範圍[一二三123]']
+  - id: targets
+    pillar: metrics_targets
+    ref: "¶51–53"
+    title: Targets, with base period, milestones and progress
+    zh: 目標（包括基準期、里程碑及進度）
+    cues: ['\btarget\w*\b.{0,60}\b(?:20[2-5]\d|baseline|base year|base period)', '\binterim targets?\b', '目標.{0,20}(?:20[2-5]\d|基準)', '基準年']
+  - id: connected_info
+    pillar: general
+    ref: "¶21–24"
+    title: Connected information, consistent with the financial statements
+    zh: 關連資料，與財務報表一致
+    cues: ['\bfinancial statements?\b', '\bconsistent with\b.{0,40}\bfinancial', '財務報表']
+  - id: same_entity_timing
+    pillar: general
+    ref: "¶20, ¶64–69"
+    title: Same reporting entity and period as the financial statements, published at the same time
+    zh: 與財務報表相同的報告實體及期間，並同時發布
+    cues: ['\bsame (?:reporting )?(?:period|entity)\b', '\bpublished (?:together|alongside|with) (?:the|our) annual report\b', '與年報同時', '報告期間']
+  - id: judgements
+    pillar: general
+    ref: "¶74–82"
+    title: Judgements and measurement uncertainty
+    zh: 判斷及計量不確定性
+    cues: ['\bjudgements?\b', '\bestimat\w+\b.{0,40}\buncertain', '\bmeasurement uncertainty\b', '判斷', '估計.{0,10}不確定', '計量不確定性']
+  - id: compliance_statement
+    pillar: general
+    ref: "¶72–73"
+    title: Explicit and unreserved statement of compliance (only when every requirement is met)
+    zh: 明確及無保留的遵從聲明（只在符合所有規定時作出）
+    cues: ['\b(?:complies|compliance|prepared in accordance) with (?:HKFRS|IFRS) S1\b', '按照.{0,10}(?:HKFRS|香港財務報告準則|IFRS).{0,6}S1']

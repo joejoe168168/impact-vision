@@ -17,7 +17,7 @@ what every surface exposes.
 | Sector benchmarks | 18 |
 | DD checklist questions | 122 |
 | DD checklist categories | 34 |
-| Framework modules (`impact/frameworks/`) | 22 |
+| Framework modules (`impact/frameworks/`) | 23 |
 
 ## Tools
 

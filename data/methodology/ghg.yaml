@@ -1,0 +1,18 @@
+# GHG accounting methods behind a flag (roadmap v8 Wave 4). Every inventory
+# records which method produced its Scope 3 figures, so results stay
+# reproducible when the GHG Protocol revision lands and can be re-run under it.
+as_of: "2026-10-09"
+source: "GHG Protocol Corporate Value Chain (Scope 3) Standard (2011); Scope 3 revision under way"
+source_url: https://ghgprotocol.org/corporate-value-chain-scope-3-standard
+status: verified
+scope3:
+  default: ghgp-2011
+  methods:
+    ghgp-2011:
+      label: "GHG Protocol Corporate Value Chain (Scope 3) Standard, 2011 (15 categories)"
+      status: current
+  pending:
+    - id: ghgp-revision
+      label: "GHG Protocol Scope 3 revision (proposals include a coverage threshold and new categories)"
+      expected: "final ~late 2027 (unverified)"
+      note: "Add as a method here once final; do not implement draft rules."
