@@ -97,8 +97,8 @@ def contribution_split(text: str, expected_impact: dict[str, Any] | None = None,
     people = next((o for o in (expected_impact or {}).get("outcomes") or []), None)
     level = int(people.get("evidence_level") or 1) if people else 1
     level_score = (ent.get("evidence_level_score") or {}).get(level, 10)
-    netted = bool(people) and any(f.get("name") == "Without deadweight" and float(f.get("median", 0)) >= 0.999
-                                  for f in people.get("factors", []))
+    netted = any(f.get("name") == "Without deadweight" and float(f.get("median", 0)) >= 0.999
+                 for f in (people or {}).get("factors", []))
     bonus = 15 if any(s["signal"] == "controlled_evaluation" for s in signals) else (
         5 if any(s["signal"] == "baseline_comparison" for s in signals) else 0)
     return {

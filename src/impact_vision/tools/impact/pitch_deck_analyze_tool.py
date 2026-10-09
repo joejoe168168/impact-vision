@@ -397,18 +397,12 @@ def _extract_pdf_text(path: Path) -> tuple[str, list[dict]]:
     except ImportError:
         raise ImportError("pymupdf is required for PDF extraction. Install with: pip install pymupdf")
 
-    doc = pymupdf.open(str(path))
-    page_texts: list[dict] = []
-    all_text: list[str] = []
+    del pymupdf  # parsing (and OCR of scanned pages) lives in doc_parsers (v8 W2.3)
+    from impact_vision.impact.doc_parsers import parse_pdf
 
-    for page_num in range(len(doc)):
-        page = doc[page_num]
-        text = page.get_text()
-        page_texts.append({"page": page_num + 1, "text": text})
-        all_text.append(text)
-
-    doc.close()
-    full_text = "\n".join(all_text)
+    parsed = parse_pdf(path)
+    page_texts: list[dict] = [{"page": p.page, "text": p.text, "source": p.source} for p in parsed.pages]
+    full_text = parsed.text
 
     detected_lang = _detect_language(full_text)
     if detected_lang != "en":
