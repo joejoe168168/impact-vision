@@ -48,7 +48,8 @@ _NUMBER_UNIT = re.compile(
 _EVIDENCE_SIGNALS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("third_party_verified", re.compile(
         r"\b(?:independently|externally|third[\s-]party)[\s-](?:verified|validated|assured|certified)\b"
-        r"|\bverified\s+by\s+(?:an?\s+)?[A-Z][\w&.-]+",
+        r"|\bverified\s+by\s+(?:an?\s+)?[A-Z][\w&.-]+"
+        r"|\b(?:validated|accredited|assured)\s+by\s+(?:an?\s+|the\s+)?(?-i:[A-Z])[\w&.-]+",
         re.IGNORECASE,
     )),
     ("audited", re.compile(
@@ -59,7 +60,10 @@ _EVIDENCE_SIGNALS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("certified", re.compile(
         r"\b(?:B[-\s]?Corp|ISO\s?\d{4,5}|Fair[-\s]?Trade|Rainforest Alliance|FSC|MSC|RSPO|"
         r"LEED|BREEAM|GOTS|2X)\b[\w\s-]{0,15}\bcertifi(?:ed|cation)\b"
-        r"|\bcertified\s+(?:by|under|to)\b",
+        r"|\bcertified\s+(?:by|under|to)\b"
+        # Sector accreditations and carbon standards (v8 W2.1).
+        r"|\b(?:SafeCare|JCI|COHSASA|ISQua|Gold\s+Standard|Verra|VCS|Plan\s+Vivo|SIRIM|Fairtrade|EDGE|"
+        r"Living\s+Wage)\b[^.\n]{0,40}?\b(?:accredit\w*|certifi\w*|validat\w*|verifi\w*|registered|level\s*\d)",
         re.IGNORECASE,
     )),
     ("controlled_evaluation", re.compile(

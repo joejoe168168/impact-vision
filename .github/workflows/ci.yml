@@ -65,7 +65,7 @@ jobs:
           src/impact_vision/impact/mcp_auth.py src/impact_vision/impact/i18n_phrasebook.py
           src/impact_vision/impact/identity.py src/impact_vision/api_gateway/oidc.py
           src/impact_vision/impact/annual_monitoring.py src/impact_vision/impact/doc_parsers.py
-          src/impact_vision/impact/contribution_split.py
+          src/impact_vision/impact/contribution_split.py src/impact_vision/impact/doc_structure.py
 
   security:
     name: Dependency & code security audit

@@ -282,6 +282,9 @@ def assess_document(
         raise ValueError(f"audience must be one of {', '.join(AUDIENCES)}")
     if not text or not text.strip():
         raise ValueError("The document has no extractable text.")
+    from impact_vision.impact.doc_structure import prepare_text
+
+    text = prepare_text(text)  # v8 W2.1: table rows become sentences
 
     themes_guess = _detect_themes(text)
     inferred = _extract_company_model(

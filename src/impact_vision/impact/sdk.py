@@ -130,7 +130,12 @@ class ImpactVision:
         Heavier workflows should construct a `Company` manually with
         explicit `reported_metrics` so the 5D engine has hard data.
         """
-        claims = self._extractor.extract(text)
+        from impact_vision.impact.doc_structure import prepare_text
+
+        text = prepare_text(text)
+        # v8 W2.1: problem / market / team / ask sections describe the world,
+        # not the company, so their statistics are context, not claims.
+        claims = self._extractor.extract(scoring_text(text))
         extracted_geography = next((c.geography for c in claims if c.geography), "")
         company = Company(
             name=company_name,

@@ -158,9 +158,24 @@ _DISCLOSED_RISK_RE = re.compile(
 def _disclosed_risks(text: str, limit: int = 5) -> list[str]:
     """Pull risk disclosures out of the source document, verbatim (trimmed)."""
     from impact_vision.impact.extractors.regex_extractor import RegexExtractor
+    from impact_vision.impact.text_sections import split_sections
 
     out: list[str] = []
+    # v8 W2.1: every bullet under a "Risks we manage" / "Risk & mitigation" heading
+    # is a disclosure, whatever words it uses.
+    for section in split_sections(text or ""):
+        if section.role != "risk":
+            continue
+        for line in section.text.splitlines():
+            item = line.strip().lstrip("-•*·").strip()
+            if len(item) > 12 and item not in out:
+                out.append(item if len(item) <= 600 else item[:597].rstrip() + "\u2026")
+    out = out[:limit]
     for sentence in RegexExtractor._sentences(text or ""):
+        if len(out) >= limit:
+            break
+        if any(sentence.strip().lstrip("-•*·").strip() in o or o in sentence for o in out):
+            continue
         if _DISCLOSED_RISK_RE.search(sentence) and len(sentence) > 30:
             out.append(sentence if len(sentence) <= 600 else sentence[:597].rstrip() + "\u2026")
         if len(out) >= limit:
