@@ -42,9 +42,9 @@ def _word(text: str, lang: str) -> str:
 
     table = {"zh-HK": STAKEHOLDERS_ZH_HK, "zh-CN": STAKEHOLDERS_ZH_CN}[lang]
     if text in table:
-        return table[text]
+        return str(table[text])
     hit = _book()["exact"].get(text.strip().lower())
-    return hit[lang] if hit else text
+    return str(hit[lang]) if hit else text
 
 
 def _fill(kind: str | None, value: str, lang: str) -> str:
@@ -55,7 +55,8 @@ def _fill(kind: str | None, value: str, lang: str) -> str:
     if kind == "sector":
         from impact_vision.impact.report_templates.design.strings import SECTOR_NAMES
 
-        return SECTOR_NAMES.get(lang, {}).get(value.lower(), SECTOR_NAMES.get(lang, {}).get(value, value))
+        names = SECTOR_NAMES.get(lang, {})
+        return str(names.get(value.lower(), names.get(value, value)))
     if kind == "gwc":
         from impact_vision.impact.report_templates.design.strings import translator
 
@@ -78,12 +79,12 @@ def localize(text: str, lang: str) -> str:
     book = _book()
     hit = book["exact"].get(text.strip().lower())
     if hit:
-        return hit[lang]
+        return str(hit[lang])
     for rx, entry in book["patterns"]:
         m = rx.match(text.strip())
         if m:
             groups = m.groupdict()
-            return _SLOT.sub(lambda s: _fill(s.group(2), groups.get(s.group(1)) or "", lang), entry[lang])
+            return _SLOT.sub(lambda s: _fill(s.group(2), groups.get(s.group(1)) or "", lang), str(entry[lang]))
     return text
 
 

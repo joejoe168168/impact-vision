@@ -450,12 +450,12 @@ impact-vision dd analyze "text or /path/to/doc.txt"
 
 # Service surfaces
 impact-vision serve-mcp                                  # MCP server (stdio)
-impact-vision serve-mcp --transport sse --port 8765      # MCP over SSE
+impact-vision serve-mcp --transport http --port 8765     # MCP over HTTP (token auth)
 impact-vision serve-web                                  # Chat UI + tool console + REST API (http://127.0.0.1:8787)
 impact-vision dashboard [--port 8501]                    # Streamlit portfolio dashboard ([dashboard] extra)
 
 # Developer utilities
-impact-vision mcp      list | add | remove               # Manage MCP server configs
+impact-vision mcp      list | add | remove | token       # MCP server configs + tokens
 impact-vision plugin   list | install | remove           # Manage entry-point plug-ins
 impact-vision cron     list | add | remove | run         # Cron scheduler for background jobs
 ```
@@ -762,13 +762,15 @@ playbook** (`deal_screening`, `lp_reporting`, `regulatory_compliance`, …)
 and 5 read-only resources to any MCP-compatible AI client.
 
 ```bash
-impact-vision serve-mcp                              # stdio (desktop clients)
-impact-vision serve-mcp --transport sse --port 8765  # SSE (remote clients)
+impact-vision serve-mcp                               # stdio (desktop clients)
+impact-vision mcp token create ci-bot --scope assess  # prints a bearer token once
+impact-vision serve-mcp --transport http --port 8765  # remote clients, authenticated
 ```
 
 Use stdio for local desktop clients such as Claude Desktop, Cursor, and
-VS Code. Use SSE when the MCP server is started separately and clients
-connect over HTTP.
+VS Code. Use `--transport http` for remote clients: stateless Streamable
+HTTP at `/mcp` with bearer tokens, per-tool scopes (`read` / `assess` /
+`write` / `files` / `admin`) and every call written to the audit trail.
 
 ### Client setup
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import sys
+import time
 from pathlib import Path
 from typing import Optional
 
@@ -213,30 +214,46 @@ def demo_cmd(
 
 @app.command("serve-mcp")
 def serve_mcp(
-    transport: str = typer.Option("stdio", help="Transport: stdio or sse"),
+    transport: str = typer.Option("stdio", help="Transport: stdio, http (authenticated, stateless) or sse"),
     host: str = typer.Option(
         "127.0.0.1",
         help=(
-            "Host for SSE transport. Defaults to 127.0.0.1 to avoid binding "
+            "Host for HTTP/SSE transport. Defaults to 127.0.0.1 to avoid binding "
             "to all interfaces; pass '0.0.0.0' explicitly to expose."
         ),
     ),
-    port: int = typer.Option(8765, help="Port for SSE transport"),
+    port: int = typer.Option(8765, help="Port for HTTP/SSE transport"),
+    allow_host: list[str] = typer.Option([], "--allow-host",
+                                         help="Extra Host header allowed over HTTP, e.g. mcp.example.org:443"),
 ) -> None:
     """Start the Impact Vision MCP server.
 
-    The server exposes the full impact-tool surface registered in
-    ``impact_vision.tools.impact``. The exact tool count is sourced at runtime
-    from ``len(impact_vision.tools.impact.__all__)`` so this docstring never
-    drifts from reality.
+    ``--transport http`` serves stateless Streamable HTTP at ``/mcp`` with
+    bearer tokens, per-tool scopes and an audit log (create a token with
+    ``impact-vision mcp token create``). The exact tool count is sourced at
+    runtime from ``len(impact_vision.tools.impact.__all__)``.
     """
-    from impact_vision.impact.mcp_server import mcp as mcp_server  # noqa: F811
-
     print(
         f"impact-vision serve-mcp: exposing {_resolve_tool_count()} impact tools over {transport}",
         file=sys.stderr,
     )
+    if transport in ("http", "streamable-http"):
+        import uvicorn
+
+        from impact_vision.impact.mcp_auth import TokenStore, build_app
+
+        store = TokenStore()
+        if not store.list():
+            print("No MCP tokens yet: create one with `impact-vision mcp token create <label> --scope assess`.",
+                  file=sys.stderr)
+        print(f"Endpoint: http://{host}:{port}/mcp · discovery: /.well-known/mcp.json · tokens: {store.path}",
+              file=sys.stderr)
+        uvicorn.run(build_app(store, allowed_hosts=allow_host), host=host, port=port, log_level="warning")
+        return
+    from impact_vision.impact.mcp_server import mcp as mcp_server  # noqa: F811
+
     if transport == "sse":
+        print("Warning: SSE has no authentication; prefer --transport http.", file=sys.stderr)
         mcp_server.settings.host = host
         mcp_server.settings.port = port
     mcp_server.run(transport=transport)
@@ -322,6 +339,52 @@ def serve_web(
 
 
 # ---- mcp subcommands ----
+
+
+mcp_token_app = typer.Typer(name="token", help="Bearer tokens for `serve-mcp --transport http`")
+mcp_app.add_typer(mcp_token_app)
+
+
+@mcp_token_app.command("create")
+def mcp_token_create(
+    label: str = typer.Argument(..., help="Who or what the token is for (shown in the audit log)"),
+    scope: list[str] = typer.Option(["assess"], "--scope", help="read, assess, write, files or admin; repeatable"),
+    days: int = typer.Option(0, help="Expire after this many days (0 = no expiry)"),
+) -> None:
+    """Create a token. It is printed once and only its hash is stored."""
+    from impact_vision.impact.mcp_auth import TokenStore
+
+    try:
+        token = TokenStore().create(label, scope, days=days or None)
+    except ValueError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        raise typer.Exit(1) from None
+    print(token)
+    print(f"Scopes: {', '.join(sorted(set(scope)))}. Store it now; it can't be shown again.", file=sys.stderr)
+
+
+@mcp_token_app.command("list")
+def mcp_token_list() -> None:
+    """List token labels and scopes (never the tokens)."""
+    from impact_vision.impact.mcp_auth import TokenStore
+
+    rows = TokenStore().list()
+    if not rows:
+        print("No MCP tokens.")
+    for r in rows:
+        expiry = time.strftime("%Y-%m-%d", time.gmtime(r["expires"])) if r.get("expires") else "never"
+        print(f"{r['label']}: {', '.join(r['scopes'])} (expires {expiry})")
+
+
+@mcp_token_app.command("revoke")
+def mcp_token_revoke(label: str = typer.Argument(...)) -> None:
+    """Revoke a token by label."""
+    from impact_vision.impact.mcp_auth import TokenStore
+
+    if not TokenStore().revoke(label):
+        print(f"No token labelled {label!r}.", file=sys.stderr)
+        raise typer.Exit(1)
+    print(f"Revoked {label}.")
 
 
 @mcp_app.command("list")
