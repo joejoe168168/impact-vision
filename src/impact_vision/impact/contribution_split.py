@@ -52,7 +52,8 @@ def enterprise_signals(text: str) -> list[dict[str, str]]:
         for sig in evidence_signals(sentence):
             if sig in wanted and sig not in found:
                 found[sig] = {"signal": sig, "label": wanted[sig]["label"], "quote": _quote(sentence)}
-    return list(found.values())
+    # Strongest design first: the report quotes the first one.
+    return sorted(found.values(), key=lambda f: -float(wanted[f["signal"]]["points"]))
 
 
 def enterprise_boost(text: str) -> float:

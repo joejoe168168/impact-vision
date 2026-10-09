@@ -311,56 +311,46 @@ Every row carries `as_of` and `source_url`, and the freshness gate runs
 
 ## 5. Build order & releases
 
-### Progress (2026-10-08)
+### Progress (2026-10-09)
 
 **Released**
 - **0.17.2:** Wave 0 complete.
 - **0.18.0:**
   - **W1:** Methodology 2.0 — W1.1–W1.3, W1.5, W1.7, W1.10; W1.8 relabelled.
-  - **W2:**
-    - W2.2: page citations.
-    - W2.4 partly: 13 golden decks across sectors, regions and zh.
-    - W2.5: perturbation tests.
-  - **W3:**
-    - W3.1: the company record.
-    - W3.2 partly: correct and re-run.
-    - W3.3: comments and IC decisions.
-    - W3.4 core: expected vs actual.
-    - W3.5 partly: Excel/CSV import.
+  - **W2:** W2.2 page citations; W2.4 partly (13 golden decks); W2.5 perturbation tests.
+  - **W3:** W3.1 company record; W3.2 partly; W3.3 comments and IC decisions; W3.4 core
+    (expected vs actual); W3.5 partly (Excel/CSV import).
   - **W4:** AI Act machine-readable marking.
-  - **W5:**
-    - W5.1 partly: shims removed.
-    - W5.2 partly: lazy imports.
-    - W5.4 partly: migrations and history.
-    - W5.5: Ed25519.
-    - W5.7: release pipeline and gates.
+  - **W5:** W5.1 partly; W5.2 partly; W5.4 partly; W5.5 Ed25519; W5.7 release pipeline.
+- **0.19.0:**
+  - **W1:** W1.4 contribution split (Methodology 2.1.0); W1.6 negative impacts;
+    W1.9 greenwashing 2.0.
+  - **W2:** W2.1 evidence-aware extraction; W2.3 OCR for scanned pages; W2.4
+    30-deck held-out set with a CI report.
+  - **W3:** W3.4 annual monitoring (portal, variance, reminders); W3.6 LP report and
+    exit from the record; W3.7 zh report bodies.
+  - **W5:** W5.1 code moved to `src/impact_vision`; W5.3 OIDC and tenancy; W5.4
+    remaining state persisted, with migrations; W5.6 authenticated MCP over HTTP.
+
+**Held-out baseline (0.19.0, 30 decks):** facts F1 0.83 (P 92 %, R 76 %), sector
+77 %, geography 100 %, SDG 93 %, greenwashing 90 %, verdict 90 %. Known misses,
+to be fixed on other documents and never by tuning on this set:
+- Sector detection mistakes sanitation, school water, housing refurbishment and
+  garment manufacturing for nearby sectors.
+- Numbers in Chinese decks are often missed (e.g. 回收 1,280 公噸).
+- Three greenwashers with no data are not flagged as greenwashing findings,
+  although two still fail the thesis.
+- Strong evidence (an RCT, a verified comparison group) still gives "evidence
+  plan" rather than "ready" when core-metric coverage is low.
 
 **Still to do**
-- **Methodology:**
-  - W1.4: investor contribution, which needs fund data.
-  - W1.6: negative impacts by severity × likelihood.
-  - W1.9: per-claim greenwashing 2.0.
-- **Evidence and evaluation:**
-  - W2.1: a deeper extraction pass.
-  - W2.3: pluggable OCR/layout models.
-  - W2.4: grow the held-out set to 30+ decks.
-  - W2.6: the expert calibration study. It needs 2–3 practitioners to rate
-    50–100 decks.
-  - W2.7: cross-provider agent evals. These need API keys.
-- **Lifecycle:**
-  - W3.4: investee-portal linkage and reminders.
-  - W3.5: CRM, Drive and data-room connectors, and the ILPA export once the
-    template is final in Jan 2027.
-  - W3.6: LP report and exit built from the record.
-  - W3.7: full zh body localisation.
-- **Standards (Wave 4):** the dated items in §2.1 are scheduled for when each
-  text is final.
-- **Platform:**
-  - W5.1: physically move the code to `src/impact_vision` and remove the
-    unused coding-agent scaffolding.
-  - W5.3: OIDC/tenancy.
-  - W5.4: persist the remaining stateful tools.
-  - W5.6: the authenticated MCP server on the 2026-07-28 spec.
+- **W2.6:** the expert calibration study. It needs 2–3 practitioners to rate
+  50–100 decks.
+- **W2.7:** cross-provider agent evals. These need API keys.
+- **W3.5:** CRM, Drive and data-room connectors, and the ILPA export once the
+  template is final in Jan 2027.
+- **Standards (Wave 4):** the dated items in §2.1, scheduled for when each text
+  is final.
 - **Release setup:** the first PyPI release needs a one-time trusted-publisher
   setup on PyPI.
 

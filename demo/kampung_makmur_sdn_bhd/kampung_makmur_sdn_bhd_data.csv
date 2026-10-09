@@ -1,13 +1,13 @@
 Section,Metric,Value,Details,Numeric,Max,Unit
 Company,Name,Kampung Makmur Sdn Bhd,,,,
-Company,Generated,2026-10-08T20:03:42Z,,,,
+Company,Generated,2026-10-09T05:01:53Z,,,,
 Company,AI disclosure,Automated analysis: produced by rules and a deterministic scoring model; no generative AI was used. 3 of 22 scores are estimated from document text rather than reported metrics. Review before relying on it.,,,,
 Company,Methodology,1.2.0,config ae3e77ecaccf,,,
-5D,Overall Grade,C,1.8/5.0,1.8,5,score
+5D,Overall Grade,C,1.9/5.0,1.9,5,score
 5D,What,2.3/5.0,2 metrics reported · 1 of 25 reference metrics,2.3,5,score
 5D,Who,2.5/5.0,3 metrics reported · 1 of 10 reference metrics,2.5,5,score
 5D,How Much,1.7/5.0,"Scale=1.7, Depth=1.7, Duration=1.7",1.7,5,score
-5D,Contribution,1.3/5.0,"Depth=1.3, Duration=1.3",1.3,5,score
+5D,Contribution,1.9/5.0,"Depth=1.9, Duration=1.9",1.9,5,score
 5D,Risk,1.3/5.0,Estimated from sector/description · 4 reference metrics to track,1.3,5,score
 SDG,SDG 7,43.3/100,"medium | metrics: OI2496,OI2764",43.3,100,score
 SDG,SDG 2,39.2/100,medium | metrics: PI9991,39.2,100,score

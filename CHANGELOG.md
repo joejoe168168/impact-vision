@@ -11,6 +11,85 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [0.19.0] - 2026-10-09 - Connected (roadmap v8, second pass)
+
+A fund team can now share one server: people sign in, each fund's data is
+kept apart, and portfolio companies send their yearly results through a
+private link. Scoring counts only evidence, including for contribution, and
+a 30-deck held-out set reports extraction quality on every release.
+
+### Breaking
+- **The code lives in `src/impact_vision`.** `openharness` is now an alias
+  package: every `openharness.<path>` import returns the same module object,
+  and `python -m openharness` still works. Config stays in `~/.openharness/`.
+- The unused chat-channel gateway (`channels/`), `vim/` and the `ohmo/`
+  gateway are removed.
+- **Methodology 2.1.0:** the 5D Contribution score no longer counts adjectives
+  ("unique", "catalytic", "transformative") or the keywords "sustainable"
+  and "innovation". It counts the evidence design instead (comparison group,
+  baseline). Scores for decks that relied on those words go down.
+  `IMPACT_VISION_METHODOLOGY_VERSION=1` keeps the old behaviour.
+
+### Added — methodology and evidence
+- **Negative impacts** by severity × likelihood (ESRS 1 §3.4), per sector, in
+  `data/negative_impacts.yaml`. A control the company describes lowers the
+  likelihood, and its sentence is quoted. Material impacts with no control
+  go into the evidence plan.
+- **Greenwashing 2.0:** each claim is judged on its own (specificity ×
+  evidence × materiality; generic environmental terms per EU ECGT). The
+  score is the mean of the three riskiest claims, and the report lists the
+  claims behind it.
+- **Contribution split:** enterprise contribution (from the evidence design)
+  and investor contribution (signal, engage, grow new markets, flexible
+  capital; levels 0–3 on `data/methodology/contribution_rubric.yaml`).
+  The report quotes the evidence for each and lists the adjectives it ignored.
+- **Evidence-aware extraction:** table rows become sentences, so a traction
+  table now sets reach. Problem, market, team and ask sections are context,
+  not company claims. SafeCare, JCI, Gold Standard, Verra, SIRIM and
+  "validated / accredited by <body>" count as verification. Every bullet
+  under a risk heading is a disclosed risk.
+- **Scanned PDFs:** pages without a text layer go to OCR: a local OCR or
+  layout model via `IMPACT_VISION_OCR_COMMAND`, or Tesseract. Nothing
+  leaves the machine (`docs/install-troubleshooting.md`).
+- **Held-out evaluation:** 30 unseen decks across 12 sectors, 22 countries,
+  en / zh-HK / zh-CN and 5 greenwashers (`tests/golden/heldout`). Baseline:
+  facts F1 0.83 (P 92 %, R 76 %), sector 77 %, geography 100 %, SDG 93 %,
+  greenwashing 90 %, verdict 90 %. CI prints the report and fails on a
+  regression.
+
+### Added — company lifecycle
+- **Annual monitoring:** a yearly results request built from the IC
+  expectation and five VSME Basic Module datapoints, with a private
+  `/portal/<token>` form for the company. Answers are scored with the same
+  methodology and filed as actuals. Variance is explained by its drivers
+  plus the company's own words. Reminders go out by email (SMTP) and
+  webhook (`impact-vision monitoring request | remind`).
+- **LP report** and **exit assessment (OPIM 8)** are built from the company
+  record.
+- **Chinese reports:** the generated sentences in zh-HK / zh-CN reports are
+  translated (`data/i18n/phrasebook.yaml`); claims and quotes stay verbatim.
+
+### Added — platform
+- **Team sign-in (OIDC)** with PKCE, roles from the `tenancy.py` presets, a
+  permission check per route, and tenant isolation for chats, uploads,
+  reports, the assessment database and the state store. Share links carry
+  their tenant. See `docs/team-deployment.md`.
+- **Authenticated MCP over HTTP** (`serve-mcp --transport http`): stateless,
+  with hashed bearer tokens scoped per tool and per tenant, every call
+  audited, and `server/discover` plus `/.well-known/mcp.json`.
+  `impact-vision mcp token create | list | revoke`.
+- Verification workspaces, LP Q&A, the consent register, gateway webhooks and
+  batch jobs are persisted. The state store has a schema-version table and
+  migrations for SQLite and Postgres.
+
+### Fixed
+- One assessment database per tenant (the first tenant used to decide the
+  file for everyone).
+- Action text no longer names an IRIS+ ID twice.
+- The annual-results form could not be submitted from a browser: with
+  `Referrer-Policy: no-referrer`, browsers post `Origin: null`, which the
+  cross-origin guard refused.
+
 ## [0.18.0] - 2026-10-08 - Measured (roadmap v8 Waves 1–5, first pass)
 
 Scores now say how much impact, for whom and how sure we are; a company is

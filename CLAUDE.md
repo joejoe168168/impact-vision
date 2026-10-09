@@ -2,10 +2,10 @@
 
 Impact Vision is an open-source AI-powered impact measurement and SDG alignment agent for VC and impact investment funds, built on top of OpenHarness.
 
-Current release: **0.18.0 (Measured — roadmap v8)**, after roadmap v7
-(`docs/roadmap-v7.md`), Waves 0–5. **Next: roadmap v8** (`docs/roadmap-v8.md`)
-— secure by default, Methodology 2.0, evidence-aware extraction, company
-lifecycle. The v3 roadmap
+Current release: **0.19.0 (Connected — roadmap v8)**. Roadmap v8
+(`docs/roadmap-v8.md`) covers security by default, Methodology 2.x,
+evidence-aware extraction, the company lifecycle and the team platform. Its
+"Progress" section lists what remains. The v3 roadmap
 (`docs/roadmap-v3.md`) and engineering plan
 (`docs/roadmap-v3-implementation.md`) describe the strategic shift toward
 causal-style claims, stakeholder voice as evidence, governed AI, and an
@@ -204,6 +204,15 @@ src/impact_vision/
 │   ├── expected_impact.py         # v8: methodology 2.0 — expected impact, ranges, gate 2.0
 │   ├── company_record.py          # v8: stages, expected vs actual, review & IC decisions
 │   ├── metric_import.py           # v8: Excel / CSV KPI import
+│   ├── negative_impacts.py        # v8 W1.6: severity × likelihood (data/negative_impacts.yaml)
+│   ├── contribution_split.py      # v8 W1.4: enterprise vs investor contribution (rubric YAML)
+│   ├── annual_monitoring.py       # v8 W3.4: yearly results request, portal, variance, reminders
+│   ├── i18n_phrasebook.py         # v8 W3.7: zh-HK / zh-CN report sentences (data/i18n/)
+│   ├── identity.py                # v8 W5.3: current identity/tenant, tenant_home, TenantGuard
+│   ├── mcp_auth.py                # v8 W5.6: MCP over HTTP — tokens, scopes, audit, discovery
+│   ├── doc_parsers.py             # v8 W2.3: PDF pages + OCR for scanned pages
+│   ├── doc_structure.py           # v8 W2.1: tables → sentences before extraction
+│   ├── heldout_eval.py            # v8 W2.4: 30-deck held-out evaluation (tests/golden/heldout)
 │   ├── knowledge.py               # v7 W5.1: YAML knowledge loader + freshness gate
 │   ├── benchmark_provider.py      # v7 W5.1: one provider over data/benchmarks.yaml
 │   ├── methodology.py             # v7 W5.2: versioned scoring methodology + stamp
