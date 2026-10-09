@@ -343,7 +343,7 @@ to be fixed on other documents and never by tuning on this set:
 - Strong evidence (an RCT, a verified comparison group) still gives "evidence
   plan" rather than "ready" when core-metric coverage is low.
 
-- **After 0.19.0 (on main, unreleased):**
+- **0.19.1:**
   - **W2.6:** calibration toolkit (blind packets, Krippendorff's α checked against the published
     example, proportional-odds fit, report; `docs/methodology/calibration-protocol.md`).
   - **W2.7:** agent trajectory evals across provider presets (`impact-vision eval agents`).

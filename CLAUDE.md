@@ -2,7 +2,7 @@
 
 Impact Vision is an open-source AI-powered impact measurement and SDG alignment agent for VC and impact investment funds, built on top of OpenHarness.
 
-Current release: **0.19.0 (Connected — roadmap v8)**. Roadmap v8
+Current release: **0.19.1 (Connected — roadmap v8)**. Roadmap v8
 (`docs/roadmap-v8.md`) covers security by default, Methodology 2.x,
 evidence-aware extraction, the company lifecycle and the team platform. Its
 "Progress" section lists what remains. The v3 roadmap

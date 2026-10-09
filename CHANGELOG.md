@@ -11,6 +11,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [0.19.1] - 2026-10-09 - Connected (roadmap v8, completion pass)
+
+The rest of roadmap v8 that doesn't depend on people, API keys or texts that aren't final yet:
+- connectors;
+- the calibration study kit;
+- agent evals;
+- reviewer sign-off;
+- 2026 standards updates.
+
 ### Added
 - **Connectors (read-only):** data-room folder, Google Drive, SharePoint / OneDrive, Affinity and
   DealCloud. `impact-vision connect docs | deals` copies new documents (optionally assessing them)

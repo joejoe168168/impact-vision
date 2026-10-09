@@ -66,7 +66,7 @@
   "ai_disclosure": "Automated analysis: produced by rules and a deterministic scoring model; no generative AI was used. 2 of 21 scores are estimated from document text rather than reported metrics. Review before relying on it.",
   "ai_marking": {
     "digital_source_type": "http://cv.iptc.org/newscodes/digitalsourcetype/algorithmicMedia",
-    "generator": "Impact Vision 0.19.0",
+    "generator": "Impact Vision 0.19.1",
     "ai_generated": false,
     "machine_generated": true,
     "human_reviewed": false,

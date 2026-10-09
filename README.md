@@ -622,7 +622,7 @@ cross-references to IRIS+ metric IDs via the shared
 | | EDCI | 2026 PE/VC KPI fields, including non-core cybersecurity testing |
 | | UNPRI | 6 Principles, 27 actions |
 | | Theory of Change | RS Group 8 Blended Value Principles + GIIN 8-step ToC Checklist |
-| | ISSB IFRS S1 | General sustainability disclosure (4 pillars) |
+| | ISSB IFRS S1 | General sustainability disclosure (4 pillars); HKFRS S1 gap check of a report, ¶-referenced, en / zh-HK (v0.19) |
 | | ISSB IFRS S2 | Climate-related disclosures plus an issued-amendments register (effective 2027-01-01) |
 | | EU CSRD / ESRS | 11 standards, double-materiality; revised ESRS (Delegated Reg 2026/1563, mandatory FY2027) with date-aware legal status |
 | | EFRAG VSME | Voluntary SME standard (Delegated Reg 2026/1560): Basic B1-B11 + Comprehensive C1-C9, investee template, value-chain cap enforced on data requests |
@@ -638,12 +638,12 @@ cross-references to IRIS+ metric IDs via the shared
 | | Hong Kong Taxonomy (HKMA) | Eligibility candidates from text + alignment % (Phase 1 / 2A; 2B flagged as consultation) |
 | | UK SRS (FCA PS26/19) | Listed-issuer comply-or-explain obligation from 2027 in the UK jurisdiction profile |
 | | EU Digital Product Passport (ESPR) | Import + map to IRIS+/ESRS/SDG |
-| | Per-jurisdiction packs | EU-SFDR, EU-CSRD, EU-CSDDD, UK-FCA-SDR, US-SEC-ESG, HK-HKEX-ESG, AU-AASB-S2, ISSB-global; deadline calendars for 10 jurisdictions incl. Hong Kong |
-| **Climate & nature** | PCAF | Financed-emissions attribution, sector defaults, weighted data quality |
+| | Per-jurisdiction packs | EU-SFDR, EU-CSRD, EU-CSDDD, UK-FCA-SDR, US-SEC-ESG, HK-HKEX-ESG, AU-AASB-S2, ISSB-global; deadline calendars for 10 jurisdictions incl. Hong Kong; China profile with the MoF Basic and Climate No. 1 (Trial) standards (v0.19) |
+| **Climate & nature** | PCAF | Financed-emissions attribution, sector defaults, weighted data quality; Dec-2025 Part A update (new asset classes; undrawn commitments and avoided emissions reported separately) (v0.19) |
 | | SBTi (Net-Zero Standard v1.2) | 1.5 °C pathway, Scope-3 materiality, 2050 cap |
 | | TNFD v1 | 14 LEAP / pillar disclosures (now feeding the ISSB nature Practice Statement) |
 | | CDP | Climate / water / forests questionnaire intake + readiness screen (`framework_assess`) |
-| | GHG Protocol | Scope 1/2 inventory (Scope 3 via PCAF) with versioned factor catalog |
+| | GHG Protocol | Scope 1/2 inventory (Scope 3 via PCAF) with versioned factor catalog; Scope 3 method recorded per inventory (v0.19) |
 | | NGFS scenarios | Physical/transition portfolio exposure across 7 NGFS pathways + illustrative value-at-risk |
 | **Impact management** | IFC OPIM | 9-principle verification readiness + Principle 8 exit-impact |
 | | SROI | Deadweight / attribution / displacement / drop-off adjustments |
@@ -660,7 +660,7 @@ cross-references to IRIS+ metric IDs via the shared
 | | SOC 2 Type II / ISO 27001 | Starter control set with readiness report |
 | | Verification workspace | Finding lifecycle + threaded comments (v0.15.0) |
 | | 3-pillar assurance bundle | HMAC-signed evidence graph + audit trail + workspace (v4) |
-| | AI governance (EU AI Act) | Model card + data lineage + human-oversight log + risk classification & obligations; Art 50 AI/automation disclosure stamped on every report, memo and export |
+| | AI governance (EU AI Act) | Model card + data lineage + human-oversight log + risk classification & obligations; Art 50 AI/automation disclosure stamped on every report, memo and export; named reviewer sign-off in the report and its machine-readable marking (v0.19) |
 
 ### Agent Tools (48)
 
