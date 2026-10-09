@@ -446,7 +446,7 @@ impact-vision dd list [--category "What (Outcomes)"] · dd categories
 impact-vision dd analyze "text or /path/to/doc.txt"
 impact-vision monitoring request "SunPath" --period 2026 --email cfo@… | remind   # annual results
 impact-vision connect docs folder|gdrive|sharepoint [--assess] · connect deals affinity|dealcloud  # docs/connectors.md
-impact-vision calibrate packet|analyze · eval agents --model claude-api:claude-sonnet-5-5   # calibration, agent evals
+impact-vision calibrate packet|analyze · eval agents --model claude-api:claude-sonnet-5-5   # docs/methodology/calibration-protocol.md
 
 # Service surfaces
 impact-vision serve-mcp                                  # MCP server (stdio)
@@ -824,7 +824,7 @@ OpenAPI docs at `/docs`.
 
 Strategy and engineering plans live in [`docs/`](docs/):
 
-- [`docs/roadmap-v8.md`](docs/roadmap-v8.md) — **current**: secure by default, Methodology 2.0 (expected impact with ranges), evidence-aware extraction, the company lifecycle, 2027 standards.
+- [`docs/roadmap-v8.md`](docs/roadmap-v8.md) — **current**: secure by default, Methodology 2.0 (expected impact with ranges), evidence-aware extraction, the company lifecycle, 2027 standards. Its parameters stay *illustrative* until the expert calibration study ([protocol](docs/methodology/calibration-protocol.md); 57-deck kit ready) has been rated.
 - [`docs/roadmap-v7.md`](docs/roadmap-v7.md) — trust fixes, effortless first run, decision-first reports, standards currency. Shipped as 0.17.
 - [`docs/roadmap-v2.md`](docs/roadmap-v2.md) — Institutional-readiness plan: data contracts, investee collection, climate accounting, LP reporting, assurance, causal impact, and governed AI.
 - [`docs/roadmap-v3.md`](docs/roadmap-v3.md) / [`-v3-implementation.md`](docs/roadmap-v3-implementation.md) — Trust infrastructure. Shipped.

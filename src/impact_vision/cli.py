@@ -369,16 +369,18 @@ def eval_agents(
 
 @calibrate_app.command("packet")
 def calibrate_packet(
-    decks: list[str] = typer.Argument(..., help="Deck files (PDF, DOCX, PPTX, MD, TXT)"),
+    decks: list[str] = typer.Argument(None, help="Deck files (default: the study corpus, data/calibration)"),
     out: str = typer.Option("calibration-packet", help="Output folder"),
     raters: str = typer.Option("A,B,C", help="Rater IDs, comma-separated"),
 ) -> None:
     """Build a blind rating packet; engine_scores.csv stays with the coordinator."""
-    from impact_vision.impact.calibration import build_packet
+    from impact_vision.impact.calibration import build_packet, corpus_paths
 
-    info = build_packet(decks, out, raters=[r.strip() for r in raters.split(",") if r.strip()])
-    print(f"{info['decks']} decks → {info['folder']}. Send decks/, GUIDE.md and one ratings_<rater>.csv to "
-          "each rater; keep engine_scores.csv.")
+    info = build_packet(decks or corpus_paths(), out, raters=[r.strip() for r in raters.split(",") if r.strip()])
+    print(f"{info['decks']} decks → {info['folder']}\n"
+          f"Send each rater the folder {info['rater_kit']} (they open rate.html).\n"
+          f"Keep {info['folder']}/coordinator to yourself; put the returned CSVs in {info['folder']}/returned, then run "
+          f"impact-vision calibrate analyze {info['folder']}")
 
 
 @calibrate_app.command("analyze")

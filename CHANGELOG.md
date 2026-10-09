@@ -15,6 +15,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 - **Connectors (read-only):** data-room folder, Google Drive, SharePoint / OneDrive, Affinity and
   DealCloud. `impact-vision connect docs | deals` copies new documents (optionally assessing them)
   and follows CRM stages in the pipeline. See `docs/connectors.md`.
+- **Calibration study, ready to run (W2.6):** a 57-deck study corpus (44 new fictional decks
+  mixing strong, middling, weak and greenwashing; English and Chinese; the held-out set
+  excluded). `impact-vision calibrate packet` builds a rater kit, with an offline `rate.html`
+  form that saves as you go and exports each rater's sheet. The engine's scores stay in a
+  separate coordinator folder. The study itself still needs 2–3 practitioners to rate the decks.
 - **Expert calibration toolkit:** `impact-vision calibrate packet | analyze`. It covers blind
   rating packets, Krippendorff's α, a proportional-odds fit of expert ratings and a report. The
   protocol is in `docs/methodology/calibration-protocol.md`.

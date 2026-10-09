@@ -1,0 +1,291 @@
+as_of: '2026-10-09'
+source: Fictional decks written for the Impact Vision calibration study (W2.6); plus the golden and sample decks
+status: fictional
+note: intended_quality is the writer's intent, kept for the coordinator only (never sent to raters); the experts' ratings are the ground truth.
+  The held-out set (tests/golden/heldout) is deliberately excluded.
+decks:
+- sector: clean cooking stoves
+  country: Uganda
+  lang: en
+  intended_quality: strong
+  path: data/calibration/corpus/b1_cookstove_ug.md
+- sector: microinsurance for farmers
+  country: India
+  lang: en
+  intended_quality: middling
+  path: data/calibration/corpus/b1_microinsurance_in.md
+- sector: girls' secondary scholarships
+  country: Pakistan
+  lang: en
+  intended_quality: middling
+  path: data/calibration/corpus/b1_girls_scholar_pk.md
+- sector: e-waste refurbishing
+  country: Nigeria
+  lang: en
+  intended_quality: weak
+  path: data/calibration/corpus/b1_ewaste_ng.md
+- sector: affordable dental clinics
+  country: Mexico
+  lang: en
+  intended_quality: middling
+  path: data/calibration/corpus/b1_dental_mx.md
+- sector: regenerative coffee sourcing
+  country: Colombia
+  lang: en
+  intended_quality: greenwasher
+  path: data/calibration/corpus/b1_coffee_co.md
+- sector: EV motorbike taxis
+  country: Kenya
+  lang: en
+  intended_quality: strong
+  path: data/calibration/corpus/b1_evmoto_ke.md
+- sector: elderly escort to clinic visits
+  country: Hong Kong
+  lang: zh-HK
+  intended_quality: middling
+  path: data/calibration/corpus/b1_elderly_escort_hk.md
+- sector: water ATMs
+  country: Bangladesh
+  lang: en
+  intended_quality: middling
+  path: data/calibration/corpus/b1_water_atm_bd.md
+- sector: carbon-neutral fashion brand
+  country: United Kingdom
+  lang: en
+  intended_quality: greenwasher
+  path: data/calibration/corpus/b1_fashion_uk.md
+- sector: smallholder dairy chilling centres
+  country: Tanzania
+  lang: en
+  intended_quality: weak
+  path: data/calibration/corpus/b1_dairy_tz.md
+- sector: pay-as-you-go solar irrigation pumps
+  country: Ethiopia
+  lang: en
+  intended_quality: strong
+  path: data/calibration/corpus/b2_solar_irrigation_et.md
+- sector: digital lending to market women
+  country: Ghana
+  lang: en
+  intended_quality: middling
+  path: data/calibration/corpus/b2_mobile_lending_gh.md
+- sector: teacher coaching app
+  country: Philippines
+  lang: en
+  intended_quality: middling
+  path: data/calibration/corpus/b2_teacher_coaching_ph.md
+- sector: biochar from crop residue
+  country: India
+  lang: en
+  intended_quality: middling
+  path: data/calibration/corpus/b2_biochar_in.md
+- sector: telepharmacy
+  country: Peru
+  lang: en
+  intended_quality: weak
+  path: data/calibration/corpus/b2_telepharmacy_pe.md
+- sector: green crypto mining
+  country: Norway
+  lang: en
+  intended_quality: greenwasher
+  path: data/calibration/corpus/b2_green_crypto_no.md
+- sector: affordable rental housing
+  country: South Africa
+  lang: en
+  intended_quality: strong
+  path: data/calibration/corpus/b2_rental_housing_za.md
+- sector: rural e-commerce for farmers
+  country: China
+  lang: zh-CN
+  intended_quality: middling
+  path: data/calibration/corpus/b2_rural_ecommerce_cn.md
+- sector: textile recycling
+  country: Netherlands
+  lang: en
+  intended_quality: middling
+  path: data/calibration/corpus/b2_textile_recycling_nl.md
+- sector: palm-oil smallholder certification
+  country: Malaysia
+  lang: en
+  intended_quality: weak
+  path: data/calibration/corpus/b2_palm_smallholder_my.md
+- sector: sustainable seafood marketplace
+  country: Vietnam
+  lang: en
+  intended_quality: greenwasher
+  path: data/calibration/corpus/b2_seafood_marketplace_vn.md
+- sector: maternal health
+  country: Nigeria
+  lang: en
+  intended_quality: strong
+  path: data/calibration/corpus/b3_nigeria_maternal_sms.md
+- sector: solar home systems
+  country: Jordan
+  lang: en
+  intended_quality: middling
+  path: data/calibration/corpus/b3_jordan_solar_refugee.md
+- sector: vocational education
+  country: Philippines
+  lang: en
+  intended_quality: middling
+  path: data/calibration/corpus/b3_philippines_nursing_school.md
+- sector: urban logistics
+  country: Germany
+  lang: en
+  intended_quality: middling
+  path: data/calibration/corpus/b3_germany_ecargo_logistics.md
+- sector: agriculture
+  country: Brazil
+  lang: en
+  intended_quality: weak
+  path: data/calibration/corpus/b3_brazil_agri_drone.md
+- sector: hospitality
+  country: Thailand
+  lang: en
+  intended_quality: greenwasher
+  path: data/calibration/corpus/b3_thailand_netzero_hotels.md
+- sector: health insurance
+  country: Rwanda
+  lang: en
+  intended_quality: strong
+  path: data/calibration/corpus/b3_rwanda_health_insurance.md
+- sector: accessible transport
+  country: China
+  lang: zh-CN
+  intended_quality: middling
+  path: data/calibration/corpus/b3_china_accessible_transport.md
+- sector: food waste
+  country: Singapore
+  lang: en
+  intended_quality: middling
+  path: data/calibration/corpus/b3_singapore_foodwaste_feed.md
+- sector: microfinance
+  country: Colombia
+  lang: en
+  intended_quality: weak
+  path: data/calibration/corpus/b3_colombia_refugee_microfinance.md
+- sector: beverages
+  country: Indonesia
+  lang: en
+  intended_quality: greenwasher
+  path: data/calibration/corpus/b3_indonesia_eco_water.md
+- sector: early-childhood reading programme
+  country: South Africa
+  lang: en
+  intended_quality: strong
+  path: data/calibration/corpus/b4_reading_za.md
+- sector: biogas digesters for dairy farms
+  country: Vietnam
+  lang: en
+  intended_quality: middling
+  path: data/calibration/corpus/b4_biogas_vn.md
+- sector: home energy retrofits for low-income tenants
+  country: United Kingdom
+  lang: en
+  intended_quality: strong
+  path: data/calibration/corpus/b4_retrofit_uk.md
+- sector: mobile money for gig workers
+  country: Kenya
+  lang: en
+  intended_quality: middling
+  path: data/calibration/corpus/b4_gigmoney_ke.md
+- sector: tele-mental-health for students
+  country: India
+  lang: en
+  intended_quality: weak
+  path: data/calibration/corpus/b4_telementalhealth_in.md
+- sector: climate positive sneaker brand
+  country: Spain
+  lang: en
+  intended_quality: greenwasher
+  path: data/calibration/corpus/b4_sneakers_es.md
+- sector: off-grid cold storage for fishers
+  country: Senegal
+  lang: en
+  intended_quality: middling
+  path: data/calibration/corpus/b4_coldchain_sn.md
+- sector: workplace safety training for factory workers
+  country: Hong Kong
+  lang: zh-HK
+  intended_quality: middling
+  path: data/calibration/corpus/b4_safety_hk.md
+- sector: affordable eyeglasses
+  country: Bangladesh
+  lang: en
+  intended_quality: strong
+  path: data/calibration/corpus/b4_eyeglasses_bd.md
+- sector: reforestation carbon credits
+  country: Brazil
+  lang: en
+  intended_quality: greenwasher
+  path: data/calibration/corpus/b4_reforest_br.md
+- sector: digital land titling
+  country: Ghana
+  lang: en
+  intended_quality: weak
+  path: data/calibration/corpus/b4_landtitle_gh.md
+- path: tests/golden_decks/afyaplus_clinics.md
+  sector: ''
+  country: ''
+  lang: en
+  intended_quality: unlabelled
+- path: tests/golden_decks/agosto_water_ph.md
+  sector: ''
+  country: ''
+  lang: en
+  intended_quality: unlabelled
+- path: tests/golden_decks/belajar_edtech.md
+  sector: ''
+  country: ''
+  lang: en
+  intended_quality: unlabelled
+- path: tests/golden_decks/creditopyme_co.md
+  sector: ''
+  country: ''
+  lang: en
+  intended_quality: unlabelled
+- path: tests/golden_decks/greenvibe.md
+  sector: ''
+  country: ''
+  lang: en
+  intended_quality: greenwasher
+- path: tests/golden_decks/hearthstone_housing_uk.md
+  sector: ''
+  country: ''
+  lang: en
+  intended_quality: unlabelled
+- path: tests/golden_decks/jaldhara_irrigation_in.md
+  sector: ''
+  country: ''
+  lang: en
+  intended_quality: unlabelled
+- path: tests/golden_decks/loopwear_hk.md
+  sector: ''
+  country: ''
+  lang: en
+  intended_quality: unlabelled
+- path: tests/golden_decks/warmloop_heatpumps_nl.md
+  sector: ''
+  country: ''
+  lang: en
+  intended_quality: unlabelled
+- path: tests/golden_decks/yikang_eldercare_hk.md
+  sector: ''
+  country: ''
+  lang: zh-HK
+  intended_quality: unlabelled
+- path: data/sample_decks/brightpath_microfinance.pdf
+  sector: ''
+  country: ''
+  lang: en
+  intended_quality: unlabelled
+- path: data/sample_decks/kampung_makmur_pig_farm.pdf
+  sector: ''
+  country: ''
+  lang: en
+  intended_quality: unlabelled
+- path: data/sample_decks/sunpath_solar.pdf
+  sector: ''
+  country: ''
+  lang: en
+  intended_quality: unlabelled

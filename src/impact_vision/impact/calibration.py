@@ -27,6 +27,8 @@ from pathlib import Path
 from statistics import median
 from typing import Any, Sequence
 
+import yaml
+
 QUESTIONS: dict[str, dict[str, Any]] = {
     "impact_magnitude": {"label": "How much positive change, for how many (1 = very little, 5 = very large)",
                          "level": "ordinal", "scale": [1, 2, 3, 4, 5]},
@@ -71,38 +73,171 @@ def engine_features(path: Path) -> dict[str, Any]:
     }
 
 
+def corpus_paths() -> list[Path]:
+    """The study corpus listed in ``data/calibration/manifest.yaml`` (held-out decks excluded)."""
+    from impact_vision.impact._paths import data_path
+
+    manifest = data_path("calibration/manifest.yaml")
+    root = manifest.parents[2]  # repository root: paths in the manifest are repo-relative
+    doc = yaml.safe_load(manifest.read_text(encoding="utf-8"))
+    return [root / d["path"] for d in doc["decks"] if (root / d["path"]).exists()]
+
+
 def build_packet(decks: Sequence[str | Path], out_dir: str | Path, *, raters: Sequence[str] = ("A", "B", "C"),
-                 score: bool = True) -> dict[str, Any]:
-    """A folder to send to raters (``decks/``, ``ratings_<rater>.csv``, ``GUIDE.md``) plus
-    ``engine_scores.csv`` for the coordinator only."""
+                 score: bool = True, seed: int = 2026) -> dict[str, Any]:
+    """Build the study folder.
+
+    ``rater_kit/`` is what raters receive: ``decks/`` under neutral IDs in a
+    shuffled order, ``rate.html`` (an offline rating form that exports their
+    sheet), ``GUIDE.md`` and a spreadsheet template. ``coordinator/`` stays with
+    the study lead: the engine's scores and the key from IDs to source files.
+    Filled sheets go back into ``returned/``.
+    """
+    import random
+
     out = Path(out_dir)
-    (out / "decks").mkdir(parents=True, exist_ok=True)
+    kit, coord = out / "rater_kit", out / "coordinator"
+    (kit / "decks").mkdir(parents=True, exist_ok=True)
+    coord.mkdir(parents=True, exist_ok=True)
+    (out / "returned").mkdir(exist_ok=True)
+    sources = sorted(Path(d) for d in decks if Path(d).suffix.lower() in SUPPORTED)
+    random.Random(seed).shuffle(sources)  # neighbours shouldn't share a batch, sector or quality
     names = []
-    for i, deck in enumerate(sorted(Path(d) for d in decks), 1):
-        if deck.suffix.lower() not in SUPPORTED:
-            continue
+    for i, deck in enumerate(sources, 1):
         name = f"D{i:03d}{deck.suffix.lower()}"  # neutral IDs: the file name mustn't hint at the answer
-        shutil.copyfile(deck, out / "decks" / name)
+        shutil.copyfile(deck, kit / "decks" / name)
         names.append((name, deck))
-    for rater in raters:
-        with open(out / f"ratings_{rater}.csv", "w", newline="", encoding="utf-8") as fh:
-            w = csv.writer(fh)
-            w.writerow(["deck", "rater", *QUESTIONS, "minutes", "notes"])
-            for name, _ in names:
-                w.writerow([name, rater, *([""] * len(QUESTIONS)), "", ""])
-    guide = ["# Rating guide", "", "Rate each deck on its own, without looking at Impact Vision's output and "
-             "without discussing it with the other raters. Leave a cell blank if you can't tell.", ""]
+    with open(kit / "ratings_TEMPLATE.csv", "w", newline="", encoding="utf-8") as fh:
+        w = csv.writer(fh)
+        w.writerow(["deck", "rater", *QUESTIONS, "minutes", "notes"])
+        for name, _ in names:
+            w.writerow([name, "", *([""] * len(QUESTIONS)), "", ""])
+    guide = ["# Rating guide", "",
+             "Open `rate.html` in a browser. Enter your rater ID, read each deck, and answer the questions. "
+             "Your answers are saved in the browser as you go. When you finish, press **Download my ratings** "
+             "and send the CSV back to the study lead.", "",
+             "Rate each deck on its own. Don't look at Impact Vision's output and don't discuss decks with the "
+             "other raters. Leave an answer blank if you can't tell. A deck takes about 10–15 minutes.", "",
+             "## Questions", ""]
     guide += [f"- **{key}**: {q['label']}" for key, q in QUESTIONS.items()]
-    guide += ["", "Record roughly how many minutes each deck took (column `minutes`)."]
-    (out / "GUIDE.md").write_text("\n".join(guide) + "\n", encoding="utf-8")
+    guide += ["", "Prefer a spreadsheet? Fill in `ratings_TEMPLATE.csv` (put your rater ID in the `rater` "
+              "column) and send it back instead."]
+    (kit / "GUIDE.md").write_text("\n".join(guide) + "\n", encoding="utf-8")
+    (kit / "rate.html").write_text(rating_form([(name, kit / "decks" / name) for name, _ in names]),
+                                   encoding="utf-8")
+    with open(coord / "key.csv", "w", newline="", encoding="utf-8") as fh:
+        w = csv.writer(fh)
+        w.writerow(["deck", "source"])
+        w.writerows([(name, str(src)) for name, src in names])
     if score:
         rows = [{"deck": name, "source": str(src), **engine_features(src)} for name, src in names]
         if rows:
-            with open(out / "engine_scores.csv", "w", newline="", encoding="utf-8") as fh:
+            with open(coord / "engine_scores.csv", "w", newline="", encoding="utf-8") as fh:
                 dw = csv.DictWriter(fh, fieldnames=list(rows[0]))
                 dw.writeheader()
                 dw.writerows(rows)
-    return {"decks": len(names), "raters": list(raters), "folder": str(out)}
+    return {"decks": len(names), "raters": list(raters), "folder": str(out), "rater_kit": str(kit)}
+
+
+def rating_form(decks: Sequence[tuple[str, Path]]) -> str:
+    """A self-contained, offline rating form (no network, no external files except the decks)."""
+    import html
+    import json
+
+    items = []
+    for name, path in decks:
+        text = path.read_text(encoding="utf-8", errors="replace") if path.suffix in (".md", ".txt") else ""
+        items.append({"id": name, "text": text, "file": f"decks/{name}"})
+    payload = json.dumps({"decks": items, "questions": QUESTIONS}, ensure_ascii=False).replace("</", "<\\/")
+    return _FORM.replace("__DATA__", payload).replace("__COUNT__", html.escape(str(len(items))))
+
+
+_FORM = r"""<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Deck rating</title>
+<style>
+:root{--bg:#fafaf8;--card:#fff;--ink:#1d1d1b;--muted:#6b6b66;--line:#e2e1dc;--brand:#1f5f8b;--ok:#2e7d4f}
+@media (prefers-color-scheme:dark){:root{--bg:#161616;--card:#202020;--ink:#ececea;--muted:#a3a39e;--line:#3a3a38;--brand:#79b4dc;--ok:#7fcf9c}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,sans-serif}
+header{position:sticky;top:0;background:var(--card);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;z-index:2}
+header h1{font-size:16px;margin:0 12px 0 0}input,select,textarea,button{font:inherit;color:inherit}
+input,select,textarea{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:6px 8px}
+button{border:0;border-radius:6px;padding:7px 12px;background:var(--brand);color:var(--card);cursor:pointer}
+button.ghost{background:transparent;color:var(--brand);border:1px solid var(--line)}
+main{display:grid;grid-template-columns:220px 1fr;gap:16px;padding:16px;max-width:1300px;margin:0 auto}
+nav{max-height:calc(100vh - 90px);overflow:auto;position:sticky;top:70px}nav a{display:flex;justify-content:space-between;padding:4px 8px;border-radius:6px;color:var(--ink);text-decoration:none}
+nav a.on{background:var(--line)}nav a .done{color:var(--ok)}
+.deck{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(280px,1fr);gap:16px}
+.text{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:16px;white-space:pre-wrap;max-height:calc(100vh - 110px);overflow:auto}
+form{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:16px;align-self:start}
+label{display:block;margin:0 0 12px}label span{display:block;font-weight:600;margin-bottom:4px}
+.scale{display:flex;gap:6px}.scale label{display:flex;align-items:center;gap:3px;margin:0;font-weight:400}
+.muted{color:var(--muted);font-size:13px}
+@media (max-width:760px){main{grid-template-columns:1fr}nav{position:static;max-height:none;display:flex;flex-wrap:wrap}.deck{grid-template-columns:1fr}}
+</style></head><body>
+<header><h1>Deck rating · __COUNT__ decks</h1>
+<label style="margin:0">Rater ID <input id="rater" size="6" placeholder="A"></label>
+<span id="progress" class="muted"></span><span style="flex:1"></span>
+<button class="ghost" id="prev" type="button">← Previous</button><button class="ghost" id="next" type="button">Next →</button>
+<button id="export" type="button">Download my ratings</button></header>
+<main><nav id="nav" aria-label="Decks"></nav><section id="deck" class="deck"></section></main>
+<script type="application/json" id="data">__DATA__</script>
+<script>
+const DATA = JSON.parse(document.getElementById('data').textContent);
+const Q = DATA.questions, KEYS = Object.keys(Q);
+let i = 0, store = {};
+const $ = (s) => document.querySelector(s);
+const key = () => 'iv-rating-' + ($('#rater').value.trim() || 'anon');
+function load() { try { store = JSON.parse(localStorage.getItem(key()) || '{}'); } catch (e) { store = {}; } }
+function save() { try { localStorage.setItem(key(), JSON.stringify(store)); } catch (e) { /* private mode: export often */ } }
+function done(id) { const r = store[id] || {}; return KEYS.every((k) => r[k]); }
+function nav() {
+  $('#nav').replaceChildren(...DATA.decks.map((d, n) => {
+    const a = document.createElement('a'); a.href = '#'; a.className = n === i ? 'on' : '';
+    a.append(d.id.replace(/\.\w+$/, '')); const s = document.createElement('span'); s.className = 'done'; s.textContent = done(d.id) ? '✓' : '';
+    a.append(s); a.onclick = (e) => { e.preventDefault(); i = n; show(); }; return a; }));
+  $('#progress').textContent = DATA.decks.filter((d) => done(d.id)).length + ' / ' + DATA.decks.length + ' rated';
+}
+function show() {
+  const d = DATA.decks[i], r = store[d.id] || {};
+  const text = document.createElement('div'); text.className = 'text';
+  if (d.text) text.textContent = d.text; else { const a = document.createElement('a'); a.href = d.file; a.target = '_blank'; a.textContent = 'Open ' + d.id + ' (opens in a new tab)'; text.append(a); }
+  const form = document.createElement('form');
+  const h = document.createElement('h2'); h.textContent = d.id.replace(/\.\w+$/, ''); h.style.marginTop = '0'; form.append(h);
+  for (const k of KEYS) {
+    const q = Q[k], lab = document.createElement('label'), t = document.createElement('span'); t.textContent = q.label; lab.append(t);
+    const box = document.createElement('div'); box.className = 'scale';
+    for (const v of q.scale) {
+      const o = document.createElement('label'), inp = document.createElement('input');
+      inp.type = 'radio'; inp.name = k; inp.value = v; inp.checked = String(r[k]) === String(v);
+      inp.onchange = () => { (store[d.id] = store[d.id] || {})[k] = v; save(); nav(); };
+      o.append(inp, String(v).replace('_', ' ')); box.append(o);
+    }
+    lab.append(box); form.append(lab);
+  }
+  for (const [k, label, tag] of [['minutes', 'Minutes spent', 'input'], ['notes', 'Notes (optional)', 'textarea']]) {
+    const lab = document.createElement('label'), t = document.createElement('span'); t.textContent = label;
+    const f = document.createElement(tag); if (tag === 'input') { f.inputMode = 'numeric'; f.size = 4; } else { f.rows = 3; f.style.width = '100%'; }
+    f.value = r[k] || ''; f.oninput = () => { (store[d.id] = store[d.id] || {})[k] = f.value; save(); };
+    lab.append(t, f); form.append(lab);
+  }
+  $('#deck').replaceChildren(text, form); nav(); window.scrollTo(0, 0);
+}
+function csv(v) { v = String(v == null ? '' : v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
+$('#export').onclick = () => {
+  const rater = $('#rater').value.trim(); if (!rater) { alert('Enter your rater ID first.'); $('#rater').focus(); return; }
+  const rows = [['deck', 'rater', ...KEYS, 'minutes', 'notes']];
+  for (const d of DATA.decks) { const r = store[d.id] || {}; rows.push([d.id, rater, ...KEYS.map((k) => r[k] || ''), r.minutes || '', r.notes || '']); }
+  const blob = new Blob([rows.map((r) => r.map(csv).join(',')).join('\n') + '\n'], {type: 'text/csv'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'ratings_' + rater.replace(/[^\w-]/g, '_') + '.csv'; a.click();
+};
+$('#rater').onchange = () => { try { localStorage.setItem('iv-rating-rater', $('#rater').value.trim()); } catch (e) {} load(); show(); };
+$('#prev').onclick = () => { i = Math.max(0, i - 1); show(); };
+$('#next').onclick = () => { i = Math.min(DATA.decks.length - 1, i + 1); show(); };
+try { $('#rater').value = localStorage.getItem('iv-rating-rater') || ''; } catch (e) {}
+load(); show();
+</script></body></html>
+"""
 
 
 # ------------------------------------------------------------------ Krippendorff's alpha
@@ -225,13 +360,17 @@ def _read_ratings(paths: Sequence[Path]) -> dict[str, dict[str, dict[str, str]]]
     for path in paths:
         with open(path, newline="", encoding="utf-8") as fh:
             for row in csv.DictReader(fh):
-                out[row["deck"]][row["rater"]] = {q: (row.get(q) or "").strip() for q in QUESTIONS}
+                rater = (row.get("rater") or "").strip()
+                answers = {q: (row.get(q) or "").strip() for q in QUESTIONS}
+                if rater and any(answers.values()):
+                    out[row["deck"]][rater] = answers
     return out
 
 
 def analyse(packet: str | Path) -> dict[str, Any]:
     folder = Path(packet)
-    ratings = _read_ratings(sorted(folder.glob("ratings_*.csv")))
+    sheets = [p for p in sorted(folder.rglob("ratings_*.csv")) if p.name != "ratings_TEMPLATE.csv"]
+    ratings = _read_ratings(sheets)
     raters = sorted({r for by_rater in ratings.values() for r in by_rater})
     decks = sorted(ratings)
     alpha: dict[str, float] = {}
@@ -250,7 +389,9 @@ def analyse(packet: str | Path) -> dict[str, Any]:
                                    else Counter(present).most_common(1)[0][0])
         alpha[q] = round(krippendorff_alpha(units, spec["level"]), 3)
     engine = {}
-    scores = folder / "engine_scores.csv"
+    scores = folder / "coordinator" / "engine_scores.csv"
+    if not scores.exists():
+        scores = folder / "engine_scores.csv"
     if scores.exists():
         with open(scores, newline="", encoding="utf-8") as fh:
             engine = {row["deck"]: row for row in csv.DictReader(fh)}

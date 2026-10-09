@@ -352,8 +352,9 @@ to be fixed on other documents and never by tuning on this set:
     HKFRS S1 gap tool; Scope 3 method flag; ILPA template on the watchlist.
 
 **Still to do (needs people, keys or final texts)**
-- **W2.6:** run the study: 2–3 practitioners rate 50–100 decks with the packet; then fit and
-  publish Methodology 2.x as `calibrated`.
+- **W2.6:** the study is ready to run. The 57-deck corpus and the rater kit (`impact-vision
+  calibrate packet`, raters use `rate.html`) are done. What's left is for 2–3 practitioners to rate
+  the decks; then `calibrate analyze`, fit, and publish Methodology 2.x as `calibrated`.
 - **W2.7:** run `impact-vision eval agents` with API keys; let the results set each preset's
   recommended model.
 - **Release setup:** PyPI trusted publisher, then set the repository variable `PYPI_PUBLISH=true`.

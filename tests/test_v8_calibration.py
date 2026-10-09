@@ -58,26 +58,39 @@ def test_spearman():
 
 
 def test_packet_to_report(tmp_path):
-    decks = sorted((Path(__file__).parent / "golden" / "heldout").glob("*.md"))[:6]
+    decks = sorted((Path(__file__).parent / "golden_decks").glob("*.md"))[:6]
     info = build_packet(decks, tmp_path / "pack", raters=("A", "B"))
-    assert info["decks"] == 6 and (tmp_path / "pack" / "GUIDE.md").exists()
-    names = sorted(p.name for p in (tmp_path / "pack" / "decks").iterdir())
-    assert names[0] == "D001.md"  # neutral IDs, no hints in file names
-    engine = {r["deck"]: r for r in csv.DictReader(open(tmp_path / "pack" / "engine_scores.csv"))}
+    kit, coord = tmp_path / "pack" / "rater_kit", tmp_path / "pack" / "coordinator"
+    assert info["decks"] == 6 and (kit / "GUIDE.md").exists() and (kit / "rate.html").exists()
+    assert sorted(p.name for p in (kit / "decks").iterdir())[0] == "D001.md"  # neutral IDs
+    assert not list(kit.rglob("engine_scores.csv")) and (coord / "engine_scores.csv").exists()
+    html = (kit / "rate.html").read_text()
+    assert "Download my ratings" in html and "<script src" not in html and "</script><script" not in html.split("id=\"data\">")[1][:50]
+    engine = {r["deck"]: r for r in csv.DictReader(open(coord / "engine_scores.csv"))}
+    template = list(csv.DictReader(open(kit / "ratings_TEMPLATE.csv")))
     for rater in ("A", "B"):  # two raters who agree closely, and follow the evidence score
-        path = tmp_path / "pack" / f"ratings_{rater}.csv"
-        rows = list(csv.DictReader(open(path)))
-        for row in rows:
+        rows = []
+        for row in template:
             eq = float(engine[row["deck"]]["evidence_quality"])
-            row.update(evidence_quality=str(min(5, 1 + int(eq // 20))), impact_magnitude="3", contribution="3",
-                       greenwashing_risk="2", verdict=engine[row["deck"]]["verdict"])
-        with open(path, "w", newline="") as fh:
+            rows.append({**row, "rater": rater, "evidence_quality": str(max(1, min(5, int(eq // 10) - 2))),
+                         "impact_magnitude": "3", "contribution": "3", "greenwashing_risk": "2",
+                         "verdict": engine[row["deck"]]["verdict"]})
+        with open(tmp_path / "pack" / "returned" / f"ratings_{rater}.csv", "w", newline="") as fh:
             w = csv.DictWriter(fh, fieldnames=list(rows[0]))
             w.writeheader()
             w.writerows(rows)
     result = analyse(tmp_path / "pack")
+    assert result["raters"] == ["A", "B"]  # the blank template is ignored
     assert result["alpha"]["evidence_quality"] == 1.0
     assert result["comparisons"]["verdict"]["agreement"] == 1.0
     assert result["comparisons"]["evidence_quality"]["spearman"] > 0.9
     md = to_markdown(result)
     assert "Krippendorff" in md and "evidence_quality" in md
+
+
+def test_the_study_corpus_excludes_the_held_out_set():
+    from impact_vision.impact.calibration import corpus_paths
+
+    paths = corpus_paths()
+    assert len(paths) >= 50
+    assert not any("heldout" in str(p) for p in paths)
