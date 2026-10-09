@@ -76,6 +76,7 @@ cron_app = typer.Typer(name="cron", help="Manage cron scheduler and jobs")
 catalog_app = typer.Typer(name="catalog", help="Manage the IRIS+ metric catalog")
 framework_app = typer.Typer(name="framework", help="ESG/sustainability framework tools")
 dd_app = typer.Typer(name="dd", help="Impact due diligence checklist tools")
+eval_app = typer.Typer(name="eval", help="Evaluations: agent trajectories across providers")
 calibrate_app = typer.Typer(name="calibrate", help="Expert calibration study: rating packets and analysis")
 connect_app = typer.Typer(name="connect", help="Read-only connectors: data room, Drive, SharePoint, Affinity, DealCloud")
 monitoring_app = typer.Typer(name="monitoring", help="Annual results requests and reminders (portfolio companies)")
@@ -92,6 +93,7 @@ app.add_typer(dd_app)
 app.add_typer(monitoring_app)
 app.add_typer(connect_app)
 app.add_typer(calibrate_app)
+app.add_typer(eval_app)
 
 
 # ---- dashboard: Streamlit portfolio dashboard ----
@@ -345,6 +347,24 @@ def serve_web(
 
 
 # ---- mcp subcommands ----
+
+
+@eval_app.command("agents")
+def eval_agents(
+    model: list[str] = typer.Option([], "--model", help="profile:model, repeatable (default: the recommended set)"),
+    scenario: list[str] = typer.Option([], "--scenario", help="Only these scenario IDs"),
+    save_results: bool = typer.Option(True, "--save/--no-save", help="Write evals/agent/results/<date>.json/.md"),
+) -> None:
+    """Run the agent evals on every provider with a key set (others are skipped)."""
+    import asyncio
+
+    from impact_vision.impact.agent_evals import DEFAULT_MODELS, load_scenarios, run_matrix, save, to_markdown
+
+    scenarios = [s for s in load_scenarios() if not scenario or s["id"] in scenario]
+    result = asyncio.run(run_matrix(list(model) or list(DEFAULT_MODELS), scenarios))
+    print(to_markdown(result))
+    if save_results and result["models"]:
+        print(f"Saved {save(result)}", file=sys.stderr)
 
 
 @calibrate_app.command("packet")
