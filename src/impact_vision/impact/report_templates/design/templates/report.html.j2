@@ -228,6 +228,14 @@
   <div class="axis-row" aria-hidden="true"><span></span><span class="ticks">{% for v in range(0, 101, 20) %}<span style="left:{{ v }}%">{{ v }}</span>{% endfor %}</span><span></span></div>
   <p class="legend"><span><span class="key"></span>{{ t('legend_component') }}</span>{% if greenwashing.components | selectattr('over') | list %}<span><span class="key over"></span>▲ {{ t('legend_over') }}</span>{% endif %}<span><span class="key threshold"></span>{{ t('legend_threshold') }}</span></p>
   {% if greenwashing.flags %}<p class="small" style="margin:12px 0 0"><strong>{{ t('flags') }}:</strong> {{ greenwashing.flags | join('; ') }}</p>{% endif %}
+  {% if greenwashing.claims %}
+  <h3 class="small">{{ t('gw_claims_title') }}</h3>
+  <div class="table-wrap"><table>
+    <caption class="sr-only">{{ t('gw_claims_title') }}</caption>
+    <thead><tr><th scope="col">{{ t('col_claim') }}</th><th scope="col" class="num">{{ t('col_claim_risk') }}</th><th scope="col">{{ t('col_why') }}</th><th scope="col">{{ t('col_fix') }}</th></tr></thead>
+    <tbody>{% for c in greenwashing.claims %}<tr><td>{{ c.text }}</td><td class="num"><span class="pill {{ 'critical' if c.risk >= 60 else 'warning' }}">{{ c.risk }}</span></td><td class="small">{{ c.reasons | join('; ') }}</td><td class="small">{{ c.followup }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% endif %}
 </section>
 
 {% elif section == 'risks' %}

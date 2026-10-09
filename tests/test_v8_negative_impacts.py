@@ -27,3 +27,17 @@ def test_unaddressed_material_impacts_become_questions_not_findings():
 def test_report_shows_the_table():
     html = render_decision_report(assess_file(sample_deck_path("pig-farm")).report_data)
     assert "Potential negative impacts" in html and 'class="neg"' in html
+
+
+def test_greenwashing_2_judges_claims_not_gaps():
+    from pathlib import Path
+
+    green = assess_file(Path(__file__).parent / "golden_decks" / "greenvibe.md")
+    review = green.report_data["greenwashing"]["claims_review"]
+    assert review["score"] >= 60 and review["flagged"] >= 3
+    assert any(c["generic_environmental"] for c in review["claims"])
+    assert "claims likely misleading" in green.report_data["expected_impact"]["gate"]["reasons"][0]
+    honest = assess_file(Path(__file__).parent / "golden_decks" / "belajar_edtech.md")
+    assert honest.report_data["greenwashing"]["claims_review"]["score"] < 30
+    html = render_decision_report(green.report_data)
+    assert "Claims that drive the risk" in html

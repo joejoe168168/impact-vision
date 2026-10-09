@@ -337,6 +337,10 @@ def assess_document(
 
     gap_result = analyze_gaps(company, store)
     gw_dump = gw.model_dump()
+    from impact_vision.impact.greenwashing_reviewer import review_claims_v2
+
+    gw_dump["claims_review"] = review_claims_v2(  # v8 W1.9
+        assessment.impact_claims, text=company.assessment_text or text)
     gw_dump["sub_scores"] = {
         "claim_metric_gap": gw.claim_metric_gap,
         "adverse_omission": gw.adverse_omission,
@@ -385,6 +389,7 @@ def assess_document(
         v1_checks=report_data["decision"].get("checks", []),
         missing_metrics=[m["name"] for m in gap_result.get("missing", [])[:5]],
         negative=report_data["negative_impacts"],
+        claims_review=gw_dump.get("claims_review"),
     )
     fd = report_data["five_dimensions"]
     if fd and company.sector:

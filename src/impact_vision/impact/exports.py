@@ -81,6 +81,25 @@ def slim_report(data: dict) -> dict:
         for name in DIMENSIONS:
             if isinstance(fd.get(name), dict):
                 fd[name].pop("provenance", None)
+    # Methodology 2.0 blocks: keep the numbers, drop factor tables and quotes.
+    ei = out.get("expected_impact")
+    if isinstance(ei, dict):
+        ei["outcomes"] = [{k: o.get(k) for k in ("kind", "unit", "stakeholder", "p10", "p50", "p90",
+                                                  "uncertainty", "evidence_level")} for o in ei.get("outcomes", [])]
+        ei.pop("targets", None)
+    neg = out.get("negative_impacts")
+    if isinstance(neg, dict):
+        out["negative_impacts"] = {"material_count": neg.get("material_count"), "items": [
+            {k: r.get(k) for k in ("id", "score", "band", "controlled")} for r in neg.get("items", [])]}
+    gw = out.get("greenwashing")
+    if isinstance(gw, dict) and isinstance(gw.get("claims_review"), dict):
+        review = gw["claims_review"]
+        gw["claims_review"] = {"score": review.get("score"), "flagged": review.get("flagged"),
+                               "top": [{"risk": c.get("risk"), "text": str(c.get("text", ""))[:120]}
+                                       for c in review.get("claims", [])[:3]]}
+    for claim in out.get("impact_claims", []) or []:
+        if isinstance(claim, dict):
+            claim.pop("entities", None)
     return out
 
 

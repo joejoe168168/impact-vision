@@ -386,6 +386,7 @@ def assess_expected_impact(
     v1_checks: Iterable[dict[str, Any]] = (),
     missing_metrics: Iterable[str] = (),
     negative: dict[str, Any] | None = None,
+    claims_review: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Methodology 2.0 result block stored in ``report_data['expected_impact']``."""
     claims = list(claims)
@@ -409,7 +410,7 @@ def assess_expected_impact(
         from impact_vision.impact.negative_impacts import plan_items
 
         plan = (plan[:3] + plan_items(negative, 1) + plan[3:])[:4]
-    gate = _gate(outcomes, eq, data_completeness_pct, greenwashing, list(v1_checks), plan)
+    gate = _gate(outcomes, eq, data_completeness_pct, greenwashing, list(v1_checks), plan, claims_review)
     return {
         "methodology": stamp(),
         "outcomes": outcomes,
@@ -507,10 +508,15 @@ def _all_drivers(outcome: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def _gate(outcomes: list[dict[str, Any]], eq: dict[str, Any], completeness: float | None,
-          greenwashing: Any, v1_checks: list[dict[str, Any]], plan: list[dict[str, str]]) -> dict[str, Any]:
+          greenwashing: Any, v1_checks: list[dict[str, Any]], plan: list[dict[str, str]],
+          claims_review: dict[str, Any] | None = None) -> dict[str, Any]:
     cfg = params()["gate"]
     reasons: list[str] = []
     found = []
+    # Greenwashing 2.0 (W1.9): several claims that are themselves misleading.
+    review = claims_review or {}
+    if (review.get("score") or 0) >= 60 and review.get("flagged", 0) >= 2:
+        found.append(f"{review['flagged']} claims likely misleading (claim-level greenwashing {review['score']}/100)")
     if greenwashing is not None and getattr(greenwashing, "is_finding", False) and not getattr(
             greenwashing, "evidence_gap", False):
         found.append(f"greenwashing finding ({greenwashing.overall_score:.0f}/100: {greenwashing.classification})")

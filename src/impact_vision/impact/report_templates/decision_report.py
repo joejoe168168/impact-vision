@@ -461,6 +461,9 @@ def _greenwashing(data: dict[str, Any], t) -> dict[str, Any] | None:  # type: ig
             for k in _GW_COMPONENTS if subs.get(k) is not None
         ],
         "flags": [str(f).split(":", 1)[-1].strip() for f in gw.get("flags") or []],
+        "claims": [c for c in ((gw.get("claims_review") or {}).get("claims") or [])
+                   if c.get("risk", 0) >= 30][:5],
+        "v2_score": (gw.get("claims_review") or {}).get("score"),
     }
 
 

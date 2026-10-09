@@ -219,7 +219,71 @@ def review_company_claims(
     )
 
 
+# --------------------------------------------------------------------------- 2.0
+# Greenwashing 2.0 (roadmap v8 W1.9): judge the claims, not the gaps.
+#   claim risk = 100 × specificity × evidence × materiality
+# The company score is the mean of its three riskiest claims, so one sound
+# claim can't hide a misleading one, and missing data alone scores nothing.
+_SPECIFICITY_W = {"concrete": 0.2, "mixed": 0.5, "vague": 0.8, "buzzword_only": 1.0}
+_EVIDENCE_W = {1: 1.0, 2: 0.7, 3: 0.4, 4: 0.25, 5: 0.15}
+# Generic environmental claims are what the EU ECGT Directive bans without
+# recognised excellence or proof, so they weigh most.
+_GENERIC_ENV = ("eco-friendly", "eco friendly", "green", "sustainable", "carbon neutral", "carbon-neutral",
+                "net zero", "net-zero", "climate positive", "climate-positive", "environmentally friendly",
+                "planet-positive", "nature positive", "100% renewable", "zero waste", "zero-waste")
+
+
+def claim_risk(claim: ImpactClaim) -> dict[str, Any]:
+    """One claim's greenwashing risk (0–100) with the reasons."""
+    specificity = _classify_specificity(claim.text)
+    signals = set((claim.entities or {}).get("evidence", []) or [])
+    verified = bool(signals & {"third_party_verified", "audited", "certified"})
+    evidence = _EVIDENCE_W.get(int(claim.evidence_strength or 1), 1.0) * (0.7 if verified else 1.0)
+    lowered = claim.text.lower()
+    generic = [g for g in _GENERIC_ENV if re.search(r"(?<![\w-])" + re.escape(g) + r"(?![\w-])", lowered)]
+    if generic and specificity == "mixed" and not re.search(r"\d[\d,.]*\s*(?!%)[a-z]", lowered):
+        specificity = "vague"  # "100% green" — a percentage on an adjective is not a measurement
+    materiality = 1.0 if generic else 0.8 if claim.category in {"outcome", "output"} else 0.6
+    risk = round(100 * _SPECIFICITY_W[specificity] * evidence * materiality)
+    reasons = [f"{specificity.replace('_', ' ')} wording", f"NESTA {claim.evidence_strength}"
+               + (", verified" if verified else "")]
+    if generic:
+        reasons.append("generic environmental claim (" + ", ".join(generic[:2]) + ")")
+    return {"text": claim.text, "risk": risk, "specificity": specificity, "evidence_level": claim.evidence_strength,
+            "verified": verified, "generic_environmental": bool(generic), "reasons": reasons,
+            "followup": _suggested_followup(claim, specificity, not claim.mapped_metrics or claim.evidence_strength <= 1)
+            or ("Name the recognised standard or proof behind the claim (EU ECGT)." if generic else "")}
+
+
+def review_claims_v2(claims: list[ImpactClaim], *, text: str = "", top: int = 3) -> dict[str, Any]:
+    """Company-level greenwashing 2.0: the riskiest claims drive the score.
+
+    Sentences in *text* that make a generic environmental claim are reviewed
+    too: the claim extractor looks for quantified statements and misses
+    exactly the unquantified ones that matter here.
+    """
+    claims = list(claims)
+    seen = {c.text.strip().lower()[:60] for c in claims}
+    for sentence in re.split(r"(?<=[.!?。])\s+|\n+", text or ""):
+        sentence = sentence.strip(" -•*\t")
+        low = sentence.lower()
+        if len(sentence) < 12 or low[:60] in seen or not any(
+                re.search(r"(?<![\w-])" + re.escape(g) + r"(?![\w-])", low) for g in _GENERIC_ENV):
+            continue
+        seen.add(low[:60])
+        claims.append(ImpactClaim(text=sentence, category="intent", evidence_strength=1))
+    rows = sorted((claim_risk(c) for c in claims if c.text.strip()), key=lambda r: -r["risk"])
+    if not rows:
+        return {"score": None, "claims": [], "flagged": 0, "method": "greenwashing-2.0"}
+    worst = rows[:top]
+    score = round(sum(r["risk"] for r in worst) / len(worst))
+    return {"score": score, "claims": rows[:8], "flagged": sum(1 for r in rows if r["risk"] >= 60),
+            "reviewed": len(rows), "method": "greenwashing-2.0"}
+
+
 __all__ = [
+    "claim_risk",
+    "review_claims_v2",
     "ClaimReviewItem",
     "GreenwashingReviewerOutput",
     "ReviewerSeverity",
