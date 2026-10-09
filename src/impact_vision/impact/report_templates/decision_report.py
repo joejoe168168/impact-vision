@@ -607,7 +607,7 @@ def _stems(text: str) -> set[str]:
     return {w.rstrip("s") for w in re.findall(r"[a-z0-9]+", text.lower()) if len(w) > 3}
 
 
-_IRIS_ID = re.compile(r"\b([A-Z]{2}\d{4})\b(?!\s*\()")
+_IRIS_ID = re.compile(r"(?<!\()\b([A-Z]{2}\d{4})\b(?!\s*\()")  # "Name (OI1234)" is already named
 
 
 def _actions(data: dict[str, Any], spec: ReportSpec, t) -> list[dict[str, str]]:  # type: ignore[no-untyped-def]
@@ -739,6 +739,33 @@ def _branding(raw: dict[str, Any] | None) -> dict[str, Any]:
     return out
 
 
+def _localize_view(view: dict[str, Any], lang: str) -> None:
+    """Translate the generated sentences (v8 W3.7); claims and quotes stay verbatim."""
+    from impact_vision.impact.i18n_phrasebook import localize, localize_list
+
+    view["verdict"]["reasons"] = localize_list(view["verdict"]["reasons"], lang)
+    for item in view["mind"]:
+        item["what"], item["why"] = localize(item["what"], lang), localize(item["why"], lang)
+    for item in view["actions"]:
+        item["text"] = localize(item["text"], lang)
+    risks = view["risks"]
+    risks["sector"] = localize_list(risks["sector"], lang)
+    risks["opportunities"] = localize_list(risks["opportunities"], lang)
+    if view.get("negatives"):
+        neg = dict(view["negatives"])
+        neg["items"] = [{**r, "impact": localize(r["impact"], lang), "stakeholder": localize(r["stakeholder"], lang)}
+                        for r in neg.get("items") or []]
+        view["negatives"] = neg
+    gw = view.get("greenwashing")
+    if gw:
+        gw["flags"] = localize_list(gw["flags"], lang)
+        gw["claims"] = [{**c, "reasons": localize_list(list(c.get("reasons") or []), lang),
+                         "followup": localize(c.get("followup") or "", lang)} for c in gw["claims"]]
+    if view.get("five_d"):
+        for row in view["five_d"]["rows"]:
+            row["sentence"] = localize(row["sentence"], lang)
+
+
 def build_view(data: dict[str, Any], *, audience: str | None = None, lang: str = "en",
                branding: dict[str, Any] | None = None) -> dict[str, Any]:
     """Assemble everything the template needs from ``report_data``."""
@@ -843,6 +870,8 @@ def build_view(data: dict[str, Any], *, audience: str | None = None, lang: str =
         "feedback": bool(view["feedback"]),
         "appendix": True,
     }
+    if lang != "en":
+        _localize_view(view, lang)
     view["sections"] = [s for s in spec.sections if present.get(s)]
     view["toc"] = [(SECTION_IDS[s], t(SECTION_TITLES[s])) for s in view["sections"] if s in SECTION_IDS]
     return view
