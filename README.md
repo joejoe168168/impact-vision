@@ -446,6 +446,7 @@ impact-vision dd list [--category "What (Outcomes)"]
 impact-vision dd categories
 impact-vision dd analyze "text or /path/to/doc.txt"
 impact-vision monitoring request "SunPath" --period 2026 --email cfo@… | remind   # annual results
+impact-vision connect docs folder|gdrive|sharepoint [--assess] · connect deals affinity|dealcloud  # docs/connectors.md
 
 # Service surfaces
 impact-vision serve-mcp                                  # MCP server (stdio)

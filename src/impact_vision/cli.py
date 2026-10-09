@@ -76,6 +76,7 @@ cron_app = typer.Typer(name="cron", help="Manage cron scheduler and jobs")
 catalog_app = typer.Typer(name="catalog", help="Manage the IRIS+ metric catalog")
 framework_app = typer.Typer(name="framework", help="ESG/sustainability framework tools")
 dd_app = typer.Typer(name="dd", help="Impact due diligence checklist tools")
+connect_app = typer.Typer(name="connect", help="Read-only connectors: data room, Drive, SharePoint, Affinity, DealCloud")
 monitoring_app = typer.Typer(name="monitoring", help="Annual results requests and reminders (portfolio companies)")
 
 app.add_typer(mcp_app)
@@ -88,6 +89,7 @@ app.add_typer(catalog_app)
 app.add_typer(framework_app)
 app.add_typer(dd_app)
 app.add_typer(monitoring_app)
+app.add_typer(connect_app)
 
 
 # ---- dashboard: Streamlit portfolio dashboard ----
@@ -341,6 +343,48 @@ def serve_web(
 
 
 # ---- mcp subcommands ----
+
+
+@connect_app.command("docs")
+def connect_docs(
+    connector: str = typer.Argument(..., help="folder, gdrive or sharepoint (settings: docs/connectors.md)"),
+    assess: bool = typer.Option(False, "--assess", help="Assess new decks and file them on the company record"),
+    path: str = typer.Option("", help="For 'folder': the data-room export folder"),
+) -> None:
+    """Copy new or changed documents into the uploads folder (and optionally assess them)."""
+    from impact_vision.impact.connectors import get_connector
+    from impact_vision.impact.connectors.sync import sync_documents
+
+    try:
+        source = get_connector(connector, **({"root": path} if connector == "folder" and path else {}))
+        out = sync_documents(source, assess=assess)
+    except (RuntimeError, ValueError) as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        raise typer.Exit(1) from None
+    print(f"{len(out['copied'])} new or changed, {out['unchanged']} unchanged → {out['folder']}")
+    for a in out["assessed"]:
+        print(f"  assessed {a['document']} → {a['company']} (#{a['assessment_id']})")
+    for e in out["errors"]:
+        print(f"  ! {e['document']}: {e['error']}", file=sys.stderr)
+
+
+@connect_app.command("deals")
+def connect_deals(connector: str = typer.Argument(..., help="affinity or dealcloud")) -> None:
+    """Add CRM deals to the pipeline and follow their stage (never writes to the CRM)."""
+    from impact_vision.impact.connectors import get_connector
+    from impact_vision.impact.connectors.sync import sync_deals
+
+    try:
+        out = sync_deals(get_connector(connector))
+    except (RuntimeError, ValueError) as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        raise typer.Exit(1) from None
+    print(f"{len(out['added'])} added, {len(out['moved'])} moved, {out['unchanged']} unchanged")
+    for m in out["moved"]:
+        print(f"  {m['company']}: {m['from']} → {m['to']}")
+    if out["stage_not_mapped"]:
+        print(f"  stage not recognised for {len(out['stage_not_mapped'])} deal(s); "
+              "set IMPACT_VISION_CRM_STAGE_MAP", file=sys.stderr)
 
 
 @monitoring_app.command("request")
