@@ -26,12 +26,20 @@ def _default_db_path() -> Path:
     history; otherwise the store lives in ``~/.impact-vision/``, which works
     for installed wheels regardless of the working directory.
     """
+    from impact_vision.impact.identity import DEFAULT_TENANT, current_tenant, tenant_home
+
     env = os.environ.get("IMPACT_VISION_DB")
     if env:
-        return Path(env).expanduser()
-    if _LEGACY_DB_PATH.is_file():
-        return _LEGACY_DB_PATH
-    return Path.home() / ".impact-vision" / "impact_vision.db"
+        path = Path(env).expanduser()
+    elif _LEGACY_DB_PATH.is_file():
+        path = _LEGACY_DB_PATH
+    else:
+        path = Path.home() / ".impact-vision" / "impact_vision.db"
+    if current_tenant() == DEFAULT_TENANT:
+        return path
+    folder = tenant_home(path.parent)  # each tenant gets its own database (v8 W5.3)
+    folder.mkdir(parents=True, exist_ok=True)
+    return folder / path.name
 
 
 _SCHEMA = """

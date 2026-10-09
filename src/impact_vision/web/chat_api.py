@@ -100,8 +100,10 @@ def uploads_dir() -> Path:
     in the working directory, so confidential decks never land in a git
     checkout.
     """
+    from impact_vision.impact.identity import tenant_home
+
     default = Path(os.environ.get("IMPACT_VISION_WEB_HOME", Path.home() / ".openharness")) / "web-uploads"
-    root = Path(os.environ.get("IMPACT_VISION_UPLOAD_DIR", default))
+    root = tenant_home(Path(os.environ.get("IMPACT_VISION_UPLOAD_DIR", default)))
     root.mkdir(parents=True, exist_ok=True)
     return root
 
@@ -422,7 +424,9 @@ def build_chat_ws_router() -> APIRouter:
         # access logs. ``?token=`` still works for older clients.
         offered = [p.strip() for p in websocket.headers.get("sec-websocket-protocol", "").split(",") if p.strip()]
         supplied = next((p[len("bearer."):] for p in offered if p.startswith("bearer.")), None) or token
-        if not token_matches(supplied):
+        from impact_vision.impact.identity import current_identity
+
+        if current_identity().auth not in {"oidc", "api_key"} and not token_matches(supplied):
             await websocket.close(code=4401, reason="Invalid or missing API key")
             return
 

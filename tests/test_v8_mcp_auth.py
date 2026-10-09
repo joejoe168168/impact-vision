@@ -104,3 +104,21 @@ async def _calls(client, auth):
         "tools/call", {"name": "pitch_deck_analyze", "arguments": {"file_path": "/etc/passwd"}}))
     assert denied.status_code == 403 and denied.json()["error"]["code"] == -32003
 
+
+
+async def test_token_tenant_scopes_the_audit_and_state(store):
+    from impact_vision.impact.audit_trail import AuditTrail
+    from impact_vision.impact.state_store import get_state_store
+
+    token = store.create("fund-b-bot", ["read"], tenant="fund-b")
+    auth = {**HEADERS, "authorization": f"Bearer {token}"}
+    async with _client(store) as client:
+        ok = await client.post("/mcp", headers=auth, content=_rpc(
+            "tools/call", {"name": "iris_catalog", "arguments": {"action": "search", "query": "jobs", "limit": 1}}))
+        assert ok.status_code == 200
+    default_events = [r.payload for r in AuditTrail(fund_id="mcp", store=get_state_store()).feed.reports]
+    assert all(e["actor"] != "fund-b-bot" for e in default_events)
+    raw = get_state_store()
+    assert raw.get("fund-b", "audit_trail", "mcp")
+    with pytest.raises(ValueError):
+        store.create("bad", ["read"], tenant="../x")

@@ -222,7 +222,11 @@ def get_state_store() -> StateStore:
                 _STORE = PostgresStateStore()
             else:
                 _STORE = SQLiteStateStore()
-        return _STORE
+        store = _STORE
+    from impact_vision.impact.identity import DEFAULT_TENANT, TenantGuard, current_tenant
+
+    tenant = current_tenant()
+    return store if tenant == DEFAULT_TENANT else TenantGuard(store, tenant)  # type: ignore[return-value]
 
 
 def set_state_store(store: StateStore | None) -> None:

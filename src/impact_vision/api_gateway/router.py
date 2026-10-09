@@ -105,6 +105,9 @@ app = FastAPI(
     version=_package_version(),
 )
 
+from impact_vision.api_gateway.oidc import IdentityMiddleware  # noqa: E402
+
+app.add_middleware(IdentityMiddleware)  # inner: who is calling, and may they (v8 W5.3)
 app.add_middleware(LocalGuardMiddleware)
 app.add_middleware(
     CORSMiddleware,
@@ -155,6 +158,10 @@ async def verify_api_key(
 ) -> None:
     """Verify the bearer token when IMPACT_VISION_API_KEY is set (read per request)."""
     if not configured_api_key():
+        return
+    from impact_vision.impact.identity import current_identity
+
+    if current_identity().auth in {"oidc", "api_key"}:  # signed in through IdentityMiddleware
         return
     if request.url.path in {"/api/v1/health", "/health"}:
         return

@@ -61,9 +61,14 @@ _SHARE_HEADERS = {
 # ---------------------------------------------------------------- storage
 
 
+def _web_home() -> Path:
+    return Path(os.environ.get("IMPACT_VISION_WEB_HOME", Path.home() / ".openharness"))
+
+
 def reports_dir() -> Path:
-    root = Path(os.environ.get("IMPACT_VISION_WEB_HOME", Path.home() / ".openharness"))
-    target = root / "web-reports"
+    from impact_vision.impact.identity import tenant_home
+
+    target = tenant_home(_web_home()) / "web-reports"
     target.mkdir(parents=True, exist_ok=True)
     return target
 
@@ -197,7 +202,8 @@ def _share_key() -> bytes:
     raw = os.environ.get("IMPACT_VISION_SHARE_HMAC_KEY") or os.environ.get("IMPACT_VISION_HMAC_KEY")
     if raw:
         return raw.encode("utf-8")
-    key_file = reports_dir() / ".share.key"
+    (_web_home() / "web-reports").mkdir(parents=True, exist_ok=True)
+    key_file = _web_home() / "web-reports" / ".share.key"  # one key for every tenant
     if not key_file.exists():
         fd = os.open(key_file, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
         with os.fdopen(fd, "w") as fh:
@@ -216,7 +222,9 @@ def _unb64(text: str) -> bytes:
 def make_share_token(report_id: str, *, audience: str = "lp", lang: str = "en",
                      days: int = 14, now: float | None = None) -> tuple[str, int]:
     exp = int((now or time.time()) + max(1, min(days, SHARE_MAX_DAYS)) * 86400)
-    body = _b64(json.dumps({"r": report_id, "a": audience, "l": lang, "e": exp},
+    from impact_vision.impact.identity import current_tenant
+
+    body = _b64(json.dumps({"r": report_id, "a": audience, "l": lang, "e": exp, "t": current_tenant()},
                            separators=(",", ":")).encode())
     sig = _b64(hmac.new(_share_key(), body.encode(), hashlib.sha256).digest())
     return f"{body}.{sig}", exp
@@ -423,16 +431,23 @@ def build_shared_router() -> Any:
 
     @router.get("/shared/{token}", response_class=HTMLResponse, include_in_schema=False)
     async def shared(token: str) -> HTMLResponse:
+        from impact_vision.impact.identity import DEFAULT_TENANT, Identity, acting_as
+
         try:
             claims = read_share_token(token)
-            record = load_report(claims["r"])
-        except (ValueError, HTTPException):
+            # The link carries its tenant; read the report as a viewer of that tenant only.
+            viewer = Identity(sub="share-link", tenant_id=claims.get("t") or DEFAULT_TENANT,
+                              roles=("viewer",), auth="share")
+            with acting_as(viewer):
+                record = load_report(claims["r"])
+        except (ValueError, HTTPException, PermissionError):
             return HTMLResponse(
                 "<!doctype html><meta charset=utf-8><title>Link unavailable</title>"
                 "<p style='font:16px system-ui;margin:3rem'>This share link is invalid, expired "
                 "or has been revoked. Ask the sender for a new one.</p>",
                 status_code=404, headers=_SHARE_HEADERS)
-        html = render_report(record, audience=claims["a"], lang=claims["l"])
+        with acting_as(viewer):
+            html = render_report(record, audience=claims["a"], lang=claims["l"])
         return HTMLResponse(html, headers=_SHARE_HEADERS)
 
     return router

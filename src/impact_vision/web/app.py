@@ -28,6 +28,7 @@ from contextlib import asynccontextmanager
 from typing import Any, AsyncIterator
 
 try:
+    from impact_vision.api_gateway.oidc import build_auth_router
     from impact_vision.api_gateway.router import app as _gateway_app
     from impact_vision.api_gateway.router import verify_api_key
     from impact_vision.web.chat_api import build_chat_router, build_chat_ws_router
@@ -50,6 +51,7 @@ app.include_router(build_chat_router(auth_dependency=verify_api_key))
 app.include_router(build_chat_ws_router())
 app.include_router(build_reports_router(auth_dependency=verify_api_key))
 app.include_router(build_shared_router())
+app.include_router(build_auth_router())
 app.include_router(chat_ui_router())
 
 # The original tool console keeps working, now at /console.

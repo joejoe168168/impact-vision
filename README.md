@@ -775,8 +775,9 @@ HTTP at `/mcp` with bearer tokens, per-tool scopes (`read` / `assess` /
 ### Client setup
 
 For Cursor or VS Code, add the `impact-vision` stdio server to the client's MCP
-configuration. For Claude Desktop, copy
-`examples/claude_desktop_config.json` into its configuration directory.
+configuration. For Claude Desktop, copy `examples/claude_desktop_config.json`
+into its configuration directory. See
+[docs/cursor-integration.md](docs/cursor-integration.md) for client notes.
 
 ### MCP Resources
 
@@ -787,9 +788,6 @@ configuration. For Claude Desktop, copy
 | `impact://frameworks/list` | Supported ESG / impact frameworks |
 | `impact://cross-reference/{metric_id}` | Cross-framework mapping for one metric |
 | `impact://sdg/goals` | UN SDG goal reference data |
-
-See [docs/cursor-integration.md](docs/cursor-integration.md) for the full
-setup guide and client-specific notes.
 
 ## REST API
 
@@ -803,6 +801,8 @@ uvicorn impact_vision.api_gateway.router:app --reload
 # Authenticated (set env var for production)
 IMPACT_VISION_API_KEY=your-secret-key uvicorn impact_vision.api_gateway.router:app
 ```
+
+Shared team server with OIDC sign-in, tenants and roles: [docs/team-deployment.md](docs/team-deployment.md).
 
 Every impact tool is one generic route, generated from the tool registry:
 

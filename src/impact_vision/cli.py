@@ -350,12 +350,13 @@ def mcp_token_create(
     label: str = typer.Argument(..., help="Who or what the token is for (shown in the audit log)"),
     scope: list[str] = typer.Option(["assess"], "--scope", help="read, assess, write, files or admin; repeatable"),
     days: int = typer.Option(0, help="Expire after this many days (0 = no expiry)"),
+    tenant: str = typer.Option("default", help="Tenant whose data the token can reach"),
 ) -> None:
     """Create a token. It is printed once and only its hash is stored."""
     from impact_vision.impact.mcp_auth import TokenStore
 
     try:
-        token = TokenStore().create(label, scope, days=days or None)
+        token = TokenStore().create(label, scope, days=days or None, tenant=tenant)
     except ValueError as exc:
         print(f"Error: {exc}", file=sys.stderr)
         raise typer.Exit(1) from None
@@ -373,7 +374,7 @@ def mcp_token_list() -> None:
         print("No MCP tokens.")
     for r in rows:
         expiry = time.strftime("%Y-%m-%d", time.gmtime(r["expires"])) if r.get("expires") else "never"
-        print(f"{r['label']}: {', '.join(r['scopes'])} (expires {expiry})")
+        print(f"{r['label']}: {', '.join(r['scopes'])} · tenant {r['tenant']} (expires {expiry})")
 
 
 @mcp_token_app.command("revoke")

@@ -66,6 +66,7 @@ def default_token_path() -> Path:
 class Principal:
     label: str
     scopes: frozenset[str]
+    tenant_id: str = "default"
 
     def allows(self, scope: str) -> bool:
         return "admin" in self.scopes or scope in self.scopes
@@ -90,8 +91,12 @@ class TokenStore:
         os.chmod(tmp, 0o600)
         tmp.replace(self.path)
 
-    def create(self, label: str, scopes: list[str], *, days: int | None = None) -> str:
+    def create(self, label: str, scopes: list[str], *, days: int | None = None, tenant: str = "default") -> str:
         """Create a token and return it. It is not stored and can't be shown again."""
+        from impact_vision.impact.identity import valid_tenant_id
+
+        if not valid_tenant_id(tenant):
+            raise ValueError(f"invalid tenant id {tenant!r}")
         bad = [s for s in scopes if s not in SCOPES]
         if bad or not scopes:
             raise ValueError(f"unknown scope(s) {bad}; choose from {', '.join(SCOPES)}")
@@ -99,13 +104,15 @@ class TokenStore:
         if any(v["label"] == label for v in data.values()):
             raise ValueError(f"a token labelled {label!r} already exists")
         token = "ivmcp_" + secrets.token_urlsafe(32)
-        data[_hash(token)] = {"label": label, "scopes": sorted(set(scopes)), "created": int(time.time()),
+        data[_hash(token)] = {"label": label, "scopes": sorted(set(scopes)), "tenant": tenant,
+                              "created": int(time.time()),
                               "expires": int(time.time() + days * 86400) if days else None}
         self._save(data)
         return token
 
     def list(self) -> list[dict[str, Any]]:
-        return [{"label": v["label"], "scopes": v["scopes"], "created": v["created"], "expires": v.get("expires")}
+        return [{"label": v["label"], "scopes": v["scopes"], "tenant": v.get("tenant", "default"),
+                 "created": v["created"], "expires": v.get("expires")}
                 for v in self._load().values()]
 
     def revoke(self, label: str) -> bool:
@@ -122,7 +129,7 @@ class TokenStore:
         entry = self._load().get(_hash(token))
         if not entry or (entry.get("expires") and entry["expires"] < time.time()):
             return None
-        return Principal(entry["label"], frozenset(entry["scopes"]))
+        return Principal(entry["label"], frozenset(entry["scopes"]), entry.get("tenant", "default"))
 
 
 def discovery(tool_names: list[str], version: str) -> dict[str, Any]:
@@ -184,6 +191,10 @@ class AuthenticatedMCP:
                              [(b"www-authenticate", b'Bearer realm="impact-vision-mcp"')])
             return
 
+        from impact_vision.impact.identity import Identity, acting_as
+
+        who = Identity(sub=f"mcp:{principal.label}", tenant_id=principal.tenant_id,
+                       roles=("tenant_admin",) if principal.allows("admin") else ("analyst",), auth="mcp")
         body = b""
         more = True
         while more:
@@ -205,7 +216,8 @@ class AuthenticatedMCP:
             params = msg.get("params") or {}
             name = str(params.get("name", ""))
             if not principal.allows(tool_scope(name)):
-                _audit(principal, name, params.get("arguments"), "denied")
+                with acting_as(who):
+                    _audit(principal, name, params.get("arguments"), "denied")
                 await _send_json(send, 403, {"jsonrpc": "2.0", "id": msg.get("id"), "error": {
                     "code": -32003, "message": f"token '{principal.label}' lacks scope '{tool_scope(name)}' for {name}"}})
                 return
@@ -222,11 +234,12 @@ class AuthenticatedMCP:
                 status["code"] = message["status"]
             await send(message)
 
-        await self.app(scope, replay, watch)
-        for msg in calls:
-            params = msg.get("params") or {}
-            _audit(principal, str(params.get("name", "")), params.get("arguments"),
-                   "ok" if status.get("code", 500) < 400 else f"http_{status.get('code')}")
+        with acting_as(who):  # tools and the state store see the token's tenant (W5.3)
+            await self.app(scope, replay, watch)
+            for msg in calls:
+                params = msg.get("params") or {}
+                _audit(principal, str(params.get("name", "")), params.get("arguments"),
+                       "ok" if status.get("code", 500) < 400 else f"http_{status.get('code')}")
 
 
 def build_app(store: TokenStore | None = None, *, allowed_hosts: list[str] | None = None) -> AuthenticatedMCP:

@@ -76,12 +76,30 @@ _SAVED_TO = re.compile(r"saved to:\s*(.+?)\s*$", re.IGNORECASE | re.MULTILINE)
 _MAX_TRANSCRIPT_ROWS = 2000
 
 
-def web_chat_dir() -> Path:
-    """Return (and create) the directory holding persisted web transcripts."""
+def web_chat_dir(tenant_id: str | None = None) -> Path:
+    """Return (and create) the directory holding persisted web transcripts (per tenant)."""
+    from impact_vision.impact.identity import tenant_home
+
     root = Path(os.environ.get("IMPACT_VISION_WEB_HOME", Path.home() / ".openharness"))
-    target = root / "web-chat"
+    target = tenant_home(root, tenant_id) / "web-chat"
     target.mkdir(parents=True, exist_ok=True)
     return target
+
+
+def current_tenant() -> str:
+    from impact_vision.impact.identity import current_tenant as _ct
+
+    return _ct()
+
+
+def _visible(tenant_id: str, owner: str) -> bool:
+    """Same tenant, and the owner (or a tenant admin; everyone in local mode)."""
+    from impact_vision.impact.identity import current_identity
+
+    who = current_identity()
+    if tenant_id != who.tenant_id:
+        return False
+    return who.auth == "local" or who.is_admin or owner == who.sub
 
 
 def _fund_read_roots(opts: "SessionOptions") -> list[Path]:
@@ -166,6 +184,11 @@ class ChatSession:
         options: SessionOptions | None = None,
         title: str = "New chat",
     ) -> None:
+        from impact_vision.impact.identity import current_identity
+
+        who = current_identity()
+        self.tenant_id = who.tenant_id
+        self.owner = who.sub
         self.session_id = session_id or uuid4().hex[:12]
         self.options = options or SessionOptions()
         self.title = title
@@ -606,12 +629,14 @@ class ChatSession:
     # ------------------------------------------------------------------
 
     def _store_path(self) -> Path:
-        return web_chat_dir() / f"{self.session_id}.json"
+        return web_chat_dir(self.tenant_id) / f"{self.session_id}.json"
 
     def persist(self) -> None:
         """Write the transcript to disk so it survives a server restart."""
         payload = {
             "session_id": self.session_id,
+            "tenant_id": self.tenant_id,
+            "owner": self.owner,
             "title": self.title,
             "created_at": self.created_at,
             "updated_at": self.updated_at,
@@ -648,6 +673,7 @@ class ChatSession:
                 cwd=stored_options.get("cwd"),
             ),
         )
+        session.owner = payload.get("owner") or "local"  # pre-0.19 transcripts belong to the local user
         session.created_at = float(payload.get("created_at") or _now())
         session.updated_at = float(payload.get("updated_at") or session.created_at)
         session.transcript = list(payload.get("transcript") or [])
@@ -683,9 +709,11 @@ class ChatSessionManager:
     def get(self, session_id: str) -> ChatSession | None:
         session = self.sessions.get(session_id)
         if session is not None:
-            return session
+            return session if _visible(session.tenant_id, session.owner) else None
         restored = self._load_from_disk(session_id)
         if restored is not None:
+            if not _visible(restored.tenant_id, restored.owner):
+                return None
             self.sessions[restored.session_id] = restored
         return restored
 
@@ -697,6 +725,8 @@ class ChatSessionManager:
         return self.create()
 
     async def delete(self, session_id: str) -> bool:
+        if self.get(session_id) is None:
+            return False
         session = self.sessions.pop(session_id, None)
         if session is not None:
             await session.close()
@@ -723,6 +753,8 @@ class ChatSessionManager:
         """Live sessions merged over the on-disk archive, newest first."""
         merged: dict[str, dict[str, Any]] = {}
         for payload in self._archive_payloads():
+            if not _visible(payload.get("tenant_id") or current_tenant(), payload.get("owner") or "local"):
+                continue
             merged[payload["session_id"]] = {
                 "session_id": payload["session_id"],
                 "title": payload.get("title") or "New chat",
@@ -735,7 +767,8 @@ class ChatSessionManager:
                 "model": (payload.get("options") or {}).get("model"),
             }
         for session in self.sessions.values():
-            merged[session.session_id] = session.meta()
+            if _visible(session.tenant_id, session.owner):
+                merged[session.session_id] = session.meta()
         return sorted(merged.values(), key=lambda item: item.get("updated_at") or 0, reverse=True)
 
     def _archive_payloads(self) -> list[dict[str, Any]]:
