@@ -320,8 +320,25 @@ class WebhookRegistration(BaseModel):
     )
 
 
-_webhooks: list[dict] = []
-_batch_jobs: dict[str, dict] = {}
+# Webhooks and batch jobs live in the state store so they survive a restart
+# and are shared by every worker (v8 W5.4).
+_GATEWAY = "gateway"
+_running_jobs: set[str] = set()
+
+
+def _state():  # noqa: ANN202
+    from impact_vision.impact.state_store import get_state_store
+
+    return get_state_store()
+
+
+def _webhook_list() -> list[dict]:
+    store = _state()
+    return [w for k in store.keys(_GATEWAY, "webhook") if (w := store.get(_GATEWAY, "webhook", k))]
+
+
+def _save_job(job_id: str, job: dict) -> None:
+    _state().put(_GATEWAY, "batch_job", job_id, job)
 
 
 def _build_company(req: CompanyRequest) -> Company:
@@ -359,7 +376,7 @@ async def _fire_webhooks(event: str, payload: dict) -> None:
         import httpx
     except ImportError:
         return
-    for wh in _webhooks:
+    for wh in _webhook_list():
         if event not in wh["events"]:
             continue
         if wh.get("company_name") and wh["company_name"] != payload.get("company", ""):
@@ -952,12 +969,14 @@ async def esg_toolbox_endpoint(req: ESGToolboxRequest):
 async def batch_assess(req: BatchRequest):
     """Submit multiple companies for assessment. Returns a job ID for async processing."""
     job_id = str(uuid.uuid4())
-    _batch_jobs[job_id] = {
+    job: dict[str, Any] = {
         "status": "processing",
         "total": len(req.companies),
         "completed": 0,
         "results": [],
     }
+    _save_job(job_id, job)
+    _running_jobs.add(job_id)
 
     async def _run_batch():
         for company_req in req.companies:
@@ -996,10 +1015,13 @@ async def batch_assess(req: BatchRequest):
             except Exception as exc:
                 entry["error"] = str(exc)
 
-            _batch_jobs[job_id]["results"].append(entry)
-            _batch_jobs[job_id]["completed"] += 1
+            job["results"].append(entry)
+            job["completed"] += 1
+            _save_job(job_id, job)
 
-        _batch_jobs[job_id]["status"] = "complete"
+        job["status"] = "complete"
+        _save_job(job_id, job)
+        _running_jobs.discard(job_id)
         await _fire_webhooks(
             "assessment_complete",
             {
@@ -1014,9 +1036,11 @@ async def batch_assess(req: BatchRequest):
 
 @app.get("/api/v1/batch/{job_id}", dependencies=[Depends(verify_api_key)])
 async def batch_status(job_id: str):
-    job = _batch_jobs.get(job_id)
+    job = _state().get(_GATEWAY, "batch_job", job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Batch job not found")
+    if job["status"] == "processing" and job_id not in _running_jobs:
+        job["status"] = "interrupted"  # the process running it stopped; results so far are kept
     return job
 
 
@@ -1052,15 +1076,13 @@ async def survey_delivery_webhook(channel_id: str, request: SurveyWebhookRequest
 async def register_webhook(reg: WebhookRegistration):
     await _ensure_webhook_target(reg.url)
     webhook_id = str(uuid.uuid4())
-    _webhooks.append(
-        {
-            "id": webhook_id,
-            "url": reg.url,
-            "events": reg.events,
-            "company_name": reg.company_name,
-            "secret": reg.secret,
-        }
-    )
+    _state().put(_GATEWAY, "webhook", webhook_id, {
+        "id": webhook_id,
+        "url": reg.url,
+        "events": reg.events,
+        "company_name": reg.company_name,
+        "secret": reg.secret,
+    })
     return {
         "status": "registered",
         "webhook_id": webhook_id,
@@ -1080,16 +1102,14 @@ async def list_webhooks():
                 "events": w["events"],
                 "company_name": w.get("company_name", ""),
             }
-            for w in _webhooks
+            for w in _webhook_list()
         ]
     }
 
 
 @app.delete("/api/v1/webhook/{webhook_id}", dependencies=[Depends(verify_api_key)])
 async def delete_webhook(webhook_id: str):
-    global _webhooks
-    before = len(_webhooks)
-    _webhooks = [w for w in _webhooks if w.get("id") != webhook_id]
-    if len(_webhooks) == before:
+    if not _state().get(_GATEWAY, "webhook", webhook_id):
         raise HTTPException(status_code=404, detail="Webhook not found")
+    _state().delete(_GATEWAY, "webhook", webhook_id)
     return {"status": "deleted", "webhook_id": webhook_id}

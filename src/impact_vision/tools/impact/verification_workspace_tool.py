@@ -14,6 +14,7 @@ from impact_vision.impact.verification_workspace import (
     VerificationWorkspace,
     open_workspace,
 )
+from impact_vision.tools.impact.common import load_state, save_state
 from impact_vision.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 
@@ -33,6 +34,10 @@ class VerificationWorkspaceInput(BaseModel):
         "issa5000_pack",
     ] = Field(description="Action to perform on the verifier workspace (or pre-verification prep).")
     pack: dict = Field(default_factory=dict, description="AssurancePack payload (for 'open')")
+    workspace_id: str = Field(
+        default="", description="Saved workspace to load and update (every 'open' is saved under its id)"
+    )
+    tenant_id: str = "default"
     workspace: dict = Field(
         default_factory=dict, description="VerificationWorkspace state to mutate"
     )
@@ -164,12 +169,16 @@ class VerificationWorkspaceTool(BaseTool):
                 )
             except Exception as e:  # noqa: BLE001
                 return ToolResult(output=f"Open failed: {e}", is_error=True)
+            _save_workspace(workspace, args.tenant_id)
             return _ok(workspace.to_api_payload())
 
-        if not args.workspace:
-            return ToolResult(output="workspace state required for this action", is_error=True)
+        state = args.workspace or (load_state(args.tenant_id, "verification_workspace", args.workspace_id)
+                                   if args.workspace_id else None)
+        if not state:
+            return ToolResult(output="workspace state or a saved workspace_id is required for this action",
+                              is_error=True)
         try:
-            workspace = VerificationWorkspace.model_validate(args.workspace)
+            workspace = VerificationWorkspace.model_validate(state)
         except Exception as e:  # noqa: BLE001
             return ToolResult(output=f"Invalid workspace state: {e}", is_error=True)
 
@@ -209,7 +218,13 @@ class VerificationWorkspaceTool(BaseTool):
         except (KeyError, ValueError) as e:
             return ToolResult(output=str(e), is_error=True)
 
+        if args.action != "snapshot":
+            _save_workspace(workspace, args.tenant_id)
         return _ok(workspace.to_api_payload())
+
+
+def _save_workspace(workspace: VerificationWorkspace, tenant_id: str) -> None:
+    save_state(tenant_id, "verification_workspace", workspace.workspace_id, workspace.model_dump(mode="json"))
 
 
 def _ok(payload: dict) -> ToolResult:

@@ -7,6 +7,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from impact_vision.tools.impact.common import load_state, save_state
 from impact_vision.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 
@@ -23,6 +24,8 @@ class LPNarrativeInput(BaseModel):
     risk_callouts: list[str] = Field(default_factory=list)
     opportunity_callouts: list[str] = Field(default_factory=list)
     workspace: dict = Field(default_factory=dict)
+    workspace_name: str = Field(default="", description="Saved Q&A workspace to load and update")
+    tenant_id: str = "default"
     approved_records: list[dict] = Field(default_factory=list, description="MetricRecord payloads (verified only)")
     question: dict = Field(default_factory=dict, description="LPQuestion payload")
     question_id: str = ""
@@ -104,6 +107,8 @@ class LPNarrativeTool(BaseTool):
         except (KeyError, ValueError) as e:
             return ToolResult(output=str(e), is_error=True)
 
+        if args.workspace_name and args.action != "qa_export":
+            save_state(args.tenant_id, "lp_qa_workspace", args.workspace_name, workspace.model_dump(mode="json"))
         return _ok(workspace.export())
 
     def _load_workspace(self, args: LPNarrativeInput):
@@ -112,6 +117,9 @@ class LPNarrativeTool(BaseTool):
 
         if args.workspace:
             return LPQuestionWorkspace.model_validate(args.workspace)
+        saved = load_state(args.tenant_id, "lp_qa_workspace", args.workspace_name) if args.workspace_name else None
+        if saved:
+            return LPQuestionWorkspace.model_validate(saved)
         records = [MetricRecord.model_validate(r) for r in args.approved_records]
         return LPQuestionWorkspace(
             fund_name=args.fund_name,

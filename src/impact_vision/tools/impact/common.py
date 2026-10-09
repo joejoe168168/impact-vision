@@ -5,6 +5,7 @@ from __future__ import annotations
 import html
 import re
 from collections.abc import Iterable
+from typing import Any
 
 METRIC_ID_PATTERN = re.compile(r"^(PI|OI|OD|FP|PD)\d{4}$", re.IGNORECASE)
 EDCI_METRIC_ID_PATTERN = re.compile(r"^EDCI-[A-Z0-9-]+$", re.IGNORECASE)
@@ -504,3 +505,26 @@ def hydrate_from_assessment(args):  # type: ignore[no-untyped-def]
         if claim_field in fields and not getattr(args, claim_field) and claims:
             update[claim_field] = claims
     return args.model_copy(update=update), None
+
+
+# --------------------------------------------------------------------------- saved state (v8 W5.4)
+
+
+def load_state(tenant_id: str, kind: str, key: str) -> dict[str, Any] | None:
+    """A tool's saved state from the state store (SQLite by default)."""
+    from impact_vision.impact.state_store import get_state_store
+
+    return get_state_store().get(tenant_id or "default", kind, key)
+
+
+def save_state(tenant_id: str, kind: str, key: str, payload: dict[str, Any]) -> None:
+    from impact_vision.impact.state_store import get_state_store
+
+    get_state_store().put(tenant_id or "default", kind, key, payload)
+
+
+def list_state(tenant_id: str, kind: str) -> list[dict[str, Any]]:
+    from impact_vision.impact.state_store import get_state_store
+
+    store = get_state_store()
+    return [p for k in store.keys(tenant_id or "default", kind) if (p := store.get(tenant_id or "default", kind, k))]

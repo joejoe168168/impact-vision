@@ -35,6 +35,27 @@ CREATE TABLE IF NOT EXISTS iv_state (
 """
 
 
+# Schema migrations, applied in order and recorded in iv_schema (v8 W5.4).
+# Append only: never edit a released step. Each SQL runs on SQLite and Postgres.
+MIGRATIONS: list[tuple[int, str]] = [
+    (1, _TABLE),
+    (2, "CREATE INDEX IF NOT EXISTS iv_state_kind ON iv_state (tenant_id, kind, updated_at)"),
+]
+SCHEMA_VERSION = MIGRATIONS[-1][0]
+
+
+def _migrate(execute: Any, fetch_version: Any, mark: Any) -> int:
+    """Run pending migrations; returns the schema version afterwards."""
+    execute("CREATE TABLE IF NOT EXISTS iv_schema (version INTEGER NOT NULL, applied_at TEXT NOT NULL)")
+    current = fetch_version() or 0
+    for version, sql in MIGRATIONS:
+        if version > current:
+            execute(sql)
+            mark(version)
+            current = version
+    return int(current)
+
+
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
@@ -77,7 +98,11 @@ class SQLiteStateStore:
         self._conn = sqlite3.connect(str(self.path), check_same_thread=False)
         with self._lock:
             self._conn.execute("PRAGMA journal_mode=WAL")
-            self._conn.execute(_TABLE)
+            self.schema_version = _migrate(
+                self._conn.execute,
+                lambda: self._conn.execute("SELECT MAX(version) FROM iv_schema").fetchone()[0],
+                lambda v: self._conn.execute("INSERT INTO iv_schema VALUES (?, ?)", (v, _now())),
+            )
             self._conn.commit()
 
     def get(self, tenant_id: str, kind: str, key: str) -> dict[str, Any] | None:
@@ -131,7 +156,12 @@ class PostgresStateStore:
         self._conn = connection
         self._lock = threading.Lock()
         with self._lock, self._conn.cursor() as cur:
-            cur.execute(_TABLE)
+            def version() -> Any:
+                cur.execute("SELECT MAX(version) FROM iv_schema")
+                return cur.fetchone()[0]
+
+            self.schema_version = _migrate(
+                cur.execute, version, lambda v: cur.execute("INSERT INTO iv_schema VALUES (%s, %s)", (v, _now())))
         self._conn.commit()
 
     def _one(self, sql: str, params: tuple) -> Any:

@@ -16,6 +16,7 @@ from impact_vision.impact.stakeholder_voice import (
     revoke_consent,
     score_feedback_quality,
 )
+from impact_vision.tools.impact.common import list_state, load_state, save_state
 from impact_vision.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 
@@ -26,6 +27,7 @@ class StakeholderVoiceInput(BaseModel):
         "link_feedback",
         "consent_grant",
         "consent_revoke",
+        "consent_list",
     ] = Field(description="Action to perform.")
     sector: str = Field(default="generic")
     languages: list[str] = Field(default_factory=lambda: ["en"])
@@ -41,6 +43,7 @@ class StakeholderVoiceInput(BaseModel):
     claims: list[dict] = Field(default_factory=list, description="ImpactClaim payloads")
     consent: dict = Field(default_factory=dict, description="ConsentRecord payload")
     consent_id: str = ""
+    tenant_id: str = "default"
     output_format: Literal["json", "text"] = "json"
 
 
@@ -49,12 +52,13 @@ class StakeholderVoiceTool(BaseTool):
     description = (
         "Lean Data 60-Decibels-style survey builder, GDPR/PDPA consent capture, "
         "beneficiary feedback quality scoring, and feedback-to-claim evidence linking. "
-        "Actions: 'build_survey', 'score_quality', 'link_feedback', 'consent_grant', 'consent_revoke'."
+        "Actions: 'build_survey', 'score_quality', 'link_feedback', 'consent_grant', 'consent_revoke', "
+        "'consent_list'. Consents are kept in a register (granted and revoked records)."
     )
     input_model = StakeholderVoiceInput
 
     def is_read_only(self, arguments: BaseModel) -> bool:
-        return True
+        return getattr(arguments, "action", "") not in {"consent_grant", "consent_revoke"}
 
     async def execute(self, arguments: BaseModel, context: ToolExecutionContext) -> ToolResult:
         args = arguments if isinstance(arguments, StakeholderVoiceInput) else StakeholderVoiceInput.model_validate(arguments)
@@ -93,17 +97,27 @@ class StakeholderVoiceTool(BaseTool):
                 record = ConsentRecord.model_validate(args.consent)
             except Exception as e:  # noqa: BLE001
                 return ToolResult(output=f"Invalid consent payload: {e}", is_error=True)
+            save_state(args.tenant_id, "consent", record.consent_id, record.model_dump(mode="json"))
             return _ok(record.model_dump(mode="json"))
 
         if args.action == "consent_revoke":
-            if not args.consent:
-                return ToolResult(output="consent payload required", is_error=True)
+            payload = args.consent or (load_state(args.tenant_id, "consent", args.consent_id)
+                                       if args.consent_id else None)
+            if not payload:
+                return ToolResult(output="consent payload or a registered consent_id is required", is_error=True)
             try:
-                record = ConsentRecord.model_validate(args.consent)
+                record = ConsentRecord.model_validate(payload)
             except Exception as e:  # noqa: BLE001
                 return ToolResult(output=f"Invalid consent payload: {e}", is_error=True)
             revoked = revoke_consent(record)
+            save_state(args.tenant_id, "consent", revoked.consent_id, revoked.model_dump(mode="json"))
             return _ok(revoked.model_dump(mode="json"))
+
+        if args.action == "consent_list":
+            records = [ConsentRecord.model_validate(r) for r in list_state(args.tenant_id, "consent")]
+            return _ok({"consents": [r.model_dump(mode="json") for r in records],
+                        "active": sum(1 for r in records if r.is_active),
+                        "revoked": sum(1 for r in records if not r.is_active)})
 
         return ToolResult(output=f"Unknown action: {args.action}", is_error=True)
 
