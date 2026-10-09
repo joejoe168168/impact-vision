@@ -11,6 +11,31 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Added
+- **Connectors (read-only):** data-room folder, Google Drive, SharePoint / OneDrive, Affinity and
+  DealCloud. `impact-vision connect docs | deals` copies new documents (optionally assessing them)
+  and follows CRM stages in the pipeline. See `docs/connectors.md`.
+- **Expert calibration toolkit:** `impact-vision calibrate packet | analyze`. It covers blind
+  rating packets, Krippendorff's α, a proportional-odds fit of expert ratings and a report. The
+  protocol is in `docs/methodology/calibration-protocol.md`.
+- **Agent evals:** `impact-vision eval agents` checks trajectories across provider presets:
+  tools used, `assessment_id` hand-off, no invented figures and refusal to invent evidence.
+  Each run uses a throwaway database.
+- **Reviewer sign-off (EU AI Act Art 50):** sign off a report from the viewer or
+  `POST /api/v1/chat/reports/{id}/sign-off`. The reviewer is recorded in the visible disclosure,
+  the machine-readable marking (`reviewedBy`), the audit trail and the company record.
+- **HKFRS S1 gap tool:** `impact-vision framework hkfrs-s1 report.pdf`, for reports in English
+  or Traditional Chinese.
+- **China:** the CN profile now includes the MoF Basic Standard and Climate Standard No. 1
+  (Trial).
+- **PCAF Dec-2025 update:** three new asset classes; undrawn commitments and avoided emissions
+  are reported beside the inventory, never netted.
+- **Scope 3 method flag** (`data/methodology/ghg.yaml`). Inventories record the method that
+  produced them.
+
+### Changed
+- The release workflow skips PyPI until the repository variable `PYPI_PUBLISH` is `true`.
+
 ## [0.19.0] - 2026-10-09 - Connected (roadmap v8, second pass)
 
 A fund team can now share one server: people sign in, each fund's data is

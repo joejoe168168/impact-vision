@@ -343,16 +343,24 @@ to be fixed on other documents and never by tuning on this set:
 - Strong evidence (an RCT, a verified comparison group) still gives "evidence
   plan" rather than "ready" when core-metric coverage is low.
 
-**Still to do**
-- **W2.6:** the expert calibration study. It needs 2–3 practitioners to rate
-  50–100 decks.
-- **W2.7:** cross-provider agent evals. These need API keys.
-- **W3.5:** CRM, Drive and data-room connectors, and the ILPA export once the
-  template is final in Jan 2027.
-- **Standards (Wave 4):** the dated items in §2.1, scheduled for when each text
-  is final.
-- **Release setup:** the first PyPI release needs a one-time trusted-publisher
-  setup on PyPI.
+- **After 0.19.0 (on main, unreleased):**
+  - **W2.6:** calibration toolkit (blind packets, Krippendorff's α checked against the published
+    example, proportional-odds fit, report; `docs/methodology/calibration-protocol.md`).
+  - **W2.7:** agent trajectory evals across provider presets (`impact-vision eval agents`).
+  - **W3.5:** read-only connectors (data room, Google Drive, SharePoint, Affinity, DealCloud).
+  - **Wave 4:** reviewer sign-off for AI Act Art 50; China MoF profile; PCAF Dec-2025 update;
+    HKFRS S1 gap tool; Scope 3 method flag; ILPA template on the watchlist.
+
+**Still to do (needs people, keys or final texts)**
+- **W2.6:** run the study: 2–3 practitioners rate 50–100 decks with the packet; then fit and
+  publish Methodology 2.x as `calibrated`.
+- **W2.7:** run `impact-vision eval agents` with API keys; let the results set each preset's
+  recommended model.
+- **Release setup:** PyPI trusted publisher, then set the repository variable `PYPI_PUBLISH=true`.
+- **Waiting for final texts:** ILPA Portfolio Company Template (Jan 2027) export; ESRS XBRL annex
+  datapoint codes (2027); ISSB nature Practice Statement mapping (ED ~Oct 2026, final later);
+  HK Taxonomy Phase 2B screen (~H1 2027); SFDR 2.0 final-text sprint (after the political deal);
+  GHG Protocol Scope 3 revision (add as a method in `data/methodology/ghg.yaml` when final).
 
 | Release | Target | Contents |
 |---|---|---|
