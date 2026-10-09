@@ -14,7 +14,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from openharness.impact.knowledge import MAX_AGE_DAYS, freshness_report  # noqa: E402
+from impact_vision.impact.knowledge import MAX_AGE_DAYS, freshness_report  # noqa: E402
 
 
 def main() -> int:

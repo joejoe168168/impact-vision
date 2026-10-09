@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import asyncio
 
-from openharness.tools.base import ToolExecutionContext
+from impact_vision.tools.base import ToolExecutionContext
 
 
 def _ctx() -> ToolExecutionContext:
@@ -15,7 +15,7 @@ def _ctx() -> ToolExecutionContext:
 
 # --------------------------------------------------------------------------- B2
 def test_impact_quantifier_welfare_and_rollup() -> None:
-    from openharness.impact.impact_quantifier import (
+    from impact_vision.impact.impact_quantifier import (
         ImpactQuantifierInput, quantify_welfare, rollup_welfare,
     )
 
@@ -38,7 +38,7 @@ def test_impact_quantifier_welfare_and_rollup() -> None:
 
 
 def test_impact_quantifier_tool() -> None:
-    from openharness.tools.impact.impact_quantifier_tool import ImpactQuantifierTool
+    from impact_vision.tools.impact.impact_quantifier_tool import ImpactQuantifierTool
 
     tool = ImpactQuantifierTool()
     res = asyncio.run(tool.execute(
@@ -51,7 +51,7 @@ def test_impact_quantifier_tool() -> None:
 
 # --------------------------------------------------------------------------- A3
 def test_hrdd_gross_risk_ranks_first_and_csddd_band() -> None:
-    from openharness.impact.hrdd import (
+    from impact_vision.impact.hrdd import (
         GrievanceMechanism, HRDDInput, SalientIssue, assess_hrdd, seed_salient_issues_from_text,
     )
 
@@ -76,7 +76,7 @@ def test_hrdd_gross_risk_ranks_first_and_csddd_band() -> None:
 
 
 def test_hrdd_tool() -> None:
-    from openharness.tools.impact.hrdd_tool import HRDDTool
+    from impact_vision.tools.impact.hrdd_tool import HRDDTool
 
     tool = HRDDTool()
     res = asyncio.run(tool.execute(
@@ -89,7 +89,7 @@ def test_hrdd_tool() -> None:
 
 # --------------------------------------------------------------------------- B4
 def test_tisfd_readiness_four_pillars() -> None:
-    from openharness.impact.frameworks.tisfd import assess_tisfd_readiness, get_tisfd_disclosures
+    from impact_vision.impact.frameworks.tisfd import assess_tisfd_readiness, get_tisfd_disclosures
 
     assert len(get_tisfd_disclosures()) == 13
     t = assess_tisfd_readiness(
@@ -104,7 +104,7 @@ def test_tisfd_readiness_four_pillars() -> None:
 
 
 def test_tisfd_framework_tool_mode() -> None:
-    from openharness.tools.impact.framework_tool import FrameworkTool
+    from impact_vision.tools.impact.framework_tool import FrameworkTool
 
     tool = FrameworkTool()
     res = asyncio.run(tool.execute({"framework": "tisfd", "action": "list"}, _ctx()))
@@ -114,7 +114,7 @@ def test_tisfd_framework_tool_mode() -> None:
 
 # --------------------------------------------------------------------------- B5
 def test_target_setter_ranges_and_trajectory() -> None:
-    from openharness.impact.impact_target_setter import TargetSetterInput, set_impact_targets
+    from impact_vision.impact.impact_target_setter import TargetSetterInput, set_impact_targets
 
     ts = set_impact_targets(TargetSetterInput(
         theme="financial_inclusion", geography="low_income", capital_usd=10_000_000,
@@ -129,7 +129,7 @@ def test_target_setter_ranges_and_trajectory() -> None:
 
 
 def test_decision_workflow_set_targets_action() -> None:
-    from openharness.tools.impact.decision_workflow_tool import DecisionWorkflowTool
+    from impact_vision.tools.impact.decision_workflow_tool import DecisionWorkflowTool
 
     tool = DecisionWorkflowTool()
     res = asyncio.run(tool.execute(
@@ -143,7 +143,7 @@ def test_decision_workflow_set_targets_action() -> None:
 
 # --------------------------------------------------------------------------- E1
 def test_climate_scenarios_exposure() -> None:
-    from openharness.impact.climate_scenario import (
+    from impact_vision.impact.climate_scenario import (
         ClimateScenarioInput, PortfolioHolding, assess_climate_scenarios,
     )
 
@@ -161,7 +161,7 @@ def test_climate_scenarios_exposure() -> None:
 
 
 def test_climate_scenario_tool() -> None:
-    from openharness.tools.impact.climate_scenario_tool import ClimateScenarioTool
+    from impact_vision.tools.impact.climate_scenario_tool import ClimateScenarioTool
 
     tool = ClimateScenarioTool()
     res = asyncio.run(tool.execute(
@@ -174,10 +174,10 @@ def test_climate_scenario_tool() -> None:
 
 # --------------------------------------------------------------------------- E2
 def test_ai_governance_classification_and_artifact() -> None:
-    from openharness.impact.ai_governance import (
+    from impact_vision.impact.ai_governance import (
         build_ai_governance_artifact, classify_ai_act_risk,
     )
-    from openharness.impact.engagements.copilot import CopilotOutput
+    from impact_vision.impact.engagements.copilot import CopilotOutput
 
     assert classify_ai_act_risk(
         "extract impact claims and map to IRIS+",
@@ -203,7 +203,7 @@ def test_ai_governance_classification_and_artifact() -> None:
 
 
 def test_ai_governance_tool() -> None:
-    from openharness.tools.impact.ai_governance_tool import AIGovernanceTool
+    from impact_vision.tools.impact.ai_governance_tool import AIGovernanceTool
 
     tool = AIGovernanceTool()
     res = asyncio.run(tool.execute({"action": "model_card"}, _ctx()))
@@ -213,7 +213,7 @@ def test_ai_governance_tool() -> None:
 
 # --------------------------------------------------------------------------- C2
 def test_investee_portal_html() -> None:
-    from openharness.impact.investee_portal import (
+    from impact_vision.impact.investee_portal import (
         build_investee_portal, default_portal_sections, portal_schema,
     )
 
@@ -229,7 +229,7 @@ def test_investee_portal_html() -> None:
 
 
 def test_investee_portal_tool_schema() -> None:
-    from openharness.tools.impact.investee_portal_tool import InvesteePortalTool
+    from impact_vision.tools.impact.investee_portal_tool import InvesteePortalTool
 
     tool = InvesteePortalTool()
     res = asyncio.run(tool.execute({"action": "schema"}, _ctx()))
@@ -239,8 +239,8 @@ def test_investee_portal_tool_schema() -> None:
 
 # --------------------------------------------------------------- Track D report
 def test_report_audience_tearsheet_uncertainty_dark() -> None:
-    from openharness.impact.models import Company
-    from openharness.tools.impact.impact_report_tool import _to_html
+    from impact_vision.impact.models import Company
+    from impact_vision.tools.impact.impact_report_tool import _to_html
 
     company = Company(name="Acme Solar", description="Solar in Kenya", sector="Energy",
                       impact_themes=["Clean Energy"], sdg_claims=[7, 13])
@@ -282,7 +282,7 @@ def test_report_audience_tearsheet_uncertainty_dark() -> None:
 
 
 def test_report_branding_injection() -> None:
-    from openharness.impact.branding import inject_branding_css, load_branding
+    from impact_vision.impact.branding import inject_branding_css, load_branding
 
     html = "<html><head><style>x</style></head><body>hi</body></html>"
     branded = inject_branding_css(html, load_branding(raw={"fund_name": "Example", "primary_color": "#0d47a1"}))

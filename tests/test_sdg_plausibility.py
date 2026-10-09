@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import yaml
 
-from openharness.impact.database import get_metric_store
-from openharness.impact.models import Company
-from openharness.impact.sdg_mapper import generate_sdg_gap_recommendations, map_sdg_alignment
-from openharness.impact.sdk import ImpactVision
+from impact_vision.impact.database import get_metric_store
+from impact_vision.impact.models import Company
+from impact_vision.impact.sdg_mapper import generate_sdg_gap_recommendations, map_sdg_alignment
+from impact_vision.impact.sdk import ImpactVision
 
 
 def _brightpath() -> Company:

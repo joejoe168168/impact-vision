@@ -6,7 +6,7 @@ import json
 import asyncio
 from pathlib import Path
 
-from openharness.impact.models import Company
+from impact_vision.impact.models import Company
 
 
 def _make_report_data(company_name: str = "TestCo") -> dict:
@@ -28,20 +28,20 @@ def _make_report_data(company_name: str = "TestCo") -> dict:
 
 class TestTextReport:
     def test_to_text_includes_company_name(self) -> None:
-        from openharness.tools.impact.impact_report_tool import _to_text
+        from impact_vision.tools.impact.impact_report_tool import _to_text
         data = _make_report_data()
         text = _to_text(data)
         assert "TestCo" in text
 
     def test_to_text_includes_company_info(self) -> None:
-        from openharness.tools.impact.impact_report_tool import _to_text
+        from impact_vision.tools.impact.impact_report_tool import _to_text
         data = _make_report_data()
         text = _to_text(data)
         assert "IMPACT ASSESSMENT REPORT" in text
         assert "TestCo" in text
 
     def test_to_text_snapshot_includes_claim_evidence(self) -> None:
-        from openharness.tools.impact.impact_report_tool import _to_text
+        from impact_vision.tools.impact.impact_report_tool import _to_text
         data = _make_report_data()
         data["impact_claims"] = [
             {
@@ -65,21 +65,21 @@ class TestTextReport:
 
 class TestCSVReport:
     def test_to_csv_returns_string(self) -> None:
-        from openharness.tools.impact.impact_report_tool import _to_csv
+        from impact_vision.tools.impact.impact_report_tool import _to_csv
         data = _make_report_data()
         csv_output = _to_csv(data)
         assert isinstance(csv_output, str)
         assert len(csv_output) > 0
 
     def test_to_csv_has_headers(self) -> None:
-        from openharness.tools.impact.impact_report_tool import _to_csv
+        from impact_vision.tools.impact.impact_report_tool import _to_csv
         data = _make_report_data()
         csv_output = _to_csv(data)
         first_line = csv_output.strip().split("\n")[0]
         assert "," in first_line
 
     def test_to_csv_includes_claim_rows(self) -> None:
-        from openharness.tools.impact.impact_report_tool import _to_csv
+        from impact_vision.tools.impact.impact_report_tool import _to_csv
         data = _make_report_data()
         data["impact_claims"] = [
             {"text": "Avoided emissions", "category": "outcome", "mapped_metrics": ["OI4112"]},
@@ -90,27 +90,27 @@ class TestCSVReport:
 
 class TestHTMLReport:
     def test_to_html_returns_valid_html(self) -> None:
-        from openharness.tools.impact.impact_report_tool import _to_html
+        from impact_vision.tools.impact.impact_report_tool import _to_html
         data = _make_report_data()
         html = _to_html(data)
         assert html.startswith("<!DOCTYPE html>")
         assert "</html>" in html
 
     def test_to_html_includes_company_name(self) -> None:
-        from openharness.tools.impact.impact_report_tool import _to_html
+        from impact_vision.tools.impact.impact_report_tool import _to_html
         data = _make_report_data()
         html = _to_html(data)
         assert "TestCo" in html
 
     def test_to_html_includes_plotly(self) -> None:
-        from openharness.tools.impact.impact_report_tool import _to_html
+        from impact_vision.tools.impact.impact_report_tool import _to_html
         data = _make_report_data()
         html = _to_html(data)
         assert "plotly" in html.lower()
 
     def test_to_html_includes_ux_polish_chrome(self) -> None:
         """Track D polish: reading progress, utility dock, scrollspy."""
-        from openharness.tools.impact.impact_report_tool import _to_html
+        from impact_vision.tools.impact.impact_report_tool import _to_html
         data = _make_report_data()
         html = _to_html(data)
         # reading-progress bar
@@ -138,7 +138,7 @@ class TestHTMLReport:
         assert "mh-name" in html
 
     def test_to_html_sticky_header_shows_grade(self) -> None:
-        from openharness.tools.impact.impact_report_tool import _to_html
+        from impact_vision.tools.impact.impact_report_tool import _to_html
         data = _make_report_data("StickyCo")
         data["five_dimensions"] = {
             "what": {"dimension": "What", "score": 3.0, "metrics_reported": 1, "metrics_available": 10, "gaps": [], "notes": "t", "provenance": "partial"},
@@ -155,7 +155,7 @@ class TestHTMLReport:
 
     def test_to_html_print_cover_and_page_footer(self) -> None:
         """Track D polish: print-only cover page + @page running footer."""
-        from openharness.tools.impact.impact_report_tool import _to_html
+        from impact_vision.tools.impact.impact_report_tool import _to_html
         data = _make_report_data("CoverCo")
         html = _to_html(data)
         # print-only cover page, hidden on screen, before the report header
@@ -174,14 +174,14 @@ class TestHTMLReport:
         assert "\x81" not in html
 
     def test_to_html_dark_theme_applies_body_class(self) -> None:
-        from openharness.tools.impact.impact_report_tool import _to_html
+        from impact_vision.tools.impact.impact_report_tool import _to_html
         data = _make_report_data()
         data["theme"] = "dark"
         html = _to_html(data)
         assert '<body class="theme-dark">' in html
 
     def test_to_html_with_five_dimensions(self) -> None:
-        from openharness.tools.impact.impact_report_tool import _to_html
+        from impact_vision.tools.impact.impact_report_tool import _to_html
         data = _make_report_data()
         data["five_dimensions"] = {
             "what": {"dimension": "What", "score": 3.0, "metrics_reported": 1, "metrics_available": 10, "gaps": [], "notes": "test", "provenance": "partial"},
@@ -200,7 +200,7 @@ class TestHTMLReport:
         assert "C+" in html
 
     def test_to_html_snapshot_includes_escaped_claims_and_targets(self) -> None:
-        from openharness.tools.impact.impact_report_tool import _to_html
+        from impact_vision.tools.impact.impact_report_tool import _to_html
         data = _make_report_data()
         data["impact_claims"] = [
             {
@@ -231,8 +231,8 @@ class TestHTMLReport:
         assert "<td>500 tCO2e by 2027</td>" in html
 
     def test_report_tool_target_progress_uses_input_targets(self) -> None:
-        from openharness.tools.base import ToolExecutionContext
-        from openharness.tools.impact.impact_report_tool import ImpactReportInput, ImpactReportTool
+        from impact_vision.tools.base import ToolExecutionContext
+        from impact_vision.tools.impact.impact_report_tool import ImpactReportInput, ImpactReportTool
         args = ImpactReportInput(
             company_name="TargetCo",
             company_description="Solar energy access",
@@ -249,7 +249,7 @@ class TestHTMLReport:
         assert "Target: 200 tCO2e by 2027" in result.output
 
     def test_api_report_forwards_target_and_claim_inputs(self) -> None:
-        from openharness.api_gateway.router import ReportRequest, generate_report
+        from impact_vision.api_gateway.router import ReportRequest, generate_report
         req = ReportRequest(
             company_name="API TargetCo",
             company_description="Solar energy access",
@@ -280,8 +280,8 @@ class TestJSONReport:
         assert parsed["company"]["name"] == "TestCo"
 
     def test_report_json_enriches_tracked_metrics_and_gap_suggestions(self) -> None:
-        from openharness.tools.base import ToolExecutionContext
-        from openharness.tools.impact.impact_report_tool import ImpactReportInput, ImpactReportTool
+        from impact_vision.tools.base import ToolExecutionContext
+        from impact_vision.tools.impact.impact_report_tool import ImpactReportInput, ImpactReportTool
 
         args = ImpactReportInput(
             company_name="EvidenceCo",
@@ -300,7 +300,7 @@ class TestJSONReport:
 
 class TestTemplateEngine:
     def test_render_header(self) -> None:
-        from openharness.impact.report_templates.html_template import render_header
+        from impact_vision.impact.report_templates.html_template import render_header
         data = _make_report_data()
         header = render_header(data)
         assert "TestCo" in header
@@ -308,19 +308,19 @@ class TestTemplateEngine:
         assert "<!DOCTYPE html>" in header
 
     def test_render_footer(self) -> None:
-        from openharness.impact.report_templates.html_template import render_footer
+        from impact_vision.impact.report_templates.html_template import render_footer
         footer = render_footer()
         assert "Impact Vision" in footer
         assert "</html>" in footer
 
     def test_get_css(self) -> None:
-        from openharness.impact.report_templates.html_template import get_css
+        from impact_vision.impact.report_templates.html_template import get_css
         css = get_css()
         assert "--primary" in css
         assert "score-card" in css
 
     def test_sdg_colors(self) -> None:
-        from openharness.impact.report_templates.html_template import get_sdg_colors
+        from impact_vision.impact.report_templates.html_template import get_sdg_colors
         colors = get_sdg_colors()
         assert len(colors) == 17
         assert 1 in colors
@@ -329,7 +329,7 @@ class TestTemplateEngine:
 
 class TestStorageLayer:
     def test_save_and_retrieve_assessment(self, tmp_path) -> None:
-        from openharness.impact.storage import AssessmentStore
+        from impact_vision.impact.storage import AssessmentStore
         store = AssessmentStore(tmp_path / "test.db")
         rid = store.save_assessment(
             "TestCo",
@@ -344,7 +344,7 @@ class TestStorageLayer:
         store.close()
 
     def test_list_assessments(self, tmp_path) -> None:
-        from openharness.impact.storage import AssessmentStore
+        from impact_vision.impact.storage import AssessmentStore
         store = AssessmentStore(tmp_path / "test.db")
         store.save_assessment("CompA", {"name": "CompA"})
         store.save_assessment("CompB", {"name": "CompB"})
@@ -353,7 +353,7 @@ class TestStorageLayer:
         store.close()
 
     def test_delete_assessment(self, tmp_path) -> None:
-        from openharness.impact.storage import AssessmentStore
+        from impact_vision.impact.storage import AssessmentStore
         store = AssessmentStore(tmp_path / "test.db")
         store.save_assessment("CompDel", {"name": "CompDel"})
         assert store.delete_assessment("CompDel")
@@ -361,7 +361,7 @@ class TestStorageLayer:
         store.close()
 
     def test_session_history(self, tmp_path) -> None:
-        from openharness.impact.storage import AssessmentStore
+        from impact_vision.impact.storage import AssessmentStore
         store = AssessmentStore(tmp_path / "test.db")
         store.log_tool_invocation(
             session_id="sess-001",
@@ -375,7 +375,7 @@ class TestStorageLayer:
         store.close()
 
     def test_update_existing_assessment(self, tmp_path) -> None:
-        from openharness.impact.storage import AssessmentStore
+        from impact_vision.impact.storage import AssessmentStore
         store = AssessmentStore(tmp_path / "test.db")
         store.save_assessment("TestCo", {"name": "TestCo"}, five_dimensions={"score": 2.0})
         store.save_assessment("TestCo", {"name": "TestCo"}, five_dimensions={"score": 3.5})

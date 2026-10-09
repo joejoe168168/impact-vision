@@ -7,8 +7,8 @@ import re
 
 import pytest
 
-from openharness.impact.pipeline import assess_file, sample_deck_path
-from openharness.impact.report_templates.decision_report import (
+from impact_vision.impact.pipeline import assess_file, sample_deck_path
+from impact_vision.impact.report_templates.decision_report import (
     SPECS,
     build_view,
     render_decision_report,
@@ -102,7 +102,7 @@ def test_report_without_optional_sections_still_renders():
 def test_pdf_export_falls_back_with_install_hint(monkeypatch, tmp_path):
     import builtins
 
-    from openharness.impact.report_templates import pdf
+    from impact_vision.impact.report_templates import pdf
 
     real_import = builtins.__import__
 
@@ -118,7 +118,7 @@ def test_pdf_export_falls_back_with_install_hint(monkeypatch, tmp_path):
 
 
 def test_print_css_hides_table_twins_and_avoids_row_breaks():
-    from openharness.impact.report_templates.decision_report import design_css
+    from impact_vision.impact.report_templates.decision_report import design_css
 
     css = design_css()
     assert "details.twin" in css
@@ -137,7 +137,7 @@ def test_chinese_reports(pig_data, lang, html_lang, verdict, sdg2):
 
 
 def test_every_string_is_translated():
-    from openharness.impact.report_templates.design.strings import EN, ZH_CN, ZH_HK
+    from impact_vision.impact.report_templates.design.strings import EN, ZH_CN, ZH_HK
 
     assert set(ZH_HK) == set(EN) == set(ZH_CN)
     traditional = set("響評機資與夥監審據證險風綠會業標貢獻誰總擇無這來")

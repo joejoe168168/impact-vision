@@ -1,8 +1,8 @@
 """v8 W2.2: every claim from a PDF carries the page it came from."""
 from __future__ import annotations
 
-from openharness.impact.pipeline import SAMPLE_DECKS, assess_file, sample_deck_path
-from openharness.impact.report_templates.decision_report import render_decision_report
+from impact_vision.impact.pipeline import SAMPLE_DECKS, assess_file, sample_deck_path
+from impact_vision.impact.report_templates.decision_report import render_decision_report
 
 
 def test_pdf_claims_have_pages_and_the_ledger_shows_them():

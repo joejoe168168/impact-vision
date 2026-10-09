@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from openharness.config.settings import (
+from impact_vision.config.settings import (
     PROFILE_MODEL_SUGGESTIONS,
     Settings,
     credential_storage_provider_name,
@@ -75,8 +75,8 @@ def test_hosted_preset_without_key_still_errors():
 
 
 def test_profile_status_and_web_snapshot(monkeypatch):
-    from openharness.auth.manager import AuthManager
-    from openharness.web.chat_api import _provider_snapshot
+    from impact_vision.auth.manager import AuthManager
+    from impact_vision.web.chat_api import _provider_snapshot
 
     monkeypatch.setenv("DEEPSEEK_API_KEY", "sk-test")
     statuses = AuthManager(Settings()).get_profile_statuses()
@@ -92,8 +92,8 @@ def test_profile_status_and_web_snapshot(monkeypatch):
 
 
 def test_custom_endpoint_key_is_saved_to_its_own_slot(tmp_path):
-    from openharness.auth.storage import load_credential
-    from openharness.web.chat_api import ProviderUpdate, _apply_provider_update
+    from impact_vision.auth.storage import load_credential
+    from impact_vision.web.chat_api import ProviderUpdate, _apply_provider_update
 
     snap = _apply_provider_update(ProviderUpdate(
         profile="custom", base_url="https://llm.example.internal/v1", model="my-model",

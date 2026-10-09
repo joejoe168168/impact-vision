@@ -8,9 +8,9 @@ from pathlib import Path
 
 import pytest
 
-from openharness.impact.toolbox.workflow import build_esg_workflow
-from openharness.tools.base import ToolExecutionContext
-from openharness.tools.impact.pitch_deck_analyze_tool import (
+from impact_vision.impact.toolbox.workflow import build_esg_workflow
+from impact_vision.tools.base import ToolExecutionContext
+from impact_vision.tools.impact.pitch_deck_analyze_tool import (
     PitchDeckAnalyzeTool,
     _detect_sector,
     _detect_themes,

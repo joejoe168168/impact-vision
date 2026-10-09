@@ -4,7 +4,7 @@ from __future__ import annotations
 
 
 def test_classifiers_share_threshold_status_and_categories() -> None:
-    from openharness.impact.frameworks import sfdr_pai, sfdr_recast
+    from impact_vision.impact.frameworks import sfdr_pai, sfdr_recast
 
     facts = sfdr_recast.sfdr2_facts()
     assert sfdr_pai._SFDR2_THRESHOLD_PCT == facts["threshold"] * 100
@@ -15,7 +15,7 @@ def test_classifiers_share_threshold_status_and_categories() -> None:
 
 
 def test_every_category_excludes_weapons_tobacco_and_ungc() -> None:
-    from openharness.impact.frameworks.sfdr_recast import (
+    from impact_vision.impact.frameworks.sfdr_recast import (
         MANDATORY_EXCLUSIONS,
         PortfolioHolding,
         SFDRv2Category,
@@ -32,8 +32,8 @@ def test_every_category_excludes_weapons_tobacco_and_ungc() -> None:
 
 
 def test_fossil_exclusions_follow_the_benchmark_basis() -> None:
-    from openharness.impact.frameworks.sfdr_pai import SFDR2Input, classify_sfdr2_category
-    from openharness.impact.frameworks.sfdr_recast import PortfolioHolding, SFDRv2Category, classify_sfdr_v2
+    from impact_vision.impact.frameworks.sfdr_pai import SFDR2Input, classify_sfdr2_category
+    from impact_vision.impact.frameworks.sfdr_recast import PortfolioHolding, SFDRv2Category, classify_sfdr_v2
 
     fossil = [PortfolioHolding(name="A", weight=1.0, follows_esg_strategy=True, sector_flags=["fossil_fuel"])]
     assert not classify_sfdr_v2(fossil, SFDRv2Category.SUSTAINABLE).eligible       # PAB

@@ -5,10 +5,10 @@ from __future__ import annotations
 import asyncio
 from pathlib import Path
 
-from openharness.impact.assurance import build_assurance_pack
-from openharness.impact.models import MetricRecord
-from openharness.tools import create_default_tool_registry
-from openharness.tools.base import ToolExecutionContext
+from impact_vision.impact.assurance import build_assurance_pack
+from impact_vision.impact.models import MetricRecord
+from impact_vision.tools import create_default_tool_registry
+from impact_vision.tools.base import ToolExecutionContext
 
 
 def _run_tool(name: str, payload: dict):

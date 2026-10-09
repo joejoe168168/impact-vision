@@ -5,8 +5,8 @@ from __future__ import annotations
 import pytest
 from types import SimpleNamespace
 
-from openharness.ui.app import run_print_mode, run_repl, run_task_worker
-from openharness.ui.react_launcher import build_backend_command
+from impact_vision.ui.app import run_print_mode, run_repl, run_task_worker
+from impact_vision.ui.react_launcher import build_backend_command
 
 
 class _AsyncIterator:
@@ -25,7 +25,7 @@ def test_build_backend_command_includes_flags():
         system_prompt="system",
         api_key="secret",
     )
-    assert command[:3] == [command[0], "-m", "openharness"]
+    assert command[:3] == [command[0], "-m", "impact_vision"]
     assert "--backend-only" in command
     assert "--cwd" in command
     assert "--model" in command
@@ -42,7 +42,7 @@ async def test_run_repl_uses_react_launcher_by_default(monkeypatch):
         seen.update(kwargs)
         return 0
 
-    monkeypatch.setattr("openharness.ui.app.launch_react_tui", _launch)
+    monkeypatch.setattr("impact_vision.ui.app.launch_react_tui", _launch)
     await run_repl(prompt="hi", cwd="/tmp/demo", model="kimi-k2.5")
 
     assert seen["prompt"] == "hi"
@@ -72,10 +72,10 @@ async def test_run_print_mode_passes_cwd_to_build_runtime(monkeypatch):
     async def _close_runtime(_bundle):
         return None
 
-    monkeypatch.setattr("openharness.ui.app.build_runtime", _build_runtime)
-    monkeypatch.setattr("openharness.ui.app.start_runtime", _start_runtime)
-    monkeypatch.setattr("openharness.ui.app.handle_line", _handle_line)
-    monkeypatch.setattr("openharness.ui.app.close_runtime", _close_runtime)
+    monkeypatch.setattr("impact_vision.ui.app.build_runtime", _build_runtime)
+    monkeypatch.setattr("impact_vision.ui.app.start_runtime", _start_runtime)
+    monkeypatch.setattr("impact_vision.ui.app.handle_line", _handle_line)
+    monkeypatch.setattr("impact_vision.ui.app.close_runtime", _close_runtime)
 
     await run_print_mode(prompt="hi", cwd="/tmp/demo")
 
@@ -127,11 +127,11 @@ async def test_run_task_worker_reads_one_shot_json_line(monkeypatch):
     async def _close_runtime(_bundle):
         return None
 
-    monkeypatch.setattr("openharness.ui.app.build_runtime", _build_runtime)
-    monkeypatch.setattr("openharness.ui.app.start_runtime", _start_runtime)
-    monkeypatch.setattr("openharness.ui.app.handle_line", _handle_line)
-    monkeypatch.setattr("openharness.ui.app.close_runtime", _close_runtime)
-    monkeypatch.setattr("openharness.ui.app.sys.stdin", _FakeStdin())
+    monkeypatch.setattr("impact_vision.ui.app.build_runtime", _build_runtime)
+    monkeypatch.setattr("impact_vision.ui.app.start_runtime", _start_runtime)
+    monkeypatch.setattr("impact_vision.ui.app.handle_line", _handle_line)
+    monkeypatch.setattr("impact_vision.ui.app.close_runtime", _close_runtime)
+    monkeypatch.setattr("impact_vision.ui.app.sys.stdin", _FakeStdin())
 
     await run_task_worker(cwd="/tmp/demo")
 

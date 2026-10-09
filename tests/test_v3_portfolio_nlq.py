@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from openharness.impact.models import MetricRecord
-from openharness.impact.portfolio_nlq import (
+from impact_vision.impact.models import MetricRecord
+from impact_vision.impact.portfolio_nlq import (
     ApprovedDataPolicy,
     PortfolioNLQEngine,
     parse_intent,

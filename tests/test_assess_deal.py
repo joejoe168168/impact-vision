@@ -8,18 +8,18 @@ from pathlib import Path
 
 import pytest
 
-import openharness.impact.storage as storage
-from openharness.impact.pipeline import sample_deck_path
-from openharness.impact.tool_advisor import route_query
-from openharness.tools.base import ToolExecutionContext
-from openharness.tools.impact.assess_deal_tool import AssessDealInput, AssessDealTool
-from openharness.tools.impact.five_dimension_assess_tool import (
+import impact_vision.impact.storage as storage
+from impact_vision.impact.pipeline import sample_deck_path
+from impact_vision.impact.tool_advisor import route_query
+from impact_vision.tools.base import ToolExecutionContext
+from impact_vision.tools.impact.assess_deal_tool import AssessDealInput, AssessDealTool
+from impact_vision.tools.impact.five_dimension_assess_tool import (
     FiveDimensionAssessTool,
     FiveDimensionInput,
 )
-from openharness.tools.impact.greenwashing_tool import GreenwashingDetectorTool, GreenwashingInput
-from openharness.tools.impact.impact_report_tool import ImpactReportInput, ImpactReportTool
-from openharness.tools.impact.sdg_mapper_tool import SdgMapperInput, SdgMapperTool
+from impact_vision.tools.impact.greenwashing_tool import GreenwashingDetectorTool, GreenwashingInput
+from impact_vision.tools.impact.impact_report_tool import ImpactReportInput, ImpactReportTool
+from impact_vision.tools.impact.sdg_mapper_tool import SdgMapperInput, SdgMapperTool
 
 
 @pytest.fixture(autouse=True)

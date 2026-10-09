@@ -1,10 +1,10 @@
-"""Tests for openharness.config.paths."""
+"""Tests for impact_vision.config.paths."""
 
 from __future__ import annotations
 
 from pathlib import Path
 
-from openharness.config.paths import (
+from impact_vision.config.paths import (
     get_config_dir,
     get_config_file_path,
     get_data_dir,

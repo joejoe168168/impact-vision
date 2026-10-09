@@ -7,12 +7,12 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from openharness.ui.output import OutputRenderer
+from impact_vision.ui.output import OutputRenderer
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="PromptSession requires a Windows console buffer")
 def test_input_session_updates_prompt_modes():
-    from openharness.ui.input import InputSession
+    from impact_vision.ui.input import InputSession
     session = InputSession()
     assert session._prompt == "> "
 
@@ -25,8 +25,8 @@ def test_input_session_updates_prompt_modes():
 
 def test_input_session_set_modes_logic():
     """Test set_modes logic without requiring a PromptSession console."""
-    from openharness.ui.input import InputSession
-    with patch("openharness.ui.input.PromptSession", return_value=MagicMock()):
+    from impact_vision.ui.input import InputSession
+    with patch("impact_vision.ui.input.PromptSession", return_value=MagicMock()):
         session = InputSession()
     assert session._prompt == "> "
 

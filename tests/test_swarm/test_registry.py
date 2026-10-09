@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import pytest
 
-from openharness.platforms import get_platform_capabilities
-from openharness.swarm.registry import BackendRegistry
-from openharness.swarm.types import TeammateExecutor
+from impact_vision.platforms import get_platform_capabilities
+from impact_vision.swarm.registry import BackendRegistry
+from impact_vision.swarm.types import TeammateExecutor
 
 
 # ---------------------------------------------------------------------------

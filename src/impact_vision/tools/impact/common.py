@@ -1,0 +1,506 @@
+"""Shared helpers for impact tools input normalization."""
+
+from __future__ import annotations
+
+import html
+import re
+from collections.abc import Iterable
+
+METRIC_ID_PATTERN = re.compile(r"^(PI|OI|OD|FP|PD)\d{4}$", re.IGNORECASE)
+EDCI_METRIC_ID_PATTERN = re.compile(r"^EDCI-[A-Z0-9-]+$", re.IGNORECASE)
+
+
+def canonicalize_metric_id(key: str) -> str:
+    """Normalise IRIS+, EDCI, and CUSTOM metric keys for engine lookups."""
+    metric_id = str(key or "").strip()
+    if not metric_id:
+        return ""
+    if METRIC_ID_PATTERN.match(metric_id):
+        return metric_id.upper()
+    if EDCI_METRIC_ID_PATTERN.match(metric_id):
+        return metric_id.upper()
+    if metric_id[:7].upper() == "CUSTOM:":
+        suffix = metric_id.split(":", 1)[1].strip().lower()
+        return f"CUSTOM:{suffix}" if suffix else ""
+    return metric_id
+
+
+def is_engine_metric_id(key: str) -> bool:
+    metric_id = canonicalize_metric_id(key)
+    return bool(
+        METRIC_ID_PATTERN.match(metric_id)
+        or EDCI_METRIC_ID_PATTERN.match(metric_id)
+        or metric_id.startswith("CUSTOM:")
+    )
+
+
+_NEGATION_PHRASES = (
+    "not ",
+    "no ",
+    "don't ",
+    "doesn't ",
+    "do not ",
+    "does not ",
+    "without ",
+    "lack ",
+    "lacks ",
+    "lacking ",
+    "unable to ",
+    "anti-",
+    "anti ",
+    "free of ",
+    "free from ",
+    "zero ",
+    "never ",
+)
+
+
+_NEGATION_NEXT_WINDOW = ("policy", "policies", "framework", "free", "compliance")
+
+
+def keyword_not_negated(text: str, keyword: str, *, window: int = 30) -> bool:
+    """Check that ``keyword`` appears in ``text`` without nearby negation.
+
+    A keyword is considered *not negated* if at least one occurrence has no
+    negation phrase in the ``window`` characters that precede it.
+    """
+    text = text.lower()
+    keyword = keyword.lower()
+    idx = text.find(keyword)
+    while idx >= 0:
+        prefix = text[max(0, idx - window) : idx]
+        if not any(neg in prefix for neg in _NEGATION_PHRASES):
+            return True
+        idx = text.find(keyword, idx + len(keyword))
+    return False
+
+
+def has_word(text: str, term: str) -> bool:
+    """Word-boundary aware substring check (no leading/trailing word chars)."""
+    if not term:
+        return False
+    return bool(re.search(r"\b" + re.escape(term.lower()) + r"\b", text.lower()))
+
+
+def keyword_match_with_context(
+    text: str,
+    keyword: str,
+    *,
+    window: int = 30,
+) -> bool:
+    """Return True only when ``keyword`` matches as a phrase and is not negated.
+
+    Multi-word keywords are matched as substrings (since ``\\b`` does not
+    naturally handle whitespace), and negation is checked via
+    :func:`keyword_not_negated`. Single-word keywords additionally require a
+    word-boundary match to avoid spurious matches inside other words.
+    """
+    if not keyword:
+        return False
+    lower_text = text.lower()
+    lower_kw = keyword.lower()
+    if " " in lower_kw or "-" in lower_kw:
+        if lower_kw not in lower_text:
+            return False
+    elif not has_word(lower_text, lower_kw):
+        return False
+    return keyword_not_negated(lower_text, lower_kw, window=window)
+
+
+def safe_html(value: object | None) -> str:
+    """HTML-escape ``value`` for safe interpolation into HTML/SVG strings."""
+    if value is None:
+        return ""
+    return html.escape(str(value), quote=True)
+
+
+def clamp_pct(value: float | int) -> float:
+    """Clamp a percentage-like number to the inclusive 0..100 range."""
+    try:
+        v = float(value)
+    except (TypeError, ValueError):
+        return 0.0
+    if v < 0:
+        return 0.0
+    if v > 100:
+        return 100.0
+    return v
+
+_DEFAULTS_THEME_HINTS: dict[str, list[str]] = {
+    "climate": ["Climate Mitigation", "Climate Adaptation"],
+    "carbon": ["Climate Mitigation"],
+    "emission": ["Climate Mitigation"],
+    "energy": ["Clean Energy", "Energy Access"],
+    "solar": ["Clean Energy", "Energy Access"],
+    "education": ["Education", "Quality Education"],
+    "health": ["Health"],
+    "water": ["Water", "Sustainable Water Management"],
+    "sanitation": ["Water", "Sustainable Water Management"],
+    "finance": ["Financial Inclusion"],
+    "fintech": ["Financial Inclusion"],
+    "agri": ["Smallholder Agriculture", "Food Security"],
+    "agriculture": ["Smallholder Agriculture", "Food Security"],
+    "gender": ["Gender Equality"],
+    "women": ["Gender Equality"],
+}
+
+
+def _get_theme_hints() -> dict[str, list[str]]:
+    """Load theme hints from scoring config, fall back to defaults."""
+    try:
+        from impact_vision.impact.five_dimensions import _load_scoring_config
+        config = _load_scoring_config()
+        return config.get("theme_hints", _DEFAULTS_THEME_HINTS)
+    except Exception:
+        return _DEFAULTS_THEME_HINTS
+
+
+def normalize_str_list(values: Iterable[str] | None) -> list[str]:
+    """Return a de-duplicated list of non-empty stripped strings, preserving order."""
+    if not values:
+        return []
+    out: list[str] = []
+    seen: set[str] = set()
+    for value in values:
+        cleaned = " ".join((str(value) or "").split()).strip()
+        if not cleaned:
+            continue
+        key = cleaned.casefold()
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(cleaned)
+    return out
+
+
+def normalize_metric_map(
+    metrics: dict[str, str] | None,
+) -> tuple[dict[str, str], list[str]]:
+    """Normalize IRIS metric IDs (uppercase, stripped) and return warnings for invalid keys."""
+    if not metrics:
+        return {}, []
+    normalized: dict[str, str] = {}
+    warnings: list[str] = []
+    for key, value in metrics.items():
+        metric_id = canonicalize_metric_id(key)
+        if not metric_id:
+            continue
+        if not is_engine_metric_id(metric_id):
+            warnings.append(f"Ignored invalid metric ID: {key}")
+            continue
+        normalized[metric_id] = "" if value is None else str(value).strip()
+    return normalized, warnings
+
+
+def normalize_metric_ids(values: Iterable[str] | None) -> tuple[list[str], list[str]]:
+    """Normalize a list of metric ID strings. Returns (valid_ids, warnings)."""
+    if not values:
+        return [], []
+    normalized: list[str] = []
+    warnings: list[str] = []
+    for value in values:
+        metric_id = canonicalize_metric_id(value)
+        if not metric_id:
+            continue
+        if not is_engine_metric_id(metric_id):
+            warnings.append(f"Ignored invalid metric ID: {value}")
+            continue
+        if metric_id not in normalized:
+            normalized.append(metric_id)
+    return normalized, warnings
+
+
+def normalize_sdg_goals(values: Iterable[int] | None) -> tuple[list[int], list[str]]:
+    """Return valid SDG goal numbers (1-17), de-duplicated. Returns (goals, warnings)."""
+    if not values:
+        return [], []
+    out: list[int] = []
+    warnings: list[str] = []
+    seen: set[int] = set()
+    for value in values or []:
+        try:
+            goal = int(value)
+        except (TypeError, ValueError):
+            continue
+        if goal < 1 or goal > 17:
+            warnings.append(f"Ignored invalid SDG goal: {goal} (valid range: 1-17)")
+            continue
+        if goal in seen:
+            continue
+        seen.add(goal)
+        out.append(goal)
+    return out, warnings
+
+
+def infer_themes(text: str, existing: list[str] | None = None) -> list[str]:
+    """Infer impact themes from free text and merge with existing themes."""
+    themes = normalize_str_list(existing or [])
+    seen_lower: set[str] = {t.lower() for t in themes}
+    lower = (text or "").lower()
+    for keyword, hints in _get_theme_hints().items():
+        if keyword in lower:
+            for hint in hints:
+                hint_key = hint.lower()
+                if hint_key not in seen_lower:
+                    seen_lower.add(hint_key)
+                    themes.append(hint)
+    return themes
+
+
+def parse_od4091_targets(value: str) -> list[dict]:
+    """Parse OD4091 (Social and Environmental Targets) into structured target dicts.
+
+    Handles formats like:
+    - "3 social targets, 2 environmental targets"
+    - "Reduce CO2 by 50% by 2027; Reach 100,000 farmers by 2026"
+    - "500 tCO2e by 2027"
+
+    Returns list of dicts suitable for ImpactTarget construction.
+    """
+    if not value or not value.strip():
+        return []
+
+    targets: list[dict] = []
+
+    parts = re.split(r"[;|\n]", value)
+    for part in parts:
+        part = part.strip()
+        if not part:
+            continue
+
+        target: dict = {"description": part}
+
+        # Try to extract a metric ID (e.g. OI4112) from the beginning
+        mid = re.match(r"^((?:PI|OI|OD|FP|PD)\d{4})[\s:,-]*", part, re.IGNORECASE)
+        if mid:
+            target["metric_id"] = mid.group(1).upper()
+
+        year_match = re.search(r"\b(20\d{2})\b", part)
+        if year_match:
+            target["target_date"] = year_match.group(1)
+
+        num_match = re.search(r"([\d,]+(?:\.\d+)?)\s*(%|tCO2e|tons?|kg|MWh|kWh|USD|EUR|people|farmers?|clients?|beneficiar)", part, re.IGNORECASE)
+        if num_match:
+            try:
+                target["target_value"] = float(num_match.group(1).replace(",", ""))
+                target["target_unit"] = num_match.group(2).strip()
+            except ValueError:
+                pass
+
+        pct_match = re.search(r"(\d+(?:\.\d+)?)\s*%", part)
+        if pct_match and "target_value" not in target:
+            target["target_value"] = float(pct_match.group(1))
+            target["target_unit"] = "%"
+
+        targets.append(target)
+
+    return targets
+
+
+def normalize_impact_targets(
+    targets: dict[str, str] | list[dict] | list | None,
+) -> tuple[list, list[str]]:
+    """Normalize impact targets from various input formats into ImpactTarget objects.
+
+    Accepts:
+    - dict[str, str]: Legacy format {"OI4112": "500 tCO2e by 2027"}
+    - list[dict]: Structured format [{"metric_id": "OI4112", "target_value": 500, ...}]
+    - None: Returns empty list
+
+    Returns: (list[ImpactTarget], warnings)
+    """
+    from impact_vision.impact.models import ImpactTarget
+
+    if not targets:
+        return [], []
+
+    result: list[ImpactTarget] = []
+    warnings: list[str] = []
+
+    if isinstance(targets, dict):
+        # Legacy dict[str, str] format — parse each value
+        for metric_id, target_str in targets.items():
+            mid = metric_id.strip().upper()
+            if not METRIC_ID_PATTERN.match(mid):
+                warnings.append(f"Ignored invalid metric ID in target: {metric_id}")
+                continue
+            # Try to extract structured data from the target string
+            parsed = parse_od4091_targets(target_str)
+            if parsed and parsed[0].get("target_value") is not None:
+                p = parsed[0]
+                it = ImpactTarget(
+                    metric_id=mid,
+                    target_value=p.get("target_value"),
+                    target_unit=p.get("target_unit", ""),
+                    target_date=p.get("target_date", ""),
+                    description=target_str,
+                )
+            else:
+                it = ImpactTarget(metric_id=mid, description=target_str)
+            result.append(it)
+        return result, warnings
+
+    if isinstance(targets, list):
+        for item in targets:
+            if isinstance(item, ImpactTarget):
+                result.append(item)
+            elif isinstance(item, dict):
+                try:
+                    result.append(ImpactTarget(**item))
+                except Exception as e:
+                    warnings.append(f"Invalid impact target: {e}")
+            else:
+                warnings.append(f"Invalid impact target type: {type(item).__name__}")
+        return result, warnings
+
+    return result, warnings
+
+
+_SECTOR_ALIASES: dict[str, str] = {
+    "financial services": "fintech",
+    "financial inclusion": "fintech",
+    "microfinance": "fintech",
+    "banking": "fintech",
+    "healthcare": "healthcare",
+    "health": "healthcare",
+    "medical": "healthcare",
+    "water & sanitation": "water",
+    "water and sanitation": "water",
+    "wash": "water",
+    "agriculture": "agriculture",
+    "agritech": "agriculture",
+    "farming": "agriculture",
+    "energy": "energy",
+    "clean energy": "energy",
+    "renewable energy": "energy",
+    "education": "education",
+    "edtech": "education",
+    "technology": "technology",
+    "software": "technology",
+    "saas": "technology",
+    "real estate": "real estate",
+    "housing": "real estate",
+    "affordable housing": "real estate",
+    "transportation": "transport",
+    "transport": "transport",
+    "logistics": "logistics",
+    "food & beverage": "agriculture",
+    "food": "agriculture",
+    "manufacturing": "manufacturing",
+    "construction": "construction",
+    "tourism": "tourism",
+    "retail": "retail",
+    "mining": "mining",
+    "mining & extractives": "mining",
+    "extractives": "extractives",
+    "media": "media",
+    "professional services": "professional services",
+    "waste management": "waste management",
+    "waste": "waste management",
+    "ict": "ict",
+    "livestock": "livestock",
+}
+
+
+# Display names used by GIIN ``SECTOR_BENCHMARKS``. Canonical engine keys
+# (``fintech``, ``water``) must map here or ``get_benchmark("fintech")`` misses.
+ENGINE_TO_BENCHMARK_SECTOR: dict[str, str] = {
+    "fintech": "Financial Services",
+    "financial": "Financial Services",
+    "healthcare": "Healthcare",
+    "health": "Healthcare",
+    "education": "Education",
+    "agriculture": "Agriculture",
+    "livestock": "Agriculture",
+    "energy": "Energy",
+    "technology": "Technology",
+    "real estate": "Real Estate",
+    "water": "Water & Sanitation",
+    "manufacturing": "Manufacturing",
+    "transport": "Transport & Logistics",
+    "logistics": "Transport & Logistics",
+    "construction": "Construction",
+    "tourism": "Tourism",
+    "retail": "Retail",
+    "mining": "Mining & Extractives",
+    "extractives": "Mining & Extractives",
+    "media": "Media",
+    "professional services": "Professional Services",
+    "waste management": "Waste Management",
+    "ict": "ICT",
+}
+
+
+def benchmark_sector_name(sector: str) -> str:
+    """Map a canonical engine sector key onto a GIIN benchmark display name."""
+    key = normalize_sector(sector)
+    return ENGINE_TO_BENCHMARK_SECTOR.get(key, sector)
+
+
+def normalize_sector(sector: str) -> str:
+    """Normalize a sector string to a canonical lowercase key for engine lookups.
+
+    Maps user-facing names like 'Financial Services' to engine keys like 'fintech'.
+    Returns the original lowercased value if no alias is found.
+    """
+    if not sector:
+        return ""
+    key = sector.strip().lower()
+    return _SECTOR_ALIASES.get(key, key)
+
+
+# --- assessment_id hand-off (v7 W1.3) -------------------------------------
+
+ASSESSMENT_ID_DESCRIPTION = (
+    "ID returned by assess_deal (or a saved assessment). Fills any company "
+    "fields you leave empty — name, description, sector, geography, themes, "
+    "reported metrics, SDG claims and extracted claims — so you don't have to "
+    "re-type them. Fields you pass explicitly win."
+)
+
+_HYDRATE_FIELDS = {
+    "company_name": "name",
+    "company_description": "description",
+    "sector": "sector",
+    "geography": "geography",
+    "impact_themes": "impact_themes",
+    "reported_metrics": "reported_metrics",
+    "sdg_claims": "sdg_claims",
+}
+
+
+def hydrate_from_assessment(args):  # type: ignore[no-untyped-def]
+    """Fill empty company fields on a tool input from its ``assessment_id``.
+
+    Returns ``(args, error)``; *error* is a user-facing message or ``None``.
+    """
+    assessment_id = str(getattr(args, "assessment_id", "") or "").strip()
+    if not assessment_id:
+        if not getattr(args, "company_name", ""):
+            return args, "Provide company_name (or an assessment_id from assess_deal)."
+        return args, None
+
+    from impact_vision.impact.storage import get_assessment_store
+
+    row = get_assessment_store().get_assessment_by_id(assessment_id)
+    if row is None:
+        return args, (
+            f"No saved assessment with id {assessment_id!r}. Run assess_deal first, "
+            "or list saved assessments with the pipeline tool."
+        )
+    company = row.get("company") or {}
+    metadata = row.get("metadata") or {}
+    fields = type(args).model_fields
+    update: dict = {}
+    for arg_field, company_field in _HYDRATE_FIELDS.items():
+        if arg_field in fields and not getattr(args, arg_field):
+            value = company.get(company_field)
+            if arg_field == "reported_metrics" and isinstance(value, dict):
+                value = {k: str(v) for k, v in value.items()}
+            if value:
+                update[arg_field] = value
+    claims = metadata.get("impact_claims") or []
+    for claim_field in ("impact_claims", "claims"):
+        if claim_field in fields and not getattr(args, claim_field) and claims:
+            update[claim_field] = claims
+    return args.model_copy(update=update), None

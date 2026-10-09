@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
-from openharness.cli import app
+from impact_vision.cli import app
 
 REPO = Path(__file__).resolve().parents[1]
 runner = CliRunner()
@@ -49,7 +49,7 @@ def test_dashboard_without_extra_gives_hint(monkeypatch):
 def test_terminal_ui_without_node_explains_alternatives(monkeypatch):
     import asyncio
 
-    from openharness.ui import react_launcher
+    from impact_vision.ui import react_launcher
 
     monkeypatch.setattr(react_launcher.shutil, "which", lambda name: None)
     with pytest.raises(SystemExit) as exc:

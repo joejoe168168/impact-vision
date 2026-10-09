@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from openharness.impact.engagements import (
+from impact_vision.impact.engagements import (
     BenchmarkQuery,
     DataRoomSubmission,
     DiagnosticAnswer,
@@ -64,8 +64,8 @@ from openharness.impact.engagements import (
     transition_report,
     verify_assurance_bundle,
 )
-from openharness.tools import create_default_tool_registry
-from openharness.tools.base import ToolExecutionContext
+from impact_vision.tools import create_default_tool_registry
+from impact_vision.tools.base import ToolExecutionContext
 
 
 # ====================================================================== Track 3
@@ -343,7 +343,7 @@ def test_report_state_machine_and_claim_decision() -> None:
         transition_report(report, "draft", actor="x")
     report = transition_report(report, "published", actor="pub")
     # Add a claim and decide.
-    from openharness.impact.engagements import ClaimReview
+    from impact_vision.impact.engagements import ClaimReview
     report.claim_reviews.append(
         ClaimReview(claim_id="c1", text="Claim text")
     )
@@ -657,8 +657,8 @@ def test_verifier_marketplace_populated() -> None:
 
 def test_workspace_record_artifact_writes_audit_event() -> None:
     """Generic v4 artifact hook should land in the hash-chained audit trail."""
-    from openharness.impact.audit_trail import AuditTrail
-    from openharness.impact.engagements import EngagementWorkspace
+    from impact_vision.impact.audit_trail import AuditTrail
+    from impact_vision.impact.engagements import EngagementWorkspace
 
     audit = AuditTrail(tenant_id="t", fund_id="f")
     workspace = EngagementWorkspace(audit_trail=audit)
@@ -684,7 +684,7 @@ def test_workspace_record_artifact_writes_audit_event() -> None:
 
 
 def test_workspace_record_artifact_requires_known_engagement() -> None:
-    from openharness.impact.engagements import EngagementWorkspace
+    from impact_vision.impact.engagements import EngagementWorkspace
 
     workspace = EngagementWorkspace()
     with pytest.raises(KeyError):
@@ -903,7 +903,7 @@ def test_schedule_deadlines_flags_overdue_and_due_soon() -> None:
 
 def test_copilot_queue_blocks_unsafe_approval() -> None:
     """Queue should refuse approval of low-confidence or unsourced outputs."""
-    from openharness.impact.engagements import CopilotOutput, CopilotReviewQueue
+    from impact_vision.impact.engagements import CopilotOutput, CopilotReviewQueue
 
     queue = CopilotReviewQueue()
     low_confidence = CopilotOutput(

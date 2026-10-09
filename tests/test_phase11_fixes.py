@@ -35,7 +35,7 @@ class TestMCPResources:
     """
 
     def test_catalog_stats_resource(self) -> None:
-        from openharness.impact import mcp_server
+        from impact_vision.impact import mcp_server
         out = json.loads(mcp_server.catalog_stats())
         assert "error" not in out
         assert out["total_metrics"] > 0
@@ -43,20 +43,20 @@ class TestMCPResources:
         assert isinstance(out["themes"], list)
 
     def test_dd_checklist_categories_resource(self) -> None:
-        from openharness.impact import mcp_server
+        from impact_vision.impact import mcp_server
         out = json.loads(mcp_server.dd_checklist_categories())
         assert "error" not in out
         assert out["total_questions"] > 0
         assert isinstance(out["categories"], dict)
 
     def test_cross_reference_lookup_resource(self) -> None:
-        from openharness.impact import mcp_server
+        from impact_vision.impact import mcp_server
         out = json.loads(mcp_server.cross_reference_lookup("OI4112"))
         assert "error" not in out
         assert out["match_count"] >= 1
 
     def test_sdg_goals_list_resource(self) -> None:
-        from openharness.impact import mcp_server
+        from impact_vision.impact import mcp_server
         out = json.loads(mcp_server.sdg_goals_list())
         assert "error" not in out
         assert out["total"] == 17
@@ -70,7 +70,7 @@ class TestMCPResourceLogicStandalone:
     """
 
     def test_store_all_metrics_works(self) -> None:
-        from openharness.impact.database import get_metric_store
+        from impact_vision.impact.database import get_metric_store
         store = get_metric_store()
         metrics = store.all_metrics()
         assert metrics, "MetricStore.all_metrics() must return non-empty"
@@ -81,7 +81,7 @@ class TestMCPResourceLogicStandalone:
         assert hasattr(m, "impact_themes")
 
     def test_load_checklist_returns_dd_questions(self) -> None:
-        from openharness.impact.dd_checklist import DDQuestion, load_checklist
+        from impact_vision.impact.dd_checklist import DDQuestion, load_checklist
         qs = load_checklist()
         assert qs, "load_checklist() returned empty"
         assert isinstance(qs[0], DDQuestion)
@@ -89,7 +89,7 @@ class TestMCPResourceLogicStandalone:
         assert hasattr(qs[0], "category")
 
     def test_iris_lookup_helpers_exist(self) -> None:
-        from openharness.impact.frameworks import cross_reference as xr
+        from impact_vision.impact.frameworks import cross_reference as xr
         assert hasattr(xr, "lookup_by_iris")
         assert hasattr(xr, "lookup_by_gri")
         assert hasattr(xr, "lookup_by_edci")
@@ -106,7 +106,7 @@ class TestDDEvidenceScoping:
         """An RCT mention buried in a memo's footer must not lift every
         addressed question to evidence level 5.
         """
-        from openharness.impact.dd_checklist import analyze_document_coverage
+        from impact_vision.impact.dd_checklist import analyze_document_coverage
 
         # Long text with one stray "RCT" mention but no other rigorous-evidence
         # signals near the question keywords.
@@ -131,7 +131,7 @@ class TestDDEvidenceScoping:
 
 class TestSDGCoreMetricSet:
     def test_yaml_loads(self) -> None:
-        from openharness.impact.sdg_mapper import _load_core_metrics_per_sdg
+        from impact_vision.impact.sdg_mapper import _load_core_metrics_per_sdg
         core = _load_core_metrics_per_sdg()
         assert len(core) >= 16, f"Should cover at least 16 SDGs, got {len(core)}"
         thin = {16, 17}  # IRIS+ 5.3c: little governance coverage; no SDG 17 metrics at all
@@ -141,9 +141,9 @@ class TestSDGCoreMetricSet:
             assert low <= len(ids) <= 20, f"SDG {goal_num} has {len(ids)} metrics; should be {low}-20"
 
     def test_scoring_basis_in_alignment(self) -> None:
-        from openharness.impact.database import get_metric_store
-        from openharness.impact.models import Company
-        from openharness.impact.sdg_mapper import map_sdg_alignment
+        from impact_vision.impact.database import get_metric_store
+        from impact_vision.impact.models import Company
+        from impact_vision.impact.sdg_mapper import map_sdg_alignment
 
         company = Company(
             name="Test Microfinance",
@@ -173,9 +173,9 @@ class TestFiveDimensionCap:
         """When a dimension has no reference set at all, the score must
         reflect the inferred baseline (>= 0.5) but not be auto-floored at 1.0.
         """
-        from openharness.impact.database import get_metric_store
-        from openharness.impact.five_dimensions import assess_five_dimensions
-        from openharness.impact.models import Company
+        from impact_vision.impact.database import get_metric_store
+        from impact_vision.impact.five_dimensions import assess_five_dimensions
+        from impact_vision.impact.models import Company
 
         company = Company(
             name="Empty",
@@ -191,9 +191,9 @@ class TestFiveDimensionCap:
         """Reporting only 1-2 dimension-relevant metrics must not push the
         dimension above 2.5.
         """
-        from openharness.impact.database import get_metric_store
-        from openharness.impact.five_dimensions import assess_five_dimensions
-        from openharness.impact.models import Company
+        from impact_vision.impact.database import get_metric_store
+        from impact_vision.impact.five_dimensions import assess_five_dimensions
+        from impact_vision.impact.models import Company
 
         company = Company(
             name="Sparse Reporter",
@@ -215,7 +215,7 @@ class TestFiveDimensionCap:
 class TestWordBoundaryMatching:
     def test_dd_keyword_does_not_substring_match(self) -> None:
         """'food' as a DD keyword must not match 'seafood' embedded in text."""
-        from openharness.impact.dd_checklist import analyze_document_coverage
+        from impact_vision.impact.dd_checklist import analyze_document_coverage
         # Use text where only the substring is present — no real DD signal.
         text = (
             "We sell seafood and adjobs through our marketplace. "
@@ -235,7 +235,7 @@ class TestWordBoundaryMatching:
 
 class TestAdverseMetricsMap:
     def test_fintech_adverse_set_is_meaningful(self) -> None:
-        from openharness.impact.greenwashing import _ADVERSE_METRICS_BY_SECTOR
+        from impact_vision.impact.greenwashing import _ADVERSE_METRICS_BY_SECTOR
         fintech = _ADVERSE_METRICS_BY_SECTOR["fintech"]
         # Old placeholder set was {PI4060, OI1571} — both *positive* impact
         # metrics. The new set must be wider AND not be a subset of those.
@@ -249,7 +249,7 @@ class TestAdverseMetricsMap:
 
 class TestBenchmarkProvenance:
     def test_every_benchmark_has_source_and_confidence(self) -> None:
-        from openharness.impact.benchmarks import SECTOR_BENCHMARKS
+        from impact_vision.impact.benchmarks import SECTOR_BENCHMARKS
         for name, bm in SECTOR_BENCHMARKS.items():
             assert bm.source, f"{name} missing source"
             assert bm.source_year >= 2020
@@ -262,21 +262,21 @@ class TestBenchmarkProvenance:
 
 class TestSFDRPAILinkage:
     def test_all_mandatory_pais_have_iris_links(self) -> None:
-        from openharness.impact.frameworks.sfdr_pai import PAI_INDICATORS
+        from impact_vision.impact.frameworks.sfdr_pai import PAI_INDICATORS
         for pai in PAI_INDICATORS:
             assert pai.iris_cross_refs, (
                 f"PAI #{pai.number} '{pai.name}' has no IRIS+ cross-reference"
             )
 
     def test_all_optional_pais_have_iris_links(self) -> None:
-        from openharness.impact.frameworks.sfdr_pai import OPTIONAL_PAI_INDICATORS
+        from impact_vision.impact.frameworks.sfdr_pai import OPTIONAL_PAI_INDICATORS
         for pai in OPTIONAL_PAI_INDICATORS:
             assert pai.iris_cross_refs, (
                 f"Optional PAI #{pai.number} '{pai.name}' has no IRIS+ cross-reference"
             )
 
     def test_direct_pai_keys_count_as_reported_data(self) -> None:
-        from openharness.impact.frameworks.sfdr_pai import assess_sfdr_compliance
+        from impact_vision.impact.frameworks.sfdr_pai import assess_sfdr_compliance
 
         result = assess_sfdr_compliance(reported_data={"SFDR PAI 1": "100 tCO2e", "pai-13": "40%"})
         rows = {row["number"]: row for row in result["indicators"]}
@@ -286,7 +286,7 @@ class TestSFDRPAILinkage:
         assert "PAI 1 reported" in rows[1]["evidence"]
 
     def test_text_mentions_do_not_count_as_reportable_pai_coverage(self) -> None:
-        from openharness.impact.frameworks.sfdr_pai import assess_sfdr_compliance
+        from impact_vision.impact.frameworks.sfdr_pai import assess_sfdr_compliance
 
         result = assess_sfdr_compliance(
             company_description="The company mentions GHG emissions and gender pay gap governance.",
@@ -304,14 +304,14 @@ class TestSFDRPAILinkage:
 
 class TestSASBCodeLookup:
     def test_lookup_by_sasb_code(self) -> None:
-        from openharness.impact.frameworks.cross_reference import lookup_by_sasb
+        from impact_vision.impact.frameworks.cross_reference import lookup_by_sasb
         results = lookup_by_sasb("EM-EP-110a.1")
         assert results, "SASB code reverse lookup returned empty"
         # The returned cross-reference should map back to GHG concept
         assert any("GHG" in r.concept or "Emissions" in r.concept for r in results)
 
     def test_new_framework_lookups(self) -> None:
-        from openharness.impact.frameworks.cross_reference import (
+        from impact_vision.impact.frameworks.cross_reference import (
             lookup_by_cdp,
             lookup_by_pcaf,
             lookup_by_sbti,

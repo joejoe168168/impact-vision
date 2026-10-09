@@ -15,14 +15,14 @@ import pytest
 playwright = pytest.importorskip("playwright.sync_api")
 axe_mod = pytest.importorskip("axe_playwright_python.sync_playwright")
 
-from openharness.impact.investee_portal import build_investee_portal  # noqa: E402
-from openharness.impact.pipeline import (  # noqa: E402
+from impact_vision.impact.investee_portal import build_investee_portal  # noqa: E402
+from impact_vision.impact.pipeline import (  # noqa: E402
     assess_file,
     sample_deck_path,
     write_deliverables,
     write_gallery,
 )
-from openharness.impact.report_templates.decision_report import render_decision_report  # noqa: E402
+from impact_vision.impact.report_templates.decision_report import render_decision_report  # noqa: E402
 
 WIDTHS = (390, 1024, 1440)
 
@@ -43,7 +43,7 @@ def pages(tmp_path_factory):
     }
     for name, html in variants.items():
         (out / f"variant_{name}.html").write_text(html, encoding="utf-8")
-    from openharness.impact.portfolio_home import (
+    from impact_vision.impact.portfolio_home import (
         build_portfolio_home,
         record_from_bundle,
         render_portfolio_home,
@@ -53,8 +53,8 @@ def pages(tmp_path_factory):
         render_portfolio_home(build_portfolio_home([record_from_bundle(bundle)], fund_name="Fund")),
         encoding="utf-8",
     )
-    from openharness.impact.engagement_home import build_engagement_home, render_engagement_home
-    from openharness.impact.engagements.workspace import EngagementWorkspace
+    from impact_vision.impact.engagement_home import build_engagement_home, render_engagement_home
+    from impact_vision.impact.engagements.workspace import EngagementWorkspace
 
     ws = EngagementWorkspace()
     eng = ws.create_engagement(name="Fund I DD", client_name="Acme Capital", bundle_id="dd_light")

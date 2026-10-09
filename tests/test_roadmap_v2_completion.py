@@ -6,66 +6,66 @@ from datetime import datetime, timezone
 
 import pytest
 
-from openharness.impact.database import MetricStore
-from openharness.impact.evidence_graph import EvidenceGraph, EvidenceNode
-from openharness.impact.investee_collection import (
+from impact_vision.impact.database import MetricStore
+from impact_vision.impact.evidence_graph import EvidenceGraph, EvidenceNode
+from impact_vision.impact.investee_collection import (
     create_collection_submission,
     generate_investee_questionnaire_schema,
     review_collection_submission,
 )
-from openharness.impact.models import DimensionTags, Metric, MetricRecord
-from openharness.impact.ai_review import (
+from impact_vision.impact.models import DimensionTags, Metric, MetricRecord
+from impact_vision.impact.ai_review import (
     AIExtractionReview,
     build_review_queue,
     decide_ai_extraction,
     harmonize_uploaded_metrics,
 )
-from openharness.impact.climate_accounting import (
+from impact_vision.impact.climate_accounting import (
     build_climate_coverage_dashboard,
     calculate_carbon_intensity,
     estimate_scope3_proxy,
 )
-from openharness.impact.contribution import (
+from impact_vision.impact.contribution import (
     calculate_difference_in_differences,
     generate_counterfactual_questions,
     run_contribution_analysis,
     score_evidence_strength,
 )
-from openharness.impact.disclosure_packs import (
+from impact_vision.impact.disclosure_packs import (
     SourceLinkedAnswer,
     autofill_sfdr_pai,
     build_esrs_disclosure_pack,
     build_issb_disclosure_pack,
 )
-from openharness.impact.frameworks.cross_reference import (
+from impact_vision.impact.frameworks.cross_reference import (
     explore_framework_crosswalk,
 )
-from openharness.impact.frameworks.pcaf import (
+from impact_vision.impact.frameworks.pcaf import (
     PCAFPosition,
     calculate_pcaf_financed_emissions,
 )
-from openharness.impact.investee_collection import (
+from impact_vision.impact.investee_collection import (
     build_collection_tracker,
     issue_collection_link,
     preview_csv_metric_import,
 )
-from openharness.impact.portfolio_nlq import (
+from impact_vision.impact.portfolio_nlq import (
     answer_portfolio_query,
 )
-from openharness.impact.regulatory_calendar import (
+from impact_vision.impact.regulatory_calendar import (
     select_jurisdiction_profile,
 )
-from openharness.impact.regulatory_radar import (
+from impact_vision.impact.regulatory_radar import (
     monitor_regulatory_change,
 )
-from openharness.impact.report_governance import (
+from impact_vision.impact.report_governance import (
     ReportPublication,
     build_immutable_report_manifest,
     build_lp_export_bundle,
     run_control_checks,
     transition_report_publication,
 )
-from openharness.impact.standards_registry import (
+from impact_vision.impact.standards_registry import (
     run_rule_pack_tests,
 )
 

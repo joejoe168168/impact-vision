@@ -6,14 +6,14 @@ from datetime import date
 
 import pytest
 
-from openharness.impact.lp_narrative import (
+from impact_vision.impact.lp_narrative import (
     LPNarrativeRequest,
     LPQuestion,
     LPQuestionWorkspace,
     generate_lp_narrative,
 )
-from openharness.impact.lp_portal import ImpactDashboardView
-from openharness.impact.models import MetricRecord
+from impact_vision.impact.lp_portal import ImpactDashboardView
+from impact_vision.impact.models import MetricRecord
 
 
 def _verified_record(metric_id: str = "OI4112", value: str = "150") -> MetricRecord:

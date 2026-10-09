@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from openharness.impact.ai_provenance import (
+from impact_vision.impact.ai_provenance import (
     AIProvenance,
     IPTC_DST,
     machine_marking,
@@ -15,7 +15,7 @@ from openharness.impact.ai_provenance import (
     mark_xlsx,
     marking_from_html,
 )
-from openharness.impact.pipeline import assess_file, write_deliverables
+from impact_vision.impact.pipeline import assess_file, write_deliverables
 
 DECK = Path(__file__).parent / "golden_decks" / "loopwear_hk.md"
 

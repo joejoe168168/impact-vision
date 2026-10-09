@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from openharness.coordinator.coordinator_mode import (
+from impact_vision.coordinator.coordinator_mode import (
     TaskNotification,
     WorkerConfig,
     format_task_notification,

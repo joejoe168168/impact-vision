@@ -5,28 +5,28 @@ from __future__ import annotations
 import asyncio
 from pathlib import Path
 
-from openharness.impact.carbon_credit_integrity import (
+from impact_vision.impact.carbon_credit_integrity import (
     CCP_APPROVED_METHODOLOGIES,
     CarbonCredit,
     normalize_program,
     screen_credits,
 )
-from openharness.impact.ecosystem_services import (
+from impact_vision.impact.ecosystem_services import (
     BIODIVERSITY_CREDIT_PRINCIPLES,
     screen_biodiversity_credit,
 )
-from openharness.impact.frameworks.sbtn import nature_target_ranges, sbtn_readiness
-from openharness.impact.fx import convert
-from openharness.impact.greenwashing import assess_greenwashing
-from openharness.impact.just_transition import JT_METRICS, assess_just_transition
-from openharness.impact.living_wage import (
+from impact_vision.impact.frameworks.sbtn import nature_target_ranges, sbtn_readiness
+from impact_vision.impact.fx import convert
+from impact_vision.impact.greenwashing import assess_greenwashing
+from impact_vision.impact.just_transition import JT_METRICS, assess_just_transition
+from impact_vision.impact.living_wage import (
     list_geographies,
     living_wage_gap,
     resolve_geography,
 )
-from openharness.impact.models import Company, MetricRecord
-from openharness.tools.base import ToolExecutionContext
-from openharness.tools.impact.pitch_deck_analyze_tool import (
+from impact_vision.impact.models import Company, MetricRecord
+from impact_vision.tools.base import ToolExecutionContext
+from impact_vision.tools.impact.pitch_deck_analyze_tool import (
     PitchDeckAnalyzeInput,
     PitchDeckAnalyzeTool,
     _extract_reported_metrics,
@@ -226,8 +226,8 @@ def test_company_uppercases_iris_metric_ids() -> None:
 
 
 def test_fintech_hits_giin_financial_services_benchmark() -> None:
-    from openharness.impact.benchmarks import get_benchmark
-    from openharness.impact.models import Company
+    from impact_vision.impact.benchmarks import get_benchmark
+    from impact_vision.impact.models import Company
 
     bm = get_benchmark("fintech")
     assert bm is not None
@@ -254,7 +254,7 @@ def test_greenwashing_verification_ignores_metric_count() -> None:
 
 
 def test_normalize_metric_map_keeps_custom_and_edci() -> None:
-    from openharness.tools.impact.common import normalize_metric_map
+    from impact_vision.tools.impact.common import normalize_metric_map
 
     normalized, warnings = normalize_metric_map(
         {"oi4112": "10", "EDCI-G1": "yes", "CUSTOM:data_breach_incidents": "2", "BADID": "x"}
@@ -267,7 +267,7 @@ def test_normalize_metric_map_keeps_custom_and_edci() -> None:
 
 
 def test_ddq_bank_is_authored_not_generated() -> None:
-    from openharness.impact.ddq_responder import load_ddq_bank
+    from impact_vision.impact.ddq_responder import load_ddq_bank
 
     bank = load_ddq_bank()
     assert len(bank) == 80
@@ -278,7 +278,7 @@ def test_ddq_bank_is_authored_not_generated() -> None:
 
 
 def test_giin_benchmarks_cover_core_impact_sectors() -> None:
-    from openharness.impact.giin_benchmarks import list_giin_benchmarks
+    from impact_vision.impact.giin_benchmarks import list_giin_benchmarks
 
     sectors = {row.sector for row in list_giin_benchmarks()}
     assert {
@@ -298,8 +298,8 @@ def test_giin_benchmarks_cover_core_impact_sectors() -> None:
 
 
 def test_pitch_deck_mapped_metrics_require_iris_id_in_sentence() -> None:
-    from openharness.impact.database import get_metric_store
-    from openharness.tools.impact.pitch_deck_analyze_tool import _match_metrics
+    from impact_vision.impact.database import get_metric_store
+    from impact_vision.tools.impact.pitch_deck_analyze_tool import _match_metrics
 
     store = get_metric_store()
     health_only = _match_metrics("We work in health and education.", store)

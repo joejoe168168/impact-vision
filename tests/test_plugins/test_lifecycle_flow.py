@@ -8,13 +8,13 @@ from pathlib import Path
 
 import pytest
 
-from openharness.config.settings import Settings, load_settings
-from openharness.mcp.client import McpClientManager
-from openharness.mcp.config import load_mcp_server_configs
-from openharness.plugins import load_plugins
-from openharness.plugins.installer import install_plugin_from_path, uninstall_plugin
-from openharness.tools import create_default_tool_registry
-from openharness.tools.base import ToolExecutionContext
+from impact_vision.config.settings import Settings, load_settings
+from impact_vision.mcp.client import McpClientManager
+from impact_vision.mcp.config import load_mcp_server_configs
+from impact_vision.plugins import load_plugins
+from impact_vision.plugins.installer import install_plugin_from_path, uninstall_plugin
+from impact_vision.tools import create_default_tool_registry
+from impact_vision.tools.base import ToolExecutionContext
 
 
 def _write_plugin(source_root: Path, server_script: Path) -> Path:

@@ -10,13 +10,13 @@ from pathlib import Path
 
 import pytest
 
-from openharness.api.usage import UsageSnapshot
-from openharness.channels.bus.events import InboundMessage
-from openharness.channels.bus.queue import MessageBus
-from openharness.commands import CommandResult
-from openharness.commands.registry import SlashCommand
-from openharness.engine.messages import ConversationMessage, ImageBlock, TextBlock
-from openharness.engine.stream_events import (
+from impact_vision.api.usage import UsageSnapshot
+from impact_vision.channels.bus.events import InboundMessage
+from impact_vision.channels.bus.queue import MessageBus
+from impact_vision.commands import CommandResult
+from impact_vision.commands.registry import SlashCommand
+from impact_vision.engine.messages import ConversationMessage, ImageBlock, TextBlock
+from impact_vision.engine.stream_events import (
     AssistantTextDelta,
     CompactProgressEvent,
     ToolExecutionCompleted,

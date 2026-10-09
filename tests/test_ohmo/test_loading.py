@@ -2,9 +2,9 @@ import asyncio
 import json
 from pathlib import Path
 
-from openharness.config.settings import load_settings
-from openharness.plugins import load_plugins
-from openharness.skills import load_skill_registry
+from impact_vision.config.settings import load_settings
+from impact_vision.plugins import load_plugins
+from impact_vision.skills import load_skill_registry
 
 from ohmo.runtime import run_ohmo_backend
 from ohmo.workspace import get_plugins_dir, get_skills_dir, initialize_workspace

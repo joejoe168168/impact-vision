@@ -122,7 +122,7 @@ def cli_shot(browser) -> Path:  # noqa: ANN001
     deck = REPO / "data" / "sample_decks" / "sunpath_solar.pdf"
     with tempfile.TemporaryDirectory() as tmp:
         shutil.copy2(deck, Path(tmp) / deck.name)
-        cmd = [sys.executable, "-m", "openharness", "assess", deck.name, "-o", "reports"]
+        cmd = [sys.executable, "-m", "impact_vision", "assess", deck.name, "-o", "reports"]
         env = dict(os.environ, COLUMNS="100", PYTHONPATH=str(REPO / "src"))
         out = subprocess.run(cmd, cwd=tmp, env=env, capture_output=True, text=True, timeout=300).stdout
     body = html.escape(out.rstrip())
@@ -157,8 +157,8 @@ def seed_web(home: Path) -> None:
     os.environ["IMPACT_VISION_WEB_HOME"] = str(home)
     os.environ.setdefault("IMPACT_VISION_DB", str(home / "impact_vision.db"))
     sys.path.insert(0, str(REPO / "src"))
-    from openharness.impact.pipeline import SAMPLE_DECKS, sample_deck_path
-    from openharness.web.reports_api import create_report
+    from impact_vision.impact.pipeline import SAMPLE_DECKS, sample_deck_path
+    from impact_vision.web.reports_api import create_report
 
     home.mkdir(parents=True, exist_ok=True)
     for key in SAMPLE_DECKS:

@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from openharness.impact.exit_impact import (
+from impact_vision.impact.exit_impact import (
     ExitDurabilityRisk,
     PostExitFollowUp,
     build_exit_plan,
     score_exit_impact,
 )
-from openharness.impact.models import Company, ImpactClaim
+from impact_vision.impact.models import Company, ImpactClaim
 
 
 def _company() -> Company:

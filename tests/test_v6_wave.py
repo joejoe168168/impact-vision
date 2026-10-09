@@ -4,56 +4,56 @@ from __future__ import annotations
 
 from datetime import date
 
-from openharness.impact.audit_trail import AuditTrail
-from openharness.impact.cids_export import export_cids, validate_cids
-from openharness.impact.climate_accounting import (
+from impact_vision.impact.audit_trail import AuditTrail
+from impact_vision.impact.cids_export import export_cids, validate_cids
+from impact_vision.impact.climate_accounting import (
     energy_to_tce,
     scope1_mass_balance,
     scope3_estimate,
     water_balance,
 )
-from openharness.impact.concordance import load_concordance
-from openharness.impact.contribution import (
+from impact_vision.impact.concordance import load_concordance
+from impact_vision.impact.contribution import (
     ContributionChannel,
     ContributionClaim,
     ContributionEvidence,
     contribution_scorecard,
 )
-from openharness.impact.ddq_responder import load_ddq_bank
-from openharness.impact.disclosure_checklist import load_checklist
-from openharness.impact.engagements.data_room import burden_report, dedupe_requests
-from openharness.impact.engagements.materiality import (
+from impact_vision.impact.ddq_responder import load_ddq_bank
+from impact_vision.impact.disclosure_checklist import load_checklist
+from impact_vision.impact.engagements.data_room import burden_report, dedupe_requests
+from impact_vision.impact.engagements.materiality import (
     FinancialMaterialityInput,
     ImpactMaterialityScore,
     assess_materiality,
 )
-from openharness.impact.engagements.toc_builder import (
+from impact_vision.impact.engagements.toc_builder import (
     KPIFramework,
     KPIFrameworkEntry,
     lock_kpi_framework,
     promote_kpis_to_conditions,
 )
-from openharness.impact.engagements.regulatory import (
+from impact_vision.impact.engagements.regulatory import (
     classify_cn_disclosure,
     load_cn_topics,
 )
-from openharness.impact.evidence_graph import EvidenceGraph, EvidenceNode
-from openharness.impact.frameworks.esrs import load_simplified_datapoints
-from openharness.impact.frameworks.sfdr_recast import (
+from impact_vision.impact.evidence_graph import EvidenceGraph, EvidenceNode
+from impact_vision.impact.frameworks.esrs import load_simplified_datapoints
+from impact_vision.impact.frameworks.sfdr_recast import (
     PortfolioHolding,
     SFDRv2Category,
     classify_sfdr_v2,
 )
-from openharness.impact.metric_records import (
+from impact_vision.impact.metric_records import (
     comparability_score,
     portfolio_comparability_index,
 )
-from openharness.impact.deal_gate import TargetCondition, gate_with_targets
-from openharness.impact.models import Company, MetricRecord
-from openharness.impact.regulatory_calendar import issb_status, issb_summary
-from openharness.impact.regulatory_packs import ca_climate_scope
-from openharness.impact.standards_registry import load_articles, mandatory_gap_scan
-from openharness.impact.xbrl_export import render_ixbrl, tag_records
+from impact_vision.impact.deal_gate import TargetCondition, gate_with_targets
+from impact_vision.impact.models import Company, MetricRecord
+from impact_vision.impact.regulatory_calendar import issb_status, issb_summary
+from impact_vision.impact.regulatory_packs import ca_climate_scope
+from impact_vision.impact.standards_registry import load_articles, mandatory_gap_scan
+from impact_vision.impact.xbrl_export import render_ixbrl, tag_records
 
 
 def _record(metric_id: str = "OI4112", **updates) -> MetricRecord:
@@ -212,11 +212,11 @@ def test_aspiration_only_target_does_not_pass_gate() -> None:
 
 
 def test_ic_memo_and_portal_render_v6_conditions() -> None:
-    from openharness.impact.fund_thesis import FundThesis
-    from openharness.impact.ic_memo import render_ic_memo_markdown
-    from openharness.impact.investee_portal import build_investee_portal
-    from openharness.impact.models import Assessment
-    from openharness.impact.deal_gate import evaluate_deal
+    from impact_vision.impact.fund_thesis import FundThesis
+    from impact_vision.impact.ic_memo import render_ic_memo_markdown
+    from impact_vision.impact.investee_portal import build_investee_portal
+    from impact_vision.impact.models import Assessment
+    from impact_vision.impact.deal_gate import evaluate_deal
 
     assessment = Assessment(
         company=Company(name="A", geography="Hong Kong"),
@@ -244,11 +244,11 @@ def test_lp_dataroom_bundle_hashes_and_writer(tmp_path) -> None:
     import hashlib
     import json
 
-    from openharness.impact.engagements.data_room import (
+    from impact_vision.impact.engagements.data_room import (
         build_lp_dataroom,
         write_lp_dataroom_bundle,
     )
-    from openharness.impact.signed_feed import HMACSigner
+    from impact_vision.impact.signed_feed import HMACSigner
 
     company = Company(name="A")
     bundle = build_lp_dataroom({"name": "Fund"}, [company], {"A": [_record()]})

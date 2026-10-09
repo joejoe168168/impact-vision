@@ -1,0 +1,1150 @@
+"""Greenwashing / impact-washing detection engine.
+
+Produces a composite greenwashing risk score (0-100) from 5 sub-scores:
+1. Claim-Metric Gap: do SDG/theme claims have supporting metrics?
+2. Adverse Omission: are negative-impact metrics missing for the sector?
+3. Specificity: are claims concrete or vague?
+4. Selectivity: is reporting balanced or cherry-picked?
+5. Verification: is there evidence of measurement systems and auditing?
+
+Extended with NLP-enhanced signals:
+- Green Authenticity Index (GAI) - adapted from Stacey Matrix
+- Cheap Talk Index - proportion of non-specific commitments
+- Sentiment deflection detection
+- Claim decomposition into verifiable sub-claims
+- Climate-claim classifier (heuristic, ClimateBERT when a local model is present)
+"""
+
+from __future__ import annotations
+
+from impact_vision.impact.text_sections import company_text
+
+import re
+from typing import Any, Literal
+
+from pydantic import BaseModel, Field
+
+from impact_vision.impact.models import Company
+
+
+# Single-word vague verbs (matched against tokenised words).
+_VAGUE_VERBS = {
+    "aim", "aspire", "believe", "commit", "contribute", "dedicated", "endeavor",
+    "expect", "hope", "intend", "plan", "pledge", "promise", "seek", "strive",
+    "support", "try",
+}
+
+# Multi-word vague phrases (matched as substrings against the lowered text).
+# These cannot be detected by single-token set intersection; matching them as
+# phrases prevents the most diagnostic kind of greenwashy phrasing from being
+# silently ignored by the specificity scorer.
+_VAGUE_PHRASES = (
+    "work toward",
+    "working toward",
+    "work towards",
+    "working towards",
+    "plan to",
+    "aim to",
+    "strive to",
+    "committed to",
+)
+
+_CONCRETE_VERBS = {
+    "achieved", "completed", "delivered", "deployed", "doubled", "eliminated",
+    "generated", "grew", "halved", "implemented", "installed", "launched",
+    "measured", "produced", "reached", "reduced", "saved", "served", "trained",
+    "tripled", "verified",
+}
+
+_BUZZWORDS = {
+    "sustainable", "sustainability", "esg", "green", "eco-friendly", "responsible",
+    "ethical", "conscious", "purpose-driven", "impact-driven", "net-zero",
+    "carbon-neutral", "climate-positive", "circular", "regenerative",
+}
+
+# Genuinely *adverse* metrics — things that, when reported, demonstrate
+# the company is monitoring potential negative impact. IRIS+ metric IDs are
+# used only where the bundled IRIS+ 5.3c catalog contains a suitable metric;
+# otherwise a CUSTOM:* label marks a non-IRIS sector indicator.
+_ADVERSE_METRICS_BY_SECTOR: dict[str, list[str]] = {
+    # Microfinance / consumer lending: client over-indebtedness, pricing,
+    # complaints, loan-loss provisioning, harassment.
+    "fintech": [
+        "PI7467",   # Effective Interest Rate (EIR)
+        "PI4733",   # Repayment Capacity Analysis
+        "OI4753",   # Client protection / over-indebtedness policy
+        "FP2635",   # Non-Performing Loans (Portfolio at Risk): 30 Days
+        "PI5216",   # Complaints Ratio
+        "OI5049",   # Client Feedback System
+    ],
+    "financial": [
+        "PI7467", "PI4733", "OI4753", "FP2635", "PI5216", "OI5049",
+    ],
+    # Energy: scope 1+2+3, water, methane, project-related displacement.
+    "energy": [
+        "OI4112",   # GHG Emissions: Direct (Scope 1)
+        "OI9604",   # GHG Emissions: Indirect (Scope 2)
+        "OI1479",   # GHG Emissions: Total
+        "OI0263",   # Water Withdrawn
+        "OI3757",   # Occupational Injuries
+        "OI6525",   # Occupational Fatalities
+        "PI1297",   # Individuals Displaced: Total
+    ],
+    # Agriculture / food: pesticides, soil/water, smallholder pricing.
+    "agriculture": [
+        "OI4112",   # GHG (incl. land use change)
+        "OI2569",   # Land Directly Controlled: Treated with Pesticides
+        "OI7394",   # Pesticide Hazard Classification Type
+        "OI3637",   # Water Consumed: Regions with High Water Stress
+        "PI1568",   # Producer Price Premium
+        "CUSTOM:child_forced_labor_policy",
+    ],
+    "livestock": [
+        "OI4112", "OI0263", "OI2569", "OI7394", "CUSTOM:animal_welfare_incidents",
+    ],
+    # Healthcare: avoidable adverse events, antibiotic stewardship, affordability.
+    "healthcare": [
+        "OI4753",   # Patient safety / adverse event rate
+        "PI7161",   # Target Stakeholder Injuries
+        "PI8145",   # Target Stakeholder Fatalities
+        "PI7395",   # Target Stakeholder Spending: Health
+        "OI5049",   # Patient complaints
+    ],
+    "health": ["OI4753", "PI7161", "PI8145", "PI7395", "OI5049"],
+    # Technology / SaaS: data breaches, content moderation, model bias, e-waste.
+    "technology": [
+        "EDCI-G1",   # Cybersecurity testing
+        "CUSTOM:data_breach_incidents",
+        "CUSTOM:content_moderation_incidents",
+        "PD6596",    # Energy Consumption of Product
+        "OI9604",    # Scope 2 emissions
+    ],
+    "ict": ["EDCI-G1", "CUSTOM:data_breach_incidents", "PD6596", "OI9604"],
+    # Manufacturing: scope 1/2/3, hazardous waste, occupational injury.
+    "manufacturing": [
+        "OI4112", "OI9604", "OI1479",
+        "OI0263",
+        "OI3757",   # Occupational Injuries
+        "OI1346",   # Hazardous Waste Produced
+    ],
+    # Mining / extractives: tailings, biodiversity, community grievances.
+    "mining": [
+        "OI4112", "OI0263", "OI1346",
+        "OI5929",   # Biodiversity Assessment
+        "OI1042",   # Number of Employee Grievances Registered
+        "OI6525",   # Occupational Fatalities
+        "CUSTOM:tailings_management",
+    ],
+    "extractives": [
+        "OI4112", "OI0263", "OI1346", "OI5929", "OI1042", "OI6525", "CUSTOM:tailings_management",
+    ],
+    # Real estate / construction: embodied carbon, displacement.
+    "real estate": [
+        "OI4112", "OI9604", "OI3757",
+        "PI6303",   # Eviction Rate
+        "PD5833",   # Percent Affordable Housing
+        "PI1297",   # Individuals Displaced: Total
+    ],
+    "construction": [
+        "OI4112", "OI9604", "OI3757", "OI1346",
+    ],
+    # Transport / logistics: scope 1, NOx/PM, road safety.
+    "transport": [
+        "OI4112", "OI9604", "OI3757", "CUSTOM:nox_pm_emissions", "CUSTOM:road_safety_incidents",
+    ],
+    "logistics": ["OI4112", "OI9604", "OI3757", "CUSTOM:nox_pm_emissions", "CUSTOM:road_safety_incidents"],
+    # Education: drop-out, debt burden.
+    "education": [
+        "OI5049",   # Learner complaints
+        "PI9910",   # Student Dropout Rate
+        "PI6941",   # Cost Transparency
+        "CUSTOM:student_debt_burden",
+    ],
+    # Water / sanitation: leakage, affordability, source depletion.
+    "water": [
+        "OI0263", "OI1697", "OI0386", "PI6941",
+    ],
+    # Waste: landfill diversion, hazardous handling.
+    "waste management": [
+        "OI4112", "OI1346", "OI3757",
+    ],
+    # Tourism: emissions, water, community displacement, labour.
+    "tourism": [
+        "OI4112",
+        "OI9604",
+        "OI0263",
+        "PI1297",
+        "OI3757",
+        "CUSTOM:community_displacement",
+    ],
+    # Retail: packaging waste, labour, Scope 3.
+    "retail": [
+        "OI4112",
+        "OI9604",
+        "OI1479",
+        "OI1346",
+        "OI3757",
+        "CUSTOM:packaging_waste",
+    ],
+    "professional services": [
+        "OI9604",
+        "EDCI-G1",
+        "CUSTOM:data_breach_incidents",
+        "OI3757",
+    ],
+    "media": [
+        "CUSTOM:content_moderation_incidents",
+        "EDCI-G1",
+        "OI9604",
+    ],
+    # Default: GHG + worker safety as universal adverse signals.
+    "default": [
+        "OI4112",   # Scope 1
+        "OI9604",   # Scope 2
+        "OI3757",   # Occupational Injuries
+        "OI6525",   # Occupational Fatalities
+    ],
+}
+
+_VERIFICATION_KEYWORDS = {
+    "audit", "audited", "verified", "third-party", "third party",
+    "assurance", "certification", "certified", "independently verified",
+    "external review", "iso 14001", "b corp", "fair trade",
+    "accredited", "accreditation", "gold standard", "verra", "safecare",
+    "sirim", "sedex", "fairtrade", "rainforest alliance", "iso 9001", "iso 27001",
+}
+
+_MEASUREMENT_KEYWORDS = {
+    "baseline", "benchmark", "data collection", "indicator", "kpi",
+    "methodology", "monitoring", "reporting framework", "survey",
+    "target", "tracking", "year-over-year",
+}
+
+
+class GreenwashingScore(BaseModel):
+    """Composite greenwashing risk assessment."""
+
+    overall_score: float = Field(ge=0, le=100, description="0=clean, 100=high greenwashing risk")
+    classification: Literal[
+        "Genuine Impact Leader",
+        "Substantive with Gaps",
+        "Moderate Risk",
+        "High Risk",
+        "Probable Greenwashing",
+    ]
+
+    claim_metric_gap: float = Field(ge=0, le=100, description="Unsubstantiated claims score")
+    adverse_omission: float = Field(ge=0, le=100, description="Missing negative-impact metrics")
+    specificity: float = Field(ge=0, le=100, description="Vagueness of language")
+    selectivity: float = Field(ge=0, le=100, description="Cherry-picked positive reporting")
+    verification: float = Field(ge=0, le=100, description="Lack of verification/audit signals")
+
+    flags: list[str] = Field(default_factory=list)
+    recommendations: list[str] = Field(default_factory=list)
+    # v8 W0.4: True when the score is driven by missing data rather than by
+    # anything the company said; such a score is capped below the finding
+    # threshold and reads as "evidence gap", never as greenwashing.
+    evidence_gap: bool = False
+    disclosed_controls: int = 0
+    methodology: dict[str, str] = Field(default_factory=lambda: _gw_stamp())
+
+    @property
+    def is_finding(self) -> bool:
+        return self.overall_score >= finding_threshold()
+
+
+def _gw_stamp() -> dict[str, str]:
+    from impact_vision.impact.methodology import methodology_stamp
+
+    return methodology_stamp()
+
+
+def _gw() -> dict:
+    """Greenwashing parameters from the versioned methodology (W5.2)."""
+    from impact_vision.impact.methodology import section
+
+    return section("greenwashing")
+
+
+def finding_threshold() -> float:
+    """Overall score at which greenwashing risk is a finding (methodology YAML)."""
+    return float(_gw().get("finding_threshold", 60))
+
+
+def pass_max() -> float:
+    """Overall score at or below which the greenwashing check passes outright."""
+    return float(_gw().get("pass_max", 40))
+
+
+# Phrases that show a company names and manages its own risks. Counted on the
+# whole document, word-boundary aware.
+_CONTROL_PHRASES = (
+    "risks we manage", "risk management", "we manage", "mitigat", "safeguard", "grievance",
+    "complaints mechanism", "complaint mechanism", "do no harm", "licensed contractor",
+    "take-back", "take back", "recycl", "landfill", "over-indebtedness", "overindebtedness",
+    "repayment capacity", "loan cap", "we cap", "data privacy", "data protection", "consent",
+    "child safeguarding", "health and safety", "incident", "whistleblow", "code of conduct",
+    "e-waste", "end-of-life", "disposal", "waste contractor",
+)
+
+
+def _count_controls(text: str) -> int:
+    lowered = text.lower()
+    return sum(1 for phrase in _CONTROL_PHRASES if phrase in lowered)
+
+
+def _canonical_metric_ids(raw: Any) -> set[str]:
+    """Normalise reported metric keys so catalog lookups are case-stable."""
+    from impact_vision.tools.impact.common import canonicalize_metric_id
+
+    ids: set[str] = set()
+    for key in raw or ():
+        metric_id = canonicalize_metric_id(key)
+        if metric_id:
+            ids.add(metric_id)
+    return ids
+
+
+def assess_greenwashing(
+    company: Company,
+    claims: list[dict[str, Any]] | None = None,
+) -> GreenwashingScore:
+    """Run greenwashing risk assessment for a company."""
+    text = f"{company_text(company)} {' '.join(company.impact_themes)}".lower()
+    if claims:
+        # Extracted claim sentences are part of the evidence base — a
+        # truncated description must not hide "independently verified by …".
+        claim_text = " ".join(str(c.get("text", "")) for c in claims if isinstance(c, dict))
+        text = f"{text} {claim_text.lower()}"
+    metrics = _canonical_metric_ids(company.reported_metrics.keys())
+
+    gw = _gw()
+    controls = _count_controls(text)
+    relief = gw.get("disclosed_controls", {})
+    has_controls = controls >= int(relief.get("min_hits", 2))
+
+    gap_score = _score_claim_metric_gap(company, metrics)
+    omission_score = _score_adverse_omission(company, metrics)
+    specificity_score = _score_specificity(text, claims)
+    selectivity_score = _score_selectivity(company, metrics, text)
+    verification_score = _score_verification(text, metrics, claims)
+    if has_controls:
+        omission_score *= float(relief.get("omission_factor", 0.6))
+        selectivity_score = max(0.0, selectivity_score - float(relief.get("selectivity_relief", 15)))
+
+    w = _gw()["weights"]
+    weights = {
+        "gap": w["claim_metric_gap"], "omission": w["adverse_omission"], "specificity": w["specificity"],
+        "selectivity": w["selectivity"], "verification": w["verification"],
+    }
+    overall = (
+        gap_score * weights["gap"]
+        + omission_score * weights["omission"]
+        + specificity_score * weights["specificity"]
+        + selectivity_score * weights["selectivity"]
+        + verification_score * weights["verification"]
+    )
+    overall = min(100, max(0, overall))
+    components = {"claim_metric_gap": gap_score, "adverse_omission": omission_score,
+                  "specificity": specificity_score, "selectivity": selectivity_score,
+                  "verification": verification_score}
+    conduct = [components[c] for c in gw.get("conduct_components", ["specificity"]) if c in components]
+    evidence_gap = False
+    if overall >= finding_threshold() and not any(v > gw["flag_threshold"] for v in conduct):
+        overall = min(overall, float(gw.get("absence_cap", finding_threshold() - 1)))
+        evidence_gap = True
+    # Whole numbers: what is shown is exactly what is classified and gated.
+    overall = float(round(overall))
+
+    classification = _classify(overall)
+    flags = _generate_flags(gap_score, omission_score, specificity_score, selectivity_score, verification_score)
+    recommendations = _generate_recommendations(gap_score, omission_score, specificity_score, selectivity_score, verification_score, company)
+
+    return GreenwashingScore(
+        overall_score=overall,
+        classification=classification,
+        claim_metric_gap=round(gap_score, 1),
+        adverse_omission=round(omission_score, 1),
+        specificity=round(specificity_score, 1),
+        selectivity=round(selectivity_score, 1),
+        verification=round(verification_score, 1),
+        flags=flags,
+        recommendations=recommendations,
+        evidence_gap=evidence_gap,
+        disclosed_controls=controls,
+    )
+
+
+def _score_claim_metric_gap(company: Company, metrics: set[str]) -> float:
+    """Score: do SDG claims and themes have supporting metrics?
+
+    Earlier versions checked whether the theme name appeared inside reported
+    metric *values*, which almost never matched in practice (values are usually
+    numbers or short strings). We instead resolve the IRIS+ theme→metric map
+    via the in-memory store so a "Financial Inclusion" theme is supported when
+    any metric in that theme family has been reported.
+    """
+    claims_count = len(company.sdg_claims) + len(company.impact_themes)
+    if claims_count == 0:
+        return 20.0
+
+    if not metrics:
+        return min(100, 40 + claims_count * 8)
+
+    supported = 0
+    try:
+        from impact_vision.impact.database import get_metric_store
+
+        store = get_metric_store()
+    except Exception:  # pragma: no cover - cataloge optional in some test paths
+        store = None
+
+    for theme in company.impact_themes:
+        theme_metric_ids: set[str] = set()
+        if store is not None:
+            try:
+                theme_metric_ids = {m.id.upper() for m in store.filter_by_theme(theme)}
+            except Exception:  # pragma: no cover
+                theme_metric_ids = set()
+        if theme_metric_ids and metrics & theme_metric_ids:
+            supported += 1
+            continue
+        # Fallback: legacy string-overlap check (kept for catalog-less tests).
+        theme_lower = theme.lower()
+        if any(theme_lower in str(v).lower() for v in company.reported_metrics.values()):
+            supported += 1
+
+    for goal in company.sdg_claims:
+        try:
+            goal_num = int(goal)
+        except (TypeError, ValueError):
+            continue
+        sdg_metric_ids: set[str] = set()
+        if store is not None:
+            try:
+                sdg_metric_ids = {m.id.upper() for m in store.filter_by_sdg(goal_num)}
+            except Exception:  # pragma: no cover
+                sdg_metric_ids = set()
+        if sdg_metric_ids and metrics & sdg_metric_ids:
+            supported += 1
+            continue
+        # Catalog-less fallback: only credit an SDG when the claim number or
+        # an explicit "SDG N" token appears in a *reported value* — never by
+        # counting unrelated metric IDs.
+        needle = f"sdg {goal_num}"
+        if any(needle in str(v).lower() for v in company.reported_metrics.values()):
+            supported += 1
+
+    support_ratio = supported / max(1, claims_count)
+    return max(0, round(80 - support_ratio * 60, 1))
+
+
+def _score_adverse_omission(company: Company, metrics: set[str]) -> float:
+    """Score: are sector-appropriate negative-impact metrics missing?"""
+    # Defensive: most call paths normalise via the Company validator, but we
+    # still apply normalize_sector here so older callers that bypass the model
+    # (e.g. constructed via direct attribute setting) get the right table.
+    from impact_vision.tools.impact.common import normalize_sector
+
+    sector = normalize_sector(company.sector or "")
+    required = _ADVERSE_METRICS_BY_SECTOR.get(sector, _ADVERSE_METRICS_BY_SECTOR["default"])
+
+    if not required:
+        return 20.0
+
+    missing = [m for m in required if m not in metrics]
+    return min(100, len(missing) / len(required) * 80 + 10)
+
+
+def _score_specificity(text: str, claims: list[dict[str, Any]] | None) -> float:
+    """Score: are claims vague or concrete?"""
+    lowered = text.lower()
+    words = set(re.findall(r"\b\w+\b", lowered))
+
+    vague_count = len(words & _VAGUE_VERBS)
+    # Multi-word vague phrases need substring matching: tokenisation drops them.
+    vague_count += sum(1 for phrase in _VAGUE_PHRASES if phrase in lowered)
+    concrete_count = len(words & _CONCRETE_VERBS)
+    buzzword_count = len(words & _BUZZWORDS)
+
+    has_numbers = bool(re.search(r"\b\d+[%,.\d]*\b", text))
+
+    score = 50.0
+    score += vague_count * 5
+    score -= concrete_count * 8
+    score += buzzword_count * 4
+    if has_numbers:
+        score -= 15
+
+    if claims:
+        vague_claims = sum(1 for c in claims if c.get("category") in ("intent", "activity"))
+        outcome_claims = sum(1 for c in claims if c.get("category") in ("outcome", "output"))
+        if vague_claims > outcome_claims:
+            score += 15
+
+    return max(0, min(100, score))
+
+
+def _score_selectivity(company: Company, metrics: set[str], text: str = "") -> float:
+    """Score: is reporting balanced or only positive metrics?"""
+    if not metrics:
+        return 60.0
+
+    # Check if any reported metrics are from the adverse/risk set for this sector
+    from impact_vision.tools.impact.common import normalize_sector
+
+    sector = normalize_sector(company.sector or "")
+    adverse_set = set(_ADVERSE_METRICS_BY_SECTOR.get(sector, _ADVERSE_METRICS_BY_SECTOR["default"]))
+    has_adverse_metrics = bool(metrics & adverse_set)
+
+    # Check if any reported values mention risk/negative indicators
+    has_risk_language = any(
+        "risk" in str(v).lower() or "negative" in str(v).lower()
+        for v in company.reported_metrics.values()
+    ) or _count_controls(text) > 0
+
+    total = len(metrics)
+
+    score = 50.0
+    if not has_adverse_metrics and not has_risk_language:
+        score += 25
+    elif not has_adverse_metrics:
+        score += 15
+    if total < 5:
+        score += 10
+
+    return max(0, min(100, score))
+
+
+def _has_word(text: str, term: str) -> bool:
+    """Word-boundary aware substring check."""
+    return bool(re.search(r"\b" + re.escape(term) + r"\b", text))
+
+
+def _score_verification(
+    text: str, metrics: set[str], claims: list[dict[str, Any]] | None = None
+) -> float:
+    """Score: does the company show verification/audit signals?"""
+    text_lower = text.lower()
+    verification_hits = sum(1 for kw in _VERIFICATION_KEYWORDS if _has_word(text_lower, kw))
+    measurement_hits = sum(1 for kw in _MEASUREMENT_KEYWORDS if _has_word(text_lower, kw))
+    # Structured evidence signals from extracted claims (verified / audited /
+    # controlled evaluation) count once per distinct signal.
+    signals: set[str] = set()
+    for c in claims or []:
+        if isinstance(c, dict):
+            signals.update((c.get("entities") or {}).get("evidence", []) or [])
+    verification_hits += len(signals & {"third_party_verified", "audited", "certified"})
+    measurement_hits += len(signals & {"controlled_evaluation", "baseline_comparison"})
+
+    score = 70.0
+    score -= verification_hits * 12
+    score -= measurement_hits * 8
+    # Metrics only reduce verification risk when measurement/audit language
+    # is also present — a pile of unrelated IDs is not verification.
+    if metrics and (verification_hits or measurement_hits):
+        score -= 4
+
+    return max(0, min(100, score))
+
+
+def _classify(score: float) -> str:
+    bands = _gw()["classification"]
+    for band in bands[:-1]:
+        if score < band["max"]:
+            return band["label"]
+    return bands[-1]["label"]
+
+
+def _generate_flags(gap: float, omission: float, specificity: float, selectivity: float, verification: float) -> list[str]:
+    flags = []
+    limit = _gw()["flag_threshold"]
+    if gap > limit:
+        flags.append("HIGH_CLAIM_METRIC_GAP: SDG/theme claims lack supporting metric evidence")
+    if omission > limit:
+        flags.append("ADVERSE_OMISSION: Missing negative-impact metrics for sector")
+    if specificity > limit:
+        flags.append("VAGUE_LANGUAGE: Claims use aspirational language without concrete evidence")
+    if selectivity > limit:
+        flags.append("SELECTIVE_REPORTING: Reporting appears to cherry-pick positive metrics")
+    if verification > limit:
+        flags.append("NO_VERIFICATION: No evidence of third-party verification or auditing")
+    return flags
+
+
+def _adverse_recommendation(company: Company) -> str:
+    """Name the sector's own negative-impact metrics instead of a generic list."""
+    from impact_vision.tools.impact.common import normalize_sector
+
+    sector = normalize_sector(company.sector or "") or "default"
+    ids = _ADVERSE_METRICS_BY_SECTOR.get(sector, _ADVERSE_METRICS_BY_SECTOR["default"])
+    names: list[str] = []
+    try:
+        from impact_vision.impact.database import get_metric_store
+
+        store = get_metric_store()
+    except Exception:  # pragma: no cover - catalog optional
+        store = None
+    for metric_id in ids:
+        if metric_id.startswith("CUSTOM:"):
+            names.append(metric_id.split(":", 1)[1].replace("_", " "))
+            continue
+        metric = store.get(metric_id) if store is not None else None
+        names.append(f"{metric.name} ({metric_id})" if metric is not None else metric_id)
+        if len(names) == 3:
+            break
+    label = sector if sector != "default" else "this business"
+    return f"Report the negative impacts that matter for {label}, e.g. {'; '.join(names[:3])}"
+
+
+def _generate_recommendations(
+    gap: float, omission: float, specificity: float, selectivity: float, verification: float,
+    company: Company,
+) -> list[str]:
+    recs = []
+    if gap > 40:
+        recs.append("Map each SDG claim to at least one IRIS+ metric with reported data")
+    if omission > 40:
+        recs.append(_adverse_recommendation(company))
+    if specificity > 40:
+        recs.append("Replace aspirational language with concrete, quantified outcome statements")
+    if selectivity > 40:
+        recs.append("Include risk-oriented and negative-impact metrics alongside positive outcomes")
+    if verification > 40:
+        recs.append("Obtain third-party verification or implement a recognized measurement framework")
+    return recs
+
+
+# ---------------------------------------------------------------------------
+# EU green-claims screen (v7 W4.7, re-verified 2026-10-06).
+#
+# Operative law: the Empowering Consumers for the Green Transition Directive
+# (EU) 2024/825 ("ECGT"), amending the Unfair Commercial Practices Directive
+# 2005/29/EC ("UCPD"), applies from 2026-09-27. Its Annex I blacklist bans
+# generic environmental claims without recognised excellent environmental
+# performance (point 4a) and product-level neutrality claims based on
+# offsetting (point 4c); Art 6(2)(d) requires future environmental
+# performance claims to rest on a detailed, realistic, independently
+# monitored implementation plan.
+#
+# The proposed Green Claims Directive (COM/2023/166) is SHELVED: the
+# Commission announced its intention to withdraw it on 2025-06-20, but no
+# formal withdrawal has followed and trilogues have stalled. Its stricter
+# tests (life-cycle evidence, accredited ex-ante verification) are reported
+# separately as best practice, never as breaches.
+# ---------------------------------------------------------------------------
+
+ECGT_OPERATIVE_LAW = (
+    "Directive (EU) 2024/825 (ECGT) amending the UCPD 2005/29/EC — applies from 2026-09-27"
+)
+GCD_STATUS = (
+    "Proposed Green Claims Directive (COM/2023/166): shelved — withdrawal announced "
+    "2025-06-20, not formalised; trilogues stalled. Best practice only."
+)
+
+_ENVIRONMENTAL_CLAIM_PATTERNS: list[str] = [
+    "carbon neutral", "carbon-neutral", "net zero", "net-zero", "climate neutral",
+    "climate-neutral", "climate positive", "carbon negative", "eco-friendly",
+    "biodegradable", "compostable", "recyclable", "recycled content",
+    "renewable", "sustainable", "green", "environmentally friendly",
+    "reduced footprint", "low carbon", "zero emission",
+]
+
+# ECGT Annex I point 4a: generic claims (no clear, specific substantiation on the medium).
+_GENERIC_CLAIMS: list[str] = [
+    "eco-friendly", "environmentally friendly", "green", "sustainable", "climate friendly",
+    "climate-friendly", "nature friendly", "earth friendly", "planet friendly",
+    "environmentally responsible", "ecological",
+]
+
+# ECGT Annex I point 4c: neutrality / reduced-impact claims based on offsetting.
+_NEUTRALITY_CLAIMS: list[str] = [
+    "carbon neutral", "carbon-neutral", "climate neutral", "climate-neutral",
+    "climate positive", "carbon negative", "co2 neutral", "co2-neutral", "net zero product",
+]
+
+_RECOGNISED_EXCELLENCE = [
+    "eu ecolabel", "ecolabel", "emas", "nordic swan", "blue angel", "iso 14024",
+]
+
+_LCA_TRIGGER_TERMS: list[str] = [
+    "carbon neutral", "carbon-neutral", "net zero", "net-zero",
+    "climate neutral", "climate-neutral", "carbon negative",
+    "zero emission", "climate positive", "reduced footprint",
+]
+
+_FUTURE_CLAIM = re.compile(
+    r"\b(net[- ]zero|carbon[- ]neutral|climate[- ]neutral|zero[- ]emissions?)\b[^.]{0,40}\bby\s+20\d{2}\b"
+)
+_PLAN_SIGNALS = ("transition plan", "implementation plan", "interim target", "sbti", "science-based target", "independent monitor")
+
+
+class GreenClaimsResult(BaseModel):
+    """EU green-claims screen: ECGT breaches (law) + GCD-style gaps (best practice)."""
+
+    compliant: bool = False
+    claims_found: list[str] = Field(default_factory=list)
+    operative_law: str = ECGT_OPERATIVE_LAW
+    gcd_status: str = GCD_STATUS
+    ecgt_breaches: list[str] = Field(default_factory=list)
+    best_practice_gaps: list[str] = Field(default_factory=list)
+    lca_required: bool = False
+    lca_triggers: list[str] = Field(default_factory=list)
+    substantiation_issues: list[str] = Field(default_factory=list)
+    independent_verification_present: bool = False
+    recommendations: list[str] = Field(default_factory=list)
+
+
+def assess_green_claims_compliance(
+    description: str = "",
+    document_text: str = "",
+    reported_metrics: dict[str, str] | None = None,
+    has_lca: bool = False,
+    has_independent_verification: bool = False,
+) -> GreenClaimsResult:
+    """Screen company claims against EU green-claims rules.
+
+    ``ecgt_breaches`` are likely breaches of operative law (ECGT / UCPD):
+    unsubstantiated generic claims, offsetting-based neutrality claims, and
+    future-performance claims without an implementation plan.
+    ``best_practice_gaps`` are the shelved Green Claims Directive tests
+    (life-cycle evidence, independent verification). ``compliant`` depends on
+    ECGT breaches only. ``substantiation_issues`` is the union, for callers
+    that predate the split.
+    """
+    text = f"{description} {document_text}".lower()
+    metrics = reported_metrics or {}
+
+    def _claim_in(t: str, c: str) -> bool:
+        return _has_word(t, c) if (" " not in c and "-" not in c) else c in t
+
+    claims = [c for c in _ENVIRONMENTAL_CLAIM_PATTERNS if _claim_in(text, c)]
+    lca_triggers = [t for t in _LCA_TRIGGER_TERMS if _claim_in(text, t)]
+    lca_required = bool(lca_triggers) and not has_lca
+    excellence = any(term in text for term in _RECOGNISED_EXCELLENCE)
+
+    breaches: list[str] = []
+    best: list[str] = []
+    recs: list[str] = []
+
+    generic = [c for c in _GENERIC_CLAIMS if _claim_in(text, c)]
+    for claim in generic:
+        has_data = any(claim.replace("-", " ").split()[0] in str(v).lower() for v in metrics.values())
+        if not has_data and not excellence:
+            breaches.append(
+                f"Possible breach: generic environmental claim '{claim}' without recognised excellent environmental "
+                "performance (ECGT, UCPD Annex I point 4a)"
+            )
+    if generic and breaches:
+        recs.append("Replace generic wording with a specific, quantified claim, or cite an EN ISO 14024 ecolabel")
+
+    neutral = [c for c in _NEUTRALITY_CLAIMS if _claim_in(text, c)]
+    offsets = _has_word(text, "offset") or _has_word(text, "offsets") or "carbon credit" in text
+    if neutral and offsets:
+        breaches.append(
+            f"Possible breach: neutrality claim ('{neutral[0]}') based on offsetting — banned outright "
+            "(ECGT, UCPD Annex I point 4c)"
+        )
+        recs.append("Drop product-level neutrality claims that rely on credits; report reductions and credits separately")
+    elif offsets and "reduc" not in text:
+        best.append("Offsets referenced without evidence of primary emission reductions")
+        recs.append("Demonstrate primary emission reductions before referencing offsets")
+
+    if _FUTURE_CLAIM.search(text) and not any(sig in text for sig in _PLAN_SIGNALS):
+        breaches.append(
+            "Possible breach: future environmental performance claim without a detailed, realistic implementation "
+            "plan and independent monitoring (ECGT, UCPD Art 6(2)(d))"
+        )
+        recs.append("Publish the implementation plan with interim targets and an independent monitor")
+
+    if lca_required:
+        best.append("Full-scope environmental claim without life-cycle assessment (shelved GCD test)")
+        recs.append("Commission a life-cycle assessment covering the full product/service life cycle")
+    if claims and not has_independent_verification:
+        best.append("Environmental claims lack independent verification (shelved GCD test)")
+        recs.append("Engage an independent verifier to substantiate environmental claims")
+
+    if not claims and not neutral and not generic:
+        recs.append("No explicit environmental claims detected — EU green-claims rules may not apply")
+
+    return GreenClaimsResult(
+        compliant=bool(claims or neutral or generic) and not breaches,
+        claims_found=sorted(set(claims + neutral + generic)),
+        ecgt_breaches=breaches,
+        best_practice_gaps=best,
+        lca_required=lca_required,
+        lca_triggers=lca_triggers,
+        substantiation_issues=breaches + best,
+        independent_verification_present=has_independent_verification,
+        recommendations=recs,
+    )
+
+
+# ---------------------------------------------------------------------------
+# UK FCA Anti-Greenwashing Rule (PS23/16, effective 31 May 2024)
+# ---------------------------------------------------------------------------
+
+class FCAAntiGreenwashingResult(BaseModel):
+    """UK FCA Anti-Greenwashing Rule assessment."""
+
+    compliant: bool = False
+    issues: list[str] = Field(default_factory=list)
+    sdl_labels_applicable: list[str] = Field(default_factory=list)
+    recommendations: list[str] = Field(default_factory=list)
+
+
+_FCA_PROHIBITED_TERMS = [
+    "green fund", "sustainable fund", "esg fund", "impact fund",
+    "net zero fund", "climate fund", "responsible fund",
+]
+
+_SDL_LABELS = {
+    "sustainability_focus": {
+        "label": "Sustainability Focus",
+        "requirement": "At least 70% of assets meet a credible standard of environmental/social sustainability",
+    },
+    "sustainability_improvers": {
+        "label": "Sustainability Improvers",
+        "requirement": "Assets that may not be sustainable now but aim to improve over a set period",
+    },
+    "sustainability_impact": {
+        "label": "Sustainability Impact",
+        "requirement": "Investments with measurable positive environmental/social outcomes alongside financial return",
+    },
+    "sustainability_mixed_goals": {
+        "label": "Sustainability Mixed Goals",
+        "requirement": "Portfolio combining sustainability-focused and other investments with clear allocation",
+    },
+}
+
+
+def assess_fca_anti_greenwashing(
+    description: str = "",
+    document_text: str = "",
+    fund_name: str = "",
+    reported_metrics: dict[str, str] | None = None,
+) -> FCAAntiGreenwashingResult:
+    """Assess compliance with the UK FCA Anti-Greenwashing Rule.
+
+    Key requirements (PS23/16 + SDR):
+    1. Sustainability claims must be fair, clear, and not misleading.
+    2. Fund naming conventions restricted (no "green"/"ESG" without substance).
+    3. Sustainability Disclosure Requirements (SDR) labels require evidence.
+    4. Product-level disclosures must be consumer-facing and accessible.
+    """
+    text = f"{description} {document_text} {fund_name}".lower()
+    metrics = reported_metrics or {}
+    issues: list[str] = []
+    recs: list[str] = []
+    applicable_labels: list[str] = []
+
+    def _term_in(t: str, term: str) -> bool:
+        return _has_word(t, term) if (" " not in term and "-" not in term) else term in t
+
+    for term in _FCA_PROHIBITED_TERMS:
+        if _term_in(text, term):
+            has_evidence = bool(metrics) or any(
+                _has_word(text, kw)
+                for kw in ["measured", "reported", "verified", "certified", "tracked"]
+            )
+            if not has_evidence:
+                issues.append(
+                    f"Use of '{term}' without substantiation may breach FCA Anti-Greenwashing Rule"
+                )
+
+    if _has_word(text, "impact") and metrics:
+        applicable_labels.append("sustainability_impact")
+    if _has_word(text, "esg") or _has_word(text, "sustainable"):
+        if metrics and len(metrics) >= 3:
+            applicable_labels.append("sustainability_focus")
+        else:
+            applicable_labels.append("sustainability_improvers")
+
+    if not applicable_labels and any(_term_in(text, t) for t in _FCA_PROHIBITED_TERMS):
+        issues.append("Sustainability-related terminology used without qualifying for an SDR label")
+        recs.append("Evaluate whether a Sustainability Disclosure Requirements (SDR) label applies")
+
+    if applicable_labels:
+        for label_id in applicable_labels:
+            info = _SDL_LABELS[label_id]
+            recs.append(f"If using label '{info['label']}': {info['requirement']}")
+
+    compliant = not bool(issues)
+    return FCAAntiGreenwashingResult(
+        compliant=compliant,
+        issues=issues,
+        sdl_labels_applicable=applicable_labels,
+        recommendations=recs,
+    )
+
+
+# ---------------------------------------------------------------------------
+# NLP-Enhanced Greenwashing Detection
+# ---------------------------------------------------------------------------
+
+class NLPGreenwashingResult(BaseModel):
+    """Advanced NLP-based greenwashing analysis."""
+
+    green_authenticity_index: float = Field(ge=0, le=100, description="GAI: 0=inauthentic, 100=fully authentic")
+    cheap_talk_index: float = Field(ge=0, le=100, description="CTI: 0=all substantive, 100=all cheap talk")
+    sentiment_deflection_score: float = Field(ge=0, le=100, description="0=balanced, 100=high deflection")
+    verifiable_sub_claims: list[dict[str, Any]] = Field(default_factory=list)
+    climatebert_available: bool = False
+    climatebert_prediction: str | None = None
+
+
+_COMMITMENT_PATTERNS: list[str] = [
+    r"\b(?:we|our|the)\s+(?:aim|plan|intend|expect|hope|aspire)\s+to\b",
+    r"\b(?:committed|dedicated|working)\s+(?:to|toward)\b",
+    r"\bby\s+20\d{2}\b",
+    r"\bin\s+(?:the\s+)?(?:near|medium|long)\s+(?:term|future)\b",
+    r"\b(?:net[\s-]?zero|carbon[\s-]?neutral)\s+by\b",
+]
+
+_SUBSTANTIVE_PATTERNS: list[str] = [
+    r"\b\d+(?:\.\d+)?%?\s*(?:reduction|increase|decrease|growth|improvement)\b",
+    r"\b(?:reduced|increased|achieved|measured|verified)\s+\w+\s+by\s+\d+",
+    r"\b(?:ISO\s*\d+|GRI|IRIS\+?|SASB|CDP|SBTi|B\s*Corp)\b",
+    r"\b\d{4}\s*(?:data|results|figures|report|audit)\b",
+]
+
+_DEFLECTION_POSITIVE = {
+    "excited", "proud", "thrilled", "delighted", "honored", "pleased",
+    "passionate", "grateful", "humbled", "privileged", "inspired",
+}
+
+_DEFLECTION_NEGATIVE = {
+    "challenge", "risk", "concern", "failure", "incident", "violation",
+    "contamination", "spill", "breach", "fine", "penalty", "lawsuit",
+}
+
+
+def assess_nlp_greenwashing(
+    text: str,
+    claims: list[dict[str, Any]] | None = None,
+) -> NLPGreenwashingResult:
+    """Run advanced NLP-based greenwashing analysis.
+
+    Combines:
+    - **Green Authenticity Index (GAI)** — adapted from the Stacey Matrix,
+      evaluating coherence between stated values and reported actions.
+    - **Cheap Talk Index (CTI)** — proportion of forward-looking commitments
+      vs. substantive past-tense evidence.
+    - **Sentiment Deflection Score** — detects overly positive emotional
+      language used to deflect from negative information.
+    - **Claim Decomposition** — splits claims into verifiable sub-claims.
+    """
+    lower = text.lower()
+
+    # Green Authenticity Index
+    gai = _compute_gai(lower)
+
+    # Cheap Talk Index
+    cti = _compute_cheap_talk_index(lower)
+
+    # Sentiment deflection
+    deflection = _compute_sentiment_deflection(lower)
+
+    # Claim decomposition
+    sub_claims = _decompose_claims(text, claims)
+
+    # ClimateBERT stub
+    climatebert_available = _check_climatebert_available()
+
+    return NLPGreenwashingResult(
+        green_authenticity_index=round(gai, 1),
+        cheap_talk_index=round(cti, 1),
+        sentiment_deflection_score=round(deflection, 1),
+        verifiable_sub_claims=sub_claims,
+        climatebert_available=climatebert_available,
+        climatebert_prediction=None,
+    )
+
+
+def _compute_gai(text: str) -> float:
+    """Green Authenticity Index — adapted from the Stacey Matrix.
+
+    Evaluates alignment between:
+    - Stated values/commitments (agreement dimension)
+    - Reported evidence/data (certainty dimension)
+
+    High GAI = strong alignment (authentic). Low GAI = misalignment (inauthentic).
+    """
+    value_keywords = {
+        "sustainability", "responsible", "ethical", "impact", "green",
+        "commitment", "policy", "principle", "standard", "framework",
+    }
+    evidence_keywords = {
+        "data", "metric", "measured", "reported", "audited", "verified",
+        "baseline", "target", "achieved", "result", "outcome", "evidence",
+    }
+
+    words = set(re.findall(r"\b\w+\b", text))
+    values_found = len(words & value_keywords)
+    evidence_found = len(words & evidence_keywords)
+
+    if values_found == 0 and evidence_found == 0:
+        return 50.0
+
+    total = values_found + evidence_found
+    if total == 0:
+        return 50.0
+
+    alignment = evidence_found / total
+    return min(100, alignment * 100 + (evidence_found * 3))
+
+
+def _compute_cheap_talk_index(text: str) -> float:
+    """Cheap Talk Index — ratio of non-specific commitments to substantive evidence."""
+    commitment_hits = sum(1 for p in _COMMITMENT_PATTERNS if re.search(p, text))
+    substantive_hits = sum(1 for p in _SUBSTANTIVE_PATTERNS if re.search(p, text))
+
+    total = commitment_hits + substantive_hits
+    if total == 0:
+        return 50.0
+
+    return min(100, (commitment_hits / total) * 100)
+
+
+def _compute_sentiment_deflection(text: str) -> float:
+    """Detect overly positive sentiment used to deflect from negative info."""
+    words = set(re.findall(r"\b\w+\b", text))
+    pos_count = len(words & _DEFLECTION_POSITIVE)
+    neg_count = len(words & _DEFLECTION_NEGATIVE)
+
+    if pos_count == 0 and neg_count == 0:
+        return 20.0
+
+    total = pos_count + neg_count
+    pos_ratio = pos_count / total
+
+    if neg_count > 0 and pos_ratio > 0.8:
+        return min(100, pos_ratio * 100 + 20)
+
+    if pos_count > 3 and neg_count == 0:
+        return min(100, 40 + pos_count * 8)
+
+    return max(0, pos_ratio * 60)
+
+
+def _decompose_claims(text: str, claims: list[dict[str, Any]] | None) -> list[dict[str, Any]]:
+    """Break claims into verifiable sub-claims."""
+    results: list[dict[str, Any]] = []
+
+    source_claims = claims or []
+    if not source_claims:
+        sentences = re.split(r"[.!?]+", text)
+        impact_keywords = {"impact", "sustainab", "emission", "reduc", "improv", "benefit", "achiev"}
+        source_claims = [
+            {"text": s.strip()} for s in sentences
+            if any(k in s.lower() for k in impact_keywords) and len(s.strip()) > 20
+        ]
+
+    for claim in source_claims[:10]:
+        claim_text = claim.get("text", claim.get("claim", ""))
+        if not claim_text:
+            continue
+
+        has_quantity = bool(re.search(r"\b\d+(?:\.\d+)?[%]?\b", claim_text))
+        has_timeframe = bool(re.search(r"\b(?:20\d{2}|by|since|annually|quarterly)\b", claim_text, re.IGNORECASE))
+        has_method = bool(re.search(r"\b(?:measured|verified|audited|certified|reported)\b", claim_text, re.IGNORECASE))
+        has_source = bool(re.search(r"\b(?:ISO|GRI|IRIS|CDP|SBTi|survey|audit)\b", claim_text, re.IGNORECASE))
+
+        verifiability_score = sum([has_quantity, has_timeframe, has_method, has_source]) / 4 * 100
+        missing = []
+        if not has_quantity:
+            missing.append("quantitative data")
+        if not has_timeframe:
+            missing.append("timeframe/date")
+        if not has_method:
+            missing.append("measurement methodology")
+        if not has_source:
+            missing.append("data source/standard")
+
+        results.append({
+            "claim": claim_text[:200],
+            "verifiability_pct": round(verifiability_score, 0),
+            "has_quantity": has_quantity,
+            "has_timeframe": has_timeframe,
+            "has_method": has_method,
+            "has_source": has_source,
+            "missing_for_verification": missing,
+        })
+
+    return results
+
+
+_CLIMATE_CLAIM_PATTERNS: dict[str, tuple[str, ...]] = {
+    "net_zero": ("net-zero", "net zero", "climate positive", "carbon negative"),
+    "neutrality": ("carbon neutral", "climate neutral", "carbon-neutral"),
+    "offset": ("offset", "carbon credit", "carbon credits", "retired credits"),
+    "mitigation": ("scope 1", "scope 2", "scope 3", "tco2e", "emissions reduction", "sbti"),
+    "adaptation": ("climate adaptation", "physical risk", "resilience", "flood", "drought"),
+}
+
+
+def classify_climate_claims(text: str) -> dict:
+    """Classify climate-related claims.
+
+    Uses ClimateBERT when ``transformers`` and the local model are available;
+    otherwise a transparent keyword classifier. Outputs always include the
+    backend name so callers never mistake the heuristic for a model score.
+    """
+    lowered = (text or "").lower()
+    hits = {
+        kind: [pat for pat in patterns if pat in lowered]
+        for kind, patterns in _CLIMATE_CLAIM_PATTERNS.items()
+    }
+    kinds = [kind for kind, matched in hits.items() if matched]
+    backend = "heuristic"
+    model_score = None
+    if _check_climatebert_available():
+        try:
+            model_score = _climatebert_score(text)
+            backend = "climatebert"
+        except Exception:  # noqa: BLE001 — optional model path
+            backend = "heuristic"
+    return {
+        "is_climate_related": bool(kinds) or (model_score or 0) >= 0.5,
+        "claim_kinds": kinds,
+        "keyword_hits": {k: v for k, v in hits.items() if v},
+        "backend": backend,
+        "model_score": model_score,
+        "neutrality_language": bool(hits["neutrality"] or hits["net_zero"]),
+        "offset_language": bool(hits["offset"]),
+    }
+
+
+def _climatebert_score(text: str) -> float:
+    """Best-effort ClimateBERT inference; never required at import time."""
+    from transformers import pipeline  # type: ignore[import-untyped]
+
+    clf = pipeline(
+        "text-classification",
+        model="climatebert/distilroberta-base-climate-detector",
+        truncation=True,
+    )
+    result = clf(text[:512])[0]
+    label = str(result.get("label", "")).lower()
+    score = float(result.get("score", 0.0))
+    if "yes" in label or "climate" in label:
+        return score
+    return 1.0 - score
+
+
+def _check_climatebert_available() -> bool:
+    """Return True when transformers *and* a local ClimateBERT model exist."""
+    try:
+        import transformers  # noqa: F401
+    except ImportError:
+        return False
+    try:
+        from transformers import AutoConfig
+
+        AutoConfig.from_pretrained(  # nosec B615 - local_files_only: availability probe, no download
+            "climatebert/distilroberta-base-climate-detector",
+            local_files_only=True,
+        )
+        return True
+    except Exception:
+        return False

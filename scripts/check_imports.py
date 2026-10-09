@@ -18,7 +18,7 @@ import importlib
 import sys
 from pathlib import Path
 
-SRC_ROOT = Path(__file__).resolve().parent.parent / "src" / "openharness"
+SRC_ROOT = Path(__file__).resolve().parent.parent / "src" / "impact_vision"
 
 PACKAGES_REQUIRING_INIT = [
     "",
@@ -61,27 +61,27 @@ PACKAGES_REQUIRING_INIT = [
 ]
 
 CRITICAL_IMPORTS = [
-    ("openharness.config", ["load_settings", "save_settings", "Settings", "get_config_file_path"]),
-    ("openharness.bridge", ["build_sdk_url", "WorkSecret"]),
-    ("openharness.permissions", ["PermissionMode"]),
-    ("openharness.hooks", ["HookEvent"]),
-    ("openharness.memory", ["find_relevant_memories", "load_memory_prompt", "add_memory_entry"]),
-    ("openharness.services", ["estimate_tokens", "compact_messages", "summarize_messages"]),
-    ("openharness.engine", ["QueryEngine"]),
-    ("openharness.tools", ["ToolRegistry", "create_default_tool_registry"]),
-    ("openharness.themes", ["list_themes", "load_theme"]),
-    ("openharness.keybindings", ["load_keybindings"]),
-    ("openharness.voice", ["extract_keyterms"]),
-    ("openharness.output_styles", ["load_output_styles"]),
-    ("openharness.commands", ["CommandContext", "create_default_command_registry"]),
-    ("openharness.sandbox", ["SandboxUnavailableError"]),
-    ("openharness.skills", ["load_skill_registry"]),
-    ("openharness.tasks", ["get_task_manager"]),
-    ("openharness.plugins", ["load_plugins"]),
-    ("openharness.prompts", ["build_runtime_system_prompt"]),
-    ("openharness.state", ["AppState", "AppStateStore"]),
-    ("openharness.impact", ["Company", "Metric", "Assessment"]),
-    ("openharness.services.lsp", ["go_to_definition", "find_references"]),
+    ("impact_vision.config", ["load_settings", "save_settings", "Settings", "get_config_file_path"]),
+    ("impact_vision.bridge", ["build_sdk_url", "WorkSecret"]),
+    ("impact_vision.permissions", ["PermissionMode"]),
+    ("impact_vision.hooks", ["HookEvent"]),
+    ("impact_vision.memory", ["find_relevant_memories", "load_memory_prompt", "add_memory_entry"]),
+    ("impact_vision.services", ["estimate_tokens", "compact_messages", "summarize_messages"]),
+    ("impact_vision.engine", ["QueryEngine"]),
+    ("impact_vision.tools", ["ToolRegistry", "create_default_tool_registry"]),
+    ("impact_vision.themes", ["list_themes", "load_theme"]),
+    ("impact_vision.keybindings", ["load_keybindings"]),
+    ("impact_vision.voice", ["extract_keyterms"]),
+    ("impact_vision.output_styles", ["load_output_styles"]),
+    ("impact_vision.commands", ["CommandContext", "create_default_command_registry"]),
+    ("impact_vision.sandbox", ["SandboxUnavailableError"]),
+    ("impact_vision.skills", ["load_skill_registry"]),
+    ("impact_vision.tasks", ["get_task_manager"]),
+    ("impact_vision.plugins", ["load_plugins"]),
+    ("impact_vision.prompts", ["build_runtime_system_prompt"]),
+    ("impact_vision.state", ["AppState", "AppStateStore"]),
+    ("impact_vision.impact", ["Company", "Metric", "Assessment"]),
+    ("impact_vision.services.lsp", ["go_to_definition", "find_references"]),
 ]
 
 
@@ -116,8 +116,8 @@ def smoke_test_imports() -> bool:
 
 def test_registry() -> bool:
     try:
-        from openharness.tools import create_default_tool_registry
-        from openharness.tools.impact import __all__ as impact_exports
+        from impact_vision.tools import create_default_tool_registry
+        from impact_vision.tools.impact import __all__ as impact_exports
 
         registry = create_default_tool_registry()
         tools = registry.list_tools()
@@ -132,14 +132,14 @@ def test_registry() -> bool:
         impact_tools = [
             tool
             for tool in tools
-            if type(tool).__module__.startswith("openharness.tools.impact.")
+            if type(tool).__module__.startswith("impact_vision.tools.impact.")
             # One-release aliases for merged tools are registered but not exported.
             and not getattr(tool, "deprecated_for", None)
         ]
         if len(impact_exports) != len(impact_tools):
             print(
                 "IMPACT TOOL COUNT MISMATCH: "
-                f"openharness.tools.impact.__all__ has {len(impact_exports)} entries; "
+                f"impact_vision.tools.impact.__all__ has {len(impact_exports)} entries; "
                 f"the registry has {len(impact_tools)} impact tools"
             )
             return False

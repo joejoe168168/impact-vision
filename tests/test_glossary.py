@@ -5,9 +5,9 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from openharness.impact.glossary import load_glossary, render_glossary_markdown, terms_used_in
-from openharness.impact.pipeline import assess_file, sample_deck_path
-from openharness.tools.impact.impact_report_tool import _to_html
+from impact_vision.impact.glossary import load_glossary, render_glossary_markdown, terms_used_in
+from impact_vision.impact.pipeline import assess_file, sample_deck_path
+from impact_vision.tools.impact.impact_report_tool import _to_html
 
 REPO = Path(__file__).resolve().parents[1]
 

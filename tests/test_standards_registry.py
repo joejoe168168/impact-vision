@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from openharness.impact.standards_registry import (
+from impact_vision.impact.standards_registry import (
     StandardVersion,
     StandardsRegistry,
     default_standards_registry,

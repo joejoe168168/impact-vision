@@ -7,19 +7,19 @@ from typing import AsyncIterator
 
 import pytest
 
-from openharness.api.client import (
+from impact_vision.api.client import (
     ApiMessageCompleteEvent,
     ApiMessageRequest,
     ApiStreamEvent,
     ApiTextDeltaEvent,
 )
-from openharness.api.copilot_auth import (
+from impact_vision.api.copilot_auth import (
     save_copilot_auth,
 )
-from openharness.api.copilot_client import CopilotClient
-from openharness.api.errors import AuthenticationFailure
-from openharness.api.usage import UsageSnapshot
-from openharness.engine.messages import ConversationMessage, TextBlock
+from impact_vision.api.copilot_client import CopilotClient
+from impact_vision.api.errors import AuthenticationFailure
+from impact_vision.api.usage import UsageSnapshot
+from impact_vision.engine.messages import ConversationMessage, TextBlock
 
 
 # ---------------------------------------------------------------------------

@@ -7,9 +7,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
-from openharness.mcp.highlevel import FastMCP
+from impact_vision.mcp.highlevel import FastMCP
 
-from openharness.mcp.compat import patch_fastmcp_func_metadata
+from impact_vision.mcp.compat import patch_fastmcp_func_metadata
 
 patch_fastmcp_func_metadata()
 

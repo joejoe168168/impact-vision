@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from openharness.sandbox.path_validator import validate_sandbox_path
+from impact_vision.sandbox.path_validator import validate_sandbox_path
 
 
 def test_path_within_cwd_allowed(tmp_path):

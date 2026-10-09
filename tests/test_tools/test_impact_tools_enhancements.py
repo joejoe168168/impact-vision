@@ -6,7 +6,7 @@ import asyncio
 import json
 from pathlib import Path
 
-from openharness.tools.impact.common import (
+from impact_vision.tools.impact.common import (
     infer_themes,
     normalize_impact_targets,
     normalize_metric_ids,
@@ -63,7 +63,7 @@ class TestNormalizers:
         assert "Health" in themes
 
     def test_normalize_impact_targets_from_dict(self):
-        from openharness.impact.models import ImpactTarget
+        from impact_vision.impact.models import ImpactTarget
         targets, warnings = normalize_impact_targets({"OI4112": "500 tCO2e by 2027", "PI4060": "1000 clients"})
         assert len(targets) == 2
         assert all(isinstance(t, ImpactTarget) for t in targets)
@@ -74,7 +74,7 @@ class TestNormalizers:
         assert targets[1].target_value == 1000.0
 
     def test_normalize_impact_targets_from_list(self):
-        from openharness.impact.models import ImpactTarget
+        from impact_vision.impact.models import ImpactTarget
         targets, warnings = normalize_impact_targets([
             {"metric_id": "OI4112", "target_value": 500, "target_unit": "tCO2e"},
         ])
@@ -101,23 +101,23 @@ class TestNormalizers:
 
 class TestNewTools:
     def test_data_quality_tool_import(self):
-        from openharness.tools.impact.data_quality_tool import DataQualityTool
+        from impact_vision.tools.impact.data_quality_tool import DataQualityTool
         tool = DataQualityTool()
         assert tool.name == "impact_data_quality"
 
     def test_metric_recommender_tool_import(self):
-        from openharness.tools.impact.metric_recommender_tool import MetricRecommenderTool
+        from impact_vision.tools.impact.metric_recommender_tool import MetricRecommenderTool
         tool = MetricRecommenderTool()
         assert tool.name == "impact_metric_recommender"
 
     def test_risk_opportunity_tool_import(self):
-        from openharness.tools.impact.impact_risk_opportunity_tool import ImpactRiskOpportunityTool
+        from impact_vision.tools.impact.impact_risk_opportunity_tool import ImpactRiskOpportunityTool
         tool = ImpactRiskOpportunityTool()
         assert tool.name == "impact_risk_opportunity"
 
     def test_risk_opportunity_engine(self):
-        from openharness.impact.models import Company
-        from openharness.impact.risk_opportunity import assess_impact_risk_opportunity
+        from impact_vision.impact.models import Company
+        from impact_vision.impact.risk_opportunity import assess_impact_risk_opportunity
 
         company = Company(
             name="Test Farm",
@@ -131,8 +131,8 @@ class TestNewTools:
         assert isinstance(result["opportunities"], list)
 
     def test_data_quality_assess(self):
-        from openharness.tools.impact.data_quality_tool import DataQualityTool, DataQualityInput
-        from openharness.tools.base import ToolExecutionContext
+        from impact_vision.tools.impact.data_quality_tool import DataQualityTool, DataQualityInput
+        from impact_vision.tools.base import ToolExecutionContext
 
         tool = DataQualityTool()
         args = DataQualityInput(
@@ -144,7 +144,7 @@ class TestNewTools:
         assert "quality_score" in result.output.lower() or "quality" in result.output.lower()
 
     def test_all_impact_tool_modules_are_registered(self):
-        from openharness.tools import create_default_tool_registry
+        from impact_vision.tools import create_default_tool_registry
 
         registry = create_default_tool_registry()
         registered = {tool.name for tool in registry.list_tools()}
@@ -185,8 +185,8 @@ class TestNewTools:
         assert "greenwashing_reviewer" not in registered
 
     def test_improvement_advisor_executes_with_sdg_claims(self):
-        from openharness.tools.base import ToolExecutionContext
-        from openharness.tools.impact.improvement_advisor_tool import (
+        from impact_vision.tools.base import ToolExecutionContext
+        from impact_vision.tools.impact.improvement_advisor_tool import (
             ImprovementAdvisorInput,
             ImprovementAdvisorTool,
         )
@@ -205,8 +205,8 @@ class TestNewTools:
         assert "IMPROVEMENT RECOMMENDATIONS" in result.output
 
     def test_narrative_executes_with_sdg_claims(self):
-        from openharness.tools.base import ToolExecutionContext
-        from openharness.tools.impact.narrative_tool import NarrativeInput, NarrativeTool
+        from impact_vision.tools.base import ToolExecutionContext
+        from impact_vision.tools.impact.narrative_tool import NarrativeInput, NarrativeTool
 
         tool = NarrativeTool()
         args = NarrativeInput(
@@ -222,8 +222,8 @@ class TestNewTools:
         assert "EXECUTIVE SUMMARY PROMPT" in result.output
 
     def test_document_analysis_normalizes_metric_id_case(self):
-        from openharness.tools.base import ToolExecutionContext
-        from openharness.tools.impact.document_analysis_tool import DocumentAnalysisInput, DocumentAnalysisTool
+        from impact_vision.tools.base import ToolExecutionContext
+        from impact_vision.tools.impact.document_analysis_tool import DocumentAnalysisInput, DocumentAnalysisTool
 
         tool = DocumentAnalysisTool()
         args = DocumentAnalysisInput(
@@ -241,8 +241,8 @@ class TestNewTools:
         assert "PI4060" in result.output
 
     def test_beneficiary_feedback_preserves_zero_nps(self):
-        from openharness.tools.base import ToolExecutionContext
-        from openharness.tools.impact.beneficiary_feedback_tool import (
+        from impact_vision.tools.base import ToolExecutionContext
+        from impact_vision.tools.impact.beneficiary_feedback_tool import (
             BeneficiaryFeedbackInput,
             BeneficiaryFeedbackTool,
         )
@@ -260,8 +260,8 @@ class TestNewTools:
         assert result.metadata["feedback"]["nps"] == 0
 
     def test_product_passport_rejects_non_object_json(self):
-        from openharness.tools.base import ToolExecutionContext
-        from openharness.tools.impact.product_passport_tool import ProductPassportInput, ProductPassportTool
+        from impact_vision.tools.base import ToolExecutionContext
+        from impact_vision.tools.impact.product_passport_tool import ProductPassportInput, ProductPassportTool
 
         tool = ProductPassportTool()
         ctx = ToolExecutionContext(cwd=Path("."))
@@ -275,9 +275,9 @@ class TestNewTools:
         assert "JSON object" in assessed.output
 
     def test_monitoring_normalizes_metric_ids_and_parses_units(self, tmp_path, monkeypatch):
-        from openharness.impact import storage
-        from openharness.tools.base import ToolExecutionContext
-        from openharness.tools.impact.monitoring_tool import MonitoringInput, MonitoringTool
+        from impact_vision.impact import storage
+        from impact_vision.tools.base import ToolExecutionContext
+        from impact_vision.tools.impact.monitoring_tool import MonitoringInput, MonitoringTool
 
         monkeypatch.setattr(storage, "_global_store", storage.AssessmentStore(tmp_path / "impact.db"))
         store = storage.get_assessment_store()
@@ -322,7 +322,7 @@ class TestNewTools:
         assert alerts[0]["metric_id"] == "OI4112"
 
     def test_product_passport_mcp_maps_product_data(self):
-        from openharness.impact.mcp_server import product_passport
+        from impact_vision.impact.mcp_server import product_passport
 
         output = asyncio.run(product_passport(
             action="assess",
@@ -334,8 +334,8 @@ class TestNewTools:
         assert "carbon_footprint" in output
 
     def test_mcp_pipeline_uses_stage_field(self, tmp_path, monkeypatch):
-        from openharness.impact import storage
-        from openharness.impact.mcp_server import pipeline
+        from impact_vision.impact import storage
+        from impact_vision.impact.mcp_server import pipeline
 
         monkeypatch.setattr(storage, "_global_store", storage.AssessmentStore(tmp_path / "impact.db"))
         asyncio.run(pipeline(
@@ -349,8 +349,8 @@ class TestNewTools:
         assert entry["pipeline_stage"] == "screening"
 
     def test_mcp_monitoring_uses_metric_value_field(self, tmp_path, monkeypatch):
-        from openharness.impact import storage
-        from openharness.impact.mcp_server import monitoring
+        from impact_vision.impact import storage
+        from impact_vision.impact.mcp_server import monitoring
 
         monkeypatch.setattr(storage, "_global_store", storage.AssessmentStore(tmp_path / "impact.db"))
         store = storage.get_assessment_store()
@@ -371,7 +371,7 @@ class TestNewTools:
         assert "Recorded OI4112 = 125.0" in output
 
     def test_mcp_beneficiary_feedback_maps_feedback_data(self):
-        from openharness.impact.mcp_server import beneficiary_feedback
+        from impact_vision.impact.mcp_server import beneficiary_feedback
 
         output = asyncio.run(beneficiary_feedback(
             action="import",
@@ -383,14 +383,14 @@ class TestNewTools:
         assert "Sample size: 5" in output
 
     def test_mcp_cross_reference_supplies_required_action(self):
-        from openharness.impact.mcp_server import cross_reference
+        from impact_vision.impact.mcp_server import cross_reference
 
         output = asyncio.run(cross_reference(metric_id="OI4112"))
 
         assert "Cross-references for 'OI4112'" in output
 
     def test_mcp_dd_checklist_maps_text_to_document_text(self):
-        from openharness.impact.mcp_server import dd_checklist
+        from impact_vision.impact.mcp_server import dd_checklist
 
         output = asyncio.run(dd_checklist(
             action="analyze",
@@ -401,7 +401,7 @@ class TestNewTools:
         assert "DD Checklist Coverage Analysis" in output
 
     def test_mcp_narrative_maps_section_and_audience_aliases(self):
-        from openharness.impact.mcp_server import narrative
+        from impact_vision.impact.mcp_server import narrative
 
         output = asyncio.run(narrative(
             section="executive_summary",
@@ -414,7 +414,7 @@ class TestNewTools:
         assert "EXECUTIVE SUMMARY PROMPT" in output
 
     def test_mcp_portfolio_analyze_maps_action_alias(self):
-        from openharness.impact.mcp_server import portfolio_analyze
+        from impact_vision.impact.mcp_server import portfolio_analyze
 
         output = asyncio.run(portfolio_analyze(
             action="analyze",
@@ -432,7 +432,7 @@ class TestNewTools:
         assert "PORTFOLIO" in output.upper()
 
     def test_mcp_trend_analysis_flattens_metric_history(self):
-        from openharness.impact.mcp_server import trend_analysis
+        from impact_vision.impact.mcp_server import trend_analysis
 
         output = asyncio.run(trend_analysis(
             company_name="Trend Co",
@@ -448,7 +448,7 @@ class TestNewTools:
         assert "TREND" in output.upper()
 
     def test_mcp_framework_assess_supplies_action(self):
-        from openharness.impact.mcp_server import framework_assess
+        from impact_vision.impact.mcp_server import framework_assess
 
         output = asyncio.run(framework_assess(
             framework="opim",
@@ -461,7 +461,7 @@ class TestNewTools:
         assert "IFC OPIM ALIGNMENT ASSESSMENT" in output
 
     def test_mcp_guided_assessment_list_templates_uses_default_template(self):
-        from openharness.impact.mcp_server import guided_assessment
+        from impact_vision.impact.mcp_server import guided_assessment
 
         output = asyncio.run(guided_assessment(action="list_templates"))
 
@@ -469,7 +469,7 @@ class TestNewTools:
         assert "ASSESSMENT TEMPLATES" in output
 
     def test_mcp_impact_report_passes_target_and_claim_inputs(self):
-        from openharness.impact.mcp_server import impact_report
+        from impact_vision.impact.mcp_server import impact_report
 
         output = asyncio.run(impact_report(
             company_name="Report Co",
@@ -496,8 +496,8 @@ class TestNewTools:
         assert "OI4112" in output
 
     def test_api_pipeline_and_monitoring_map_request_fields(self, tmp_path, monkeypatch):
-        from openharness.api_gateway.router import MonitoringRequest, PipelineRequest, monitoring_endpoint, pipeline_endpoint
-        from openharness.impact import storage
+        from impact_vision.api_gateway.router import MonitoringRequest, PipelineRequest, monitoring_endpoint, pipeline_endpoint
+        from impact_vision.impact import storage
 
         monkeypatch.setattr(storage, "_global_store", storage.AssessmentStore(tmp_path / "impact.db"))
         store = storage.get_assessment_store()
@@ -529,8 +529,8 @@ class TestNewTools:
         assert assessment["company"]["reported_metrics"]["OI4112"] == "125.0"
 
     def test_framework_opim_executes_current_framework_api(self):
-        from openharness.tools.base import ToolExecutionContext
-        from openharness.tools.impact.framework_tool import FrameworkInput, FrameworkTool
+        from impact_vision.tools.base import ToolExecutionContext
+        from impact_vision.tools.impact.framework_tool import FrameworkInput, FrameworkTool
 
         tool = FrameworkTool()
         result = asyncio.run(tool.execute(
@@ -549,8 +549,8 @@ class TestNewTools:
         assert "Principles addressed" in result.output
 
     def test_pitch_deck_analyze_accepts_raw_text(self):
-        from openharness.tools.base import ToolExecutionContext
-        from openharness.tools.impact.pitch_deck_analyze_tool import PitchDeckAnalyzeInput, PitchDeckAnalyzeTool
+        from impact_vision.tools.base import ToolExecutionContext
+        from impact_vision.tools.impact.pitch_deck_analyze_tool import PitchDeckAnalyzeInput, PitchDeckAnalyzeTool
 
         tool = PitchDeckAnalyzeTool()
         result = asyncio.run(tool.execute(
@@ -564,8 +564,8 @@ class TestNewTools:
     def test_pitch_deck_suggestions_are_not_reported_evidence(self, tmp_path):
         import yaml
 
-        from openharness.tools.base import ToolExecutionContext
-        from openharness.tools.impact.pitch_deck_analyze_tool import PitchDeckAnalyzeInput, PitchDeckAnalyzeTool
+        from impact_vision.tools.base import ToolExecutionContext
+        from impact_vision.tools.impact.pitch_deck_analyze_tool import PitchDeckAnalyzeInput, PitchDeckAnalyzeTool
 
         out = tmp_path / "company.yaml"
         tool = PitchDeckAnalyzeTool()
@@ -594,9 +594,9 @@ class TestNewTools:
 
 class TestScoreProvenance:
     def test_provenance_estimated_when_no_metrics(self):
-        from openharness.impact.database import get_metric_store
-        from openharness.impact.five_dimensions import assess_five_dimensions
-        from openharness.impact.models import Company
+        from impact_vision.impact.database import get_metric_store
+        from impact_vision.impact.five_dimensions import assess_five_dimensions
+        from impact_vision.impact.models import Company
 
         store = get_metric_store()
         company = Company(name="Test Co", description="A fintech company", sector="fintech")
@@ -606,9 +606,9 @@ class TestScoreProvenance:
             assert dim.provenance == "estimated"
 
     def test_provenance_partial_with_few_metrics(self):
-        from openharness.impact.database import get_metric_store
-        from openharness.impact.five_dimensions import assess_five_dimensions
-        from openharness.impact.models import Company
+        from impact_vision.impact.database import get_metric_store
+        from impact_vision.impact.five_dimensions import assess_five_dimensions
+        from impact_vision.impact.models import Company
 
         store = get_metric_store()
         company = Company(
@@ -623,7 +623,7 @@ class TestScoreProvenance:
 
 class TestNegationDetection:
     def test_negation_blocks_boost(self):
-        from openharness.impact.five_dimensions import _keyword_not_negated
+        from impact_vision.impact.five_dimensions import _keyword_not_negated
 
         assert _keyword_not_negated("we support women empowerment", "women") is True
         assert _keyword_not_negated("we do not target women", "women") is False
@@ -633,7 +633,7 @@ class TestNegationDetection:
 
 class TestCompanyModel:
     def test_new_fields_default(self):
-        from openharness.impact.models import Company
+        from impact_vision.impact.models import Company
 
         company = Company(name="Test")
         assert company.geography == ""
@@ -646,7 +646,7 @@ class TestCompanyModel:
         assert company.metric_history == []
 
     def test_new_fields_set(self):
-        from openharness.impact.models import Company, ImpactTarget, MetricValue
+        from impact_vision.impact.models import Company, ImpactTarget, MetricValue
 
         company = Company(
             name="Test",
@@ -678,7 +678,7 @@ class TestCompanyModel:
 
 class TestMetricValueModel:
     def test_metric_value_defaults(self):
-        from openharness.impact.models import MetricValue
+        from impact_vision.impact.models import MetricValue
 
         mv = MetricValue(metric_id="OI4112", value="100 tCO2e")
         assert mv.metric_id == "OI4112"
@@ -688,7 +688,7 @@ class TestMetricValueModel:
         assert mv.verified is False
 
     def test_metric_value_full(self):
-        from openharness.impact.models import MetricValue
+        from impact_vision.impact.models import MetricValue
 
         mv = MetricValue(
             metric_id="PI4060",
@@ -706,13 +706,13 @@ class TestMetricValueModel:
 
 class TestGreenwashing:
     def test_greenwashing_tool_import(self):
-        from openharness.tools.impact.greenwashing_tool import GreenwashingDetectorTool
+        from impact_vision.tools.impact.greenwashing_tool import GreenwashingDetectorTool
         tool = GreenwashingDetectorTool()
         assert tool.name == "greenwashing_detect"
 
     def test_greenwashing_low_risk(self):
-        from openharness.impact.greenwashing import assess_greenwashing
-        from openharness.impact.models import Company
+        from impact_vision.impact.greenwashing import assess_greenwashing
+        from impact_vision.impact.models import Company
 
         company = Company(
             name="Verified Solar",
@@ -731,8 +731,8 @@ class TestGreenwashing:
         assert result.classification in ("Genuine Impact Leader", "Substantive with Gaps")
 
     def test_greenwashing_high_risk(self):
-        from openharness.impact.greenwashing import assess_greenwashing
-        from openharness.impact.models import Company
+        from impact_vision.impact.greenwashing import assess_greenwashing
+        from impact_vision.impact.models import Company
 
         company = Company(
             name="Vague Impact Co",
@@ -745,7 +745,7 @@ class TestGreenwashing:
         assert len(result.flags) > 0
 
     def test_greenwashing_classification_range(self):
-        from openharness.impact.greenwashing import _classify
+        from impact_vision.impact.greenwashing import _classify
         assert _classify(10) == "Genuine Impact Leader"
         assert _classify(30) == "Substantive with Gaps"
         assert _classify(50) == "Moderate Risk"
@@ -755,13 +755,13 @@ class TestGreenwashing:
 
 class TestExclusionScreening:
     def test_exclusion_tool_import(self):
-        from openharness.tools.impact.exclusion_screening_tool import ExclusionScreeningTool
+        from impact_vision.tools.impact.exclusion_screening_tool import ExclusionScreeningTool
         tool = ExclusionScreeningTool()
         assert tool.name == "exclusion_screening"
 
     def test_exclusion_pass(self):
-        from openharness.tools.impact.exclusion_screening_tool import ExclusionScreeningTool, ExclusionScreeningInput
-        from openharness.tools.base import ToolExecutionContext
+        from impact_vision.tools.impact.exclusion_screening_tool import ExclusionScreeningTool, ExclusionScreeningInput
+        from impact_vision.tools.base import ToolExecutionContext
 
         tool = ExclusionScreeningTool()
         args = ExclusionScreeningInput(
@@ -775,8 +775,8 @@ class TestExclusionScreening:
         assert "PASS" in result.output
 
     def test_exclusion_fail(self):
-        from openharness.tools.impact.exclusion_screening_tool import ExclusionScreeningTool, ExclusionScreeningInput
-        from openharness.tools.base import ToolExecutionContext
+        from impact_vision.tools.impact.exclusion_screening_tool import ExclusionScreeningTool, ExclusionScreeningInput
+        from impact_vision.tools.base import ToolExecutionContext
 
         tool = ExclusionScreeningTool()
         args = ExclusionScreeningInput(
@@ -792,9 +792,9 @@ class TestExclusionScreening:
 
 class TestSDGProvenance:
     def test_sdg_estimated_with_no_metrics(self):
-        from openharness.impact.database import get_metric_store
-        from openharness.impact.models import Company
-        from openharness.impact.sdg_mapper import map_sdg_alignment
+        from impact_vision.impact.database import get_metric_store
+        from impact_vision.impact.models import Company
+        from impact_vision.impact.sdg_mapper import map_sdg_alignment
 
         store = get_metric_store()
         company = Company(
@@ -809,42 +809,42 @@ class TestSDGProvenance:
                 assert a.provenance in ("estimated", "partial")
 
     def test_sdg_provenance_field_exists(self):
-        from openharness.impact.models import SDGAlignment
+        from impact_vision.impact.models import SDGAlignment
         a = SDGAlignment(goal=1, goal_name="No Poverty", score=50.0)
         assert a.provenance == "estimated"
 
 
 class TestGeographyInTools:
     def test_sdg_mapper_has_geography(self):
-        from openharness.tools.impact.sdg_mapper_tool import SdgMapperInput
+        from impact_vision.tools.impact.sdg_mapper_tool import SdgMapperInput
         inp = SdgMapperInput(company_name="Test", geography="Kenya")
         assert inp.geography == "Kenya"
 
     def test_five_dimension_has_geography(self):
-        from openharness.tools.impact.five_dimension_assess_tool import FiveDimensionInput
+        from impact_vision.tools.impact.five_dimension_assess_tool import FiveDimensionInput
         inp = FiveDimensionInput(company_name="Test", geography="Southeast Asia")
         assert inp.geography == "Southeast Asia"
 
     def test_greenwashing_has_geography(self):
-        from openharness.tools.impact.greenwashing_tool import GreenwashingInput
+        from impact_vision.tools.impact.greenwashing_tool import GreenwashingInput
         inp = GreenwashingInput(company_name="Test", geography="Brazil")
         assert inp.geography == "Brazil"
 
     def test_report_has_geography(self):
-        from openharness.tools.impact.impact_report_tool import ImpactReportInput
+        from impact_vision.tools.impact.impact_report_tool import ImpactReportInput
         inp = ImpactReportInput(company_name="Test", geography="India")
         assert inp.geography == "India"
 
     def test_risk_opportunity_has_geography(self):
-        from openharness.tools.impact.impact_risk_opportunity_tool import ImpactRiskOpportunityInput
+        from impact_vision.tools.impact.impact_risk_opportunity_tool import ImpactRiskOpportunityInput
         inp = ImpactRiskOpportunityInput(company_name="Test", geography="Nigeria")
         assert inp.geography == "Nigeria"
 
 
 class TestGreenwashingIntegration:
     def test_greenwashing_assess_returns_dict(self):
-        from openharness.impact.greenwashing import assess_greenwashing
-        from openharness.impact.models import Company
+        from impact_vision.impact.greenwashing import assess_greenwashing
+        from impact_vision.impact.models import Company
 
         company = Company(
             name="Test Co",
@@ -857,7 +857,7 @@ class TestGreenwashingIntegration:
         assert hasattr(result, "flags")
 
     def test_report_text_includes_greenwashing(self):
-        from openharness.tools.impact.impact_report_tool import _to_text
+        from impact_vision.tools.impact.impact_report_tool import _to_text
 
         data = {
             "company": {"name": "Test Co", "sector": "energy", "description": ""},
@@ -879,15 +879,15 @@ class TestGreenwashingIntegration:
 
 class TestPortfolioTool:
     def test_portfolio_tool_import(self):
-        from openharness.tools.impact.portfolio_tool import PortfolioTool
+        from impact_vision.tools.impact.portfolio_tool import PortfolioTool
         tool = PortfolioTool()
         assert tool.name == "portfolio_analyze"
 
 
 class TestTrendAnalysis:
     def test_trend_analysis_improving(self):
-        from openharness.impact.models import MetricValue
-        from openharness.impact.trend_analysis import analyze_metric_trend
+        from impact_vision.impact.models import MetricValue
+        from impact_vision.impact.trend_analysis import analyze_metric_trend
 
         values = [
             MetricValue(metric_id="OI4112", value="100", period="FY2023"),
@@ -900,16 +900,16 @@ class TestTrendAnalysis:
         assert result["change_pct"] > 0
 
     def test_trend_analysis_insufficient(self):
-        from openharness.impact.models import MetricValue
-        from openharness.impact.trend_analysis import analyze_metric_trend
+        from impact_vision.impact.models import MetricValue
+        from impact_vision.impact.trend_analysis import analyze_metric_trend
 
         values = [MetricValue(metric_id="PI4060", value="500", period="FY2025")]
         result = analyze_metric_trend(values)
         assert result["direction"] == "insufficient_data"
 
     def test_company_trends(self):
-        from openharness.impact.models import Company, MetricValue
-        from openharness.impact.trend_analysis import analyze_company_trends
+        from impact_vision.impact.models import Company, MetricValue
+        from impact_vision.impact.trend_analysis import analyze_company_trends
 
         company = Company(
             name="Test Co",
@@ -925,15 +925,15 @@ class TestTrendAnalysis:
         assert result["overall_direction"] in ("mostly_improving", "mixed")
 
     def test_trend_tool_import(self):
-        from openharness.tools.impact.trend_analysis_tool import TrendAnalysisTool
+        from impact_vision.tools.impact.trend_analysis_tool import TrendAnalysisTool
         tool = TrendAnalysisTool()
         assert tool.name == "trend_analysis"
 
 
 class TestTargetTracking:
     def test_target_progress(self):
-        from openharness.impact.models import Company, ImpactTarget
-        from openharness.impact.trend_analysis import assess_target_progress
+        from impact_vision.impact.models import Company, ImpactTarget
+        from impact_vision.impact.trend_analysis import assess_target_progress
 
         company = Company(
             name="Target Co",
@@ -954,8 +954,8 @@ class TestTargetTracking:
         assert result["targets"][0]["progress_pct"] == 70.0
 
     def test_target_exceeded(self):
-        from openharness.impact.models import Company, ImpactTarget
-        from openharness.impact.trend_analysis import assess_target_progress
+        from impact_vision.impact.models import Company, ImpactTarget
+        from impact_vision.impact.trend_analysis import assess_target_progress
 
         company = Company(
             name="Over Achiever",
@@ -976,7 +976,7 @@ class TestTargetTracking:
 
 class TestISSBS1:
     def test_ifrs_s1_framework_structure(self):
-        from openharness.impact.frameworks.issb_ifrs_s1 import get_ifrs_s1_framework
+        from impact_vision.impact.frameworks.issb_ifrs_s1 import get_ifrs_s1_framework
 
         fw = get_ifrs_s1_framework()
         assert len(fw.pillars) == 4
@@ -984,7 +984,7 @@ class TestISSBS1:
         assert total_disclosures >= 12
 
     def test_ifrs_s1_readiness(self):
-        from openharness.impact.frameworks.issb_ifrs_s1 import assess_ifrs_s1_readiness
+        from impact_vision.impact.frameworks.issb_ifrs_s1 import assess_ifrs_s1_readiness
 
         result = assess_ifrs_s1_readiness(
             description="The board oversees sustainability strategy and risk management",
@@ -997,21 +997,21 @@ class TestISSBS1:
         assert len(result["pillar_scores"]) == 4
 
     def test_issb_framework_tool_handler(self):
-        from openharness.tools.impact.framework_tool import FrameworkInput
+        from impact_vision.tools.impact.framework_tool import FrameworkInput
         inp = FrameworkInput(framework="issb_s1", action="list")
         assert inp.framework == "issb_s1"
 
 
 class TestSASBExpanded:
     def test_sasb_has_25_industries(self):
-        from openharness.impact.frameworks.sasb import get_sasb_industries
+        from impact_vision.impact.frameworks.sasb import get_sasb_industries
         industries = get_sasb_industries()
         assert len(industries) >= 25
 
 
 class TestDataQualityTool:
     def test_data_quality_input_model(self):
-        from openharness.tools.impact.data_quality_tool import DataQualityInput
+        from impact_vision.tools.impact.data_quality_tool import DataQualityInput
         inp = DataQualityInput(
             reported_metrics={"OI4112": "500", "PI4060": "n/a"},
             required_metrics=["OI4112", "OI9090"],
@@ -1021,20 +1021,20 @@ class TestDataQualityTool:
         assert "OI9090" in inp.required_metrics
 
     def test_data_quality_placeholder_detection(self):
-        from openharness.tools.impact.data_quality_tool import _PLACEHOLDER_VALUES
+        from impact_vision.tools.impact.data_quality_tool import _PLACEHOLDER_VALUES
         assert "n/a" in _PLACEHOLDER_VALUES
         assert "tbd" in _PLACEHOLDER_VALUES
         assert "none" in _PLACEHOLDER_VALUES
 
     def test_extract_number(self):
-        from openharness.tools.impact.data_quality_tool import _extract_number
+        from impact_vision.tools.impact.data_quality_tool import _extract_number
         assert _extract_number("500") == 500.0
         assert _extract_number("1,200.50 tons") == 1200.50
         assert _extract_number("not a number") is None
         assert _extract_number("") is None
 
     def test_looks_numeric_metric(self):
-        from openharness.tools.impact.data_quality_tool import _looks_numeric_metric
+        from impact_vision.tools.impact.data_quality_tool import _looks_numeric_metric
         assert _looks_numeric_metric("number of employees") is True
         assert _looks_numeric_metric("USD amount") is True
         assert _looks_numeric_metric(None) is True
@@ -1042,7 +1042,7 @@ class TestDataQualityTool:
 
 class TestImpactRiskOpportunityTool:
     def test_risk_input_has_geography(self):
-        from openharness.tools.impact.impact_risk_opportunity_tool import ImpactRiskOpportunityInput
+        from impact_vision.tools.impact.impact_risk_opportunity_tool import ImpactRiskOpportunityInput
         inp = ImpactRiskOpportunityInput(
             company_name="Test",
             description="A test company",
@@ -1051,13 +1051,13 @@ class TestImpactRiskOpportunityTool:
         assert inp.geography == "Kenya"
 
     def test_risk_tool_import(self):
-        from openharness.tools.impact.impact_risk_opportunity_tool import ImpactRiskOpportunityTool
+        from impact_vision.tools.impact.impact_risk_opportunity_tool import ImpactRiskOpportunityTool
         tool = ImpactRiskOpportunityTool()
         assert tool.name == "impact_risk_opportunity"
 
     def test_risk_tool_includes_esg_toolbox_recommendations(self):
-        from openharness.tools.base import ToolExecutionContext
-        from openharness.tools.impact.impact_risk_opportunity_tool import (
+        from impact_vision.tools.base import ToolExecutionContext
+        from impact_vision.tools.impact.impact_risk_opportunity_tool import (
             ImpactRiskOpportunityInput,
             ImpactRiskOpportunityTool,
         )
@@ -1086,8 +1086,8 @@ class TestImpactRiskOpportunityTool:
 
 class TestGapAnalysisESGIntegration:
     def test_gap_analysis_includes_esg_crosswalk_and_recommendations(self):
-        from openharness.tools.base import ToolExecutionContext
-        from openharness.tools.impact.gap_analysis_tool import GapAnalysisInput, GapAnalysisTool
+        from impact_vision.tools.base import ToolExecutionContext
+        from impact_vision.tools.impact.gap_analysis_tool import GapAnalysisInput, GapAnalysisTool
 
         tool = GapAnalysisTool()
         result = asyncio.run(
@@ -1109,8 +1109,8 @@ class TestGapAnalysisESGIntegration:
         assert "ESG Toolbox Leverage" in result.output
 
     def test_gap_analysis_uses_company_context_for_esg_routing(self):
-        from openharness.tools.base import ToolExecutionContext
-        from openharness.tools.impact.gap_analysis_tool import GapAnalysisInput, GapAnalysisTool
+        from impact_vision.tools.base import ToolExecutionContext
+        from impact_vision.tools.impact.gap_analysis_tool import GapAnalysisInput, GapAnalysisTool
 
         tool = GapAnalysisTool()
         result = asyncio.run(
@@ -1135,7 +1135,7 @@ class TestGapAnalysisESGIntegration:
 
 class TestMetricRecommenderTool:
     def test_recommender_input_has_geography(self):
-        from openharness.tools.impact.metric_recommender_tool import MetricRecommenderInput
+        from impact_vision.tools.impact.metric_recommender_tool import MetricRecommenderInput
         inp = MetricRecommenderInput(
             company_name="Test",
             description="A test company",
@@ -1146,13 +1146,13 @@ class TestMetricRecommenderTool:
         assert inp.sector == "Healthcare"
 
     def test_recommender_tool_import(self):
-        from openharness.tools.impact.metric_recommender_tool import MetricRecommenderTool
+        from impact_vision.tools.impact.metric_recommender_tool import MetricRecommenderTool
         tool = MetricRecommenderTool()
         assert tool.name == "impact_metric_recommender"
 
     def test_recommender_includes_esg_toolbox_guidance(self):
-        from openharness.tools.base import ToolExecutionContext
-        from openharness.tools.impact.metric_recommender_tool import MetricRecommenderInput, MetricRecommenderTool
+        from impact_vision.tools.base import ToolExecutionContext
+        from impact_vision.tools.impact.metric_recommender_tool import MetricRecommenderInput, MetricRecommenderTool
 
         tool = MetricRecommenderTool()
         result = asyncio.run(
@@ -1179,8 +1179,8 @@ class TestMetricRecommenderTool:
 
 class TestImpactReportESGIntegration:
     def test_report_includes_esg_toolbox_section(self):
-        from openharness.tools.base import ToolExecutionContext
-        from openharness.tools.impact.impact_report_tool import ImpactReportInput, ImpactReportTool
+        from impact_vision.tools.base import ToolExecutionContext
+        from impact_vision.tools.impact.impact_report_tool import ImpactReportInput, ImpactReportTool
 
         tool = ImpactReportTool()
         result = asyncio.run(
@@ -1203,8 +1203,8 @@ class TestImpactReportESGIntegration:
         assert "ESG TOOLBOX READINESS" in result.output
 
     def test_html_report_renders_esg_toolbox_cards(self):
-        from openharness.tools.base import ToolExecutionContext
-        from openharness.tools.impact.impact_report_tool import ImpactReportInput, ImpactReportTool
+        from impact_vision.tools.base import ToolExecutionContext
+        from impact_vision.tools.impact.impact_report_tool import ImpactReportInput, ImpactReportTool
 
         tool = ImpactReportTool()
         result = asyncio.run(
@@ -1230,7 +1230,7 @@ class TestImpactReportESGIntegration:
 
 class TestPortfolioInput:
     def test_portfolio_input_has_geography(self):
-        from openharness.tools.impact.portfolio_tool import PortfolioInput
+        from impact_vision.tools.impact.portfolio_tool import PortfolioInput
         inp = PortfolioInput(
             action="analyze_companies",
             geography="Southeast Asia",
@@ -1239,12 +1239,12 @@ class TestPortfolioInput:
         assert inp.geography == "Southeast Asia"
 
     def test_aggregate_empty(self):
-        from openharness.tools.impact.portfolio_tool import _aggregate_results
+        from impact_vision.tools.impact.portfolio_tool import _aggregate_results
         result = _aggregate_results([])
         assert result == {}
 
     def test_company_from_dict_with_geography(self):
-        from openharness.tools.impact.portfolio_tool import _dict_to_company
+        from impact_vision.tools.impact.portfolio_tool import _dict_to_company
         company = _dict_to_company({"name": "Test Co", "sector": "Energy", "geography": "Kenya"})
         assert company.geography == "Kenya"
         assert company.name == "Test Co"
@@ -1252,24 +1252,24 @@ class TestPortfolioInput:
 
 class TestPitchDeckGeoDetection:
     def test_detect_geography_kenya(self):
-        from openharness.tools.impact.pitch_deck_analyze_tool import _detect_geography
+        from impact_vision.tools.impact.pitch_deck_analyze_tool import _detect_geography
         text = "Our company is based in Nairobi, Kenya and serves rural communities in East Africa."
         result = _detect_geography(text)
         assert result == "Kenya"
 
     def test_detect_geography_southeast_asia(self):
-        from openharness.tools.impact.pitch_deck_analyze_tool import _detect_geography
+        from impact_vision.tools.impact.pitch_deck_analyze_tool import _detect_geography
         text = "We operate across Southeast Asia with offices in Jakarta and Ho Chi Minh City."
         assert "Southeast Asia" in _detect_geography(text) or "Indonesia" in _detect_geography(text) or "Vietnam" in _detect_geography(text)
 
     def test_detect_geography_empty(self):
-        from openharness.tools.impact.pitch_deck_analyze_tool import _detect_geography
+        from impact_vision.tools.impact.pitch_deck_analyze_tool import _detect_geography
         text = "A generic company with no location mentions."
         result = _detect_geography(text)
         assert result == ""
 
     def test_detect_geography_headquartered_pattern(self):
-        from openharness.tools.impact.pitch_deck_analyze_tool import _detect_geography
+        from impact_vision.tools.impact.pitch_deck_analyze_tool import _detect_geography
         text = "The company is headquartered in Singapore and has been growing rapidly."
         result = _detect_geography(text)
         assert result != ""
@@ -1277,8 +1277,8 @@ class TestPitchDeckGeoDetection:
 
 class TestSDGGeoBoost:
     def test_geo_boost_applied(self):
-        from openharness.impact.models import Company
-        from openharness.impact.sdg_mapper import _infer_sdg_from_description
+        from impact_vision.impact.models import Company
+        from impact_vision.impact.sdg_mapper import _infer_sdg_from_description
         company_no_geo = Company(
             name="Test",
             description="A farming company",
@@ -1297,18 +1297,18 @@ class TestSDGGeoBoost:
 
 class TestSDGKeywordsYAML:
     def test_yaml_loader_returns_dict(self):
-        from openharness.impact.sdg_mapper import _load_sdg_keywords_config
+        from impact_vision.impact.sdg_mapper import _load_sdg_keywords_config
         config = _load_sdg_keywords_config()
         assert isinstance(config, dict)
 
     def test_get_keyword_sdg_map_has_entries(self):
-        from openharness.impact.sdg_mapper import _get_keyword_sdg_map
+        from impact_vision.impact.sdg_mapper import _get_keyword_sdg_map
         kw_map = _get_keyword_sdg_map()
         assert len(kw_map) > 20
         assert "poverty" in kw_map
 
     def test_get_sector_sdg_relevance(self):
-        from openharness.impact.sdg_mapper import _get_sector_sdg_relevance
+        from impact_vision.impact.sdg_mapper import _get_sector_sdg_relevance
         sector_map = _get_sector_sdg_relevance()
         assert "agriculture" in sector_map
         assert 2 in sector_map["agriculture"]
@@ -1316,21 +1316,21 @@ class TestSDGKeywordsYAML:
 
 class TestConfigurableThreshold:
     def test_min_metrics_threshold_loaded(self):
-        from openharness.impact.five_dimensions import MIN_METRICS_FOR_ABOVE_BASELINE
+        from impact_vision.impact.five_dimensions import MIN_METRICS_FOR_ABOVE_BASELINE
         assert isinstance(MIN_METRICS_FOR_ABOVE_BASELINE, int)
         assert MIN_METRICS_FOR_ABOVE_BASELINE >= 1
 
     def test_scoring_config_has_threshold(self):
-        from openharness.impact.five_dimensions import _load_scoring_config
+        from impact_vision.impact.five_dimensions import _load_scoring_config
         config = _load_scoring_config()
         assert "min_metrics_for_above_baseline" in config
 
 
 class TestEdgeCases:
     def test_empty_company_five_dimensions(self):
-        from openharness.impact.five_dimensions import assess_five_dimensions
-        from openharness.impact.database import get_metric_store
-        from openharness.impact.models import Company
+        from impact_vision.impact.five_dimensions import assess_five_dimensions
+        from impact_vision.impact.database import get_metric_store
+        from impact_vision.impact.models import Company
         try:
             store = get_metric_store()
         except FileNotFoundError:
@@ -1341,9 +1341,9 @@ class TestEdgeCases:
         assert result.overall_grade in ("A", "B+", "B", "B-", "C+", "C", "C-", "D+", "D", "F")
 
     def test_empty_company_sdg_mapper(self):
-        from openharness.impact.sdg_mapper import map_sdg_alignment
-        from openharness.impact.database import get_metric_store
-        from openharness.impact.models import Company
+        from impact_vision.impact.sdg_mapper import map_sdg_alignment
+        from impact_vision.impact.database import get_metric_store
+        from impact_vision.impact.models import Company
         try:
             store = get_metric_store()
         except FileNotFoundError:
@@ -1353,11 +1353,11 @@ class TestEdgeCases:
         assert isinstance(result, list)
 
     def test_sdg_alignment_provenance_default(self):
-        from openharness.impact.models import SDGAlignment
+        from impact_vision.impact.models import SDGAlignment
         alignment = SDGAlignment(goal=1, goal_name="No Poverty", score=25.0, confidence="low")
         assert alignment.provenance == "estimated"
 
     def test_company_geography_default(self):
-        from openharness.impact.models import Company
+        from impact_vision.impact.models import Company
         company = Company(name="Test")
         assert company.geography == ""

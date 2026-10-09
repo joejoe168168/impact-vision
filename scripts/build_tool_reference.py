@@ -21,13 +21,13 @@ OUT = ROOT / "docs" / "reference" / "tools.md"
 
 
 def impact_tools() -> list:
-    from openharness.tools import create_default_tool_registry
+    from impact_vision.tools import create_default_tool_registry
 
     return sorted(
         (
             tool
             for tool in create_default_tool_registry().list_tools()
-            if type(tool).__module__.startswith("openharness.tools.impact.")
+            if type(tool).__module__.startswith("impact_vision.tools.impact.")
             and not getattr(tool, "deprecated_for", None)
         ),
         key=lambda tool: tool.name,
@@ -35,12 +35,12 @@ def impact_tools() -> list:
 
 
 def code_facts() -> dict[str, int]:
-    import openharness.impact.frameworks as frameworks
-    from openharness.impact.benchmarks import SECTOR_BENCHMARKS
-    from openharness.impact.dd_checklist import load_checklist
-    from openharness.impact.engagements.regulatory import JURISDICTION_PROFILES
-    from openharness.impact.frameworks.cross_reference import CROSS_REFERENCE_MAP
-    from openharness.tools.impact.engagement_suite_catalog import ACTION_AREAS
+    import impact_vision.impact.frameworks as frameworks
+    from impact_vision.impact.benchmarks import SECTOR_BENCHMARKS
+    from impact_vision.impact.dd_checklist import load_checklist
+    from impact_vision.impact.engagements.regulatory import JURISDICTION_PROFILES
+    from impact_vision.impact.frameworks.cross_reference import CROSS_REFERENCE_MAP
+    from impact_vision.tools.impact.engagement_suite_catalog import ACTION_AREAS
 
     questions = load_checklist()
     framework_modules = [

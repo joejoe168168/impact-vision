@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from openharness.impact.climate_accounting import ActivityData
-from openharness.impact.emission_factors import (
+from impact_vision.impact.climate_accounting import ActivityData
+from impact_vision.impact.emission_factors import (
     EmissionFactorCatalogV2,
     apply_catalog_to_inventory,
     default_factor_catalog,

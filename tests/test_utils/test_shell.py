@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from openharness.utils.shell import resolve_shell_command
+from impact_vision.utils.shell import resolve_shell_command
 
 
 def test_resolve_shell_command_prefers_bash_on_linux(monkeypatch):
     monkeypatch.setattr(
-        "openharness.utils.shell.shutil.which",
+        "impact_vision.utils.shell.shutil.which",
         lambda name: "/usr/bin/bash" if name == "bash" else None,
     )
 
@@ -24,7 +24,7 @@ def test_resolve_shell_command_wraps_with_script_when_pty_requested(monkeypatch)
         }
         return mapping.get(name)
 
-    monkeypatch.setattr("openharness.utils.shell.shutil.which", fake_which)
+    monkeypatch.setattr("impact_vision.utils.shell.shutil.which", fake_which)
 
     command = resolve_shell_command("echo hi", platform_name="linux", prefer_pty=True)
 
@@ -38,7 +38,7 @@ def test_resolve_shell_command_uses_powershell_on_windows(monkeypatch):
         }
         return mapping.get(name)
 
-    monkeypatch.setattr("openharness.utils.shell.shutil.which", fake_which)
+    monkeypatch.setattr("impact_vision.utils.shell.shutil.which", fake_which)
 
     command = resolve_shell_command("Write-Output hi", platform_name="windows")
 

@@ -7,14 +7,14 @@ from pathlib import Path
 
 import pytest
 
-from openharness.api.client import ApiMessageCompleteEvent, ApiRetryEvent, ApiTextDeltaEvent
-from openharness.api.errors import RequestFailure
-from openharness.api.usage import UsageSnapshot
-from openharness.config.settings import PermissionSettings, Settings
-from openharness.engine.messages import ConversationMessage, TextBlock, ToolUseBlock
-from openharness.engine.query_engine import QueryEngine
-from openharness.prompts.context import build_runtime_system_prompt
-from openharness.engine.stream_events import (
+from impact_vision.api.client import ApiMessageCompleteEvent, ApiRetryEvent, ApiTextDeltaEvent
+from impact_vision.api.errors import RequestFailure
+from impact_vision.api.usage import UsageSnapshot
+from impact_vision.config.settings import PermissionSettings, Settings
+from impact_vision.engine.messages import ConversationMessage, TextBlock, ToolUseBlock
+from impact_vision.engine.query_engine import QueryEngine
+from impact_vision.prompts.context import build_runtime_system_prompt
+from impact_vision.engine.stream_events import (
     AssistantTextDelta,
     AssistantTurnComplete,
     CompactProgressEvent,
@@ -23,17 +23,17 @@ from openharness.engine.stream_events import (
     ToolExecutionCompleted,
     ToolExecutionStarted,
 )
-from openharness.permissions import PermissionChecker, PermissionMode
-from openharness.tools import create_default_tool_registry
-from openharness.tools.base import BaseTool, ToolExecutionContext, ToolRegistry, ToolResult
-from openharness.tools.glob_tool import GlobTool
-from openharness.tools.grep_tool import GrepTool
+from impact_vision.permissions import PermissionChecker, PermissionMode
+from impact_vision.tools import create_default_tool_registry
+from impact_vision.tools.base import BaseTool, ToolExecutionContext, ToolRegistry, ToolResult
+from impact_vision.tools.glob_tool import GlobTool
+from impact_vision.tools.grep_tool import GrepTool
 from pydantic import BaseModel
-from openharness.engine.messages import ToolResultBlock
-from openharness.hooks import HookExecutionContext, HookExecutor, HookEvent
-from openharness.hooks.loader import HookRegistry
-from openharness.hooks.schemas import PromptHookDefinition
-from openharness.engine.query import QueryContext, _execute_tool_call
+from impact_vision.engine.messages import ToolResultBlock
+from impact_vision.hooks import HookExecutionContext, HookExecutor, HookEvent
+from impact_vision.hooks.loader import HookRegistry
+from impact_vision.hooks.schemas import PromptHookDefinition
+from impact_vision.engine.query import QueryContext, _execute_tool_call
 
 
 @dataclass
@@ -344,8 +344,8 @@ async def test_query_engine_surfaces_retry_status_events(tmp_path: Path):
 @pytest.mark.asyncio
 async def test_query_engine_emits_compact_progress_before_reply(tmp_path: Path, monkeypatch):
     long_text = "alpha " * 50000
-    monkeypatch.setattr("openharness.services.compact.try_session_memory_compaction", lambda *args, **kwargs: None)
-    monkeypatch.setattr("openharness.services.compact.should_autocompact", lambda *args, **kwargs: True)
+    monkeypatch.setattr("impact_vision.services.compact.try_session_memory_compaction", lambda *args, **kwargs: None)
+    monkeypatch.setattr("impact_vision.services.compact.should_autocompact", lambda *args, **kwargs: True)
     engine = QueryEngine(
         api_client=FakeApiClient(
             [
@@ -390,8 +390,8 @@ async def test_query_engine_emits_compact_progress_before_reply(tmp_path: Path, 
 
 @pytest.mark.asyncio
 async def test_query_engine_reactive_compacts_after_prompt_too_long(tmp_path: Path, monkeypatch):
-    monkeypatch.setattr("openharness.services.compact.try_session_memory_compaction", lambda *args, **kwargs: None)
-    monkeypatch.setattr("openharness.services.compact.should_autocompact", lambda *args, **kwargs: False)
+    monkeypatch.setattr("impact_vision.services.compact.try_session_memory_compaction", lambda *args, **kwargs: None)
+    monkeypatch.setattr("impact_vision.services.compact.should_autocompact", lambda *args, **kwargs: False)
     engine = QueryEngine(
         api_client=PromptTooLongThenSuccessApiClient(),
         tool_registry=create_default_tool_registry(),

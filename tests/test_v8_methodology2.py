@@ -9,12 +9,12 @@ from pathlib import Path
 
 import pytest
 
-from openharness.impact.expected_impact import (
+from impact_vision.impact.expected_impact import (
     assess_expected_impact,
     methodology_mode,
     read_outcomes,
 )
-from openharness.impact.pipeline import assess_document, assess_file, sample_deck_path
+from impact_vision.impact.pipeline import assess_document, assess_file, sample_deck_path
 
 DECKS = Path(__file__).parent / "golden_decks"
 
@@ -101,7 +101,7 @@ def test_gate2_states_on_goldens():
 
 
 def test_ready_when_evidence_is_good():
-    from openharness.impact.models import ImpactClaim
+    from impact_vision.impact.models import ImpactClaim
 
     claims = [ImpactClaim(text="We served 50,000 farmers in 2024, verified by an independent auditor.",
                           category="outcome", evidence_strength=3,
@@ -122,7 +122,7 @@ def test_chinese_deck_is_read():
 
 
 def test_report_leads_with_expected_impact_and_v1_switch(monkeypatch):
-    from openharness.impact.report_templates.decision_report import build_view, render_decision_report
+    from impact_vision.impact.report_templates.decision_report import build_view, render_decision_report
 
     data = assess_file(sample_deck_path("solar")).report_data
     view = build_view(data)

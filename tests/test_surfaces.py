@@ -6,14 +6,14 @@ import asyncio
 
 import pytest
 
-from openharness.impact import surfaces
+from impact_vision.impact import surfaces
 
 DECK = ("SunPath sells pay-as-you-go solar home systems in Kenya. In 2025 we connected "
         "12,000 households and avoided 9,000 tCO2e.")
 
 
 def test_manifest_matches_public_tool_surface():
-    import openharness.tools.impact as impact_tools
+    import impact_vision.tools.impact as impact_tools
 
     names = {t.name for t in surfaces.surface_tools()}
     assert len(names) == len(impact_tools.__all__)
@@ -48,7 +48,7 @@ def client():
     pytest.importorskip("fastapi")
     from fastapi.testclient import TestClient
 
-    from openharness.api_gateway.router import app
+    from impact_vision.api_gateway.router import app
 
     return TestClient(app)
 
@@ -71,8 +71,8 @@ def test_rest_tool_routes(client):
 
 def test_mcp_exposes_every_tool_and_playbook_prompts():
     pytest.importorskip("mcp")
-    from openharness.impact import mcp_server
-    from openharness.impact.tool_advisor import PLAYBOOKS
+    from impact_vision.impact import mcp_server
+    from impact_vision.impact.tool_advisor import PLAYBOOKS
 
     async def go():
         tools = {t.name: t for t in await mcp_server.mcp.list_tools()}
@@ -91,7 +91,7 @@ def test_mcp_exposes_every_tool_and_playbook_prompts():
 
 
 def test_console_discovers_registry_tools():
-    from openharness.web.console import render_console_html
+    from impact_vision.web.console import render_console_html
 
     html = render_console_html()
     assert "discoverFromRegistry" in html and "/api/v1/tools?schemas=true" in html

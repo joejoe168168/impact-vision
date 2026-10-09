@@ -5,17 +5,17 @@ from __future__ import annotations
 import asyncio
 from pathlib import Path
 
-from openharness.impact.concordance import load_concordance
-from openharness.impact.frameworks.esrs import (
+from impact_vision.impact.concordance import load_concordance
+from impact_vision.impact.frameworks.esrs import (
     load_simplified_datapoints,
     simplified_esrs_metadata,
 )
-from openharness.impact.issb_reporting import load_s2_amendments
-from openharness.impact.models import MetricRecord
-from openharness.impact.regulatory_calendar import issb_summary
-from openharness.impact.standards_registry import load_articles
-from openharness.tools.base import ToolExecutionContext
-from openharness.tools.impact.regulatory_calendar_tool import RegulatoryCalendarTool
+from impact_vision.impact.issb_reporting import load_s2_amendments
+from impact_vision.impact.models import MetricRecord
+from impact_vision.impact.regulatory_calendar import issb_summary
+from impact_vision.impact.standards_registry import load_articles
+from impact_vision.tools.base import ToolExecutionContext
+from impact_vision.tools.impact.regulatory_calendar_tool import RegulatoryCalendarTool
 
 
 def _record() -> MetricRecord:

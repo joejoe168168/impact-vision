@@ -8,8 +8,8 @@ from pathlib import Path
 
 import yaml
 
-from openharness.tools.base import ToolExecutionContext
-from openharness.tools.impact.impact_report_tool import ImpactReportInput, ImpactReportTool
+from impact_vision.tools.base import ToolExecutionContext
+from impact_vision.tools.impact.impact_report_tool import ImpactReportInput, ImpactReportTool
 
 
 def _render(tmp_path: Path, **overrides) -> str:

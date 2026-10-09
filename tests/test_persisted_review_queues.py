@@ -10,7 +10,7 @@ import pytest
 
 @pytest.fixture()
 def store():
-    from openharness.impact import state_store
+    from impact_vision.impact import state_store
 
     mem = state_store.MemoryStateStore()
     state_store.set_state_store(mem)
@@ -19,14 +19,14 @@ def store():
 
 
 def _ctx():
-    from openharness.tools.base import ToolExecutionContext
+    from impact_vision.tools.base import ToolExecutionContext
 
     return ToolExecutionContext(cwd=Path.cwd())
 
 
 def test_evidence_review_tool_accumulates_in_a_named_queue(store) -> None:
-    from openharness.impact.evidence_workflow import list_review_queues
-    from openharness.tools.impact.evidence_review_tool import EvidenceReviewInput, EvidenceReviewTool
+    from impact_vision.impact.evidence_workflow import list_review_queues
+    from impact_vision.tools.impact.evidence_review_tool import EvidenceReviewInput, EvidenceReviewTool
 
     tool = EvidenceReviewTool()
     for n in (1, 2):
@@ -53,9 +53,9 @@ def test_evidence_review_tool_accumulates_in_a_named_queue(store) -> None:
 
 
 def test_portfolio_home_lists_pending_queue_items(store) -> None:
-    from openharness.impact.ai_review import AIExtractionReview
-    from openharness.impact.evidence_workflow import load_review_queue, save_review_queue, list_review_queues
-    from openharness.impact.portfolio_home import build_portfolio_home, render_portfolio_home
+    from impact_vision.impact.ai_review import AIExtractionReview
+    from impact_vision.impact.evidence_workflow import load_review_queue, save_review_queue, list_review_queues
+    from impact_vision.impact.portfolio_home import build_portfolio_home, render_portfolio_home
 
     q = load_review_queue("regulatory_radar")
     q.add(AIExtractionReview(item_id="r1", extracted_text="ESRS page changed", confidence=0.8, source_refs=["u"]))

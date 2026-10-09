@@ -7,13 +7,13 @@ from pathlib import Path
 
 import pytest
 
-from openharness.commands.registry import CommandContext, create_default_command_registry
-from openharness.config.settings import load_settings
-from openharness.engine.messages import ConversationMessage, TextBlock
-from openharness.engine.query_engine import QueryEngine
-from openharness.permissions import PermissionChecker
-from openharness.state import AppState, AppStateStore
-from openharness.tools import create_default_tool_registry
+from impact_vision.commands.registry import CommandContext, create_default_command_registry
+from impact_vision.config.settings import load_settings
+from impact_vision.engine.messages import ConversationMessage, TextBlock
+from impact_vision.engine.query_engine import QueryEngine
+from impact_vision.permissions import PermissionChecker
+from impact_vision.state import AppState, AppStateStore
+from impact_vision.tools import create_default_tool_registry
 
 
 class FakeApiClient:

@@ -4,14 +4,14 @@ from __future__ import annotations
 
 from datetime import date
 
-from openharness.impact.concordance import load_concordance
-from openharness.impact.dmrv import get_dmrv_signer, observations_to_series
-from openharness.impact.frameworks.esrs import load_simplified_datapoints
-from openharness.impact.geospatial import AssetLocation, classify_biome, get_satellite_provider
-from openharness.impact.greenwashing import classify_climate_claims
-from openharness.impact.models import MetricRecord
-from openharness.impact.xbrl_export import render_ixbrl, render_xbrl_json, tag_records
-from openharness.mcp.highlevel import FastMCP, create_highlevel_server
+from impact_vision.impact.concordance import load_concordance
+from impact_vision.impact.dmrv import get_dmrv_signer, observations_to_series
+from impact_vision.impact.frameworks.esrs import load_simplified_datapoints
+from impact_vision.impact.geospatial import AssetLocation, classify_biome, get_satellite_provider
+from impact_vision.impact.greenwashing import classify_climate_claims
+from impact_vision.impact.models import MetricRecord
+from impact_vision.impact.xbrl_export import render_ixbrl, render_xbrl_json, tag_records
+from impact_vision.mcp.highlevel import FastMCP, create_highlevel_server
 
 
 def _record(metric_id: str = "OI4112") -> MetricRecord:

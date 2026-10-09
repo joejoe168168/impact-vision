@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import re
 
-from openharness.impact._paths import data_path
-from openharness.impact.database import get_metric_store
+from impact_vision.impact._paths import data_path
+from impact_vision.impact.database import get_metric_store
 
 
 def _entries():
@@ -46,8 +46,8 @@ def test_clean_energy_goals_count_avoided_emissions_not_scope_1() -> None:
 
 
 def test_footprint_disclosure_does_not_drive_sdg_13() -> None:
-    from openharness.impact.models import Company
-    from openharness.impact.sdg_mapper import map_sdg_alignment
+    from impact_vision.impact.models import Company
+    from impact_vision.impact.sdg_mapper import map_sdg_alignment
 
     fintech = Company(
         name="Lender", sector="fintech", description="Digital microfinance for women micro-entrepreneurs.",

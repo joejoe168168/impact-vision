@@ -3,14 +3,14 @@
 
 from __future__ import annotations
 
-from openharness.tools import create_default_tool_registry
+from impact_vision.tools import create_default_tool_registry
 
 
 def main() -> None:
     tools = [
         tool
         for tool in create_default_tool_registry().list_tools()
-        if type(tool).__module__.startswith("openharness.tools.impact.")
+        if type(tool).__module__.startswith("impact_vision.tools.impact.")
         and not getattr(tool, "deprecated_for", None)  # merged-tool aliases
     ]
     print(f"Impact tools: {len(tools)}\n")

@@ -4,15 +4,15 @@ from __future__ import annotations
 
 import pytest
 
-from openharness.impact.audit_trail import AuditTrail
-from openharness.impact.engagements.verification_bundle import (
+from impact_vision.impact.audit_trail import AuditTrail
+from impact_vision.impact.engagements.verification_bundle import (
     MandatePack,
     PracticePack,
     ReportingPack,
     build_assurance_bundle,
     verify_assurance_bundle,
 )
-from openharness.impact.signed_feed import SigningKeyError, get_signer, resolve_signing_key
+from impact_vision.impact.signed_feed import SigningKeyError, get_signer, resolve_signing_key
 
 
 @pytest.fixture(autouse=True)
@@ -62,7 +62,7 @@ def test_assurance_manifest_discloses_key_and_verifies(monkeypatch):
 
 
 def test_tool_registry_loads_in_production_without_keys(monkeypatch):
-    from openharness.tools import create_default_tool_registry
+    from impact_vision.tools import create_default_tool_registry
 
     monkeypatch.setenv("IMPACT_VISION_ENV", "production")
     assert len(create_default_tool_registry().list_tools()) > 50

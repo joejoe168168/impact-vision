@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from openharness.impact.pipeline import SAMPLE_DECKS, assess_file, sample_deck_path
+from impact_vision.impact.pipeline import SAMPLE_DECKS, assess_file, sample_deck_path
 
 DECKS = Path(__file__).parent / "golden_decks"
 
@@ -131,6 +131,6 @@ def test_company_names_are_read_from_titles(bundles, name, company):
 
 
 def test_lowercase_title_words_still_give_a_name():
-    from openharness.impact.pipeline import assess_document
+    from impact_vision.impact.pipeline import assess_document
 
     assert assess_document("# Sunlit Homes — Seed pitch\n\nSunlit Homes sells lanterns.").company.name == "Sunlit Homes"

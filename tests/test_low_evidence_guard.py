@@ -6,11 +6,11 @@ import json
 
 from typer.testing import CliRunner
 
-from openharness.cli import app
-from openharness.impact.dd_checklist import analyze_document_coverage
-from openharness.impact.decision_workflow import assess_evidence_sufficiency
-from openharness.impact.models import Company
-from openharness.impact.sdk import ImpactVision
+from impact_vision.cli import app
+from impact_vision.impact.dd_checklist import analyze_document_coverage
+from impact_vision.impact.decision_workflow import assess_evidence_sufficiency
+from impact_vision.impact.models import Company
+from impact_vision.impact.sdk import ImpactVision
 
 SOLAR = (
     "SunPath Energy sells pay-as-you-go solar home systems to off-grid households in rural "

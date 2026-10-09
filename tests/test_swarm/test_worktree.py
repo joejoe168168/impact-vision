@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from openharness.swarm.worktree import (
+from impact_vision.swarm.worktree import (
     _flatten_slug,
     _worktree_branch,
     validate_worktree_slug,

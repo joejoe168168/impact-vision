@@ -3,11 +3,11 @@ from __future__ import annotations
 
 import pytest
 
-from openharness.impact.counterfactual import (
+from impact_vision.impact.counterfactual import (
     CounterfactualInput,
     estimate_counterfactual,
 )
-from openharness.impact.extractors import (
+from impact_vision.impact.extractors import (
     HeuristicVerifier,
     NoopExtractor,
     NoopVerifier,
@@ -15,7 +15,7 @@ from openharness.impact.extractors import (
     get_extractor,
     get_verifier,
 )
-from openharness.impact.frameworks import (
+from impact_vision.impact.frameworks import (
     EconomicActivity,
     FinancedEmissionsInput,
     SBTiClaim,
@@ -26,12 +26,12 @@ from openharness.impact.frameworks import (
     parse_cdp_responses,
     rollup_pcaf,
 )
-from openharness.impact.ic_memo import render_ic_memo_markdown
-from openharness.impact.models import Company
-from openharness.impact.plugins import discover_plugins
-from openharness.impact.signed_feed import HMACSigner, ReportFeed
-from openharness.impact.sdk import ImpactVision
-from openharness.impact.tenancy import (
+from impact_vision.impact.ic_memo import render_ic_memo_markdown
+from impact_vision.impact.models import Company
+from impact_vision.impact.plugins import discover_plugins
+from impact_vision.impact.signed_feed import HMACSigner, ReportFeed
+from impact_vision.impact.sdk import ImpactVision
+from impact_vision.impact.tenancy import (
     BUILTIN_ROLES,
     InMemoryRBACStore,
     PERM_DEAL_WRITE,
@@ -39,7 +39,7 @@ from openharness.impact.tenancy import (
     RBACPolicy,
     bootstrap_tenant,
 )
-from openharness.impact.toc_graph import build_simple_chain, render_mermaid
+from impact_vision.impact.toc_graph import build_simple_chain, render_mermaid
 
 
 # ---------------------------------------------------------------------------
@@ -209,7 +209,7 @@ class TestExtractors:
         assert "certification" in cats
 
     def test_heuristic_verifier_validates_outcome_with_assurance(self):
-        from openharness.impact.extractors import ExtractedClaim
+        from impact_vision.impact.extractors import ExtractedClaim
         c = ExtractedClaim(
             text="3,500 students enrolled, audited by Deloitte",
             category="outcome", metric_value=3500.0, metric_unit="students",
@@ -300,7 +300,7 @@ class TestSignedFeed:
         assert not ok2 and any("content_hash" in p for p in problems2)
 
     def test_wrong_signer_rejected(self):
-        from openharness.impact.signed_feed import export_chain, import_chain
+        from impact_vision.impact.signed_feed import export_chain, import_chain
         real = HMACSigner(key=b"real")
         fake = HMACSigner(key=b"fake")
         feed = ReportFeed(tenant_id="t", fund_id="f")
@@ -321,13 +321,13 @@ class TestSignedFeed:
 
 class TestEdgeCases:
     def test_pcaf_zero_input(self):
-        from openharness.impact.frameworks.pcaf import rollup_pcaf
+        from impact_vision.impact.frameworks.pcaf import rollup_pcaf
         r = rollup_pcaf([])
         assert r.company_count == 0
         assert r.total_financed_emissions_tco2e == 0.0
 
     def test_pcaf_no_emissions_and_no_revenue_is_flagged(self):
-        from openharness.impact.frameworks.pcaf import (
+        from impact_vision.impact.frameworks.pcaf import (
             FinancedEmissionsInput, rollup_pcaf,
         )
         r = rollup_pcaf([FinancedEmissionsInput(
@@ -339,7 +339,7 @@ class TestEdgeCases:
         assert r.entries[0].notes  # should carry a follow-up flag
 
     def test_sbti_insufficient_data(self):
-        from openharness.impact.frameworks.sbti import (
+        from impact_vision.impact.frameworks.sbti import (
             SBTiClaim, check_sbti_alignment,
         )
         r = check_sbti_alignment(SBTiClaim(company_name="Empty"))
@@ -368,7 +368,7 @@ class TestEdgeCases:
         assert ex.extract(None) == []  # guards against None for defensive callers
 
     def test_rbac_inactive_user_denied(self):
-        from openharness.impact.tenancy import User
+        from impact_vision.impact.tenancy import User
         store = InMemoryRBACStore()
         tenant, admin = bootstrap_tenant(store, "ACo", "a@a.test")
         store.upsert_user(User(
@@ -381,7 +381,7 @@ class TestEdgeCases:
         assert "inactive" in d.reason.lower()
 
     def test_rbac_role_with_unknown_perm_rejected_at_construction(self):
-        from openharness.impact.tenancy import Role
+        from impact_vision.impact.tenancy import Role
         with pytest.raises(ValueError):
             Role(name="bad", permissions=["not-a-real-permission"])
 
@@ -392,9 +392,9 @@ class TestEdgeCases:
             policy.require("nonexistent", PERM_DEAL_WRITE)
 
     def test_ic_memo_handles_missing_5d(self):
-        from openharness.impact.deal_gate import evaluate_deal
-        from openharness.impact.fund_thesis import FundThesis
-        from openharness.impact.models import Assessment, Company
+        from impact_vision.impact.deal_gate import evaluate_deal
+        from impact_vision.impact.fund_thesis import FundThesis
+        from impact_vision.impact.models import Assessment, Company
 
         a = Assessment(
             company=Company(name="Ghost", sector=""),
@@ -414,7 +414,7 @@ class TestEdgeCases:
 
 class TestHtmlRenderers:
     def test_ic_memo_html_contains_key_sections(self):
-        from openharness.impact.ic_memo import render_ic_memo, render_ic_memo_html
+        from impact_vision.impact.ic_memo import render_ic_memo, render_ic_memo_html
 
         iv = ImpactVision()
         a = iv.assess_company(Company(
@@ -458,7 +458,7 @@ class TestHtmlRenderers:
         assert html2 == html
 
     def test_ic_memo_html_path_writes_file(self, tmp_path):
-        from openharness.impact.ic_memo import render_ic_memo
+        from impact_vision.impact.ic_memo import render_ic_memo
 
         iv = ImpactVision()
         a = iv.assess_company(Company(name="FileCo", sector=""))
@@ -526,7 +526,7 @@ class TestHtmlRenderers:
         """The main impact report keeps its TOC sidebar, KPI strip and
         section anchors so the executive summary can navigate to sub-sections.
         """
-        from openharness.tools.impact import impact_report_tool as ir
+        from impact_vision.tools.impact import impact_report_tool as ir
 
         iv = ImpactVision()
         comp = Company(
@@ -549,7 +549,7 @@ class TestHtmlRenderers:
         assert 'id="sec-5d"' in html
 
     def test_report_v2_helpers(self):
-        from openharness.impact.report_templates import (
+        from impact_vision.impact.report_templates import (
             render_footer,
             render_hero,
             render_kpi_strip,
@@ -654,7 +654,7 @@ class TestWebConsole:
     """Smoke-tests for the new web console SPA and router."""
 
     def test_console_html_contains_tool_list(self):
-        from openharness.web.console import render_console_html
+        from impact_vision.web.console import render_console_html
 
         html = render_console_html()
         assert "<!DOCTYPE html>" in html
@@ -672,7 +672,7 @@ class TestWebConsole:
         from fastapi import FastAPI
         from fastapi.testclient import TestClient
 
-        from openharness.web.console import console_router
+        from impact_vision.web.console import console_router
 
         app = FastAPI()
         app.include_router(console_router())
@@ -691,7 +691,7 @@ class TestWebConsolePhase156:
     def test_openapi_walker_is_wired_into_html(self):
         """The SPA must ship the OpenAPI discovery + history JS so analysts
         get auto-forms for every new endpoint and a replayable run history."""
-        from openharness.web.console import render_console_html
+        from impact_vision.web.console import render_console_html
 
         html = render_console_html()
 
@@ -719,7 +719,7 @@ class TestWebConsolePhase156:
     def test_curated_catalogue_and_recipes_are_exported(self):
         """External plug-ins / tests may want to inspect or extend the
         curated catalogue and field recipes — keep them importable."""
-        from openharness.web.console import _FIELD_RECIPES, _TOOL_CATALOGUE
+        from impact_vision.web.console import _FIELD_RECIPES, _TOOL_CATALOGUE
 
         # 19 endpoints seeded at minimum; grows as the gateway adds routes.
         assert len(_TOOL_CATALOGUE) >= 19
@@ -741,7 +741,7 @@ class TestWebConsolePhase156:
         from fastapi import Body, FastAPI
         from fastapi.testclient import TestClient
 
-        from openharness.web.console import console_router
+        from impact_vision.web.console import console_router
 
         app = FastAPI(title="Demo")
         app.include_router(console_router())

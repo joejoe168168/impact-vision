@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import pytest
 
-from openharness.impact.metric_import import import_metrics
-from openharness.impact.pipeline import assess_files
+from impact_vision.impact.metric_import import import_metrics
+from impact_vision.impact.pipeline import assess_files
 
 DECK = "# Sunlit Homes — Seed pitch\n\nSunlit Homes sells solar lanterns to off-grid households in Uganda.\n"
 

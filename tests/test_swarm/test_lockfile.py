@@ -8,8 +8,8 @@ from pathlib import Path
 
 import pytest
 
-from openharness.swarm import lockfile
-from openharness.utils import file_lock
+from impact_vision.swarm import lockfile
+from impact_vision.utils import file_lock
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="fcntl unavailable on Windows; Windows lock uses msvcrt")
@@ -30,8 +30,8 @@ def test_exclusive_file_lock_routes_windows_branch(monkeypatch, tmp_path: Path):
         calls.append(lock_path)
         yield
 
-    # The implementation lives in ``openharness.utils.file_lock``;
-    # ``openharness.swarm.lockfile`` re-exports it for backwards compatibility.
+    # The implementation lives in ``impact_vision.utils.file_lock``;
+    # ``impact_vision.swarm.lockfile`` re-exports it for backwards compatibility.
     monkeypatch.setattr(file_lock, "_exclusive_windows_lock", _fake_windows_lock)
 
     lock_path = tmp_path / "windows.lock"

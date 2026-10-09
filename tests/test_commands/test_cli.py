@@ -6,8 +6,8 @@ from pathlib import Path
 
 from typer.testing import CliRunner
 
-import openharness.cli as cli
-from openharness.config import load_settings
+import impact_vision.cli as cli
+from impact_vision.config import load_settings
 
 
 app = cli.app
@@ -36,9 +36,9 @@ def test_setup_flow_selects_profile_and_model(tmp_path: Path, monkeypatch):
     def fake_login(provider):
         logged_in.append(provider)
 
-    monkeypatch.setattr("openharness.cli._select_setup_workflow", fake_select)
-    monkeypatch.setattr("openharness.cli._prompt_model_for_profile", lambda profile: "gpt-5.4")
-    monkeypatch.setattr("openharness.cli._login_provider", fake_login)
+    monkeypatch.setattr("impact_vision.cli._select_setup_workflow", fake_select)
+    monkeypatch.setattr("impact_vision.cli._prompt_model_for_profile", lambda profile: "gpt-5.4")
+    monkeypatch.setattr("impact_vision.cli._login_provider", fake_login)
 
     result = runner.invoke(app, ["setup"])
     assert result.exit_code == 0
@@ -94,10 +94,10 @@ def test_setup_flow_creates_kimi_profile_with_profile_scoped_key(tmp_path: Path,
         ]
     )
 
-    monkeypatch.setattr("openharness.cli._select_setup_workflow", lambda *args, **kwargs: next(selections))
-    monkeypatch.setattr("openharness.cli._select_from_menu", lambda *args, **kwargs: next(selections))
-    monkeypatch.setattr("openharness.cli._text_prompt", lambda *args, **kwargs: next(prompts))
-    monkeypatch.setattr("openharness.auth.flows.ApiKeyFlow.run", lambda self: "sk-kimi-test")
+    monkeypatch.setattr("impact_vision.cli._select_setup_workflow", lambda *args, **kwargs: next(selections))
+    monkeypatch.setattr("impact_vision.cli._select_from_menu", lambda *args, **kwargs: next(selections))
+    monkeypatch.setattr("impact_vision.cli._text_prompt", lambda *args, **kwargs: next(prompts))
+    monkeypatch.setattr("impact_vision.auth.flows.ApiKeyFlow.run", lambda self: "sk-kimi-test")
 
     result = runner.invoke(app, ["setup"])
     assert result.exit_code == 0
@@ -111,7 +111,7 @@ def test_setup_flow_creates_kimi_profile_with_profile_scoped_key(tmp_path: Path,
     assert profile.credential_slot == "kimi-anthropic"
     assert profile.allowed_models == ["kimi-k2.5"]
 
-    from openharness.auth.storage import load_credential
+    from impact_vision.auth.storage import load_credential
 
     assert load_credential("profile:kimi-anthropic", "api_key") == "sk-kimi-test"
 
@@ -119,13 +119,13 @@ def test_setup_flow_creates_kimi_profile_with_profile_scoped_key(tmp_path: Path,
 def test_auth_login_naxtclaude_stores_profile_scoped_key(tmp_path: Path, monkeypatch):
     runner = CliRunner()
     monkeypatch.setenv("OPENHARNESS_CONFIG_DIR", str(tmp_path))
-    monkeypatch.setattr("openharness.auth.flows.ApiKeyFlow.run", lambda self: "sk-naxt-test")
+    monkeypatch.setattr("impact_vision.auth.flows.ApiKeyFlow.run", lambda self: "sk-naxt-test")
 
     result = runner.invoke(app, ["auth", "login", "naxtclaude"])
 
     assert result.exit_code == 0
     assert "NaxtClaude API key saved." in result.output
-    from openharness.auth.storage import load_credential
+    from impact_vision.auth.storage import load_credential
 
     assert load_credential("profile:naxtclaude", "api_key") == "sk-naxt-test"
     settings = load_settings()
@@ -139,7 +139,7 @@ def test_dangerously_skip_permissions_passes_full_auto_to_run_repl(monkeypatch):
     async def fake_run_repl(**kwargs):
         captured.update(kwargs)
 
-    monkeypatch.setattr("openharness.ui.app.run_repl", fake_run_repl)
+    monkeypatch.setattr("impact_vision.ui.app.run_repl", fake_run_repl)
 
     result = runner.invoke(app, ["--dangerously-skip-permissions"])
 
@@ -154,7 +154,7 @@ def test_task_worker_flag_routes_to_run_task_worker(monkeypatch):
     async def fake_run_task_worker(**kwargs):
         captured.update(kwargs)
 
-    monkeypatch.setattr("openharness.ui.app.run_task_worker", fake_run_task_worker)
+    monkeypatch.setattr("impact_vision.ui.app.run_task_worker", fake_run_task_worker)
 
     result = runner.invoke(app, ["--task-worker", "--model", "kimi-k2.5"])
 

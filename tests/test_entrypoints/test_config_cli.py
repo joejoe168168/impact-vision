@@ -6,8 +6,8 @@ from pathlib import Path
 
 from typer.testing import CliRunner
 
-from openharness.cli import app
-from openharness.config.settings import load_settings
+from impact_vision.cli import app
+from impact_vision.config.settings import load_settings
 
 
 def test_cli_config_set_persists_nested_web_settings(tmp_path: Path, monkeypatch):

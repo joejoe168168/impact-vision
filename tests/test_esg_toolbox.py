@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from openharness.impact.toolbox import (
+from impact_vision.impact.toolbox import (
     build_esg_workflow,
     build_toolbox_input_plan,
     build_toolbox_output_blueprint,
@@ -21,10 +21,10 @@ from openharness.impact.toolbox import (
     search_toolbox_tools,
     source_keyword_coverage,
 )
-from openharness.impact.toolbox.ingest import extract_landing_tools
-from openharness.tools import create_default_tool_registry
-from openharness.tools.base import ToolExecutionContext
-from openharness.tools.impact.esg_toolbox_tool import ESGToolboxInput, ESGToolboxTool
+from impact_vision.impact.toolbox.ingest import extract_landing_tools
+from impact_vision.tools import create_default_tool_registry
+from impact_vision.tools.base import ToolExecutionContext
+from impact_vision.tools.impact.esg_toolbox_tool import ESGToolboxInput, ESGToolboxTool
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -643,7 +643,7 @@ def test_toolbox_workflow_does_not_ask_product_code_for_supplier_due_diligence()
 async def test_esg_toolbox_api_rejects_invalid_action_cleanly() -> None:
     from fastapi import HTTPException
 
-    from openharness.api_gateway.router import ESGToolboxRequest, esg_toolbox_endpoint
+    from impact_vision.api_gateway.router import ESGToolboxRequest, esg_toolbox_endpoint
 
     with pytest.raises(HTTPException) as exc_info:
         await esg_toolbox_endpoint(ESGToolboxRequest(action="bad-action"))
@@ -654,7 +654,7 @@ async def test_esg_toolbox_api_rejects_invalid_action_cleanly() -> None:
 
 @pytest.mark.asyncio
 async def test_esg_toolbox_mcp_rejects_invalid_action_cleanly() -> None:
-    from openharness.impact.mcp_server import esg_toolbox
+    from impact_vision.impact.mcp_server import esg_toolbox
 
     output = await esg_toolbox(action="bad-action")
 
@@ -684,7 +684,7 @@ def test_default_tool_registry_registers_esg_toolbox() -> None:
 
 @pytest.mark.asyncio
 async def test_mcp_esg_toolbox_wrapper_recommends_modules() -> None:
-    from openharness.impact.mcp_server import esg_toolbox
+    from impact_vision.impact.mcp_server import esg_toolbox
 
     output = await esg_toolbox(
         action="recommend",
@@ -717,7 +717,7 @@ def test_crosswalk_carbon_category_includes_sbti_and_cdp_codes() -> None:
 
 
 def test_search_source_index_finds_gri_disclosures() -> None:
-    from openharness.impact.toolbox import search_source_index
+    from impact_vision.impact.toolbox import search_source_index
 
     records = search_source_index("gri", "413-1", limit=3)
 
@@ -740,7 +740,7 @@ async def test_esg_toolbox_assess_includes_host_tool_handoff() -> None:
 
 @pytest.mark.asyncio
 async def test_framework_tool_cdp_handler_assesses_readiness() -> None:
-    from openharness.tools.impact.framework_tool import FrameworkInput, FrameworkTool
+    from impact_vision.tools.impact.framework_tool import FrameworkInput, FrameworkTool
 
     tool = FrameworkTool()
     result = await tool.execute(
@@ -761,7 +761,7 @@ async def test_framework_tool_cdp_handler_assesses_readiness() -> None:
 
 @pytest.mark.asyncio
 async def test_framework_tool_gri_match_appends_sector_topics() -> None:
-    from openharness.tools.impact.framework_tool import FrameworkInput, FrameworkTool
+    from impact_vision.tools.impact.framework_tool import FrameworkInput, FrameworkTool
 
     tool = FrameworkTool()
     result = await tool.execute(
@@ -780,7 +780,7 @@ async def test_framework_tool_gri_match_appends_sector_topics() -> None:
 
 
 def test_eu_regulatory_calendar_includes_export_compliance_obligations() -> None:
-    from openharness.impact.regulatory_calendar import build_regulatory_calendar
+    from impact_vision.impact.regulatory_calendar import build_regulatory_calendar
 
     calendar = build_regulatory_calendar(jurisdiction="EU", fiscal_year_end="2026-12-31")
     frameworks = {item.framework for item in calendar.items}
@@ -790,7 +790,7 @@ def test_eu_regulatory_calendar_includes_export_compliance_obligations() -> None
 
 @pytest.mark.asyncio
 async def test_hrdd_tool_appends_audit_scheme_readiness() -> None:
-    from openharness.tools.impact.hrdd_tool import HRDDTool, HRDDToolInput
+    from impact_vision.tools.impact.hrdd_tool import HRDDTool, HRDDToolInput
 
     tool = HRDDTool()
     result = await tool.execute(
@@ -812,7 +812,7 @@ async def test_hrdd_tool_appends_audit_scheme_readiness() -> None:
 
 @pytest.mark.asyncio
 async def test_verification_prep_supports_aa1000_target() -> None:
-    from openharness.tools.impact.verification_prep_tool import VerificationPrepInput, VerificationPrepTool
+    from impact_vision.tools.impact.verification_prep_tool import VerificationPrepInput, VerificationPrepTool
 
     tool = VerificationPrepTool()
     result = await tool.execute(
@@ -832,7 +832,7 @@ async def test_verification_prep_supports_aa1000_target() -> None:
 
 @pytest.mark.asyncio
 async def test_product_passport_assess_appends_battery_regulation_readiness() -> None:
-    from openharness.tools.impact.product_passport_tool import ProductPassportInput, ProductPassportTool
+    from impact_vision.tools.impact.product_passport_tool import ProductPassportInput, ProductPassportTool
 
     tool = ProductPassportTool()
     result = await tool.execute(

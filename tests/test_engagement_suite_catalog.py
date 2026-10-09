@@ -7,9 +7,9 @@ import json
 import typing
 from pathlib import Path
 
-from openharness.tools.base import ToolExecutionContext
-from openharness.tools.impact.engagement_suite_catalog import ACTION_AREAS, payload_catalog
-from openharness.tools.impact.engagement_suite_tool import EngagementSuiteInput, EngagementSuiteTool
+from impact_vision.tools.base import ToolExecutionContext
+from impact_vision.tools.impact.engagement_suite_catalog import ACTION_AREAS, payload_catalog
+from impact_vision.tools.impact.engagement_suite_tool import EngagementSuiteInput, EngagementSuiteTool
 
 ACTIONS = set(typing.get_args(EngagementSuiteInput.model_fields["action"].annotation)) - {"describe"}
 NO_PAYLOAD = {  # listing actions that take no arguments

@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from openharness.impact.extractors.base import to_impact_claims
-from openharness.impact.extractors.regex_extractor import RegexExtractor, evidence_signals
-from openharness.impact.greenwashing import assess_greenwashing
-from openharness.impact.models import Company
-from openharness.impact.sdk import ImpactVision
+from impact_vision.impact.extractors.base import to_impact_claims
+from impact_vision.impact.extractors.regex_extractor import RegexExtractor, evidence_signals
+from impact_vision.impact.greenwashing import assess_greenwashing
+from impact_vision.impact.models import Company
+from impact_vision.impact.sdk import ImpactVision
 
 PITCH = (
     "Our biogas plant generates 1.8 GWh of electricity per year, replacing ~920 tonnes "

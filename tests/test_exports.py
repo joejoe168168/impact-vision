@@ -8,8 +8,8 @@ import json
 
 import pytest
 
-from openharness.impact import exports
-from openharness.impact.pipeline import assess_file, sample_deck_path, write_deliverables
+from impact_vision.impact import exports
+from impact_vision.impact.pipeline import assess_file, sample_deck_path, write_deliverables
 
 
 @pytest.fixture(scope="module")
@@ -78,8 +78,8 @@ def test_deliverables_include_data_files(bundle, tmp_path):
 def test_tool_json_slim_flag(tmp_path):
     import asyncio
 
-    from openharness.tools.base import ToolExecutionContext
-    from openharness.tools.impact.impact_report_tool import ImpactReportInput, ImpactReportTool
+    from impact_vision.tools.base import ToolExecutionContext
+    from impact_vision.tools.impact.impact_report_tool import ImpactReportInput, ImpactReportTool
 
     ctx = ToolExecutionContext(cwd=tmp_path)
     args = ImpactReportInput(company_name="Acme Solar", sector="energy",

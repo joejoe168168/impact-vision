@@ -4,16 +4,16 @@ from __future__ import annotations
 
 import yaml
 
-from openharness.impact._paths import data_path
-from openharness.impact.database import get_metric_store
-from openharness.impact.dd_checklist import (
+from impact_vision.impact._paths import data_path
+from impact_vision.impact.database import get_metric_store
+from impact_vision.impact.dd_checklist import (
     analyze_document_coverage,
     filter_questions_for_sector,
     load_checklist,
 )
-from openharness.impact.gap_analysis import analyze_gaps, core_set_for_sector
-from openharness.impact.models import Company
-from openharness.tools.impact.impact_report_tool import _infer_opportunities_and_risks
+from impact_vision.impact.gap_analysis import analyze_gaps, core_set_for_sector
+from impact_vision.impact.models import Company
+from impact_vision.tools.impact.impact_report_tool import _infer_opportunities_and_risks
 
 PIG_TEXT = (
     "We run an integrated pig farm with 18 smallholder outgrowers and a biogas plant. "

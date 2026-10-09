@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from openharness.channels.impl.base import resolve_channel_media_dir
+from impact_vision.channels.impl.base import resolve_channel_media_dir
 
 
 def test_resolve_channel_media_dir_uses_ohmo_workspace(monkeypatch, tmp_path):

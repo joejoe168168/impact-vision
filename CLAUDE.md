@@ -153,21 +153,19 @@ grows past ~1000, trim before shipping.
 
 ## Engineering housekeeping (package rename status)
 
-**`impact_vision` is the supported import path** (v7 W5.5). Every
-`impact_vision.*` module is the same object as its `openharness.impact.*`
-implementation (plus `impact_vision.tools` / `.cli` / `.web` /
-`.api_gateway` / `.dashboard`), and the console scripts point at
-`impact_vision.cli:app`. Write new docs and examples against `impact_vision`.
+**The package is `impact_vision`** (`src/impact_vision/`, physically moved in
+0.19, roadmap v8 W5.1). `openharness` is a thin alias package (`src/openharness/`)
+mapping every `openharness.<path>` to the same `impact_vision.<path>` module
+object, so old imports and monkeypatch targets still work; `python -m
+openharness` still runs. Short names from 0.17 resolve too:
+`impact_vision.<x>` → `impact_vision.impact.<x>` and `impact_vision.tools.<X>`
+→ the impact tools, unless `<x>` is a real top-level module. Write new code,
+docs and tests against `impact_vision`. Config stays in `~/.openharness/` and
+`OPENHARNESS_*` env vars (renaming would orphan users' settings and keys).
 
-The deprecated shims (`roadmap_v2`, `questionnaire_v2`, `frameworks.sfdr_v2`)
-were removed in 0.18; import from the modules they re-exported. Still
-deferred (roadmap v8 W5.1):
-
-1. Physically move the code under `src/impact_vision/` and turn `openharness`
-   into the alias (the reverse of today).
-2. `channels/` and `vim/` are already excluded from the wheel. `themes`,
-   `voice`, `bridge` and `keybindings` are still imported by the slash-command
-   registry / TUI, so make those imports lazy before dropping them.
+Still deferred (roadmap v8 W5.1): `channels/` and `vim/` are excluded from the
+wheel; `themes`, `voice`, `bridge` and `keybindings` are still imported by the
+slash-command registry / TUI, so make those imports lazy before dropping them.
 
 **Knowledge, methodology and state (v7 Wave 5):** reference data lives in
 sourced YAML under `data/` (`regulatory/`, `standards_registry.yaml`,
@@ -180,7 +178,7 @@ the YAML with `as_of` / `source_url`. Consultant state persists through
 ## Project Structure
 
 ```
-src/openharness/
+src/impact_vision/
 ├── impact/                        # Impact measurement engine
 │   ├── models.py                  # Pydantic models (Metric, Company, Assessment, SDG, ImpactClaim)
 │   ├── catalog.py                 # IRIS+ 5.3c Excel ETL (263-column parser)

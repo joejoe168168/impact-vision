@@ -7,18 +7,18 @@ from pathlib import Path
 
 import pytest
 
-import openharness.commands.registry as registry_module
-from openharness.commands.registry import CommandContext, create_default_command_registry
-from openharness.config.paths import get_feedback_log_path, get_project_issue_file, get_project_pr_comments_file
-from openharness.config.settings import load_settings, save_settings, Settings
-from openharness.engine.messages import ConversationMessage, TextBlock
-from openharness.engine.query_engine import QueryEngine
-from openharness.mcp.types import McpHttpServerConfig, McpStdioServerConfig
-from openharness.permissions import PermissionChecker
-from openharness.plugins.types import PluginCommandDefinition
-from openharness.state import AppState, AppStateStore
-from openharness.tasks import get_task_manager
-from openharness.tools import create_default_tool_registry
+import impact_vision.commands.registry as registry_module
+from impact_vision.commands.registry import CommandContext, create_default_command_registry
+from impact_vision.config.paths import get_feedback_log_path, get_project_issue_file, get_project_pr_comments_file
+from impact_vision.config.settings import load_settings, save_settings, Settings
+from impact_vision.engine.messages import ConversationMessage, TextBlock
+from impact_vision.engine.query_engine import QueryEngine
+from impact_vision.mcp.types import McpHttpServerConfig, McpStdioServerConfig
+from impact_vision.permissions import PermissionChecker
+from impact_vision.plugins.types import PluginCommandDefinition
+from impact_vision.state import AppState, AppStateStore
+from impact_vision.tasks import get_task_manager
+from impact_vision.tools import create_default_tool_registry
 
 
 class FakeApiClient:

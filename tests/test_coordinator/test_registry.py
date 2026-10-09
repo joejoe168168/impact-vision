@@ -2,7 +2,7 @@
 
 import pytest
 
-from openharness.coordinator.coordinator_mode import TeamRegistry
+from impact_vision.coordinator.coordinator_mode import TeamRegistry
 
 
 def test_create_add_and_delete_team():

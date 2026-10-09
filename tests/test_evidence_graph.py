@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from openharness.impact.evidence_graph import build_evidence_graph, graph_warnings
-from openharness.impact.models import ImpactClaim, ImpactTarget, MetricRecord
+from impact_vision.impact.evidence_graph import build_evidence_graph, graph_warnings
+from impact_vision.impact.models import ImpactClaim, ImpactTarget, MetricRecord
 
 
 def test_build_evidence_graph_links_claim_metric_target_and_section() -> None:

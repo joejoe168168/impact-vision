@@ -7,12 +7,12 @@ from pathlib import Path
 
 import pytest
 
-from openharness.impact.ic_memo import render_ic_memo
-from openharness.impact.investee_portal import build_investee_portal
-from openharness.impact.models import Company
-from openharness.impact.sdk import ImpactVision
-from openharness.tools.base import ToolExecutionContext
-from openharness.tools.impact.impact_report_tool import ImpactReportInput, ImpactReportTool
+from impact_vision.impact.ic_memo import render_ic_memo
+from impact_vision.impact.investee_portal import build_investee_portal
+from impact_vision.impact.models import Company
+from impact_vision.impact.sdk import ImpactVision
+from impact_vision.tools.base import ToolExecutionContext
+from impact_vision.tools.impact.impact_report_tool import ImpactReportInput, ImpactReportTool
 
 ATTR = '"><svg onload=alert(1)>'
 TAG = "<img src=x onerror=alert(1)>"

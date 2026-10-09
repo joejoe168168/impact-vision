@@ -6,13 +6,13 @@ from pathlib import Path
 
 import pytest
 
-from openharness.swarm.in_process import (
+from impact_vision.swarm.in_process import (
     InProcessBackend,
     TeammateContext,
     get_teammate_context,
     set_teammate_context,
 )
-from openharness.swarm.types import TeammateMessage, TeammateSpawnConfig
+from impact_vision.swarm.types import TeammateMessage, TeammateSpawnConfig
 
 
 # ---------------------------------------------------------------------------
@@ -142,7 +142,7 @@ async def test_send_message_writes_to_mailbox(backend, tmp_path, monkeypatch):
     await backend.send_message("rcvr@myteam", msg)
 
     # Verify the message was written to mailbox
-    from openharness.swarm.mailbox import TeammateMailbox
+    from impact_vision.swarm.mailbox import TeammateMailbox
     mailbox = TeammateMailbox(team_name="myteam", agent_id="rcvr")
     messages = await mailbox.read_all(unread_only=False)
     assert any(m.payload.get("content") == "work on it" for m in messages)

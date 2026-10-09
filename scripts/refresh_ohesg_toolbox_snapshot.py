@@ -16,7 +16,7 @@ from datetime import date
 from pathlib import Path
 from urllib.parse import urljoin
 
-from openharness.impact.toolbox.ingest import build_source_profile, extract_landing_tools, fetch_text
+from impact_vision.impact.toolbox.ingest import build_source_profile, extract_landing_tools, fetch_text
 
 
 DEFAULT_BASE_URL = "https://tool.ohesg.com/"

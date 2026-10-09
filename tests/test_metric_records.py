@@ -5,14 +5,14 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from openharness.impact.metric_records import (
+from impact_vision.impact.metric_records import (
     metric_record_from_value,
     metric_records_from_reported_metrics,
     metric_records_to_reported_metrics,
     validate_metric_record,
     validate_metric_records,
 )
-from openharness.impact.models import MetricRecord
+from impact_vision.impact.models import MetricRecord
 
 
 def test_metric_record_valid_contract() -> None:

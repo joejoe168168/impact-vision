@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from openharness.tools import create_default_tool_registry
-from openharness.tools.base import ToolExecutionContext
+from impact_vision.tools import create_default_tool_registry
+from impact_vision.tools.base import ToolExecutionContext
 
 
 @pytest.mark.asyncio

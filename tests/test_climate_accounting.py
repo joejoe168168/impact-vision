@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from openharness.impact.climate_accounting import (
+from impact_vision.impact.climate_accounting import (
     ActivityData,
     EmissionFactor,
     calculate_activity_emissions,

@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from openharness.impact.lca import (
+from impact_vision.impact.lca import (
     LCAStudy,
     assess_lca_readiness,
     build_lcm_plan,
@@ -15,9 +15,9 @@ from openharness.impact.lca import (
     calculate_lcsa,
     run_lca_sensitivity,
 )
-from openharness.tools import create_default_tool_registry
-from openharness.tools.base import ToolExecutionContext
-from openharness.tools.impact.lca_tool import LCAAssessmentInput, LCAAssessmentTool
+from impact_vision.tools import create_default_tool_registry
+from impact_vision.tools.base import ToolExecutionContext
+from impact_vision.tools.impact.lca_tool import LCAAssessmentInput, LCAAssessmentTool
 
 
 def _study(**overrides):

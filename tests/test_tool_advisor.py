@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 from pathlib import Path
 
-from openharness.impact.tool_advisor import (
+from impact_vision.impact.tool_advisor import (
     PLAYBOOKS,
     TOOL_ROUTES,
     get_playbook,
@@ -13,8 +13,8 @@ from openharness.impact.tool_advisor import (
     route_query,
     routed_tool_names,
 )
-from openharness.tools import create_default_tool_registry
-from openharness.tools.base import ToolExecutionContext
+from impact_vision.tools import create_default_tool_registry
+from impact_vision.tools.base import ToolExecutionContext
 
 
 def _ctx() -> ToolExecutionContext:

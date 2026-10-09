@@ -5,8 +5,8 @@ from __future__ import annotations
 import textwrap
 from pathlib import Path
 
-from openharness.skills import get_user_skills_dir, load_skill_registry
-from openharness.skills.loader import _parse_skill_markdown as parse_skill_markdown
+from impact_vision.skills import get_user_skills_dir, load_skill_registry
+from impact_vision.skills.loader import _parse_skill_markdown as parse_skill_markdown
 
 
 def test_load_skill_registry_includes_bundled(tmp_path: Path, monkeypatch):

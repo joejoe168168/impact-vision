@@ -8,10 +8,10 @@ import yaml
 
 
 def test_methodology_stamp_on_models_and_outputs() -> None:
-    from openharness.impact.exports import build_workbook, to_csv, to_json
-    from openharness.impact.methodology import methodology_stamp
-    from openharness.impact.pipeline import assess_file, sample_deck_path
-    from openharness.impact.report_templates.decision_report import render_decision_report
+    from impact_vision.impact.exports import build_workbook, to_csv, to_json
+    from impact_vision.impact.methodology import methodology_stamp
+    from impact_vision.impact.pipeline import assess_file, sample_deck_path
+    from impact_vision.impact.report_templates.decision_report import render_decision_report
 
     stamp = methodology_stamp()
     assert stamp["methodology_version"] == "1.2.0" and len(stamp["config_hash"]) == 12
@@ -30,10 +30,10 @@ def test_methodology_stamp_on_models_and_outputs() -> None:
 
 
 def test_appendix_is_generated_from_yaml(tmp_path, monkeypatch) -> None:
-    from openharness.impact import methodology
-    from openharness.impact._paths import data_path
-    from openharness.impact.five_dimensions import _grade_from_score
-    from openharness.impact.greenwashing import _classify
+    from impact_vision.impact import methodology
+    from impact_vision.impact._paths import data_path
+    from impact_vision.impact.five_dimensions import _grade_from_score
+    from impact_vision.impact.greenwashing import _classify
 
     base = yaml.safe_load(data_path("methodology", "v1.yaml").read_text(encoding="utf-8"))
     rows = dict(methodology.methodology_appendix())

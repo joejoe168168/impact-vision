@@ -8,10 +8,10 @@ from pathlib import Path
 
 import pytest
 
-import openharness.tools.impact as impact_tools
-from openharness.tools import create_default_tool_registry
-from openharness.tools.base import ToolExecutionContext
-from openharness.tools.impact.merged_tools import (
+import impact_vision.tools.impact as impact_tools
+from impact_vision.tools import create_default_tool_registry
+from impact_vision.tools.base import ToolExecutionContext
+from impact_vision.tools.impact.merged_tools import (
     DEPRECATED_TOOLS,
     DDQResponderTool,
     PipelineTool,

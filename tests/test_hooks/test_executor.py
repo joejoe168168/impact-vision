@@ -6,13 +6,13 @@ from pathlib import Path
 
 import pytest
 
-from openharness.api.client import ApiMessageCompleteEvent
-from openharness.api.usage import UsageSnapshot
-from openharness.engine.messages import ConversationMessage, TextBlock
-from openharness.hooks import HookEvent, HookExecutionContext, HookExecutor
-from openharness.hooks.executor import _inject_arguments
-from openharness.hooks.loader import HookRegistry
-from openharness.hooks.schemas import CommandHookDefinition, PromptHookDefinition
+from impact_vision.api.client import ApiMessageCompleteEvent
+from impact_vision.api.usage import UsageSnapshot
+from impact_vision.engine.messages import ConversationMessage, TextBlock
+from impact_vision.hooks import HookEvent, HookExecutionContext, HookExecutor
+from impact_vision.hooks.executor import _inject_arguments
+from impact_vision.hooks.loader import HookRegistry
+from impact_vision.hooks.schemas import CommandHookDefinition, PromptHookDefinition
 
 
 class FakeApiClient:

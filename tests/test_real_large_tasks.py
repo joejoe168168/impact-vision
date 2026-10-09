@@ -19,7 +19,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
-from openharness.config.settings import Settings
+from impact_vision.config.settings import Settings
 
 API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
 BASE_URL = os.environ.get("ANTHROPIC_BASE_URL", "https://api.moonshot.cn/anthropic")
@@ -35,19 +35,19 @@ RESULTS: dict[str, tuple[bool, float]] = {}
 # ====================================================================
 
 def make_engine(system_prompt, cwd=None, hook_executor=None, max_tokens=4096, max_turns=DEFAULT_MAX_TURNS):
-    from openharness.api.client import AnthropicApiClient
-    from openharness.config.settings import PermissionSettings
-    from openharness.engine.query_engine import QueryEngine
-    from openharness.permissions.checker import PermissionChecker
-    from openharness.permissions.modes import PermissionMode
-    from openharness.tools.base import ToolRegistry
-    from openharness.tools.bash_tool import BashTool
-    from openharness.tools.file_read_tool import FileReadTool
-    from openharness.tools.file_write_tool import FileWriteTool
-    from openharness.tools.file_edit_tool import FileEditTool
-    from openharness.tools.glob_tool import GlobTool
-    from openharness.tools.grep_tool import GrepTool
-    from openharness.tools.web_fetch_tool import WebFetchTool
+    from impact_vision.api.client import AnthropicApiClient
+    from impact_vision.config.settings import PermissionSettings
+    from impact_vision.engine.query_engine import QueryEngine
+    from impact_vision.permissions.checker import PermissionChecker
+    from impact_vision.permissions.modes import PermissionMode
+    from impact_vision.tools.base import ToolRegistry
+    from impact_vision.tools.bash_tool import BashTool
+    from impact_vision.tools.file_read_tool import FileReadTool
+    from impact_vision.tools.file_write_tool import FileWriteTool
+    from impact_vision.tools.file_edit_tool import FileEditTool
+    from impact_vision.tools.glob_tool import GlobTool
+    from impact_vision.tools.grep_tool import GrepTool
+    from impact_vision.tools.web_fetch_tool import WebFetchTool
 
     api = AnthropicApiClient(api_key=API_KEY, base_url=BASE_URL)
     reg = ToolRegistry()
@@ -63,7 +63,7 @@ def make_engine(system_prompt, cwd=None, hook_executor=None, max_tokens=4096, ma
 
 
 def collect(events):
-    from openharness.engine.stream_events import (
+    from impact_vision.engine.stream_events import (
         AssistantTextDelta, AssistantTurnComplete,
         ToolExecutionStarted, ToolExecutionCompleted,
     )
@@ -94,11 +94,11 @@ async def task_security_audit_with_hooks():
     """Full security audit: agent reads code, fetches OWASP checklist, reports issues.
     Hooks log every tool use. Permission denies dangerous commands."""
 
-    from openharness.hooks.events import HookEvent
-    from openharness.hooks.loader import HookRegistry
-    from openharness.hooks.schemas import CommandHookDefinition
-    from openharness.hooks.executor import HookExecutor, HookExecutionContext
-    from openharness.api.client import AnthropicApiClient
+    from impact_vision.hooks.events import HookEvent
+    from impact_vision.hooks.loader import HookRegistry
+    from impact_vision.hooks.schemas import CommandHookDefinition
+    from impact_vision.hooks.executor import HookExecutor, HookExecutionContext
+    from impact_vision.api.client import AnthropicApiClient
 
     api = AnthropicApiClient(api_key=API_KEY, base_url=BASE_URL)
 
@@ -169,25 +169,25 @@ async def task_security_audit_with_hooks():
 async def task_coordinator_code_review():
     """Coordinator delegates code review to 2 worker agents, synthesizes results."""
 
-    from openharness.coordinator.coordinator_mode import (
+    from impact_vision.coordinator.coordinator_mode import (
         get_coordinator_system_prompt, format_task_notification, TaskNotification,
     )
-    from openharness.coordinator.agent_definitions import get_agent_definition
-    from openharness.swarm.in_process import start_in_process_teammate, TeammateAbortController
-    from openharness.swarm.types import TeammateSpawnConfig
-    from openharness.swarm.team_lifecycle import TeamLifecycleManager, TeamMember
-    from openharness.engine.query import QueryContext
-    from openharness.api.client import AnthropicApiClient
-    from openharness.config.settings import PermissionSettings
-    from openharness.permissions.checker import PermissionChecker
-    from openharness.permissions.modes import PermissionMode
-    from openharness.tools.base import ToolRegistry
-    from openharness.tools.bash_tool import BashTool
-    from openharness.tools.file_read_tool import FileReadTool
-    from openharness.tools.glob_tool import GlobTool
-    from openharness.tools.grep_tool import GrepTool
-    import openharness.swarm.mailbox as mb
-    import openharness.swarm.team_lifecycle as tl
+    from impact_vision.coordinator.agent_definitions import get_agent_definition
+    from impact_vision.swarm.in_process import start_in_process_teammate, TeammateAbortController
+    from impact_vision.swarm.types import TeammateSpawnConfig
+    from impact_vision.swarm.team_lifecycle import TeamLifecycleManager, TeamMember
+    from impact_vision.engine.query import QueryContext
+    from impact_vision.api.client import AnthropicApiClient
+    from impact_vision.config.settings import PermissionSettings
+    from impact_vision.permissions.checker import PermissionChecker
+    from impact_vision.permissions.modes import PermissionMode
+    from impact_vision.tools.base import ToolRegistry
+    from impact_vision.tools.bash_tool import BashTool
+    from impact_vision.tools.file_read_tool import FileReadTool
+    from impact_vision.tools.glob_tool import GlobTool
+    from impact_vision.tools.grep_tool import GrepTool
+    import impact_vision.swarm.mailbox as mb
+    import impact_vision.swarm.team_lifecycle as tl
 
     api = AnthropicApiClient(api_key=API_KEY, base_url=BASE_URL)
 
@@ -298,13 +298,13 @@ async def task_migration_plan_with_memory():
     """Agent analyzes AutoAgent, saves findings to memory, creates migration plan,
     saves session for later resume."""
 
-    from openharness.coordinator.agent_definitions import get_agent_definition
-    from openharness.skills.registry import SkillRegistry
-    from openharness.skills.types import SkillDefinition
-    from openharness.memory.manager import add_memory_entry, list_memory_files, remove_memory_entry
-    from openharness.services.session_storage import save_session_snapshot, export_session_markdown
-    import openharness.memory.paths as mp
-    import openharness.memory.manager as mm
+    from impact_vision.coordinator.agent_definitions import get_agent_definition
+    from impact_vision.skills.registry import SkillRegistry
+    from impact_vision.skills.types import SkillDefinition
+    from impact_vision.memory.manager import add_memory_entry, list_memory_files, remove_memory_entry
+    from impact_vision.services.session_storage import save_session_snapshot, export_session_markdown
+    import impact_vision.memory.paths as mp
+    import impact_vision.memory.manager as mm
 
     with tempfile.TemporaryDirectory() as tmpdir:
         mem_dir = Path(tmpdir) / "memory"
@@ -418,7 +418,7 @@ async def task_migration_plan_with_memory():
 async def task_bugfix_in_worktree():
     """Agent creates a worktree, makes a fix in isolation, verifies it, cleans up."""
 
-    from openharness.swarm.worktree import WorktreeManager
+    from impact_vision.swarm.worktree import WorktreeManager
 
     with tempfile.TemporaryDirectory() as tmpdir:
         # Create a test repo with a "buggy" file
@@ -517,28 +517,28 @@ if __name__ == "__main__":
 async def task_full_pipeline():
     """Simulate the full research→plan→implement→verify pipeline with coordinator."""
 
-    from openharness.coordinator.coordinator_mode import (
+    from impact_vision.coordinator.coordinator_mode import (
         get_coordinator_system_prompt, format_task_notification, TaskNotification,
     )
-    from openharness.swarm.in_process import start_in_process_teammate, TeammateAbortController
-    from openharness.swarm.types import TeammateSpawnConfig
-    from openharness.swarm.permission_sync import (
+    from impact_vision.swarm.in_process import start_in_process_teammate, TeammateAbortController
+    from impact_vision.swarm.types import TeammateSpawnConfig
+    from impact_vision.swarm.permission_sync import (
         create_permission_request, write_permission_request,
         read_pending_permissions, resolve_permission, PermissionResolution,
     )
-    from openharness.swarm.team_lifecycle import TeamLifecycleManager, TeamMember
-    from openharness.engine.query import QueryContext
-    from openharness.api.client import AnthropicApiClient
-    from openharness.config.settings import PermissionSettings
-    from openharness.permissions.checker import PermissionChecker
-    from openharness.permissions.modes import PermissionMode
-    from openharness.tools.base import ToolRegistry
-    from openharness.tools.bash_tool import BashTool
-    from openharness.tools.file_read_tool import FileReadTool
-    from openharness.tools.glob_tool import GlobTool
-    from openharness.tools.grep_tool import GrepTool
-    import openharness.swarm.mailbox as mb
-    import openharness.swarm.team_lifecycle as tl
+    from impact_vision.swarm.team_lifecycle import TeamLifecycleManager, TeamMember
+    from impact_vision.engine.query import QueryContext
+    from impact_vision.api.client import AnthropicApiClient
+    from impact_vision.config.settings import PermissionSettings
+    from impact_vision.permissions.checker import PermissionChecker
+    from impact_vision.permissions.modes import PermissionMode
+    from impact_vision.tools.base import ToolRegistry
+    from impact_vision.tools.bash_tool import BashTool
+    from impact_vision.tools.file_read_tool import FileReadTool
+    from impact_vision.tools.glob_tool import GlobTool
+    from impact_vision.tools.grep_tool import GrepTool
+    import impact_vision.swarm.mailbox as mb
+    import impact_vision.swarm.team_lifecycle as tl
 
     api = AnthropicApiClient(api_key=API_KEY, base_url=BASE_URL)
 
@@ -665,7 +665,7 @@ async def task_full_pipeline():
 async def task_refactor_with_session():
     """Refactor code across 3 turns, save session, verify it can be loaded."""
 
-    from openharness.services.session_storage import (
+    from impact_vision.services.session_storage import (
         save_session_snapshot, load_session_snapshot,
     )
 

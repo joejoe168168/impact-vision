@@ -61,7 +61,7 @@ def _diff(old_ids: set[str], new_ids: set[str]) -> tuple[list[str], list[str]]:
 
 def main() -> int:
     _add_repo_root_to_path()
-    from openharness.impact.catalog import (
+    from impact_vision.impact.catalog import (
         load_catalog_from_excel, save_catalog_json, load_catalog_json,
         get_default_excel_path, get_default_json_path,
     )

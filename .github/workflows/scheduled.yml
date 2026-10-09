@@ -21,4 +21,4 @@ jobs:
       - name: Every knowledge row sourced and re-verified within 180 days
         run: python scripts/check_knowledge.py
       - name: Extraction benchmark gate
-        run: python -m openharness.impact.extraction_eval --extractor regex --summary
+        run: python -m impact_vision.impact.extraction_eval --extractor regex --summary

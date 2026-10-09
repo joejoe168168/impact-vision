@@ -1,4 +1,4 @@
-"""Tests for openharness.config.settings."""
+"""Tests for impact_vision.config.settings."""
 
 from __future__ import annotations
 
@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from openharness.auth.storage import store_credential
-from openharness.config.settings import (
+from impact_vision.auth.storage import store_credential
+from impact_vision.config.settings import (
     ProviderProfile,
     Settings,
     display_model_setting,

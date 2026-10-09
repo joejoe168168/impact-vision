@@ -14,14 +14,14 @@ from datetime import date
 def _ctx():
     from pathlib import Path
 
-    from openharness.tools.base import ToolExecutionContext
+    from impact_vision.tools.base import ToolExecutionContext
 
     return ToolExecutionContext(cwd=Path.cwd())
 
 
 # --------------------------------------------------------------- SFDR 2.0
 def test_sfdr2_sustainable_candidate_threshold_met() -> None:
-    from openharness.impact.frameworks.sfdr_pai import SFDR2Input, classify_sfdr2_category
+    from impact_vision.impact.frameworks.sfdr_pai import SFDR2Input, classify_sfdr2_category
 
     res = classify_sfdr2_category(SFDR2Input(
         current_article=9,
@@ -36,7 +36,7 @@ def test_sfdr2_sustainable_candidate_threshold_met() -> None:
 
 
 def test_sfdr2_transition_candidate_from_signals() -> None:
-    from openharness.impact.frameworks.sfdr_pai import SFDR2Input, classify_sfdr2_category
+    from impact_vision.impact.frameworks.sfdr_pai import SFDR2Input, classify_sfdr2_category
 
     res = classify_sfdr2_category(SFDR2Input(
         current_article=8,
@@ -51,7 +51,7 @@ def test_sfdr2_transition_candidate_from_signals() -> None:
 
 
 def test_sfdr2_exclusions_and_unclassified() -> None:
-    from openharness.impact.frameworks.sfdr_pai import SFDR2Input, classify_sfdr2_category
+    from impact_vision.impact.frameworks.sfdr_pai import SFDR2Input, classify_sfdr2_category
 
     res = classify_sfdr2_category(SFDR2Input(
         has_sustainable_objective=True,
@@ -67,7 +67,7 @@ def test_sfdr2_exclusions_and_unclassified() -> None:
 
 
 def test_sfdr2_missing_threshold_input_is_a_caveat() -> None:
-    from openharness.impact.frameworks.sfdr_pai import SFDR2Input, classify_sfdr2_category
+    from impact_vision.impact.frameworks.sfdr_pai import SFDR2Input, classify_sfdr2_category
 
     res = classify_sfdr2_category(SFDR2Input(current_article=8, applies_binding_esg_criteria=True))
     assert res.category == "esg_basics"
@@ -76,7 +76,7 @@ def test_sfdr2_missing_threshold_input_is_a_caveat() -> None:
 
 
 def test_sfdr2_via_framework_tool() -> None:
-    from openharness.tools.impact.framework_tool import FrameworkTool
+    from impact_vision.tools.impact.framework_tool import FrameworkTool
 
     tool = FrameworkTool()
     listed = asyncio.run(tool.execute({"framework": "sfdr2", "action": "list"}, _ctx()))
@@ -102,7 +102,7 @@ def test_sfdr2_via_framework_tool() -> None:
 
 # ------------------------------------------------------ estimate provenance
 def test_metric_record_is_estimate_flag() -> None:
-    from openharness.impact.models import MetricRecord
+    from impact_vision.impact.models import MetricRecord
 
     base = dict(metric_id="OI4112", value=100, unit="tCO2e", period="FY2025",
                 source="model", owner="analyst", quality_score=50)
@@ -119,11 +119,11 @@ def test_metric_record_is_estimate_flag() -> None:
 
 
 def test_estimate_disclosure_label_and_flags() -> None:
-    from openharness.impact.metric_records import (
+    from impact_vision.impact.metric_records import (
         estimate_disclosure_label,
         flag_undisclosed_estimates,
     )
-    from openharness.impact.models import MetricRecord
+    from impact_vision.impact.models import MetricRecord
 
     base = dict(metric_id="OI4112", value=100, unit="tCO2e", period="FY2025",
                 source="model", owner="analyst", quality_score=50)
@@ -142,7 +142,7 @@ def test_estimate_disclosure_label_and_flags() -> None:
 
 
 def test_evidence_chain_metric_link_carries_estimate_badge() -> None:
-    from openharness.impact.evidence_chain_renderer import MetricLink
+    from impact_vision.impact.evidence_chain_renderer import MetricLink
 
     link = MetricLink(metric_id="OI4112", is_estimate=True, estimate_note="ESTIMATE — proxy")
     payload = link.model_dump()
@@ -152,7 +152,7 @@ def test_evidence_chain_metric_link_carries_estimate_badge() -> None:
 
 # ------------------------------------------------------- EDCI-first scaffold
 def test_edci_core_iris_metric_ids() -> None:
-    from openharness.impact.frameworks.edci import edci_core_iris_metric_ids
+    from impact_vision.impact.frameworks.edci import edci_core_iris_metric_ids
 
     ids = edci_core_iris_metric_ids()
     assert ids, "core EDCI metrics should cross-reference IRIS+ IDs"
@@ -161,8 +161,8 @@ def test_edci_core_iris_metric_ids() -> None:
 
 
 def test_edci_core_data_request_pack() -> None:
-    from openharness.impact.engagements.data_room import build_data_request_pack
-    from openharness.impact.frameworks.edci import EDCI_METRICS
+    from impact_vision.impact.engagements.data_room import build_data_request_pack
+    from impact_vision.impact.frameworks.edci import EDCI_METRICS
 
     pack = build_data_request_pack(engagement_id="eng-1", bundle_id="edci_core")
     assert len(pack.fields) == len(EDCI_METRICS)
@@ -176,11 +176,11 @@ def test_edci_core_data_request_pack() -> None:
 
 
 def test_investee_questionnaire_edci_template() -> None:
-    from openharness.impact.investee_collection import default_metric_ids_for_sector
+    from impact_vision.impact.investee_collection import default_metric_ids_for_sector
 
     ids = default_metric_ids_for_sector("edci")
     assert ids
-    from openharness.impact.frameworks.edci import edci_core_iris_metric_ids
+    from impact_vision.impact.frameworks.edci import edci_core_iris_metric_ids
 
     assert ids == edci_core_iris_metric_ids()
     # Sector templates unchanged.
@@ -189,7 +189,7 @@ def test_investee_questionnaire_edci_template() -> None:
 
 # ------------------------------------------------------------- watch-list
 def test_regulatory_watchlist_sorting_and_status() -> None:
-    from openharness.impact.regulatory_calendar import regulatory_watchlist
+    from impact_vision.impact.regulatory_calendar import regulatory_watchlist
 
     items = regulatory_watchlist(today=date(2026, 7, 3))
     assert items
@@ -206,7 +206,7 @@ def test_regulatory_watchlist_sorting_and_status() -> None:
 
 
 def test_regulatory_watchlist_jurisdiction_filter() -> None:
-    from openharness.impact.regulatory_calendar import regulatory_watchlist
+    from impact_vision.impact.regulatory_calendar import regulatory_watchlist
 
     us_items = regulatory_watchlist(today=date(2026, 7, 3), jurisdiction="us")
     assert us_items
@@ -214,7 +214,7 @@ def test_regulatory_watchlist_jurisdiction_filter() -> None:
 
 
 def test_regulatory_calendar_tool_watchlist_action() -> None:
-    from openharness.tools.impact.regulatory_calendar_tool import RegulatoryCalendarTool
+    from impact_vision.tools.impact.regulatory_calendar_tool import RegulatoryCalendarTool
 
     tool = RegulatoryCalendarTool()
     res = asyncio.run(tool.execute({"action": "watchlist"}, _ctx()))

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from openharness.platforms import detect_platform, get_platform_capabilities
+from impact_vision.platforms import detect_platform, get_platform_capabilities
 
 
 def test_detect_platform_recognizes_wsl():

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from openharness.engine.messages import ConversationMessage, ImageBlock, TextBlock
-from openharness.api.client import AnthropicApiClient, OAUTH_BETA_HEADER
+from impact_vision.engine.messages import ConversationMessage, ImageBlock, TextBlock
+from impact_vision.api.client import AnthropicApiClient, OAUTH_BETA_HEADER
 
 
 def test_anthropic_client_adds_oauth_beta_header(monkeypatch):
@@ -11,7 +11,7 @@ def test_anthropic_client_adds_oauth_beta_header(monkeypatch):
         def __init__(self, **kwargs):
             captured.update(kwargs)
 
-    monkeypatch.setattr("openharness.api.client.AsyncAnthropic", _FakeAsyncAnthropic)
+    monkeypatch.setattr("impact_vision.api.client.AsyncAnthropic", _FakeAsyncAnthropic)
 
     AnthropicApiClient(auth_token="oauth-token")
 
@@ -26,7 +26,7 @@ def test_anthropic_client_uses_api_key_without_oauth_beta(monkeypatch):
         def __init__(self, **kwargs):
             captured.update(kwargs)
 
-    monkeypatch.setattr("openharness.api.client.AsyncAnthropic", _FakeAsyncAnthropic)
+    monkeypatch.setattr("impact_vision.api.client.AsyncAnthropic", _FakeAsyncAnthropic)
 
     AnthropicApiClient(api_key="api-key")
 
@@ -41,21 +41,21 @@ def test_anthropic_client_adds_claude_oauth_identity_headers(monkeypatch):
         def __init__(self, **kwargs):
             captured.update(kwargs)
 
-    monkeypatch.setattr("openharness.api.client.AsyncAnthropic", _FakeAsyncAnthropic)
+    monkeypatch.setattr("impact_vision.api.client.AsyncAnthropic", _FakeAsyncAnthropic)
     monkeypatch.setattr(
-        "openharness.auth.external.get_claude_code_version",
+        "impact_vision.auth.external.get_claude_code_version",
         lambda: "2.1.92",
     )
     monkeypatch.setattr(
-        "openharness.auth.external.get_claude_code_session_id",
+        "impact_vision.auth.external.get_claude_code_session_id",
         lambda: "session-123",
     )
     monkeypatch.setattr(
-        "openharness.api.client.get_claude_code_session_id",
+        "impact_vision.api.client.get_claude_code_session_id",
         lambda: "session-123",
     )
     monkeypatch.setattr(
-        "openharness.api.client.claude_attribution_header",
+        "impact_vision.api.client.claude_attribution_header",
         lambda: "x-anthropic-billing-header: cc_version=2.1.92; cc_entrypoint=cli;",
     )
 
@@ -141,17 +141,17 @@ def test_anthropic_client_refreshes_claude_token_on_request(monkeypatch):
             self.beta = _FakeBeta()
             self.messages = _FakeMessages()
 
-    monkeypatch.setattr("openharness.api.client.AsyncAnthropic", _FakeAsyncAnthropic)
+    monkeypatch.setattr("impact_vision.api.client.AsyncAnthropic", _FakeAsyncAnthropic)
     monkeypatch.setattr(
-        "openharness.auth.external.get_claude_code_session_id",
+        "impact_vision.auth.external.get_claude_code_session_id",
         lambda: "session-123",
     )
     monkeypatch.setattr(
-        "openharness.api.client.get_claude_code_session_id",
+        "impact_vision.api.client.get_claude_code_session_id",
         lambda: "session-123",
     )
     monkeypatch.setattr(
-        "openharness.api.client.claude_attribution_header",
+        "impact_vision.api.client.claude_attribution_header",
         lambda: "x-anthropic-billing-header: cc_version=2.1.92; cc_entrypoint=cli;",
     )
 
@@ -164,7 +164,7 @@ def test_anthropic_client_refreshes_claude_token_on_request(monkeypatch):
     )
     current_token["value"] = "refreshed-token"
 
-    from openharness.api.client import ApiMessageRequest
+    from impact_vision.api.client import ApiMessageRequest
 
     async def _run():
         events = []

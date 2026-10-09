@@ -13,7 +13,7 @@ CORE_IDS = {
 
 ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "data" / "processed" / "iris_catalog_5.3c.json"
-DST = ROOT / "src" / "openharness" / "impact" / "core_metrics.json"
+DST = ROOT / "src" / "impact_vision" / "impact" / "core_metrics.json"
 
 data = json.loads(SRC.read_text(encoding="utf-8"))
 core = [m for m in data if m["id"] in CORE_IDS]

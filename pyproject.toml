@@ -20,7 +20,7 @@ dependencies = [
     "pydantic>=2.0.0",
     "httpx>=0.27.0",
     "websockets>=12.0",
-    "mcp>=1.0.0,<2",  # FastMCP 1.x. openharness.mcp.highlevel is MCPServer-ready; client transports still v1.
+    "mcp>=1.0.0,<2",  # FastMCP 1.x. impact_vision.mcp.highlevel is MCPServer-ready; client transports still v1.
     "pyperclip>=1.9.0",
     "pyyaml>=6.0",
     "questionary>=2.0.1",
@@ -69,10 +69,10 @@ impact-vision = "impact_vision.cli:app"
 iv = "impact_vision.cli:app"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/openharness", "src/impact_vision"]
+packages = ["src/impact_vision", "src/openharness"]
 # W5.5: HKUDS-era sub-packages with no runtime importers stay out of the wheel
 # (kept in the source tree for the tests / ohmo gateway that still use them).
-exclude = ["src/openharness/channels", "src/openharness/vim"]
+exclude = ["src/impact_vision/channels", "src/impact_vision/vim"]
 
 [tool.hatch.build]
 exclude = [
@@ -90,10 +90,10 @@ exclude = [
 ]
 
 [tool.hatch.build.targets.wheel.force-include]
-"frontend/terminal/package.json" = "openharness/_frontend/package.json"
-"frontend/terminal/tsconfig.json" = "openharness/_frontend/tsconfig.json"
-"frontend/terminal/src" = "openharness/_frontend/src"
-"data" = "openharness/_data"
+"frontend/terminal/package.json" = "impact_vision/_frontend/package.json"
+"frontend/terminal/tsconfig.json" = "impact_vision/_frontend/tsconfig.json"
+"frontend/terminal/src" = "impact_vision/_frontend/src"
+"data" = "impact_vision/_data"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

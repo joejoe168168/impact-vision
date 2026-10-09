@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import pytest
 
-from openharness.impact.evidence_graph import EvidenceLink
-from openharness.impact.models import BeneficiaryFeedback, ImpactClaim
-from openharness.impact.stakeholder_voice import (
+from impact_vision.impact.evidence_graph import EvidenceLink
+from impact_vision.impact.models import BeneficiaryFeedback, ImpactClaim
+from impact_vision.impact.stakeholder_voice import (
     ConsentRecord,
     build_lean_data_survey,
     filter_active_responses,

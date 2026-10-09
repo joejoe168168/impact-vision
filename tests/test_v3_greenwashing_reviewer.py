@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from openharness.impact.greenwashing_reviewer import review_company_claims
-from openharness.impact.models import Company, ImpactClaim
+from impact_vision.impact.greenwashing_reviewer import review_company_claims
+from impact_vision.impact.models import Company, ImpactClaim
 
 
 def _company() -> Company:

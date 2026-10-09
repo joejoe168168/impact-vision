@@ -2,12 +2,12 @@
 
 import pytest
 
-from openharness.impact.database import MetricStore, get_metric_store
-from openharness.impact.five_dimensions import assess_five_dimensions
-from openharness.impact.gap_analysis import analyze_gaps
-from openharness.impact.models import Company
-from openharness.impact.sdg_mapper import map_sdg_alignment
-from openharness.impact.sdg_taxonomy import get_all_targets, get_sdg_goal, get_sdg_goals
+from impact_vision.impact.database import MetricStore, get_metric_store
+from impact_vision.impact.five_dimensions import assess_five_dimensions
+from impact_vision.impact.gap_analysis import analyze_gaps
+from impact_vision.impact.models import Company
+from impact_vision.impact.sdg_mapper import map_sdg_alignment
+from impact_vision.impact.sdg_taxonomy import get_all_targets, get_sdg_goal, get_sdg_goals
 
 
 @pytest.fixture
@@ -118,14 +118,14 @@ class TestGapAnalysis:
 
 class TestDDChecklist:
     def test_load_checklist(self) -> None:
-        from openharness.impact.dd_checklist import load_checklist
+        from impact_vision.impact.dd_checklist import load_checklist
         questions = load_checklist()
         assert len(questions) >= 40
         assert all(q.id for q in questions)
         assert all(q.question for q in questions)
 
     def test_categories(self) -> None:
-        from openharness.impact.dd_checklist import load_checklist
+        from impact_vision.impact.dd_checklist import load_checklist
         questions = load_checklist()
         cats = {q.category for q in questions}
         assert "impact_thesis" in cats
@@ -133,7 +133,7 @@ class TestDDChecklist:
         assert "who_stakeholders" in cats
 
     def test_analyze_coverage(self) -> None:
-        from openharness.impact.dd_checklist import analyze_document_coverage
+        from impact_vision.impact.dd_checklist import analyze_document_coverage
         text = (
             "Our theory of change links financial inclusion to poverty reduction. "
             "We serve 45,000 underserved clients, primarily women in rural areas. "
@@ -145,7 +145,7 @@ class TestDDChecklist:
         assert result.coverage_pct > 0
 
     def test_select_questions(self) -> None:
-        from openharness.impact.dd_checklist import select_questions_for_document
+        from impact_vision.impact.dd_checklist import select_questions_for_document
         text = "A fintech startup providing mobile banking to rural communities."
         suggested = select_questions_for_document(text, max_questions=10)
         assert len(suggested) > 0
@@ -154,18 +154,18 @@ class TestDDChecklist:
 
 class TestFrameworks:
     def test_sasb_match(self) -> None:
-        from openharness.impact.frameworks.sasb import match_sasb_industry
+        from impact_vision.impact.frameworks.sasb import match_sasb_industry
         matches = match_sasb_industry(sector="Financial Services", description="Digital microfinance platform")
         assert len(matches) > 0
         assert matches[0][1] > 0
 
     def test_gri_match(self) -> None:
-        from openharness.impact.frameworks.gri import match_gri_topics
+        from impact_vision.impact.frameworks.gri import match_gri_topics
         matches = match_gri_topics(description="Manufacturing company with high energy consumption and emissions")
         assert len(matches) > 0
 
     def test_tcfd_assess(self) -> None:
-        from openharness.impact.frameworks.tcfd import assess_tcfd_alignment
+        from impact_vision.impact.frameworks.tcfd import assess_tcfd_alignment
         result = assess_tcfd_alignment(
             company_description="We track Scope 1 and Scope 2 emissions and have set science-based targets",
             reported_data={"OI4112": "80", "OI1479": "120"},
@@ -174,7 +174,7 @@ class TestFrameworks:
         assert result["addressed_disclosures"] > 0
 
     def test_sfdr_assess(self) -> None:
-        from openharness.impact.frameworks.sfdr_pai import assess_sfdr_compliance
+        from impact_vision.impact.frameworks.sfdr_pai import assess_sfdr_compliance
         result = assess_sfdr_compliance(
             reported_data={"OI4112": "80", "OI1479": "120", "OI1582": "0.95"},
             company_description="We report GHG emissions and gender pay gap data",
@@ -183,7 +183,7 @@ class TestFrameworks:
         assert result["addressed"] > 0
 
     def test_edci_assess(self) -> None:
-        from openharness.impact.frameworks.edci import assess_edci_coverage
+        from impact_vision.impact.frameworks.edci import assess_edci_coverage
         result = assess_edci_coverage(
             reported_data={"OI4112": "80", "OI1075": "40%"},
             company_description="We track employee turnover, female leadership, and renewable energy use",
@@ -192,7 +192,7 @@ class TestFrameworks:
         assert result["addressed"] > 0
 
     def test_unpri_assess(self) -> None:
-        from openharness.impact.frameworks.unpri import assess_unpri_alignment
+        from impact_vision.impact.frameworks.unpri import assess_unpri_alignment
         result = assess_unpri_alignment(
             fund_description="We integrate ESG analysis into investment decisions and report to LPs",
         )
@@ -200,7 +200,7 @@ class TestFrameworks:
         assert len(result["principles"]) == 6
 
     def test_toc_rs_group(self) -> None:
-        from openharness.impact.frameworks.theory_of_change import assess_toc_alignment, get_rs_group_principles
+        from impact_vision.impact.frameworks.theory_of_change import assess_toc_alignment, get_rs_group_principles
         principles = get_rs_group_principles()
         assert len(principles) == 8
         result = assess_toc_alignment(
@@ -210,7 +210,7 @@ class TestFrameworks:
         assert result["total_principles"] == 8
 
     def test_toc_giin_checklist(self) -> None:
-        from openharness.impact.frameworks.theory_of_change import assess_toc_completeness
+        from impact_vision.impact.frameworks.theory_of_change import assess_toc_completeness
         result = assess_toc_completeness(
             document_text="The problem we address is financial exclusion. Our stakeholders are "
                          "smallholder farmers. We provide microloans as our intervention. "
@@ -221,13 +221,13 @@ class TestFrameworks:
         assert result["addressed"] > 0
 
     def test_issb_s1_standards(self) -> None:
-        from openharness.impact.frameworks.issb_ifrs_s1 import get_ifrs_s1_framework
+        from impact_vision.impact.frameworks.issb_ifrs_s1 import get_ifrs_s1_framework
         framework = get_ifrs_s1_framework()
         assert len(framework.pillars) > 0
         assert any("governance" in p.name.lower() for p in framework.pillars)
 
     def test_issb_s2_assess(self) -> None:
-        from openharness.impact.frameworks.issb_ifrs_s2 import assess_ifrs_s2_readiness
+        from impact_vision.impact.frameworks.issb_ifrs_s2 import assess_ifrs_s2_readiness
         result = assess_ifrs_s2_readiness(
             description="We track Scope 1 emissions and have climate targets",
             reported_metrics={"OI4112": "100"},
@@ -237,7 +237,7 @@ class TestFrameworks:
         assert result["assessment_basis"] == "screening_readiness_not_compliance_opinion"
 
     def test_esrs_standards(self) -> None:
-        from openharness.impact.frameworks.esrs import get_esrs_standards
+        from impact_vision.impact.frameworks.esrs import get_esrs_standards
         standards = get_esrs_standards()
         assert len(standards) == 12
         assert standards[0].code == "ESRS 1"
@@ -247,7 +247,7 @@ class TestFrameworks:
         assert any("Workforce" in n for n in names)
 
     def test_esrs_double_materiality(self) -> None:
-        from openharness.impact.frameworks.esrs import assess_double_materiality
+        from impact_vision.impact.frameworks.esrs import assess_double_materiality
         result = assess_double_materiality(
             "Solar energy company reducing carbon emissions",
             sector="Energy",
@@ -258,54 +258,54 @@ class TestFrameworks:
         assert result["requires_stakeholder_validation"] is True
 
     def test_esrs_data_points(self) -> None:
-        from openharness.impact.frameworks.esrs import get_total_data_points
+        from impact_vision.impact.frameworks.esrs import get_total_data_points
         dp = get_total_data_points()
         assert dp >= 80
 
 
 class TestCrossReference:
     def test_lookup_by_iris(self) -> None:
-        from openharness.impact.frameworks.cross_reference import lookup_by_iris
+        from impact_vision.impact.frameworks.cross_reference import lookup_by_iris
         results = lookup_by_iris("OI4112")
         assert len(results) > 0
         assert results[0].concept == "GHG Emissions - Scope 1 (Direct)"
 
     def test_lookup_by_gri(self) -> None:
-        from openharness.impact.frameworks.cross_reference import lookup_by_gri
+        from impact_vision.impact.frameworks.cross_reference import lookup_by_gri
         results = lookup_by_gri("305-1")
         assert len(results) > 0
 
     def test_lookup_by_edci(self) -> None:
-        from openharness.impact.frameworks.cross_reference import lookup_by_edci
+        from impact_vision.impact.frameworks.cross_reference import lookup_by_edci
         results = lookup_by_edci("EDCI-E1")
         assert len(results) > 0
 
     def test_lookup_by_sfdr(self) -> None:
-        from openharness.impact.frameworks.cross_reference import lookup_by_sfdr
+        from impact_vision.impact.frameworks.cross_reference import lookup_by_sfdr
         results = lookup_by_sfdr(1)
         assert len(results) > 0
 
     def test_lookup_by_issb_and_esrs(self) -> None:
-        from openharness.impact.frameworks.cross_reference import lookup_by_esrs, lookup_by_issb
+        from impact_vision.impact.frameworks.cross_reference import lookup_by_esrs, lookup_by_issb
 
         assert lookup_by_issb("S2-MT-1")
         assert lookup_by_esrs("E1-6")
 
     def test_search_cross_references(self) -> None:
-        from openharness.impact.frameworks.cross_reference import search_cross_references
+        from impact_vision.impact.frameworks.cross_reference import search_cross_references
         results = search_cross_references("gender")
         assert len(results) > 0
         assert results[0].mapping_confidence in {"direct", "partial", "proxy", "conceptual"}
 
     def test_total_mappings(self) -> None:
-        from openharness.impact.frameworks.cross_reference import get_all_cross_references
+        from impact_vision.impact.frameworks.cross_reference import get_all_cross_references
         refs = get_all_cross_references()
         assert len(refs) >= 35
 
 
 class TestEvidenceLevels:
     def test_evidence_level_narrative(self) -> None:
-        from openharness.impact.dd_checklist import analyze_document_coverage
+        from impact_vision.impact.dd_checklist import analyze_document_coverage
         text = "Our mission is to improve lives. We aim to create social good."
         result = analyze_document_coverage(text)
         for match in result.addressed:
@@ -313,7 +313,7 @@ class TestEvidenceLevels:
             assert match.evidence_label != ""
 
     def test_evidence_level_outcome_data(self) -> None:
-        from openharness.impact.dd_checklist import analyze_document_coverage
+        from impact_vision.impact.dd_checklist import analyze_document_coverage
         text = (
             "We served 45,000 clients. Our pre-post survey data shows a 30% income increase. "
             "We tracked KPIs quarterly and measured outcomes against baseline. "
@@ -324,7 +324,7 @@ class TestEvidenceLevels:
         assert result.avg_evidence_level >= 2.0
 
     def test_evidence_level_definitions(self) -> None:
-        from openharness.impact.dd_checklist import EVIDENCE_LEVELS
+        from impact_vision.impact.dd_checklist import EVIDENCE_LEVELS
         assert len(EVIDENCE_LEVELS) == 5
         assert 1 in EVIDENCE_LEVELS
         assert 5 in EVIDENCE_LEVELS
@@ -332,7 +332,7 @@ class TestEvidenceLevels:
 
 class TestSectorDDQuestions:
     def test_sector_questions_loaded(self) -> None:
-        from openharness.impact.dd_checklist import load_checklist
+        from impact_vision.impact.dd_checklist import load_checklist
         questions = load_checklist()
         sector_cats = {q.category for q in questions if q.category.startswith("sector_")}
         assert "sector_fintech" in sector_cats
@@ -342,13 +342,13 @@ class TestSectorDDQuestions:
         assert "sector_education" in sector_cats
 
     def test_sector_questions_count(self) -> None:
-        from openharness.impact.dd_checklist import load_checklist
+        from impact_vision.impact.dd_checklist import load_checklist
         questions = load_checklist()
         sector_qs = [q for q in questions if q.category.startswith("sector_")]
         assert len(sector_qs) >= 25  # 5 original + 10 new sectors
 
     def test_sector_relevance_detection(self) -> None:
-        from openharness.impact.dd_checklist import select_questions_for_document
+        from impact_vision.impact.dd_checklist import select_questions_for_document
         text = "A fintech platform offering microfinance loans and mobile banking to rural communities."
         suggested = select_questions_for_document(text, max_questions=20)
         categories = {q.category for q in suggested}
@@ -357,20 +357,20 @@ class TestSectorDDQuestions:
 
 class TestBenchmarks:
     def test_get_benchmark(self) -> None:
-        from openharness.impact.benchmarks import get_benchmark
+        from impact_vision.impact.benchmarks import get_benchmark
         bm = get_benchmark("Financial Services")
         assert bm is not None
         assert bm.five_d_overall > 0
         assert len(bm.sdg_primary) > 0
 
     def test_get_benchmark_fuzzy(self) -> None:
-        from openharness.impact.benchmarks import get_benchmark
+        from impact_vision.impact.benchmarks import get_benchmark
         bm = get_benchmark("healthcare")
         assert bm is not None
         assert bm.sector == "Healthcare"
 
     def test_compare_to_benchmark(self) -> None:
-        from openharness.impact.benchmarks import compare_to_benchmark
+        from impact_vision.impact.benchmarks import compare_to_benchmark
         result = compare_to_benchmark(
             "Financial Services",
             {"what": 3.5, "who": 3.0, "how_much": 2.5, "contribution": 2.0, "risk": 3.0},
@@ -381,6 +381,6 @@ class TestBenchmarks:
         assert "overall" in result
 
     def test_no_benchmark(self) -> None:
-        from openharness.impact.benchmarks import compare_to_benchmark
+        from impact_vision.impact.benchmarks import compare_to_benchmark
         result = compare_to_benchmark("Unknown Sector", {}, 0, 0)
         assert result["benchmark_available"] is False

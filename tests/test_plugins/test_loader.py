@@ -5,10 +5,10 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from openharness.config.settings import Settings
-from openharness.hooks.loader import load_hook_registry
-from openharness.plugins import load_plugins
-from openharness.skills import load_skill_registry
+from impact_vision.config.settings import Settings
+from impact_vision.hooks.loader import load_hook_registry
+from impact_vision.plugins import load_plugins
+from impact_vision.skills import load_skill_registry
 
 
 def _write_plugin(root: Path) -> None:

@@ -134,7 +134,7 @@ the agent. Extras add the other surfaces: `[web]` (browser chat + REST API),
 then run `playwright install chromium`), `[tui]` and `[all]`. If
 `impact-vision` isn't found, see
 [install troubleshooting](docs/install-troubleshooting.md) or use
-`python -m openharness`.
+`python -m impact_vision`.
 
 ### 2. Try it without an API key
 
@@ -464,7 +464,7 @@ impact-vision cron     list | add | remove | run         # Cron scheduler for ba
 
 ```
 impact-vision/
-├── src/openharness/
+├── src/impact_vision/
 │   ├── impact/                        # Impact measurement engine
 │   │   │
 │   │   │   # --- Core engine ---
@@ -690,7 +690,7 @@ tool's description and the counts quoted in these docs, is in
 For a curated visual workflow, run:
 
 ```bash
-streamlit run src/openharness/dashboard/app.py
+streamlit run src/impact_vision/dashboard/app.py
 ```
 
 The six tabs cover company assessment, IRIS+, DD, framework scans, the ESG
@@ -796,10 +796,10 @@ integrations:
 
 ```bash
 # Start the API server
-uvicorn openharness.api_gateway.router:app --reload
+uvicorn impact_vision.api_gateway.router:app --reload
 
 # Authenticated (set env var for production)
-IMPACT_VISION_API_KEY=your-secret-key uvicorn openharness.api_gateway.router:app
+IMPACT_VISION_API_KEY=your-secret-key uvicorn impact_vision.api_gateway.router:app
 ```
 
 Every impact tool is one generic route, generated from the tool registry:

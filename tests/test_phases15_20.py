@@ -19,7 +19,7 @@ import pytest
 class TestLLMExtractorOfflineFallback:
     def test_falls_back_to_regex_when_no_api_key(self, monkeypatch):
         monkeypatch.delenv("OPENAI_API_KEY", raising=False)
-        from openharness.impact.extractors.llm_extractor import LLMClaimExtractor
+        from impact_vision.impact.extractors.llm_extractor import LLMClaimExtractor
 
         ex = LLMClaimExtractor(api_key=None)
         claims = ex.extract(
@@ -29,7 +29,7 @@ class TestLLMExtractorOfflineFallback:
         assert all(c.raw_extractor_id.startswith("llm-fallback") for c in claims)
 
     def test_strip_think_blocks(self):
-        from openharness.impact.extractors.llm_extractor import _strip_think_blocks
+        from impact_vision.impact.extractors.llm_extractor import _strip_think_blocks
         raw = "<think>debating…</think>\n```json\n{\"claims\":[]}\n```"
         out = _strip_think_blocks(raw)
         assert "<think>" not in out
@@ -37,7 +37,7 @@ class TestLLMExtractorOfflineFallback:
         assert '"claims"' in out
 
     def test_safe_parse_json_recovers_from_noise(self):
-        from openharness.impact.extractors.llm_extractor import _safe_parse_json
+        from impact_vision.impact.extractors.llm_extractor import _safe_parse_json
         noisy = 'irrelevant preamble {"claims":[{"text":"x"}]} trailing text'
         parsed = _safe_parse_json(noisy)
         assert parsed and parsed["claims"][0]["text"] == "x"
@@ -45,8 +45,8 @@ class TestLLMExtractorOfflineFallback:
 
 class TestLLMVerifierOfflineFallback:
     def test_no_api_key_uses_fallback(self, monkeypatch):
-        from openharness.impact.extractors.base import ExtractedClaim
-        from openharness.impact.extractors.llm_verifier import LLMSourceVerifier
+        from impact_vision.impact.extractors.base import ExtractedClaim
+        from impact_vision.impact.extractors.llm_verifier import LLMSourceVerifier
 
         monkeypatch.delenv("OPENAI_API_KEY", raising=False)
         v = LLMSourceVerifier(api_key=None, known_sources=[])
@@ -60,19 +60,19 @@ class TestLLMVerifierOfflineFallback:
 
 class TestCreditRegistries:
     def test_demo_registry_has_four_records(self):
-        from openharness.impact.registries import DEMO_REGISTRY
+        from impact_vision.impact.registries import DEMO_REGISTRY
         assert len(DEMO_REGISTRY.records) == 4
         ids = {r.registry for r in DEMO_REGISTRY.records}
         assert {"Verra", "Gold Standard", "Puro.earth", "BioCredits"} <= ids
 
     def test_aliases_resolve(self):
-        from openharness.impact.registries import get_registry
+        from impact_vision.impact.registries import get_registry
         assert get_registry("vcs").id == "verra"
         assert get_registry("gs").id == "gold-standard"
         assert get_registry("puro").id == "puro.earth"
 
     def test_rollup_aggregates(self):
-        from openharness.impact.registries import DEMO_REGISTRY, rollup_credits
+        from impact_vision.impact.registries import DEMO_REGISTRY, rollup_credits
         r = rollup_credits(DEMO_REGISTRY.records)
         assert r.total_outstanding > 0
         assert r.total_retired >= 0
@@ -86,7 +86,7 @@ class TestCreditRegistries:
 
 class TestReturns:
     def test_moi_and_moic_basic(self):
-        from openharness.impact.returns import ImpactCashflow, compute_moi
+        from impact_vision.impact.returns import ImpactCashflow, compute_moi
         cfs = [
             ImpactCashflow(period=date(2024, 1, 1), capital_flow_usd=-1_000_000, impact_units=0),
             ImpactCashflow(period=date(2025, 1, 1), capital_flow_usd=0, impact_units=5000),
@@ -97,7 +97,7 @@ class TestReturns:
         assert moi.moi_impact == pytest.approx(7000 / 1_000_000, rel=1e-3)
 
     def test_irr_converges_and_lift_is_signed(self):
-        from openharness.impact.returns import ImpactCashflow, compute_irr
+        from impact_vision.impact.returns import ImpactCashflow, compute_irr
         cfs = [
             ImpactCashflow(period=date(2024, 1, 1), capital_flow_usd=-1_000_000),
             ImpactCashflow(period=date(2026, 1, 1), capital_flow_usd=1_210_000, impact_units=1000),
@@ -114,14 +114,14 @@ class TestReturns:
 
 class TestExternalBenchmarks:
     def test_quartile_assignment(self):
-        from openharness.impact.external_benchmarks import contextualise
+        from impact_vision.impact.external_benchmarks import contextualise
         ctx = contextualise("energy", "what", 4.0)
         assert ctx is not None
         assert ctx.quartile in {1, 2, 3, 4}
         assert ctx.narrative
 
     def test_generic_fallback_when_sector_missing(self):
-        from openharness.impact.external_benchmarks import contextualise
+        from impact_vision.impact.external_benchmarks import contextualise
         ctx = contextualise("made-up-sector", "how_much", 2.5)
         assert ctx is not None
         assert ctx.percentiles.sector.lower() == "generic"
@@ -129,7 +129,7 @@ class TestExternalBenchmarks:
 
 class TestBlendedFinance:
     def test_il_loan_step_schedule_monotonic(self):
-        from openharness.impact.blended_finance import design_il_loan
+        from impact_vision.impact.blended_finance import design_il_loan
         t = design_il_loan(
             borrower="Acme", principal_usd=5_000_000, base_rate_bps=600,
             tenor_months=60, kpi_id="IRIS+OI2764",
@@ -139,7 +139,7 @@ class TestBlendedFinance:
         assert bps == sorted(bps)
 
     def test_soc_max_payment_has_buffer(self):
-        from openharness.impact.blended_finance import design_soc
+        from impact_vision.impact.blended_finance import design_soc
         t = design_soc(
             project_name="X", outcome_payer="Gov", intermediary="Int",
             service_provider="SP", beneficiary_count_target=1000,
@@ -150,7 +150,7 @@ class TestBlendedFinance:
 
 class TestLPPortal:
     def test_capital_account_rollup(self):
-        from openharness.impact.lp_portal import LPPortal
+        from impact_vision.impact.lp_portal import LPPortal
         p = LPPortal(fund_name="Demo Fund")
         s = p.capital_account_statement(
             lp_identifier="LP-001",
@@ -161,7 +161,7 @@ class TestLPPortal:
         assert len(s.lines) == 4
 
     def test_audit_trail_verifies(self):
-        from openharness.impact.lp_portal import LPPortal
+        from impact_vision.impact.lp_portal import LPPortal
         p = LPPortal(fund_name="Demo Fund")
         a = p.audit_trail()
         assert a.chain_valid
@@ -169,8 +169,8 @@ class TestLPPortal:
 
 class TestMarketplace:
     def test_publish_search_and_compare(self):
-        from openharness.impact.fund_thesis import FundThesis
-        from openharness.impact.marketplace import ThesisMarketplace
+        from impact_vision.impact.fund_thesis import FundThesis
+        from impact_vision.impact.marketplace import ThesisMarketplace
 
         m = ThesisMarketplace()
         a = m.publish("GP A", FundThesis(name="A", strategy="climate",
@@ -191,7 +191,7 @@ class TestMarketplace:
 
 class TestAssurance:
     def test_pack_round_trip(self):
-        from openharness.impact.assurance import build_assurance_pack
+        from impact_vision.impact.assurance import build_assurance_pack
         pack = build_assurance_pack(
             fund_name="Demo", reporting_period="FY2025",
             assertion_text="We believe the following disclosures are fairly stated.",
@@ -206,7 +206,7 @@ class TestAssurance:
 
 class TestCSRDWizard:
     def test_above_threshold_is_material(self):
-        from openharness.impact.csrd_wizard import (
+        from impact_vision.impact.csrd_wizard import (
             MaterialityScore, assess_double_materiality,
         )
         scores = [
@@ -223,7 +223,7 @@ class TestCSRDWizard:
 
 class TestISSBPack:
     def test_structured_output(self):
-        from openharness.impact.issb_reporting import (
+        from impact_vision.impact.issb_reporting import (
             Governance, IFRSS1Pack, IFRSS2Pack, build_issb_pack,
         )
         s1 = IFRSS1Pack(entity="Co", reporting_period="2025",
@@ -236,7 +236,7 @@ class TestISSBPack:
 
 class TestAuditTrail:
     def test_chain_valid_after_events(self):
-        from openharness.impact.audit_trail import AuditTrail
+        from impact_vision.impact.audit_trail import AuditTrail
         t = AuditTrail(tenant_id="T", fund_id="F")
         t.record_event(event_type="score.recompute",
                        payload={"company": "Acme", "score": 3.4})
@@ -249,7 +249,7 @@ class TestAuditTrail:
 
 class TestSOC2Checklist:
     def test_default_checklist_non_empty(self):
-        from openharness.impact.soc2_checklist import (
+        from impact_vision.impact.soc2_checklist import (
             build_readiness_report, default_checklist,
         )
         items = default_checklist()
@@ -265,7 +265,7 @@ class TestSOC2Checklist:
 
 class TestCausal:
     def test_rct_shifts_prior(self):
-        from openharness.impact.causal import StudyResult, update_counterfactual_prior
+        from impact_vision.impact.causal import StudyResult, update_counterfactual_prior
         r = StudyResult(
             study_id="JPAL-001", design="RCT", outcome_metric="income_usd",
             treatment_effect=100.0, std_error=25.0,
@@ -277,7 +277,7 @@ class TestCausal:
 
 class TestBayes:
     def test_posterior_updates_and_ci(self):
-        from openharness.impact.bayes import default_prior, update
+        from impact_vision.impact.bayes import default_prior, update
         prior = default_prior(optimism=0.5, strength=4.0)
         post = update(prior, corroborating=3, contradicting=1)
         assert post.mean == pytest.approx(5 / 8)
@@ -287,7 +287,7 @@ class TestBayes:
 
 class TestMetaAnalysis:
     def test_deviation_flag_fires_above_two_sigma(self):
-        from openharness.impact.meta_analysis import MetaStudy, deviation_flag, pool_effects
+        from impact_vision.impact.meta_analysis import MetaStudy, deviation_flag, pool_effects
         studies = [
             MetaStudy(study_id="s1", outcome_metric="y",
                       effect_size=0.20, std_error=0.05),
@@ -303,7 +303,7 @@ class TestMetaAnalysis:
 
 class TestSpillover:
     def test_leakage_and_spillover_order(self):
-        from openharness.impact.spillover import SpilloverAssumption, adjust_node
+        from impact_vision.impact.spillover import SpilloverAssumption, adjust_node
         a = SpilloverAssumption(
             toc_node_id="n1", outcome_metric="ha restored",
             raw_value=100.0, leakage_rate=0.2, spillover_rate=0.5,
@@ -315,7 +315,7 @@ class TestSpillover:
 
 class TestSROI:
     def test_sroi_positive_ratio(self):
-        from openharness.impact.sroi import SROIOutcome, compute_sroi
+        from impact_vision.impact.sroi import SROIOutcome, compute_sroi
         r = compute_sroi(
             project_name="X",
             total_investment_usd=100_000,
@@ -338,7 +338,7 @@ class TestSROI:
 
 class TestSatellite:
     def test_deterministic_observation(self):
-        from openharness.impact.geospatial import AssetLocation, get_satellite_provider
+        from impact_vision.impact.geospatial import AssetLocation, get_satellite_provider
         p = get_satellite_provider()
         asset = AssetLocation(asset_id="FARM-01", latitude=3.15, longitude=101.7)
         a = p.observe(asset, "gfw-tree-cover-loss", date(2025, 1, 1))
@@ -349,7 +349,7 @@ class TestSatellite:
 
 class TestSurveys:
     def test_csv_loader_skips_blank_ids(self):
-        from openharness.impact.surveys import GenericCSVProvider, aggregate_numeric
+        from impact_vision.impact.surveys import GenericCSVProvider, aggregate_numeric
         blob = (
             "respondent_id,nps_score,grievance_reported\n"
             "R1,9,false\n"
@@ -365,8 +365,8 @@ class TestSurveys:
 
 class TestWorkerVoice:
     def test_who_lift_in_range(self):
-        from openharness.impact.surveys import GenericCSVProvider
-        from openharness.impact.worker_voice import summarise
+        from impact_vision.impact.surveys import GenericCSVProvider
+        from impact_vision.impact.worker_voice import summarise
         blob = (
             "respondent_id,nps_score,grievance_reported,anonymous_submission\n"
             "A,10,false,true\nB,9,false,true\nC,8,false,true\nD,6,true,true\n"
@@ -379,7 +379,7 @@ class TestWorkerVoice:
 
 class TestEcosystem:
     def test_unit_value_lookup_returns_sensible_usd(self):
-        from openharness.impact.ecosystem_services import (
+        from impact_vision.impact.ecosystem_services import (
             EcosystemAsset, get_ecosystem_provider,
         )
         v = get_ecosystem_provider().value(
@@ -396,14 +396,14 @@ class TestEcosystem:
 
 class TestI18NDashboard:
     def test_six_language_keys_present(self):
-        from openharness.impact.i18n import get_dashboard_strings, supported_locales
+        from impact_vision.impact.i18n import get_dashboard_strings, supported_locales
         for locale in supported_locales():
             s = get_dashboard_strings(locale)
             assert s, f"no strings for locale {locale}"
             assert "dashboard_title" in s
 
     def test_fallback_to_en(self):
-        from openharness.impact.i18n import get_dashboard_strings
+        from impact_vision.impact.i18n import get_dashboard_strings
         s = get_dashboard_strings("made-up")
         assert s.get("run_tool")
 
@@ -424,7 +424,7 @@ class TestRegionalThesisPacks:
 
 class TestRegulatoryPacks:
     def test_seven_jurisdictions_registered(self):
-        from openharness.impact.regulatory_packs import list_packs
+        from impact_vision.impact.regulatory_packs import list_packs
         packs = list_packs()
         assert len(packs) >= 7
         ids = {p.jurisdiction for p in packs}
@@ -432,19 +432,19 @@ class TestRegulatoryPacks:
 
     def test_unknown_raises(self):
         import pytest as _pt
-        from openharness.impact.regulatory_packs import get_pack
+        from impact_vision.impact.regulatory_packs import get_pack
         with _pt.raises(KeyError):
             get_pack("MARS")
 
 
 class TestFX:
     def test_round_trip_is_idempotent(self):
-        from openharness.impact.fx import convert
+        from impact_vision.impact.fx import convert
         v = convert(100.0, from_ccy="USD", to_ccy="USD")
         assert v == 100.0
 
     def test_myr_to_usd(self):
-        from openharness.impact.fx import convert
+        from impact_vision.impact.fx import convert
         v = convert(4650.0, from_ccy="MYR", to_ccy="USD")
         assert v is not None
         # 4650 MYR / 4.65 USD-per-MYR ≈ 1000 USD
@@ -457,21 +457,21 @@ class TestFX:
 
 class TestBranding:
     def test_default_colors_when_no_yaml(self):
-        from openharness.impact.branding import branding_css, load_branding
+        from impact_vision.impact.branding import branding_css, load_branding
         b = load_branding(thesis_path="/does/not/exist.yaml")
         css = branding_css(b)
         assert "--primary:" in css and "#0d47a1" in css
 
     def test_bad_color_ignored(self):
-        from openharness.impact.branding import load_branding
+        from impact_vision.impact.branding import load_branding
         b = load_branding(raw={"primary_color": "javascript:alert(1)"})
         assert b.primary_color == "#0d47a1"  # fell back
 
 
 class TestQuestionnaireV2:
     def test_missing_answer_triggers_followup(self):
-        from openharness.impact.dd_checklist import DDQuestion
-        from openharness.impact.questionnaire_branching import (
+        from impact_vision.impact.dd_checklist import DDQuestion
+        from impact_vision.impact.questionnaire_branching import (
             BranchRule, active_follow_up_ids, expand_active,
         )
         catalogue = [
@@ -492,7 +492,7 @@ class TestQuestionnaireV2:
 
 class TestSSEStreaming:
     def test_sse_format(self):
-        from openharness.web.streaming import sse_format
+        from impact_vision.web.streaming import sse_format
         out = sse_format("progress", {"pct": 50})
         assert out.startswith("event: progress\n")
         assert "data: " in out
@@ -503,7 +503,7 @@ class TestSSEStreaming:
         from fastapi import FastAPI
         from fastapi.testclient import TestClient
 
-        from openharness.web.streaming import build_sse_router
+        from impact_vision.web.streaming import build_sse_router
         app = FastAPI()
         app.include_router(build_sse_router())
         with TestClient(app) as c:
@@ -521,7 +521,7 @@ class TestSSEStreaming:
 
 class TestSDKFacade:
     def test_new_methods_are_exposed(self):
-        from openharness.impact.sdk import ImpactVision
+        from impact_vision.impact.sdk import ImpactVision
         expected = [
             "compute_moi", "compute_irr", "rollup_credits",
             "benchmark_peer_context", "design_il_loan", "design_soc",

@@ -8,13 +8,13 @@ import json
 
 import pytest
 
-from openharness.api.client import ApiMessageCompleteEvent
-from openharness.api.usage import UsageSnapshot
-from openharness.engine.stream_events import CompactProgressEvent
-from openharness.engine.messages import ConversationMessage, TextBlock
-from openharness.ui.backend_host import BackendHostConfig, ReactBackendHost, run_backend_host
-from openharness.ui.protocol import BackendEvent
-from openharness.ui.runtime import build_runtime, close_runtime, start_runtime
+from impact_vision.api.client import ApiMessageCompleteEvent
+from impact_vision.api.usage import UsageSnapshot
+from impact_vision.engine.stream_events import CompactProgressEvent
+from impact_vision.engine.messages import ConversationMessage, TextBlock
+from impact_vision.ui.backend_host import BackendHostConfig, ReactBackendHost, run_backend_host
+from impact_vision.ui.protocol import BackendEvent
+from impact_vision.ui.runtime import build_runtime, close_runtime, start_runtime
 
 
 class StaticApiClient:
@@ -63,7 +63,7 @@ async def test_run_backend_host_accepts_permission_mode(monkeypatch):
         captured["permission_mode"] = self._config.permission_mode
         return 0
 
-    monkeypatch.setattr("openharness.ui.backend_host.ReactBackendHost.run", _fake_run)
+    monkeypatch.setattr("impact_vision.ui.backend_host.ReactBackendHost.run", _fake_run)
 
     result = await run_backend_host(
         api_client=StaticApiClient("unused"),
@@ -95,7 +95,7 @@ async def test_read_requests_resolves_permission_response_without_queueing(monke
     class _FakeStdin:
         buffer = _FakeBuffer()
 
-    monkeypatch.setattr("openharness.ui.backend_host.sys.stdin", _FakeStdin())
+    monkeypatch.setattr("impact_vision.ui.backend_host.sys.stdin", _FakeStdin())
 
     await host._read_requests()
 
@@ -198,7 +198,7 @@ async def test_backend_host_emits_compact_progress_event(tmp_path, monkeypatch):
         )
         return True
 
-    monkeypatch.setattr("openharness.ui.backend_host.handle_line", _fake_handle_line)
+    monkeypatch.setattr("impact_vision.ui.backend_host.handle_line", _fake_handle_line)
     host._emit = _emit  # type: ignore[method-assign]
     await start_runtime(host._bundle)
     try:
@@ -336,7 +336,7 @@ async def test_build_runtime_leaves_interactive_sessions_unbounded_by_default(tm
 async def test_backend_host_emits_utf8_protocol_bytes(monkeypatch):
     host = ReactBackendHost(BackendHostConfig())
     fake_stdout = FakeBinaryStdout()
-    monkeypatch.setattr("openharness.ui.backend_host.sys.stdout", fake_stdout)
+    monkeypatch.setattr("impact_vision.ui.backend_host.sys.stdout", fake_stdout)
 
     await host._emit(BackendEvent(type="assistant_delta", message="你好😊"))
 

@@ -19,7 +19,7 @@ def _isolated_assessment_db(tmp_path, monkeypatch):
     this, saving an assessment in a test would write to the developer's real
     database.
     """
-    from openharness.impact import storage
+    from impact_vision.impact import storage
 
     monkeypatch.setenv("IMPACT_VISION_DB", str(tmp_path / "impact_vision.db"))
     monkeypatch.setattr(storage, "_global_store", None)

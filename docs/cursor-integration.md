@@ -39,7 +39,7 @@ Then configure your client to connect via `http://localhost:8765/sse`.
 ### Option 4: Direct Python Module
 
 ```bash
-python -m openharness.impact.mcp_server
+python -m impact_vision.impact.mcp_server
 ```
 
 ## Prerequisites

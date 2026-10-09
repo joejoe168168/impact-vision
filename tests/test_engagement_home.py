@@ -11,7 +11,7 @@ TODAY = date(2026, 10, 6)
 
 
 def _workspace(store=None):
-    from openharness.impact.engagements.workspace import EngagementWorkspace
+    from impact_vision.impact.engagements.workspace import EngagementWorkspace
 
     ws = EngagementWorkspace(store=store)
     eng = ws.create_engagement(name="Fund I DD", client_name="Acme Capital", bundle_id="dd_light",
@@ -24,7 +24,7 @@ def _workspace(store=None):
 
 
 def test_view_counts_overdue_and_soon_items() -> None:
-    from openharness.impact.engagement_home import build_engagement_home, render_engagement_home
+    from impact_vision.impact.engagement_home import build_engagement_home, render_engagement_home
 
     ws, eng = _workspace()
     view = build_engagement_home(ws.list_engagements(), today=TODAY)
@@ -44,14 +44,14 @@ def test_web_engagement_routes_read_the_persisted_workspace(monkeypatch) -> None
     pytest.importorskip("fastapi")
     from fastapi.testclient import TestClient
 
-    from openharness.impact.state_store import MemoryStateStore
-    from openharness.tools.impact import engagement_workspace_tool as tool
-    from openharness.web.app import app
+    from impact_vision.impact.state_store import MemoryStateStore
+    from impact_vision.tools.impact import engagement_workspace_tool as tool
+    from impact_vision.web.app import app
 
     store = MemoryStateStore()
     ws, _ = _workspace(store)
     monkeypatch.setattr(tool, "_DEFAULT_WORKSPACE", None)
-    monkeypatch.setattr("openharness.impact.state_store._STORE", store)
+    monkeypatch.setattr("impact_vision.impact.state_store._STORE", store)
     client = TestClient(app)
     listed = client.get("/api/v1/chat/engagements").json()["engagements"]
     assert {e["name"] for e in listed} == {"Fund I DD", "Old project"}  # restored from the store

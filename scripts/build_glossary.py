@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from openharness.impact.glossary import render_glossary_markdown
+from impact_vision.impact.glossary import render_glossary_markdown
 
 OUT = Path(__file__).resolve().parents[1] / "docs" / "glossary.md"
 

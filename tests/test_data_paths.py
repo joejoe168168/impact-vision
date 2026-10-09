@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from openharness.impact import _paths
-from openharness.impact.storage import _default_db_path
+from impact_vision.impact import _paths
+from impact_vision.impact.storage import _default_db_path
 
 
 def test_data_path_resolves_repo_data():

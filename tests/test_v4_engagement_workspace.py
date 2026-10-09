@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from openharness.impact.audit_trail import AuditTrail
-from openharness.impact.engagements import (
+from impact_vision.impact.audit_trail import AuditTrail
+from impact_vision.impact.engagements import (
     CLIENT_TEMPLATE_LIBRARY,
     ENGAGEMENT_BUNDLES,
     EngagementWorkspace,
@@ -18,8 +18,8 @@ from openharness.impact.engagements import (
     get_client_template,
     list_bundles,
 )
-from openharness.tools import create_default_tool_registry
-from openharness.tools.base import ToolExecutionContext
+from impact_vision.tools import create_default_tool_registry
+from impact_vision.tools.base import ToolExecutionContext
 
 
 # --------------------------------------------------------------------- bundles

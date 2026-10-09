@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import pytest
 
-from openharness.impact.data_quality import (
+from impact_vision.impact.data_quality import (
     apply_quality_assessment,
     assess_metric_record_quality,
 )
-from openharness.impact.models import MetricRecord
+from impact_vision.impact.models import MetricRecord
 
 
 def _record(**overrides: object) -> MetricRecord:

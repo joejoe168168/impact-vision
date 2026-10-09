@@ -6,8 +6,8 @@ import re
 
 import pytest
 
-from openharness.impact.database import get_metric_store
-from openharness.impact.engagements.data_room import _DEFAULT_FIELDS_BY_BUNDLE
+from impact_vision.impact.database import get_metric_store
+from impact_vision.impact.engagements.data_room import _DEFAULT_FIELDS_BY_BUNDLE
 
 # Generic qualifiers ("Direct", "Total", ...) don't identify a concept, so a
 # label must share a substantive word with the catalogue name.
@@ -37,8 +37,8 @@ def test_default_field_metric_exists_and_label_matches_catalogue(metric_id: str,
 
 def test_illustrative_benchmark_ids_exist_and_match_their_data() -> None:
     """Sample observations / website teaser must use real IDs for what their numbers measure."""
-    from openharness.impact.engagements.website import build_benchmark_teaser
-    from openharness.impact.knowledge import load_knowledge
+    from impact_vision.impact.engagements.website import build_benchmark_teaser
+    from impact_vision.impact.knowledge import load_knowledge
 
     store = get_metric_store()
     rows = [(r["metric_id"], r["sector"]) for r in load_knowledge("benchmarks.yaml")["sample_observations"]["rows"]]

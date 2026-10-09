@@ -6,8 +6,8 @@ import json
 
 
 def test_production_chain_passes_the_blocking_gate() -> None:
-    from openharness.impact._paths import data_path
-    from openharness.impact.extraction_eval import GATE, production_extract, run_eval
+    from impact_vision.impact._paths import data_path
+    from impact_vision.impact.extraction_eval import GATE, production_extract, run_eval
 
     result = run_eval(lambda t: production_extract(t, extractor_id="regex"),
                       str(data_path("eval", "extraction_gold.jsonl")))
@@ -17,7 +17,7 @@ def test_production_chain_passes_the_blocking_gate() -> None:
 
 
 def test_gold_set_covers_the_hard_cases() -> None:
-    from openharness.impact._paths import data_path
+    from impact_vision.impact._paths import data_path
 
     rows = [json.loads(line) for line in data_path("eval", "extraction_gold.jsonl").read_text().splitlines() if line]
     assert len(rows) >= 18
@@ -27,7 +27,7 @@ def test_gold_set_covers_the_hard_cases() -> None:
 
 
 def test_mapper_disambiguates_scope_1_and_sales() -> None:
-    from openharness.impact.claim_metric_mapper import map_claim_metrics
+    from impact_vision.impact.claim_metric_mapper import map_claim_metrics
 
     ids = lambda s: [m.metric_id for m in map_claim_metrics(s)]  # noqa: E731
     assert ids("The company reports 1,200 tCO2e Scope 1 emissions.") == ["OI4112"]
@@ -38,7 +38,7 @@ def test_mapper_disambiguates_scope_1_and_sales() -> None:
 
 
 def test_extractor_auto_uses_llm_only_with_a_key(monkeypatch) -> None:
-    from openharness.impact.extractors import resolve_extractor_id
+    from impact_vision.impact.extractors import resolve_extractor_id
 
     monkeypatch.delenv("IMPACT_VISION_EXTRACTOR", raising=False)
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
@@ -51,14 +51,14 @@ def test_extractor_auto_uses_llm_only_with_a_key(monkeypatch) -> None:
 
 
 def test_llm_fallback_claims_are_not_disclosed_as_ai() -> None:
-    from openharness.impact.ai_provenance import ai_provenance_for_report
+    from impact_vision.impact.ai_provenance import ai_provenance_for_report
 
     prov = ai_provenance_for_report({"impact_claims": [{"text": "x", "extracted_by": "llm-fallback(no-api-key-or-empty)"}]})
     assert prov.extraction == "rules" and not prov.ai_generated
 
 
 def test_sdg_hints_accept_inflections_but_not_compounds() -> None:
-    from openharness.tools.impact.pitch_deck_analyze_tool import _detect_sdg_goals, _has_inflected
+    from impact_vision.tools.impact.pitch_deck_analyze_tool import _detect_sdg_goals, _has_inflected
 
     assert _has_inflected("annual emissions totalled", "emission")
     assert _has_inflected("we are recycling plastics", "recycl")

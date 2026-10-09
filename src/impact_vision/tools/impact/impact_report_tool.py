@@ -1,0 +1,4091 @@
+"""Tool: Generate impact assessment reports (HTML, CSV, JSON)."""
+
+from __future__ import annotations
+
+import html
+import json
+import re
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Literal
+
+from pydantic import BaseModel, Field
+
+from impact_vision.impact.database import ensure_catalog_loaded
+from impact_vision.impact.five_dimensions import assess_five_dimensions
+from impact_vision.impact.gap_analysis import analyze_gaps
+from impact_vision.impact.greenwashing import assess_greenwashing
+from impact_vision.impact.models import BeneficiaryFeedback, Company, ImpactClaim, MetricValue
+from impact_vision.impact.sdg_mapper import generate_sdg_gap_recommendations, map_sdg_alignment
+from impact_vision.impact.toolbox import build_esg_workflow
+from impact_vision.tools.base import BaseTool, ToolExecutionContext, ToolResult
+from impact_vision.tools.impact.common import (
+    ASSESSMENT_ID_DESCRIPTION,
+    hydrate_from_assessment,
+    infer_themes,
+    normalize_impact_targets,
+    normalize_metric_map,
+    normalize_sdg_goals,
+    normalize_sector,
+)
+
+
+def _esc(value: object | None) -> str:
+    """HTML-escape ``value`` for safe interpolation into report HTML."""
+    if value is None:
+        return ""
+    return html.escape(str(value), quote=True)
+
+
+_SECTOR_OPPORTUNITIES: dict[str, list[str]] = {
+    "agriculture": [
+        "Food security: improving access to nutritious food for underserved populations",
+        "Poverty reduction: increasing income for smallholder farmers",
+        "Sustainable supply chains: promoting responsible sourcing and production",
+        "Climate adaptation: developing climate-resilient farming practices",
+        "Rural employment: creating jobs in farming communities",
+    ],
+    "livestock": [
+        "Food security: providing protein and nutrition to local markets",
+        "Poverty reduction: supporting livelihoods of small-scale farmers",
+        "Economic development: strengthening local agricultural value chains",
+        "Sustainable practices: implementing responsible animal husbandry",
+        "Rural employment: creating jobs in farming and processing",
+    ],
+    "healthcare": [
+        "Health outcomes: improving access to quality healthcare services",
+        "Health equity: reducing disparities in healthcare access",
+        "Disease prevention: supporting public health initiatives",
+        "Workforce development: training healthcare professionals",
+    ],
+    "energy": [
+        "Clean energy access: providing affordable clean energy to underserved areas",
+        "Climate mitigation: reducing greenhouse gas emissions",
+        "Energy independence: reducing reliance on fossil fuels",
+        "Job creation: creating green energy employment opportunities",
+    ],
+    "education": [
+        "Educational access: reaching underserved or marginalized populations",
+        "Skills development: building employable skills for the workforce",
+        "Digital inclusion: bridging the digital divide",
+        "Gender equity: improving educational access for girls and women",
+    ],
+    "fintech": [
+        "Financial inclusion: providing access to financial services for the unbanked",
+        "Economic empowerment: enabling savings, credit, and insurance",
+        "Gender equity: improving financial access for women",
+        "Efficiency: reducing transaction costs for low-income users",
+    ],
+    "water": [
+        "Clean water access: providing safe drinking water to underserved communities",
+        "Sanitation: improving hygiene and reducing waterborne disease",
+        "Water efficiency: promoting sustainable water management practices",
+    ],
+    "technology": [
+        "Digital inclusion: bridging the digital divide for underserved populations",
+        "Efficiency gains: improving productivity and reducing waste",
+        "Innovation: enabling new solutions to social and environmental challenges",
+    ],
+}
+
+_SECTOR_RISKS: dict[str, list[str]] = {
+    "agriculture": [
+        "Environmental degradation: soil depletion, water pollution from fertilizers/pesticides",
+        "Climate vulnerability: sensitivity to extreme weather events and climate change",
+        "Labor conditions: risk of exploitative labor practices",
+        "Land use change: deforestation or biodiversity loss from land conversion",
+        "Market volatility: commodity price fluctuations affecting farmer incomes",
+    ],
+    "livestock": [
+        "Environmental pollution: waste management, methane emissions, water contamination",
+        "Animal welfare: risk of poor animal husbandry practices",
+        "Disease risk: zoonotic disease transmission and antibiotic resistance",
+        "Carbon footprint: significant greenhouse gas emissions from livestock",
+        "Resource intensity: high water and feed consumption per unit of protein",
+        "Community impact: odor, waste runoff affecting neighboring communities",
+    ],
+    "healthcare": [
+        "Access inequality: risk of services remaining unaffordable for the poorest",
+        "Quality variance: inconsistent quality of care across locations",
+        "Data privacy: risks around patient health data security",
+    ],
+    "energy": [
+        "Environmental impact: land use, waste from equipment, resource extraction",
+        "Community displacement: risk of displacing communities for energy projects",
+        "Technology risk: rapidly changing technology making investments obsolete",
+    ],
+    "education": [
+        "Quality risk: providing access without ensuring quality outcomes",
+        "Digital divide: technology-dependent models excluding the most vulnerable",
+        "Sustainability: dependence on grants or subsidies for viability",
+    ],
+    "fintech": [
+        "Over-indebtedness: risk of predatory lending to vulnerable populations",
+        "Data privacy: risks around financial data security and misuse",
+        "Digital exclusion: services inaccessible to those without smartphones/internet",
+    ],
+    "water": [
+        "Sustainability: risk of depleting water sources without replenishment",
+        "Infrastructure maintenance: long-term maintenance of water systems",
+        "Affordability: pricing that excludes the poorest communities",
+    ],
+    "technology": [
+        "Digital divide: reinforcing existing inequalities through technology access",
+        "Privacy and surveillance: risks around data collection and misuse",
+        "Job displacement: automation reducing employment opportunities",
+    ],
+}
+
+
+# Description keywords that pull in a template set beyond the canonical sector
+# (word-boundary matched, so "energy" no longer fires on "synergy").
+_TEMPLATE_KEYWORDS: dict[str, tuple[str, ...]] = {
+    "livestock": ("livestock", "pig", "pigs", "swine", "piggery", "piggeries", "hog", "hogs",
+                  "poultry", "cattle", "dairy", "aquaculture"),
+    "energy": ("solar", "renewable energy", "mini-grid", "off-grid", "wind power"),
+    "water": ("drinking water", "sanitation", "wastewater", "water treatment"),
+}
+
+# Sentences that disclose a concrete risk the company itself is managing.
+_DISCLOSED_RISK_RE = re.compile(
+    r"\b(?:risks?|biosecurity|outbreaks?|disease|pollution|run-?off|spills?|odou?r|"
+    r"complaints?|injur(?:y|ies)|fatalit(?:y|ies)|contaminat\w*|leakage|default rates?|"
+    r"over-?indebtedness|displacement|resettlement)\b",
+    re.IGNORECASE,
+)
+
+
+def _disclosed_risks(text: str, limit: int = 5) -> list[str]:
+    """Pull risk disclosures out of the source document, verbatim (trimmed)."""
+    from impact_vision.impact.extractors.regex_extractor import RegexExtractor
+
+    out: list[str] = []
+    for sentence in RegexExtractor._sentences(text or ""):
+        if _DISCLOSED_RISK_RE.search(sentence) and len(sentence) > 30:
+            out.append(sentence if len(sentence) <= 600 else sentence[:597].rstrip() + "\u2026")
+        if len(out) >= limit:
+            break
+    return out
+
+
+def _infer_opportunities_and_risks(company: Company, text: str = "") -> dict[str, list[str]]:
+    """Infer impact opportunities and risks.
+
+    Risks the company itself discloses in ``text`` (pitch deck / memo) come
+    first; sector templates follow as prompts for what else to diligence.
+    Templates are chosen by the canonical sector, plus word-boundary keyword
+    matches in the description and ``text``.
+    """
+    from impact_vision.tools.impact.common import normalize_sector
+
+    haystack = f"{company.description} {' '.join(company.impact_themes)} {text}".lower()
+    keys: list[str] = []
+    sector = normalize_sector(company.sector or "")
+    if sector:
+        keys.append(sector)
+    for key, words in _TEMPLATE_KEYWORDS.items():
+        if key not in keys and any(re.search(rf"\b{re.escape(w)}\b", haystack) for w in words):
+            keys.append(key)
+    if not keys:
+        keys = [k for k in _SECTOR_RISKS if re.search(rf"\b{re.escape(k)}\b", haystack)]
+
+    opportunities: list[str] = []
+    risks: list[str] = [f"Disclosed: {r}" for r in _disclosed_risks(text or company.description)]
+    for key in keys:
+        opportunities.extend(_SECTOR_OPPORTUNITIES.get(key, []))
+        risks.extend(_SECTOR_RISKS.get(key, []))
+
+    if not opportunities:
+        opportunities = ["Further analysis needed to identify specific impact opportunities"]
+    if not risks:
+        risks = ["Further analysis needed to identify specific impact risks"]
+
+    return {
+        "opportunities": list(dict.fromkeys(opportunities)),
+        "risks": list(dict.fromkeys(risks)),
+    }
+
+
+class ImpactReportInput(BaseModel):
+    company_name: str = Field(default="", description="Name of the company (optional with assessment_id)")
+    assessment_id: str = Field(default="", description=ASSESSMENT_ID_DESCRIPTION)
+    company_description: str = Field(default="")
+    sector: str = Field(default="")
+    geography: str = Field(default="", description="Country or region")
+    impact_themes: list[str] = Field(default_factory=list)
+    reported_metrics: dict[str, str] = Field(default_factory=dict)
+    sdg_claims: list[int] = Field(default_factory=list)
+    impact_targets: dict[str, str] | list[dict] = Field(
+        default_factory=dict,
+        description="Impact targets for target_progress reports. Accepts {metric_id: description} or structured target dicts.",
+    )
+    metric_history: list[dict[str, object]] = Field(
+        default_factory=list,
+        description="Historical metric values for trend and target-progress context.",
+    )
+    impact_claims: list[dict[str, object]] = Field(
+        default_factory=list,
+        description="Impact claims extracted from pitch decks or memos for report evidence sections.",
+    )
+    beneficiary_feedback: dict[str, object] | None = Field(
+        default=None,
+        description="Structured beneficiary / Lean Data feedback for the voice section.",
+    )
+    output_format: Literal[
+        "html", "csv", "json", "text", "xlsx", "pdf", "ixbrl", "xbrl-json", "cids"
+    ] = Field(
+        default="text",
+        description="Output format for the report ('xlsx' for Excel, 'pdf' for print-ready)",
+    )
+    slim: bool = Field(
+        default=False,
+        description=(
+            "JSON only: drop evidence chains, IRIS+ definitions and duplicated keys "
+            "(~6x smaller). Every JSON export carries schema_version."
+        ),
+    )
+    metric_records: list[dict] = Field(
+        default_factory=list, description="Canonical MetricRecord rows for machine-readable exports"
+    )
+    portfolio_companies: list[dict] = Field(default_factory=list)
+    records_by_company: dict[str, list[dict]] = Field(default_factory=dict)
+    output_path: str = Field(
+        default="",
+        description="File path to save the report (optional; if empty, returns as text)",
+    )
+    include_gap_analysis: bool = Field(default=True)
+    include_sdg_mapping: bool = Field(default=True)
+    include_five_dimensions: bool = Field(default=True)
+    report_type: Literal["full", "target_progress", "lp_ready", "portfolio"] = Field(
+        default="full",
+        description=(
+            "'full': Complete assessment report. "
+            "'target_progress': Focused report on target progress and trajectory projections. "
+            "'lp_ready': LP-formatted individual company report with executive summary."
+        ),
+    )
+    narrative_mode: Literal["data", "narrative_prompt"] = Field(
+        default="data",
+        description=(
+            "'data': Standard data-driven output. "
+            "'narrative_prompt': Append LLM writing prompts for executive summary, "
+            "key findings, and recommendations so the agent can generate polished narratives."
+        ),
+    )
+    narrative_section: Literal[
+        "report_summary",
+        "executive_summary",
+        "key_findings",
+        "impact_narrative",
+        "case_study",
+        "full_narrative",
+    ] = Field(
+        default="report_summary",
+        description=(
+            "Which narrative prompt to append when narrative_mode='narrative_prompt'. "
+            "'report_summary' (default) appends the report-level summary/findings/recommendations "
+            "prompts; other values generate an audience-tuned section prompt "
+            "(executive_summary, key_findings, impact_narrative, case_study, full_narrative)."
+        ),
+    )
+    narrative_audience: Literal["lp", "board", "public", "internal"] = Field(
+        default="lp",
+        description="Target audience for section-specific narrative prompts.",
+    )
+    narrative_word_limit: int = Field(
+        default=300,
+        description="Approximate word limit for section-specific narrative prompts.",
+    )
+    draft_review: bool = Field(
+        default=False,
+        description="If True, output is wrapped with DRAFT markers for human review.",
+    )
+    compare_assessment_id: str = Field(
+        default="",
+        description="Optional previous assessment ID for side-by-side comparison.",
+    )
+    theme: Literal["", "dark"] = Field(
+        default="",
+        description="HTML report theme. 'dark' renders the dark palette (accessible-by-default).",
+    )
+    branding: dict = Field(
+        default_factory=dict,
+        description=(
+            "Optional white-label branding for HTML output: {fund_name, primary_color, "
+            "accent_color, logo_url, footer_text}. Colors must be hex."
+        ),
+    )
+    lang: Literal["en", "zh-HK", "zh-CN"] = Field(
+        default="en",
+        description="Language of the decision-style HTML/PDF report (Traditional or Simplified Chinese).",
+    )
+    ai_usage: dict = Field(
+        default_factory=dict,
+        description=(
+            "Declare where an AI model was used, for the EU AI Act Art 50 disclosure on every "
+            "output: {extraction, tagging, drafting: 'llm'|'rules'|'human'|'none', model, "
+            "human_reviewed}. Set extraction='llm' when you (the agent) extracted the claims or "
+            "metrics passed here, and drafting='llm' when narrative text is yours."
+        ),
+    )
+    style: Literal["decision", "classic"] = Field(
+        default="decision",
+        description=(
+            "HTML layout. 'decision' (default): verdict-first report with offline charts, "
+            "print-ready, light/dark. 'classic': the pre-v7 interactive report (deprecated)."
+        ),
+    )
+    audience: Literal["full", "lp", "ic", "regulator", "public"] = Field(
+        default="full",
+        description=(
+            "Audience lens for the HTML report. 'full' shows everything; "
+            "'lp'/'ic'/'regulator'/'public' pre-select an audience filter that the "
+            "reader can still toggle in the browser."
+        ),
+    )
+
+
+class ImpactReportTool(BaseTool):
+    name = "impact_report"
+    description = (
+        "Generate a comprehensive impact assessment report for a company. "
+        "Includes 5-Dimension scoring, SDG alignment mapping, and gap analysis. "
+        "Supports HTML, CSV, JSON, and text output formats. "
+        "Optionally saves to a file. "
+        "Set narrative_mode='narrative_prompt' (with narrative_section / narrative_audience / "
+        "narrative_word_limit) to append LLM-ready narrative writing prompts: executive summary, "
+        "key findings, impact narrative, or case study."
+    )
+    input_model = ImpactReportInput
+
+    def is_read_only(self, arguments: BaseModel) -> bool:
+        args = (
+            arguments
+            if isinstance(arguments, ImpactReportInput)
+            else ImpactReportInput.model_validate(arguments)
+        )
+        return not args.output_path
+
+    async def execute(self, arguments: BaseModel, context: ToolExecutionContext) -> ToolResult:
+        args = (
+            arguments
+            if isinstance(arguments, ImpactReportInput)
+            else ImpactReportInput.model_validate(arguments)
+        )
+        args, hydrate_error = hydrate_from_assessment(args)
+        if hydrate_error:
+            return ToolResult(output=hydrate_error, is_error=True)
+
+        try:
+            store = ensure_catalog_loaded()
+        except FileNotFoundError as e:
+            return ToolResult(output=str(e), is_error=True)
+
+        reported_metrics, metric_warnings = normalize_metric_map(args.reported_metrics)
+        sdg_claims, sdg_warnings = normalize_sdg_goals(args.sdg_claims)
+        impact_targets, target_warnings = normalize_impact_targets(args.impact_targets)
+        input_warnings = list(metric_warnings) + list(sdg_warnings) + list(target_warnings)
+        metric_history = []
+        for entry in args.metric_history:
+            try:
+                metric_history.append(MetricValue.model_validate(entry))
+            except Exception as exc:  # noqa: BLE001 — keep report generation going
+                input_warnings.append(f"Ignored metric_history row: {exc}")
+        impact_claims = []
+        for claim in args.impact_claims:
+            try:
+                impact_claims.append(ImpactClaim.model_validate(claim))
+            except Exception as exc:  # noqa: BLE001 — keep report generation going
+                input_warnings.append(f"Ignored impact_claim row: {exc}")
+        beneficiary_feedback = None
+        if args.beneficiary_feedback:
+            try:
+                beneficiary_feedback = BeneficiaryFeedback.model_validate(args.beneficiary_feedback)
+            except Exception as exc:  # noqa: BLE001 — keep report generation going
+                input_warnings.append(f"Ignored beneficiary_feedback: {exc}")
+
+        company = Company(
+            name=args.company_name,
+            description=args.company_description,
+            sector=normalize_sector(args.sector),
+            geography=args.geography,
+            impact_themes=infer_themes(
+                f"{args.company_description} {args.sector}", args.impact_themes
+            ),
+            reported_metrics=reported_metrics,
+            sdg_claims=sdg_claims,
+            impact_targets=impact_targets,
+            metric_history=metric_history,
+            beneficiary_feedback=beneficiary_feedback,
+        )
+
+        from impact_vision.impact.methodology import methodology_stamp
+
+        report_data: dict = {
+            "company": company.model_dump(),
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "catalog_version": "IRIS+ 5.3c",
+            "theme": args.theme,
+            "audience": (
+                "lp" if args.report_type == "lp_ready" and args.audience == "full" else args.audience
+            ),
+            "report_type": args.report_type,
+            "ai_usage": dict(args.ai_usage),
+            "methodology": methodology_stamp(),
+        }
+        if impact_claims:
+            report_data["impact_claims"] = [claim.model_dump() for claim in impact_claims]
+
+        if args.include_five_dimensions:
+            fd_result = assess_five_dimensions(company, store)
+            report_data["five_dimensions"] = fd_result.model_dump()
+
+        if args.include_sdg_mapping:
+            sdg_results = map_sdg_alignment(company, store)
+            sdg_recs = generate_sdg_gap_recommendations(sdg_results, company, store)
+            sdg_dicts = []
+            for a in sdg_results:
+                d = a.model_dump()
+                d["recommendations"] = sdg_recs.get(a.goal, [])
+                sdg_dicts.append(d)
+            report_data["sdg_alignments"] = sdg_dicts
+
+        if args.include_gap_analysis:
+            gap_result = analyze_gaps(company, store)
+            report_data["gap_analysis"] = gap_result
+
+        claim_text = " ".join(str(c.get("text", "")) for c in args.impact_claims if isinstance(c, dict))
+        report_data["impact_analysis"] = _infer_opportunities_and_risks(company, claim_text)
+        esg_workflow = build_esg_workflow(
+            company_name=company.name,
+            company_description=company.description,
+            sector=company.sector,
+            geography=company.geography,
+            jurisdiction=company.geography,
+            impact_themes=company.impact_themes,
+            reported_metrics=reported_metrics,
+            document_text=company.description,
+            country=company.geography,
+            limit=6,
+        )
+        report_data["esg_toolbox"] = esg_workflow.model_dump(mode="json")
+        gw = assess_greenwashing(company)
+        gw_dump = gw.model_dump()
+        # Build sub_scores dict for report rendering compatibility
+        gw_dump["sub_scores"] = {
+            "claim_metric_gap": gw.claim_metric_gap,
+            "adverse_omission": gw.adverse_omission,
+            "specificity": gw.specificity,
+            "selectivity": gw.selectivity,
+            "verification": gw.verification,
+        }
+        report_data["greenwashing"] = gw_dump
+
+        if company.impact_targets:
+            from impact_vision.impact.trend_analysis import assess_target_progress
+
+            report_data["target_tracking"] = assess_target_progress(company)
+
+        if company.beneficiary_feedback:
+            report_data["beneficiary_feedback"] = company.beneficiary_feedback.model_dump()
+        if input_warnings:
+            report_data["input_warnings"] = input_warnings
+
+        _attach_tracked_metrics_to_five_dimensions(report_data)
+
+        from impact_vision.impact.benchmarks import compare_to_benchmark
+
+        if "five_dimensions" in report_data and company.sector:
+            fd = report_data["five_dimensions"]
+            five_d_scores = {
+                "what": fd["what"]["score"],
+                "who": fd["who"]["score"],
+                "how_much": fd["how_much"]["score"],
+                "contribution": fd["contribution"]["score"],
+                "risk": fd["risk"]["score"],
+            }
+            coverage = report_data.get("gap_analysis", {}).get("coverage_percentage", 0)
+            bm = compare_to_benchmark(company.sector, five_d_scores, fd["overall_score"], coverage)
+            if bm.get("benchmark_available"):
+                report_data["benchmark_comparison"] = bm
+
+        if args.compare_assessment_id:
+            report_data["comparison"] = _load_comparison_data(
+                args.compare_assessment_id, report_data
+            )
+
+        if args.report_type == "portfolio":
+            from impact_vision.impact.models import MetricRecord
+            from impact_vision.impact.portfolio_rollup import build_portfolio_report
+            from impact_vision.impact.report_templates.portfolio_report import render_portfolio_report
+
+            portfolio_payload = build_portfolio_report(
+                [Company.model_validate(row) for row in args.portfolio_companies],
+                {
+                    name: [MetricRecord.model_validate(row) for row in rows]
+                    for name, rows in args.records_by_company.items()
+                },
+            )
+            report_data = portfolio_payload
+            output = (
+                render_portfolio_report(portfolio_payload)
+                if args.output_format in {"html", "ixbrl"}
+                else json.dumps(portfolio_payload, indent=2, default=str)
+            )
+        elif args.output_format == "xlsx":
+            return _to_xlsx(report_data, args.output_path, context)
+        elif args.output_format == "json":
+            from impact_vision.impact.exports import to_json
+
+            output = to_json(report_data, slim=args.slim)
+        elif args.output_format == "csv":
+            output = _to_csv(report_data)
+        elif args.output_format in ("html", "pdf") and args.style == "decision":
+            from impact_vision.impact.report_templates.decision_report import (
+                render_decision_report,
+            )
+
+            output = render_decision_report(
+                report_data, branding=args.branding or None, lang=args.lang
+            )
+        elif args.output_format in ("html", "pdf"):
+            output = _to_html(report_data)
+            if args.branding:
+                try:
+                    from impact_vision.impact.branding import inject_branding_css, load_branding
+
+                    output = inject_branding_css(output, load_branding(raw=args.branding))
+                except Exception:  # noqa: BLE001 — branding must never break the report
+                    pass
+        elif args.output_format in {"ixbrl", "xbrl-json"}:
+            from impact_vision.impact.concordance import load_concordance
+            from impact_vision.impact.models import MetricRecord
+            from impact_vision.impact.xbrl_export import render_ixbrl, render_xbrl_json, tag_records
+
+            records = [MetricRecord.model_validate(row) for row in args.metric_records]
+            tags, untaggable = tag_records(records, "esrs_set1", load_concordance())
+            report_data["xbrl_untaggable"] = untaggable
+            output = (
+                render_ixbrl(
+                    _to_html(report_data), tags, company.name, company.reporting_period or "FY2026"
+                )
+                if args.output_format == "ixbrl"
+                else json.dumps(
+                    render_xbrl_json(tags, company.name, company.reporting_period or "FY2026"),
+                    indent=2,
+                )
+            )
+        elif args.output_format == "cids":
+            from impact_vision.impact.cids_export import export_cids
+            from impact_vision.impact.models import ImpactTarget, MetricRecord
+
+            records = [MetricRecord.model_validate(row) for row in args.metric_records]
+            output = json.dumps(
+                export_cids(
+                    company,
+                    None,
+                    records,
+                    [
+                        ImpactTarget.model_validate(row)
+                        for row in normalize_impact_targets(args.impact_targets)
+                    ],
+                ),
+                indent=2,
+                default=str,
+            )
+        elif args.report_type == "target_progress":
+            output = _to_target_progress_text(report_data)
+        elif args.report_type == "lp_ready":
+            output = _to_lp_ready_text(report_data)
+        else:
+            output = _to_text(report_data)
+
+        if args.narrative_mode == "narrative_prompt":
+            if args.narrative_section != "report_summary":
+                from impact_vision.tools.impact.narrative_tool import NarrativeInput, NarrativeTool
+
+                narrative_result = await NarrativeTool().execute(
+                    NarrativeInput(
+                        action=args.narrative_section,
+                        company_name=args.company_name,
+                        company_description=args.company_description,
+                        sector=args.sector,
+                        geography=args.geography,
+                        impact_themes=args.impact_themes,
+                        reported_metrics=args.reported_metrics,
+                        sdg_claims=args.sdg_claims,
+                        audience=args.narrative_audience,
+                        word_limit=args.narrative_word_limit,
+                    ),
+                    context,
+                )
+                output += "\n\n" + narrative_result.output
+            else:
+                output += "\n\n" + _generate_report_narrative_prompt(report_data)
+
+        if args.draft_review:
+            output = _wrap_report_draft(output, company.name)
+
+        if args.output_format == "pdf":
+            return _to_pdf(output, args.output_path, context)
+
+        if args.output_path:
+            path = Path(args.output_path)
+            if not path.is_absolute():
+                path = context.cwd / path
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(output, encoding="utf-8")
+            summary = _to_text(report_data) if args.output_format != "text" else output[:1500]
+            return ToolResult(
+                output=f"Report saved to: {path}\nFormat: {args.output_format}\n\n{summary}",
+                metadata={
+                    "output_path": str(path),
+                    "format": args.output_format,
+                    "input_warnings": input_warnings,
+                },
+            )
+
+        if args.output_format == "html" and len(output) > 2000:
+            summary = _to_text(report_data)
+            hint = (
+                "Tip: pass output_path='report.html' to save the full report; "
+                "the HTML payload is also available under metadata['html']."
+            )
+            return ToolResult(
+                output=(
+                    f"HTML report generated ({len(output)} chars). "
+                    f"{hint}\n\nText summary:\n\n{summary}"
+                ),
+                metadata={
+                    "format": args.output_format,
+                    "html_length": len(output),
+                    # Keep the full HTML available to programmatic callers so
+                    # the rendered output isn't silently discarded when no
+                    # output_path is provided.
+                    "html": output,
+                    "input_warnings": input_warnings,
+                },
+            )
+
+        return ToolResult(
+            output=output,
+            metadata={
+                "format": args.output_format,
+                "report_data": report_data,
+                "input_warnings": input_warnings,
+            },
+        )
+
+
+def _attach_tracked_metrics_to_five_dimensions(data: dict) -> None:
+    """Add render-friendly tracked metric IDs to 5D dimension payloads.
+
+    The scoring engine returns counts and gaps, while the report UI can render a
+    clearer "tracked metrics" overlay when each dimension carries explicit IDs.
+    This is derived from the gap-analysis metric metadata and does not affect
+    scoring.
+    """
+    fd = data.get("five_dimensions")
+    gap = data.get("gap_analysis")
+    if not isinstance(fd, dict) or not isinstance(gap, dict):
+        return
+
+    group_to_key = {
+        "what": "what",
+        "who": "who",
+        "how much": "how_much",
+        "contribution": "contribution",
+        "risk": "risk",
+    }
+    tracked_by_dim: dict[str, list[str]] = {key: [] for key in group_to_key.values()}
+    for metric in gap.get("reported", []) + gap.get("extra_metrics_reported", []):
+        metric_id = str(metric.get("id", "")).strip()
+        if not metric_id:
+            continue
+        for group in metric.get("dimension_groups") or []:
+            dim_key = group_to_key.get(str(group).lower())
+            if dim_key and metric_id not in tracked_by_dim[dim_key]:
+                tracked_by_dim[dim_key].append(metric_id)
+
+    for dim_key, metric_ids in tracked_by_dim.items():
+        dim = fd.get(dim_key)
+        if isinstance(dim, dict):
+            existing = [str(item) for item in dim.get("metrics_tracked", [])]
+            dim["metrics_tracked"] = list(dict.fromkeys(existing + metric_ids))
+
+
+def _to_text(data: dict) -> str:
+    lines = [
+        "=" * 70,
+        f"IMPACT ASSESSMENT REPORT: {data['company']['name']}",
+        f"Generated: {data['generated_at']}",
+        f"Standard: {data['catalog_version']}",
+        "=" * 70,
+        "",
+    ]
+
+    if "five_dimensions" in data:
+        fd = data["five_dimensions"]
+        lines.append("5 DIMENSIONS OF IMPACT")
+        lines.append("-" * 40)
+        lines.append(f"Overall Grade: {fd['overall_grade']} ({fd['overall_score']}/5.0)")
+        for dim_name in ["what", "who", "how_much", "contribution", "risk"]:
+            dim = fd[dim_name]
+            lines.append(f"  {dim['dimension']}: {dim['score']}/5.0 | {dim['notes']}")
+        if fd.get("recommendations"):
+            lines.append("\nRecommendations:")
+            for r in fd["recommendations"]:
+                lines.append(f"  - {r}")
+        lines.append("")
+
+    if "sdg_alignments" in data:
+        lines.append("SDG ALIGNMENT")
+        lines.append("-" * 40)
+        for a in data["sdg_alignments"]:
+            if a["score"] > 0:
+                lines.append(
+                    f"  SDG {a['goal']} ({a['goal_name']}): {a['score']}/100 [{a['confidence']}]"
+                )
+        lines.append("")
+
+    if "gap_analysis" in data:
+        ga = data["gap_analysis"]
+        lines.append("GAP ANALYSIS")
+        lines.append("-" * 40)
+        lines.append(
+            f"  Coverage: {ga['coverage_percentage']}% ({ga['metrics_reported']}/{ga['core_metric_set_size']})"
+        )
+        if ga.get("missing"):
+            lines.append("  Missing:")
+            for m in ga["missing"][:10]:
+                lines.append(f"    - {m['id']}: {m['name']}")
+        lines.append("")
+
+    if "esg_toolbox" in data:
+        esg = data["esg_toolbox"]
+        recs = esg.get("recommended_tools", []) if isinstance(esg, dict) else []
+        lines.append("ESG TOOLBOX READINESS")
+        lines.append("-" * 40)
+        if recs:
+            for item in recs[:6]:
+                lines.append(
+                    f"  - {item.get('tool_id')}: {item.get('title')} "
+                    f"({item.get('readiness_score_pct', 0)}% readiness)"
+                )
+                if item.get("missing_inputs"):
+                    lines.append(
+                        f"    Missing inputs: {', '.join(item.get('missing_inputs', [])[:3])}"
+                    )
+        else:
+            lines.append(
+                "  No high-confidence ESG toolbox modules were recommended from current context."
+            )
+        next_questions = esg.get("next_questions", []) if isinstance(esg, dict) else []
+        if next_questions:
+            lines.append("  Minimum follow-up:")
+            for question in next_questions[:3]:
+                lines.append(f"    - {question}")
+        lines.append("")
+
+    if "impact_claims" in data:
+        claims = data["impact_claims"]
+        lines.append("IMPACT CLAIMS")
+        lines.append("-" * 40)
+        for claim in claims[:10]:
+            claim_text = str(claim.get("text", "")).strip()
+            category = str(claim.get("category", "intent")).upper()
+            confidence = float(claim.get("confidence", 0.0) or 0.0)
+            evidence = claim.get("evidence_strength", 1)
+            metrics = ", ".join(str(m) for m in claim.get("mapped_metrics", [])[:5])
+            lines.append(f"  - [{category}] {claim_text}")
+            lines.append(f"    Confidence: {confidence:.0%} | Evidence: NESTA {evidence}")
+            if metrics:
+                lines.append(f"    Mapped metrics: {metrics}")
+        if len(claims) > 10:
+            lines.append(f"  ... {len(claims) - 10} additional claims omitted")
+        lines.append("")
+
+    if "impact_analysis" in data:
+        ia = data["impact_analysis"]
+        lines.append("IMPACT OPPORTUNITIES")
+        lines.append("-" * 40)
+        for o in ia.get("opportunities", []):
+            lines.append(f"  + {o}")
+        lines.append("")
+        lines.append("IMPACT RISKS")
+        lines.append("-" * 40)
+        for r in ia.get("risks", []):
+            lines.append(f"  ! {r}")
+        lines.append("")
+
+    if "greenwashing" in data:
+        gw = data["greenwashing"]
+        lines.append("GREENWASHING / IMPACT-WASHING RISK")
+        lines.append("-" * 40)
+        lines.append(
+            f"  Risk Score: {gw.get('overall_score', 0)}/100 — {gw.get('classification', 'Unknown')}"
+        )
+        for sname, sval in gw.get("sub_scores", {}).items():
+            lines.append(f"    {sname.replace('_', ' ').title()}: {sval}/100")
+        for flag in gw.get("flags", []):
+            lines.append(f"  ! {flag}")
+        for rec in gw.get("recommendations", []):
+            lines.append(f"  > {rec}")
+        lines.append("")
+
+    if "benchmark_comparison" in data:
+        bm = data["benchmark_comparison"]
+        lines.append("SECTOR BENCHMARK COMPARISON")
+        lines.append("-" * 40)
+        lines.append(f"  Sector: {bm['sector']} ({bm['sample_note']})")
+        ov = bm["overall"]
+        arrow = "^" if ov["delta"] > 0 else ("v" if ov["delta"] < 0 else "=")
+        lines.append(
+            f"  Overall: {ov['actual']:.1f} vs {ov['benchmark']:.1f} benchmark ({arrow} {ov['delta']:+.1f})"
+        )
+        for dim, vals in bm["dimensions"].items():
+            arrow = "^" if vals["delta"] > 0 else ("v" if vals["delta"] < 0 else "=")
+            lines.append(
+                f"    {dim}: {vals['actual']:.1f} vs {vals['benchmark']:.1f} ({arrow} {vals['delta']:+.1f})"
+            )
+        cov = bm["coverage"]
+        lines.append(
+            f"  Coverage: {cov['actual']:.0f}% vs {cov['benchmark']:.0f}% benchmark ({cov['delta']:+.1f}%)"
+        )
+        lines.append("")
+
+    return "\n".join(lines)
+
+
+def _generate_report_narrative_prompt(data: dict) -> str:
+    """Generate structured LLM prompts for executive summary, findings, and recommendations."""
+    company = data.get("company", {})
+    fd = data.get("five_dimensions", {})
+    sdg = data.get("sdg_alignments", [])
+    gaps = data.get("gap_analysis", {})
+    gw = data.get("greenwashing", {})
+
+    sections = []
+
+    sections.append("=== NARRATIVE GENERATION PROMPTS ===\n")
+    sections.append("The following prompts provide structured context for the agent to generate")
+    sections.append(
+        "investor-quality narratives. Each section includes data points and writing instructions.\n"
+    )
+
+    # Executive Summary prompt
+    exec_data = [f"Company: {company.get('name', 'Unknown')} ({company.get('sector', 'N/A')})"]
+    if company.get("geography"):
+        exec_data.append(f"Geography: {company['geography']}")
+    if fd:
+        exec_data.append(
+            f"5D Score: {fd.get('overall_score', 'N/A')}/5 (Grade: {fd.get('overall_grade', 'N/A')})"
+        )
+    top_sdgs = sorted(sdg, key=lambda s: s.get("score", 0), reverse=True)[:3]
+    if top_sdgs:
+        sdg_str = ", ".join(f"SDG {s['goal']} ({s.get('score', 0):.0f}/100)" for s in top_sdgs)
+        exec_data.append(f"Top SDGs: {sdg_str}")
+    if gaps:
+        exec_data.append(f"Core Metric Coverage: {gaps.get('coverage_percentage', 0)}%")
+    if isinstance(gw, dict):
+        exec_data.append(
+            f"Greenwashing Risk: {gw.get('overall_score', 'N/A')}/100 ({gw.get('classification', 'N/A')})"
+        )
+
+    sections.append("--- EXECUTIVE SUMMARY ---")
+    sections.append("Data points:")
+    for d_item in exec_data:
+        sections.append(f"  - {d_item}")
+    sections.append(
+        "Instructions: Write a 200-word executive summary covering the company's impact profile,"
+    )
+    sections.append(
+        "key strengths, primary risks, and recommended next steps. Use formal investor language.\n"
+    )
+
+    # Key Findings prompt
+    findings_data = []
+    if fd:
+        dims = fd.get("dimension_averages", {}) if "dimension_averages" in fd else {}
+        if not dims:
+            for dim_name in ("what", "who", "how_much", "contribution", "risk"):
+                dim = fd.get(dim_name, {})
+                if isinstance(dim, dict) and "score" in dim:
+                    findings_data.append(
+                        f"{dim_name}: {dim['score']}/5 [{dim.get('provenance', 'N/A')}]"
+                    )
+    if gaps:
+        findings_data.append(
+            f"Metrics reported: {gaps.get('metrics_reported', 0)}/{gaps.get('metrics_reported', 0) + gaps.get('metrics_missing', 0)}"
+        )
+        recs = gaps.get("recommendations", [])[:3]
+        for r in recs:
+            findings_data.append(f"Gap recommendation: {r}")
+
+    sections.append("--- KEY FINDINGS ---")
+    sections.append("Data points:")
+    for f_item in findings_data:
+        sections.append(f"  - {f_item}")
+    sections.append(
+        "Instructions: Summarize 3-5 key findings about the company's impact measurement maturity,"
+    )
+    sections.append(
+        "data quality, and alignment with international standards. Be specific and data-driven.\n"
+    )
+
+    # Recommendations prompt
+    sections.append("--- RECOMMENDATIONS ---")
+    sections.append(
+        "Instructions: Based on the full report data above, write 3-5 prioritized recommendations"
+    )
+    sections.append(
+        "for improving the company's impact measurement and reporting. Each recommendation should:"
+    )
+    sections.append("  1. Identify the specific gap or weakness")
+    sections.append("  2. Propose a concrete action")
+    sections.append("  3. Reference the relevant framework or standard (IRIS+, SDG, SASB, etc.)")
+    sections.append("  4. Estimate the effort level (quick win / medium-term / strategic)")
+    sections.append("================================\n")
+
+    return "\n".join(sections)
+
+
+def _wrap_report_draft(output: str, company_name: str) -> str:
+    """Wrap report output with DRAFT review markers."""
+    header = (
+        "╔══════════════════════════════════════════════════════════════════╗\n"
+        "║  DRAFT IMPACT REPORT — FOR INTERNAL REVIEW ONLY               ║\n"
+        "╚══════════════════════════════════════════════════════════════════╝\n"
+        f"Company: {company_name}\n"
+        "Status: PENDING HUMAN REVIEW\n"
+        "Instructions: Review all scores, claims, and recommendations for\n"
+        "accuracy before sharing with stakeholders or including in LP reports.\n"
+        "─" * 66 + "\n"
+    )
+    footer = (
+        "\n" + "─" * 66 + "\n"
+        "╔══════════════════════════════════════════════════════════════════╗\n"
+        "║  END OF DRAFT — REQUIRES INVESTMENT TEAM SIGN-OFF             ║\n"
+        "╚══════════════════════════════════════════════════════════════════╝"
+    )
+    return header + output + footer
+
+
+def _esg_toolbox_section(data: dict) -> str:
+    esg = data.get("esg_toolbox")
+    if not isinstance(esg, dict):
+        return ""
+    recs = esg.get("recommended_tools") or []
+    cards = (esg.get("ui") or {}).get("cards") or []
+    next_questions = esg.get("next_questions") or []
+    if not recs and not cards and not next_questions:
+        return ""
+
+    parts = ['<h2 id="sec-esg-toolbox">ESG Toolbox Readiness</h2>']
+    if cards:
+        parts.append('<div class="cards-row">')
+        for card in cards[:6]:
+            score = float(card.get("readiness_score_pct", 0) or 0)
+            color = (
+                "var(--success)"
+                if score >= 80
+                else "var(--warning)"
+                if score >= 45
+                else "var(--danger)"
+            )
+            parts.append(
+                '<div class="score-card" style="min-width:180px;text-align:left">'
+                f'<div class="value" style="font-size:1.7em;color:{color}">{score:.0f}%</div>'
+                f'<div class="label">{_esc(card.get("title", ""))}</div>'
+                f'<div style="margin-top:8px;color:var(--text-secondary);font-size:0.85em">{_esc(card.get("status", ""))} | {_esc(card.get("priority", ""))}</div>'
+                "</div>"
+            )
+        parts.append("</div>")
+    elif recs:
+        parts.append('<div class="cards-row">')
+        for item in recs[:6]:
+            score = float(item.get("readiness_score_pct", 0) or 0)
+            color = (
+                "var(--success)"
+                if score >= 80
+                else "var(--warning)"
+                if score >= 45
+                else "var(--danger)"
+            )
+            parts.append(
+                '<div class="score-card" style="min-width:180px;text-align:left">'
+                f'<div class="value" style="font-size:1.7em;color:{color}">{score:.0f}%</div>'
+                f'<div class="label">{_esc(item.get("title", ""))}</div>'
+                f'<div style="margin-top:8px;color:var(--text-secondary);font-size:0.85em">{_esc(item.get("tool_id", ""))}</div>'
+                "</div>"
+            )
+        parts.append("</div>")
+
+    if recs:
+        parts.append("<h3>Recommended Modules</h3>")
+        for item in recs[:6]:
+            reason = item.get("reason") or "Relevant ESG module for this company context."
+            missing = item.get("missing_inputs") or []
+            detail = (
+                f"<br><span style='color:var(--text-secondary)'>Missing inputs: {_esc(', '.join(missing[:3]))}</span>"
+                if missing
+                else ""
+            )
+            parts.append(
+                f'<div class="rec"><strong>{_esc(item.get("tool_id", ""))}: {_esc(item.get("title", ""))}</strong><br>{_esc(reason)}{detail}</div>'
+            )
+
+    if next_questions:
+        parts.append("<h3>Minimum Follow-up Questions</h3>")
+        for question in next_questions[:5]:
+            parts.append(f'<div class="rec">{_esc(question)}</div>')
+
+    return "\n".join(parts)
+
+
+def _to_csv(data: dict) -> str:
+    from impact_vision.impact.exports import to_csv
+
+    return to_csv(data)
+
+
+def _interactive_scoring_section(fd: dict, sdg_alignments: list, company_name: str = "") -> str:
+    """Generate an interactive HTML section with checkboxes that adjust scores."""
+    base_scores = {
+        "what": fd["what"]["score"],
+        "who": fd["who"]["score"],
+        "how_much": fd["how_much"]["score"],
+        "contribution": fd["contribution"]["score"],
+        "risk": fd["risk"]["score"],
+    }
+    overall = fd["overall_score"]
+
+    items = [
+        {
+            "id": "beneficiaries",
+            "label": "We track the number of direct beneficiaries served",
+            "dims": {"who": 0.6, "how_much": 0.3},
+            "sdgs": [1, 2, 3],
+        },
+        {
+            "id": "outcomes",
+            "label": "We measure outcomes (not just outputs) for beneficiaries",
+            "dims": {"what": 0.7, "how_much": 0.4},
+            "sdgs": [],
+        },
+        {
+            "id": "ghg",
+            "label": "We track greenhouse gas emissions or have reduction targets",
+            "dims": {"risk": 0.5, "what": 0.3},
+            "sdgs": [13, 7],
+        },
+        {
+            "id": "water",
+            "label": "We measure water usage or have water stewardship practices",
+            "dims": {"risk": 0.4, "what": 0.3},
+            "sdgs": [6, 14],
+        },
+        {
+            "id": "gender",
+            "label": "We track gender diversity in our workforce/beneficiaries",
+            "dims": {"who": 0.5, "contribution": 0.2},
+            "sdgs": [5, 10],
+        },
+        {
+            "id": "local_hiring",
+            "label": "We prioritize hiring from local/underserved communities",
+            "dims": {"contribution": 0.6, "who": 0.3},
+            "sdgs": [8, 10, 1],
+        },
+        {
+            "id": "supply_chain",
+            "label": "We have responsible supply chain policies",
+            "dims": {"risk": 0.5, "contribution": 0.3},
+            "sdgs": [12, 8],
+        },
+        {
+            "id": "baseline",
+            "label": "We have baseline data from before our intervention started",
+            "dims": {"contribution": 0.7, "how_much": 0.3},
+            "sdgs": [],
+        },
+        {
+            "id": "third_party",
+            "label": "We have third-party verification or independent audits",
+            "dims": {"risk": 0.8, "contribution": 0.4},
+            "sdgs": [],
+        },
+        {
+            "id": "theory_of_change",
+            "label": "We have a documented Theory of Change",
+            "dims": {"what": 0.5, "contribution": 0.4},
+            "sdgs": [],
+        },
+        {
+            "id": "stakeholder",
+            "label": "We regularly collect feedback from beneficiaries/stakeholders",
+            "dims": {"who": 0.4, "how_much": 0.3, "risk": 0.2},
+            "sdgs": [],
+        },
+        {
+            "id": "negative_screen",
+            "label": "We assess and mitigate negative/unintended impacts",
+            "dims": {"risk": 0.7},
+            "sdgs": [],
+        },
+    ]
+
+    import hashlib as _hashlib
+    import json as _json
+    import re as _re
+
+    items_json = _json.dumps(items)
+    base_json = _json.dumps(base_scores)
+    # The slug alone collides for visually similar names ("BrightPath, Inc."
+    # vs "BrightPath Inc"). Mix in a short hash of the original name so two
+    # different companies never overwrite each other's local state.
+    name_slug = _re.sub(r"[^a-zA-Z0-9]", "-", company_name or "").lower().strip("-") or "default"
+    name_hash = _hashlib.sha1((company_name or "").encode("utf-8")).hexdigest()[:8]
+    company_name_safe = f"{name_slug}-{name_hash}"
+
+    return f"""
+<h3 style="margin-top:24px">Improve Your Score</h3>
+<p style="color:var(--text-secondary);font-size:0.85em;margin-bottom:12px">
+Check practices your organization follows. The radar chart and scores above update in real-time.
+</p>
+<div id="interactive-panel" style="background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:20px;border:1px solid var(--border);margin:0 0 16px">
+<div id="checklist-items"></div>
+</div>
+<script>
+(function() {{
+  const items = {items_json};
+  const baseScores = {base_json};
+  const origOverall = {overall:.2f};
+  const dimNames = ['what','who','how_much','contribution','risk'];
+  const dimLabels = {{what:'What',who:'Who',how_much:'How Much',contribution:'Contribution',risk:'Risk'}};
+  const dimKeys = {{what:'what',who:'who',how_much:'how_much',contribution:'contribution',risk:'risk'}};
+
+  const container = document.getElementById('checklist-items');
+  items.forEach(function(item) {{
+    const div = document.createElement('div');
+    div.style.cssText = 'padding:8px 0;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:12px';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox'; cb.id = 'chk-'+item.id;
+    cb.style.cssText = 'width:18px;height:18px;cursor:pointer;accent-color:#1976d2;flex-shrink:0';
+    cb.addEventListener('change', recalc);
+    const lbl = document.createElement('label');
+    lbl.htmlFor = 'chk-'+item.id;
+    lbl.textContent = item.label;
+    lbl.style.cssText = 'cursor:pointer;font-size:0.9em;flex:1';
+    const dims = Object.keys(item.dims).map(function(d) {{ return dimLabels[d]; }}).join(', ');
+    const tag = document.createElement('span');
+    tag.textContent = dims;
+    tag.style.cssText = 'font-size:0.7em;color:var(--text-secondary);background:var(--primary-light);padding:2px 8px;border-radius:10px;white-space:nowrap';
+    div.appendChild(cb); div.appendChild(lbl); div.appendChild(tag);
+    container.appendChild(div);
+  }});
+
+  function getGrade(s) {{
+    if (s >= 4.0) return 'A';
+    if (s >= 3.0) return 'B';
+    if (s >= 2.0) return 'C';
+    if (s >= 1.0) return 'D';
+    return 'F';
+  }}
+  function gradeClass(g) {{ return 'grade-'+g[0]; }}
+
+  const STORAGE_KEY = 'impact-vision-scenario-' + '{company_name_safe}';
+
+  function saveState() {{
+    const state = {{}};
+    items.forEach(function(item) {{
+      const cb = document.getElementById('chk-'+item.id);
+      if (cb) state[item.id] = cb.checked;
+    }});
+    try {{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }} catch(e) {{}}
+  }}
+
+  function loadState() {{
+    try {{
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (!saved) return;
+      const state = JSON.parse(saved);
+      items.forEach(function(item) {{
+        const cb = document.getElementById('chk-'+item.id);
+        if (cb && state[item.id]) cb.checked = true;
+      }});
+      recalc();
+    }} catch(e) {{}}
+  }}
+
+  function recalc() {{
+    const scores = {{}};
+    dimNames.forEach(function(d) {{ scores[d] = baseScores[d]; }});
+    let anyChecked = false;
+    items.forEach(function(item) {{
+      const cb = document.getElementById('chk-'+item.id);
+      if (cb && cb.checked) {{
+        anyChecked = true;
+        Object.keys(item.dims).forEach(function(d) {{
+          scores[d] = Math.min(5.0, scores[d] + item.dims[d]);
+        }});
+      }}
+    }});
+    saveState();
+    const avg = dimNames.reduce(function(s,d){{ return s+scores[d]; }}, 0) / 5;
+    const grade = getGrade(avg);
+    const delta = avg - origOverall;
+
+    const gradeEl = document.getElementById('main-grade');
+    if (gradeEl) {{
+      gradeEl.textContent = grade;
+      gradeEl.className = 'value ' + gradeClass(grade);
+    }}
+    const overallEl = document.getElementById('main-overall');
+    if (overallEl) {{
+      overallEl.innerHTML = avg.toFixed(1) + '<span style="font-size:0.5em;color:var(--text-secondary)">/5</span>';
+    }}
+    const deltaCard = document.getElementById('delta-card');
+    const deltaEl = document.getElementById('main-delta');
+    if (deltaCard && deltaEl) {{
+      deltaCard.style.display = anyChecked ? 'block' : 'none';
+      deltaEl.textContent = (delta >= 0 ? '+' : '') + delta.toFixed(1);
+      deltaEl.style.color = delta > 0 ? 'var(--success)' : 'var(--text-secondary)';
+    }}
+
+    dimNames.forEach(function(d) {{
+      const scoreEl = document.getElementById('dim-score-'+d);
+      if (scoreEl) scoreEl.textContent = scores[d].toFixed(1) + '/5';
+      const barEl = document.getElementById('dim-bar-'+d);
+      if (barEl) {{
+        const pct = Math.round(scores[d] / 5 * 100);
+        barEl.style.width = pct + '%';
+        barEl.className = 'bar-fill ' + (pct >= 60 ? 'green' : pct >= 30 ? 'orange' : 'red');
+      }}
+    }});
+
+    const vals = dimNames.map(function(d) {{ return scores[d]; }});
+    vals.push(vals[0]);
+    const labels = dimNames.map(function(d) {{ return dimLabels[d]; }});
+    labels.push(labels[0]);
+    const baseVals = dimNames.map(function(d) {{ return baseScores[d]; }});
+    baseVals.push(baseVals[0]);
+
+    const traces = anyChecked ? [
+      {{type:'scatterpolar', r:baseVals, theta:labels, fill:'toself', fillcolor:'rgba(176,190,197,0.15)',
+        line:{{color:'#b0bec5',width:1.5,dash:'dot'}}, marker:{{size:5}}, name:'Before'}},
+      {{type:'scatterpolar', r:vals, theta:labels, fill:'toself', fillcolor:'rgba(25,118,210,0.15)',
+        line:{{color:'#1976d2',width:2.5}}, marker:{{size:7,color:'#1976d2'}}, name:'With improvements'}}
+    ] : [
+      {{type:'scatterpolar', r:vals, theta:labels, fill:'toself', fillcolor:'rgba(25,118,210,0.12)',
+        line:{{color:'#1976d2',width:2.5}}, marker:{{size:7,color:'#1976d2'}}, name:'Current'}}
+    ];
+
+    Plotly.react('radar-chart', traces, {{
+      polar:{{radialaxis:{{visible:true,range:[0,5],tickfont:{{size:10}}}},angularaxis:{{tickfont:{{size:11}}}}}},
+      showlegend:true, legend:{{orientation:'h',y:-0.1}},
+      height:380, margin:{{l:70,r:70,t:40,b:40}},
+      paper_bgcolor:'transparent', plot_bgcolor:'transparent',
+      font:{{family:'Inter, -apple-system, sans-serif'}}
+    }}, {{responsive:true}});
+  }}
+  loadState();
+}})();
+</script>"""
+
+
+def _generate_executive_summary(data: dict, company: dict) -> str:
+    """Generate an executive summary section for the HTML report.
+
+    Emits a KPI strip (5D overall, top SDG, greenwashing risk, gap-analysis
+    coverage) followed by a concise "at-a-glance" card with auto-derived
+    strengths and watch-outs. Uses the v2 chrome classes so styling matches
+    the IC memo and DD HTML reports.
+    """
+    name = html.escape(str(company.get("name") or "the company"))
+    sector = html.escape(str(company.get("sector") or ""))
+
+    fd = data.get("five_dimensions")
+    sdg = data.get("sdg_alignments") or []
+    gw = data.get("greenwashing")
+    gap = data.get("gap_analysis") or {}
+
+    # --- KPI tiles -------------------------------------------------
+    kpis: list[str] = []
+    if fd:
+        grade = fd.get("overall_grade", "")
+        grade_cls = f"grade-{grade[0]}" if grade else ""
+        prov = fd.get("overall_provenance", "estimated")
+        prov_kind = {"evidence-based": "pass", "partial": "warn"}.get(prov, "neutral")
+        kpis.append(
+            f'<div class="kpi-tile {prov_kind}">'
+            f'<div class="kpi-label">5-Dimension overall</div>'
+            f'<div class="kpi-value"><span class="{grade_cls}">{fd["overall_score"]:.1f}<span '
+            f'style="font-size:0.55em;color:var(--text-muted)">/5</span></span></div>'
+            f'<div class="kpi-sub">Grade {grade} · {prov}</div>'
+            f"</div>",
+        )
+
+    top_sdgs = sorted(sdg, key=lambda s: s.get("score", 0), reverse=True)
+    top_pos = [s for s in top_sdgs if s.get("score", 0) > 0]
+    if top_pos:
+        t = top_pos[0]
+        s_score = t.get("score", 0)
+        s_kind = "pass" if s_score >= 60 else "warn" if s_score >= 30 else "neutral"
+        kpis.append(
+            f'<div class="kpi-tile {s_kind}">'
+            f'<div class="kpi-label">Top SDG</div>'
+            f'<div class="kpi-value">SDG {t["goal"]}</div>'
+            f'<div class="kpi-sub">{t.get("goal_name", "")} · {s_score:.0f}/100</div>'
+            f"</div>",
+        )
+
+    if gap and gap.get("coverage_percentage") is not None:
+        cov = gap.get("coverage_percentage", 0) or 0
+        cov_kind = "pass" if cov >= 70 else "warn" if cov >= 40 else "fail"
+        kpis.append(
+            f'<div class="kpi-tile {cov_kind}">'
+            f'<div class="kpi-label">Core-metric coverage</div>'
+            f'<div class="kpi-value">{cov:.0f}%</div>'
+            f'<div class="kpi-sub">IRIS+ core set addressed</div>'
+            f"</div>",
+        )
+
+    if gw:
+        score = (
+            gw.get("overall_score", 0) if isinstance(gw, dict) else getattr(gw, "overall_score", 0)
+        )
+        classification = (
+            gw.get("classification", "")
+            if isinstance(gw, dict)
+            else getattr(gw, "classification", "")
+        )
+        if score >= 70:
+            gw_kind = "fail"
+        elif score >= 40:
+            gw_kind = "warn"
+        else:
+            gw_kind = "pass"
+        kpis.append(
+            f'<div class="kpi-tile {gw_kind}">'
+            f'<div class="kpi-label">Greenwashing risk</div>'
+            f'<div class="kpi-value">{score:.0f}<span '
+            f'style="font-size:0.55em;color:var(--text-muted)">/100</span></div>'
+            f'<div class="kpi-sub">{classification or "classification pending"}</div>'
+            f"</div>",
+        )
+
+    kpi_strip = f'<div class="kpi-strip">{"".join(kpis)}</div>' if kpis else ""
+
+    # --- Strengths / watch-outs -----------------------------------
+    strengths: list[str] = []
+    watch: list[str] = []
+    next_steps: list[str] = []
+
+    if fd:
+        dim_scores = {
+            "What": fd.get("what", {}).get("score", 0),
+            "Who": fd.get("who", {}).get("score", 0),
+            "How Much": fd.get("how_much", {}).get("score", 0),
+            "Contribution": fd.get("contribution", {}).get("score", 0),
+            "Risk": fd.get("risk", {}).get("score", 0),
+        }
+        best = max(dim_scores.items(), key=lambda kv: kv[1]) if dim_scores else None
+        worst = min(dim_scores.items(), key=lambda kv: kv[1]) if dim_scores else None
+        if best and best[1] >= 3.5:
+            strengths.append(f"Strong <b>{best[0]}</b> dimension ({best[1]:.1f}/5).")
+        if worst and worst[1] <= 2.5:
+            watch.append(
+                f"Weakest dimension is <b>{worst[0]}</b> ({worst[1]:.1f}/5) — prioritise evidence here."
+            )
+
+    if len(top_pos) >= 1 and top_pos[0].get("score", 0) >= 60:
+        goals = ", ".join(f"SDG {s['goal']}" for s in top_pos[:3])
+        strengths.append(f"Credible alignment with {goals}.")
+    elif top_pos:
+        watch.append(
+            "No SDG scored ≥ 60/100 — consider deepening the metric coverage on the top goal."
+        )
+
+    if gap and gap.get("coverage_percentage", 0) < 50:
+        watch.append(
+            f"Core-metric coverage is {gap.get('coverage_percentage', 0):.0f}% "
+            "— the fund's IC will likely flag this as an evidence gap.",
+        )
+
+    if gw:
+        gw_score = (
+            gw.get("overall_score", 0) if isinstance(gw, dict) else getattr(gw, "overall_score", 0)
+        )
+        if gw_score >= 40:
+            watch.append(
+                f"Greenwashing composite is {gw_score:.0f}/100 — review claim-metric gaps and "
+                "any unverified certifications before LP distribution.",
+            )
+
+    if fd and fd.get("overall_provenance") != "evidence-based":
+        next_steps.append(
+            "Obtain outcome-level data (pre/post or independent surveys) to move from estimated to evidence-based scoring."
+        )
+    if top_pos and top_pos[0].get("score", 0) < 60:
+        next_steps.append(
+            f"Add 3–5 IRIS+ metrics aligned to SDG {top_pos[0]['goal']} in the next reporting cycle."
+        )
+    if gap.get("suggested_metrics"):
+        first_sug = gap["suggested_metrics"][0] if gap["suggested_metrics"] else None
+        if isinstance(first_sug, dict) and first_sug.get("iris_id"):
+            next_steps.append(
+                f"Start tracking <code>{first_sug['iris_id']}</code> ({first_sug.get('name', '')})."
+            )
+
+    def _list_html(items: list[str], cls: str, label: str) -> str:
+        if not items:
+            return ""
+        li = "".join(f"<li>{x}</li>" for x in items)
+        return f'<div class="callout {cls}"><b>{label}</b><ul style="margin:6px 0 0 18px">{li}</ul></div>'
+
+    strengths_html = _list_html(strengths, "ok", "Strengths")
+    watch_html = _list_html(watch, "warn", "Watch-outs")
+    next_html = _list_html(next_steps, "", "Recommended next steps")
+
+    # --- Narrative -------------------------------------------------
+    narrative_parts: list[str] = []
+    if fd:
+        narrative_parts.append(
+            f"<p><strong>{name}</strong>"
+            f"{f' ({sector})' if sector else ''} received an overall impact score of "
+            f"<strong>{fd['overall_score']:.1f}/5.0 (Grade {fd['overall_grade']})</strong>. "
+            f"Score confidence is rated as <em>{fd.get('overall_provenance', 'estimated')}</em>.</p>",
+        )
+    if top_pos:
+        sdg_list = ", ".join(f"SDG {s['goal']} ({s.get('goal_name', '')})" for s in top_pos[:3])
+        narrative_parts.append(f"<p>Strongest SDG alignments: {sdg_list}.</p>")
+    if gw:
+        score = (
+            gw.get("overall_score", 0) if isinstance(gw, dict) else getattr(gw, "overall_score", 0)
+        )
+        classification = (
+            gw.get("classification", "")
+            if isinstance(gw, dict)
+            else getattr(gw, "classification", "")
+        )
+        if score:
+            narrative_parts.append(
+                f"<p>Greenwashing risk assessment: <strong>{classification}</strong> "
+                f"(score: {score}/100).</p>",
+            )
+    if gap and gap.get("coverage_percentage") is not None:
+        narrative_parts.append(
+            f"<p>Core Metric Set coverage: {gap.get('coverage_percentage', 0):.0f}%.</p>",
+        )
+    narrative_parts.append(
+        "<p><em>Generated by Impact Vision using IRIS+ metrics, the 5 Dimensions of Impact, "
+        "and multi-framework ESG analysis. Scores based on limited data should be validated with "
+        "additional evidence before being relied upon for investment decisions.</em></p>",
+    )
+
+    body = (
+        '<div class="section" id="executive-summary"><h2>Executive Summary</h2>'
+        '<div class="content">'
+        f"{kpi_strip}"
+        + "".join(narrative_parts)
+        + strengths_html
+        + watch_html
+        + next_html
+        + "</div></div>"
+    )
+    return body
+
+
+def _truncate(text: str, limit: int) -> str:
+    """Truncate ``text`` to ``limit`` chars on a word boundary, adding an ellipsis.
+
+    Avoids the ragged mid-word cuts (e.g. "...passed th") produced by a raw
+    slice. Falls back to a hard slice only when there is no nearby space.
+    """
+    text = (text or "").strip()
+    if len(text) <= limit:
+        return text
+    cut = text[:limit].rstrip()
+    sp = cut.rfind(" ")
+    if sp > limit * 0.6:
+        cut = cut[:sp].rstrip()
+    return cut.rstrip(",;:.") + "\u2026"
+
+
+def _metric_tracking_dashboard(data: dict) -> str:
+    """Generate a metric tracking status dashboard (card grid)."""
+    fd = data.get("five_dimensions", {})
+    ga = data.get("gap_analysis", {})
+    if not fd and not ga:
+        return ""
+
+    tracked: dict[str, dict] = {}
+    gaps: dict[str, dict] = {}
+
+    for dim_name in ("what", "who", "how_much", "contribution", "risk"):
+        dim = fd.get(dim_name, {})
+        dim_label = dim.get("dimension", dim_name)
+        for mt in dim.get("metrics_tracked", []):
+            mid = mt if isinstance(mt, str) else str(mt)
+            tracked[mid] = {
+                "id": mid,
+                "name": mid,
+                "dimension": dim_label,
+                "status": "tracked",
+                "unit": "",
+            }
+        for g in dim.get("gaps", []):
+            gid = g.split(" (")[0] if isinstance(g, str) else str(g)
+            if gid not in tracked:
+                gaps[gid] = {
+                    "id": gid,
+                    "name": gid,
+                    "dimension": dim_label,
+                    "status": "gap",
+                    "unit": "",
+                }
+
+    # gap_analysis entries are now rich (id + name + unit + dimension_groups)
+    # so use them in preference to the 5D-only entries.
+    for m in ga.get("reported", []):
+        mid = m.get("id", "")
+        if not mid:
+            continue
+        dim_groups = m.get("dimension_groups") or []
+        tracked[mid] = {
+            "id": mid,
+            "name": m.get("name", mid),
+            "dimension": ", ".join(dim_groups)
+            if dim_groups
+            else tracked.get(mid, {}).get("dimension", ""),
+            "status": "tracked",
+            "unit": m.get("unit", "") or m.get("reporting_format", ""),
+        }
+    for m in ga.get("missing", []):
+        mid = m.get("id", "")
+        if not mid or mid in tracked:
+            continue
+        dim_groups = m.get("dimension_groups") or []
+        gaps[mid] = {
+            "id": mid,
+            "name": m.get("name", mid),
+            "dimension": ", ".join(dim_groups)
+            if dim_groups
+            else gaps.get(mid, {}).get("dimension", ""),
+            "status": "gap",
+            "unit": m.get("unit", "") or m.get("reporting_format", ""),
+        }
+
+    # Resolve any metric whose name still equals its code (5D-only gaps that
+    # never received catalog enrichment) against the IRIS+ catalog so cards
+    # show human-readable names instead of bare IDs (e.g. "OI0263").
+    _unresolved = [m for m in (*tracked.values(), *gaps.values()) if m["name"] == m["id"]]
+    if _unresolved:
+        try:
+            from impact_vision.impact.database import get_metric_store
+
+            _store = get_metric_store()
+            for _m in _unresolved:
+                _rec = _store.get(_m["id"])
+                if _rec is not None and getattr(_rec, "name", ""):
+                    _m["name"] = _rec.name
+                    if not _m.get("unit"):
+                        _m["unit"] = getattr(_rec, "unit", "") or ""
+        except Exception:  # noqa: BLE001 — never let a catalog lookup break the report
+            pass
+
+    all_metrics = list(tracked.values()) + list(gaps.values())
+    if not all_metrics:
+        return ""
+
+    parts = [
+        '<h2 id="sec-metrics">Metric Tracking Dashboard</h2>',
+        f'<p style="color:var(--text-secondary);font-size:0.88em;margin-bottom:12px">'
+        f"{len(tracked)} tracked &bull; {len(gaps)} gaps &bull; {len(all_metrics)} total"
+        f' &bull; Click <a href="#sec-missing-metrics" style="color:var(--accent)">Missing Metrics</a> for definitions</p>',
+        '<div class="metric-grid">',
+    ]
+    for m in sorted(all_metrics, key=lambda x: (x["status"] != "tracked", x["name"])):
+        status = m["status"]
+        status_label = "Tracked" if status == "tracked" else "Gap"
+        unit_html = (
+            f'<div style="font-size:0.72em;color:var(--text-secondary);margin-top:6px">Unit: {m["unit"]}</div>'
+            if m.get("unit")
+            else ""
+        )
+        dim_html = (
+            f'<div style="font-size:0.72em;color:var(--primary);margin-top:2px">{m["dimension"]}</div>'
+            if m.get("dimension")
+            else ""
+        )
+        parts.append(
+            f'<div class="metric-card {status}">'
+            f'<div class="mc-id">{m["id"]}</div>'
+            f'<div class="mc-name">{m["name"]}</div>'
+            f"{dim_html}"
+            f"{unit_html}"
+            f'<span class="mc-status {status}" style="margin-top:8px;display:inline-block">{status_label}</span>'
+            f"</div>"
+        )
+    parts.append("</div>")
+    return "\n".join(parts)
+
+
+_EVIDENCE_SIGNAL_LABELS = {
+    "third_party_verified": "Third-party verified",
+    "audited": "Audited",
+    "certified": "Certified",
+    "controlled_evaluation": "Controlled evaluation",
+    "baseline_comparison": "Baseline comparison",
+}
+
+
+def _impact_claims_section(data: dict) -> str:
+    """Generate expandable impact claim evidence cards."""
+    claims = data.get("impact_claims", [])
+    if not claims:
+        return ""
+
+    parts = [
+        f'<h2 id="sec-claims">Impact Claims <span style="font-size:0.65em;color:var(--text-secondary);font-weight:400">'
+        f"({len(claims)} claims)</span></h2>",
+    ]
+
+    visible = min(5, len(claims))
+    for i, claim in enumerate(claims):
+        hidden = ' style="display:none"' if i >= visible else ""
+        cat = claim.get("category", "intent")
+        conf = claim.get("confidence", 0.5)
+        evidence = claim.get("evidence_strength", 1)
+        text = str(claim.get("text", "No text"))
+        safe_text = html.escape(text)
+        safe_cat = html.escape(str(cat))
+        negated = claim.get("negation_detected", False)
+        metrics = claim.get("mapped_metrics", [])
+        sdg_targets = claim.get("mapped_sdg_targets", [])
+        conf_pct = int(conf * 100)
+        conf_color = "#2e7d32" if conf >= 0.7 else "#f57c00" if conf >= 0.4 else "#c62828"
+
+        parts.append(f'<div class="claim-card" data-claim-idx="{i}"{hidden}>')
+        parts.append(
+            "<div class=\"claim-header\" role=\"button\" tabindex=\"0\" aria-expanded=\"false\" onclick=\"var b=this.parentElement.querySelector('.claim-body');var o=b.classList.toggle('active');this.setAttribute('aria-expanded',o?'true':'false')\" onkeydown=\"if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}\">"
+        )
+        parts.append(f'<span class="claim-badge {safe_cat}">{safe_cat}</span>')
+        parts.append(
+            f'<span class="claim-text">{safe_text[:120]}{"..." if len(text) > 120 else ""}</span>'
+        )
+        parts.append('<span class="claim-toggle" aria-hidden="true">&#9660;</span>')
+        parts.append("</div>")
+        parts.append('<div class="claim-body">')
+
+        if negated:
+            parts.append(
+                '<div style="color:var(--danger);font-size:0.85em;margin-bottom:6px">&#9888; Negation detected in this claim</div>'
+            )
+
+        parts.append(
+            '<div style="margin-bottom:8px"><strong style="font-size:0.82em">Confidence:</strong> '
+        )
+        parts.append(
+            f'<div class="confidence-bar"><div class="confidence-fill" style="width:{conf_pct}%;background:{conf_color}"></div></div>'
+        )
+        parts.append(f' <span style="font-size:0.82em;color:{conf_color}">{conf_pct}%</span></div>')
+
+        parts.append(
+            '<div style="margin-bottom:8px"><strong style="font-size:0.82em">Evidence Level:</strong> '
+        )
+        stars = "&#9733;" * evidence + "&#9734;" * (5 - evidence)
+        parts.append(f'<span style="color:#f9a825;font-size:0.95em">{stars}</span>')
+        parts.append(
+            f' <span style="font-size:0.78em;color:var(--text-secondary)">NESTA Level {evidence}</span></div>'
+        )
+
+        signals = (claim.get("entities") or {}).get("evidence") or []
+        if signals:
+            parts.append(
+                '<div style="margin-bottom:8px"><strong style="font-size:0.82em">Evidence:</strong> '
+            )
+            parts.append(
+                " ".join(
+                    f'<span class="chip">{html.escape(_EVIDENCE_SIGNAL_LABELS.get(str(sig), str(sig)))}</span>'
+                    for sig in signals
+                )
+            )
+            parts.append("</div>")
+        if metrics:
+            parts.append(
+                '<div style="margin-bottom:8px"><strong style="font-size:0.82em">Mapped Metrics:</strong> '
+            )
+            parts.append(
+                " ".join(f'<span class="chip">{html.escape(str(m))}</span>' for m in metrics[:8])
+            )
+            parts.append("</div>")
+        if sdg_targets:
+            parts.append(
+                '<div style="margin-bottom:8px"><strong style="font-size:0.82em">SDG Targets:</strong> '
+            )
+            parts.append(
+                " ".join(
+                    f'<span class="chip" style="background:#fff3e0;color:#e65100">'
+                    f"{html.escape(str(t))}</span>"
+                    for t in sdg_targets[:8]
+                )
+            )
+            parts.append("</div>")
+
+        parts.append("</div></div>")
+
+    if len(claims) > visible:
+        remaining = len(claims) - visible
+        parts.append(
+            f'<button id="show-more-claims" '
+            f'style="display:block;margin:12px auto;padding:8px 24px;background:var(--primary-light);color:var(--primary);'
+            f'border:1px solid var(--primary);border-radius:var(--radius-sm);cursor:pointer;font-size:0.88em">'
+            f"Show {remaining} more claims</button>"
+            "<script>"
+            'document.getElementById("show-more-claims").addEventListener("click",function(){'
+            'document.querySelectorAll(".claim-card").forEach(function(c){c.style.display=""});'
+            'this.style.display="none"'
+            "});"
+            "</script>"
+        )
+
+    return "\n".join(parts)
+
+
+def _render_missing_metrics_section(ga: dict) -> str:
+    """Render the missing-metrics panel grouped by catalog section.
+
+    Each metric exposes the human-readable name, definition, expected unit
+    (from ``reporting_format``), calculation or usage guidance ("how to
+    measure"), the 5D dimension(s) it feeds and the SDGs it supports. This
+    replaces the old three-column ID/Name/Definition table which was
+    effectively an unlabeled list of IRIS+ codes.
+    """
+    missing = ga.get("missing") or []
+    if not missing:
+        return ""
+
+    grouped = ga.get("missing_by_category")
+    if not grouped:
+        grouped = {}
+        for m in missing:
+            grouped.setdefault(m.get("category") or "General", []).append(m)
+        grouped = dict(sorted(grouped.items()))
+
+    parts: list[str] = [
+        '<h3 id="sec-missing-metrics">Missing Metrics <span style="font-size:0.7em;color:var(--text-secondary);font-weight:400">'
+        f"({len(missing)} gaps grouped into {len(grouped)} categories)</span></h3>",
+        '<p style="color:var(--text-secondary);font-size:0.88em;margin-bottom:12px">'
+        "Click any group to see what the metric means, the expected unit, how to measure it, and "
+        "which 5D dimensions or SDGs it supports. Reporting any of these will move your scores "
+        'out of the "Estimated" confidence band.</p>',
+    ]
+
+    # First group is open by default so the reader can see the format
+    first = True
+    for category, metrics in grouped.items():
+        open_attr = " open" if first else ""
+        first = False
+        n = len(metrics)
+        parts.append(
+            f'<details class="missing-metrics-group"{open_attr}>'
+            f'<summary>{category} <span style="font-weight:400;color:var(--text-secondary);font-size:0.85em">'
+            f"&nbsp;{n} metric{'s' if n != 1 else ''} missing</span></summary>"
+        )
+        for m in metrics:
+            mid = m.get("id", "")
+            name = m.get("name", mid)
+            defn = (m.get("definition") or "").strip()
+            how = (m.get("how_to_measure") or m.get("usage_guidance") or "").strip()
+            how_src = (
+                "Calculation"
+                if m.get("calculation")
+                else "Usage guidance"
+                if m.get("usage_guidance")
+                else ""
+            )
+            unit = (m.get("unit") or m.get("reporting_format") or "").strip()
+            dims = m.get("dimension_groups") or []
+            sdgs = m.get("sdg_goals") or []
+
+            dim_chips = (
+                " ".join(f'<span class="mm-chip dim">{d}</span>' for d in dims)
+                or '<span class="mm-chip dim" style="opacity:0.55">Not tagged</span>'
+            )
+            sdg_chips = " ".join(f'<span class="mm-chip sdg">SDG {g}</span>' for g in sdgs[:8])
+            if len(sdgs) > 8:
+                sdg_chips += (
+                    f'<span class="mm-chip sdg" style="opacity:0.7">+{len(sdgs) - 8}</span>'
+                )
+            if not sdg_chips:
+                sdg_chips = '<span class="mm-chip sdg" style="opacity:0.55">No mapped SDGs</span>'
+
+            parts.append('<div class="missing-metric-card">')
+            parts.append('<div class="mm-main">')
+            parts.append(
+                f'<div class="mm-head">'
+                f'<div><span class="mm-name">{name}</span></div>'
+                f'<span class="mm-id">{mid}</span>'
+                f"</div>"
+            )
+            if defn:
+                parts.append(f'<div class="mm-def">{defn}</div>')
+            if how:
+                label = f"{how_src}: " if how_src else "How to measure: "
+                parts.append(
+                    f'<div class="mm-def"><strong style="color:var(--text)">{label}</strong>{_truncate(how, 260)}</div>'
+                )
+            parts.append("</div>")
+            parts.append('<div class="mm-side"><dl>')
+            if unit:
+                parts.append(
+                    f'<dt>Expected unit</dt><dd><span class="mm-chip unit">{unit}</span></dd>'
+                )
+            parts.append(f"<dt>Supports 5D</dt><dd>{dim_chips}</dd>")
+            parts.append(f"<dt>Maps to SDGs</dt><dd>{sdg_chips}</dd>")
+            parts.append("</dl></div>")
+            parts.append("</div>")
+
+        parts.append("</details>")
+
+    return "\n".join(parts)
+
+
+def _impact_pathway_section(data: dict) -> str:
+    """Generate an auto-inferred Theory of Change pathway diagram."""
+    company = data.get("company", {})
+    fd = data.get("five_dimensions", {})
+    sdg = data.get("sdg_alignments", [])
+    ga = data.get("gap_analysis", {})
+
+    inputs_items = []
+    if company.get("sector"):
+        inputs_items.append(f"Sector: {_esc(company['sector'])}")
+    if company.get("geography"):
+        inputs_items.append(f"Geography: {_esc(company['geography'])}")
+    reported_count = ga.get("metrics_reported", 0) if ga else 0
+    if reported_count:
+        inputs_items.append(f"{reported_count} metrics reported")
+    if not inputs_items:
+        inputs_items.append("Investment capital")
+
+    activities = []
+    if company.get("description"):
+        activities.append(_esc(_truncate(company["description"], 90)))
+    if company.get("impact_themes"):
+        activities.extend(_esc(t) for t in company["impact_themes"][:2])
+    if not activities:
+        activities.append("Core operations")
+
+    outputs = []
+    for dim_name in ("what", "who", "how_much"):
+        dim = fd.get(dim_name, {})
+        tracked = dim.get("metrics_tracked", [])
+        if tracked:
+            outputs.extend(_esc(t) for t in tracked[:2])
+    if not outputs:
+        outputs.append("Metrics to be reported")
+
+    outcomes = []
+    top_sdgs = sorted(sdg, key=lambda s: s.get("score", 0), reverse=True)[:3]
+    for s in top_sdgs:
+        if s.get("score", 0) > 0:
+            outcomes.append(
+                f"SDG {_esc(s.get('goal'))}: {_esc(_truncate(s.get('goal_name', ''), 40))}"
+            )
+    if not outcomes:
+        outcomes.append("SDG alignment pending")
+
+    impact_items = []
+    if fd:
+        impact_items.append(f"5D Score: {fd.get('overall_score', 0):.1f}/5")
+        impact_items.append(f"Grade: {fd.get('overall_grade', 'N/A')}")
+    if not impact_items:
+        impact_items.append("Impact TBD")
+
+    stages = [
+        ("Inputs", inputs_items),
+        ("Activities", activities),
+        ("Outputs", outputs),
+        ("Outcomes", outcomes),
+        ("Impact", impact_items),
+    ]
+
+    parts = ['<h2 id="sec-pathway">Impact Pathway (Theory of Change)</h2>', '<div class="pathway">']
+    for idx, (label, items) in enumerate(stages):
+        items_html = "<br>".join(f"&bull; {it}" for it in items[:3])
+        parts.append(
+            f'<div class="pathway-stage">'
+            f'<div class="pathway-box"><h4>{label}</h4>'
+            f'<div class="items">{items_html}</div></div>'
+        )
+        if idx < len(stages) - 1:
+            parts.append('<span class="pathway-arrow">&#8594;</span>')
+        parts.append("</div>")
+    parts.append("</div>")
+
+    rationale = _scoring_rationale_section(data)
+    if rationale:
+        parts.append(rationale)
+
+    return "\n".join(parts)
+
+
+def _scoring_rationale_section(data: dict) -> str:
+    """Render a transparent "how this grade was calculated" panel.
+
+    The panel exposes the inputs the 5D engine used: sector baseline,
+    keyword boosts, evidence (reported metrics), and caps/penalties.
+    It also tells the reader exactly what to report to move the score.
+    """
+    fd = data.get("five_dimensions")
+    if not fd:
+        return ""
+    try:
+        from impact_vision.impact.five_dimensions import (  # lazy import to avoid cycle
+            MIN_METRICS_FOR_ABOVE_BASELINE,
+            _compute_exclusion_penalty,
+            _compute_negative_impact_penalty,
+            _infer_baseline,
+        )
+        from impact_vision.impact.models import Company
+    except Exception:
+        return ""
+
+    company_dict = data.get("company") or {}
+    try:
+        company_model = Company(**company_dict)
+    except Exception:
+        return ""
+
+    baseline = _infer_baseline(company_model)
+    baseline_full = {
+        "what": baseline.get("what", 0.5),
+        "who": baseline.get("who", 0.5),
+        "how_much": baseline.get("how_much", 0.5),
+        "contribution": baseline.get("contribution", 0.5),
+        "risk": baseline.get("risk", 0.5),
+    }
+    neg_penalty = _compute_negative_impact_penalty(company_model)
+    exclusion_penalty = _compute_exclusion_penalty(company_model)
+
+    overall = fd.get("overall_score", 0)
+    grade = fd.get("overall_grade", "N/A")
+    overall_prov = fd.get("overall_provenance", "estimated")
+    prov_label = {
+        "evidence-based": "Evidence-Based",
+        "partial": "Partial",
+        "estimated": "Estimated",
+    }.get(overall_prov, overall_prov.title() if overall_prov else "Estimated")
+    prov_color = {
+        "evidence-based": "var(--success)",
+        "partial": "var(--warning)",
+        "estimated": "var(--danger)",
+    }.get(overall_prov, "var(--text-secondary)")
+
+    rows = []
+    dim_order = ["what", "who", "how_much", "contribution", "risk"]
+    for dim_name in dim_order:
+        dim = fd.get(dim_name, {}) or {}
+        bl = baseline_full.get(dim_name, 0.5)
+        reported = dim.get("metrics_reported", 0)
+        available = dim.get("metrics_available", 0)
+        score = dim.get("score", 0)
+        prov = dim.get("provenance", "estimated")
+        # Informally decompose: the final score is max(evidence, baseline)
+        # with a 2.5 cap when matched reference metrics < threshold.
+        capped = reported < MIN_METRICS_FOR_ABOVE_BASELINE and score == 2.5
+        if reported == 0:
+            driver = "Baseline only (no IRIS+ metrics reported)"
+        elif capped:
+            driver = (
+                f"Capped at 2.5 — need ≥ {MIN_METRICS_FOR_ABOVE_BASELINE} metrics in this dimension"
+            )
+        else:
+            driver = f"Evidence from {reported} reported metric{'s' if reported != 1 else ''}"
+        if dim_name == "risk":
+            if neg_penalty > 0:
+                driver += f" · −{neg_penalty:.1f} adverse-impact penalty"
+            if exclusion_penalty > 0:
+                driver += f" · −{exclusion_penalty:.1f} exclusion penalty"
+        display_name = {
+            "what": "What",
+            "who": "Who",
+            "how_much": "How Much",
+            "contribution": "Contribution",
+            "risk": "Risk",
+        }[dim_name]
+        evidence_component = max(0.0, score - bl)
+        rows.append(
+            {
+                "name": display_name,
+                "score": score,
+                "baseline": round(bl, 2),
+                "evidence": round(evidence_component, 2),
+                "reported": reported,
+                "available": available,
+                "driver": driver,
+                "provenance": prov,
+                "capped": capped,
+            }
+        )
+
+    # Build next-step levers — the highest-ROI thing the company could
+    # report to move the lowest dimension.
+    low_dim = min(rows, key=lambda r: r["score"])
+    ga = data.get("gap_analysis") or {}
+    by_dim = ga.get("missing_by_dimension") or {}
+    # Map UI labels back to the grouping used in gap_analysis
+    levers = by_dim.get(low_dim["name"], [])[:3]
+
+    html = [
+        '<div class="rationale-panel">',
+        '<h3 style="margin-top:0">How this grade was calculated</h3>',
+        '<div class="rationale-headline">',
+        f'<div><span class="rationale-overall">{overall:.1f}<span class="rationale-overall-max">/5</span></span>',
+        f'<span class="rationale-grade">{grade}</span></div>',
+        f'<div class="rationale-prov" style="color:{prov_color}">{prov_label}</div>',
+        "</div>",
+        '<p class="rationale-intro">'
+        "Each dimension is scored on a 0–5 scale. The final score is "
+        "<strong>max(sector baseline, evidence score)</strong>, capped at 2.5 until you report "
+        f"<strong>≥ {MIN_METRICS_FOR_ABOVE_BASELINE}</strong> IRIS+ metrics in that dimension. "
+        "The overall grade is the unweighted average of the five dimensions.</p>",
+        '<div class="rationale-table-wrap">',
+        '<table class="rationale-table">',
+        "<colgroup>"
+        '<col class="col-dim"><col class="col-final"><col class="col-baseline">'
+        '<col class="col-lift"><col class="col-metrics"><col class="col-driver">'
+        "</colgroup>",
+        "<thead><tr>"
+        "<th>Dimension</th>"
+        "<th>Final</th>"
+        "<th>Baseline</th>"
+        "<th>Lift</th>"
+        "<th>Metrics</th>"
+        "<th>Main driver</th>"
+        "</tr></thead>",
+        "<tbody>",
+    ]
+    for r in rows:
+        score_color = (
+            "var(--success)"
+            if r["score"] >= 3.0
+            else "var(--warning)"
+            if r["score"] >= 2.0
+            else "var(--danger)"
+        )
+        lift_html = f"+{r['evidence']:.1f}" if r["evidence"] > 0 else "—"
+        if r["capped"]:
+            lift_html += ' <span class="rationale-cap-tag">cap&nbsp;2.5</span>'
+        prov_dim_color = {
+            "evidence-based": "var(--success)",
+            "partial": "var(--warning)",
+            "estimated": "var(--danger)",
+        }.get(r["provenance"], "var(--text-secondary)")
+        prov_badge = f'<span class="prov-badge" style="background:{prov_dim_color}20;color:{prov_dim_color}">{r["provenance"].replace("-", " ").title()}</span>'
+        html.append(
+            f"<tr>"
+            f'<td class="r-dim"><strong>{r["name"]}</strong> {prov_badge}</td>'
+            f'<td class="r-final" style="font-weight:700;color:{score_color}">{r["score"]:.1f}</td>'
+            f'<td class="r-baseline" style="color:var(--text-secondary)">{r["baseline"]:.2f}</td>'
+            f'<td class="r-lift">{lift_html}</td>'
+            f'<td class="r-metrics">{r["reported"]} / {r["available"]}</td>'
+            f'<td class="r-driver">{r["driver"]}</td>'
+            f"</tr>"
+        )
+    html.append("</tbody></table></div>")
+
+    if levers:
+        html.append('<div class="rationale-levers">')
+        html.append(
+            f'<div class="rationale-levers-title">'
+            f"Biggest lever: report any of these <strong>{low_dim['name']}</strong> metrics "
+            f"to move your lowest dimension</div>"
+        )
+        lever_names = []
+        # Fetch names for lever IDs if possible
+        try:
+            from impact_vision.impact.database import get_metric_store
+
+            store = get_metric_store()
+            for mid in levers:
+                m = store.get(mid)
+                if m and m.name:
+                    lever_names.append(f"<code>{mid}</code> · {m.name}")
+                else:
+                    lever_names.append(f"<code>{mid}</code>")
+        except Exception:
+            lever_names = [f"<code>{mid}</code>" for mid in levers]
+        html.append('<ul class="rationale-lever-list">')
+        for lv in lever_names:
+            html.append(f"<li>{lv}</li>")
+        html.append("</ul>")
+        html.append("</div>")
+
+    html.append(
+        '<div class="rationale-legend">'
+        '<div><span class="legend-dot" style="background:var(--danger)"></span>'
+        "<strong>Estimated</strong> — driven by sector baseline, no metrics reported</div>"
+        '<div><span class="legend-dot" style="background:var(--warning)"></span>'
+        "<strong>Partial</strong> — 1–2 metrics reported; capped at 2.5</div>"
+        '<div><span class="legend-dot" style="background:var(--success)"></span>'
+        f"<strong>Evidence-Based</strong> — ≥ {MIN_METRICS_FOR_ABOVE_BASELINE} metrics reported in this dimension</div>"
+        "</div>"
+    )
+    html.append("</div>")
+    return "\n".join(html)
+
+
+# Which report sections (by H2 id) each audience cares about. Sections not
+# listed here default to "all audiences". Drives the Track D4 audience filter.
+_AUDIENCE_SECTION_MAP: dict[str, list[str]] = {
+    "executive-summary": ["lp", "ic", "regulator", "public"],
+    "sec-5d": ["lp", "ic", "regulator", "public"],
+    "sec-sdg": ["lp", "ic", "regulator", "public"],
+    "sec-claims": ["lp", "ic", "regulator", "public"],
+    "sec-pathway": ["lp", "ic", "public"],
+    "sec-opp-risk": ["lp", "ic", "regulator"],
+    "sec-gap": ["ic"],
+    "sec-greenwashing": ["ic", "regulator"],
+    "sec-benchmark": ["lp", "ic"],
+    "sec-metrics": ["lp", "ic", "regulator"],
+    "sec-targets": ["lp", "ic", "public"],
+    "sec-beneficiary": ["lp", "public", "regulator"],
+    "sec-esg-toolbox": ["ic", "regulator"],
+}
+
+# Illustrative confidence-band half-widths (in score points, 0-5 scale) by
+# provenance — used for the Track D5 uncertainty visualization.
+_PROVENANCE_BAND: dict[str, float] = {
+    "evidence-based": 0.3,
+    "partial": 0.6,
+    "estimated": 1.0,
+}
+
+
+def _render_audience_toolbar(data: dict) -> str:
+    """Render the Track D4 audience-filter toolbar."""
+    initial = str(data.get("audience", "full")).lower()
+    if initial not in ("full", "lp", "ic", "regulator", "public"):
+        initial = "full"
+    buttons = [
+        ("full", "Everything"),
+        ("lp", "LP"),
+        ("ic", "Investment Committee"),
+        ("regulator", "Regulator"),
+        ("public", "Public"),
+    ]
+    parts = [
+        f'<div class="audience-bar" role="group" aria-label="Audience view" data-initial="{initial}">',
+        '<span class="aud-label">View as:</span>',
+    ]
+    for key, label in buttons:
+        pressed = "true" if key == initial else "false"
+        parts.append(
+            f'<button type="button" class="aud-btn" data-aud="{key}" aria-pressed="{pressed}">{label}</button>'
+        )
+    parts.append("</div>")
+    return "".join(parts)
+
+
+def _render_uncertainty_block(score: float, provenance: str) -> str:
+    """Render a Track D5 confidence-band visualization for a 0-5 score."""
+    half = _PROVENANCE_BAND.get(provenance, 0.8)
+    lo = max(0.0, score - half)
+    hi = min(5.0, score + half)
+    left = lo / 5 * 100
+    width = max(1.0, (hi - lo) / 5 * 100)
+    point = min(100.0, score / 5 * 100)
+    prov_label = {
+        "evidence-based": "evidence-based (narrow band)",
+        "partial": "partial evidence (moderate band)",
+        "estimated": "estimated (wide band)",
+    }.get(provenance, "estimated")
+    return (
+        '<div class="uncertainty">'
+        '<div class="ci-track" role="img" '
+        f'aria-label="Confidence band {lo:.1f} to {hi:.1f} out of 5 around a score of {score:.1f}; {prov_label}">'
+        f'<div class="ci-band" style="left:{left:.1f}%;width:{width:.1f}%"></div>'
+        f'<div class="ci-point" style="left:{point:.1f}%"></div>'
+        "</div>"
+        f'<div class="ci-note">Score {score:.1f}/5 &middot; indicative range {lo:.1f}&ndash;{hi:.1f} '
+        f"({prov_label}). Bands are illustrative, derived from evidence provenance.</div>"
+        "</div>"
+    )
+
+
+def _render_tear_sheet(data: dict) -> str:
+    """Render the Track D6 single-screen executive tear sheet."""
+    company = data["company"]
+    fd = data.get("five_dimensions", {})
+    grade = fd.get("overall_grade", "—")
+    score = fd.get("overall_score", 0.0)
+    provenance = fd.get("overall_provenance", "estimated")
+    grade_class = f"grade-{str(grade)[0]}" if grade and grade != "—" else ""
+
+    stats: list[str] = [
+        f'<div class="tear-stat"><div class="v {grade_class}">{_esc(grade)}</div><div class="l">Overall grade</div></div>',
+        f'<div class="tear-stat"><div class="v">{score:.1f}<span style="font-size:0.5em;color:var(--text-secondary)">/5</span></div><div class="l">Impact score</div></div>',
+    ]
+
+    sdgs = sorted(
+        [a for a in data.get("sdg_alignments", []) if a.get("score", 0) > 0],
+        key=lambda a: a.get("score", 0),
+        reverse=True,
+    )[:3]
+    if sdgs:
+        sdg_str = ", ".join(f"SDG {a['goal']}" for a in sdgs)
+        stats.append(
+            f'<div class="tear-stat"><div class="v" style="font-size:1.05em">{_esc(sdg_str)}</div><div class="l">Top SDG alignment</div></div>'
+        )
+
+    gw = data.get("greenwashing", {})
+    if gw:
+        risk = (
+            gw.get("risk_level")
+            or gw.get("overall_risk")
+            or (
+                "Low"
+                if gw.get("overall_score", 0) < 30
+                else "Medium"
+                if gw.get("overall_score", 0) < 60
+                else "High"
+            )
+        )
+        stats.append(
+            f'<div class="tear-stat"><div class="v" style="font-size:1.2em">{_esc(str(risk))}</div><div class="l">Greenwashing risk</div></div>'
+        )
+
+    bm = data.get("benchmark_comparison", {})
+    if bm.get("benchmark_available") and bm.get("percentile") is not None:
+        stats.append(
+            f'<div class="tear-stat"><div class="v">{_esc(bm["percentile"])}<span style="font-size:0.5em">pct</span></div><div class="l">Sector percentile</div></div>'
+        )
+
+    claims = data.get("impact_claims", [])
+    if claims:
+        stats.append(
+            f'<div class="tear-stat"><div class="v">{len(claims)}</div><div class="l">Impact claims</div></div>'
+        )
+
+    name = _esc(company.get("name", ""))
+    sector = _esc(company.get("sector", ""))
+    sub = f"{name}{' · ' + sector if sector else ''}"
+    uncertainty = _render_uncertainty_block(score, provenance) if fd else ""
+    return (
+        '<section class="tear-sheet" id="tear-sheet" aria-label="Executive summary at a glance">'
+        f"<h2>At a glance</h2>"
+        f'<p style="color:var(--text-secondary);margin:0">{sub}</p>'
+        f'<div class="tear-grid">{"".join(stats)}</div>'
+        f"{uncertainty}"
+        "</section>"
+    )
+
+
+def _audience_filter_script() -> str:
+    """JS that filters report sections by audience (Track D4)."""
+    import json as _json
+
+    audience_map = _json.dumps(_AUDIENCE_SECTION_MAP)
+    return (
+        "<script>(function(){\n"
+        f"var MAP = {audience_map};\n"
+        "var ALL = ['lp','ic','regulator','public'];\n"
+        "var main = document.getElementById('main-content');\n"
+        "var bar = document.querySelector('.audience-bar');\n"
+        "if(!main || !bar) return;\n"
+        "var groups = [], current = null;\n"
+        "Array.prototype.forEach.call(main.children, function(el){\n"
+        "  var id = el.id;\n"
+        "  var isAnchor = (id && MAP.hasOwnProperty(id)) || (el.tagName === 'H2' && id);\n"
+        "  if(isAnchor){ current = {aud: MAP[id] || ALL, els:[el]}; groups.push(current); }\n"
+        "  else if(current){ current.els.push(el); }\n"
+        "});\n"
+        "function apply(aud){\n"
+        "  groups.forEach(function(g){\n"
+        "    var show = aud === 'full' || g.aud.indexOf(aud) !== -1;\n"
+        "    g.els.forEach(function(e){ e.style.display = show ? '' : 'none'; });\n"
+        "  });\n"
+        "}\n"
+        "bar.querySelectorAll('.aud-btn').forEach(function(btn){\n"
+        "  btn.addEventListener('click', function(){\n"
+        "    bar.querySelectorAll('.aud-btn').forEach(function(b){ b.setAttribute('aria-pressed', b===btn ? 'true':'false'); });\n"
+        "    apply(btn.dataset.aud);\n"
+        "  });\n"
+        "});\n"
+        "var init = bar.dataset.initial || 'full';\n"
+        "if(init !== 'full'){ apply(init); }\n"
+        "})();</script>"
+    )
+
+
+_ICON_SUN = (
+    '<svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+    'stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/>'
+    '<path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.4 1.4M17.6 17.6L19 19M19 5l-1.4 1.4M6.4 17.6L5 19"/></svg>'
+)
+_ICON_MOON = (
+    '<svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+    'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+    '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>'
+)
+_ICON_TOP = (
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" '
+    'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>'
+)
+_ICON_PRINT = (
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '
+    'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+    '<path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"/></svg>'
+)
+
+
+_DISTRIBUTION_NOTICES = {
+    "public": "Prepared for public disclosure.",
+    "lp": "Confidential &mdash; prepared for the fund&rsquo;s limited partners.",
+    "regulator": "Prepared for regulatory review.",
+    "ic": "Confidential &mdash; prepared for the investment committee.",
+}
+
+
+def _distribution_notice(data: dict) -> str:
+    audience = str(data.get("audience") or "full").lower()
+    text = _DISTRIBUTION_NOTICES.get(
+        audience,
+        "Confidential &mdash; prepared for internal investment and LP use. "
+        "Not for public distribution.",
+    )
+    return f'<div class="pc-confidential">{text}</div>'
+
+
+def _render_print_cover(data: dict) -> str:
+    """Render the print/PDF-only cover page (hidden on screen).
+
+    Marked ``aria-hidden`` because it is a paginated-media convenience that
+    duplicates the on-screen report header.
+    """
+    company = data.get("company", {})
+    name = _esc(company.get("name", "")) or "Impact report"
+    sector = _esc(company.get("sector", ""))
+    fd = data.get("five_dimensions", {})
+    gen = _esc(data.get("generated_at", "")[:10])
+    std = _esc(data.get("catalog_version", ""))
+
+    parts = [
+        '<section class="print-cover" aria-hidden="true">',
+        '<div class="pc-kicker">Impact Assessment</div>',
+        '<div class="pc-title">Impact Assessment Report</div>',
+        f'<div class="pc-company">{name}</div>',
+    ]
+    if sector:
+        parts.append(f'<div class="pc-sector">{sector}</div>')
+    if fd:
+        grade = fd.get("overall_grade")
+        if grade:
+            grade_class = f"grade-{str(grade)[0]}"
+            score = fd.get("overall_score")
+            score_html = (
+                f'<span style="font-size:0.4em;color:var(--text-secondary);font-weight:600"> {score:.1f}/5</span>'
+                if score is not None
+                else ""
+            )
+            parts.append(f'<div class="pc-grade {grade_class}">{_esc(grade)}{score_html}</div>')
+    meta_bits = []
+    if gen:
+        meta_bits.append(f"Generated {gen}")
+    if std:
+        meta_bits.append(f"Standard: {std}")
+    parts.append('<div class="pc-meta">')
+    parts.append(" &middot; ".join(meta_bits))
+    parts.append(_distribution_notice(data))
+    parts.append("</div></section>")
+    return "".join(parts)
+
+
+def _render_sticky_header(data: dict) -> str:
+    """Render the scroll-activated sticky mini-header (company + grade).
+
+    Marked ``aria-hidden`` because it visually duplicates the main report
+    header, which already lives in the accessibility tree.
+    """
+    company = data.get("company", {})
+    name = _esc(company.get("name", "")) or "Impact report"
+    sector = company.get("sector", "")
+    fd = data.get("five_dimensions", {})
+    parts = [
+        '<div class="mini-header" aria-hidden="true">',
+        f'<span class="mh-name">{name}</span>',
+    ]
+    if sector:
+        parts.append(f'<span class="mh-sector">{_esc(sector)}</span>')
+    parts.append('<span class="mh-spacer"></span>')
+    if fd:
+        grade = fd.get("overall_grade")
+        if grade:
+            grade_class = f"grade-{str(grade)[0]}"
+            parts.append(f'<span class="mh-grade {grade_class}">{_esc(grade)}</span>')
+        score = fd.get("overall_score")
+        if score is not None:
+            parts.append(f'<span class="mh-score">{score:.1f}/5</span>')
+    parts.append("</div>")
+    return "".join(parts)
+
+
+def _render_utility_dock() -> str:
+    """Render the floating utility dock (theme toggle, back-to-top, print)."""
+    return (
+        '<div class="util-dock" role="group" aria-label="Report controls">'
+        f'<button type="button" class="theme-toggle" aria-pressed="false" '
+        f'aria-label="Toggle dark mode" title="Toggle dark mode">{_ICON_MOON}{_ICON_SUN}</button>'
+        f'<button type="button" class="print-btn" aria-label="Print or save as PDF" '
+        f'title="Print / Save as PDF">{_ICON_PRINT}</button>'
+        f'<button type="button" class="to-top" aria-label="Back to top" '
+        f'title="Back to top">{_ICON_TOP}</button>'
+        "</div>"
+    )
+
+
+def _report_ux_script() -> str:
+    """Reading progress, scrollspy TOC highlight, theme toggle, back-to-top, print."""
+    return (
+        "<script>(function(){\n"
+        "var doc=document.documentElement, body=document.body;\n"
+        "var prog=document.getElementById('read-progress');\n"
+        "var toTop=document.querySelector('.util-dock .to-top');\n"
+        "var themeBtn=document.querySelector('.util-dock .theme-toggle');\n"
+        "var printBtn=document.querySelector('.util-dock .print-btn');\n"
+        "var mini=document.querySelector('.mini-header');\n"
+        "function ivRethemeCharts(){\n"
+        "  if(typeof Plotly==='undefined') return;\n"
+        "  var dark=body.classList.contains('theme-dark');\n"
+        "  var font=dark?'#e6e9ef':'#1f2937';\n"
+        "  var grid=dark?'rgba(255,255,255,0.14)':'rgba(0,0,0,0.08)';\n"
+        "  var line=dark?'rgba(255,255,255,0.30)':'rgba(0,0,0,0.18)';\n"
+        "  ['radar-chart','sdg-chart','benchmark-chart'].forEach(function(id){\n"
+        "    var el=document.getElementById(id);\n"
+        "    if(!el||!el.data||!el._fullLayout) return;\n"
+        "    var up={'font.color':font,'legend.font.color':font};\n"
+        "    if(el._fullLayout.polar){\n"
+        "      up['polar.bgcolor']='rgba(0,0,0,0)';\n"
+        "      up['polar.radialaxis.gridcolor']=grid; up['polar.radialaxis.linecolor']=line; up['polar.radialaxis.tickfont.color']=font;\n"
+        "      up['polar.angularaxis.gridcolor']=grid; up['polar.angularaxis.linecolor']=line; up['polar.angularaxis.tickfont.color']=font;\n"
+        "    } else {\n"
+        "      up['xaxis.gridcolor']=grid; up['xaxis.linecolor']=line; up['xaxis.tickfont.color']=font; up['xaxis.zerolinecolor']=grid;\n"
+        "      up['yaxis.gridcolor']=grid; up['yaxis.linecolor']=line; up['yaxis.tickfont.color']=font; up['yaxis.zerolinecolor']=grid;\n"
+        "    }\n"
+        "    try{ Plotly.relayout(el, up); }catch(e){}\n"
+        "  });\n"
+        "}\n"
+        "window.ivRethemeCharts=ivRethemeCharts;\n"
+        "window.addEventListener('load', function(){ setTimeout(ivRethemeCharts, 60); });\n"
+        "setTimeout(ivRethemeCharts, 500);\n"
+        "function onScroll(){\n"
+        "  var st=doc.scrollTop||body.scrollTop;\n"
+        "  var h=doc.scrollHeight-doc.clientHeight;\n"
+        "  var p=h>0?st/h*100:0;\n"
+        "  if(prog){ prog.style.width=p.toFixed(1)+'%'; }\n"
+        "  if(toTop){ toTop.classList.toggle('show', st>400); }\n"
+        "  if(mini){ mini.classList.toggle('show', st>240); }\n"
+        "}\n"
+        "window.addEventListener('scroll', onScroll, {passive:true}); onScroll();\n"
+        "if(toTop){ toTop.addEventListener('click', function(){ window.scrollTo({top:0, behavior:'smooth'}); }); }\n"
+        "if(printBtn){ printBtn.addEventListener('click', function(){ window.print(); }); }\n"
+        "if(themeBtn){\n"
+        "  try{ if(localStorage.getItem('iv-theme')==='dark'){ body.classList.add('theme-dark'); } }catch(e){}\n"
+        "  function sync(){ themeBtn.setAttribute('aria-pressed', body.classList.contains('theme-dark')?'true':'false'); }\n"
+        "  sync(); ivRethemeCharts();\n"
+        "  themeBtn.addEventListener('click', function(){\n"
+        "    var dark=body.classList.toggle('theme-dark');\n"
+        "    try{ localStorage.setItem('iv-theme', dark?'dark':'light'); }catch(e){}\n"
+        "    sync(); ivRethemeCharts();\n"
+        "  });\n"
+        "}\n"
+        "var links=Array.prototype.slice.call(document.querySelectorAll('.report-toc a'));\n"
+        "var targets=links.map(function(a){ var id=a.getAttribute('href'); return id?document.querySelector(id):null; });\n"
+        "if('IntersectionObserver' in window){\n"
+        "  var seen={};\n"
+        "  var obs=new IntersectionObserver(function(entries){\n"
+        "    entries.forEach(function(en){ seen[en.target.id]=en.isIntersecting; });\n"
+        "    var activeId=null;\n"
+        "    for(var i=0;i<targets.length;i++){ var t=targets[i]; if(t && seen[t.id]){ activeId=t.id; break; } }\n"
+        "    links.forEach(function(a){ a.classList.toggle('active', a.getAttribute('href')==='#'+activeId); });\n"
+        "  }, {rootMargin:'-10% 0px -70% 0px'});\n"
+        "  targets.forEach(function(t){ if(t) obs.observe(t); });\n"
+        "}\n"
+        'var LINK_SVG=\'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>\';\n'
+        "var main2=document.getElementById('main-content');\n"
+        "if(main2){ Array.prototype.forEach.call(main2.querySelectorAll('h2[id]'), function(h){\n"
+        "  var b=document.createElement('button');\n"
+        "  b.type='button'; b.className='h-anchor'; b.innerHTML=LINK_SVG;\n"
+        "  b.setAttribute('aria-label','Copy link to this section'); b.title='Copy link to this section';\n"
+        "  b.addEventListener('click', function(){\n"
+        "    var url=location.href.split('#')[0]+'#'+h.id;\n"
+        "    try{ history.replaceState(null,'',  '#'+h.id); }catch(e){}\n"
+        "    var done=function(){ b.classList.add('copied'); setTimeout(function(){ b.classList.remove('copied'); },1200); };\n"
+        "    if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(url).then(done, done); }\n"
+        "    else { location.hash=h.id; done(); }\n"
+        "  });\n"
+        "  h.appendChild(b);\n"
+        "}); }\n"
+        "})();</script>"
+    )
+
+
+def _collapsible_sections_script() -> str:
+    """Make each major (h2) section collapsible, plus expand/collapse-all controls."""
+    return (
+        "<script>(function(){\n"
+        "var main=document.getElementById('main-content');\n"
+        "if(!main) return;\n"
+        'var CARET=\'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>\';\n'
+        "var heads=Array.prototype.slice.call(main.querySelectorAll('h2[id]'));\n"
+        "var sections=[];\n"
+        "heads.forEach(function(h){\n"
+        "  var body=[]; var n=h.nextElementSibling;\n"
+        "  while(n && n.tagName !== 'H2'){ body.push(n); n=n.nextElementSibling; }\n"
+        "  var btn=document.createElement('button');\n"
+        "  btn.type='button'; btn.className='sec-toggle'; btn.innerHTML=CARET;\n"
+        "  btn.setAttribute('aria-expanded','true');\n"
+        "  btn.setAttribute('aria-label','Collapse or expand this section');\n"
+        "  var sec={head:h, body:body, btn:btn};\n"
+        "  function set(open){\n"
+        "    btn.setAttribute('aria-expanded', open?'true':'false');\n"
+        "    body.forEach(function(e){ e.classList.toggle('sec-collapsed-body', !open); });\n"
+        "  }\n"
+        "  sec.set=set;\n"
+        "  btn.addEventListener('click', function(){ set(btn.getAttribute('aria-expanded')!=='true'); });\n"
+        "  h.insertBefore(btn, h.firstChild);\n"
+        "  sections.push(sec);\n"
+        "});\n"
+        "if(!sections.length) return;\n"
+        "var bar=document.createElement('div');\n"
+        "bar.className='collapse-controls';\n"
+        "var ca=document.createElement('button'); ca.type='button'; ca.className='collapse-all'; ca.textContent='Collapse all';\n"
+        "var ea=document.createElement('button'); ea.type='button'; ea.className='expand-all'; ea.textContent='Expand all';\n"
+        "ca.addEventListener('click', function(){ sections.forEach(function(s){ s.set(false); }); });\n"
+        "ea.addEventListener('click', function(){ sections.forEach(function(s){ s.set(true); }); });\n"
+        "bar.appendChild(ca); bar.appendChild(ea);\n"
+        "var anchor=document.querySelector('.audience-bar') || (sections[0] && sections[0].head);\n"
+        "if(anchor && anchor.parentNode){ anchor.parentNode.insertBefore(bar, anchor.nextSibling); }\n"
+        "})();</script>"
+    )
+
+
+# Data that feeds each audience-scoped section. When a report is rendered for
+# one audience, data for sections that audience doesn't see is dropped before
+# rendering, so it can't leak via KPI cards, the tear sheet or the summary.
+_SECTION_DATA_KEYS: dict[str, tuple[str, ...]] = {
+    "sec-gap": ("gap_analysis",),
+    "sec-greenwashing": ("greenwashing",),
+    "sec-benchmark": ("benchmark_comparison",),
+    "sec-targets": ("target_tracking",),
+    "sec-beneficiary": ("beneficiary_feedback",),
+    "sec-claims": ("impact_claims",),
+    "sec-opp-risk": ("impact_analysis",),
+}
+
+_H2_ID_RE = re.compile(r'<h2 id="([^"]+)"')
+
+_TOC_PLACEHOLDER = "<!--impact-report-toc-->"
+_TOC_LABELS: dict[str, str] = {
+    "executive-summary": "Executive summary",
+    "sec-5d": "5 Dimensions",
+    "sec-sdg": "SDG alignment",
+    "sec-pathway": "Impact pathway",
+    "sec-opp-risk": "Opportunities &amp; risks",
+    "sec-gap": "Gap analysis",
+    "sec-esg-toolbox": "ESG toolbox",
+    "sec-greenwashing": "Greenwashing",
+    "sec-benchmark": "Benchmarks",
+    "sec-metrics": "Metric tracking",
+    "sec-claims": "Impact claims",
+    "sec-targets": "Targets",
+    "sec-beneficiary": "Beneficiary feedback",
+    "sec-glossary": "Glossary",
+}
+_SECTION_ID_RE = re.compile(r'id="(executive-summary|sec-[a-z0-9-]+)"')
+
+
+def _render_toc(rendered_html: str) -> str:
+    links = []
+    seen: set[str] = set()
+    for section_id in _SECTION_ID_RE.findall(rendered_html):
+        label = _TOC_LABELS.get(section_id)
+        if label and section_id not in seen:
+            seen.add(section_id)
+            links.append(f'  <a href="#{section_id}">{label}</a>')
+    return (
+        '<nav class="report-toc" aria-label="Report contents">\n  <h4>On this page</h4>\n'
+        + "\n".join(links)
+        + "\n</nav>"
+    )
+
+
+def _visible_to(section_id: str, audience: str) -> bool:
+    allowed = _AUDIENCE_SECTION_MAP.get(section_id)
+    return audience == "full" or allowed is None or audience in allowed
+
+
+def _scope_data_to_audience(data: dict) -> dict:
+    audience = str(data.get("audience") or "full").lower()
+    if audience == "full":
+        return data
+    scoped = dict(data)
+    for section_id, keys in _SECTION_DATA_KEYS.items():
+        if not _visible_to(section_id, audience):
+            for key in keys:
+                scoped.pop(key, None)
+    return scoped
+
+
+def _filter_sections_for_audience(sections: list[str], audience: str) -> list[str]:
+    """Drop rendered H2 sections the audience doesn't see (server-side)."""
+    if audience == "full":
+        return sections
+    out: list[str] = []
+    visible = True
+    for chunk in sections:
+        m = _H2_ID_RE.search(chunk)
+        if m and not chunk[: m.start()].strip():
+            visible = _visible_to(m.group(1), audience)
+        if visible:
+            out.append(chunk)
+    return out
+
+
+def _to_html(data: dict) -> str:
+    from impact_vision.impact.ai_provenance import ai_provenance_for_report
+
+    data = _scope_data_to_audience(data)
+    audience = str(data.get("audience") or "full").lower()
+    company = data["company"]
+    sections: list[str] = []
+    print_footer_suffix = "" if audience == "public" else " \u2014 Confidential"
+    body_class = ' class="theme-dark"' if str(data.get("theme", "")).lower() == "dark" else ""
+    sdg_colors_map = {
+        1: "#E5243B",
+        2: "#DDA63A",
+        3: "#4C9F38",
+        4: "#C5192D",
+        5: "#FF3A21",
+        6: "#26BDE2",
+        7: "#FCC30B",
+        8: "#A21942",
+        9: "#FD6925",
+        10: "#DD1367",
+        11: "#FD9D24",
+        12: "#BF8B2E",
+        13: "#3F7E44",
+        14: "#0A97D9",
+        15: "#56C02B",
+        16: "#00689D",
+        17: "#19486A",
+    }
+
+    sections.append(f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Impact Report: {_esc(company.get("name", ""))}</title>
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<style>
+:root {{
+  --primary: #0d47a1; --primary-light: #e3f2fd; --primary-dark: #002171;
+  --accent: #1976d2; --accent-light: #63a4ff;
+  --success: #2e7d32; --success-light: #e8f5e9;
+  --warning: #f57c00; --warning-light: #fff3e0;
+  --danger: #c62828; --danger-light: #ffebee;
+  --surface: #ffffff; --bg: #f5f7fa; --text: #1a1a2e; --text-secondary: #5f6368;
+  --border: #e0e4e8; --shadow-sm: 0 1px 3px rgba(0,0,0,0.08); --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
+  --radius: 12px; --radius-sm: 8px;
+}}
+* {{ box-sizing: border-box; margin: 0; padding: 0; }}
+body {{ font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 1080px; margin: 0 auto; padding: 32px 24px; color: var(--text); background: var(--bg); line-height: 1.5; }}
+.report-header {{ background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%); color: white; padding: 36px 40px; border-radius: var(--radius); margin-bottom: 28px; box-shadow: var(--shadow-md); }}
+.report-header h1 {{ font-size: 1.75em; font-weight: 700; margin-bottom: 6px; letter-spacing: -0.02em; }}
+.report-header .subtitle {{ opacity: 0.9; font-size: 0.95em; }}
+.report-header .meta-row {{ display: flex; gap: 20px; flex-wrap: wrap; margin-top: 12px; opacity: 0.85; font-size: 0.85em; }}
+.report-header .meta-row span {{ display: flex; align-items: center; gap: 4px; }}
+.tag-row {{ display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }}
+.tag {{ display: inline-block; background: rgba(255,255,255,0.2); padding: 3px 12px; border-radius: 20px; font-size: 0.8em; }}
+h2 {{ color: var(--primary); font-size: 1.3em; margin: 32px 0 16px; padding-bottom: 8px; border-bottom: 2px solid var(--primary-light); font-weight: 600; }}
+h3 {{ color: var(--text); font-size: 1.05em; margin: 20px 0 10px; font-weight: 600; }}
+.cards-row {{ display: flex; gap: 16px; flex-wrap: wrap; margin: 16px 0; }}
+.score-card {{ flex: 0 0 auto; background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow-sm); padding: 20px 28px; text-align: center; border: 1px solid var(--border); min-width: 130px; }}
+.score-card .value {{ font-size: 2.2em; font-weight: 700; line-height: 1.1; }}
+.score-card .label {{ font-size: 0.8em; color: var(--text-secondary); margin-top: 6px; text-transform: uppercase; letter-spacing: 0.03em; }}
+.grade-A {{ color: var(--success); }} .grade-B {{ color: #558b2f; }} .grade-C {{ color: #f9a825; }} .grade-D {{ color: #e65100; }} .grade-F {{ color: var(--danger); }}
+.chart-row {{ display: flex; gap: 20px; flex-wrap: wrap; margin: 16px 0; }}
+.chart-box {{ flex: 1 1 420px; min-width: 0; background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow-sm); padding: 20px; border: 1px solid var(--border); overflow: hidden; }}
+table {{ border-collapse: collapse; width: 100%; margin: 12px 0; background: var(--surface); border-radius: var(--radius-sm); overflow: hidden; box-shadow: var(--shadow-sm); font-size: 0.9em; }}
+th {{ background: var(--primary); color: white; font-weight: 600; padding: 12px 14px; text-align: left; text-transform: uppercase; font-size: 0.75em; letter-spacing: 0.05em; }}
+td {{ border-bottom: 1px solid var(--border); padding: 10px 14px; }}
+tr:hover td {{ background: var(--primary-light); }}
+.bar-track {{ background: #e8eaed; border-radius: 6px; height: 10px; width: 100%; overflow: hidden; }}
+.bar-fill {{ height: 100%; border-radius: 6px; transition: width 0.4s ease; }}
+.bar-fill.blue {{ background: linear-gradient(90deg, var(--accent), var(--accent-light)); }}
+.bar-fill.green {{ background: linear-gradient(90deg, #43a047, #66bb6a); }}
+.bar-fill.orange {{ background: linear-gradient(90deg, #ef6c00, #ffa726); }}
+.bar-fill.red {{ background: linear-gradient(90deg, #c62828, #ef5350); }}
+.bar-fill.coverage {{ background: linear-gradient(90deg, var(--primary), var(--accent)); }}
+.rec {{ background: var(--warning-light); padding: 14px 18px; border-left: 4px solid var(--warning); margin: 8px 0; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: 0.9em; line-height: 1.6; }}
+.bm-delta.positive {{ color: var(--success); font-weight: 700; }}
+.bm-delta.negative {{ color: var(--danger); font-weight: 700; }}
+.bm-delta.neutral {{ color: var(--text-secondary); font-weight: 600; }}
+.coverage-hero {{ background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow-sm); padding: 24px 28px; border: 1px solid var(--border); margin: 16px 0; display: flex; align-items: center; gap: 20px; }}
+.coverage-hero .pct {{ font-size: 2.5em; font-weight: 800; color: var(--primary); line-height: 1; }}
+.coverage-hero .detail {{ flex: 1; }}
+.coverage-hero .bar-track {{ height: 14px; margin-top: 8px; }}
+.footer {{ margin-top: 48px; padding: 20px 0; border-top: 2px solid var(--border); color: var(--text-secondary); font-size: 0.8em; text-align: center; }}
+.footer a {{ color: var(--accent); text-decoration: none; }}
+@media(max-width: 700px) {{ .chart-row {{ flex-direction: column; }} .chart-box {{ flex-basis: 100%; }} }}
+
+/* 7.1.1 -- 5D Overlay Panel */
+.dim-clickable {{ cursor: pointer; }}
+.dim-clickable:hover td {{ background: var(--primary-light) !important; }}
+.dim-overlay {{ display: none; }}
+.dim-overlay.active {{ display: table-row; }}
+.dim-overlay td {{ background: #f8fafe; padding: 16px 14px; }}
+.dim-overlay-content {{ display: flex; gap: 16px; flex-wrap: wrap; }}
+.dim-overlay-col {{ flex: 1 1 200px; min-width: 180px; }}
+.dim-overlay-col h4 {{ font-size: 0.85em; color: var(--primary); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.03em; }}
+.metric-pill {{ display: inline-block; padding: 3px 10px; border-radius: 14px; font-size: 0.78em; margin: 2px 3px; font-weight: 500; }}
+.metric-pill.tracked {{ background: var(--success-light); color: var(--success); }}
+.metric-pill.gap {{ background: var(--danger-light); color: var(--danger); }}
+.metric-pill.partial {{ background: var(--warning-light); color: var(--warning); }}
+.dim-suggestion {{ font-size: 0.82em; color: var(--text-secondary); margin: 4px 0; padding-left: 12px; border-left: 2px solid var(--warning); }}
+
+/* 7.1.2 -- SDG Drill-down */
+.sdg-clickable {{ cursor: pointer; }}
+.sdg-clickable:hover td {{ background: #fff9e6 !important; }}
+.sdg-detail {{ display: none; }}
+.sdg-detail.active {{ display: table-row; }}
+.sdg-detail td {{ background: #fffef5; padding: 16px 14px; }}
+.evidence-chain {{ display: flex; align-items: center; gap: 4px; flex-wrap: wrap; margin: 6px 0; }}
+.chain-node {{ background: var(--primary-light); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 6px 10px; font-size: 0.78em; text-align: center; max-width: 160px; }}
+.chain-arrow {{ color: var(--text-secondary); font-size: 1.1em; }}
+.chain-confidence {{ font-size: 0.7em; color: var(--text-secondary); }}
+.sdg-rec {{ font-size: 0.82em; padding: 6px 10px; background: var(--warning-light); border-radius: var(--radius-sm); margin: 3px 0; }}
+
+/* 7.1.3 -- Metric Tracking Dashboard */
+.metric-grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin: 16px 0; }}
+.metric-card {{ background: var(--surface); border-radius: var(--radius-sm); box-shadow: var(--shadow-sm); padding: 14px 16px; border: 1px solid var(--border); border-top: 3px solid var(--border); }}
+.metric-card.tracked {{ border-top-color: var(--success); }}
+.metric-card.gap {{ border-top-color: var(--danger); }}
+.metric-card.partial {{ border-top-color: var(--warning); }}
+.metric-card .mc-id {{ font-size: 0.75em; color: var(--text-secondary); font-weight: 600; }}
+.metric-card .mc-name {{ font-size: 0.88em; font-weight: 600; margin: 4px 0; }}
+.metric-card .mc-status {{ display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.72em; font-weight: 600; text-transform: uppercase; }}
+.mc-status.tracked {{ background: var(--success-light); color: var(--success); }}
+.mc-status.gap {{ background: var(--danger-light); color: var(--danger); }}
+.mc-status.partial {{ background: var(--warning-light); color: var(--warning); }}
+
+/* 7.1.4 -- Claim Evidence Cards */
+.claim-card {{ background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow-sm); padding: 16px 20px; margin: 10px 0; border: 1px solid var(--border); transition: box-shadow 0.2s; }}
+.claim-card:hover {{ box-shadow: var(--shadow-md); }}
+.claim-header {{ display: flex; align-items: center; gap: 10px; cursor: pointer; }}
+.claim-text {{ flex: 1; font-size: 0.9em; }}
+.claim-badge {{ display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 0.72em; font-weight: 600; text-transform: uppercase; }}
+.claim-badge.outcome {{ background: #e8f5e9; color: #2e7d32; }}
+.claim-badge.output {{ background: #e3f2fd; color: #1565c0; }}
+.claim-badge.activity {{ background: #fff3e0; color: #e65100; }}
+.claim-badge.intent {{ background: #f3e5f5; color: #7b1fa2; }}
+.claim-badge.risk {{ background: #ffebee; color: #c62828; }}
+.claim-body {{ display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }}
+.claim-body.active {{ display: block; }}
+.confidence-bar {{ background: #e8eaed; border-radius: 6px; height: 8px; width: 100px; display: inline-block; overflow: hidden; vertical-align: middle; }}
+.confidence-fill {{ height: 100%; border-radius: 6px; }}
+.chip {{ display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.75em; margin: 2px; background: var(--primary-light); color: var(--primary); }}
+.claim-toggle {{ color: var(--text-secondary); font-size: 0.85em; }}
+
+/* 7.2.3 -- Impact Pathway Diagram */
+.pathway {{ display: flex; align-items: stretch; gap: 0; margin: 20px 0; overflow-x: auto; padding: 10px 0; }}
+.pathway-stage {{ flex: 1 1 150px; min-width: 130px; text-align: center; position: relative; }}
+.pathway-box {{ background: var(--surface); border: 2px solid var(--primary-light); border-radius: var(--radius-sm); padding: 12px 10px; margin: 0 6px; min-height: 80px; display: flex; flex-direction: column; justify-content: center; }}
+.pathway-box h4 {{ font-size: 0.78em; color: var(--primary); text-transform: uppercase; margin-bottom: 6px; }}
+.pathway-box .items {{ font-size: 0.78em; color: var(--text); }}
+.pathway-box .confidence-label {{ font-size: 0.68em; color: var(--text-secondary); margin-top: 4px; }}
+.pathway-arrow {{ position: absolute; right: -10px; top: 50%; transform: translateY(-50%); color: var(--primary); font-size: 1.4em; z-index: 1; }}
+
+/* 7.2.4 -- 5D layout: radar at top, full-width table below */
+.five-d-grid {{ display: grid; grid-template-columns: minmax(340px, 0.9fr) minmax(360px, 1.4fr); gap: 20px; margin: 16px 0; align-items: stretch; }}
+@media(max-width: 1024px) {{ .five-d-grid {{ grid-template-columns: 1fr; }} }}
+/* The 5-Dimension table has 6 columns incl. a wide Rationale; the 1080px body
+   cap makes a side-by-side card too narrow, so stack it: radar above (centred),
+   full-width table below. The 5-column SDG grid still sits side-by-side. */
+.five-d-grid.dim-stack {{ grid-template-columns: 1fr; }}
+.five-d-grid.dim-stack #radar-chart {{ max-width: 620px; width: 100%; margin: 0 auto; }}
+.five-d-grid .chart-box {{ padding: 20px; }}
+.five-d-grid #radar-chart {{ min-height: 360px; }}
+.table-scroll {{ overflow-x: auto; -webkit-overflow-scrolling: touch; }}
+#dim-table {{ width: 100%; }}
+#dim-table th, #dim-table td {{ vertical-align: top; }}
+#dim-table td.notes {{ white-space: normal; color: var(--text-secondary); font-size: 0.85em; line-height: 1.45; }}
+#dim-table td.metrics-cell {{ white-space: nowrap; }}
+
+/* 7.2.5 -- SDG chart + collapsible rows */
+.sdg-toggle {{ display: inline-block; margin: 10px 0 14px; padding: 6px 14px; background: var(--primary-light); color: var(--primary); border: none; border-radius: var(--radius-sm); font-size: 0.82em; font-weight: 600; cursor: pointer; }}
+.sdg-toggle:hover {{ background: #cfe3ff; }}
+tr.sdg-collapsed, tr.sdg-collapsed + tr.sdg-detail {{ display: none; }}
+tr.sdg-collapsed.show, tr.sdg-collapsed.show + tr.sdg-detail {{ display: table-row; }}
+
+/* 7.2.6 -- Missing Metrics rich table */
+.missing-metrics-group {{ margin: 18px 0; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--surface); box-shadow: var(--shadow-sm); }}
+.missing-metrics-group summary {{ padding: 14px 18px; cursor: pointer; font-weight: 600; color: var(--primary); background: var(--primary-light); list-style: none; display: flex; justify-content: space-between; align-items: center; }}
+.missing-metrics-group summary::-webkit-details-marker {{ display: none; }}
+.missing-metrics-group summary::after {{ content: '▾'; font-size: 0.9em; color: var(--primary); transition: transform 0.2s; }}
+.missing-metrics-group[open] summary::after {{ transform: rotate(180deg); }}
+.missing-metric-card {{ padding: 14px 18px; border-top: 1px solid var(--border); display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1.2fr); gap: 14px; }}
+@media(max-width: 760px) {{ .missing-metric-card {{ grid-template-columns: 1fr; }} }}
+.missing-metric-card:first-of-type {{ border-top: none; }}
+.missing-metric-card .mm-head {{ display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 6px; }}
+.missing-metric-card .mm-id {{ font-family: 'SF Mono', Consolas, monospace; font-size: 0.78em; background: var(--bg); color: var(--text-secondary); padding: 2px 8px; border-radius: 4px; letter-spacing: 0.02em; }}
+.missing-metric-card .mm-name {{ font-weight: 600; font-size: 0.95em; color: var(--text); }}
+.missing-metric-card .mm-def {{ font-size: 0.85em; color: var(--text-secondary); margin-top: 4px; line-height: 1.5; }}
+.missing-metric-card .mm-side dl {{ margin: 0; font-size: 0.82em; }}
+.missing-metric-card .mm-side dt {{ color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; font-size: 0.72em; font-weight: 600; margin-top: 6px; }}
+.missing-metric-card .mm-side dd {{ margin: 2px 0 0; color: var(--text); line-height: 1.4; }}
+.missing-metric-card .mm-chip {{ display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.72em; margin: 2px 4px 2px 0; font-weight: 600; }}
+.missing-metric-card .mm-chip.dim {{ background: var(--primary-light); color: var(--primary); }}
+.missing-metric-card .mm-chip.sdg {{ background: #fff4dc; color: #8a5a00; }}
+.missing-metric-card .mm-chip.unit {{ background: var(--success-light); color: var(--success); }}
+
+/* 7.2.7 -- Scoring rationale panel */
+.rationale-panel {{ margin: 22px 0; padding: 20px 22px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-sm); }}
+.rationale-headline {{ display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 10px; flex-wrap: wrap; }}
+.rationale-overall {{ font-size: 2.6em; font-weight: 800; color: var(--primary); line-height: 1; }}
+.rationale-overall-max {{ font-size: 0.4em; color: var(--text-secondary); margin-left: 4px; font-weight: 400; }}
+.rationale-grade {{ display: inline-block; padding: 4px 12px; margin-left: 12px; background: var(--primary-light); color: var(--primary); border-radius: 16px; font-size: 1em; font-weight: 700; vertical-align: super; }}
+.rationale-prov {{ font-size: 0.95em; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }}
+.rationale-intro {{ font-size: 0.9em; color: var(--text-secondary); line-height: 1.6; margin: 6px 0 14px; }}
+.rationale-table-wrap {{ overflow-x: auto; margin: 8px 0 10px; }}
+.rationale-table {{ width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 0.82em; }}
+.rationale-table col.col-dim {{ width: 24%; }}
+.rationale-table col.col-final {{ width: 9%; }}
+.rationale-table col.col-baseline {{ width: 11%; }}
+.rationale-table col.col-lift {{ width: 12%; }}
+.rationale-table col.col-metrics {{ width: 13%; }}
+.rationale-table col.col-driver {{ width: 31%; }}
+.rationale-table th {{ background: var(--bg); color: var(--text); padding: 8px 10px; font-size: 0.72em; text-align: left; vertical-align: top; }}
+.rationale-table td {{ padding: 8px 10px; vertical-align: top; word-break: break-word; overflow-wrap: break-word; line-height: 1.42; }}
+.rationale-table td.r-final,
+.rationale-table td.r-baseline,
+.rationale-table td.r-lift,
+.rationale-table td.r-metrics {{ white-space: nowrap; }}
+.rationale-table td.r-driver {{ font-size: 0.92em; color: var(--text-secondary); }}
+.rationale-table td.r-dim {{ line-height: 1.35; }}
+.rationale-table td.r-dim .prov-badge {{ display: inline-block; margin: 2px 0 0; }}
+@media (max-width: 780px) {{
+  .rationale-table {{ table-layout: auto; font-size: 0.78em; min-width: 640px; }}
+  .rationale-table th, .rationale-table td {{ padding: 6px 8px; }}
+}}
+.rationale-cap-tag {{ font-size: 0.7em; background: var(--warning-light); color: var(--warning); padding: 1px 6px; border-radius: 8px; margin-left: 4px; white-space: nowrap; }}
+.prov-badge {{ font-size: 0.64em; padding: 2px 7px; border-radius: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; margin-left: 6px; white-space: nowrap; }}
+.rationale-levers {{ margin: 12px 0; padding: 14px 16px; background: var(--warning-light); border-left: 4px solid var(--warning); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }}
+.rationale-levers-title {{ font-size: 0.88em; color: var(--text); font-weight: 600; margin-bottom: 6px; }}
+.rationale-lever-list {{ margin: 0; padding-left: 20px; font-size: 0.85em; color: var(--text-secondary); }}
+.rationale-lever-list code {{ font-size: 0.9em; background: rgba(255,255,255,0.7); padding: 1px 6px; border-radius: 4px; color: var(--text); }}
+.rationale-legend {{ display: flex; gap: 18px; flex-wrap: wrap; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border); font-size: 0.82em; color: var(--text-secondary); }}
+.rationale-legend .legend-dot {{ display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }}
+
+/* 7.1.5 -- Print/PDF */
+@media print {{
+  body {{ background: white; max-width: 100%; padding: 16px; font-size: 10pt; }}
+  .report-header {{ background: #0d47a1 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }}
+  .score-card, .chart-box, .claim-card, .metric-card {{ break-inside: avoid; }}
+  #interactive-panel, .dim-clickable .claim-toggle {{ display: none !important; }}
+  .dim-overlay, .sdg-detail, .claim-body {{ display: table-row !important; }}
+  .claim-body {{ display: block !important; }}
+  h2 {{ break-before: page; }}
+  .footer {{ break-before: avoid; }}
+}}
+
+/* 7.1.6 -- Report Comparison */
+.comparison-table {{ width: 100%; border-collapse: collapse; }}
+.comparison-table th {{ background: var(--primary); color: white; padding: 10px; font-size: 0.8em; }}
+.comparison-table td {{ padding: 8px 10px; border-bottom: 1px solid var(--border); font-size: 0.88em; }}
+.delta-up {{ color: var(--success); font-weight: 700; }}
+.delta-down {{ color: var(--danger); font-weight: 700; }}
+.delta-same {{ color: var(--text-secondary); }}
+
+/* v0.12 -- Executive Summary KPI strip & callouts */
+.kpi-strip {{
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px; margin: 0 0 20px;
+}}
+.kpi-tile {{
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px 18px; box-shadow: var(--shadow-sm);
+  position: relative; overflow: hidden;
+}}
+.kpi-tile::before {{
+  content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+  background: var(--accent);
+}}
+.kpi-tile.pass::before {{ background: var(--success); }}
+.kpi-tile.warn::before {{ background: var(--warning); }}
+.kpi-tile.fail::before {{ background: var(--danger);  }}
+.kpi-tile.neutral::before {{ background: #9aa0a6; }}
+.kpi-tile .kpi-label {{
+  font-size: 0.72em; color: #5f6368; text-transform: uppercase;
+  letter-spacing: 0.06em; font-weight: 600; margin-bottom: 6px;
+}}
+.kpi-tile .kpi-value {{ font-size: 1.7em; font-weight: 750; line-height: 1.05; color: var(--text); }}
+.kpi-tile .kpi-sub {{ font-size: 0.78em; color: var(--text-secondary); margin-top: 4px; }}
+.callout {{
+  border-left: 4px solid var(--primary); background: var(--primary-light);
+  padding: 12px 16px; border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  margin: 10px 0; font-size: 0.9em; color: var(--text);
+}}
+.callout.warn   {{ border-color: var(--warning); background: var(--warning-light); }}
+.callout.danger {{ border-color: var(--danger);  background: var(--danger-light); }}
+.callout.ok     {{ border-color: var(--success); background: var(--success-light); }}
+
+/* v0.12 -- TOC sidebar */
+.report-toc {{
+  position: fixed; top: 32px; left: 16px; width: 210px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px 14px;
+  box-shadow: var(--shadow-sm); font-size: 0.84em;
+  max-height: calc(100vh - 64px); overflow-y: auto;
+}}
+.report-toc h4 {{
+  font-size: 0.7em; text-transform: uppercase; letter-spacing: 0.08em;
+  color: #9aa0a6; margin-bottom: 8px; font-weight: 700;
+}}
+.report-toc a {{
+  display: block; color: var(--text-secondary); text-decoration: none;
+  padding: 5px 9px; border-radius: var(--radius-sm); margin: 1px 0;
+  border-left: 2px solid transparent; transition: all 0.15s;
+}}
+.report-toc a:hover {{
+  color: var(--primary); background: var(--primary-light);
+  border-left-color: var(--primary);
+}}
+@media(max-width: 1360px) {{ .report-toc {{ display: none; }} }}
+@media print {{ .report-toc {{ display: none; }} }}
+
+/* ---------- Accessibility (WCAG 2.2 AA) ---------- */
+.skip-link {{ position:absolute; left:-9999px; top:0; z-index:1000; background:var(--primary); color:#fff; padding:10px 16px; border-radius:0 0 8px 0; font-weight:600; text-decoration:none; }}
+.skip-link:focus {{ left:0; }}
+a:focus-visible, button:focus-visible, [tabindex]:focus-visible {{ outline:3px solid var(--accent); outline-offset:2px; border-radius:3px; }}
+tr.dim-clickable:focus-visible, tr.sdg-clickable:focus-visible, .claim-header:focus-visible {{ outline:3px solid var(--accent); outline-offset:-3px; }}
+.visually-hidden {{ position:absolute !important; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }}
+@media (prefers-reduced-motion: reduce) {{ *, *::before, *::after {{ animation-duration:0.001ms !important; transition-duration:0.001ms !important; scroll-behavior:auto !important; }} }}
+
+/* ---------- Evidence-provenance badges (Track D3) ---------- */
+.evidence-badge {{ display:inline-flex; align-items:center; gap:5px; vertical-align:middle; padding:2px 9px; border-radius:9999px; font-size:0.7em; font-weight:650; letter-spacing:0.02em; border:1px solid #bdc1c6; background:#f1f3f4; color:#5f6368; text-decoration:none; }}
+.evidence-badge::before {{ content:""; width:7px; height:7px; border-radius:50%; background:#5f6368; flex:0 0 auto; }}
+.evidence-badge.verified {{ background:var(--success-light); color:#1b5e20; border-color:var(--success); }}
+.evidence-badge.verified::before {{ background:var(--success); }}
+.evidence-badge.reported {{ background:var(--primary-light); color:var(--primary-dark); border-color:var(--accent); }}
+.evidence-badge.reported::before {{ background:var(--accent); }}
+.evidence-badge.estimated, .evidence-badge.proxy {{ background:var(--warning-light); color:#e65100; border-color:var(--warning); }}
+.evidence-badge.estimated::before, .evidence-badge.proxy::before {{ background:var(--warning); }}
+.evidence-badge.unverified, .evidence-badge.suggested {{ background:var(--danger-light); color:#b71c1c; border-color:var(--danger); }}
+.evidence-badge.unverified::before, .evidence-badge.suggested::before {{ background:var(--danger); }}
+.evidence-legend {{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin:12px 0; font-size:0.86em; }}
+.evidence-legend .ev-title {{ font-weight:650; color:var(--text-secondary); }}
+
+/* ---------- Audience filter (Track D4) ---------- */
+.audience-bar {{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:18px 0;
+  padding:10px 14px; background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius-sm); box-shadow:var(--shadow-sm); }}
+.audience-bar .aud-label {{ font-weight:650; color:var(--text-secondary); font-size:0.85em; margin-right:4px; }}
+.audience-bar button {{ font:inherit; font-size:0.82em; font-weight:600; cursor:pointer;
+  padding:6px 14px; border-radius:999px; border:1px solid var(--accent); background:transparent;
+  color:var(--accent); }}
+.audience-bar button[aria-pressed="true"] {{ background:var(--accent); color:#fff; }}
+@media print {{ .audience-bar {{ display:none; }} }}
+.glossary summary {{ cursor:pointer; color:var(--text-secondary); font-size:0.9em; }}
+.glossary dl {{ display:grid; grid-template-columns:minmax(140px,220px) 1fr; gap:6px 16px; margin:12px 0 0; }}
+.glossary dt {{ font-weight:650; }}
+.glossary dd {{ margin:0; color:var(--text-secondary); font-size:0.92em; }}
+@media (max-width:640px) {{ .glossary dl {{ grid-template-columns:1fr; }} .glossary dd {{ margin-bottom:8px; }} }}
+@media print {{ .glossary details > summary {{ display:none; }} .glossary dl {{ display:grid; }} }}
+
+/* ---------- Executive tear sheet (Track D6) ---------- */
+.tear-sheet {{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+  box-shadow:var(--shadow-sm); padding:22px 26px; margin:8px 0 24px; }}
+.tear-sheet h2 {{ margin-top:0; border:none; padding:0; }}
+.tear-grid {{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:16px; margin-top:12px; }}
+.tear-stat {{ border-left:3px solid var(--accent); padding:4px 0 4px 12px; }}
+.tear-stat .v {{ font-size:1.5em; font-weight:700; line-height:1.1; }}
+.tear-stat .l {{ font-size:0.75em; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.03em; }}
+@media print {{ .tear-sheet {{ page-break-after:always; }} }}
+
+/* ---------- Uncertainty band (Track D5) ---------- */
+.uncertainty {{ margin-top:8px; }}
+.uncertainty .ci-track {{ position:relative; height:14px; background:#e8eaed; border-radius:7px; overflow:hidden; }}
+body.theme-dark .uncertainty .ci-track {{ background:#2c3444; }}
+.uncertainty .ci-band {{ position:absolute; top:0; bottom:0; background:var(--accent-light); opacity:0.5; }}
+.uncertainty .ci-point {{ position:absolute; top:-3px; width:3px; height:20px; background:var(--primary); border-radius:2px; }}
+.uncertainty .ci-note {{ font-size:0.78em; color:var(--text-secondary); margin-top:4px; }}
+
+/* ---------- Dark theme (Track D7) ---------- */
+body.theme-dark {{ --surface:#1e2330; --bg:#141821; --text:#e6e9ef; --text-secondary:#9aa3b2;
+  --border:#2c3444; --primary-light:#16263f; --accent-light:#3a6ea5; --success-light:#16301a;
+  --warning-light:#33260f; --danger-light:#3a1414;
+  --shadow-sm:0 1px 3px rgba(0,0,0,0.5); --shadow-md:0 4px 12px rgba(0,0,0,0.6); }}
+body.theme-dark .bar-track {{ background:#2c3444; }}
+body.theme-dark tr:hover td {{ background:#222a3a; }}
+body.theme-dark th {{ color:#ffffff; }}
+
+/* ---------- Reading progress + utility dock + scrollspy (Track D polish) ---------- */
+.read-progress {{ position:fixed; top:0; left:0; height:3px; width:0; z-index:1200;
+  background:linear-gradient(90deg, var(--accent), var(--success)); transition:width 0.08s linear; }}
+.util-dock {{ position:fixed; right:18px; bottom:18px; z-index:1100; display:flex; flex-direction:column; gap:10px; }}
+.util-dock button {{ width:44px; height:44px; border-radius:50%; border:1px solid var(--border);
+  background:var(--surface); color:var(--text); box-shadow:var(--shadow-md); cursor:pointer;
+  display:flex; align-items:center; justify-content:center; padding:0;
+  transition:transform 0.15s ease, background 0.15s ease; }}
+.util-dock button:hover {{ transform:translateY(-2px); background:var(--primary-light); color:var(--primary); }}
+.util-dock button svg {{ width:20px; height:20px; }}
+.util-dock .to-top {{ opacity:0; transform:translateY(8px); pointer-events:none; }}
+.util-dock .to-top.show {{ opacity:1; transform:none; pointer-events:auto; }}
+.icon-sun {{ display:none; }} .icon-moon {{ display:inline-flex; }}
+body.theme-dark .icon-moon {{ display:none; }} body.theme-dark .icon-sun {{ display:inline-flex; }}
+.report-toc a.active {{ color:var(--primary); background:var(--primary-light);
+  border-left-color:var(--primary); font-weight:650; }}
+/* copy-link anchors on section headings */
+main h2 {{ position:relative; }}
+.h-anchor {{ border:none; background:transparent; cursor:pointer; color:var(--text-secondary);
+  opacity:0; margin-left:8px; padding:2px 4px; font-size:0.6em; vertical-align:middle;
+  transition:opacity 0.15s, color 0.15s; }}
+main h2:hover .h-anchor, .h-anchor:focus-visible {{ opacity:1; }}
+.h-anchor:hover {{ color:var(--accent); }}
+.h-anchor.copied {{ color:var(--success); opacity:1; }}
+.h-anchor svg {{ width:15px; height:15px; vertical-align:middle; }}
+/* collapsible major sections */
+.sec-toggle {{ border:none; background:transparent; cursor:pointer; color:var(--text-secondary);
+  padding:0 8px 0 0; font-size:0.8em; line-height:1; vertical-align:middle; }}
+.sec-toggle:hover {{ color:var(--primary); }}
+.sec-toggle svg {{ width:13px; height:13px; transition:transform 0.2s ease; }}
+.sec-toggle[aria-expanded="false"] svg {{ transform:rotate(-90deg); }}
+.sec-collapsed-body {{ display:none !important; }}
+.collapse-controls {{ display:flex; gap:8px; align-items:center; margin:0 0 18px; }}
+.collapse-controls button {{ font:inherit; font-size:0.78em; font-weight:600; cursor:pointer;
+  padding:5px 12px; border-radius:999px; border:1px solid var(--border); background:transparent;
+  color:var(--text-secondary); }}
+.collapse-controls button:hover {{ color:var(--primary); border-color:var(--accent); }}
+/* sticky mini-header on scroll */
+.mini-header {{ position:fixed; top:0; left:0; right:0; z-index:1150; display:flex; align-items:center;
+  gap:12px; padding:9px 22px; background:var(--surface); border-bottom:1px solid var(--border);
+  box-shadow:var(--shadow-sm); transform:translateY(-105%); transition:transform 0.25s ease; }}
+.mini-header.show {{ transform:none; }}
+.mini-header .mh-name {{ font-weight:700; color:var(--text); font-size:0.92em; }}
+.mini-header .mh-sector {{ color:var(--text-secondary); font-size:0.8em; }}
+.mini-header .mh-spacer {{ flex:1; }}
+.mini-header .mh-grade {{ font-weight:800; font-size:1.05em; }}
+.mini-header .mh-score {{ color:var(--text-secondary); font-size:0.8em; }}
+body.theme-dark .mini-header {{ box-shadow:0 2px 8px rgba(0,0,0,0.6); }}
+@media print {{ .read-progress, .util-dock, .h-anchor, .sec-toggle, .collapse-controls, .mini-header {{ display:none; }}
+  .sec-collapsed-body {{ display:revert !important; }} }}
+
+/* ---------- Print / PDF cover page + running footer (Track D polish) ---------- */
+.print-cover {{ display:none; }}
+@page {{ size:A4; margin:20mm 18mm 18mm 18mm;
+  @bottom-left {{ content:"Impact Vision{print_footer_suffix}"; font-size:8pt; color:#9aa0a6; }}
+  @bottom-right {{ content:"Page " counter(page) " / " counter(pages); font-size:8pt; color:#9aa0a6; }}
+  @top-right {{ content:string(doc-company); font-size:8pt; color:#b0b6bd; }}
+}}
+@page :first {{ margin:0;
+  @bottom-left {{ content:none; }} @bottom-right {{ content:none; }} @top-right {{ content:none; }}
+}}
+@media print {{
+  .report-header {{ display:none; }}
+  .print-cover {{ display:flex; flex-direction:column; min-height:96vh;
+    padding:34mm 26mm 20mm; page-break-after:always; }}
+  .print-cover .pc-kicker {{ text-transform:uppercase; letter-spacing:0.18em; font-size:10pt;
+    color:var(--accent); font-weight:700; }}
+  .print-cover .pc-title {{ font-size:30pt; font-weight:800; margin:8px 0 4px; color:var(--primary); line-height:1.1; }}
+  .print-cover .pc-company {{ font-size:19pt; font-weight:700; margin-top:26px; string-set:doc-company content(); }}
+  .print-cover .pc-sector {{ font-size:11pt; color:var(--text-secondary); margin-top:2px; }}
+  .print-cover .pc-grade {{ font-size:46pt; font-weight:800; margin-top:26px; line-height:1; }}
+  .print-cover .pc-meta {{ margin-top:auto; font-size:9pt; color:var(--text-secondary);
+    border-top:1px solid var(--border); padding-top:10px; }}
+  .print-cover .pc-confidential {{ font-size:9pt; color:#9aa0a6; margin-top:6px; }}
+  .score-card, .claim-card, .metric-card, table, .chart-box, .coverage-hero {{ break-inside:avoid; }}
+  h2 {{ break-after:avoid; }}
+}}
+</style>
+</head>
+<body{body_class}>
+<a class="skip-link" href="#main-content">Skip to main content</a>
+<div class="read-progress" id="read-progress" aria-hidden="true"></div>
+{_render_sticky_header(data)}
+{_TOC_PLACEHOLDER}
+<main id="main-content" tabindex="-1">
+{_render_print_cover(data)}
+<div class="report-header">
+<h1>Impact Assessment Report</h1>
+<p class="subtitle">{_esc(company.get("name", ""))}{" | " + _esc(company.get("sector", "")) if company.get("sector") else ""}</p>
+<div class="meta-row">
+  <span>Generated: {_esc(data.get("generated_at", "")[:10])}</span>
+  <span>Standard: {_esc(data.get("catalog_version", ""))}</span>
+</div>""")
+
+    if company.get("impact_themes") or company.get("sdg_claims"):
+        sections.append('<div class="tag-row">')
+        for t in company.get("impact_themes", []):
+            sections.append(f'<span class="tag">{_esc(t)}</span>')
+        for g in company.get("sdg_claims", []):
+            try:
+                goal = int(g)
+            except (TypeError, ValueError):
+                continue
+            if 1 <= goal <= 17:
+                sections.append(f'<span class="tag">SDG {goal}</span>')
+        sections.append("</div>")
+    sections.append("</div>")
+
+    if audience == "full":
+        # Single-audience reports are already filtered server-side.
+        sections.append(_render_audience_toolbar(data))
+    sections.append(_render_tear_sheet(data))
+
+    sections.append(_generate_executive_summary(data, company))
+
+    comp_html = _comparison_section(data)
+    if comp_html:
+        sections.append(comp_html)
+
+    if "five_dimensions" in data:
+        fd = data["five_dimensions"]
+        grade_class = f"grade-{fd['overall_grade'][0]}"
+
+        sections.append(f"""
+<h2 id="sec-5d">5 Dimensions of Impact</h2>
+<div class="cards-row">
+<div class="score-card"><div class="value {grade_class}" id="main-grade">{fd["overall_grade"]}</div><div class="label">Overall Grade</div></div>
+<div class="score-card"><div class="value" id="main-overall">{fd["overall_score"]:.1f}<span style="font-size:0.5em;color:var(--text-secondary)">/5</span></div><div class="label">Overall Score</div></div>
+<div class="score-card"><div class="value" style="font-size:0.9em;color:{"var(--success)" if fd.get("overall_provenance") == "evidence-based" else "var(--warning)" if fd.get("overall_provenance") == "partial" else "var(--danger)"}">{"Evidence-Based" if fd.get("overall_provenance") == "evidence-based" else "Partial" if fd.get("overall_provenance") == "partial" else "Estimated"}</div><div class="label">Confidence</div></div>
+<div class="score-card" id="delta-card" style="display:none"><div class="value" id="main-delta" style="font-size:1.4em;color:var(--text-secondary)">+0.0</div><div class="label">Improvement</div></div>
+</div>
+<div class="five-d-grid dim-stack">
+<div class="chart-box" id="radar-chart" role="img" aria-label="Radar chart of the five impact dimension scores (What, Who, How Much, Contribution, Risk). Scores are listed below in the table."></div>
+<div class="chart-box">
+<div class="table-scroll">
+<table id="dim-table">
+<tr><th>Dimension</th><th>Score</th><th style="min-width:120px">Progress</th><th>Confidence</th><th>Metrics</th><th>Rationale</th></tr>
+""")
+        dims_js = []
+        scores_js = []
+        for dim_name in ["what", "who", "how_much", "contribution", "risk"]:
+            dim = fd[dim_name]
+            pct = int(dim["score"] / 5.0 * 100)
+            bar_color = "green" if pct >= 60 else "orange" if pct >= 30 else "red"
+            dims_js.append(f'"{dim["dimension"]}"')
+            scores_js.append(str(dim["score"]))
+            reported = dim.get("metrics_reported", 0)
+            available = dim.get("metrics_available", 0)
+            metric_pct = int(reported / available * 100) if available > 0 else 0
+            metric_color = (
+                "var(--success)"
+                if metric_pct >= 50
+                else "var(--warning)"
+                if metric_pct > 0
+                else "var(--danger)"
+            )
+            gaps_preview = ", ".join(g.split(" (")[0] for g in dim.get("gaps", [])[:3])
+            gaps_tooltip = f' title="{gaps_preview}"' if gaps_preview else ""
+            prov = dim.get("provenance", "estimated")
+            prov_badge = {
+                "evidence-based": "verified",
+                "partial": "estimated",
+                "estimated": "estimated",
+            }.get(prov, "unverified")
+            prov_label = prov.replace("-", " ").title() if prov else "Estimated"
+            sections.append(f"""<tr class="dim-clickable" data-dim="{dim_name}" tabindex="0" role="button" aria-expanded="false" aria-controls="overlay-{dim_name}">
+<td><strong>{dim["dimension"]}</strong> <span style="font-size:0.7em;color:var(--text-secondary)" aria-hidden="true">&#9660;</span></td>
+<td style="font-weight:600" id="dim-score-{dim_name}">{dim["score"]}/5</td>
+<td><div class="bar-track"><div class="bar-fill {bar_color}" id="dim-bar-{dim_name}" style="width:{pct}%"></div></div></td>
+<td><span class="evidence-badge {prov_badge}" title="Score provenance: {prov_label}">{prov_label}</span></td>
+<td class="metrics-cell" style="font-size:0.85em"><span style="color:{metric_color};font-weight:600">{reported}/{available}</span>
+<span style="color:var(--text-secondary)"{gaps_tooltip}>{" tracked" if reported > 0 else " not tracked"}</span></td>
+<td class="notes">{dim["notes"]}</td>
+</tr>""")
+
+            tracked_metrics = dim.get("metrics_tracked", [])
+            gap_metrics = dim.get("gaps", [])
+            recs = dim.get("recommendations", fd.get("recommendations", []))[:3]
+            sections.append(
+                f'<tr class="dim-overlay" id="overlay-{dim_name}"><td colspan="6"><div class="dim-overlay-content">'
+            )
+            sections.append('<div class="dim-overlay-col"><h4>Tracked Metrics</h4>')
+            if tracked_metrics:
+                for tm in tracked_metrics[:6]:
+                    label = tm if isinstance(tm, str) else str(tm)
+                    sections.append(f'<span class="metric-pill tracked">{label}</span>')
+            else:
+                sections.append(
+                    f'<span style="font-size:0.82em;color:var(--text-secondary)">No metrics tracked ({available} available)</span>'
+                )
+            sections.append('</div><div class="dim-overlay-col"><h4>Gaps</h4>')
+            if gap_metrics:
+                for gm in gap_metrics[:6]:
+                    label = gm.split(" (")[0] if isinstance(gm, str) else str(gm)
+                    sections.append(f'<span class="metric-pill gap">{label}</span>')
+            else:
+                sections.append(
+                    '<span style="font-size:0.82em;color:var(--success)">No gaps identified</span>'
+                )
+            sections.append('</div><div class="dim-overlay-col"><h4>Suggestions</h4>')
+            if recs:
+                for rc in recs[:3]:
+                    sections.append(f'<div class="dim-suggestion">{rc}</div>')
+            else:
+                sections.append(
+                    '<span style="font-size:0.82em;color:var(--text-secondary)">Report more metrics to receive suggestions</span>'
+                )
+            sections.append("</div></div></td></tr>")
+
+        sections.append("</table></div>")
+        sections.append(
+            '<div class="evidence-legend"><span class="ev-title">Score provenance:</span>'
+            '<span class="evidence-badge verified" title="Backed by reported IRIS+ metrics / verified evidence">Evidence Based</span>'
+            '<span class="evidence-badge estimated" title="Partial evidence or keyword/sector heuristic">Partial / Estimated</span>'
+            '<span class="evidence-badge unverified" title="No supporting metrics reported">Unverified</span>'
+            "</div>"
+        )
+        sections.append("""<script>
+document.querySelectorAll('.dim-clickable').forEach(function(row) {
+  function toggleRow() {
+    var dim = row.dataset.dim;
+    var overlay = document.getElementById('overlay-' + dim);
+    if (overlay) {
+      var open = overlay.classList.toggle('active');
+      row.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+  }
+  row.addEventListener('click', toggleRow);
+  row.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+      e.preventDefault();
+      toggleRow();
+    }
+  });
+});
+</script>""")
+
+        overall_prov = fd.get("overall_provenance", "estimated")
+        if overall_prov in ("estimated", "partial"):
+            disclaimer_color = (
+                "var(--warning-light)" if overall_prov == "partial" else "var(--danger-light)"
+            )
+            disclaimer_border = "var(--warning)" if overall_prov == "partial" else "var(--danger)"
+            disclaimer_text = (
+                (
+                    "Scores are primarily <strong>estimated</strong> from keywords and sector heuristics. "
+                    "Report at least 3 IRIS+ metrics per dimension for evidence-based scores."
+                )
+                if overall_prov == "estimated"
+                else (
+                    "Some scores are based on <strong>partial evidence</strong>. "
+                    "Additional reported metrics will strengthen the assessment."
+                )
+            )
+            sections.append(f"""
+<div style="margin:12px 0;padding:12px 16px;background:{disclaimer_color};border-left:4px solid {disclaimer_border};border-radius:var(--radius-sm);font-size:0.85em">
+{disclaimer_text}
+</div>""")
+
+        total_reported = sum(
+            fd[d].get("metrics_reported", 0)
+            for d in ["what", "who", "how_much", "contribution", "risk"]
+        )
+        total_available = sum(
+            fd[d].get("metrics_available", 0)
+            for d in ["what", "who", "how_much", "contribution", "risk"]
+        )
+        if total_available > 0:
+            gap_names = [
+                gap.split(" (")[0]
+                for gap in fd["what"].get("gaps", [])[:3] + fd["who"].get("gaps", [])[:2]
+            ]
+            gap_summary = (
+                f"Top gaps: {', '.join(gap_names)}"
+                if total_reported < total_available
+                else "Full coverage achieved!"
+            )
+            sections.append(f"""
+<div style="margin-top:12px;padding:12px 16px;background:var(--primary-light);border-radius:var(--radius-sm);font-size:0.85em">
+<strong>Metric Tracking:</strong> {total_reported} of {total_available} available IRIS+ metrics reported
+({int(total_reported / total_available * 100)}% coverage).
+{gap_summary}
+</div>""")
+        sections.append("</div></div>")
+
+        sections.append(f"""<script>
+Plotly.newPlot('radar-chart', [{{
+  type: 'scatterpolar', r: [{",".join(scores_js)},{scores_js[0]}],
+  theta: [{",".join(dims_js)},{dims_js[0]}],
+  fill: 'toself', fillcolor: 'rgba(25,118,210,0.12)',
+  line: {{color: '#1976d2', width: 2.5}}, marker: {{size: 7, color: '#1976d2'}},
+  name: 'Current'
+}}], {{
+  polar: {{bgcolor: 'rgba(0,0,0,0)', radialaxis: {{visible: true, range: [0, 5], tickfont: {{size: 10}}}}, angularaxis: {{tickfont: {{size: 11}}}}}},
+  showlegend: true, legend: {{orientation: 'h', y: -0.1}},
+  height: 380, margin: {{l: 70, r: 70, t: 40, b: 40}},
+  paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
+  font: {{family: 'Inter, -apple-system, sans-serif'}}
+}}, {{responsive: true}});
+</script>""")
+
+        sections.append(
+            _interactive_scoring_section(
+                fd, data.get("sdg_alignments", []), company.get("name", "")
+            )
+        )
+
+        if fd.get("recommendations"):
+            sections.append("<h3>Recommendations</h3>")
+            for r in fd["recommendations"]:
+                sections.append(f'<div class="rec">{html.escape(str(r))}</div>')
+
+    if "target_tracking" in data:
+        tt = data["target_tracking"]
+        targets = tt.get("targets", [])
+        if targets:
+            sections.append('<h2 id="sec-targets">Impact Target Tracking</h2>')
+            sections.append(
+                "<table><tr><th>Metric</th><th>Target</th><th>Current</th><th>Progress</th><th>Status</th></tr>"
+            )
+            status_colors = {
+                "exceeded": "var(--success)",
+                "on_track": "var(--success)",
+                "behind": "var(--warning)",
+                "at_risk": "var(--danger)",
+                "no_data": "var(--text-secondary)",
+            }
+            status_icons = {
+                "exceeded": "🟢",
+                "on_track": "🟢",
+                "behind": "🟡",
+                "at_risk": "🔴",
+                "no_data": "⚪",
+            }
+            for t in targets:
+                color = status_colors.get(t["status"], "var(--text-secondary)")
+                icon = status_icons.get(t["status"], "")
+                pct = t.get("progress_pct", 0)
+                pct_display = f"{pct:.0f}%" if pct else "N/A"
+                sections.append(f"""<tr>
+<td>{html.escape(str(t.get("metric_id", "")))}</td>
+<td>{html.escape(str(t.get("target_description") or t.get("target", "N/A")))}</td>
+<td>{html.escape(str(t.get("current_value", "N/A")))}</td>
+<td><div class="bar-track"><div class="bar-fill" style="width:{min(pct, 100):.0f}%;background:{color}"></div></div> {pct_display}</td>
+<td style="color:{color};font-weight:600">{icon} {t["status"].replace("_", " ").title()}</td>
+</tr>""")
+            sections.append("</table>")
+            # trend_analysis returns ``summary`` as prose; count statuses here.
+            counts = {k: 0 for k in ("on_track", "behind", "exceeded", "at_risk")}
+            for t in targets:
+                if t.get("status") in counts:
+                    counts[t["status"]] += 1
+            sections.append(f"""<div style="margin-top:12px;padding:12px 16px;background:var(--primary-light);border-radius:var(--radius-sm);font-size:0.85em">
+<strong>Target Summary:</strong> {counts["on_track"]} on track, {counts["behind"]} behind, {counts["exceeded"]} exceeded, {counts["at_risk"]} at risk
+</div>""")
+
+    if "beneficiary_feedback" in data:
+        bf = data["beneficiary_feedback"]
+        sections.append('<h2 id="sec-beneficiary">Beneficiary Feedback</h2>')
+        sections.append('<div class="chart-row">')
+        if bf.get("satisfaction_score") is not None:
+            sat = bf["satisfaction_score"]
+            sat_color = (
+                "var(--success)" if sat >= 4 else "var(--warning)" if sat >= 3 else "var(--danger)"
+            )
+            sections.append(
+                f'<div class="score-card"><div class="value" style="color:{sat_color}">{sat}/5</div><div class="label">Satisfaction</div></div>'
+            )
+        if bf.get("nps") is not None:
+            nps = bf["nps"]
+            nps_color = (
+                "var(--success)" if nps >= 50 else "var(--warning)" if nps >= 0 else "var(--danger)"
+            )
+            sections.append(
+                f'<div class="score-card"><div class="value" style="color:{nps_color}">{nps}</div><div class="label">NPS</div></div>'
+            )
+        if bf.get("sample_size"):
+            sections.append(
+                f'<div class="score-card"><div class="value">{bf["sample_size"]}</div><div class="label">Sample Size</div></div>'
+            )
+        if bf.get("quality_of_life_improvement") is not None:
+            sections.append(
+                f'<div class="score-card"><div class="value" style="color:var(--success)">{bf["quality_of_life_improvement"]}%</div><div class="label">QoL Improvement</div></div>'
+            )
+        if bf.get("would_recommend") is not None:
+            sections.append(
+                f'<div class="score-card"><div class="value">{bf["would_recommend"]}%</div><div class="label">Would Recommend</div></div>'
+            )
+        sections.append("</div>")
+        if bf.get("methodology"):
+            sections.append(
+                f'<p style="font-size:0.85em;color:var(--text-secondary)">Methodology: {html.escape(str(bf["methodology"]))}'
+            )
+            if bf.get("survey_date"):
+                sections[-1] += f" | Survey date: {html.escape(str(bf['survey_date']))}"
+            sections[-1] += "</p>"
+        if bf.get("themes"):
+            sections.append('<div style="margin-top:8px"><strong>Positive Themes:</strong> ')
+            sections.append(
+                ", ".join(
+                    f'<span style="background:var(--primary-light);padding:2px 8px;border-radius:12px;font-size:0.85em">{t}</span>'
+                    for t in bf["themes"][:5]
+                )
+            )
+            sections.append("</div>")
+        if bf.get("challenges"):
+            sections.append('<div style="margin-top:8px"><strong>Challenges:</strong> ')
+            sections.append(
+                ", ".join(
+                    f'<span style="background:#fff3e0;padding:2px 8px;border-radius:12px;font-size:0.85em">{c}</span>'
+                    for c in bf["challenges"][:5]
+                )
+            )
+            sections.append("</div>")
+        if bf.get("quotes"):
+            sections.append('<div style="margin-top:12px">')
+            for q in bf["quotes"][:3]:
+                sections.append(
+                    f'<blockquote style="border-left:3px solid var(--primary);padding:8px 16px;margin:8px 0;font-style:italic;color:var(--text-secondary)">&ldquo;{q}&rdquo;</blockquote>'
+                )
+            sections.append("</div>")
+
+    if "sdg_alignments" in data:
+        aligned = [a for a in data["sdg_alignments"] if a["score"] > 0]
+        sdg_labels = [f'"SDG {a["goal"]}"' for a in aligned]
+        sdg_scores = [str(a["score"]) for a in aligned]
+        sdg_colors = []
+        for a in aligned:
+            sdg_colors.append(f'"{sdg_colors_map.get(a["goal"], "#1976d2")}"')
+
+        # Decide which goals stay visible and which are collapsed. By default
+        # we surface the top 6 (or everything above the median score). Low-
+        # score SDGs live behind a single "show all" toggle so the main view
+        # doesn't look like 12 identical low bars with empty headroom above.
+        aligned_sorted = list(aligned)
+        visible_limit = max(5, min(6, len(aligned_sorted)))
+        collapsed_ids = {a["goal"] for a in aligned_sorted[visible_limit:]}
+        hidden_count = len(collapsed_ids)
+
+        sections.append(f"""
+<h2 id="sec-sdg">SDG Alignment <span style="font-size:0.65em;color:var(--text-secondary);font-weight:400">({len(aligned)} goals · top {min(visible_limit, len(aligned))} shown)</span></h2>
+<div class="five-d-grid">
+<div class="chart-box" id="sdg-chart" role="img" aria-label="Bar chart of SDG alignment scores. The same scores are listed in the adjacent table."></div>
+<div class="chart-box">
+<table id="sdg-table">
+<tr><th>SDG</th><th>Name</th><th>Score</th><th>Confidence</th><th>Matched Metrics</th></tr>
+""")
+        for a in aligned:
+            sdg_color = sdg_colors_map.get(a["goal"], "#666")
+            metrics_str = ", ".join(a.get("matched_metrics", [])[:3])
+            conf_style = {
+                "high": "color:var(--success);font-weight:600",
+                "medium": "color:#f57c00;font-weight:600",
+                "low": "color:var(--danger);font-weight:600",
+            }.get(a["confidence"], "")
+            collapse_cls = " sdg-collapsed" if a["goal"] in collapsed_ids else ""
+            sections.append(f"""<tr class="sdg-clickable{collapse_cls}" data-sdg="{a["goal"]}" tabindex="0" role="button" aria-expanded="false" aria-controls="sdg-detail-{a["goal"]}">
+<td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:{sdg_color};margin-right:6px;vertical-align:middle" aria-hidden="true"></span>SDG {a["goal"]} <span style="font-size:0.7em;color:var(--text-secondary)" aria-hidden="true">&#9660;</span></td>
+<td>{a.get("goal_name", "")}</td>
+<td style="font-weight:600">{a["score"]}</td><td style="{conf_style}">{a["confidence"]}</td><td style="font-size:0.85em">{metrics_str}</td>
+</tr>""")
+
+            sections.append(f'<tr class="sdg-detail" id="sdg-detail-{a["goal"]}"><td colspan="5">')
+            targets = a.get("matched_targets", [])
+            if targets:
+                sections.append(
+                    '<div style="margin-bottom:8px"><strong style="font-size:0.82em">Targets:</strong> '
+                )
+                sections.append(" ".join(f'<span class="chip">{html.escape(str(t))}</span>' for t in targets))
+                sections.append("</div>")
+            chains = a.get("evidence_chain", [])
+            if chains:
+                sections.append(
+                    '<div style="margin-bottom:8px"><strong style="font-size:0.82em">Evidence Chains:</strong>'
+                )
+                for ch in chains[:5]:
+                    claim_text = html.escape(str(ch.get("claim_text", ""))[:60])
+                    metric = html.escape(str(ch.get("metric_id", "")))
+                    ev_type = html.escape(str(ch.get("evidence_type", "")).replace("_", " ").title())
+                    sdg_tgt = html.escape(str(ch.get("sdg_target", "")))
+                    conf = ch.get("confidence", 0)
+                    sections.append('<div class="evidence-chain">')
+                    if claim_text:
+                        sections.append(
+                            f'<span class="chain-node">{claim_text}</span><span class="chain-arrow">&#8594;</span>'
+                        )
+                    if metric:
+                        sections.append(
+                            f'<span class="chain-node">{metric}</span><span class="chain-arrow">&#8594;</span>'
+                        )
+                    sections.append(
+                        f'<span class="chain-node">{ev_type}</span><span class="chain-arrow">&#8594;</span>'
+                    )
+                    sections.append(
+                        f'<span class="chain-node">{sdg_tgt}<br><span class="chain-confidence">{conf:.0%} conf.</span></span>'
+                    )
+                    sections.append("</div>")
+                sections.append("</div>")
+            sdg_recs = a.get("recommendations", [])
+            if sdg_recs:
+                sections.append('<div><strong style="font-size:0.82em">Recommendations:</strong>')
+                for sr in sdg_recs[:3]:
+                    sections.append(f'<div class="sdg-rec">{sr}</div>')
+                sections.append("</div>")
+            if not targets and not chains and not sdg_recs:
+                sections.append(
+                    f'<span style="font-size:0.85em;color:var(--text-secondary)">Provenance: {a.get("provenance", "estimated")}. Report more metrics to build evidence chain.</span>'
+                )
+            sections.append("</td></tr>")
+
+        sections.append("</table>")
+        if hidden_count > 0:
+            sections.append(
+                f'<button type="button" class="sdg-toggle" id="sdg-toggle-btn" '
+                f'data-hidden="{hidden_count}">'
+                f"Show all {len(aligned)} goals ({hidden_count} with low alignment)"
+                f"</button>"
+            )
+        sections.append("</div></div>")
+        sections.append("""<script>
+document.querySelectorAll('.sdg-clickable').forEach(function(row) {
+  function toggleSdg() {
+    var sdg = row.dataset.sdg;
+    var detail = document.getElementById('sdg-detail-' + sdg);
+    if (detail) {
+      var open = detail.classList.toggle('active');
+      row.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+  }
+  row.addEventListener('click', toggleSdg);
+  row.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+      e.preventDefault();
+      toggleSdg();
+    }
+  });
+});
+(function(){
+  var btn = document.getElementById('sdg-toggle-btn');
+  if (!btn) return;
+  var n = parseInt(btn.dataset.hidden, 10) || 0;
+  btn.addEventListener('click', function(){
+    var rows = document.querySelectorAll('#sdg-table tr.sdg-collapsed');
+    var expanded = rows.length && rows[0].classList.contains('show');
+    rows.forEach(function(r){ r.classList.toggle('show'); });
+    btn.textContent = expanded
+      ? ('Show all ' + (rows.length + document.querySelectorAll('#sdg-table tr.sdg-clickable:not(.sdg-collapsed)').length) + ' goals (' + n + ' with low alignment)')
+      : ('Hide ' + n + ' low-alignment goals');
+  });
+})();
+</script>""")
+
+        if sdg_labels:
+            try:
+                numeric_scores = [float(s) for s in sdg_scores]
+                peak = max(numeric_scores) if numeric_scores else 0.0
+            except ValueError:
+                peak = 0.0
+            # Dynamic y-axis: leaves ~25% headroom above the tallest bar so
+            # tick labels don't overlap, with a 40 floor and 110 ceiling.
+            y_max = max(40.0, min(110.0, peak * 1.3 + 5.0))
+            sections.append(f"""<script>
+Plotly.newPlot('sdg-chart', [{{
+  type: 'bar', x: [{",".join(sdg_labels)}], y: [{",".join(sdg_scores)}],
+  marker: {{color: [{",".join(sdg_colors)}], line: {{width: 0}}, cornerradius: 4}},
+  text: [{",".join(sdg_scores)}], textposition: 'outside', textfont: {{size: 11, family: 'Inter, sans-serif'}}
+}}], {{
+  yaxis: {{range: [0, {y_max:.1f}], title: 'Alignment Score', gridcolor: '#f0f0f0', titlefont: {{size: 12}}}},
+  xaxis: {{tickangle: -30, tickfont: {{size: 10}}}},
+  height: 360, margin: {{l: 55, r: 20, t: 20, b: 60}},
+  paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
+  font: {{family: 'Inter, -apple-system, sans-serif'}}
+}}, {{responsive: true}});
+</script>""")
+
+    claims_html = _impact_claims_section(data)
+    if claims_html:
+        sections.append(claims_html)
+
+    if "impact_analysis" in data:
+        ia = data["impact_analysis"]
+        sections.append("""
+<h2 id="sec-opp-risk">Impact Opportunities & Risks</h2>
+<div class="chart-row">
+<div class="chart-box">
+<h3 style="color:var(--success)">Opportunities</h3>""")
+        for o in ia.get("opportunities", []):
+            sections.append(
+                f'<div class="rec" style="border-left-color:var(--success);background:var(--success-light)">+ {o}</div>'
+            )
+        sections.append("""</div>
+<div class="chart-box">
+<h3 style="color:var(--danger)">Risks</h3>""")
+        for r in ia.get("risks", []):
+            sections.append(
+                f'<div class="rec" style="border-left-color:var(--danger);background:var(--danger-light)">! {r}</div>'
+            )
+        sections.append("</div></div>")
+
+    if "gap_analysis" in data:
+        ga = data["gap_analysis"]
+        pct = ga["coverage_percentage"]
+        pct_color = (
+            "var(--success)" if pct >= 60 else "var(--warning)" if pct >= 30 else "var(--danger)"
+        )
+        bar_cls = "green" if pct >= 60 else "orange" if pct >= 30 else "red"
+        sections.append(f"""
+<h2 id="sec-gap">Gap Analysis</h2>
+<div class="coverage-hero">
+  <div class="pct" style="color:{pct_color}">{ga["coverage_percentage"]}%</div>
+  <div class="detail">
+    <div style="font-weight:600;font-size:1.1em">Core Metric Set Coverage</div>
+    <div style="color:var(--text-secondary);font-size:0.9em">{ga["metrics_reported"]} of {ga["core_metric_set_size"]} metrics reported | {ga["metrics_missing"]} missing</div>
+    <div class="bar-track"><div class="bar-fill {bar_cls}" style="width:{int(pct)}%"></div></div>
+  </div>
+</div>
+""")
+        if ga.get("missing"):
+            sections.append(_render_missing_metrics_section(ga))
+
+        if ga.get("recommendations"):
+            sections.append("<h3>Recommendations</h3>")
+            for r in ga["recommendations"]:
+                sections.append(f'<div class="rec">{r}</div>')
+
+    esg_html = _esg_toolbox_section(data)
+    if esg_html:
+        sections.append(esg_html)
+
+    dashboard_html = _metric_tracking_dashboard(data)
+    if dashboard_html:
+        sections.append(dashboard_html)
+
+    if "greenwashing" in data:
+        gw = data["greenwashing"]
+        gw_score = gw.get("overall_score", 0)
+        gw_class = gw.get("classification", "Unknown")
+        gw_color = "#2e7d32" if gw_score < 30 else "#f57c00" if gw_score < 60 else "#c62828"
+        sections.append(f"""
+<h2 id="sec-greenwashing">Greenwashing / Impact-Washing Risk</h2>
+<div class="cards-row">
+<div class="score-card" style="border-left:4px solid {gw_color}">
+  <div class="value" style="color:{gw_color}">{gw_score}</div>
+  <div class="label">Risk Score (0-100)</div>
+</div>
+<div class="score-card"><div class="value" style="font-size:1.2em;color:{gw_color}">{gw_class}</div><div class="label">Classification</div></div>
+</div>""")
+        sub = gw.get("sub_scores", {})
+        if sub:
+            sections.append("<table><tr><th>Sub-Score</th><th>Value</th></tr>")
+            for sname, sval in sub.items():
+                display = sname.replace("_", " ").title()
+                sections.append(f"<tr><td>{display}</td><td>{sval}/100</td></tr>")
+            sections.append("</table>")
+        if gw.get("flags"):
+            sections.append("<h3>Flags</h3>")
+            for flag in gw["flags"]:
+                sections.append(
+                    f'<div class="rec" style="border-left-color:{gw_color}">{flag}</div>'
+                )
+        if gw.get("recommendations"):
+            sections.append("<h3>Recommendations</h3>")
+            for rec in gw["recommendations"]:
+                sections.append(f'<div class="rec">{rec}</div>')
+
+    if "benchmark_comparison" in data:
+        bm = data["benchmark_comparison"]
+        sections.append(f"""
+<h2 id="sec-benchmark">Sector Benchmark Comparison</h2>
+<p style="color:var(--text-secondary);font-size:0.9em;margin-bottom:12px">{bm["sector"]} | {bm.get("sample_note", "")}</p>
+<div class="chart-row">
+<div class="chart-box" id="benchmark-chart" role="img" aria-label="Chart comparing this company's dimension scores against sector benchmarks. The same values are listed in the adjacent table."></div>
+<div class="chart-box">
+<table>
+<tr><th>Dimension</th><th>Your Score</th><th>Benchmark</th><th>Delta</th></tr>
+""")
+        ov = bm["overall"]
+        delta_class = (
+            "positive" if ov["delta"] > 0 else ("negative" if ov["delta"] < 0 else "neutral")
+        )
+        delta_arrow = "+" if ov["delta"] > 0 else ""
+        sections.append(f"""<tr style="font-weight:600;background:var(--primary-light)">
+<td>Overall</td><td>{ov["actual"]:.1f}</td><td>{ov["benchmark"]:.1f}</td>
+<td class="bm-delta {delta_class}">{delta_arrow}{ov["delta"]:.1f}</td></tr>""")
+
+        bm_dim_labels = []
+        bm_actual_vals = []
+        bm_benchmark_vals = []
+        for dim, vals in bm["dimensions"].items():
+            delta_class = (
+                "positive"
+                if vals["delta"] > 0
+                else ("negative" if vals["delta"] < 0 else "neutral")
+            )
+            delta_arrow = "+" if vals["delta"] > 0 else ""
+            display_name = dim.replace("_", " ").title()
+            bm_dim_labels.append(f'"{display_name}"')
+            bm_actual_vals.append(str(vals["actual"]))
+            bm_benchmark_vals.append(str(vals["benchmark"]))
+            sections.append(f"""<tr>
+<td>{display_name}</td><td>{vals["actual"]:.1f}</td><td>{vals["benchmark"]:.1f}</td>
+<td class="bm-delta {delta_class}">{delta_arrow}{vals["delta"]:.1f}</td></tr>""")
+        sections.append("</table></div></div>")
+
+        if bm_dim_labels:
+            sections.append(f"""<script>
+Plotly.newPlot('benchmark-chart', [
+  {{type:'bar', name:'Your Score', x:[{",".join(bm_dim_labels)}], y:[{",".join(bm_actual_vals)}], marker:{{color:'#1976d2', cornerradius:3}}}},
+  {{type:'bar', name:'Benchmark', x:[{",".join(bm_dim_labels)}], y:[{",".join(bm_benchmark_vals)}], marker:{{color:'#b0bec5', cornerradius:3}}}}
+], {{
+  barmode:'group', yaxis:{{range:[0,5.5], title:'Score', gridcolor:'#f0f0f0'}},
+  height:350, margin:{{l:50,r:20,t:20,b:50}}, legend:{{orientation:'h', y:1.08}},
+  paper_bgcolor:'transparent', plot_bgcolor:'transparent',
+  font:{{family:'Inter, -apple-system, sans-serif', size:11}}
+}}, {{responsive:true}});
+</script>""")
+
+    pathway_html = _impact_pathway_section(data)
+    if pathway_html:
+        sections.append(pathway_html)
+
+    sections = _filter_sections_for_audience(sections, audience)
+    # Plain-language definitions for the terms that survived audience filtering.
+    from impact_vision.impact.glossary import render_glossary_html
+
+    visible_text = re.sub(r"<script.*?</script>|<style.*?</style>|<[^>]+>", " ", "\n".join(sections[1:]), flags=re.S)
+    glossary_html = render_glossary_html(visible_text)
+    if glossary_html:
+        sections.append(glossary_html)
+    # Build the TOC from the sections actually rendered, in page order, so it
+    # never links to a section that was skipped or filtered out.
+    rendered = "\n".join(sections)
+    sections = [rendered.replace(_TOC_PLACEHOLDER, _render_toc(rendered), 1)]
+    sections.append(_audience_filter_script())
+    sections.append(_report_ux_script())
+    sections.append(_collapsible_sections_script())
+
+    sections.append(f"""
+</main>
+{_render_utility_dock()}
+<div class="footer">
+Generated by <a href="#">Impact Vision</a> &mdash; Open-source impact measurement engine &mdash; IRIS+ 5.3c
+<br><span class="ai-disclosure">{_esc(ai_provenance_for_report(data).disclosure)}</span>
+</div>
+</body></html>""")
+    return "\n".join(sections)
+
+
+def _to_pdf(html: str, output_path: str, context) -> ToolResult:
+    """Convert HTML to PDF using WeasyPrint if available, otherwise provide instructions."""
+    if output_path:
+        path = Path(output_path)
+        if not path.is_absolute():
+            path = context.cwd / path
+        if not path.suffix:
+            path = path.with_suffix(".pdf")
+    else:
+        path = context.cwd / "impact_report.pdf"
+
+    from impact_vision.impact.report_templates.pdf import PdfUnavailable, html_to_pdf
+
+    try:
+        written, engine = html_to_pdf(html, path)
+        return ToolResult(
+            output=f"PDF report saved to: {written} (rendered with {engine})",
+            metadata={"output_path": str(written), "format": "pdf", "engine": engine},
+        )
+    except PdfUnavailable as exc:
+        html_path = path.with_suffix(".html")
+        html_path.parent.mkdir(parents=True, exist_ok=True)
+        html_path.write_text(html, encoding="utf-8")
+        return ToolResult(
+            output=f"{exc}\nHTML saved to: {html_path} (print-ready: Ctrl+P / Cmd+P → Save as PDF).",
+            metadata={"output_path": str(html_path), "format": "html_for_pdf"},
+        )
+
+
+def _load_comparison_data(assessment_id: str, current: dict) -> dict:
+    """Load a previous assessment and compute deltas against the current report."""
+    try:
+        from impact_vision.impact.storage import AssessmentStore
+
+        store = AssessmentStore()
+        prev = store.get_assessment(assessment_id)
+    except Exception:
+        return {"error": f"Could not load assessment {assessment_id}"}
+
+    if prev is None:
+        return {"error": f"Assessment {assessment_id} not found"}
+
+    prev_data = prev if isinstance(prev, dict) else prev.model_dump()
+    comparison: dict = {"previous_id": assessment_id, "dimensions": {}, "sdg": {}}
+
+    cur_fd = current.get("five_dimensions", {})
+    prev_fd = prev_data.get("five_dimensions", {})
+    if cur_fd and prev_fd:
+        for dim_name in ("what", "who", "how_much", "contribution", "risk"):
+            cur_score = cur_fd.get(dim_name, {}).get("score", 0)
+            prev_score = prev_fd.get(dim_name, {}).get("score", 0)
+            comparison["dimensions"][dim_name] = {
+                "current": cur_score,
+                "previous": prev_score,
+                "delta": round(cur_score - prev_score, 2),
+            }
+        comparison["overall"] = {
+            "current": cur_fd.get("overall_score", 0),
+            "previous": prev_fd.get("overall_score", 0),
+            "delta": round(cur_fd.get("overall_score", 0) - prev_fd.get("overall_score", 0), 2),
+        }
+
+    cur_sdg = {a["goal"]: a for a in current.get("sdg_alignments", [])}
+    prev_sdg = {a["goal"]: a for a in prev_data.get("sdg_alignments", [])}
+    for goal in sorted(set(cur_sdg) | set(prev_sdg)):
+        c = cur_sdg.get(goal, {}).get("score", 0)
+        p = prev_sdg.get(goal, {}).get("score", 0)
+        if c or p:
+            comparison["sdg"][goal] = {"current": c, "previous": p, "delta": round(c - p, 2)}
+
+    return comparison
+
+
+def _comparison_section(data: dict) -> str:
+    """Render comparison table if comparison data is present."""
+    comp = data.get("comparison", {})
+    if not comp or comp.get("error"):
+        return ""
+
+    parts = [
+        f'<h2>Assessment Comparison <span style="font-size:0.65em;color:var(--text-secondary);font-weight:400">'
+        f"vs. {comp.get('previous_id', 'previous')}</span></h2>",
+    ]
+
+    if comp.get("overall"):
+        ov = comp["overall"]
+        delta_cls = (
+            "delta-up" if ov["delta"] > 0 else "delta-down" if ov["delta"] < 0 else "delta-same"
+        )
+        parts.append(
+            f'<div class="cards-row">'
+            f'<div class="score-card"><div class="value">{ov["current"]:.1f}</div><div class="label">Current</div></div>'
+            f'<div class="score-card"><div class="value" style="color:var(--text-secondary)">{ov["previous"]:.1f}</div><div class="label">Previous</div></div>'
+            f'<div class="score-card"><div class="value {delta_cls}">{"+" if ov["delta"] > 0 else ""}{ov["delta"]:.1f}</div><div class="label">Change</div></div>'
+            f"</div>"
+        )
+
+    dims = comp.get("dimensions", {})
+    if dims:
+        parts.append(
+            '<table class="comparison-table"><tr><th>Dimension</th><th>Previous</th><th>Current</th><th>Change</th></tr>'
+        )
+        for dim, vals in dims.items():
+            display = dim.replace("_", " ").title()
+            delta = vals["delta"]
+            cls = "delta-up" if delta > 0 else "delta-down" if delta < 0 else "delta-same"
+            arrow = "&#9650;" if delta > 0 else "&#9660;" if delta < 0 else "&#8212;"
+            parts.append(
+                f"<tr><td><strong>{display}</strong></td>"
+                f"<td>{vals['previous']:.1f}</td><td>{vals['current']:.1f}</td>"
+                f'<td class="{cls}">{arrow} {"+" if delta > 0 else ""}{delta:.1f}</td></tr>'
+            )
+        parts.append("</table>")
+
+    sdg_comp = comp.get("sdg", {})
+    if sdg_comp:
+        parts.append("<h3>SDG Score Changes</h3>")
+        parts.append(
+            '<table class="comparison-table"><tr><th>SDG</th><th>Previous</th><th>Current</th><th>Change</th></tr>'
+        )
+        for goal, vals in sorted(sdg_comp.items()):
+            delta = vals["delta"]
+            cls = "delta-up" if delta > 0 else "delta-down" if delta < 0 else "delta-same"
+            arrow = "&#9650;" if delta > 0 else "&#9660;" if delta < 0 else "&#8212;"
+            parts.append(
+                f"<tr><td>SDG {goal}</td>"
+                f"<td>{vals['previous']:.0f}</td><td>{vals['current']:.0f}</td>"
+                f'<td class="{cls}">{arrow} {"+" if delta > 0 else ""}{delta:.0f}</td></tr>'
+            )
+        parts.append("</table>")
+
+    return "\n".join(parts)
+
+
+def _to_target_progress_text(data: dict) -> str:
+    """Generate a focused target progress report with trajectory projections."""
+    company = data.get("company", {})
+    lines = [
+        "=" * 60,
+        f"TARGET PROGRESS REPORT: {company.get('name', 'Unknown')}",
+        f"Generated: {data.get('generated_at', '')}",
+        "=" * 60,
+        "",
+    ]
+    tt = data.get("target_tracking", {})
+    targets = tt.get("targets", [])
+    if not targets:
+        lines.append("No impact targets defined. Set targets to enable progress tracking.")
+        return "\n".join(lines)
+
+    summary = tt.get("summary", {})
+    status_counts = {
+        "on_track": 0,
+        "behind": 0,
+        "exceeded": 0,
+        "at_risk": 0,
+    }
+    for target in targets:
+        status = target.get("status", "no_data")
+        if status in status_counts:
+            status_counts[status] += 1
+    if isinstance(summary, dict):
+        status_counts.update({k: summary.get(k, v) for k, v in status_counts.items()})
+    lines.append(f"Total Targets: {len(targets)}")
+    lines.append(f"  On Track: {status_counts['on_track']} | Behind: {status_counts['behind']}")
+    lines.append(f"  Exceeded: {status_counts['exceeded']} | At Risk: {status_counts['at_risk']}")
+    if isinstance(summary, str):
+        lines.append(f"  Summary: {summary}")
+    lines.append("")
+
+    for t in targets:
+        status = t.get("status", "no_data")
+        pct = t.get("progress_pct") or 0
+        lines.append(f"  {t['metric_id']}: {status.replace('_', ' ').upper()}")
+        lines.append(f"    Target: {t.get('target_description') or t.get('target', 'N/A')}")
+        lines.append(f"    Current: {t.get('current_value', 'N/A')} | Progress: {pct:.0f}%")
+        if pct > 0 and pct < 100:
+            remaining = 100 - pct
+            if remaining > 50:
+                lines.append(
+                    f"    Trajectory: At risk — {remaining:.0f}% remaining, consider intervention"
+                )
+            elif remaining > 20:
+                lines.append(f"    Trajectory: On track — {remaining:.0f}% remaining")
+            else:
+                lines.append(f"    Trajectory: Near completion — {remaining:.0f}% remaining")
+        lines.append("")
+
+    if data.get("five_dimensions"):
+        fd = data["five_dimensions"]
+        lines.append(
+            f"5D Score Context: {fd.get('overall_score', 0):.1f}/5 (Grade: {fd.get('overall_grade', 'N/A')})"
+        )
+
+    return "\n".join(lines)
+
+
+def _to_lp_ready_text(data: dict) -> str:
+    """Generate an LP-formatted individual company report."""
+    company = data.get("company", {})
+    fd = data.get("five_dimensions", {})
+    sdg = data.get("sdg_alignments", [])
+    ga = data.get("gap_analysis", {})
+    gw = data.get("greenwashing", {})
+
+    lines = [
+        "=" * 70,
+        "CONFIDENTIAL — FOR LP DISTRIBUTION",
+        "=" * 70,
+        f"Company: {company.get('name', 'Unknown')}",
+        f"Sector: {company.get('sector', 'N/A')}",
+        f"Geography: {company.get('geography', 'N/A')}",
+        f"Assessment Date: {data.get('generated_at', '')[:10]}",
+        f"Standard: {data.get('catalog_version', 'IRIS+ 5.3c')}",
+        "",
+        "─" * 70,
+        "",
+        "EXECUTIVE SUMMARY",
+        "─" * 40,
+    ]
+
+    if fd:
+        lines.append(
+            f"Overall Impact Score: {fd.get('overall_score', 0):.1f}/5.0 (Grade: {fd.get('overall_grade', 'N/A')})"
+        )
+        lines.append(
+            f"Assessment Confidence: {fd.get('overall_provenance', 'estimated').replace('-', ' ').title()}"
+        )
+
+    top_sdgs = sorted(sdg, key=lambda s: s.get("score", 0), reverse=True)[:3]
+    if top_sdgs:
+        lines.append(
+            "Top SDG Alignments: "
+            + ", ".join(
+                f"SDG {s['goal']} ({s.get('score', 0):.0f}%)"
+                for s in top_sdgs
+                if s.get("score", 0) > 0
+            )
+        )
+
+    if ga:
+        lines.append(f"Core Metric Coverage: {ga.get('coverage_percentage', 0)}%")
+
+    if isinstance(gw, dict) and gw.get("classification"):
+        lines.append(
+            f"Greenwashing Risk: {gw.get('classification', 'N/A')} ({gw.get('overall_score', 0)}/100)"
+        )
+
+    lines.extend(["", "─" * 70, "", "IMPACT DIMENSIONS", "─" * 40])
+    if fd:
+        for dim_name in ("what", "who", "how_much", "contribution", "risk"):
+            dim = fd.get(dim_name, {})
+            lines.append(
+                f"  {dim.get('dimension', dim_name)}: {dim.get('score', 0)}/5 | {dim.get('notes', '')}"
+            )
+
+    lines.extend(["", "KEY RISKS AND RECOMMENDATIONS", "─" * 40])
+    if fd and fd.get("recommendations"):
+        for r in fd["recommendations"][:5]:
+            lines.append(f"  • {r}")
+
+    ia = data.get("impact_analysis", {})
+    if ia.get("risks"):
+        for r in ia["risks"][:3]:
+            lines.append(f"  ⚠ {r}")
+
+    lines.extend(
+        [
+            "",
+            "─" * 70,
+            "This assessment was generated by Impact Vision using IRIS+ metrics,",
+            "5 Dimensions of Impact scoring, and multi-framework ESG analysis.",
+            "All scores should be validated with additional evidence and due diligence.",
+            "─" * 70,
+        ]
+    )
+    return "\n".join(lines)
+
+
+def _to_xlsx(data: dict, output_path: str, context) -> ToolResult:
+    """Excel workbook: frozen headers, filters, numeric cells, methodology sheet."""
+    try:
+        from impact_vision.impact.exports import build_workbook
+
+        wb = build_workbook(data)
+    except ImportError:
+        return ToolResult(
+            output="openpyxl required for XLSX. Install: pip install openpyxl", is_error=True
+        )
+
+    if not output_path:
+        return ToolResult(output="output_path is required for xlsx format", is_error=True)
+
+    path = Path(output_path)
+    if not path.is_absolute():
+        path = context.cwd / path
+    path.parent.mkdir(parents=True, exist_ok=True)
+    wb.save(str(path))
+
+    return ToolResult(
+        output=(
+            f"XLSX report saved to: {path}\nCompany: {data['company']['name']}\n"
+            f"Sheets: {', '.join(wb.sheetnames)}"
+        ),
+        metadata={"output_path": str(path), "format": "xlsx", "sheets": wb.sheetnames},
+    )

@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import pytest
 
-from openharness.impact.tool_advisor import routed_tool_names
-from openharness.tools import create_default_tool_registry, resolve_tool_profile
-from openharness.web.chat_session import SessionOptions
+from impact_vision.impact.tool_advisor import routed_tool_names
+from impact_vision.tools import create_default_tool_registry, resolve_tool_profile
+from impact_vision.web.chat_session import SessionOptions
 
 UNSAFE_FOR_FUNDS = {"bash", "write_file", "edit_file", "enter_worktree", "cron_create",
                     "team_create", "agent", "remote_trigger", "notebook_edit"}

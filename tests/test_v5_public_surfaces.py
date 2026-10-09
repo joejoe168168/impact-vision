@@ -6,7 +6,7 @@ import asyncio
 import json
 from datetime import date, timedelta
 
-from openharness.api_gateway.router import (
+from impact_vision.api_gateway.router import (
     DecisionWorkflowRequest,
     RegulatoryCalendarRequest,
     decision_workflow_endpoint,
@@ -51,7 +51,7 @@ def test_rest_regulatory_calendar_endpoint_returns_items() -> None:
 
 
 def test_mcp_decision_workflow_and_regulatory_calendar_execute() -> None:
-    from openharness.impact.mcp_server import decision_workflow, regulatory_calendar
+    from impact_vision.impact.mcp_server import decision_workflow, regulatory_calendar
 
     decision = asyncio.run(decision_workflow(
         action="quick_screen",

@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from openharness.ui.runtime import build_runtime, close_runtime
+from impact_vision.ui.runtime import build_runtime, close_runtime
 
 
 class _ClosableApiClient:

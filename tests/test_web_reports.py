@@ -11,20 +11,20 @@ pytest.importorskip("fastapi")
 
 from fastapi.testclient import TestClient  # noqa: E402
 
-from openharness.impact.pipeline import sample_deck_path  # noqa: E402
-from openharness.web import reports_api  # noqa: E402
+from impact_vision.impact.pipeline import sample_deck_path  # noqa: E402
+from impact_vision.web import reports_api  # noqa: E402
 
 
 @pytest.fixture()
 def client(tmp_path, monkeypatch):
     monkeypatch.setenv("IMPACT_VISION_WEB_HOME", str(tmp_path / "home"))
     monkeypatch.setenv("IMPACT_VISION_UPLOAD_DIR", str(tmp_path / "uploads"))
-    from openharness.impact import storage
+    from impact_vision.impact import storage
 
     monkeypatch.setattr(storage, "_global_store", storage.AssessmentStore(tmp_path / "iv.db"))
     monkeypatch.delenv("IMPACT_VISION_SHARE_HMAC_KEY", raising=False)
     monkeypatch.delenv("IMPACT_VISION_HMAC_KEY", raising=False)
-    from openharness.web.app import app
+    from impact_vision.web.app import app
 
     return TestClient(app)
 
@@ -100,7 +100,7 @@ def test_share_tokens_expire_and_never_use_the_public_dev_key(client, tmp_path):
 
 
 def test_chat_ui_has_analyze_flow():
-    from openharness.web.chat_ui import render_chat_html
+    from impact_vision.web.chat_ui import render_chat_html
 
     html = render_chat_html()
     for needle in ("Analyze a pitch deck", "analyzeFiles", 'id="viewerFrame"', "createShare",

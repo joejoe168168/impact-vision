@@ -24,7 +24,7 @@ def isolated(tmp_path, monkeypatch):
     monkeypatch.delenv("IMPACT_VISION_CORS_ORIGINS", raising=False)
     monkeypatch.delenv("IMPACT_VISION_API_ALLOW_PATHS", raising=False)
     monkeypatch.chdir(tmp_path)
-    from openharness.web import chat_session
+    from impact_vision.web import chat_session
 
     chat_session.reset_session_manager()
     yield
@@ -33,7 +33,7 @@ def isolated(tmp_path, monkeypatch):
 
 @pytest.fixture
 def client():
-    from openharness.web.app import app
+    from impact_vision.web.app import app
 
     with TestClient(app, base_url="http://127.0.0.1:8787") as c:
         yield c
@@ -97,7 +97,7 @@ def test_websocket_token_via_subprotocol(client, monkeypatch):
 
 
 def test_launch_token_only_beyond_loopback(monkeypatch):
-    from openharness.api_gateway.security import ensure_launch_token
+    from impact_vision.api_gateway.security import ensure_launch_token
 
     assert ensure_launch_token("127.0.0.1") is None
     token = ensure_launch_token("0.0.0.0")
@@ -142,7 +142,7 @@ def test_webhook_to_private_address_is_refused(client):
 
 
 def test_url_fetch_rechecks_redirect_targets():
-    from openharness.tools.impact.pitch_deck_analyze_tool import _ensure_public_url, _UrlFetchError
+    from impact_vision.tools.impact.pitch_deck_analyze_tool import _ensure_public_url, _UrlFetchError
 
     for bad in ("http://127.0.0.1/", "http://10.0.0.5/x", "file:///etc/passwd"):
         with pytest.raises(_UrlFetchError):
@@ -178,8 +178,8 @@ def test_full_auto_cannot_be_set_from_the_web(client):
 
 
 def test_fund_sessions_confine_file_access(tmp_path):
-    from openharness.config.settings import PermissionSettings
-    from openharness.permissions.checker import PermissionChecker
+    from impact_vision.config.settings import PermissionSettings
+    from impact_vision.permissions.checker import PermissionChecker
 
     checker = PermissionChecker(PermissionSettings(), confine_to=[tmp_path])
     inside = checker.evaluate("file_read_tool", is_read_only=True, file_path=str(tmp_path / "deck.md"))
@@ -189,9 +189,9 @@ def test_fund_sessions_confine_file_access(tmp_path):
 
 
 def test_mode_change_keeps_confinement(tmp_path):
-    from openharness.config.settings import PermissionSettings
-    from openharness.engine.query_engine import QueryEngine
-    from openharness.permissions.checker import PermissionChecker
+    from impact_vision.config.settings import PermissionSettings
+    from impact_vision.engine.query_engine import QueryEngine
+    from impact_vision.permissions.checker import PermissionChecker
 
     engine = QueryEngine.__new__(QueryEngine)
     engine._permission_checker = PermissionChecker(PermissionSettings(), confine_to=[tmp_path])  # noqa: SLF001
@@ -203,7 +203,7 @@ def test_mode_change_keeps_confinement(tmp_path):
 
 
 def test_legacy_report_header_escapes_company_text():
-    from openharness.impact.report_templates.html_template import render_header
+    from impact_vision.impact.report_templates.html_template import render_header
 
     html = render_header({"company": {"name": "<script>alert(1)</script>", "impact_themes": ["<b>x</b>"]}})
     assert "<script>alert" not in html and "&lt;script&gt;" in html
@@ -211,7 +211,7 @@ def test_legacy_report_header_escapes_company_text():
 
 
 def test_shared_fetcher_refuses_private_targets_and_schemes():
-    from openharness.utils.safe_fetch import UnsafeUrlError, ensure_public_url
+    from impact_vision.utils.safe_fetch import UnsafeUrlError, ensure_public_url
 
     for bad in ("http://169.254.169.254/latest/meta-data", "http://localhost:8787/", "ftp://example.com/x",
                 "file:///etc/passwd"):
@@ -220,7 +220,7 @@ def test_shared_fetcher_refuses_private_targets_and_schemes():
 
 
 def test_verifier_fetches_through_the_safe_fetcher(monkeypatch):
-    from openharness.impact.extractors import llm_verifier
+    from impact_vision.impact.extractors import llm_verifier
 
     with pytest.raises(Exception) as exc:
         llm_verifier._default_fetcher("http://127.0.0.1:22/")

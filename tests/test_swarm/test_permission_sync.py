@@ -7,7 +7,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from openharness.swarm.permission_sync import (
+from impact_vision.swarm.permission_sync import (
     SwarmPermissionResponse,
     _is_read_only,
     create_permission_request,
@@ -87,7 +87,7 @@ async def test_send_permission_request_writes_to_leader(tmp_path, monkeypatch):
     req = create_permission_request("Bash", "tu-1", {"command": "echo hi"})
     await send_permission_request(req, "myteam", "worker1", "leader")
 
-    from openharness.swarm.mailbox import TeammateMailbox
+    from impact_vision.swarm.mailbox import TeammateMailbox
     mailbox = TeammateMailbox("myteam", "leader")
     messages = await mailbox.read_all(unread_only=False)
     assert len(messages) == 1
@@ -106,7 +106,7 @@ async def test_send_permission_response_writes_to_worker(tmp_path, monkeypatch):
     resp = SwarmPermissionResponse(request_id="r1", allowed=True, feedback=None)
     await send_permission_response(resp, "myteam", "worker1", "leader")
 
-    from openharness.swarm.mailbox import TeammateMailbox
+    from impact_vision.swarm.mailbox import TeammateMailbox
     mailbox = TeammateMailbox("myteam", "worker1")
     messages = await mailbox.read_all(unread_only=False)
     assert len(messages) == 1

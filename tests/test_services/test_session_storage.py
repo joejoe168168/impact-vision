@@ -5,9 +5,9 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from openharness.api.usage import UsageSnapshot
-from openharness.engine.messages import ConversationMessage, TextBlock
-from openharness.services.session_storage import (
+from impact_vision.api.usage import UsageSnapshot
+from impact_vision.engine.messages import ConversationMessage, TextBlock
+from impact_vision.services.session_storage import (
     export_session_markdown,
     get_project_session_dir,
     load_session_snapshot,

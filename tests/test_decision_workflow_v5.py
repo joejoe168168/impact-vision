@@ -6,20 +6,20 @@ import asyncio
 import json
 from pathlib import Path
 
-from openharness.impact.database import ensure_catalog_loaded
-from openharness.impact.decision_workflow import (
+from impact_vision.impact.database import ensure_catalog_loaded
+from impact_vision.impact.decision_workflow import (
     assess_lp_readiness,
     build_ic_workflow_summary,
     compare_deals,
     quick_screen,
 )
-from openharness.impact.fund_thesis import FundThesis
-from openharness.impact.greenwashing import GreenwashingScore
-from openharness.impact.models import Company, ImpactClaim, MetricRecord
-from openharness.impact.verdict_engine import build_verdict_card, classify_greenwashing
-from openharness.tools import create_default_tool_registry
-from openharness.tools.base import ToolExecutionContext
-from openharness.tools.impact.decision_workflow_tool import DecisionWorkflowInput, DecisionWorkflowTool
+from impact_vision.impact.fund_thesis import FundThesis
+from impact_vision.impact.greenwashing import GreenwashingScore
+from impact_vision.impact.models import Company, ImpactClaim, MetricRecord
+from impact_vision.impact.verdict_engine import build_verdict_card, classify_greenwashing
+from impact_vision.tools import create_default_tool_registry
+from impact_vision.tools.base import ToolExecutionContext
+from impact_vision.tools.impact.decision_workflow_tool import DecisionWorkflowInput, DecisionWorkflowTool
 
 
 def _store():

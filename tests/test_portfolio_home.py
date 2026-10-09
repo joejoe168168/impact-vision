@@ -8,8 +8,8 @@ from datetime import date
 
 import pytest
 
-from openharness.impact.pipeline import SAMPLE_DECKS, assess_file, sample_deck_path
-from openharness.impact.portfolio_home import (
+from impact_vision.impact.pipeline import SAMPLE_DECKS, assess_file, sample_deck_path
+from impact_vision.impact.portfolio_home import (
     build_portfolio_home,
     record_from_bundle,
     render_portfolio_home,
@@ -63,12 +63,12 @@ def test_web_portfolio_view(tmp_path, monkeypatch):
     pytest.importorskip("fastapi")
     from fastapi.testclient import TestClient
 
-    from openharness.impact import storage
+    from impact_vision.impact import storage
 
     monkeypatch.setenv("IMPACT_VISION_WEB_HOME", str(tmp_path))
     monkeypatch.setattr(storage, "_global_store", storage.AssessmentStore(tmp_path / "iv.db"))
-    from openharness.web import reports_api
-    from openharness.web.app import app
+    from impact_vision.web import reports_api
+    from impact_vision.web.app import app
 
     for _ in range(2):  # re-assessing a company replaces it on the portfolio page
         reports_api.create_report(sample_deck_path("solar").with_suffix(".md"))

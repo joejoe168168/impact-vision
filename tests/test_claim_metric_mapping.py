@@ -5,14 +5,14 @@ from __future__ import annotations
 import pytest
 import yaml
 
-from openharness.impact._paths import data_path
-from openharness.impact.claim_metric_mapper import map_claim_metrics
-from openharness.impact.database import get_metric_store
-from openharness.impact.deal_gate import evaluate_deal
-from openharness.impact.fund_thesis import FundThesis
-from openharness.impact.ic_memo import render_ic_memo
-from openharness.impact.models import Company
-from openharness.impact.sdk import ImpactVision
+from impact_vision.impact._paths import data_path
+from impact_vision.impact.claim_metric_mapper import map_claim_metrics
+from impact_vision.impact.database import get_metric_store
+from impact_vision.impact.deal_gate import evaluate_deal
+from impact_vision.impact.fund_thesis import FundThesis
+from impact_vision.impact.ic_memo import render_ic_memo
+from impact_vision.impact.models import Company
+from impact_vision.impact.sdk import ImpactVision
 
 
 def _ids(sentence: str) -> dict[str, str]:

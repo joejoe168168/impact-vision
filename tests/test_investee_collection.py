@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from openharness.impact.database import MetricStore
-from openharness.impact.investee_collection import (
+from impact_vision.impact.database import MetricStore
+from impact_vision.impact.investee_collection import (
     create_collection_submission,
     default_metric_ids_for_sector,
     generate_investee_questionnaire_schema,
@@ -11,7 +11,7 @@ from openharness.impact.investee_collection import (
     submission_to_metric_records,
     validate_collection_submission,
 )
-from openharness.impact.models import DimensionTags, Metric
+from impact_vision.impact.models import DimensionTags, Metric
 
 
 def _store() -> MetricStore:

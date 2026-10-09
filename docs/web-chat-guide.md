@@ -71,7 +71,7 @@ impact-vision serve-web --reload               # auto-reload while developing
 Equivalent manual invocation:
 
 ```bash
-uvicorn openharness.web.app:app --host 127.0.0.1 --port 8787
+uvicorn impact_vision.web.app:app --host 127.0.0.1 --port 8787
 ```
 
 On startup the CLI prints every mounted surface, the workspace directory and
@@ -541,7 +541,7 @@ Browser  ──HTTP──▶  chat_ui.py       one self-contained HTML document
 `ChatSession` is the browser-side sibling of `ui/backend_host.py`, which
 drives the same runtime over stdin/stdout JSON lines for the terminal UI. Both
 consume the identical `StreamEvent` vocabulary from
-`openharness.engine.stream_events`, so the chat UI, the terminal UI, the CLI
+`impact_vision.engine.stream_events`, so the chat UI, the terminal UI, the CLI
 and the MCP server never drift apart: add a tool once and all four see it.
 
 Each conversation owns one `RuntimeBundle`. Events are broadcast to every
@@ -552,11 +552,11 @@ reopening it replays the transcript.
 
 | File | Role |
 |---|---|
-| `src/openharness/web/chat_ui.py` | The HTML/CSS/JS document |
-| `src/openharness/web/chat_api.py` | WebSocket + REST endpoints |
-| `src/openharness/web/chat_session.py` | Session lifecycle, events, persistence, artifacts |
-| `src/openharness/web/app.py` | Mounts chat, console, SSE and the REST gateway |
-| `src/openharness/web/console.py` | The tool-form console at `/console` |
+| `src/impact_vision/web/chat_ui.py` | The HTML/CSS/JS document |
+| `src/impact_vision/web/chat_api.py` | WebSocket + REST endpoints |
+| `src/impact_vision/web/chat_session.py` | Session lifecycle, events, persistence, artifacts |
+| `src/impact_vision/web/app.py` | Mounts chat, console, SSE and the REST gateway |
+| `src/impact_vision/web/console.py` | The tool-form console at `/console` |
 | `tests/test_web_chat.py` | 29 tests over the UI, REST surface and WebSocket protocol |
 
 ---

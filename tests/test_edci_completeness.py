@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from openharness.impact.frameworks.edci import (
+from impact_vision.impact.frameworks.edci import (
     assess_edci_coverage,
     assess_edci_completeness,
     get_edci_metrics,
     portfolio_edci_completeness,
 )
-from openharness.impact.models import MetricRecord
+from impact_vision.impact.models import MetricRecord
 
 
 def test_assess_edci_completeness_statuses_all_metrics() -> None:

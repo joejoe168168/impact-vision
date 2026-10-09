@@ -24,15 +24,15 @@ REPO = DEMO.parent
 if str(REPO / "src") not in sys.path:
     sys.path.insert(0, str(REPO / "src"))
 
-from openharness.impact.engagement_home import build_engagement_home, render_engagement_home  # noqa: E402
-from openharness.impact.investee_portal import build_investee_portal  # noqa: E402
-from openharness.impact.portfolio_home import (  # noqa: E402
+from impact_vision.impact.engagement_home import build_engagement_home, render_engagement_home  # noqa: E402
+from impact_vision.impact.investee_portal import build_investee_portal  # noqa: E402
+from impact_vision.impact.portfolio_home import (  # noqa: E402
     build_portfolio_home,
     jurisdictions_for,
     record_from_bundle,
     render_portfolio_home,
 )
-from openharness.impact.pipeline import (  # noqa: E402
+from impact_vision.impact.pipeline import (  # noqa: E402
     SAMPLE_DECKS,
     assess_file,
     format_summary,
@@ -41,8 +41,8 @@ from openharness.impact.pipeline import (  # noqa: E402
     write_deliverables,
     write_gallery,
 )
-from openharness.impact.report_templates.decision_report import render_decision_report  # noqa: E402
-from openharness.impact.report_templates.pdf import PdfUnavailable, html_to_pdf  # noqa: E402
+from impact_vision.impact.report_templates.decision_report import render_decision_report  # noqa: E402
+from impact_vision.impact.report_templates.pdf import PdfUnavailable, html_to_pdf  # noqa: E402
 
 KEEP = {"generate_demo.py", "README.md", "pig_farm_profile.json"}
 FUND = "Meridian Impact Partners (fictional)"
@@ -87,7 +87,7 @@ def demo_engagements(bundles):  # noqa: ANN001, ANN201
     """
     from datetime import date, timedelta
 
-    from openharness.impact.engagements.workspace import EngagementWorkspace
+    from impact_vision.impact.engagements.workspace import EngagementWorkspace
 
     today = date.today()
     d = lambda days: (today + timedelta(days=days)).isoformat()  # noqa: E731

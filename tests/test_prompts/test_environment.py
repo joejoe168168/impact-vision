@@ -1,11 +1,11 @@
-"""Tests for openharness.prompts.environment."""
+"""Tests for impact_vision.prompts.environment."""
 
 from __future__ import annotations
 
 import subprocess
 from pathlib import Path
 
-from openharness.prompts.environment import (
+from impact_vision.prompts.environment import (
     EnvironmentInfo,
     detect_git_info,
     detect_os,
@@ -75,7 +75,7 @@ def test_detect_git_info_uses_devnull_for_git_subprocess(monkeypatch):
             return _Completed(0, "true\n")
         return _Completed(0, "main\n")
 
-    monkeypatch.setattr("openharness.prompts.environment.subprocess.run", _fake_run)
+    monkeypatch.setattr("impact_vision.prompts.environment.subprocess.run", _fake_run)
 
     is_git, branch = detect_git_info("/tmp/project")
 
@@ -106,7 +106,7 @@ def test_get_environment_info_detects_virtual_env_from_python_executable(monkeyp
     fake_python.write_text("", encoding="utf-8")
 
     monkeypatch.delenv("VIRTUAL_ENV", raising=False)
-    monkeypatch.setattr("openharness.prompts.environment.sys.executable", str(fake_python))
+    monkeypatch.setattr("impact_vision.prompts.environment.sys.executable", str(fake_python))
 
     info = get_environment_info(cwd=str(tmp_path))
 

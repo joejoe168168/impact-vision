@@ -11,9 +11,9 @@ pytest.importorskip("fastapi")
 
 from fastapi.testclient import TestClient  # noqa: E402
 
-from openharness.api.client import ApiMessageCompleteEvent, ApiTextDeltaEvent  # noqa: E402
-from openharness.api.usage import UsageSnapshot  # noqa: E402
-from openharness.engine.messages import ConversationMessage, TextBlock  # noqa: E402
+from impact_vision.api.client import ApiMessageCompleteEvent, ApiTextDeltaEvent  # noqa: E402
+from impact_vision.api.usage import UsageSnapshot  # noqa: E402
+from impact_vision.engine.messages import ConversationMessage, TextBlock  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
@@ -56,7 +56,7 @@ def isolated_web_home(tmp_path, monkeypatch):
     monkeypatch.delenv("IMPACT_VISION_API_KEY", raising=False)
     monkeypatch.chdir(tmp_path)
 
-    from openharness.web import chat_session
+    from impact_vision.web import chat_session
 
     chat_session.reset_session_manager()
     yield
@@ -65,7 +65,7 @@ def isolated_web_home(tmp_path, monkeypatch):
 
 @pytest.fixture
 def client():
-    from openharness.web.app import app
+    from impact_vision.web.app import app
 
     with TestClient(app) as test_client:
         yield test_client
@@ -74,7 +74,7 @@ def client():
 @pytest.fixture
 def scripted(monkeypatch):
     """Make every new session use the scripted client instead of a live one."""
-    from openharness.web import chat_session
+    from impact_vision.web import chat_session
 
     fake = ScriptedApiClient()
     original = chat_session.ChatSession.ensure_started
@@ -93,7 +93,7 @@ def scripted(monkeypatch):
 
 
 def test_chat_ui_is_self_contained():
-    from openharness.web.chat_ui import render_chat_html
+    from impact_vision.web.chat_ui import render_chat_html
 
     html = render_chat_html()
     assert html.startswith("<!DOCTYPE html>")
@@ -155,7 +155,7 @@ def test_session_crud(client):
 
 
 def test_sessions_survive_a_restart(client):
-    from openharness.web import chat_session
+    from impact_vision.web import chat_session
 
     created = client.post("/api/v1/chat/sessions", json={"title": "Persisted"}).json()
     session_id = created["session"]["session_id"]
@@ -228,7 +228,7 @@ def test_upload_filename_is_sanitised(client):
     )
     saved = response.json()["files"][0]
     assert ".." not in saved["stored_name"]
-    from openharness.web.chat_api import uploads_dir
+    from impact_vision.web.chat_api import uploads_dir
 
     assert Path(saved["path"]).parent == uploads_dir()
 
@@ -262,11 +262,11 @@ def test_api_key_is_enforced_when_configured(monkeypatch, tmp_path):
     monkeypatch.setenv("IMPACT_VISION_API_KEY", "topsecret")
     import importlib
 
-    from openharness.api_gateway import router as gateway
+    from impact_vision.api_gateway import router as gateway
 
     importlib.reload(gateway)
     try:
-        from openharness.web.chat_api import build_chat_router
+        from impact_vision.web.chat_api import build_chat_router
         from fastapi import FastAPI
 
         probe = FastAPI()
@@ -397,7 +397,7 @@ def test_ping_pong(client):
 
 
 def test_artifacts_are_tracked_from_write_tools(tmp_path):
-    from openharness.web.chat_session import ChatSession
+    from impact_vision.web.chat_session import ChatSession
 
     written = tmp_path / "impact-report.html"
     written.write_text("<h1>report</h1>")
@@ -413,7 +413,7 @@ def test_artifacts_are_tracked_from_write_tools(tmp_path):
 
 def test_impact_report_output_path_is_captured(tmp_path):
     """``impact_report`` takes ``output_path`` rather than ``path``."""
-    from openharness.web.chat_session import ChatSession
+    from impact_vision.web.chat_session import ChatSession
 
     report = tmp_path / "acme-impact.xlsx"
     report.write_bytes(b"PK fake xlsx")
@@ -426,7 +426,7 @@ def test_impact_report_output_path_is_captured(tmp_path):
 
 
 def test_saved_to_line_captures_files_from_any_tool(tmp_path):
-    from openharness.web.chat_session import ChatSession
+    from impact_vision.web.chat_session import ChatSession
 
     deck = tmp_path / "ddq.csv"
     deck.write_text("a,b\n")
@@ -438,7 +438,7 @@ def test_saved_to_line_captures_files_from_any_tool(tmp_path):
 
 def test_reader_tools_produce_no_artifacts(tmp_path):
     """A path the agent merely *read* must not show up as an artifact."""
-    from openharness.web.chat_session import ChatSession
+    from impact_vision.web.chat_session import ChatSession
 
     source = tmp_path / "notes.md"
     source.write_text("# notes")
@@ -454,7 +454,7 @@ def test_reader_tools_produce_no_artifacts(tmp_path):
 
 
 def test_missing_files_are_not_recorded(tmp_path):
-    from openharness.web.chat_session import ChatSession
+    from impact_vision.web.chat_session import ChatSession
 
     session = ChatSession()
     session._last_tool_inputs["write_file"] = {"path": str(tmp_path / "never-written.md")}
@@ -463,7 +463,7 @@ def test_missing_files_are_not_recorded(tmp_path):
 
 
 def test_transcript_is_persisted_and_restored(tmp_path):
-    from openharness.web.chat_session import ChatSession, web_chat_dir
+    from impact_vision.web.chat_session import ChatSession, web_chat_dir
 
     session = ChatSession(title="Saved chat")
     session._record({"role": "user", "text": "hello"})
@@ -480,7 +480,7 @@ def test_transcript_is_persisted_and_restored(tmp_path):
 def test_permission_resolution_round_trip():
     import asyncio
 
-    from openharness.web.chat_session import ChatSession
+    from impact_vision.web.chat_session import ChatSession
 
     session = ChatSession()
 

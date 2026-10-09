@@ -7,14 +7,14 @@ from pathlib import Path
 
 import pytest
 
-from openharness.coordinator.coordinator_mode import get_team_registry
-from openharness.tasks import get_task_manager
-from openharness.tools.agent_tool import AgentTool, AgentToolInput
-from openharness.tools.base import ToolExecutionContext
-from openharness.tools.task_create_tool import TaskCreateTool, TaskCreateToolInput
-from openharness.tools.task_output_tool import TaskOutputTool, TaskOutputToolInput
-from openharness.tools.task_update_tool import TaskUpdateTool, TaskUpdateToolInput
-from openharness.tools.team_create_tool import TeamCreateTool, TeamCreateToolInput
+from impact_vision.coordinator.coordinator_mode import get_team_registry
+from impact_vision.tasks import get_task_manager
+from impact_vision.tools.agent_tool import AgentTool, AgentToolInput
+from impact_vision.tools.base import ToolExecutionContext
+from impact_vision.tools.task_create_tool import TaskCreateTool, TaskCreateToolInput
+from impact_vision.tools.task_output_tool import TaskOutputTool, TaskOutputToolInput
+from impact_vision.tools.task_update_tool import TaskUpdateTool, TaskUpdateToolInput
+from impact_vision.tools.team_create_tool import TeamCreateTool, TeamCreateToolInput
 
 
 @pytest.mark.asyncio
@@ -160,15 +160,15 @@ async def test_send_message_swarm_path_uses_subprocess_backend(
     monkeypatch.setenv("OPENHARNESS_DATA_DIR", str(tmp_path / "data"))
     context = ToolExecutionContext(cwd=tmp_path)
 
-    from openharness.tools.send_message_tool import SendMessageTool
+    from impact_vision.tools.send_message_tool import SendMessageTool
 
     with patch(
-        "openharness.swarm.subprocess_backend.SubprocessBackend.send_message",
+        "impact_vision.swarm.subprocess_backend.SubprocessBackend.send_message",
         new_callable=AsyncMock,
     ) as mock_send:
         await SendMessageTool().execute(
             __import__(
-                "openharness.tools.send_message_tool",
+                "impact_vision.tools.send_message_tool",
                 fromlist=["SendMessageToolInput"],
             ).SendMessageToolInput(
                 task_id="worker@default",

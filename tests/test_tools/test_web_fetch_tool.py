@@ -7,9 +7,9 @@ import time
 import httpx
 import pytest
 
-from openharness.tools.base import ToolExecutionContext
-from openharness.tools.web_fetch_tool import WebFetchTool, WebFetchToolInput, _html_to_text
-from openharness.tools.web_search_tool import WebSearchTool, WebSearchToolInput
+from impact_vision.tools.base import ToolExecutionContext
+from impact_vision.tools.web_fetch_tool import WebFetchTool, WebFetchToolInput, _html_to_text
+from impact_vision.tools.web_search_tool import WebSearchTool, WebSearchToolInput
 
 
 @pytest.mark.asyncio

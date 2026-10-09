@@ -3,8 +3,8 @@ from pathlib import Path
 
 import pytest
 
-from openharness.tools.base import ToolExecutionContext
-from openharness.tools.bash_tool import BashTool, BashToolInput
+from impact_vision.tools.base import ToolExecutionContext
+from impact_vision.tools.bash_tool import BashTool, BashToolInput
 
 
 class _FakeStdout:
@@ -80,7 +80,7 @@ async def test_bash_tool_preflight_short_circuits_interactive_scaffold_even_with
     async def fake_create_shell_subprocess(*args, **kwargs):
         return process
 
-    monkeypatch.setattr("openharness.tools.bash_tool.create_shell_subprocess", fake_create_shell_subprocess)
+    monkeypatch.setattr("impact_vision.tools.bash_tool.create_shell_subprocess", fake_create_shell_subprocess)
 
     result = await BashTool().execute(
         BashToolInput(
@@ -143,7 +143,7 @@ async def test_bash_tool_collects_combined_output(monkeypatch, tmp_path: Path):
     async def fake_create_shell_subprocess(*args, **kwargs):
         return process
 
-    monkeypatch.setattr("openharness.tools.bash_tool.create_shell_subprocess", fake_create_shell_subprocess)
+    monkeypatch.setattr("impact_vision.tools.bash_tool.create_shell_subprocess", fake_create_shell_subprocess)
 
     result = await BashTool().execute(
         BashToolInput(command="printf 'line one\\nline two\\n'"),

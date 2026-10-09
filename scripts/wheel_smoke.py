@@ -19,14 +19,14 @@ from pathlib import Path
 
 
 def main() -> int:
-    import openharness
-    from openharness.impact._paths import data_dir
-    from openharness.impact.dd_checklist import load_checklist
-    from openharness.impact.five_dimensions import _load_scoring_config
-    from openharness.impact.sdg_mapper import _load_core_metrics_per_sdg
+    import impact_vision
+    from impact_vision.impact._paths import data_dir
+    from impact_vision.impact.dd_checklist import load_checklist
+    from impact_vision.impact.five_dimensions import _load_scoring_config
+    from impact_vision.impact.sdg_mapper import _load_core_metrics_per_sdg
 
     failures: list[str] = []
-    pkg = Path(openharness.__file__).resolve().parent
+    pkg = Path(impact_vision.__file__).resolve().parent
     root = data_dir()
     print(f"package:   {pkg}")
     print(f"data root: {root}")
@@ -46,8 +46,8 @@ def main() -> int:
     # The no-key quickstart must work from an installed wheel (W1.1).
     import tempfile
 
-    from openharness.impact.pipeline import SAMPLE_DECKS, assess_file, sample_deck_path
-    from openharness.impact.pipeline import write_deliverables
+    from impact_vision.impact.pipeline import SAMPLE_DECKS, assess_file, sample_deck_path
+    from impact_vision.impact.pipeline import write_deliverables
 
     for key in SAMPLE_DECKS:
         deck = sample_deck_path(key)

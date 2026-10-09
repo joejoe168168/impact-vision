@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from openharness.impact.database import get_metric_store
-from openharness.impact.exit_impact import ExitImpactPlan
-from openharness.impact.frameworks.cross_reference import get_all_cross_references
-from openharness.impact.frameworks.edci import assess_edci_coverage, get_edci_metrics
-from openharness.impact.frameworks.sfdr_pai import assess_sfdr_compliance, get_pai_indicators
-from openharness.impact.models import Company
-from openharness.impact.sdk import ImpactVision
+from impact_vision.impact.database import get_metric_store
+from impact_vision.impact.exit_impact import ExitImpactPlan
+from impact_vision.impact.frameworks.cross_reference import get_all_cross_references
+from impact_vision.impact.frameworks.edci import assess_edci_coverage, get_edci_metrics
+from impact_vision.impact.frameworks.sfdr_pai import assess_sfdr_compliance, get_pai_indicators
+from impact_vision.impact.models import Company
+from impact_vision.impact.sdk import ImpactVision
 
 
 def _assert_iris_ids_exist(metric_ids: list[str], context: str) -> None:
@@ -111,17 +111,17 @@ def test_sdk_country_argument_maps_to_company_geography() -> None:
 
 
 def test_production_tool_iris_mappings_are_catalog_backed() -> None:
-    from openharness.impact.frameworks.cdp import CDP_TO_IRIS
-    from openharness.impact.frameworks.issb_ifrs_s1 import get_ifrs_s1_framework
-    from openharness.impact.frameworks.issb_ifrs_s2 import get_ifrs_s2_framework
-    from openharness.impact.frameworks.tnfd import TNFD_DISCLOSURES
-    from openharness.impact.greenwashing import _ADVERSE_METRICS_BY_SECTOR
-    from openharness.impact.investee_collection import SECTOR_METRIC_TEMPLATES
-    from openharness.tools.impact.improvement_advisor_tool import (
+    from impact_vision.impact.frameworks.cdp import CDP_TO_IRIS
+    from impact_vision.impact.frameworks.issb_ifrs_s1 import get_ifrs_s1_framework
+    from impact_vision.impact.frameworks.issb_ifrs_s2 import get_ifrs_s2_framework
+    from impact_vision.impact.frameworks.tnfd import TNFD_DISCLOSURES
+    from impact_vision.impact.greenwashing import _ADVERSE_METRICS_BY_SECTOR
+    from impact_vision.impact.investee_collection import SECTOR_METRIC_TEMPLATES
+    from impact_vision.tools.impact.improvement_advisor_tool import (
         _DIMENSION_IMPROVEMENT_STRATEGIES,
         _SECTOR_PEER_PATTERNS,
     )
-    from openharness.tools.impact.product_passport_tool import DPP_CATEGORIES
+    from impact_vision.tools.impact.product_passport_tool import DPP_CATEGORIES
 
     for category, config in DPP_CATEGORIES.items():
         _assert_iris_ids_exist(config["iris_mappings"], f"DPP {category}")

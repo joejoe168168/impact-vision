@@ -5,11 +5,11 @@ import pytest
 
 pytest.importorskip("cryptography")
 
-from openharness.impact.signed_feed import Ed25519Signer, verify_ed25519  # noqa: E402
+from impact_vision.impact.signed_feed import Ed25519Signer, verify_ed25519  # noqa: E402
 
 
 def _bundle():
-    from openharness.impact.engagements.verification_bundle import (
+    from impact_vision.impact.engagements.verification_bundle import (
         MandatePack,
         PracticePack,
         ReportingPack,
@@ -38,7 +38,7 @@ def test_seed_and_pem_material():
 
 
 def test_assurance_bundle_signed_with_ed25519(monkeypatch):
-    from openharness.impact.engagements.verification_bundle import verify_assurance_bundle
+    from impact_vision.impact.engagements.verification_bundle import verify_assurance_bundle
 
     signer = Ed25519Signer.generate()
     monkeypatch.setenv("IMPACT_VISION_ASSURANCE_ED25519_KEY", signer.private_key_pem())
@@ -59,7 +59,7 @@ def test_assurance_bundle_signed_with_ed25519(monkeypatch):
 def test_hmac_still_default_without_ed25519_key(monkeypatch):
     monkeypatch.delenv("IMPACT_VISION_ASSURANCE_ED25519_KEY", raising=False)
     monkeypatch.delenv("IMPACT_VISION_ED25519_KEY", raising=False)
-    from openharness.impact.engagements.verification_bundle import verify_assurance_bundle
+    from impact_vision.impact.engagements.verification_bundle import verify_assurance_bundle
 
     bundle = _bundle()
     assert bundle.manifest.signature_algorithm == "sha256"

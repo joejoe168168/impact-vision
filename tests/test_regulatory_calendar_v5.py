@@ -7,11 +7,11 @@ import json
 from datetime import date, timedelta
 from pathlib import Path
 
-from openharness.impact.regulatory_calendar import build_regulatory_calendar, jurisdiction_options
-from openharness.impact.sdk import ImpactVision
-from openharness.tools import create_default_tool_registry
-from openharness.tools.base import ToolExecutionContext
-from openharness.tools.impact.regulatory_calendar_tool import (
+from impact_vision.impact.regulatory_calendar import build_regulatory_calendar, jurisdiction_options
+from impact_vision.impact.sdk import ImpactVision
+from impact_vision.tools import create_default_tool_registry
+from impact_vision.tools.base import ToolExecutionContext
+from impact_vision.tools.impact.regulatory_calendar_tool import (
     RegulatoryCalendarInput,
     RegulatoryCalendarTool,
 )

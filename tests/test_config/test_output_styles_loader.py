@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from openharness.output_styles.loader import load_output_styles
+from impact_vision.output_styles.loader import load_output_styles
 
 
 def test_builtin_output_styles_include_codex(monkeypatch, tmp_path):

@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import pytest
 
-from openharness.impact.assurance import EvidenceEntry, build_assurance_pack
-from openharness.impact.audit_trail import AuditTrail
-from openharness.impact.verification_workspace import open_workspace
+from impact_vision.impact.assurance import EvidenceEntry, build_assurance_pack
+from impact_vision.impact.audit_trail import AuditTrail
+from impact_vision.impact.verification_workspace import open_workspace
 
 
 def _pack():

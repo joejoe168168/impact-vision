@@ -4,13 +4,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from openharness.memory import (
+from impact_vision.memory import (
     find_relevant_memories,
     get_memory_entrypoint,
     get_project_memory_dir,
     load_memory_prompt,
 )
-from openharness.memory.scan import _parse_memory_file, scan_memory_files
+from impact_vision.memory.scan import _parse_memory_file, scan_memory_files
 
 
 def test_memory_paths_are_stable(tmp_path: Path, monkeypatch):

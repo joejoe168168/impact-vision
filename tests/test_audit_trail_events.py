@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from openharness.impact.audit_trail import AuditTrail
+from impact_vision.impact.audit_trail import AuditTrail
 
 
 def test_record_metric_event_creates_hash_chained_payload() -> None:

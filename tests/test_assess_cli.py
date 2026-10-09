@@ -7,8 +7,8 @@ import json
 import pytest
 from typer.testing import CliRunner
 
-from openharness.cli import app
-from openharness.impact.pipeline import (
+from impact_vision.cli import app
+from impact_vision.impact.pipeline import (
     SAMPLE_DECKS,
     assess_file,
     reflow_pdf_text,

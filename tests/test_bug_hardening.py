@@ -6,7 +6,7 @@ from datetime import datetime
 
 
 def test_api_cors_defaults_to_same_origin_only() -> None:
-    from openharness.api_gateway.router import _CORS_ALLOW_CREDENTIALS, _parse_cors_origins, app
+    from impact_vision.api_gateway.router import _CORS_ALLOW_CREDENTIALS, _parse_cors_origins, app
 
     # v8 W0.1: no wildcard by default; a hostile page must not read responses.
     assert _parse_cors_origins(None) == []
@@ -24,7 +24,7 @@ def test_api_cors_defaults_to_same_origin_only() -> None:
 
 
 def test_mochat_synthetic_event_uses_timezone_aware_utc() -> None:
-    from openharness.channels.impl.mochat import _make_synthetic_event
+    from impact_vision.channels.impl.mochat import _make_synthetic_event
 
     event = _make_synthetic_event("msg-1", "user-1", "hello", {}, "group-1", "conv-1")
 
@@ -34,7 +34,7 @@ def test_mochat_synthetic_event_uses_timezone_aware_utc() -> None:
 
 
 def test_optional_channel_helpers_are_importable_and_safe() -> None:
-    from openharness.utils.helpers import safe_filename, split_message
+    from impact_vision.utils.helpers import safe_filename, split_message
 
     assert split_message("alpha beta gamma", 7) == ["alpha", "beta", "gamma"]
     assert split_message("abcdefghij", 4) == ["abcd", "efgh", "ij"]
@@ -49,13 +49,13 @@ def test_copilot_user_agent_uses_installed_package_version(monkeypatch) -> None:
             captured.update(kwargs)
             self.base_url = kwargs.get("base_url")
 
-    monkeypatch.setattr("openharness.api.copilot_client.AsyncOpenAI", FakeAsyncOpenAI)
+    monkeypatch.setattr("impact_vision.api.copilot_client.AsyncOpenAI", FakeAsyncOpenAI)
     monkeypatch.setattr(
-        "openharness.api.copilot_client.importlib.metadata.version",
+        "impact_vision.api.copilot_client.importlib.metadata.version",
         lambda package_name: "9.9.9" if package_name == "impact-vision" else "0.0.0",
     )
 
-    from openharness.api.copilot_client import CopilotClient
+    from impact_vision.api.copilot_client import CopilotClient
 
     CopilotClient(github_token="gho_headers")
 

@@ -6,13 +6,13 @@ from pathlib import Path
 
 import httpx
 import pytest
-from openharness.mcp.highlevel import FastMCP, create_highlevel_server
+from impact_vision.mcp.highlevel import FastMCP, create_highlevel_server
 
-import openharness.mcp.client as client_module
-from openharness.mcp.client import McpClientManager
-from openharness.mcp.types import McpHttpServerConfig
-from openharness.tools import create_default_tool_registry
-from openharness.tools.base import ToolExecutionContext
+import impact_vision.mcp.client as client_module
+from impact_vision.mcp.client import McpClientManager
+from impact_vision.mcp.types import McpHttpServerConfig
+from impact_vision.tools import create_default_tool_registry
+from impact_vision.tools.base import ToolExecutionContext
 
 
 @pytest.mark.asyncio

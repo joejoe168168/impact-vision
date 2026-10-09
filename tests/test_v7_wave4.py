@@ -9,14 +9,14 @@ from pathlib import Path
 
 
 def _ctx():
-    from openharness.tools.base import ToolExecutionContext
+    from impact_vision.tools.base import ToolExecutionContext
 
     return ToolExecutionContext(cwd=Path.cwd())
 
 
 # ------------------------------------------------------- W4.1 ESRS / VSME law
 def test_revised_esrs_is_law_with_date_aware_status() -> None:
-    from openharness.impact.frameworks.esrs import (
+    from impact_vision.impact.frameworks.esrs import (
         legal_status,
         load_simplified_datapoints,
         simplified_esrs_metadata,
@@ -34,7 +34,7 @@ def test_revised_esrs_is_law_with_date_aware_status() -> None:
 
 
 def test_vsme_questionnaire_template() -> None:
-    from openharness.impact.investee_collection import generate_investee_questionnaire_schema
+    from impact_vision.impact.investee_collection import generate_investee_questionnaire_schema
 
     basic = generate_investee_questionnaire_schema(sector="vsme")
     comp = generate_investee_questionnaire_schema(sector="vsme_comprehensive")
@@ -45,7 +45,7 @@ def test_vsme_questionnaire_template() -> None:
 
 
 def test_vsme_value_chain_cap_is_enforced_on_request_packs() -> None:
-    from openharness.impact.engagements.data_room import build_data_request_pack
+    from impact_vision.impact.engagements.data_room import build_data_request_pack
 
     capped = build_data_request_pack(
         engagement_id="e", bundle_id="dd_full_iwa",
@@ -69,7 +69,7 @@ def test_vsme_value_chain_cap_is_enforced_on_request_packs() -> None:
 
 # ----------------------------------------------------- W4.2 SFDR 2.0 Parliament
 def test_sfdr2_impact_language_requires_art7_or_9_toc_and_measurement() -> None:
-    from openharness.impact.frameworks.sfdr_pai import SFDR2Input, classify_sfdr2_category
+    from impact_vision.impact.frameworks.sfdr_pai import SFDR2Input, classify_sfdr2_category
 
     bad = classify_sfdr2_category(SFDR2Input(
         current_article=8, description="Our impact fund delivers measurable impact.",
@@ -100,7 +100,7 @@ def test_sfdr2_impact_language_requires_art7_or_9_toc_and_measurement() -> None:
 
 
 def test_sfdr2_council_flexibility_only_in_council_position() -> None:
-    from openharness.impact.frameworks.sfdr_pai import SFDR2Input, classify_sfdr2_category
+    from impact_vision.impact.frameworks.sfdr_pai import SFDR2Input, classify_sfdr2_category
 
     kw = dict(current_article=8, has_transition_plan=True, pct_strategy_aligned=50, fund_in_ramp_up=True)
     council = classify_sfdr2_category(SFDR2Input(**kw))
@@ -112,7 +112,7 @@ def test_sfdr2_council_flexibility_only_in_council_position() -> None:
 
 # ------------------------------------------------ W4.3 / W4.4 UK SRS + Hong Kong
 def test_uk_profile_has_uk_srs() -> None:
-    from openharness.impact.engagements.regulatory import get_jurisdiction_profile
+    from impact_vision.impact.engagements.regulatory import get_jurisdiction_profile
 
     uk = get_jurisdiction_profile("United Kingdom")
     ob = next(o for o in uk.obligations if o.obligation_id == "uk_srs_listed_issuers")
@@ -121,7 +121,7 @@ def test_uk_profile_has_uk_srs() -> None:
 
 
 def test_hong_kong_profile_and_calendar() -> None:
-    from openharness.impact.regulatory_calendar import build_regulatory_calendar, issb_status
+    from impact_vision.impact.regulatory_calendar import build_regulatory_calendar, issb_status
 
     cal = build_regulatory_calendar(jurisdiction="Hong Kong", fiscal_year_end="2026-12-31")  # type: ignore[arg-type]
     titles = " ".join(i.title for i in cal.items)
@@ -130,7 +130,7 @@ def test_hong_kong_profile_and_calendar() -> None:
 
 
 def test_hk_taxonomy_screen_wraps_eu_alignment_maths() -> None:
-    from openharness.impact.frameworks.hk_taxonomy import screen_hk_taxonomy
+    from impact_vision.impact.frameworks.hk_taxonomy import screen_hk_taxonomy
 
     res = screen_hk_taxonomy(
         "SunCo",
@@ -146,7 +146,7 @@ def test_hk_taxonomy_screen_wraps_eu_alignment_maths() -> None:
 
 
 def test_hk_taxonomy_via_framework_tool() -> None:
-    from openharness.tools.impact.framework_tool import FrameworkInput, FrameworkTool
+    from impact_vision.tools.impact.framework_tool import FrameworkInput, FrameworkTool
 
     out = asyncio.run(FrameworkTool().execute(
         FrameworkInput(framework="hk_taxonomy", action="assess", description="Wind farm operator"), _ctx()
@@ -156,7 +156,7 @@ def test_hk_taxonomy_via_framework_tool() -> None:
 
 # ------------------------------------------------------------ W4.5 AI provenance
 def test_ai_provenance_rules_vs_llm() -> None:
-    from openharness.impact.ai_provenance import ai_provenance_for_report
+    from impact_vision.impact.ai_provenance import ai_provenance_for_report
 
     rules = ai_provenance_for_report({
         "impact_claims": [{"text": "x", "extracted_by": "regex"}],
@@ -179,8 +179,8 @@ def test_ai_provenance_rules_vs_llm() -> None:
 def test_ai_provenance_on_every_output(tmp_path) -> None:
     from openpyxl import load_workbook
 
-    from openharness.impact.exports import to_csv, to_json
-    from openharness.impact.pipeline import assess_file, sample_deck_path, write_deliverables
+    from impact_vision.impact.exports import to_csv, to_json
+    from impact_vision.impact.pipeline import assess_file, sample_deck_path, write_deliverables
 
     bundle = assess_file(sample_deck_path("solar"))
     files = {p.name.split("_", 1)[-1]: p for p in write_deliverables(bundle, tmp_path, include_data=True)}
@@ -206,8 +206,8 @@ def test_ai_provenance_on_every_output(tmp_path) -> None:
 
 
 def test_ai_badge_localised_in_report() -> None:
-    from openharness.impact.pipeline import assess_file, sample_deck_path
-    from openharness.impact.report_templates.decision_report import render_decision_report
+    from impact_vision.impact.pipeline import assess_file, sample_deck_path
+    from impact_vision.impact.report_templates.decision_report import render_decision_report
 
     data = assess_file(sample_deck_path("solar")).report_data
     assert "以規則擷取" in render_decision_report(data, lang="zh-HK")
@@ -216,8 +216,8 @@ def test_ai_badge_localised_in_report() -> None:
 
 # ------------------------------------------------------------- W4.6 ISSA 5000
 def test_issa_5000_is_default_for_new_periods() -> None:
-    from openharness.impact.ai_provenance import AIUseRecord
-    from openharness.impact.assurance import build_assurance_pack, recommended_assurance_standard
+    from impact_vision.impact.ai_provenance import AIUseRecord
+    from impact_vision.impact.assurance import build_assurance_pack, recommended_assurance_standard
 
     assert recommended_assurance_standard("2026-12-15") == "ISSA5000"
     assert recommended_assurance_standard("2026-12-14") == "ISAE3000"
@@ -232,9 +232,9 @@ def test_issa_5000_is_default_for_new_periods() -> None:
 
 
 def test_issa5000_pack_carries_ai_use_register() -> None:
-    from openharness.impact.assurance import build_issa5000_pack
-    from openharness.impact.audit_trail import AuditTrail
-    from openharness.impact.evidence_graph import EvidenceGraph
+    from impact_vision.impact.assurance import build_issa5000_pack
+    from impact_vision.impact.audit_trail import AuditTrail
+    from impact_vision.impact.evidence_graph import EvidenceGraph
 
     trail = AuditTrail()
     pack = build_issa5000_pack(
@@ -247,7 +247,7 @@ def test_issa5000_pack_carries_ai_use_register() -> None:
 
 # ----------------------------------------------------------------- W4.7 ECGT
 def test_ecgt_is_operative_and_gcd_is_best_practice() -> None:
-    from openharness.impact.greenwashing import assess_green_claims_compliance
+    from impact_vision.impact.greenwashing import assess_green_claims_compliance
 
     res = assess_green_claims_compliance(
         "Eco-friendly packaging; our product is carbon neutral thanks to offsets. Net zero by 2030."
@@ -266,7 +266,7 @@ def test_ecgt_is_operative_and_gcd_is_best_practice() -> None:
 
 
 def test_greenwashing_tool_reports_ecgt() -> None:
-    from openharness.tools.impact.greenwashing_tool import GreenwashingDetectorTool, GreenwashingInput
+    from impact_vision.tools.impact.greenwashing_tool import GreenwashingDetectorTool, GreenwashingInput
 
     out = asyncio.run(GreenwashingDetectorTool().execute(GreenwashingInput(
         company_name="Acme", company_description="Our eco-friendly bottles are climate neutral via offsets.",
@@ -276,7 +276,7 @@ def test_greenwashing_tool_reports_ecgt() -> None:
 
 # ------------------------------------------------------- W4.8 / W4.9 ISSB + Asia
 def test_registry_tracks_wave4_standards() -> None:
-    from openharness.impact.standards_registry import default_standards_registry
+    from impact_vision.impact.standards_registry import default_standards_registry
 
     reg = default_standards_registry()
     assert reg.get("Human Capital project").name.endswith("Workforce-related Disclosures")
@@ -287,14 +287,14 @@ def test_registry_tracks_wave4_standards() -> None:
 
 
 def test_tnfd_feeds_issb() -> None:
-    from openharness.impact.frameworks.tnfd import TNFD_STATUS, TNFDInput, assess_tnfd
+    from impact_vision.impact.frameworks.tnfd import TNFD_STATUS, TNFDInput, assess_tnfd
 
     assert "ISSB" in TNFD_STATUS
     assert "ISSB" in assess_tnfd(TNFDInput(company_name="X")).status
 
 
 def test_asia_adoption_rows_are_refreshed() -> None:
-    from openharness.impact.regulatory_calendar import issb_status
+    from impact_vision.impact.regulatory_calendar import issb_status
 
     assert "¥3tn" in issb_status("Japan")["scope"]
     assert "2024-11-20" in issb_status("China")["scope"]
@@ -306,8 +306,8 @@ def test_asia_adoption_rows_are_refreshed() -> None:
 
 # -------------------------------------------------------------- W4.10 SB 253
 def test_statutory_deadline_overrides_fiscal_offset_and_alerts() -> None:
-    from openharness.impact.engagements import regulatory
-    from openharness.impact.regulatory_calendar import calendar_alerts, _calendar_item
+    from impact_vision.impact.engagements import regulatory
+    from impact_vision.impact.regulatory_calendar import calendar_alerts, _calendar_item
 
     deadlines = regulatory.schedule_deadlines(
         engagement_id="e", jurisdiction="US", fiscal_year_end="2026-12-31"
@@ -323,7 +323,7 @@ def test_statutory_deadline_overrides_fiscal_offset_and_alerts() -> None:
 
 
 def test_watchlist_rows_carry_sources() -> None:
-    from openharness.impact.regulatory_calendar import regulatory_watchlist
+    from impact_vision.impact.regulatory_calendar import regulatory_watchlist
 
     rows = regulatory_watchlist(today=date(2026, 10, 6))
     events = " ".join(r.event for r in rows)

@@ -14,9 +14,9 @@ from pathlib import Path
 import pytest
 import yaml
 
-from openharness.impact.models import Company
-from openharness.impact.sdk import ImpactVision
-from openharness.tools.impact.impact_report_tool import _to_html
+from impact_vision.impact.models import Company
+from impact_vision.impact.sdk import ImpactVision
+from impact_vision.tools.impact.impact_report_tool import _to_html
 
 REPO = Path(__file__).resolve().parents[1]
 
@@ -133,7 +133,7 @@ def test_pig_farm_numbers_reach_the_engines(pig_farm):
 
 
 def test_pig_farm_gate_says_insufficient_evidence_not_block(pig_farm):
-    from openharness.impact.ic_memo import render_ic_memo
+    from impact_vision.impact.ic_memo import render_ic_memo
 
     scorecard = pig_farm["scorecard"]
     assert scorecard.display_status == "INSUFFICIENT EVIDENCE"

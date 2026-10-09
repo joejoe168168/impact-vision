@@ -9,13 +9,13 @@ import pytest
 
 @pytest.fixture()
 def sqlite_store(tmp_path):
-    from openharness.impact.state_store import SQLiteStateStore
+    from impact_vision.impact.state_store import SQLiteStateStore
 
     return lambda: SQLiteStateStore(tmp_path / "state.db")  # each call = a "new process"
 
 
 def test_store_backends_round_trip_and_isolate_tenants(sqlite_store) -> None:
-    from openharness.impact.state_store import MemoryStateStore
+    from impact_vision.impact.state_store import MemoryStateStore
 
     for store in (MemoryStateStore(), sqlite_store()):
         store.put("fund-a", "k", "x", {"n": 1})
@@ -29,7 +29,7 @@ def test_store_backends_round_trip_and_isolate_tenants(sqlite_store) -> None:
 
 
 def test_engagement_workspace_restores_after_restart(sqlite_store) -> None:
-    from openharness.impact.engagements.workspace import EngagementWorkspace
+    from impact_vision.impact.engagements.workspace import EngagementWorkspace
 
     ws = EngagementWorkspace(tenant_id="acme", store=sqlite_store())
     eng = ws.create_engagement(name="DD", client_name="Fund I", bundle_id="dd_light")
@@ -43,8 +43,8 @@ def test_engagement_workspace_restores_after_restart(sqlite_store) -> None:
 
 
 def test_audit_chain_survives_restart_and_shared_writers(sqlite_store) -> None:
-    from openharness.impact.audit_trail import AuditTrail
-    from openharness.impact.signed_feed import HMACSigner
+    from impact_vision.impact.audit_trail import AuditTrail
+    from impact_vision.impact.signed_feed import HMACSigner
 
     signer = HMACSigner(key=b"k" * 32)
     a = AuditTrail(fund_id="f1", signer=signer, store=sqlite_store())
@@ -59,9 +59,9 @@ def test_audit_chain_survives_restart_and_shared_writers(sqlite_store) -> None:
 
 
 def test_review_queues_and_rbac_persist(sqlite_store) -> None:
-    from openharness.impact.evidence_workflow import load_review_queue, save_review_queue
-    from openharness.impact.ai_review import AIExtractionReview
-    from openharness.impact.tenancy import PersistentRBACStore, Role, Tenant, User
+    from impact_vision.impact.evidence_workflow import load_review_queue, save_review_queue
+    from impact_vision.impact.ai_review import AIExtractionReview
+    from impact_vision.impact.tenancy import PersistentRBACStore, Role, Tenant, User
 
     q = load_review_queue("radar", store=sqlite_store())
     q.add(AIExtractionReview(item_id="i1", extracted_text="x", confidence=0.5, rationale="r", source_refs=[]))
@@ -78,7 +78,7 @@ def test_review_queues_and_rbac_persist(sqlite_store) -> None:
 
 
 def test_default_store_follows_environment(monkeypatch, tmp_path) -> None:
-    from openharness.impact import state_store
+    from impact_vision.impact import state_store
 
     monkeypatch.setenv("IMPACT_VISION_STATE_STORE", "sqlite")
     monkeypatch.setenv("IMPACT_VISION_STATE_DB", str(tmp_path / "s.db"))
@@ -93,7 +93,7 @@ def test_default_store_follows_environment(monkeypatch, tmp_path) -> None:
 
 @pytest.mark.skipif(not os.environ.get("IMPACT_VISION_STATE_DSN"), reason="needs a Postgres DSN")
 def test_postgres_backend_round_trip() -> None:  # pragma: no cover - optional
-    from openharness.impact.state_store import PostgresStateStore
+    from impact_vision.impact.state_store import PostgresStateStore
 
     store = PostgresStateStore()
     store.put("t", "k", "x", {"n": 1})
@@ -105,7 +105,7 @@ def test_retired_module_shims_are_gone() -> None:
     """The roadmap_v2 / questionnaire_v2 / sfdr_v2 shims were removed in 0.18 (v8 W5.1)."""
     import importlib
 
-    for old in ("openharness.impact.roadmap_v2", "openharness.impact.questionnaire_v2",
-                "openharness.impact.frameworks.sfdr_v2"):
+    for old in ("impact_vision.impact.roadmap_v2", "impact_vision.impact.questionnaire_v2",
+                "impact_vision.impact.frameworks.sfdr_v2"):
         with pytest.raises(ModuleNotFoundError):
             importlib.import_module(old)

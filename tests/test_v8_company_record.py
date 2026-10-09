@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import pytest
 
-from openharness.impact.company_record import (
+from impact_vision.impact.company_record import (
     add_event,
     company_timeline,
     list_companies,
     set_stage,
 )
-from openharness.impact.pipeline import assess_document, save_bundle
+from impact_vision.impact.pipeline import assess_document, save_bundle
 
 DECK = """# Sunlit Homes — Seed pitch
 
@@ -69,7 +69,7 @@ def test_list_splits_portfolio_and_pipeline():
 
 
 def test_schema_is_versioned(tmp_path):
-    from openharness.impact.storage import SCHEMA_VERSION, AssessmentStore
+    from impact_vision.impact.storage import SCHEMA_VERSION, AssessmentStore
 
     store = AssessmentStore(tmp_path / "old.db")
     assert store.schema_version == SCHEMA_VERSION >= 2
@@ -83,7 +83,7 @@ def test_web_api(tmp_path, monkeypatch):
 
     monkeypatch.setenv("IMPACT_VISION_WEB_HOME", str(tmp_path / "home"))
     monkeypatch.delenv("IMPACT_VISION_API_KEY", raising=False)
-    from openharness.web.app import app
+    from impact_vision.web.app import app
 
     save_bundle(_bundle())
     with TestClient(app, base_url="http://127.0.0.1:8787") as client:

@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import pytest
 
-from openharness.api.client import ApiMessageCompleteEvent
-from openharness.api.usage import UsageSnapshot
-from openharness.engine.messages import ConversationMessage, TextBlock, ToolUseBlock
-from openharness.ui.textual_app import OpenHarnessTerminalApp
+from impact_vision.api.client import ApiMessageCompleteEvent
+from impact_vision.api.usage import UsageSnapshot
+from impact_vision.engine.messages import ConversationMessage, TextBlock, ToolUseBlock
+from impact_vision.ui.textual_app import OpenHarnessTerminalApp
 
 
 class StaticApiClient:
