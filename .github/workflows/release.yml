@@ -2,7 +2,9 @@ name: Release
 
 # Tag vX.Y.Z → PyPI (trusted publishing) + a Docker image on GHCR.
 # One-time setup on PyPI: add this repository as a trusted publisher for the
-# `impact-vision` project (workflow `release.yml`, environment `pypi`).
+# `impact-vision` project (workflow `release.yml`, environment `pypi`), then
+# set the repository variable PYPI_PUBLISH=true (Settings → Variables). Until
+# then the PyPI job is skipped instead of failing every release.
 on:
   push:
     tags: ["v*.*.*"]
@@ -36,6 +38,7 @@ jobs:
   pypi:
     name: Publish to PyPI
     needs: build
+    if: vars.PYPI_PUBLISH == 'true'
     runs-on: ubuntu-latest
     environment: pypi
     permissions:
