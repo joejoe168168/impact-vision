@@ -1263,6 +1263,21 @@ async function createShare() {
   await refreshShare();
 }
 
+async function signOff() {
+  const rep = S.viewing; if (!rep) return;
+  let name = '';
+  try { name = localStorage.getItem('iv_author') || ''; } catch (e) { /* storage blocked */ }
+  name = (prompt('Sign off this report as (your name). This records that you reviewed it and take editorial responsibility:', name) || '').trim();
+  if (!name) return;
+  const note = (prompt('What did you check? (optional)', '') || '').trim();
+  try {
+    await api('/reports/' + rep.id + '/sign-off', {method: 'POST', body: JSON.stringify({reviewer: name, note})});
+    try { localStorage.setItem('iv_author', name); } catch (e) { /* storage blocked */ }
+    toast('Signed off by ' + name);
+    renderViewer();
+  } catch (e) { toast('Sign-off failed: ' + e.message); }
+}
+
 async function refreshShare() {
   const rep = S.viewing; if (!rep) return;
   try {
@@ -1769,7 +1784,7 @@ async function boot() {
     S.analyzeNext = false; e.target.value = '';
   };
   $('#vAudience').onchange = renderViewer; $('#vLang').onchange = renderViewer; $('#vTheme').onchange = renderViewer;
-  $('#vClose').onclick = closeViewer; $('#vOpen').onclick = openViewerTab; $('#vShare').onclick = createShare;
+  $('#vClose').onclick = closeViewer; $('#vOpen').onclick = openViewerTab; $('#vShare').onclick = createShare; $('#vSign').onclick = signOff;
   $('#shareAudience').onchange = refreshShare; $('#shareDays').onchange = refreshShare;
   $('#shareCopy').onclick = async () => {
     try { await navigator.clipboard.writeText($('#shareUrl').value); toast('Link copied'); }
@@ -1972,6 +1987,7 @@ _HTML = r"""<!DOCTYPE html>
     </select></label>
     <label>Theme <select id="vTheme"><option value="">Auto</option><option value="light">Light</option><option value="dark">Dark</option></select></label>
     <button class="btn" id="vOpen" type="button">Open in new tab</button>
+    <button class="btn report-only" id="vSign" type="button" title="Record that you reviewed this report (EU AI Act Art 50)">Sign off…</button>
     <button class="btn primary report-only" id="vShare" type="button">Share…</button>
     <button class="btn" id="vClose" type="button" aria-label="Close report">Close</button>
   </div>

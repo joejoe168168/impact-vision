@@ -717,7 +717,10 @@ def _ai(data: dict[str, Any], t) -> dict[str, Any]:  # type: ignore[no-untyped-d
         sentence = t("ai_auto")
     if prov.estimated_figures:
         sentence += " " + t("ai_estimated", n=prov.estimated_figures, total=prov.total_figures)
-    sentence += " " + t("ai_reviewed" if prov.human_reviewed else "ai_review")
+    if prov.human_reviewed and prov.reviewer:
+        sentence += " " + t("ai_signed_off", name=prov.reviewer, date=prov.reviewed_at[:10])
+    else:
+        sentence += " " + t("ai_reviewed" if prov.human_reviewed else "ai_review")
     badges = [t("ai_badge_ai" if prov.extraction == "llm" else "ai_badge_rules")]
     if prov.estimated_figures:
         badges.append(t("ai_badge_estimated", n=prov.estimated_figures, total=prov.total_figures))

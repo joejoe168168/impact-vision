@@ -61,6 +61,8 @@ class AIProvenance(BaseModel):
     drafting: AIMethod = "none"
     llm_model: str = ""
     human_reviewed: bool = False
+    reviewer: str = ""  # who signed the report off (AI Act Art 50: editorial responsibility)
+    reviewed_at: str = ""
     estimated_figures: int = 0
     total_figures: int = 0
     records: list[AIUseRecord] = Field(default_factory=list)
@@ -104,7 +106,13 @@ class AIProvenance(BaseModel):
             if self.estimated_figures
             else ""
         )
-        review = " Reviewed by a person before release." if self.human_reviewed else " Review before relying on it."
+        if self.human_reviewed and self.reviewer:
+            review = f" Reviewed and signed off by {self.reviewer}" + (
+                f" on {self.reviewed_at[:10]}." if self.reviewed_at else ".")
+        elif self.human_reviewed:
+            review = " Reviewed by a person before release."
+        else:
+            review = " Review before relying on it."
         return head + est + review
 
     def as_rows(self) -> list[tuple[str, str]]:
@@ -118,7 +126,8 @@ class AIProvenance(BaseModel):
             ("Generative AI used", "yes" if self.ai_generated else "no"),
             ("Model", self.llm_model or "—"),
             ("Scores estimated from text", f"{self.estimated_figures} of {self.total_figures}"),
-            ("Human review", "yes" if self.human_reviewed else "not recorded"),
+            ("Human review", (f"signed off by {self.reviewer} {self.reviewed_at[:10]}".strip() if self.reviewer
+                              else "yes") if self.human_reviewed else "not recorded"),
             ("Regulation", self.regulation),
         ]
 
@@ -195,6 +204,8 @@ def ai_provenance_for_report(data: dict[str, Any]) -> AIProvenance:
         drafting=drafting,
         llm_model=model,
         human_reviewed=bool(usage.get("human_reviewed", False)),
+        reviewer=str(usage.get("reviewer") or ""),
+        reviewed_at=str(usage.get("reviewed_at") or ""),
         estimated_figures=sum(1 for r in scores if r.estimated),
         total_figures=len(scores),
         records=records,
@@ -241,6 +252,7 @@ def machine_marking(prov: AIProvenance | None = None) -> dict[str, Any]:
         "ai_generated": uses_llm,
         "machine_generated": True,
         "human_reviewed": bool(prov and prov.human_reviewed),
+        **({"reviewer": prov.reviewer, "reviewed_at": prov.reviewed_at} if prov and prov.reviewer else {}),
         "disclosure": prov.disclosure if prov else GENERIC_DISCLOSURE,
         "regulation": AI_ACT_REFERENCE,
     }
@@ -258,12 +270,18 @@ def html_marking(marking: dict[str, Any]) -> str:
         "digitalSourceType": marking["digital_source_type"],
         "description": marking["disclosure"],
     }
+    if marking.get("reviewer"):
+        ld["reviewedBy"] = {"@type": "Person", "name": marking["reviewer"]}
+        if marking.get("reviewed_at"):
+            ld["dateReviewed"] = marking["reviewed_at"]
     esc = _html.escape
+    review = "signed-off" if marking.get("reviewer") else "yes" if marking.get("human_reviewed") else "no"
     ld_json = _json.dumps(ld).replace("</", "<\\/")
     return (
         f'<meta name="generator" content="{esc(marking["generator"])}">\n'
         f'<meta name="iptc:digitalsourcetype" content="{esc(marking["digital_source_type"])}">\n'
         f'<meta name="ai-disclosure" content="{esc(marking["disclosure"])}">\n'
+        f'<meta name="ai-human-review" content="{review}">\n'
         f'<script type="application/ld+json" id="ai-marking">{ld_json}</script>\n'
     )
 
@@ -283,8 +301,9 @@ def marking_from_html(document: str) -> dict[str, Any] | None:
     import html as _html
     import re as _re
 
-    meta = dict(_re.findall(r'<meta name="(iptc:digitalsourcetype|ai-disclosure|generator)" content="([^"]*)"',
-                            document or ""))
+    meta = dict(_re.findall(
+        r'<meta name="(iptc:digitalsourcetype|ai-disclosure|generator|ai-human-review)" content="([^"]*)"',
+        document or ""))
     if "iptc:digitalsourcetype" not in meta:
         return None
     return {
@@ -292,7 +311,22 @@ def marking_from_html(document: str) -> dict[str, Any] | None:
         "disclosure": _html.unescape(meta.get("ai-disclosure", GENERIC_DISCLOSURE)),
         "generator": _html.unescape(meta.get("generator", "Impact Vision")),
         "regulation": AI_ACT_REFERENCE,
+        "human_reviewed": meta.get("ai-human-review") in {"yes", "signed-off"},
+        **_reviewer_from_ld(document),
     }
+
+
+def _reviewer_from_ld(document: str) -> dict[str, str]:
+    import json as _json
+    import re as _re
+
+    m = _re.search(r'<script type="application/ld\+json" id="ai-marking">(.*?)</script>', document or "", _re.S)
+    try:
+        ld = _json.loads(m.group(1).replace("<\\/", "</")) if m else {}
+    except ValueError:
+        return {}
+    who = (ld.get("reviewedBy") or {}).get("name")
+    return {"reviewer": who, "reviewed_at": ld.get("dateReviewed", "")} if who else {}
 
 
 def mark_pdf(path: Any, marking: dict[str, Any]) -> None:

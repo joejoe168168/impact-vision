@@ -137,6 +137,49 @@ def create_report(source: Path | list[Path], *, name: str = "", sector: str = ""
     return _public(record)
 
 
+def sign_off_report(report_id: str, reviewer: str, *, note: str = "") -> dict[str, Any]:
+    """Record that a named person reviewed the report and takes editorial responsibility.
+
+    EU AI Act Art 50: AI-generated text published on matters of public interest
+    needs disclosure unless a person reviewed it and holds editorial
+    responsibility. The sign-off goes into the report's AI marking (visible line
+    and machine-readable metadata), the company record and the audit trail,
+    with a hash of the report data that was signed.
+    """
+    import hashlib
+    from datetime import datetime, timezone
+
+    reviewer = reviewer.strip()[:120]
+    if not reviewer:
+        raise ValueError("A sign-off needs the reviewer's name")
+    path = _report_path(report_id) / "report.json"
+    record = json.loads(path.read_text(encoding="utf-8"))
+    data = record["report_data"]
+    digest = hashlib.sha256(json.dumps(data, sort_keys=True, default=str).encode()).hexdigest()
+    when = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    usage = dict(data.get("ai_usage") or {})
+    usage.update(human_reviewed=True, reviewer=reviewer, reviewed_at=when)
+    data["ai_usage"] = usage
+    record.setdefault("sign_offs", []).append({"reviewer": reviewer, "at": when, "note": note.strip()[:2000],
+                                              "report_sha256": digest})
+    path.write_text(json.dumps(record, default=str), encoding="utf-8")
+    try:
+        from impact_vision.impact.audit_trail import AuditTrail
+        from impact_vision.impact.company_record import add_event
+        from impact_vision.impact.state_store import get_state_store
+
+        AuditTrail(fund_id="reports", store=get_state_store()).record_event(
+            event_type="report.signed_off", actor=reviewer,
+            payload={"report_id": report_id, "company": record.get("company", ""), "report_sha256": digest,
+                     "note": note.strip()[:500]})
+        add_event(record.get("company", ""), "comment", author=reviewer, target="report sign-off",
+                  text=f"Signed off report {report_id}" + (f": {note.strip()[:500]}" if note.strip() else ""),
+                  assessment_id=str(record.get("assessment_id", "")))
+    except Exception:  # noqa: BLE001 - the sign-off itself is saved on the report
+        pass
+    return {"report_id": report_id, "reviewer": reviewer, "at": when, "report_sha256": digest}
+
+
 def render_report(record: dict[str, Any], *, audience: str = "full", lang: str = "en",
                   theme: str = "") -> str:
     from impact_vision.impact.report_templates.decision_report import render_decision_report
@@ -193,6 +236,11 @@ def _engagement_workspace():  # noqa: ANN202
     from impact_vision.tools.impact.engagement_workspace_tool import _workspace
 
     return _workspace()
+
+
+class SignOffRequest(BaseModel):
+    reviewer: str = Field("", description="Who reviewed the report (ignored when signed in: your name is used)")
+    note: str = Field("", description="What you checked")
 
 
 class MonitoringRequest(BaseModel):
@@ -407,6 +455,17 @@ def build_reports_router(*, auth_dependency: Any = None) -> Any:
         except ValueError as exc:
             raise HTTPException(status_code=404, detail=str(exc)) from exc
 
+    @router.post("/reports/{report_id}/sign-off", dependencies=deps)
+    async def report_sign_off(report_id: str, req: SignOffRequest) -> dict[str, Any]:
+        from impact_vision.impact.identity import current_identity
+
+        who = current_identity()
+        reviewer = (who.name or who.email) if who.auth == "oidc" else req.reviewer
+        try:
+            return await asyncio.to_thread(sign_off_report, report_id, reviewer, note=req.note)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+
     @router.post("/companies/{name}/monitoring", dependencies=deps)
     async def company_monitoring_request(name: str, req: MonitoringRequest, request: Request) -> dict[str, Any]:
         from impact_vision.impact.annual_monitoring import create_request
@@ -538,5 +597,6 @@ __all__ = [
     "make_share_token",
     "read_share_token",
     "render_report",
+    "sign_off_report",
     "reports_dir",
 ]
