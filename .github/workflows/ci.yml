@@ -46,6 +46,9 @@ jobs:
         run: python scripts/build_tool_reference.py --check
       - name: Extraction benchmark gate (blocking; deterministic regex extractor)
         run: python -m impact_vision.impact.extraction_eval --extractor regex --summary
+      - name: Held-out evaluation report (30 unseen decks; regressions fail tests/test_v8_heldout_eval.py)
+        if: matrix.python == '3.11'
+        run: python scripts/run_heldout_eval.py
 
   typecheck:
     name: Type check (v8 modules)
@@ -66,6 +69,7 @@ jobs:
           src/impact_vision/impact/identity.py src/impact_vision/api_gateway/oidc.py
           src/impact_vision/impact/annual_monitoring.py src/impact_vision/impact/doc_parsers.py
           src/impact_vision/impact/contribution_split.py src/impact_vision/impact/doc_structure.py
+          src/impact_vision/impact/heldout_eval.py
 
   security:
     name: Dependency & code security audit

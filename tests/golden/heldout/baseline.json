@@ -1,0 +1,15 @@
+{
+  "as_of": "2026-10-09",
+  "release": "0.19.0",
+  "decks": 30,
+  "summary": {
+    "fact_precision": 0.922,
+    "fact_recall": 0.755,
+    "fact_f1": 0.83,
+    "sector": 0.767,
+    "geography": 1.0,
+    "sdg": 0.933,
+    "greenwash": 0.9,
+    "verdict": 0.9
+  }
+}

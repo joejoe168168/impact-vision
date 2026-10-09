@@ -1,0 +1,39 @@
+# Held-out evaluation set (roadmap v8 W2.4). NEVER used to tune extraction or
+# scoring: labels were written before the first run; misses are findings.
+# sdg: any of these in the top-3 material goals counts as agreement.
+# facts: the company's own quantified statements (not years, not context or asks).
+# gate: what a careful analyst would conclude (ready / evidence_plan / fails_thesis).
+as_of: "2026-10-09"
+source: "Fictional decks written for Impact Vision v8 W2.4"
+status: fictional
+decks:
+  kisima_sanitation_ke.md: {sector: water, geography: Kenya, lang: en, sdg: [6], greenwash: false, gate: evidence_plan, facts: [2400, 11500, 96, 310]}
+  medisync_ng.md: {sector: healthcare, geography: Nigeria, lang: en, sdg: [3], greenwash: false, gate: evidence_plan, facts: [42000, 18500, 64, 2500]}
+  sokofresh_gh.md: {sector: agriculture, geography: Ghana, lang: en, sdg: [2, 1], greenwash: false, gate: evidence_plan, facts: [3100, 40, 12, 28, 400]}
+  tujenge_housing_rw.md: {sector: real estate, geography: Rwanda, lang: en, sdg: [11, 1], greenwash: false, gate: evidence_plan, facts: [640, 2900, 28, 92]}
+  nilegrid_eg.md: {sector: energy, geography: Egypt, lang: en, sdg: [7, 13], greenwash: false, gate: ready, facts: [38, 21000, 31000, 34]}
+  edupath_in.md: {sector: education, geography: India, lang: en, sdg: [4], greenwash: false, gate: ready, facts: [120000, 1450, 0.3]}
+  krishi_credit_in.md: {sector: fintech, geography: India, lang: en, sdg: [1, 5, 8], greenwash: false, gate: evidence_plan, facts: [9800, 87, 14200, 35000, 2.1]}
+  saigon_recycle_vn.md: {sector: waste management, geography: Vietnam, lang: en, sdg: [12, 11], greenwash: false, gate: evidence_plan, facts: [4600, 1250, 85]}
+  sehat_bd.md: {sector: healthcare, geography: Bangladesh, lang: en, sdg: [3, 5], greenwash: false, gate: evidence_plan, facts: [210000, 24, 58, 4.1, 1.8]}
+  bayani_microinsure_ph.md: {sector: fintech, geography: Philippines, lang: en, sdg: [1, 13], greenwash: false, gate: evidence_plan, facts: [76000, 61, 5300, 90, 72, 50]}
+  tani_maju_id.md: {sector: agriculture, geography: Indonesia, lang: en, sdg: [2, 1], greenwash: false, gate: evidence_plan, facts: [27000, 18, 410]}
+  ecomove_mx.md: {sector: transport, geography: Mexico, lang: en, sdg: [11, 13], greenwash: false, gate: evidence_plan, facts: [140, 9, 11800, 320]}
+  agua_viva_pe.md: {sector: water, geography: Peru, lang: en, sdg: [6], greenwash: false, gate: evidence_plan, facts: [410, 15600, 19]}
+  creditar_br.md: {sector: fintech, geography: Brazil, lang: en, sdg: [1, 5, 8], greenwash: false, gate: evidence_plan, facts: [33000, 68, 120, 72]}
+  aprende_co.md: {sector: education, geography: Colombia, lang: en, sdg: [4, 8], greenwash: false, gate: evidence_plan, facts: [1900, 74, 1.1, 2.6]}
+  retrofit_de.md: {sector: energy, geography: Germany, lang: en, sdg: [7, 13, 11], greenwash: false, gate: evidence_plan, facts: [2350, 58, 6900]}
+  careloop_uk.md: {sector: healthcare, geography: United Kingdom, lang: en, sdg: [3, 8], greenwash: false, gate: evidence_plan, facts: [1150, 18, 30, 11]}
+  rehome_es.md: {sector: real estate, geography: Spain, lang: en, sdg: [11], greenwash: false, gate: evidence_plan, facts: [520, 25]}
+  ubuntu_clinics_za.md: {sector: healthcare, geography: South Africa, lang: en, sdg: [3], greenwash: false, gate: evidence_plan, facts: [96000, 11, 81, 250]}
+  tide_tourism_th.md: {sector: tourism, geography: Thailand, lang: en, sdg: [8, 1, 14], greenwash: false, gate: evidence_plan, facts: [6400, 70, 14, 230]}
+  stitchright_bd.md: {sector: manufacturing, geography: Bangladesh, lang: en, sdg: [8, 5], greenwash: false, gate: evidence_plan, facts: [3800, 72, 2.4, 0.6]}
+  anxin_eldercare_cn.md: {sector: healthcare, geography: China, lang: zh-CN, sdg: [3], greenwash: false, gate: evidence_plan, facts: [4300, 26, 92]}
+  lvtian_nongye_cn.md: {sector: agriculture, geography: China, lang: zh-CN, sdg: [2, 6, 1], greenwash: false, gate: evidence_plan, facts: [6800, 35, 21]}
+  huanxin_recycle_hk.md: {sector: waste management, geography: Hong Kong, lang: zh-HK, sdg: [12, 11], greenwash: false, gate: evidence_plan, facts: [1280, 85, 19000]}
+  xuehai_education_hk.md: {sector: education, geography: Hong Kong, lang: zh-HK, sdg: [4, 10], greenwash: false, gate: evidence_plan, facts: [3200, 15, 48]}
+  purearth_cosmetics_uk.md: {sector: retail, geography: United Kingdom, lang: en, sdg: [12], greenwash: true, gate: fails_thesis, facts: []}
+  skyverde_travel_es.md: {sector: tourism, geography: Spain, lang: en, sdg: [13, 12, 8], greenwash: true, gate: fails_thesis, facts: []}
+  evergreen_bank_sg.md: {sector: fintech, geography: Singapore, lang: en, sdg: [13, 8, 1], greenwash: true, gate: fails_thesis, facts: []}
+  lvneng_cn.md: {sector: energy, geography: China, lang: zh-CN, sdg: [7, 13], greenwash: true, gate: fails_thesis, facts: []}
+  agroverde_br.md: {sector: agriculture, geography: Brazil, lang: en, sdg: [2, 15, 12], greenwash: true, gate: fails_thesis, facts: []}
