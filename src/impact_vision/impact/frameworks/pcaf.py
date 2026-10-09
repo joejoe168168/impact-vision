@@ -28,7 +28,13 @@ AssetClass = Literal[
     "commercial_real_estate",
     "motor_vehicle_loans",
     "sovereign_bonds",
+    # Added in the Part A update of 2025-12-02 (PCAF): ten asset classes in all.
+    "use_of_proceeds",
+    "securitised_products",
+    "sub_sovereign_debt",
 ]
+PCAF_VERSION = "pcaf-2025-12"  # Part A update, 2 Dec 2025
+PCAF_2025_CLASSES = {"use_of_proceeds", "securitised_products", "sub_sovereign_debt"}
 
 
 class FinancedEmissionsInput(BaseModel):
@@ -41,6 +47,10 @@ class FinancedEmissionsInput(BaseModel):
     reported_emissions_tco2e: float | None = None
     sector: str = ""
     data_quality_score: int = Field(default=4, ge=1, le=5)
+    # PCAF 2025: undrawn commitments are disclosed alongside, not added to, financed emissions.
+    undrawn_commitment_eur: float = 0.0
+    # PCAF 2025 supplementary guidance: avoided emissions are reported separately, never netted.
+    avoided_emissions_tco2e: float | None = None
 
 
 class FinancedEmissionsResult(BaseModel):
@@ -58,6 +68,9 @@ class PCAFRollup(BaseModel):
     company_count: int
     total_financed_emissions_tco2e: float
     by_asset_class: dict[str, float] = Field(default_factory=dict)
+    undrawn_commitments_eur: float = 0.0
+    avoided_emissions_tco2e: float = 0.0  # separate from the inventory (PCAF 2025 supplementary guidance)
+    method_version: str = PCAF_VERSION
     by_sector: dict[str, float] = Field(default_factory=dict)
     weighted_data_quality_score: float
     coverage_pct: float
@@ -134,6 +147,9 @@ def calculate_financed_emissions(entry: FinancedEmissionsInput) -> FinancedEmiss
         notes_parts.append("Insufficient inputs — financed emissions reported as 0; flag for follow-up")
 
     financed = attribution * emissions
+    if entry.asset_class in PCAF_2025_CLASSES:
+        notes_parts.append(f"{entry.asset_class.replace('_', ' ')}: asset class added in PCAF Part A (Dec 2025); "
+                           "the denominator given as enterprise_value_eur must follow that method")
 
     dqs = entry.data_quality_score
     if entry.reported_emissions_tco2e is None and dqs < 4:
@@ -159,6 +175,7 @@ def rollup_pcaf(entries: list[FinancedEmissionsInput]) -> PCAFRollup:
     by_sector: dict[str, float] = {}
     weighted_dqs_num = 0.0
     weighted_dqs_den = 0.0
+    undrawn = avoided = 0.0
     portfolio_size = sum(e.outstanding_investment_eur for e in entries)
     coverage_count = sum(1 for e in entries if e.reported_emissions_tco2e is not None)
 
@@ -166,6 +183,8 @@ def rollup_pcaf(entries: list[FinancedEmissionsInput]) -> PCAFRollup:
         by_class[result.asset_class] = by_class.get(result.asset_class, 0.0) + result.financed_emissions_tco2e
         by_sector[entry.sector or "Uncategorised"] = by_sector.get(entry.sector or "Uncategorised", 0.0) + result.financed_emissions_tco2e
         weighted_dqs_num += result.data_quality_score * entry.outstanding_investment_eur
+        undrawn += entry.undrawn_commitment_eur
+        avoided += entry.avoided_emissions_tco2e or 0.0
         weighted_dqs_den += entry.outstanding_investment_eur
 
     wdqs = (weighted_dqs_num / weighted_dqs_den) if weighted_dqs_den else 0.0
@@ -176,6 +195,8 @@ def rollup_pcaf(entries: list[FinancedEmissionsInput]) -> PCAFRollup:
         company_count=len(entries),
         total_financed_emissions_tco2e=round(total, 2),
         by_asset_class={k: round(v, 2) for k, v in by_class.items()},
+        undrawn_commitments_eur=round(undrawn, 2),
+        avoided_emissions_tco2e=round(avoided, 2),
         by_sector={k: round(v, 2) for k, v in by_sector.items()},
         weighted_data_quality_score=round(wdqs, 2),
         coverage_pct=round(coverage, 1),
@@ -195,7 +216,7 @@ class PCAFPosition(BaseModel):
     enterprise_value_usd: float = Field(gt=0)
     company_emissions_tco2e: float = Field(ge=0)
     data_quality_score: int = Field(ge=1, le=5)
-    method_version: str = "pcaf-2022"
+    method_version: str = PCAF_VERSION
 
 
 class PCAFResult(BaseModel):

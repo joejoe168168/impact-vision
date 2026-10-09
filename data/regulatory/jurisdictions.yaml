@@ -194,12 +194,38 @@ jurisdictions:
     title: AASB S2 climate disclosure
     summary: Mandatory climate reporting under AASB S2.
 - jurisdiction: CN
-  source: Shanghai and Shenzhen Stock Exchanges
+  source: Shanghai and Shenzhen Stock Exchanges; Ministry of Finance (财政部)
   frameworks:
   - SSE Guideline No. 14
   - SZSE Sustainability Reporting Guidelines
   - Preparation Guides No. 1-3
+  - MoF Corporate Sustainability Disclosure Standards — Basic Standard (Trial) (企业可持续披露准则——基本准则（试行）)
+  - MoF Corporate Sustainability Disclosure Standard No. 1 — Climate (Trial) (企业可持续披露准则第1号——气候（试行）)
   obligations:
+  - obligation_id: cn_mof_basic_standard
+    framework: MoF Basic Standard (Trial)
+    title: MoF sustainability disclosure — Basic Standard (voluntary for now)
+    summary: Basic Standard (Trial) issued 2024-11-20, application guidelines 2025-09-03. Sets the principles,
+      structure and terminology for the national standard system (governance, strategy, impact/risk/opportunity
+      management, metrics and targets). Scope and timing to be set by regulators; a unified national system is
+      targeted for about 2030. Voluntary adoption until then.
+    owner_hint: CFO / ESG lead
+    due_offset_days: 120
+    as_of: '2026-10-09'
+    source_url: https://cms.law/en/chn/legal-updates/esg-in-china-first-corporate-sustainability-disclosure-standards-on-climate-released2
+    last_verified: '2026-10-09'
+  - obligation_id: cn_mof_climate_no1
+    framework: MoF Climate Standard No. 1 (Trial)
+    title: MoF climate disclosure (IFRS S2-aligned, voluntary for now)
+    summary: Corporate Sustainability Disclosure Standard No. 1 — Climate (Trial), issued 2025-12-19 by the MoF and
+      eight other authorities. Aligned with IFRS S2 (governance, strategy, risk and opportunity management, metrics
+      and targets). Companies may adopt it voluntarily until scope and requirements are defined; listed issuers
+      already reporting under SSE/SZSE guidelines should map their climate section to it.
+    owner_hint: CFO / ESG lead
+    due_offset_days: 120
+    as_of: '2026-10-09'
+    source_url: https://esgpost.com/china-launches-first-national-corporate-climate-disclosure-standard/
+    last_verified: '2026-10-09'
   - obligation_id: cn_sustainability_report
     framework: SSE/SZSE
     title: Annual sustainability report
