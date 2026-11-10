@@ -196,6 +196,41 @@ failures the merge exposed (`1be5120`, `6fda138`, `3d8bce1`).
   list; SBTi still applies V1 thresholds; no standards-registry rows; not exposed through
   `framework_tool`.
 
+## Third pass (2026-11-10) — finishing the partial items, release 0.20.0
+
+- **U3b** — `d9da60a`. `localize_html` handles zh-HK and zh-CN: zh-HK labels and patterns are authored
+  in the module; `scripts/build_phrasebook.py` derives zh-CN into `phrasebook.yaml` (`labels`,
+  `label_patterns`) and a test fails if it was not re-run. Fallbacks: `design/strings.py` read
+  backwards (templated entries become patterns, most literal first), SDG and sector names, and a
+  sentence-by-sentence pass that only applies when every sentence is known (claims are never
+  half-translated). DD questions: new `dd_checklist_zh-HK.yaml` / `dd_checklist_zh-CN.yaml` keyed by
+  the real ids (122 + follow-ups); the old Simplified file used different ids and is gone.
+  `i18n.py` keeps `get_dashboard_strings` and `load_dd_checklist_localized` (now aliasing `zh`,
+  `zh_TW`, …); `get_report_strings` and `get_system_prompt_preamble` were never called and were
+  removed with their YAML.
+- **C8** — `e6984a5`, `fa907dd`, `186910c`. `verdict.note` on the report card (`.verdict-note`), in
+  every IC memo format and on the one-pager; phrasebook pattern for the note. `v2.yaml` → **2.2.0**
+  (effective / as_of 2026-11-10) with a dated comment listing the gate change and the other scoring
+  changes since 2.1.0; test asserts the version and the stamp. Held-out baseline refreshed in
+  `186910c` (verdict 0.90 → 0.967; per-class recall in the commit and a new test).
+- **U4** — `fb2961e`. `share_notice`, `share_gone*`, `share_invalid*` keys in all three tables;
+  `share_lang` picks the error page language; `create_share(reuse=True)` rebuilds the same token from
+  the stored `jti` and expiry (tokens are deterministic), only for a live, unrevoked link with the
+  same audience, language and `days`. `chat_ui.py` sends `reuse: true`.
+- **F2** — `a8b11a7`. `compare.deal_from_ic_summary` computes expected impact for an
+  `ICWorkflowSummary`; `DealComparison` loses `winner` (breaking) and gains `deals`, `outcome_kinds`,
+  `notes`. Per-US$1m reads `expected_impact["ask"]["usd"]` and `outcome["per_usd_1m"]["p50"]`.
+- **F3** — `66e37a2`. One-pager labels are `op_*` / `cond_*` keys; Chromium print test via
+  `html_to_pdf` (one A4 page, three samples, en and zh-HK; skips without Chromium).
+- **C5b** — `24f0f8e`, `186910c`. `why_also` on the Reach factor; `regex_extractor` shares `_SP`,
+  `_ZH_DIGITS` and `_number` with `expected_impact`, adds `_ZH_NUMBER_UNIT`, and splits sentences on
+  。！？. Extraction eval unchanged (F1 0.976).
+- **R6 / R7** — `e367131`. GRI successors applied by date in `gri.get_gri_standards(on=)`; SBTi
+  `thresholds` block in `updates.yaml` (V1 applied, `v2_thresholds_recorded: false`); registry status
+  `published` for issued-but-not-in-force rows; `framework_assess` `eu_taxonomy` and `sbti`.
+  **Open:** SBTi V2.0 numerical criteria (read the standard first); NACE hints and taxonomy
+  objectives still in Python.
+
 ---
 
 # Part 2 — Specifications for the remaining items
@@ -838,3 +873,9 @@ Everything in Part 2 is open.
 *(2026-11-10, after the parallel merge)* Also implemented: C7, C11 (part 1), C6b, C8, U3b (part),
 U4 (part), F2 (part), F3, C5b (part), R6 / R7 (part). See "Second pass and parallel branches" in
 Part 1 for what each still lacks. Everything else in Part 2 is open.
+
+*(2026-11-10, third pass, release 0.20.0 / methodology 2.2.0)* U3b, C8, U4, F2, F3 and C5b done;
+R6 / R7 done except SBTi V2.0 thresholds (deliberately not encoded until read at the source) and
+moving the taxonomy NACE hints to YAML. Still open in Part 2: C15b, C10, C9, F6, C11 part 2,
+C12–C14, C16, C17, U5–U12 (except U4), R3b, R5, R8, R9, R10, F1b, F5b, F4, F7–F10. Test and check
+results are in the `IMPROVEMENTS.md` DONE notes.

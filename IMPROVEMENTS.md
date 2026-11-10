@@ -184,17 +184,20 @@ fix-up commits. Nothing was pushed.
 | 11. Contradictions (C6) | Done for conflicting figures (`impact/consistency.py`). **Not done:** plausibility checks (reach above population, percentages above 100). Also fixed here: `bayes.fold` (C15, first bug). | `7958cb4` |
 | 12. Exclusions in `assess` (C7) | Done (second pass). | `1ebba38` |
 | 11b. Plausibility checks (C6b) | Done (second pass). | `3adde10` |
-| 10b. zh-HK IC memo and DD report (U3b) | **Partly** (parallel branch). IC memo and DD report chrome localised by a post-render pass; Traditional Chinese DD checklist file. **Not done:** some English leftovers remain; the `impact/i18n.py` helpers may still be unused. | `9196e30`, `11d2caf`, `af641dd` |
-| 13. Gate can say ready (C8) | **Mostly** (parallel branch + fix). Completeness is a note, not a condition; the pig-farm sample is now Ready for IC. Fix-up `6fda138`: a ready verdict keeps its evidence plan (the core-metric reporting item) so exports still list it. **Not done:** held-out eval not revisited; methodology still `2.1.0` (no bump); the note shows on the one-pager but is not confirmed on the report's verdict card or the IC memo. | `5e2b3f6`, `6fda138` |
-| 14. Share links (U4) | **Partly** (parallel branch). Read-only notice, view audit, per-link revocation. **Not done:** UI reuse of one link per audience / language; translated banner and error page; `web/chat_ui.py`. | `22f4751` |
-| 15. Compare (F2) and IC one-pager (F3) | **Mostly** (parallel branch + fix), with tests. Fix-up `3d8bce1`: one-pager fluid on screen (no 390px overflow), A4 kept for print; gallery labels it "IC one-pager". **Not done:** `decision_workflow.compare_deals` still uses the old composite; the per-US$1m figure is often blank; one-pager strings are inline, not shared templates; no Chromium exact-one-page print test. | `631da75`, `0e81e7f`, `3d8bce1` |
-| 9b. Parsing (C5b) | **Partly** (parallel branch). Reach by stakeholder, effect sizes, spaced thousands, Chinese numerals. **Not done:** `other_reach` in the factor basis line; `regex_extractor._NUMBER_UNIT`; held-out baseline update. | `072f1ba` |
-| R6 / R7 packs (§1.2) | **Partly** (parallel branch). `updates.yaml` for GRI 101–103, SBTi Net-Zero V2, EU Taxonomy 2026/73 (`frameworks/pack_updates.py`, framework module count now 25); taxonomy and SBTi checks partly wired. **Not done:** `gri.py` still hard-codes the 2016 list; SBTi still applies V1 thresholds; no standards-registry rows; not exposed in `framework_tool`. | `cad95fb`, `abf0e3d` |
+| 10b. zh-HK IC memo and DD report (U3b) | **Done** (third pass). IC memo and DD report chrome, ledes, verdict, stamp and AI disclosure in zh-HK and zh-CN (zh-CN derived by `scripts/build_phrasebook.py`); all 122 DD questions translated by id in `dd_checklist_zh-HK.yaml` / `dd_checklist_zh-CN.yaml` (the old 12-question file had mismatched ids and was removed). Unused `get_report_strings` / `get_system_prompt_preamble` and their YAML removed. Still English by design: company names, claims and quotes, IRIS+ metric names, fund-thesis values (e.g. forbidden-sector list), matched keywords. | `9196e30`, `11d2caf`, `af641dd`, `d9da60a` |
+| 13. Gate can say ready (C8) | **Done** (third pass). Note on the report's verdict card, the IC memo (HTML, Markdown, Word, PowerPoint) and the one-pager, translated. Methodology `2.2.0` (dated comment in `v2.yaml`). Held-out verdict 90 % → 97 %; per-class recall ready 2/2, evidence plan 23/23, fails thesis 4/5; baseline refreshed. | `5e2b3f6`, `6fda138`, `e6984a5`, `fa907dd`, `186910c` |
+| 14. Share links (U4) | **Done** (third pass). Banner and 410 / 404 pages translated (link language, else Accept-Language); `reuse` returns the live link for the same edition, language and validity, and the web UI sends it. Revocation and audit unchanged. | `22f4751`, `fb2961e` |
+| 15. Compare (F2) and IC one-pager (F3) | **Done** (third pass). `compare_deals` delegates to `impact/compare.py` (no composite, no winner — breaking for the agent tool's `deal_compare`); per-US$1m read from `expected_impact["ask"]` / `per_usd_1m` (blank when the deck states no ask, as in all three samples); one-pager labels in `design/strings.py`; Chromium test: exactly one A4 page for the three samples in en and zh-HK. | `631da75`, `0e81e7f`, `3d8bce1`, `a8b11a7`, `66e37a2` |
+| 9b. Parsing (C5b) | **Done** (third pass). `other_reach` on the Reach basis line; `regex_extractor` reads "12 000", Chinese numerals and 萬/億 like `expected_impact`; held-out fact F1 0.83 → 0.844 (huanxin, lvtian); baseline refreshed. | `072f1ba`, `24f0f8e`, `186910c` |
+| R6 / R7 packs (§1.2) | **Done, with one limit** (third pass). `gri.get_gri_standards(on=)` applies GRI 101 / 102 / 103 by date; SBTi cites the versions accepted on the day and says it applies V1 thresholds — **V2.0 thresholds are not encoded** (not read at source; none invented); registry rows for GRI 101–103, SBTi V1.3.1 / V2.0, EU Taxonomy 2026/73; `framework_assess` gains `eu_taxonomy` and `sbti`. Not done: NACE hints still in Python. | `cad95fb`, `abf0e3d`, `e367131` |
 | C11 (part 1) | DD checklist grades evidence on the NESTA ladder. | `58b2949` |
 | Merge fix-ups | Framework count 24 → 25 in `CLAUDE.md` and regenerated `docs/reference/tools.md`. | `1be5120` |
 
 The four parallel branches (`iv-par-1..4`) merged into this branch without conflicts; the merge
 exposed four test failures, fixed by the three fix-up commits above.
+
+**Third pass (2026-11-10).** Finished the open parts of U3b, C8, U4, F2, F3, C5b, R6 and R7 (rows
+above), then lint, evaluations and the 0.20.0 release. Typing fix-ups in `36ba900`.
 
 Everything else in §1–§4 is untouched.
 
@@ -215,6 +218,21 @@ Run from the repo root with the project's `.venv` (Python 3.13):
 | `python scripts/run_heldout_eval.py` | unchanged: facts F1 0.83, sector 77 %, geography 100 %, SDG 93 %, greenwashing 90 %, verdict 90 % |
 | `python scripts/check_imports.py --verify-init / --smoke / --registry` | pass |
 | `bandit -q -ll -r src/impact_vision/{impact,web,api_gateway}` | no findings |
+
+**Third pass (after Part 1 and 2 commits, before the release commit), no `PYTHONPATH`:**
+
+| Command | Result |
+|---|---|
+| `pytest tests/` (`IMPACT_VISION_CHROMIUM` set) | **1,952 passed**, 7 skipped, 1 xfailed, **2 failed** (the same two environment failures below) |
+| `uvx "ruff>=0.15,<0.16" check src/` | clean |
+| `mypy --ignore-missing-imports` on the CI list | clean (19 files) |
+| `mypy` on the modules changed in this pass (`localize_html`, `compare`, `onepager`, `pack_updates`, `gri`, `sbti`, `i18n`, `regex_extractor`, `decision_workflow`) | clean. **Not clean:** `web/reports_api.py` has 14 pre-existing findings (not on the CI list; none on the lines changed here) |
+| `python scripts/check_knowledge.py` | 666 rows, 0 stale, 0 missing provenance |
+| `python scripts/run_heldout_eval.py` | facts P 0.924 / R 0.777 / F1 0.844, sector 77 %, geography 100 %, SDG 93 %, greenwashing 90 %, verdict 97 % — **baseline refreshed** (`186910c`; see its message for per-deck changes) |
+| `python -m impact_vision.impact.extraction_eval --extractor regex --summary` | F1 0.976 (gate 0.95), unchanged |
+| `bandit -q -ll -r src/impact_vision/{impact,web,api_gateway}` | no findings |
+| `python scripts/build_tool_reference.py --check` | up to date (regenerated in `e367131`) |
+| `python scripts/check_imports.py --verify-init / --smoke / --registry` | pass |
 
 The rows below the pytest rows are from the first pass and were **not re-run** after the parallel merge
 (ruff, mypy, knowledge gate, extraction and held-out evals, import checks, bandit). The fix-up commits
