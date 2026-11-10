@@ -289,8 +289,10 @@ _CONTROL_PHRASES = (
 
 
 def _count_controls(text: str) -> int:
+    from impact_vision.impact.negation import asserts_phrase
+
     lowered = text.lower()
-    return sum(1 for phrase in _CONTROL_PHRASES if phrase in lowered)
+    return sum(1 for phrase in _CONTROL_PHRASES if asserts_phrase(phrase, lowered))
 
 
 def _canonical_metric_ids(raw: Any) -> set[str]:
@@ -525,9 +527,13 @@ def _score_verification(
     text: str, metrics: set[str], claims: list[dict[str, Any]] | None = None
 ) -> float:
     """Score: does the company show verification/audit signals?"""
+    from impact_vision.impact.negation import asserts_phrase
+
+    # Denied or merely planned verification ("has not been audited", "will be
+    # verified next year") is not verification.
     text_lower = text.lower()
-    verification_hits = sum(1 for kw in _VERIFICATION_KEYWORDS if _has_word(text_lower, kw))
-    measurement_hits = sum(1 for kw in _MEASUREMENT_KEYWORDS if _has_word(text_lower, kw))
+    verification_hits = sum(1 for kw in _VERIFICATION_KEYWORDS if asserts_phrase(kw, text_lower, word_boundary=True))
+    measurement_hits = sum(1 for kw in _MEASUREMENT_KEYWORDS if asserts_phrase(kw, text_lower, word_boundary=True))
     # Structured evidence signals from extracted claims (verified / audited /
     # controlled evaluation) count once per distinct signal.
     signals: set[str] = set()

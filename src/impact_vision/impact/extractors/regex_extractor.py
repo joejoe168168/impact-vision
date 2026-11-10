@@ -95,8 +95,14 @@ _FORWARD_RE = re.compile(
 
 
 def evidence_signals(sentence: str) -> list[str]:
-    """Return the evidence-quality signals present in *sentence*."""
-    return [name for name, pattern in _EVIDENCE_SIGNALS if pattern.search(sentence)]
+    """Return the evidence-quality signals *sentence* asserts.
+
+    A cue that is denied or only planned ("we have no control group yet",
+    "will be audited next year") is not a signal.
+    """
+    from impact_vision.impact.negation import asserts
+
+    return [name for name, pattern in _EVIDENCE_SIGNALS if asserts(pattern, sentence)]
 
 
 _YEAR_RE = re.compile(r"\b(19|20)\d{2}\b")

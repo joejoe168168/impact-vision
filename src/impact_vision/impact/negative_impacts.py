@@ -43,15 +43,21 @@ def assess_negative_impacts(sector: str, text: str) -> dict[str, Any]:
     sectors: dict[str, list[dict[str, Any]]] = cfg.get("sectors") or {}
     key = normalize_sector(sector or "")
     items = sectors.get(key) or sectors.get("default") or []
-    lowered = (text or "").lower()
+    from impact_vision.impact.negation import asserts_phrase
+
     sentences = [x.strip(" -•*\t") for x in re.split(r"(?<=[.!?。])\s+|\n+", text or "") if x.strip()]
     rows = []
     for item in items:
-        controls = [c for c in item.get("controls", []) if c.lower() in lowered]
+        # A control counts only where the company states it has one: "we do not
+        # yet have a client protection policy" is the absence of a control.
+        controls = []
         quotes = []
-        for c in controls:
-            hit = next((x for x in sentences if c.lower() in x.lower()), "")
-            if hit and hit not in quotes:
+        for c in item.get("controls", []):
+            hit = next((x for x in sentences if asserts_phrase(c, x)), "")
+            if not hit:
+                continue
+            controls.append(c)
+            if hit not in quotes:
                 quotes.append(hit if len(hit) <= 160 else hit[:157].rstrip() + "…")
         likelihood = max(1, int(item["likelihood"]) - (1 if controls else 0))
         score = int(item["severity"]) * likelihood
