@@ -11,29 +11,33 @@ from html import escape
 from itertools import combinations
 from typing import Any
 
-_ASK_FIELDS = ("investment_ask_usd", "ask_usd", "investment_ask", "investment_amount", "investment_size_usd")
+def _ask(v2: dict[str, Any]) -> tuple[float | None, str]:
+    """The funding ask read from the deck (``expected_impact["ask"]``: ``usd`` and the quoted ``text``)."""
+    ask = v2.get("ask") or {}
+    usd = ask.get("usd")
+    if isinstance(usd, (int, float)) and usd > 0:
+        return float(usd), str(ask.get("text") or "")
+    return None, ""
 
 
-def _ask_usd(company: Any) -> float | None:
-    for name in _ASK_FIELDS:
-        value = getattr(company, name, None)
-        if isinstance(value, (int, float)) and value > 0:
-            return float(value)
-    return None
+def _per_usd_1m(outcome: dict[str, Any]) -> float | None:
+    """P50 per US$1m of the ask, as computed by the methodology (blank when no ask was found)."""
+    per = (outcome.get("per_usd_1m") or {}).get("p50")
+    return round(float(per), 2) if isinstance(per, (int, float)) else None
 
 
 def _column(bundle: Any) -> dict[str, Any]:
     data = bundle.report_data
     v2 = data.get("expected_impact") or {}
     gate = v2.get("gate") or {}
-    ask = _ask_usd(bundle.company)
+    ask, ask_text = _ask(v2)
     outcomes: dict[str, dict[str, Any]] = {}
     for o in v2.get("outcomes") or []:
         kind = o.get("kind", "")
         if not kind or kind in outcomes:  # the first outcome of a kind is the headline for it
             continue
         row = {k: o.get(k) for k in ("unit", "stakeholder", "p10", "p50", "p90", "uncertainty", "evidence_level")}
-        row["p50_per_usd_1m"] = round(o["p50"] / (ask / 1e6), 2) if ask and o.get("p50") is not None else None
+        row["p50_per_usd_1m"] = _per_usd_1m(o) if ask else None
         outcomes[kind] = row
     negatives = sorted((data.get("negative_impacts") or {}).get("items") or [],
                        key=lambda i: -(i.get("score") or 0))
@@ -46,6 +50,7 @@ def _column(bundle: Any) -> dict[str, Any]:
         "gate": gate.get("label") or getattr(bundle.scorecard, "display_status", ""),
         "gate_state": gate.get("state", ""),
         "ask_usd": ask,
+        "ask_text": ask_text,
         "outcomes": outcomes,
         "evidence_quality": {"score": eq.get("score"), "label": eq.get("label")},
         "greenwashing": {"score": getattr(gw, "overall_score", None),
@@ -54,6 +59,35 @@ def _column(bundle: Any) -> dict[str, Any]:
                                  "controlled": bool(top.get("controlled"))} if top else None),
         "open_plan_items": [p.get("action", "") for p in gate.get("plan") or []],
     }
+
+
+def deal_from_ic_summary(summary: Any) -> Any:
+    """Adapt a ``decision_workflow.ICWorkflowSummary`` to what :func:`compare_bundles` reads.
+
+    The summary carries the v1 assessment only, so expected impact (methodology
+    2.x), negative impacts and the gate are computed here from its claims and
+    text, exactly as the pipeline does. The greenwashing finding comes from the
+    summary's verdict card.
+    """
+    from types import SimpleNamespace
+
+    from impact_vision.impact.expected_impact import assess_expected_impact
+    from impact_vision.impact.negative_impacts import assess_negative_impacts
+    from impact_vision.impact.report_templates.decision_report import decision_from_scorecard
+
+    company = summary.assessment.company
+    text = company.assessment_text or company.description or ""
+    card = summary.verdict_card
+    greenwashing = SimpleNamespace(overall_score=float(card.risk_score), classification=str(card.verdict),
+                                   is_finding=card.verdict == "fail", evidence_gap=False)
+    negative = assess_negative_impacts(company.sector, text)
+    v2 = assess_expected_impact(
+        summary.assessment.impact_claims, text, sector=company.sector, company_name=company.name,
+        greenwashing=greenwashing, v1_checks=decision_from_scorecard(summary.scorecard).get("checks", []),
+        negative=negative, full_text=text, geography=company.geography,
+    )
+    return SimpleNamespace(company=company, scorecard=summary.scorecard, greenwashing=greenwashing,
+                           report_data={"expected_impact": v2, "negative_impacts": negative})
 
 
 def _overlaps(a: dict[str, Any], b: dict[str, Any]) -> bool:
@@ -153,7 +187,8 @@ def render_comparison_html(comparison: dict[str, Any]) -> str:
             if not o:
                 cells.append("–")
                 continue
-            per = f"<br><small>{_num(o['p50_per_usd_1m'])} per US$1m</small>" if o.get("p50_per_usd_1m") else ""
+            per = (f"<br><small>{_num(o['p50_per_usd_1m'])} per US$1m</small>"
+                   if o.get("p50_per_usd_1m") is not None else "")
             cells.append(f"<strong>{_num(o['p50'])}</strong> {e(str(o['unit']))}"
                          f"<br><small>P10–P90: {_num(o['p10'])}–{_num(o['p90'])}</small>{per}")
         body.append(row(f"Expected impact: {kind}", cells))

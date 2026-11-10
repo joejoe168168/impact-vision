@@ -114,14 +114,17 @@ def test_quick_screen_and_lp_readiness_are_decision_outputs() -> None:
     assert readiness.badge_label == "Not LP-Ready"
 
 
-def test_deal_comparison_returns_winner_and_tradeoffs() -> None:
+def test_deal_comparison_delegates_to_compare_without_a_winner() -> None:
     a = build_ic_workflow_summary(_company("A", {"OI4112": "100", "PI4060": "5000"}), _store(), FundThesis())
     b = build_ic_workflow_summary(_company("B", {}), _store(), FundThesis())
     comparison = compare_deals(a, b)
-    assert comparison.winner in {"A", "B"}
+    dumped = comparison.model_dump(mode="json")
+    assert "winner" not in dumped and "composite" not in dumped
+    assert [d["company"] for d in comparison.deals] == ["A", "B"]
+    assert {"gate", "outcomes", "evidence_quality", "top_negative_impact"} <= set(comparison.deals[0])
     assert comparison.dimension_deltas
     assert comparison.greenwashing_risk["A"] >= 0
-    assert comparison.tradeoffs
+    assert comparison.tradeoffs and "no winner" in comparison.summary
 
 
 def test_decision_workflow_tool_is_registered_and_executes() -> None:

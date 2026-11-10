@@ -132,10 +132,15 @@ class ICWorkflowSummary(BaseModel):
 
 
 class DealComparison(BaseModel):
+    """Two deals side by side (F2). No composite score and no winner: expected impact
+    per outcome kind with its P10–P90 range, and whether the ranges can be told apart."""
+
     company_a: str
     company_b: str
-    winner: str
     summary: str
+    deals: list[dict[str, Any]] = Field(default_factory=list)
+    outcome_kinds: list[str] = Field(default_factory=list)
+    notes: list[dict[str, Any]] = Field(default_factory=list)
     dimension_deltas: dict[str, float] = Field(default_factory=dict)
     sdg_top_scores: dict[str, float] = Field(default_factory=dict)
     greenwashing_risk: dict[str, int] = Field(default_factory=dict)
@@ -394,18 +399,14 @@ def quick_screen(
 
 
 def compare_deals(a: ICWorkflowSummary, b: ICWorkflowSummary) -> DealComparison:
+    """Delegate to :mod:`impact_vision.impact.compare` (F2): no composite, no winner."""
+    from impact_vision.impact.compare import compare_bundles, deal_from_ic_summary
+
+    comparison = compare_bundles([deal_from_ic_summary(a), deal_from_ic_summary(b)])
     fd_a = a.assessment.five_dimensions
     fd_b = b.assessment.five_dimensions
-    score_a = fd_a.overall_score if fd_a else 0.0
-    score_b = fd_b.overall_score if fd_b else 0.0
-    risk_a = a.verdict_card.risk_score
-    risk_b = b.verdict_card.risk_score
-    composite_a = score_a * 20 - risk_a * 0.25
-    composite_b = score_b * 20 - risk_b * 0.25
-    winner = a.company_name if composite_a >= composite_b else b.company_name
-
     dimension_deltas: dict[str, float] = {}
-    if fd_a and fd_b:
+    if fd_a and fd_b:  # descriptive: A minus B per dimension, not a ranking
         dimension_deltas = {
             "what": round(fd_a.what.score - fd_b.what.score, 2),
             "who": round(fd_a.who.score - fd_b.who.score, 2),
@@ -413,24 +414,29 @@ def compare_deals(a: ICWorkflowSummary, b: ICWorkflowSummary) -> DealComparison:
             "contribution": round(fd_a.contribution.score - fd_b.contribution.score, 2),
             "risk": round(fd_a.risk.score - fd_b.risk.score, 2),
         }
-
     top_a = max(a.assessment.sdg_alignments, key=lambda item: item.score, default=None)
     top_b = max(b.assessment.sdg_alignments, key=lambda item: item.score, default=None)
-    tradeoffs = [
-        f"{a.company_name} 5D overall: {score_a:.1f}/5; greenwashing risk: {risk_a}/100.",
-        f"{b.company_name} 5D overall: {score_b:.1f}/5; greenwashing risk: {risk_b}/100.",
-    ]
+    tradeoffs = []
+    for deal in comparison["deals"]:
+        eq = deal["evidence_quality"]
+        heads = "; ".join(f"{kind} P50 {o['p50']:,.0f} {o['unit']} (P10 {o['p10']:,.0f} – P90 {o['p90']:,.0f})"
+                          for kind, o in deal["outcomes"].items()) or "no quantified outcome"
+        tradeoffs.append(f"{deal['company']}: {deal['gate']}; evidence quality {eq['score']}/100; {heads}.")
+    tradeoffs += [n["text"] for n in comparison["notes"]]
     return DealComparison(
         company_a=a.company_name,
         company_b=b.company_name,
-        winner=winner,
-        summary=f"{winner} has the stronger risk-adjusted impact profile on current evidence.",
+        summary=("Side by side, with no composite score and no winner: expected impact per outcome kind, "
+                 "and where the P10–P90 ranges overlap the deals cannot be told apart."),
+        deals=comparison["deals"],
+        outcome_kinds=comparison["outcome_kinds"],
+        notes=comparison["notes"],
         dimension_deltas=dimension_deltas,
         sdg_top_scores={
             a.company_name: round(top_a.score, 1) if top_a else 0.0,
             b.company_name: round(top_b.score, 1) if top_b else 0.0,
         },
-        greenwashing_risk={a.company_name: risk_a, b.company_name: risk_b},
+        greenwashing_risk={a.company_name: a.verdict_card.risk_score, b.company_name: b.verdict_card.risk_score},
         tradeoffs=tradeoffs,
     )
 

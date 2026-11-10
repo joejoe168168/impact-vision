@@ -81,3 +81,27 @@ def test_cli_compare(tmp_path):
     assert len(json.loads(result.output)["deals"]) == 2
     assert (tmp_path / "comparison.html").is_file()
     assert runner.invoke(app, ["compare", paths[0], "--out-dir", str(tmp_path)]).exit_code == 2
+
+
+def test_per_usd_1m_uses_the_ask_read_from_the_deck(tmp_path):
+    """The figure comes from expected_impact["ask"] / outcome["per_usd_1m"]; blank without an ask."""
+    with_ask = _fake("A", [{**_outcome("climate", 10, 50, 100), "per_usd_1m": {"p10": 5, "p50": 25, "p90": 50}}])
+    with_ask.report_data["expected_impact"]["ask"] = {"usd": 2_000_000, "text": "USD 2m"}
+    no_ask = _fake("B", [{**_outcome("climate", 10, 50, 100), "per_usd_1m": {"p10": 5, "p50": 25, "p90": 50}}])
+    out = compare_bundles([with_ask, no_ask])
+    a, b = out["deals"]
+    assert a["ask_usd"] == 2_000_000 and a["outcomes"]["climate"]["p50_per_usd_1m"] == 25
+    assert b["ask_usd"] is None and b["outcomes"]["climate"]["p50_per_usd_1m"] is None
+    html = render_comparison_html(out)
+    assert html.count("per US$1m") == 1
+
+    # End to end: a deck that states its raise gets the figure; the sample decks state none.
+    deck = tmp_path / "raise.md"
+    deck.write_text("# Raincatch Ltd\nRainwater tanks for rural schools in Kenya.\n"
+                    "We serve 12,000 students in 40 schools; a baseline survey in 2024 showed absence fell 18%.\n"
+                    "## The ask\nWe are raising USD 2m in a seed round.\n", encoding="utf-8")
+    real = assess_file(deck)
+    col = compare_bundles([real, real])["deals"][0]
+    assert col["ask_usd"] == pytest.approx(2_000_000)
+    per = [o["p50_per_usd_1m"] for o in col["outcomes"].values()]
+    assert per and all(v is not None and v > 0 for v in per)
