@@ -175,3 +175,19 @@ uncertainty_words:
   - {max: 0.35, label: "narrow"}
   - {max: 0.7, label: "moderate"}
   - {max: 99, label: "wide"}
+
+# C5b. Headline reach is chosen by stakeholder, not by size: a figure for any other
+# noun (households, patients, farmers, students ...) outranks a figure for a generic
+# noun; within a tier the largest wins. Counts described as registered / downloads /
+# visits are skipped altogether.
+reach_noun_priority:
+  generic: [users, members, customers, clients, 用戶, 用户]
+
+# C5b. "0.21 SD" is an effect size, not a 21 % change. Converted to a depth as the
+# percentile-point gain of the average participant under a normal distribution:
+# Phi(d) - 0.5, about 0.4 x d for small d, never above 0.5. A convention chosen for
+# this methodology, not a sourced figure; the factor's basis line says it is a conversion.
+effect_size_to_depth:
+  per_sd: 0.4
+  cap: 0.5
+  basis: "Phi(d) - 0.5 (Cohen's U3 minus one half), linearised"

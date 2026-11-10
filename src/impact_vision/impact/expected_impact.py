@@ -68,7 +68,11 @@ def stamp() -> dict[str, str]:
 
 # --------------------------------------------------------------------------- parsing
 
-_NUM = r"(\d{1,3}(?:[, ]\d{3})+|\d+(?:\.\d+)?)\s*(k|thousand|million|mn|m)?"
+# Left boundary so a year or a decimal does not bleed in ("2023 120 students" is 120, not 2,023,120);
+# a regular, non-breaking or thin space separates thousands only in the "d ddd" shape.
+_SP = "[ \u00a0\u2009\u202f]"
+_NUM = (r"(?<![\d.,])(\d{1,3}(?:,\d{3})+|\d{1,3}(?:" + _SP + r"\d{3})+(?!\d)"
+        r"|\d+(?:\.\d+)?)\s*(k|thousand|million|mn|m)?")
 _PEOPLE = (
     "households", "household", "people", "persons", "individuals", "patients", "students", "learners",
     "pupils", "children", "farmers", "smallholders", "customers", "clients", "borrowers", "homes",
@@ -78,7 +82,8 @@ _PEOPLE = (
 _PEOPLE_RE = re.compile(
     _NUM + r"\s+(?:[a-z][\w-]*\s+){0,3}?(" + "|".join(re.escape(p) for p in _PEOPLE) + r")\b", re.I)
 # Chinese: "3,200 名長者" / "3200名长者"
-_PEOPLE_ZH = re.compile(r"(\d{1,3}(?:,\d{3})+|\d+)\s*名\s*(長者|长者|學生|学生|病人|農民|农民|居民|用戶|用户|婦女|妇女|兒童|儿童)")
+_ZH_DIGITS = "〇零一二兩两三四五六七八九十百千"
+_PEOPLE_ZH = re.compile(r"(\d{1,3}(?:,\d{3})+|\d+(?:\.\d+)?|[" + _ZH_DIGITS + r"]+)\s*(萬|万|億|亿)?\s*(?:多|余|餘)?\s*[名位個个戶户]\s*(長者|长者|學生|学生|病人|農民|农民|居民|用戶|用户|婦女|妇女|兒童|儿童)")
 _CHANGE_WORDS = (r"higher|lower|more|less|fewer|increase[sd]?|reduction|reduced|decrease[sd]?|cut|"
                  r"improve(?:d|ment)?|gain(?:ed)?|uplift|ris(?:e|en)|rose|grew|growth|drop(?:ped)?|fell|"
                  r"fall(?:en)?|declin(?:e|ed)|lowered|sav(?:ed|ings)|down|up|better|faster")
@@ -116,9 +121,36 @@ _CURRENCY_ALIASES = {"US$": "USD", "HK$": "HKD", "R$": "BRL", "S$": "SGD", "A$":
                      "$": "USD", "€": "EUR", "£": "GBP", "RM": "MYR", "₹": "INR", "RMB": "CNY"}
 
 
+_ZH_VALUE = {"〇": 0, "零": 0, "一": 1, "二": 2, "兩": 2, "两": 2, "三": 3, "四": 4, "五": 5, "六": 6, "七": 7,
+             "八": 8, "九": 9}
+_ZH_UNIT = {"十": 10, "百": 100, "千": 1000}
+# Contexts where a count is accounts or traffic, not people served.
+_NOT_SERVED = re.compile(r"\b(?:registered|sign[- ]?ups?|signed\s+up|downloads?|downloaded|visits?|visitors|"
+                         r"page\s*views|impressions|followers|waitlist(?:ed)?)\b", re.I)
+
+
+def _zh_number(raw: str) -> float:
+    """三千 → 3000, 一百二十 → 120, 十五 → 15."""
+    total, digit = 0, 0
+    for ch in raw:
+        if ch in _ZH_UNIT:
+            total += (digit or 1) * _ZH_UNIT[ch]
+            digit = 0
+        else:
+            digit = digit * 10 + _ZH_VALUE[ch]
+    return float(total + digit)
+
+
 def _number(raw: str, scale: str | None) -> float:
-    value = float(raw.replace(",", "").replace(" ", ""))
+    if raw and raw[0] in _ZH_DIGITS:
+        value = _zh_number(raw)
+    else:
+        value = float(re.sub(r"[, \u00a0\u2009\u202f]", "", raw))
     scale = (scale or "").lower()
+    if scale in {"萬", "万"}:
+        value *= 10_000
+    elif scale in {"億", "亿"}:
+        value *= 100_000_000
     if scale in {"k", "thousand"}:
         value *= 1_000
     elif scale in {"m", "mn", "million"}:
@@ -137,6 +169,7 @@ class Figure:
     noun: str = ""
     cumulative: bool = False   # a running total ("since launch"), not a yearly rate
     raw_value: float | None = None   # the figure as stated, when the calculation capped it
+    effect_size: float | None = None  # standard deviations as stated ("0.21 SD"); value is the converted depth
     doubt: bool = False        # failed a plausibility check: its range is widened
 
 
@@ -149,6 +182,7 @@ class OutcomeInputs:
     ask_text: str = ""
     targets: list[str] = field(default_factory=list)
     sector: str = ""
+    other_reach: list[Figure] = field(default_factory=list)  # largest figure for each other noun
 
 
 def _claim_fields(claim: Any) -> tuple[str, int, bool, str]:
@@ -208,6 +242,7 @@ def read_outcomes(claims: Iterable[Any], scoring_text: str = "", *, sector: str 
         level, verified = _sentence_level(sentence)
         rows.append((sentence, level, verified, ""))
 
+    by_noun: dict[str, Figure] = {}
     for text, level, verified, category in rows:
         is_target = category == "commitment" or bool(_TARGET_WORDS.search(text))
         if is_target:
@@ -225,23 +260,30 @@ def read_outcomes(claims: Iterable[Any], scoring_text: str = "", *, sector: str 
                 if text not in out.targets:
                     out.targets.append(text)  # what the money is meant to achieve, not what was achieved
                 continue
-            if out.reach is None or value > out.reach.value:
-                out.reach = Figure(value, text, level, verified, noun)
+            if _NOT_SERVED.search(text[match.end():match.end() + 24]) or _NOT_SERVED.search(
+                    text[max(0, match.start() - 24):match.start()]):
+                continue  # accounts and traffic are not people served
+            if noun not in by_noun or value > by_noun[noun].value:
+                by_noun[noun] = Figure(value, text, level, verified, noun)
         depth_val = None
         for pattern in _DEPTH_RE:
             m = pattern.search(text)
             if m:
                 depth_val = float(m.group(1)) / 100.0
                 break
+        effect = None
         if depth_val is None:
             m = _EFFECT_SIZE_RE.search(text)
             if m:
-                depth_val = float(m.group(1))
+                # Standard deviations are not a percentage: one documented conversion, labelled as such.
+                conv = params().get("effect_size_to_depth") or {}
+                effect = float(m.group(1))
+                depth_val = min(effect * float(conv.get("per_sd", 0.4)), float(conv.get("cap", 0.5)))
         if depth_val is not None and 0 < depth_val <= 5:
             stated, depth_val = depth_val, min(depth_val, 1.0)
             better = out.depth is None or (level, depth_val) > (out.depth.level, out.depth.value)
             if better:
-                out.depth = Figure(depth_val, text, level, verified, raw_value=stated)
+                out.depth = Figure(depth_val, text, level, verified, raw_value=stated, effect_size=effect)
         for pattern in (_CO2_RE, _CO2_UNIT_RE):
             for m in pattern.finditer(text):
                 if not _AVOID_WORDS.search(text) or re.search(r"\bper\s+(?:kg|unit|item)", text, re.I):
@@ -250,6 +292,11 @@ def read_outcomes(claims: Iterable[Any], scoring_text: str = "", *, sector: str 
                 if out.tco2e_per_year is None or value > out.tco2e_per_year.value:
                     out.tco2e_per_year = Figure(value, text, level, verified, "tCO2e",
                                                 cumulative=bool(_CUMULATIVE.search(text)))
+    if by_noun:
+        # Headline reach by stakeholder, not by size: beneficiary nouns before generic ones.
+        generic = {str(n).lower() for n in (params().get("reach_noun_priority") or {}).get("generic", [])}
+        ordered = sorted(by_noun.values(), key=lambda f: (f.noun in generic, -f.value))
+        out.reach, out.other_reach = ordered[0], ordered[1:]
     out.ask_usd, out.ask_text = _ask(full_text or scoring_text)
     return out
 
@@ -324,7 +371,10 @@ def _factors(inp: OutcomeInputs, primary: Figure, *, climate: bool) -> list[Fact
     if not climate:
         if inp.depth is not None:
             factors.append(Factor("Depth of change", inp.depth.value, _sigma(inp.depth),
-                                  f"{inp.depth.value:.0%} change reported (NESTA {inp.depth.level})", cap=1.0,
+                                  (f"{inp.depth.value:.0%} change, converted from an effect size of "
+                                   f"{inp.depth.effect_size:g} SD (NESTA {inp.depth.level})"
+                                   if inp.depth.effect_size is not None else
+                                   f"{inp.depth.value:.0%} change reported (NESTA {inp.depth.level})"), cap=1.0,
                                   why_key="why_depth", why_args={"pct": f"{inp.depth.value:.0%}",
                                                                  "level": inp.depth.level}))
         else:
