@@ -14,9 +14,20 @@
 #
 # Every number below is a documented assumption, labelled "illustrative" until
 # the expert calibration study (roadmap W2.6) replaces it.
-version: "2.1.0"
-effective: "2026-10-09"
-as_of: "2026-10-09"
+version: "2.2.0"
+effective: "2026-11-10"
+as_of: "2026-11-10"
+# 2.2.0 (2026-11-10, release 0.20.0): the IC gate can say "ready" (C8). Core-metric
+#   completeness left `gate.ready` (it is disclosure, not evidence) and is a note on
+#   a ready verdict plus a reporting item; two evidence conditions replaced it:
+#   `min_headline_level: 2` and `max_spread: 8`. Also scored differently since
+#   2.1.0: exclusion screening runs inside assess (C7, data/exclusion_criteria.yaml);
+#   the DD checklist grades evidence on the NESTA ladder (C11 part 1); plausibility
+#   checks widen implausible headline figures (C6b, `plausibility`); conflicting
+#   figures are reported (`consistency`); headline reach is chosen by stakeholder
+#   and effect sizes are converted, not read as percentages (C5b,
+#   `reach_noun_priority`, `effect_size_to_depth`). `signal_levels` and
+#   `quantified_min_level` keep their 2.1.0 values.
 # 2.1.0 (2026-10-09, W1.4): the 5D Contribution baseline counts evidence design
 #   (comparison group +0.6, baseline +0.3; contribution_rubric.yaml) instead of
 #   adjectives; the report shows enterprise and investor contribution apart.
@@ -43,9 +54,9 @@ evidence_levels:
   5: {label: "Replicated at scale", sigma: 0.12, p_success: 0.93}
 # Evidence level each signal found in a claim implies; a claim takes the
 # highest. A quantified claim with no signal is taken as level
-# `quantified_min_level`. (Roadmap C8/C11: verification is assurance, not
-# causality, and a bare count shows no change. Both are due to change with
-# methodology 2.2.0; the values here are the ones 2.1.0 has always used.)
+# `quantified_min_level`. (Roadmap C11 part 2: verification is assurance, not
+# causality, and a bare count shows no change. Not changed in 2.2.0: the values
+# here are the ones 2.1.0 has always used; a later methodology version revisits them.)
 signal_levels:
   controlled_evaluation: 3
   third_party_verified: 3

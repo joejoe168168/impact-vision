@@ -42,3 +42,18 @@ def test_wide_range_is_an_evidence_plan():
 def test_core_metrics_do_not_make_weak_evidence_ready():
     assert _state([_outcome()], WEAK, 100.0)["state"] == "evidence_plan"
     assert _state([], GOOD, 100.0)["state"] == "evidence_plan"
+
+
+def test_gate_change_ships_as_methodology_2_2_0():
+    """TECH_SPEC rule 5: a scoring change bumps the methodology version, with a dated comment."""
+    from impact_vision.impact import expected_impact
+    from impact_vision.impact._paths import data_path
+    from impact_vision.impact.methodology import methodology_stamp, stamp_text
+
+    p = expected_impact.params()
+    assert p["version"] == "2.2.0" and p["effective"] == p["as_of"] == "2026-11-10"
+    assert "min_data_completeness" not in p["gate"]["ready"]
+    assert "# 2.2.0 (2026-11-10" in data_path("methodology", "v2.yaml").read_text(encoding="utf-8")
+    stamp = methodology_stamp()
+    assert stamp["expected_impact_version"] == "2.2.0"
+    assert "v2.2.0 (expected impact, IC gate)" in stamp_text(stamp)
