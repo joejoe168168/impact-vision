@@ -412,13 +412,20 @@ def _metric_names() -> dict[str, str]:
         return {}
 
 
+def _label(t, prefix: str, value: Any) -> str:  # type: ignore[no-untyped-def]
+    """Translate an enum value (claim type, target status); unknown values show as plain words."""
+    raw = str(value or "")
+    out = t(prefix + raw)
+    return raw.replace("_", " ") if out == prefix + raw else str(out)
+
+
 def _evidence(data: dict[str, Any], t) -> dict[str, Any]:  # type: ignore[no-untyped-def]
     claims = []
     for c in data.get("impact_claims") or []:
         signals = (c.get("entities") or {}).get("evidence") or []
         claims.append({
             "text": str(c.get("text", "")).strip(),
-            "category": c.get("category", ""),
+            "category": _label(t, "cat_", c.get("category", "")),
             "level": int(c.get("evidence_strength") or 1),
             "signals": [t(f"signal_{s}") for s in signals],
             "metrics": c.get("mapped_metrics") or [],
@@ -814,7 +821,8 @@ def build_view(data: dict[str, Any], *, audience: str | None = None, lang: str =
         "risks": _risks(data),
         "negatives": data.get("negative_impacts"),
         "contribution": _contribution(data, t),
-        "targets": (data.get("target_tracking") or {}).get("targets", []),
+        "targets": [dict(x, status_label=_label(t, "tstatus_", x.get("status")))
+                    for x in (data.get("target_tracking") or {}).get("targets", []) if isinstance(x, dict)],
         "feedback": data.get("beneficiary_feedback"),
     }
     view["impact"] = _impact(data, t, lang)

@@ -28,7 +28,7 @@
   </div>
   </div>
   <div style="display:flex;flex-direction:column;align-items:flex-end;gap:10px">
-    {% if branding.logo_url %}<img class="logo" src="{{ branding.logo_url }}" alt="{{ branding.fund_name or 'Logo' }}">{% endif %}
+    {% if branding.logo_url %}<img class="logo" src="{{ branding.logo_url }}" alt="{{ branding.fund_name or t('logo_alt') }}">{% endif %}
     {% if pill %}<span class="pill {{ pill.tone }}">{{ pill.label }}</span>{% endif %}
   </div>
 </header>
@@ -292,7 +292,7 @@
   <h2 id="h-targets">{{ icons.targets | safe }}{{ t('sec_targets') }}</h2>
   <div class="table-wrap"><table>
     <thead><tr><th scope="col">{{ t('col_metric') }}</th><th scope="col">{{ t('col_target') }}</th><th scope="col">{{ t('col_current') }}</th><th scope="col" class="num">%</th><th scope="col">{{ t('col_status') }}</th></tr></thead>
-    <tbody>{% for x in targets %}<tr><th scope="row">{{ x.metric_id }}</th><td>{{ x.target_description or x.target or '—' }}</td><td>{{ x.current_value if x.current_value is not none else '—' }}</td><td class="num">{{ '%.0f' % x.progress_pct if x.progress_pct else '—' }}</td><td>{{ (x.status or '') | replace('_', ' ') }}</td></tr>{% endfor %}</tbody>
+    <tbody>{% for x in targets %}<tr><th scope="row">{{ x.metric_id }}</th><td>{{ x.target_description or x.target or '—' }}</td><td>{{ x.current_value if x.current_value is not none else '—' }}</td><td class="num">{{ '%.0f' % x.progress_pct if x.progress_pct else '—' }}</td><td>{{ x.status_label }}</td></tr>{% endfor %}</tbody>
   </table></div>
 </section>
 

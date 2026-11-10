@@ -14,22 +14,22 @@ patterns:
   zh-CN: 进展良好。补充其余指标，目标覆盖率达 80% 以上。
 - en: '^Measure HOW MUCH: .*$'
   zh-HK: 量度「多少」：追蹤規模（受惠人數）、深度（改變程度）及持續時間。
-  zh-CN: 量度「多少」：追踪规模（受惠人数）、深度（改变程度）及持续时间。
+  zh-CN: 衡量“多少”：追踪规模（受益人数）、深度（改变程度）及持续时间。
 - en: '^Assess CONTRIBUTION: .*$'
   zh-HK: 評估「貢獻」：建立反事實或基準比較。
-  zh-CN: 评估「贡献」：建立反事实或基准比较。
+  zh-CN: 评估“贡献”：建立反事实或基准比较。
 - en: '^Evaluate RISK: .*$'
   zh-HK: 評估「風險」：評估證據風險、執行風險及外部風險因素。
-  zh-CN: 评估「风险」：评估证据风险、执行风险及外部风险因素。
+  zh-CN: 评估“风险”：评估证据风险、执行风险及外部风险因素。
 - en: '^Strengthen outcome measurement: .*$'
   zh-HK: 加強成果量度：以具體指標界定你所貢獻的成果（「甚麼」）。
-  zh-CN: 加强成果量度：以具体指标界定你所贡献的成果（「甚么」）。
+  zh-CN: 加强成果衡量：以具体指标界定你所贡献的成果（“什么”）。
 - en: '^Define WHO: .*$'
   zh-HK: 界定「誰」：列明目標人口、地域及持份者特徵。
-  zh-CN: 界定「谁」：列明目标人口、地域及利益相关方特征。
+  zh-CN: 界定“谁”：列明目标人口、地域及利益相关方特征。
 - en: ^Map each SDG claim to at least one IRIS\+ metric with reported data$
   zh-HK: 將每項可持續發展目標聲明對應至最少一項有報告數據的 IRIS+ 指標。
-  zh-CN: 将每项可持续发展目标声明对应至最少一项有报告数据的 IRIS+ 指标。
+  zh-CN: 将每项可持续发展目标声明对应到至少一项有报告数据的 IRIS+ 指标。
 - en: ^Report the negative impacts that matter for this business, e\.g\. (?P<m>.+)$
   zh-HK: 報告與此業務相關的負面影響，例如：{m}
   zh-CN: 报告与此业务相关的负面影响，例如：{m}
@@ -47,13 +47,13 @@ patterns:
   zh-CN: 加入影响主题：{t}
 - en: ^Add specific outcome descriptions related to \"(?P<g>.+)\" targets in company documentation$
   zh-HK: 在公司文件中加入與「{g}」目標相關的具體成果描述。
-  zh-CN: 在公司文件中加入与「{g}」目标相关的具体成果描述。
+  zh-CN: 在公司文件中加入与“{g}”目标相关的具体成果描述。
 - en: '^Priority missing metrics: (?P<m>.+)$'
   zh-HK: 優先補充的指標：{m}
   zh-CN: 优先补充的指标：{m}
 - en: ^Obtain third-party verification or implement a recognized measurement framework$
   zh-HK: 取得第三方核實，或採用公認的量度框架。
-  zh-CN: 取得第三方核实，或采用公认的量度框架。
+  zh-CN: 取得第三方核实，或采用公认的衡量框架。
 - en: ^Report at least (?P<n>\d+) IRIS\+ metrics to unlock scores above (?P<s>[\d.]+) \(currently reporting (?P<c>\d+)\)$
   zh-HK: 至少報告 {n} 項 IRIS+ 指標，評分才可高於 {s}（目前報告 {c} 項）。
   zh-CN: 至少报告 {n} 项 IRIS+ 指标，评分才可高于 {s}（目前报告 {c} 项）。
@@ -134,7 +134,7 @@ patterns:
   zh-CN: 把证据由第 {a} 级提升至第 3 级。
 - en: ^Measure how much life changes for the (?P<who>.+?) \(before/after .*\)\.$
   zh-HK: 量度{who:who}的生活改變了多少（就重要成果作前後比較，例如收入、開支、健康或學習）。
-  zh-CN: 量度{who:who}的生活改变了多少（就重要成果作前后比较，例如收入、开支、健康或学习）。
+  zh-CN: 衡量{who:who}的生活改变了多少（就重要成果作前后比较，例如收入、开支、健康或学习）。
 - en: ^Depth of change is assumed, and it carries (?P<p>\d+)% of the uncertainty\.$
   zh-HK: 改變深度屬假設，佔不確定性的 {p}%。
   zh-CN: 改变深度属假设，占不确定性的 {p}%。
@@ -161,10 +161,10 @@ patterns:
   zh-CN: 笼统的环保声明（{g}）
 - en: ^Provide a quantified output and link to the IRIS\+ metric and source document supporting the claim\.$
   zh-HK: 提供量化產出，並連結支持該聲明的 IRIS+ 指標及來源文件。
-  zh-CN: 提供量化产出，并连结支持该声明的 IRIS+ 指标及来源文件。
+  zh-CN: 提供量化产出，并关联支持该声明的 IRIS+ 指标及来源文件。
 - en: '^Replace the buzzword phrasing with a measurable target: .*$'
   zh-HK: 以可量度的目標取代流行語：甚麼數字成果、何時達成、惠及哪些人？
-  zh-CN: 以可量度的目标取代流行语：甚么数字成果、何时达成、惠及哪些人？
+  zh-CN: 以可衡量的目标取代流行语：什么数字成果、何时达成、惠及哪些人？
 - en: ^Attach the source document or system export that supports the figure\.$
   zh-HK: 附上支持該數字的來源文件或系統匯出資料。
   zh-CN: 附上支持该数字的来源文件或系统汇出资料。

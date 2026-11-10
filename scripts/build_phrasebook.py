@@ -215,7 +215,10 @@ SENTENCES: dict[str, str] = {
 
 # HK wording → mainland wording after character conversion.
 CN_VOCAB = {"质素": "质量", "持份者": "利益相关方", "堆填": "填埋", "资助": "资助", "衞生": "卫生",
-            "数码": "数字", "互联网": "互联网", "住户": "住户", "智能手机": "智能手机"}
+            "数码": "数字", "互联网": "互联网", "住户": "住户", "智能手机": "智能手机",
+            # Hong Kong usage that character conversion leaves in place.
+            "量度": "衡量", "甚么": "什么", "对应至最少一项": "对应到至少一项", "受惠": "受益", "连结": "关联",
+            "「": "“", "」": "”"}
 
 
 def _to_cn(text: str, cc) -> str:  # noqa: ANN001

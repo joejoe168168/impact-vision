@@ -52,6 +52,9 @@ Work from the 0.19.1 review (`IMPROVEMENTS.md`).
   reach. The ask is found under any "The ask / Funding / Use of funds" heading. `R$`, `S$` and `A$` are no
   longer read as US dollars, and MXN, ZAR, NGN, BRL and others are converted. A running total of tonnes
   ("since launch", "to date") is counted once instead of being multiplied by the sector's duration.
+- **Chinese reports.** Claim types ("outcome", "intent") and target statuses are translated; the language
+  note no longer says recommendations stay in English (they have been translated since 0.19.0). The zh-CN
+  phrasebook uses mainland wording (衡量, 什么, 受益, 关联, “ ”) instead of Hong Kong usage.
 - **Dark-theme reports print dark ink on white paper.** The masthead and cards used to print white on white.
 - The data CSV starts with a byte-order mark, so Excel shows Chinese text correctly. The dashboard's portfolio
   upload accepts Excel's "CSV UTF-8".
