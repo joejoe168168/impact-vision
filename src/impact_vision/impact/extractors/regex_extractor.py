@@ -15,6 +15,7 @@ that satisfies the same `ClaimExtractor` protocol.
 from __future__ import annotations
 
 import re
+from typing import Any
 
 from impact_vision.impact.expected_impact import _SP, _ZH_DIGITS, _number
 from impact_vision.impact.extractors.base import (
@@ -158,13 +159,14 @@ class RegexExtractor:
     """Concrete `ClaimExtractor` — fully deterministic, no external calls."""
     id = "regex"
 
-    def extract(self, text: str, *, context: dict | None = None) -> list[ExtractedClaim]:
+    def extract(self, text: str, *, context: dict[str, Any] | None = None) -> list[ExtractedClaim]:
         if not text:
             return []
         claims: list[ExtractedClaim] = []
         seen: set[str] = set()
 
-        matches = [(m.start(), m.group("value"), None, m.group("unit")) for m in _NUMBER_UNIT.finditer(text)]
+        matches: list[tuple[int, str, str | None, str]] = [
+            (m.start(), m.group("value"), None, m.group("unit")) for m in _NUMBER_UNIT.finditer(text)]
         matches += [(m.start(), m.group("value"), m.group("scale"),
                      "households" if m.group("hh") else _ZH_PEOPLE_UNITS[m.group("noun")])
                     for m in _ZH_NUMBER_UNIT.finditer(text)]

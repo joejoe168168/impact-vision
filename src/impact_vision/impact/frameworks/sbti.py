@@ -14,7 +14,7 @@ References:
 from __future__ import annotations
 
 from datetime import date
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -62,10 +62,11 @@ NET_ZERO_TARGET_LATEST_YEAR = 2050
 NET_ZERO_MIN_REDUCTION_PCT = 90.0
 
 
-def _versions_in_force(today: date) -> list[dict]:
+def _versions_in_force(today: date) -> list[dict[str, Any]]:
     from impact_vision.impact.frameworks import pack_updates
 
-    return pack_updates.sbti_standard_in_force(today)
+    rows: list[dict[str, Any]] = pack_updates.sbti_standard_in_force(today)
+    return rows
 
 
 def check_sbti_alignment(claim: SBTiClaim, *, today: date | None = None) -> SBTiAlignmentCheck:

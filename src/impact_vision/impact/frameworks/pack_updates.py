@@ -19,7 +19,8 @@ from impact_vision.impact._paths import data_path
 @lru_cache(maxsize=1)
 def load_updates() -> dict[str, Any]:
     with open(data_path("frameworks", "updates.yaml"), encoding="utf-8") as fh:
-        return yaml.safe_load(fh)
+        data: dict[str, Any] = yaml.safe_load(fh)
+    return data
 
 
 def _day(value: str) -> date:
@@ -35,7 +36,8 @@ def gri_successor(code: str, on: date | None = None) -> dict[str, Any] | None:
     """
     on = on or date.today()
     code = code.strip()
-    for row in load_updates()["gri"]["topic_standards"]:
+    rows: list[dict[str, Any]] = load_updates()["gri"]["topic_standards"]
+    for row in rows:
         if row.get("verified") == "unverified" or code not in row.get("supersedes", []):
             continue
         if on >= _day(row["effective_date"]):
@@ -46,7 +48,8 @@ def gri_successor(code: str, on: date | None = None) -> dict[str, Any] | None:
 def gri_upcoming(code: str, on: date | None = None) -> dict[str, Any] | None:
     """A published replacement for *code* that is not yet in force on the given day."""
     on = on or date.today()
-    for row in load_updates()["gri"]["topic_standards"]:
+    rows: list[dict[str, Any]] = load_updates()["gri"]["topic_standards"]
+    for row in rows:
         if code.strip() in row.get("supersedes", []) and on < _day(row["effective_date"]):
             return row
     return None

@@ -154,4 +154,4 @@ def render_ic_onepager(data: dict[str, Any], lang: str = "en", branding: dict[st
         f"<footer><div class='clamp1'>{e(p['stamp'])}</div><div class='clamp2'>{e(p['ai_disclosure'])}</div></footer>"
         f"</main></body></html>"
     )
-    return mark_html(body, machine_marking(ai_provenance_for_report(data)))
+    return str(mark_html(body, machine_marking(ai_provenance_for_report(data))))

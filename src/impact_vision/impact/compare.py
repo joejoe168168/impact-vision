@@ -91,7 +91,7 @@ def deal_from_ic_summary(summary: Any) -> Any:
 
 
 def _overlaps(a: dict[str, Any], b: dict[str, Any]) -> bool:
-    return a["p10"] <= b["p90"] and b["p10"] <= a["p90"]
+    return bool(a["p10"] <= b["p90"] and b["p10"] <= a["p90"])
 
 
 def compare_bundles(bundles: list[Any]) -> dict[str, Any]:
@@ -211,7 +211,7 @@ def render_comparison_html(comparison: dict[str, Any]) -> str:
     return (
         "<!doctype html><html lang='en'><head><meta charset='utf-8'>"
         "<meta name='viewport' content='width=device-width, initial-scale=1'>"
-        "<title>Deal comparison</title><style>" + design_css() +
+        "<title>Deal comparison</title><style>" + str(design_css()) +
         ".cmp{max-width:1100px;margin:2rem auto;padding:0 1rem}"
         ".cmp table{width:100%;border-collapse:collapse;table-layout:fixed}"
         ".cmp th,.cmp td{padding:.6rem .7rem;border-bottom:1px solid #d9dde3;text-align:left;vertical-align:top}"
