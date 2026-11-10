@@ -67,7 +67,7 @@ module. Progress so far:
 2. `pitch_deck_analyze` extracts text, identifies impact claims, maps to IRIS+/SDGs, runs DD checklist, auto-extracts a Company model
 3. Agent presents gaps and asks the most important unanswered DD questions (with NESTA evidence levels)
 4. Deeper scoring via `sdg_mapper`, `five_dimension_assess`, `gap_analysis` with sector benchmarks
-5. `cross_reference` tool maps metrics across all 23 framework modules
+5. `cross_reference` tool maps metrics across all 24 framework modules
 6. Greenwashing detection (standard + EU ECGT green claims + UK FCA + NLP) and regulatory compliance checks
 7. `impact_report` generates the final assessment (HTML with Plotly charts, XLSX, CSV, JSON)
 
@@ -205,6 +205,7 @@ src/impact_vision/
 │   ├── company_record.py          # v8: stages, expected vs actual, review & IC decisions
 │   ├── metric_import.py           # v8: Excel / CSV KPI import
 │   ├── negative_impacts.py        # v8 W1.6: severity × likelihood (data/negative_impacts.yaml)
+│   ├── negation.py                # is an evidence cue asserted, denied or only planned?
 │   ├── contribution_split.py      # v8 W1.4: enterprise vs investor contribution (rubric YAML)
 │   ├── annual_monitoring.py       # v8 W3.4: yearly results request, portal, variance, reminders
 │   ├── i18n_phrasebook.py         # v8 W3.7: zh-HK / zh-CN report sentences (data/i18n/)
@@ -244,7 +245,7 @@ src/impact_vision/
 │   │   └── workspace.py           # In-memory store + audit-trail integration
 │   ├── report_templates/          # Jinja2-based HTML report template engine
 │   │   └── html_template.py       # Shared CSS, header/footer, SDG colors
-│   └── frameworks/                # ESG/sustainability frameworks (23 framework modules)
+│   └── frameworks/                # ESG/sustainability frameworks (24 framework modules)
 │       ├── sasb.py                # SASB industry-specific materiality (17 industries)
 │       ├── gri.py                 # GRI Universal + Topic Standards (34 standards)
 │       ├── tcfd.py                # TCFD / IFRS S2 climate disclosure (4 pillars)
@@ -257,6 +258,7 @@ src/impact_vision/
 │       ├── esrs.py                # EU CSRD/ESRS Double Materiality (11 standards)
 │       ├── hk_taxonomy.py         # v7 W4: Hong Kong Taxonomy eligibility/alignment screen
 │       ├── hkfrs_s1.py            # v8 W4: HKFRS S1 (= IFRS S1) gap check, en + zh-HK
+│       ├── hkex_esg.py            # HKEX ESG Code (Appendix C2) gap check: Part B / C / D, en + zh-HK
 │       ├── ifc_opim.py            # IFC Operating Principles for Impact Management
 │       └── cross_reference.py     # 61 cross-framework metric mappings
 ├── tools/impact/                  # Agent tools for LLM orchestration
@@ -267,7 +269,7 @@ src/impact_vision/
 │   ├── five_dimension_assess_tool.py  # 5-Dimension assessment + additionality
 │   ├── gap_analysis_tool.py       # Gap analysis vs Core Metrics
 │   ├── impact_report_tool.py      # Report generation (HTML/CSV/JSON/text/XLSX)
-│   ├── framework_tool.py          # Multi-framework ESG assessment (23 framework modules)
+│   ├── framework_tool.py          # Multi-framework ESG assessment (24 framework modules)
 │   ├── cross_reference_tool.py    # Cross-framework metric lookup
 │   ├── data_quality_tool.py       # Metric data quality assessment
 │   ├── metric_recommender_tool.py # IRIS+ metric recommendation engine

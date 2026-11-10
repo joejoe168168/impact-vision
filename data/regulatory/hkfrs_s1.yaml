@@ -3,13 +3,14 @@
 # IFRS S1. Cues are what a report that meets the requirement usually says; a
 # match is a pointer to check, not a compliance opinion.
 as_of: "2026-10-09"
+last_verified: "2026-11-10"
 source: "HKICPA HKFRS S1 (full alignment with IFRS S1, effective 1 August 2025); IFRS S1 paragraphs"
 source_url: https://www.hkicpa.org.hk/en/News/News%20Release/20240916_HKFRS%20S1_S2
 status: illustrative
 hkex_note: >-
   HKEX already requires climate disclosures based on IFRS S2 (LargeCap issuers in full for financial years from
-  2026-01-01). HKEX expects to consult on full HKFRS S1/S2 adoption in 2027. A gap closed now is one fewer at
-  that point.
+  2026-01-01). HKEX expects to consult in 2027 on mandating HKFRS S1/S2 for listed publicly accountable
+  entities, with an expected effective date of 2028-01-01. A gap closed now is one fewer at that point.
 requirements:
   - id: gov_body
     pillar: governance

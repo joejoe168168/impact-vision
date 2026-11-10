@@ -29,6 +29,8 @@ class FrameworkInput(BaseModel):
         "esrs",
         "vsme",
         "hk_taxonomy",
+        "hkex_esg",
+        "hkfrs_s1",
         "two_x",
         "tisfd",
         "sbtn",
@@ -75,6 +77,34 @@ class FrameworkInput(BaseModel):
     structured_inputs: dict = Field(default_factory=dict)
 
 
+# One table for every "which frameworks are there?" surface (this tool's
+# framework='all' listing and `impact-vision framework list`): key, name, detail.
+FRAMEWORK_CATALOG: tuple[tuple[str, str, str], ...] = (
+    ("sasb", "SASB Industry-Specific Materiality", "industry-aware topics"),
+    ("gri", "GRI Universal + Topic Standards", "30+ standards, 120+ disclosures"),
+    ("tcfd", "TCFD / IFRS S2 Climate Disclosure", "4 pillars, 11 disclosures"),
+    ("sfdr_pai", "SFDR PAI Indicators", "14 mandatory EU indicators"),
+    ("sfdr2", "SFDR 2.0 category preview", "Sustainable / Transition / ESG Basics; proposed law"),
+    ("sfdr_v2", "SFDR 2.0 holdings-based eligibility check", "classify / migrate; proposed law"),
+    ("edci", "EDCI PE/VC Metrics", "2026 KPI fields incl. non-core"),
+    ("unpri", "UN PRI Self-Assessment", "6 principles, 27 actions"),
+    ("toc", "Theory of Change", "RS Group Blended Value + GIIN ToC Checklist"),
+    ("issb_s1", "IFRS S1 General Sustainability Disclosure", "4 pillars, 12 disclosures"),
+    ("issb_s2", "IFRS S2 Climate-related Disclosures", "4 pillars, 13 disclosures, subsumes TCFD"),
+    ("esrs", "EU CSRD/ESRS Double Materiality", "12 standards"),
+    ("vsme", "EFRAG Voluntary SME Standard", "Basic B1-B11 + Comprehensive C1-C9"),
+    ("hk_taxonomy", "Hong Kong Taxonomy for Sustainable Finance", "eligibility / alignment screen"),
+    ("hkex_esg", "HKEX ESG Reporting Code (Appendix C2)", "Part B, Part C A1-A3 / B1-B8 KPIs, Part D climate"),
+    ("hkfrs_s1", "HKFRS S1 gap check", "= IFRS S1; English or Traditional Chinese reports"),
+    ("two_x", "2X Criteria gender-lens investing standard", "2X Global 2024"),
+    ("tisfd", "TISFD Inequality & Social-related Financial Disclosures", "beta, 4 pillars"),
+    ("sbtn", "Science Based Targets Network nature readiness", "beta, five steps"),
+    ("just_transition", "Just Transition assessment", "19 metrics"),
+    ("opim", "IFC Operating Principles for Impact Management", "9 principles"),
+    ("cdp", "CDP climate / water / forest questionnaire readiness", "ESG toolbox backed"),
+)
+
+
 class FrameworkTool(BaseTool):
     name = "framework_assess"
     description = (
@@ -93,6 +123,10 @@ class FrameworkTool(BaseTool):
         "- **ESRS**: EU CSRD/ESRS double materiality screening (12 standards)\n"
         "- **HK Taxonomy**: Hong Kong Taxonomy eligibility candidates + alignment % "
         "(structured_inputs.activities)\n"
+        "- **hkex_esg**: HKEX ESG Reporting Code (Listing Rules Appendix C2) gap check on document_text — "
+        "Part B mandatory, Part C A1-A3 / B1-B8 KPIs (comply or explain), Part D climate "
+        "(structured_inputs.issuer = largecap | main_board | gem; structured_inputs.lang = en | zh-HK)\n"
+        "- **hkfrs_s1**: HKFRS S1 (= IFRS S1) gap check on document_text, English or Traditional Chinese\n"
         "- **VSME**: EFRAG Voluntary SME Standard coverage (Basic B1-B11 + Comprehensive C1-C9); "
         "post-Omnibus-I default reporting set for investee SMEs out of CSRD scope "
         "(use category='basic' or 'comprehensive')\n"
@@ -138,6 +172,8 @@ class FrameworkTool(BaseTool):
             "esrs": self._handle_esrs,
             "vsme": self._handle_vsme,
             "hk_taxonomy": self._handle_hk_taxonomy,
+            "hkex_esg": self._handle_hkex_esg,
+            "hkfrs_s1": self._handle_hkfrs_s1,
             "two_x": self._handle_two_x,
             "tisfd": self._handle_tisfd,
             "sbtn": self._handle_sbtn,
@@ -1242,30 +1278,49 @@ class FrameworkTool(BaseTool):
 
         return ToolResult(output=f"CDP does not support action: {args.action}", is_error=True)
 
+    def _handle_hkex_esg(self, args: FrameworkInput) -> ToolResult:
+        from impact_vision.impact.frameworks.hkex_esg import ISSUERS, hkex_esg_gap, hkex_esg_provisions, to_text
+
+        issuer = str(args.structured_inputs.get("issuer") or "main_board")
+        lang = str(args.structured_inputs.get("lang") or "en")
+        if issuer not in ISSUERS:
+            return ToolResult(output=f"structured_inputs.issuer must be one of {', '.join(ISSUERS)}", is_error=True)
+        if args.action == "list":
+            rows = hkex_esg_provisions(lang=lang, issuer=issuer)
+            lines = [f"HKEX ESG Reporting Code (Appendix C2): {len(rows)} provisions, issuer={issuer}\n"]
+            lines += [f"  {r['ref']:<34} [{r['basis']}] {r['title']}" for r in rows]
+            return ToolResult(output="\n".join(lines), metadata={"provisions": rows})
+        if args.action == "assess":
+            text = args.document_text or args.description
+            if not text.strip():
+                return ToolResult(output="hkex_esg assess needs document_text (the ESG report text)", is_error=True)
+            result = hkex_esg_gap(text, lang=lang, issuer=issuer)
+            return ToolResult(output=to_text(result), metadata=result)
+        return ToolResult(output=f"hkex_esg does not support action: {args.action}", is_error=True)
+
+    def _handle_hkfrs_s1(self, args: FrameworkInput) -> ToolResult:
+        from impact_vision.impact.frameworks.hkfrs_s1 import hkfrs_s1_gap, to_text
+
+        lang = str(args.structured_inputs.get("lang") or "en")
+        if args.action == "list":
+            rows = hkfrs_s1_gap("", lang=lang)["requirements"]
+            lines = [f"HKFRS S1 (= IFRS S1): {len(rows)} requirements\n"]
+            lines += [f"  {r['ref']:<12} {r['title']}" for r in rows]
+            return ToolResult(output="\n".join(lines))
+        if args.action == "assess":
+            text = args.document_text or args.description
+            if not text.strip():
+                return ToolResult(output="hkfrs_s1 assess needs document_text (the report text)", is_error=True)
+            result = hkfrs_s1_gap(text, lang=lang)
+            return ToolResult(output=to_text(result), metadata=result)
+        return ToolResult(output=f"hkfrs_s1 does not support action: {args.action}", is_error=True)
+
     def _handle_all_list(self, args: FrameworkInput) -> ToolResult:
         lines = [
             "Available Sustainability & ESG Frameworks:",
             "=" * 50,
             "",
-            "  sasb      - SASB Industry-Specific Materiality (industry-aware topics)",
-            "  gri       - GRI Universal + Topic Standards (30+ standards, 120+ disclosures)",
-            "  tcfd      - TCFD / IFRS S2 Climate Disclosure (4 pillars, 11 disclosures)",
-            "  sfdr_pai  - SFDR PAI Indicators (14 mandatory EU indicators)",
-            "  sfdr2     - SFDR 2.0 category preview (Sustainable/Transition/ESG Basics; proposed law)",
-            "  edci      - EDCI 2026 private-markets KPI fields, including non-core fields",
-            "  unpri     - UN PRI Self-Assessment (6 principles, 27 actions)",
-            "  toc       - Theory of Change (RS Group Blended Value + GIIN ToC Checklist)",
-            "  issb_s1   - IFRS S1 General Sustainability Disclosure (4 pillars, 12 disclosures)",
-            "  issb_s2   - IFRS S2 Climate-related Disclosures (4 pillars, 13 disclosures, subsumes TCFD)",
-            "  esrs      - EU CSRD/ESRS Double Materiality (12 standards)",
-            "  vsme      - EFRAG Voluntary SME Standard (Basic B1-B11 + Comprehensive C1-C9)",
-            "  hk_taxonomy - Hong Kong Taxonomy for Sustainable Finance eligibility/alignment screen",
-            "  two_x     - 2X Criteria gender-lens investing standard (2X Global 2024)",
-            "  tisfd     - TISFD Inequality & Social-related Financial Disclosures (beta, 4 pillars)",
-            "  sbtn      - Science Based Targets Network five-step nature readiness (beta)",
-            "  just_transition - 19-metric Just Transition assessment",
-            "  opim      - IFC Operating Principles for Impact Management (9 principles)",
-            "  cdp       - CDP climate/water/forest questionnaire readiness (ESG toolbox backed)",
+            *[f"  {key:<15} - {name} ({detail})" for key, name, detail in FRAMEWORK_CATALOG],
             "",
             "Use framework='<name>' with action='list' to browse, 'match' to find relevant topics,",
             "or 'assess' to check coverage. Use framework='all' with action='assess' to scan all.",

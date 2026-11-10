@@ -257,6 +257,48 @@ standards:
   - Hong Kong
   notes: Phase 2A final 2026-01-22; Phase 2B prototype consultation closed 2026-10-07.
   last_verified: '2026-10-06'
+- standard_id: HKEX_ESG_CODE
+  name: HKEX Environmental, Social and Governance Reporting Code (Listing Rules Appendix C2)
+  version: '2025'
+  effective_date: '2025-01-01'
+  source_url: https://www.hkex.com.hk/-/media/HKEX-Market/Listing/Rules-and-Guidance/Environmental-Social-and-Governance/Exchanges-guidance-materials-on-ESG/ISSBstd_esgcode.pdf
+  aliases:
+  - HKEX ESG Code
+  - ESG Reporting Code
+  - Appendix C2
+  - HKEX ESG Reporting Guide
+  scope:
+  - Hong Kong listed issuers
+  - mandatory ESG disclosures
+  - comply or explain KPIs
+  - climate disclosure
+  requirement_ids:
+  - Part B
+  - Part C
+  - Part D
+  notes: Part B mandatory disclosures (paras 13-15); Part C comply-or-explain aspects A1-A3 and B1-B8; Part D
+    climate disclosures modelled on IFRS S2 (Main Board comply-or-explain from FY2025; mandatory for Hang Seng
+    Composite LargeCap constituents from FY2026; Scope 1 and 2 mandatory for all issuers). Checklist in
+    data/regulatory/hkex_esg_code.yaml; gap check in frameworks/hkex_esg.py.
+  as_of: '2026-11-10'
+  last_verified: '2026-11-10'
+- standard_id: HKFRS_S1
+  name: HKFRS S1 General Requirements for Disclosure of Sustainability-related Financial Information
+  version: '2024'
+  effective_date: '2025-08-01'
+  source_url: https://www.hkicpa.org.hk/en/News/News%20Release/20240916_HKFRS%20S1_S2
+  aliases:
+  - HKFRS S1
+  - HK Standards
+  - HKFRS Sustainability Disclosure Standards
+  scope:
+  - general sustainability disclosure
+  - Hong Kong
+  notes: Fully aligned with IFRS S1 (HKICPA, December 2024). Not yet mandated by law or the Listing Rules; HKEX
+    has said it will consult in 2027 on mandating the HK Standards for listed publicly accountable entities,
+    with an expected effective date of 2028-01-01. Gap check in frameworks/hkfrs_s1.py.
+  as_of: '2026-11-10'
+  last_verified: '2026-11-10'
 - standard_id: ISSB_WORKFORCE
   name: 'ISSB research project: Workforce-related Disclosures'
   version: research-2026
@@ -275,7 +317,7 @@ standards:
   name: IFRS Practice Statement on nature-related disclosures
   version: ed-2026
   status: draft
-  source_url: https://www.ifrs.org/content/ifrs/home/news-and-events/updates/issb/2026/issb-update-september-2026.html
+  source_url: https://www.ifrs.org/projects/work-plan/biodiversity-ecosystems-and-ecosystem-services/ed-cl-nature-related-disclosures/
   aliases:
   - ISSB nature
   - Nature Practice Statement
@@ -283,9 +325,11 @@ standards:
   - nature
   - biodiversity
   - TNFD
-  notes: Exposure draft targeted for October 2026 (CBD COP17), 120-day comment period, built on the TNFD recommendations.
-    TNFD is pausing new technical work and now feeds the ISSB; mapping waits for the ED text.
-  last_verified: '2026-10-06'
+  notes: Exposure Draft 'IFRS Sustainability Disclosure Practice Statement 1 Nature-related Disclosures' published
+    October 2026; comments close 2027-02-19 (120 days). Draws on the TNFD recommendations. A Practice Statement
+    is not required for a statement of compliance with ISSB Standards; the ISSB asks whether it should become
+    a Standard. Mapping to frameworks/tnfd.py waits for the final text.
+  last_verified: '2026-11-10'
 - standard_id: SFDR
   name: Sustainable Finance Disclosure Regulation Principal Adverse Impact Indicators
   version: 2022-RTS
@@ -339,7 +383,8 @@ standards:
   - market-based electricity
 - standard_id: PCAF
   name: Partnership for Carbon Accounting Financials Global GHG Accounting Standard
-  version: '2022'
+  version: '2025-12'
+  effective_date: '2025-12-02'
   source_url: https://carbonaccountingfinancials.com/
   aliases:
   - PCAF Global Standard
@@ -348,6 +393,8 @@ standards:
   - financed emissions
   - attribution factor
   - data quality score
+  notes: Part A update of 2025-12-02 (ten asset classes; undrawn commitments and avoided emissions reported
+    beside the inventory, never netted). Matches PCAF_VERSION in frameworks/pcaf.py.
 - standard_id: OPIM
   name: Operating Principles for Impact Management
   version: '2019'

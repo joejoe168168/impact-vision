@@ -1,0 +1,541 @@
+# HKEX ESG Reporting Code gap checklist — Main Board Listing Rules Appendix C2
+# (GEM: Appendix C2 of the GEM Rules), as in force from 1 January 2025.
+#
+#   Part B  Mandatory disclosure requirements (paras 13–15)
+#   Part C  "Comply or explain" provisions: environmental aspects A1–A3 and
+#           social aspects B1–B8, each a General Disclosure plus KPIs.
+#           KPI A1.2 (GHG emissions) and Aspect A4 (Climate Change) moved to Part D.
+#   Part D  Climate-related disclosures modelled on IFRS S2
+#
+# Requirement wording follows HKEX, "Linking the ISSB Standards and HKEX ESG
+# Reporting Code" (September 2025), which reproduces every Part B and Part C
+# provision. Part D rows are grouped by the four IFRS S2 pillars; only the
+# paragraph numbers HKEX cites there (19 governance, 37–40 targets) are given.
+#
+# `cues` are what a report that meets the provision usually says, in English and
+# Traditional Chinese. A match is a pointer to check, not a compliance opinion.
+schema_version: 1
+as_of: "2026-11-10"
+last_verified: "2026-11-10"
+source: >-
+  HKEX, Linking the ISSB Standards and HKEX ESG Reporting Code (September 2025);
+  Main Board Listing Rules Appendix C2 (ESG Reporting Code), effective 2025-01-01
+source_url: https://www.hkex.com.hk/-/media/HKEX-Market/Listing/Rules-and-Guidance/Environmental-Social-and-Governance/Exchanges-guidance-materials-on-ESG/ISSBstd_esgcode.pdf
+cue_status: illustrative   # cue lists are heuristics; the provisions themselves are sourced
+
+standard: "HKEX ESG Reporting Code (Listing Rules Appendix C2, effective 2025-01-01)"
+
+# Who must do what, from when. `part_d` is the basis for the Part D rows that
+# are not marked `mandatory_all`.
+phasing:
+  largecap:
+    label: Hang Seng Composite LargeCap Index constituent
+    zh: 恒生綜合大型股指數成份股發行人
+    part_d: mandatory
+    from: "2026-01-01"
+    note: Part D is mandatory for financial years beginning on or after 2026-01-01.
+  main_board:
+    label: Main Board issuer
+    zh: 主板發行人
+    part_d: comply_or_explain
+    from: "2025-01-01"
+    note: Part D applies on a "comply or explain" basis for financial years beginning on or after 2025-01-01.
+  gem:
+    label: GEM issuer
+    zh: GEM 發行人
+    part_d: voluntary
+    from: "2025-01-01"
+    note: Part D is voluntary for GEM issuers, except Scope 1 and Scope 2 emissions.
+scope12_note: >-
+  Scope 1 and Scope 2 greenhouse gas emissions are a mandatory disclosure for all issuers for financial years
+  beginning on or after 2025-01-01.
+issb_note: >-
+  A report prepared in accordance with IFRS S1 and IFRS S2 is considered to comply with Part D (ESG Code
+  para 8). Parts B and C still apply.
+outlook_note: >-
+  HKEX has said it will consult in 2027 on mandating the HKFRS (ISSB-aligned) standards for listed publicly
+  accountable entities, with an expected effective date of 2028-01-01. Run the HKFRS S1 gap check as well.
+
+# A cue found in a sentence with one of these reads as "explained" rather than reported.
+explain_markers:
+  - '\bnot\s+(?:applicable|material|relevant)\b'
+  - '\b(?:immaterial|insignificant)\b'
+  - '\bno\s+(?:material|significant)\b'
+  - '\bdoes\s+not\s+(?:involve|generate|produce|consume|use)\b'
+  - '不適用'
+  - '並不(?:重大|重要|適用|涉及)'
+  - '(?:並無|沒有)(?:重大|產生|涉及)'
+  - '不(?:屬|属)重大'
+
+parts:
+  B: {label: "Part B — Mandatory disclosure", zh: "B 部分 — 強制披露規定", basis: mandatory}
+  C_env: {label: "Part C — Environmental (comply or explain)", zh: "C 部分 — 環境（不遵守就解釋）", basis: comply_or_explain}
+  C_soc: {label: "Part C — Social (comply or explain)", zh: "C 部分 — 社會（不遵守就解釋）", basis: comply_or_explain}
+  D: {label: "Part D — Climate-related disclosures", zh: "D 部分 — 氣候相關披露", basis: phased}
+
+requirements:
+  # ---------------------------------------------------------------- Part B
+  - id: b13_oversight
+    part: B
+    ref: "para 13(i)"
+    title: Board statement — the board's oversight of ESG issues
+    zh: 董事會聲明 — 董事會對 ESG 事宜的監管
+    cues: ['\bboard\b.{0,80}\b(?:oversee|oversight|overall responsibility|responsib)', '\b(?:esg|sustainab\w*)\s+committee\b', '董事會.{0,30}(?:監管|監察|監督|全面負責|整體責任)', '(?:ESG|環境、社會及管治|可持續發展).{0,6}委員會']
+  - id: b13_approach
+    part: B
+    ref: "para 13(ii)"
+    title: Board statement — ESG management approach and strategy, including how material ESG issues are evaluated, prioritised and managed
+    zh: 董事會聲明 — ESG 管理方針及策略，包括評估、優次排列及管理重要 ESG 事宜的過程
+    cues: ['\b(?:esg|sustainab\w*)\s+(?:management\s+approach|strategy|policy)\b', '\b(?:evaluat|prioriti[sz]|manag)\w*\b.{0,40}\bmaterial\b.{0,20}\b(?:esg|issues|topics)', '(?:ESG|環境、社會及管治|可持續發展).{0,6}(?:管理方針|策略|政策)', '(?:評估|優次|排序).{0,20}重要.{0,10}(?:事宜|議題)']
+  - id: b13_progress
+    part: B
+    ref: "para 13(iii)"
+    title: Board statement — how the board reviews progress against ESG goals and targets
+    zh: 董事會聲明 — 董事會如何按 ESG 目標檢討進度
+    cues: ['\bboard\b.{0,80}\b(?:review|monitor|track)\w*\b.{0,40}\b(?:progress|targets?|goals?)', '\bprogress\b.{0,40}\b(?:against|towards)\b.{0,30}\b(?:targets?|goals?)', '董事會.{0,30}(?:檢討|審視|監察).{0,20}(?:進度|目標)', '(?:目標|指標).{0,10}(?:進度|進展)']
+  - id: b14_materiality
+    part: B
+    ref: "para 14 — Materiality"
+    title: Reporting principle Materiality — how material ESG factors were identified and selected; stakeholder engagement and its results
+    zh: 匯報原則「重要性」— 識別及選擇重要 ESG 因素的過程及準則；持份者參與及結果
+    cues: ['\bmateriality\s+(?:assessment|analysis|matrix)\b', '\bmaterial\s+(?:esg\s+)?(?:topics|issues|factors)\b', '\bstakeholder\s+engagement\b', '重要性(?:評估|分析|矩陣)', '重要(?:議題|範疇|事宜)', '持份者(?:參與|溝通)', '利益相關方(?:參與|溝通)']
+  - id: b14_quantitative
+    part: B
+    ref: "para 14 — Quantitative"
+    title: Reporting principle Quantitative — standards, methodologies, assumptions, calculation tools and conversion-factor sources for emissions and energy
+    zh: 匯報原則「量化」— 排放量及能源耗用所用的標準、方法、假設、計算工具及轉換因素來源
+    cues: ['\b(?:emission|conversion)\s+factors?\b', '\bcalculat\w+\b.{0,50}\b(?:methodolog|standard|ghg protocol|iso\s?14064)', '\bghg protocol\b', '(?:排放|轉換)(?:因子|系數|係數|因素)', '(?:計算|量化).{0,20}(?:方法|標準|假設)', '溫室氣體核算體系']
+  - id: b14_consistency
+    part: B
+    ref: "para 14 — Consistency"
+    title: Reporting principle Consistency — any change to methods or KPIs that affects comparison
+    zh: 匯報原則「一致性」— 影響比較的方法或關鍵績效指標變更
+    cues: ['\bconsisten(?:t|cy)\b.{0,60}\b(?:method|approach|prior|previous|comparison|year)', '\b(?:restat|recalculat)\w+', '\bno\s+(?:significant\s+)?changes?\b.{0,40}\b(?:method|kpi|scope)', '一致性', '(?:方法|指標).{0,10}(?:變更|變動|更改)', '重列']
+  - id: b15_boundary
+    part: B
+    ref: "para 15"
+    title: Reporting boundary — which entities and operations are covered, how they were chosen, and any change in scope
+    zh: 匯報範圍 — 涵蓋哪些實體或業務、如何釐定，以及範圍變更
+    cues: ['\breporting\s+(?:boundar(?:y|ies)|scope)\b', '\bscope\s+of\s+(?:this|the)\s+report\b', '\bthis\s+report\s+covers\b', '(?:匯報|報告)(?:範圍|邊界)', '本報告涵蓋']
+
+  # ------------------------------------------------------ Part C, environmental
+  - id: a1_gd
+    part: C_env
+    aspect: A1
+    ref: "Aspect A1 — General Disclosure"
+    title: Emissions — policies and compliance with laws on air and GHG emissions, discharges into water and land, and waste
+    zh: 排放物 — 有關廢氣及溫室氣體排放、向水及土地的排污、廢棄物的政策及遵守法規情況
+    cues: ['\b(?:emissions?|waste|discharge)\b.{0,60}\b(?:polic|laws?\b|regulations?\b|ordinance)', '\b(?:air pollution control|waste disposal|water pollution control)\s+ordinance\b', '(?:排放|廢棄物|污水).{0,30}(?:政策|法律|法規|條例)', '(?:空氣污染管制|廢物處置|水污染管制)條例']
+  - id: a1_1
+    part: C_env
+    aspect: A1
+    ref: "KPI A1.1"
+    title: Types of emissions and respective emissions data
+    zh: 排放物種類及相關排放數據
+    cues: ['\b(?:nox|sox|nitrogen oxides?|sulphur oxides?|sulfur oxides?|particulate matter|pm2\.?5|pm10)\b', '\bair\s+emissions?\b', '(?:氮氧化物|硫氧化物|懸浮粒子|顆粒物)', '廢氣排放']
+  - id: a1_3
+    part: C_env
+    aspect: A1
+    ref: "KPI A1.3"
+    title: Total hazardous waste produced (tonnes) and, where appropriate, intensity
+    zh: 所產生有害廢棄物總量（以噸計算）及（如適用）密度
+    cues: ['(?<!non-)(?<!non )\bhazardous\s+waste\b', '(?<!無)(?<!无)有害廢棄物', '危險廢物']
+  - id: a1_4
+    part: C_env
+    aspect: A1
+    ref: "KPI A1.4"
+    title: Total non-hazardous waste produced (tonnes) and, where appropriate, intensity
+    zh: 所產生無害廢棄物總量（以噸計算）及（如適用）密度
+    cues: ['\bnon[-\s]hazardous\s+waste\b', '\bgeneral\s+waste\b', '無害廢棄物', '一般廢物']
+  - id: a1_5
+    part: C_env
+    aspect: A1
+    ref: "KPI A1.5"
+    title: Emission target(s) set and steps taken to achieve them
+    zh: 所訂立的排放量目標及為達到這些目標所採取的步驟
+    cues: ['\b(?:emissions?|carbon|ghg)\b.{0,30}\b(?:reduction\s+)?targets?\b', '\breduce\b.{0,40}\bemissions?\b.{0,40}\bby\s+20[2-5]\d', '\bnet[-\s]zero\b', '(?:排放|減排|減碳).{0,12}目標', '淨零']
+  - id: a1_6
+    part: C_env
+    aspect: A1
+    ref: "KPI A1.6"
+    title: How hazardous and non-hazardous wastes are handled, reduction target(s) and steps taken
+    zh: 處理有害及無害廢棄物的方法，以及所訂立的減廢目標及所採取的步驟
+    cues: ['\bwaste\b.{0,40}\b(?:handl|treat|dispos|recycl|collect)\w+', '\bwaste\s+(?:reduction|diversion)\b.{0,30}\btargets?\b', '\bwaste\s+management\b', '廢棄物.{0,12}(?:處理|回收|處置)', '減廢.{0,6}目標', '廢物管理']
+  - id: a2_gd
+    part: C_env
+    aspect: A2
+    ref: "Aspect A2 — General Disclosure"
+    title: Use of resources — policies on the efficient use of energy, water and other raw materials
+    zh: 資源使用 — 有效使用資源（包括能源、水及其他原材料）的政策
+    cues: ['\b(?:efficient|efficiency)\b.{0,40}\b(?:use\s+of\s+)?(?:resources|energy|water|materials)\b', '\bresource\s+(?:efficiency|conservation|management)\b', '(?:資源|能源|水).{0,10}(?:使用效益|效益|節約|管理).{0,10}政策', '(?:節約|有效使用)(?:資源|能源|用水)']
+  - id: a2_1
+    part: C_env
+    aspect: A2
+    ref: "KPI A2.1"
+    title: Direct and/or indirect energy consumption by type, in total (kWh in '000s) and intensity
+    zh: 按類型劃分的直接及／或間接能源總耗量（以千個千瓦時計算）及密度
+    cues: ['\benergy\s+consumption\b', '\b(?:electricity|diesel|petrol|gas|fuel)\s+consum', '\b(?:kwh|mwh|gwh)\b', '能源(?:總)?(?:耗量|消耗|用量)', '(?:耗電量|用電量)', '千瓦時']
+  - id: a2_2
+    part: C_env
+    aspect: A2
+    ref: "KPI A2.2"
+    title: Water consumption in total and intensity
+    zh: 總耗水量及密度
+    cues: ['\bwater\s+(?:consumption|usage|withdrawal|use)\b', '\b(?:cubic\s+met(?:re|er)s?|m3|m³)\b', '(?:耗水量|用水量|總耗水)', '立方米']
+  - id: a2_3
+    part: C_env
+    aspect: A2
+    ref: "KPI A2.3"
+    title: Energy use efficiency target(s) set and steps taken to achieve them
+    zh: 所訂立的能源使用效益目標及為達到這些目標所採取的步驟
+    cues: ['\benergy\b.{0,30}\b(?:efficiency|saving|reduction|intensity)\b.{0,30}\btargets?\b', '\breduce\b.{0,30}\b(?:energy|electricity)\b.{0,40}\bby\s+(?:\d|20[2-5]\d)', '能源.{0,10}(?:效益|節約|減少).{0,10}目標', '節能目標']
+  - id: a2_4
+    part: C_env
+    aspect: A2
+    ref: "KPI A2.4"
+    title: Any issue in sourcing water fit for purpose; water efficiency target(s) and steps taken
+    zh: 求取適用水源上可有任何問題，以及所訂立的用水效益目標及所採取的步驟
+    cues: ['\bsourc\w+\b.{0,30}\bwater\b', '\bwater\b.{0,30}\b(?:efficiency|saving|reduction|intensity)\b.{0,30}\btargets?\b', '(?:求取|獲取).{0,6}(?:適用)?水源', '(?:用水|節水).{0,10}(?:效益)?目標']
+  - id: a2_5
+    part: C_env
+    aspect: A2
+    ref: "KPI A2.5"
+    title: Total packaging material used for finished products (tonnes) and, if applicable, per unit produced
+    zh: 製成品所用包裝材料的總量（以噸計算）及（如適用）每生產單位佔量
+    cues: ['\bpackaging\s+materials?\b', '\bpackaging\b.{0,30}\b(?:tonnes?|kg|used|consum)', '包裝(?:材料|物料)']
+  - id: a3_gd
+    part: C_env
+    aspect: A3
+    ref: "Aspect A3 — General Disclosure"
+    title: Environment and natural resources — policies on minimising the issuer's significant impacts
+    zh: 環境及天然資源 — 減低發行人對環境及天然資源造成重大影響的政策
+    cues: ['\b(?:environment(?:al)?|natural\s+resources)\b.{0,50}\b(?:polic|minimi[sz]|reduc)\w*\b.{0,30}\bimpacts?\b', '\benvironmental\s+(?:policy|management\s+system)\b', '\biso\s?14001\b', '(?:環境|天然資源).{0,20}(?:影響).{0,10}政策', '環境(?:政策|管理體系)']
+  - id: a3_1
+    part: C_env
+    aspect: A3
+    ref: "KPI A3.1"
+    title: Significant impacts of activities on the environment and natural resources, and actions taken to manage them
+    zh: 業務活動對環境及天然資源的重大影響及已採取管理有關影響的行動
+    cues: ['\b(?:significant|material)\s+impacts?\b.{0,50}\b(?:environment|natural\s+resources|biodiversity)', '\b(?:biodiversity|ecosystems?|habitat|land\s+use)\b', '對環境.{0,12}(?:重大)?影響', '(?:生物多樣性|生態系統|天然資源)']
+
+  # ------------------------------------------------------------ Part C, social
+  - id: b1_gd
+    part: C_soc
+    aspect: B1
+    ref: "Aspect B1 — General Disclosure"
+    title: Employment — policies and legal compliance on pay and dismissal, recruitment and promotion, working hours, rest, equal opportunity, diversity, anti-discrimination and welfare
+    zh: 僱傭 — 有關薪酬及解僱、招聘及晉升、工作時數、假期、平等機會、多元化、反歧視及其他待遇及福利的政策及遵守法規情況
+    cues: ['\b(?:recruitment|promotion|dismissal|compensation|working\s+hours|rest\s+periods)\b', '\b(?:equal\s+opportunit|anti[-\s]discrimination|diversity)', '\bemployment\s+ordinance\b', '(?:招聘|晉升|解僱|薪酬|工作時數)', '(?:平等機會|反歧視|多元化)', '僱傭條例']
+  - id: b1_1
+    part: C_soc
+    aspect: B1
+    ref: "KPI B1.1"
+    title: Total workforce by gender, employment type, age group and geographical region
+    zh: 按性別、僱傭類型、年齡組別及地區劃分的僱員總數
+    cues: ['\b(?:workforce|employees|headcount)\b.{0,50}\bby\s+(?:gender|age|employment\s+type|region|geograph)', '\b(?:full[-\s]time|part[-\s]time)\b.{0,40}\b(?:employees|staff)\b', '按(?:性別|年齡|僱傭類型|地區).{0,20}(?:僱員|員工)', '(?:全職|兼職)(?:僱員|員工)']
+  - id: b1_2
+    part: C_soc
+    aspect: B1
+    ref: "KPI B1.2"
+    title: Employee turnover rate by gender, age group and geographical region
+    zh: 按性別、年齡組別及地區劃分的僱員流失比率
+    cues: ['\b(?:employee\s+|staff\s+)?turnover\s+rate\b', '\battrition\s+rate\b', '(?:僱員|員工)?流失(?:比率|率)']
+  - id: b2_gd
+    part: C_soc
+    aspect: B2
+    ref: "Aspect B2 — General Disclosure"
+    title: Health and safety — policies and legal compliance on a safe working environment and protection from occupational hazards
+    zh: 健康與安全 — 有關提供安全工作環境及保障僱員避免職業性危害的政策及遵守法規情況
+    cues: ['\boccupational\s+(?:health|safety|hazards?)\b', '\bsafe\s+work(?:ing)?\s+(?:environment|place)\b', '\biso\s?45001\b', '職業(?:健康|安全|性危害)', '安全(?:的)?工作環境']
+  - id: b2_1
+    part: C_soc
+    aspect: B2
+    ref: "KPI B2.1"
+    title: Number and rate of work-related fatalities in each of the past three years including the reporting year
+    zh: 過去三年（包括匯報年度）每年因工亡故的人數及比率
+    cues: ['\bwork[-\s]related\s+(?:fatalit|deaths?)', '\bfatalit(?:y|ies)\b', '因工(?:亡故|死亡)', '工傷死亡']
+  - id: b2_2
+    part: C_soc
+    aspect: B2
+    ref: "KPI B2.2"
+    title: Lost days due to work injury
+    zh: 因工傷損失工作日數
+    cues: ['\blost\s+(?:days|time)\b', '\bwork(?:[-\s]related)?\s+injur', '\bltifr\b', '(?:因工傷)?損失工作日', '工傷']
+  - id: b2_3
+    part: C_soc
+    aspect: B2
+    ref: "KPI B2.3"
+    title: Occupational health and safety measures adopted, and how they are implemented and monitored
+    zh: 所採納的職業健康與安全措施，以及相關執行及監察方法
+    cues: ['\b(?:health\s+and\s+safety|safety|ohs|ehs)\s+(?:measures|training|inspections?|drills?|audits?|committee)\b', '\bpersonal\s+protective\s+equipment\b', '(?:安全|職安健).{0,6}(?:措施|培訓|巡查|演習|委員會)', '個人防護裝備']
+  - id: b3_gd
+    part: C_soc
+    aspect: B3
+    ref: "Aspect B3 — General Disclosure"
+    title: Development and training — policies on improving employees' knowledge and skills; description of training activities
+    zh: 發展及培訓 — 有關提升僱員履行工作職責的知識及技能的政策；描述培訓活動
+    cues: ['\btraining\s+(?:programmes?|programs?|activities|courses|polic)\w*', '\b(?:career|professional|staff|employee)\s+development\b', '培訓(?:活動|課程|計劃|政策)', '(?:僱員|員工|專業)發展']
+  - id: b3_1
+    part: C_soc
+    aspect: B3
+    ref: "KPI B3.1"
+    title: Percentage of employees trained by gender and employee category
+    zh: 按性別及僱員類別劃分的受訓僱員百分比
+    cues: ['\b(?:percentage|proportion|%)\s+of\s+(?:employees|staff)\s+trained\b', '\bemployees\s+trained\b.{0,30}\bby\s+(?:gender|category|grade)', '受訓(?:僱員|員工)(?:百分比|比例)']
+  - id: b3_2
+    part: C_soc
+    aspect: B3
+    ref: "KPI B3.2"
+    title: Average training hours completed per employee by gender and employee category
+    zh: 按性別及僱員類別劃分，每名僱員完成受訓的平均時數
+    cues: ['\baverage\s+training\s+hours\b', '\btraining\s+hours\s+per\s+employee\b', '平均(?:受訓|培訓)時數']
+  - id: b4_gd
+    part: C_soc
+    aspect: B4
+    ref: "Aspect B4 — General Disclosure"
+    title: Labour standards — policies and legal compliance on preventing child and forced labour
+    zh: 勞工準則 — 有關防止童工或強制勞工的政策及遵守法規情況
+    cues: ['\b(?:child|forced|compulsory)\s+labou?r\b', '\bmodern\s+slavery\b', '(?:童工|強制勞工|強迫勞動)']
+  - id: b4_1
+    part: C_soc
+    aspect: B4
+    ref: "KPI B4.1"
+    title: Measures to review employment practices to avoid child and forced labour
+    zh: 描述檢討招聘慣例的措施以避免童工及強制勞工
+    cues: ['\b(?:verif|check|review|screen)\w*\b.{0,50}\b(?:age|identity|identification)\b', '\b(?:review|audit)\w*\b.{0,40}\b(?:recruitment|employment)\s+practices\b', '(?:核實|查核|檢查).{0,12}(?:年齡|身份)', '檢討.{0,6}招聘慣例']
+  - id: b4_2
+    part: C_soc
+    aspect: B4
+    ref: "KPI B4.2"
+    title: Steps taken to eliminate child and forced labour when discovered
+    zh: 描述在發現違規情況時消除有關情況所採取的步驟
+    cues: ['\b(?:eliminat|remediat|terminat|rectif)\w+\b.{0,60}\b(?:child|forced)\s+labou?r', '\bif\s+(?:any\s+)?(?:child|forced)\s+labou?r\b.{0,40}\b(?:found|discovered|identified)', '(?:發現|一經發現).{0,20}(?:童工|強制勞工).{0,30}(?:消除|終止|糾正|處理)', '(?:消除|杜絕).{0,10}(?:童工|強制勞工)']
+  - id: b5_gd
+    part: C_soc
+    aspect: B5
+    ref: "Aspect B5 — General Disclosure"
+    title: Supply chain management — policies on managing environmental and social risks of the supply chain
+    zh: 供應鏈管理 — 管理供應鏈的環境及社會風險政策
+    cues: ['\bsupply\s+chain\b.{0,50}\b(?:risks?|polic|management)\b', '\bsupplier\s+code\s+of\s+conduct\b', '供應鏈.{0,20}(?:風險|政策|管理)', '供應商(?:行為)?守則']
+  - id: b5_1
+    part: C_soc
+    aspect: B5
+    ref: "KPI B5.1"
+    title: Number of suppliers by geographical region
+    zh: 按地區劃分的供應商數目
+    cues: ['\b(?:number|no\.)\s+of\s+suppliers\b', '\bsuppliers\s+by\s+(?:geograph\w+\s+)?(?:region|location|country)\b', '按地區劃分的供應商', '供應商(?:數目|數量|總數)']
+  - id: b5_2
+    part: C_soc
+    aspect: B5
+    ref: "KPI B5.2"
+    title: Practices for engaging suppliers, number of suppliers covered, and how they are implemented and monitored
+    zh: 描述有關聘用供應商的慣例，向其執行有關慣例的供應商數目，以及相關執行及監察方法
+    cues: ['\bsupplier\s+(?:selection|assessment|evaluation|onboarding|engagement|audits?)\b', '\b(?:engag|select|assess)\w+\s+suppliers\b', '供應商(?:甄選|評估|聘用|審核|准入)', '聘用供應商']
+  - id: b5_3
+    part: C_soc
+    aspect: B5
+    ref: "KPI B5.3"
+    title: Practices used to identify environmental and social risks along the supply chain, and how they are implemented and monitored
+    zh: 描述有關識別供應鏈每個環節的環境及社會風險的慣例，以及相關執行及監察方法
+    cues: ['\b(?:identif|assess|screen)\w+\b.{0,50}\b(?:environmental|social|esg)\b.{0,30}\brisks?\b.{0,40}\b(?:supply\s+chain|suppliers?)', '\bsuppliers?\b.{0,50}\b(?:environmental|social|esg)\s+(?:risk\s+)?(?:assessment|screening|audit)', '(?:識別|評估).{0,10}供應鏈.{0,20}(?:環境|社會).{0,6}風險', '供應商.{0,12}(?:環境|社會|ESG).{0,6}(?:風險)?(?:評估|審核)']
+  - id: b5_4
+    part: C_soc
+    aspect: B5
+    ref: "KPI B5.4"
+    title: Practices used to promote environmentally preferable products and services when selecting suppliers
+    zh: 描述在揀選供應商時促使多用環保產品及服務的慣例
+    cues: ['\b(?:green|sustainable|responsible)\s+(?:procurement|purchasing|sourcing)\b', '\benvironmentally\s+(?:preferable|friendly)\s+(?:products|services|materials)\b', '(?:綠色|可持續|負責任)(?:採購|供應)', '環保(?:產品|物料|服務)']
+  - id: b6_gd
+    part: C_soc
+    aspect: B6
+    ref: "Aspect B6 — General Disclosure"
+    title: Product responsibility — policies and legal compliance on health and safety, advertising, labelling and privacy of products and services, and redress
+    zh: 產品責任 — 有關所提供產品和服務的健康與安全、廣告、標籤及私隱事宜以及補救方法的政策及遵守法規情況
+    cues: ['\bproduct\s+(?:responsibility|safety|quality|liability)\b', '\b(?:advertising|labell?ing)\b.{0,40}\b(?:polic|laws?\b|regulations?\b|complian)', '產品(?:責任|安全|質量|品質)', '(?:廣告|標籤).{0,20}(?:政策|法規|條例)']
+  - id: b6_1
+    part: C_soc
+    aspect: B6
+    ref: "KPI B6.1"
+    title: Percentage of total products sold or shipped subject to recalls for safety and health reasons
+    zh: 已售或已運送產品總數中因安全與健康理由而須回收的百分比
+    cues: ['\b(?:product\s+)?recalls?\b', '(?:產品)?(?:回收|召回)(?:的)?(?:百分比|比例|個案|事件)', '須回收']
+  - id: b6_2
+    part: C_soc
+    aspect: B6
+    ref: "KPI B6.2"
+    title: Number of products and service related complaints received and how they are dealt with
+    zh: 接獲關於產品及服務的投訴數目以及應對方法
+    cues: ['\bcomplaints?\s+(?:received|handl|were|was)\w*', '\b(?:number|no\.)\s+of\s+complaints\b', '\bcustomer\s+complaints?\b', '(?:接獲|收到).{0,10}投訴', '投訴(?:數目|個案|處理)']
+  - id: b6_3
+    part: C_soc
+    aspect: B6
+    ref: "KPI B6.3"
+    title: Practices for observing and protecting intellectual property rights
+    zh: 描述與維護及保障知識產權有關的慣例
+    cues: ['\bintellectual\s+property\b', '\b(?:patents?|trade\s?marks?|copyrights?)\b', '知識產權', '(?:專利|商標|版權)']
+  - id: b6_4
+    part: C_soc
+    aspect: B6
+    ref: "KPI B6.4"
+    title: Quality assurance process and recall procedures
+    zh: 描述質量檢定過程及產品回收程序
+    cues: ['\bquality\s+(?:assurance|control|management\s+system)\b', '\brecall\s+procedures?\b', '\biso\s?9001\b', '質量(?:檢定|保證|控制|管理體系)', '品質(?:保證|控制)', '回收程序']
+  - id: b6_5
+    part: C_soc
+    aspect: B6
+    ref: "KPI B6.5"
+    title: Consumer data protection and privacy policies, and how they are implemented and monitored
+    zh: 描述消費者資料保障及私隱政策，以及相關執行及監察方法
+    cues: ['\b(?:data\s+protection|data\s+privacy|privacy\s+polic\w+|personal\s+data)\b', '\bpersonal\s+data\s+\(privacy\)\s+ordinance\b', '\biso\s?27001\b', '(?:資料保障|私隱政策|個人資料)', '個人資料（私隱）條例']
+  - id: b7_gd
+    part: C_soc
+    aspect: B7
+    ref: "Aspect B7 — General Disclosure"
+    title: Anti-corruption — policies and legal compliance on bribery, extortion, fraud and money laundering
+    zh: 反貪污 — 有關防止賄賂、勒索、欺詐及洗黑錢的政策及遵守法規情況
+    cues: ['\banti[-\s](?:corruption|bribery|fraud|money[-\s]laundering)\b', '\b(?:briber|extortion|money\s+laundering)', '\bprevention\s+of\s+bribery\s+ordinance\b', '(?:反貪污|反賄賂|防止賄賂|反洗錢|洗黑錢)', '(?:賄賂|勒索|欺詐)']
+  - id: b7_1
+    part: C_soc
+    aspect: B7
+    ref: "KPI B7.1"
+    title: Number of concluded legal cases on corrupt practices against the issuer or its employees, and their outcomes
+    zh: 於匯報期內對發行人或其僱員提出並已審結的貪污訴訟案件的數目及訴訟結果
+    cues: ['\b(?:concluded\s+)?legal\s+cases?\b.{0,50}\b(?:corrupt|briber)', '\b(?:corrupt\w*|briber\w*)\b.{0,50}\b(?:legal\s+cases?|litigation|proceedings|convictions?)', '貪污.{0,10}(?:訴訟|案件)', '(?:已審結|審結).{0,10}(?:訴訟|案件)']
+  - id: b7_2
+    part: C_soc
+    aspect: B7
+    ref: "KPI B7.2"
+    title: Preventive measures and whistle-blowing procedures, and how they are implemented and monitored
+    zh: 描述防範措施及舉報程序，以及相關執行及監察方法
+    cues: ['\bwhistle[-\s]?blow\w+', '\b(?:reporting|grievance)\s+(?:channel|hotline|mechanism)\b', '舉報(?:程序|政策|渠道|機制)', '(?:防範|預防)措施']
+  - id: b7_3
+    part: C_soc
+    aspect: B7
+    ref: "KPI B7.3"
+    title: Anti-corruption training provided to directors and staff
+    zh: 描述向董事及員工提供的反貪污培訓
+    cues: ['\banti[-\s](?:corruption|bribery)\s+training\b', '\b(?:integrity|ethics)\s+training\b', '\btraining\b.{0,40}\b(?:anti[-\s]corruption|anti[-\s]bribery|icac)\b', '(?:反貪污|反賄賂|廉潔|誠信).{0,6}培訓', '廉政公署']
+  - id: b8_gd
+    part: C_soc
+    aspect: B8
+    ref: "Aspect B8 — General Disclosure"
+    title: Community investment — policies on community engagement to understand local needs and take communities' interests into account
+    zh: 社區投資 — 有關以社區參與來了解營運所在社區需要和確保其業務活動會考慮社區利益的政策
+    cues: ['\bcommunity\s+(?:engagement|investment|involvement|participation)\b', '\b(?:needs|interests)\s+of\s+the\s+communit', '社區(?:參與|投資|投入)', '社區.{0,6}(?:需要|利益)']
+  - id: b8_1
+    part: C_soc
+    aspect: B8
+    ref: "KPI B8.1"
+    title: Focus areas of contribution (e.g. education, environment, labour needs, health, culture, sport)
+    zh: 專注貢獻範疇（如教育、環境事宜、勞工需求、健康、文化、體育）
+    cues: ['\bfocus\s+areas?\b.{0,40}\b(?:contribution|community|donation)', '\b(?:charit\w+|donat\w+|volunteer\w*|sponsor\w+)\b.{0,60}\b(?:education|environment|health|culture|sport|elderly|youth)', '(?:專注|重點)(?:貢獻)?範疇', '(?:捐款|捐贈|義工|贊助).{0,30}(?:教育|環保|健康|文化|體育|長者|青年)']
+  - id: b8_2
+    part: C_soc
+    aspect: B8
+    ref: "KPI B8.2"
+    title: Resources contributed (e.g. money or time) to the focus area
+    zh: 在專注範疇所動用資源（如金錢或時間）
+    cues: ['\b(?:donat\w+|contribut\w+)\b.{0,40}(?:hk\$|rmb|usd|us\$|\$|million|thousand)', '\bvolunteer(?:ing)?\s+hours\b', '\bcharitable\s+donations?\b', '(?:捐款|捐贈|捐助).{0,20}(?:港元|人民幣|萬元|百萬)', '義工(?:服務)?時數']
+
+  # ---------------------------------------------------------------- Part D
+  - id: d_governance
+    part: D
+    pillar: governance
+    ref: "Part D — Governance (para 19)"
+    title: Governance body and management role in overseeing climate-related risks and opportunities
+    zh: 管治機構及管理層在監察氣候相關風險及機遇方面的角色
+    cues: ['\bboard\b.{0,80}\bclimate', '\bclimate\b.{0,60}\b(?:governance|oversight|committee)\b', '董事會.{0,30}氣候', '氣候.{0,20}(?:管治|監察|委員會)']
+  - id: d_risks_opps
+    part: D
+    pillar: strategy
+    ref: "Part D — Strategy"
+    title: Climate-related risks (physical and transition) and opportunities, with time horizons
+    zh: 氣候相關風險（實體及轉型）及機遇，連同時間範圍
+    cues: ['\b(?:physical|transition)\s+risks?\b', '\bclimate[-\s]related\s+(?:risks?|opportunit)', '\b(?:short|medium|long)[-\s]term\b.{0,60}\bclimate', '(?:實體|轉型)風險', '氣候相關(?:風險|機遇)']
+  - id: d_business_model
+    part: D
+    pillar: strategy
+    ref: "Part D — Strategy"
+    title: Effects of climate-related risks and opportunities on the business model and value chain
+    zh: 氣候相關風險及機遇對業務模式及價值鏈的影響
+    cues: ['\bclimate\b.{0,80}\b(?:business\s+model|value\s+chain)\b', '\b(?:business\s+model|value\s+chain)\b.{0,80}\bclimate', '氣候.{0,40}(?:業務模式|價值鏈)', '(?:業務模式|價值鏈).{0,40}氣候']
+  - id: d_transition_plan
+    part: D
+    pillar: strategy
+    ref: "Part D — Strategy"
+    title: Strategy and decision-making, including any climate-related transition plan
+    zh: 策略及決策，包括任何氣候相關轉型計劃
+    cues: ['\btransition\s+plan\b', '\b(?:decarboni[sz]ation|net[-\s]zero)\s+(?:roadmap|strategy|pathway|plan)\b', '轉型計劃', '(?:減碳|脫碳|淨零).{0,6}(?:路線圖|策略|路徑|計劃)']
+  - id: d_financial_effects
+    part: D
+    pillar: strategy
+    ref: "Part D — Strategy"
+    title: Current and anticipated effects on financial position, financial performance and cash flows
+    zh: 對財務狀況、財務表現及現金流量的當前及預期影響
+    cues: ['\bclimate\b.{0,100}\b(?:financial\s+(?:position|performance|effects?|impact)|cash\s+flows?)\b', '\bfinancial\s+(?:effects?|impact)\b.{0,60}\bclimate', '氣候.{0,50}(?:財務狀況|財務表現|現金流|財務影響)']
+  - id: d_resilience
+    part: D
+    pillar: strategy
+    ref: "Part D — Strategy"
+    title: Climate resilience, informed by climate-related scenario analysis
+    zh: 氣候韌性（以氣候相關情景分析為依據）
+    cues: ['\bscenario\s+analysis\b', '\bclimate\s+resilien', '\b(?:1\.5|2|4)\s?°\s?c\s+scenario', '\b(?:rcp|ssp)\s?\d', '情景分析', '氣候(?:韌性|抵禦力)']
+  - id: d_risk_management
+    part: D
+    pillar: risk_management
+    ref: "Part D — Risk management"
+    title: Processes to identify, assess, prioritise and monitor climate-related risks and opportunities, and their integration into overall risk management
+    zh: 識別、評估、優次排列及監察氣候相關風險及機遇的流程，以及如何融入整體風險管理
+    cues: ['\b(?:identif|assess|prioriti[sz]|monitor)\w+\b.{0,50}\bclimate[-\s]related\s+risks?\b', '\bclimate\b.{0,60}\b(?:enterprise\s+risk\s+management|risk\s+management\s+(?:process|framework|system))\b', '(?:識別|評估|監察).{0,12}氣候相關風險', '氣候.{0,30}(?:風險管理(?:流程|框架|體系)|企業風險管理)']
+  - id: d_scope12
+    part: D
+    pillar: metrics_targets
+    mandatory_all: true
+    ref: "Part D — Metrics: GHG emissions"
+    title: Scope 1 and Scope 2 greenhouse gas emissions (mandatory for all issuers)
+    zh: 範圍 1 及範圍 2 溫室氣體排放（所有發行人強制披露）
+    cues: ['\bscope\s*(?:1|one)\b', '\bscope\s*(?:2|two)\b', '範圍\s*(?:1|一)', '範圍\s*(?:2|二)', '範疇\s*(?:1|一|2|二)']
+  - id: d_scope3
+    part: D
+    pillar: metrics_targets
+    ref: "Part D — Metrics: GHG emissions"
+    title: Scope 3 greenhouse gas emissions and the categories included
+    zh: 範圍 3 溫室氣體排放及所包括的類別
+    cues: ['\bscope\s*(?:3|three)\b', '\b(?:value[-\s]chain|upstream|downstream)\s+emissions\b', '範圍\s*(?:3|三)', '範疇\s*(?:3|三)', '價值鏈排放']
+  - id: d_cross_industry
+    part: D
+    pillar: metrics_targets
+    ref: "Part D — Metrics: cross-industry"
+    title: Assets or business activities exposed to transition and physical risks, aligned with opportunities, and capital deployed
+    zh: 易受轉型及實體風險影響、與機遇相關的資產或業務活動，以及資本運用
+    cues: ['\b(?:assets|business\s+activities|revenue)\b.{0,60}\b(?:vulnerable|exposed)\s+to\b.{0,40}\b(?:transition|physical)', '\b(?:capital\s+(?:deployment|expenditure)|capex|investment)\b.{0,60}\bclimate', '(?:資產|業務活動).{0,30}(?:易受|受).{0,10}(?:轉型|實體)風險', '氣候.{0,30}(?:資本開支|資本運用|投資)']
+  - id: d_carbon_price
+    part: D
+    pillar: metrics_targets
+    ref: "Part D — Metrics: cross-industry"
+    title: Internal carbon price
+    zh: 內部碳定價
+    cues: ['\binternal\s+carbon\s+pric', '\bshadow\s+(?:carbon\s+)?price\b', '內部碳(?:定價|價格)', '影子(?:碳)?價格']
+  - id: d_remuneration
+    part: D
+    pillar: metrics_targets
+    ref: "Part D — Metrics: cross-industry"
+    title: Whether and how climate-related considerations are factored into remuneration
+    zh: 氣候相關考慮因素是否及如何納入薪酬政策
+    cues: ['\b(?:remuneration|compensation|bonus|incentive)\b.{0,60}\b(?:climate|esg|sustainab|emissions?)', '\b(?:climate|esg|sustainab\w*)\b.{0,40}\b(?:linked|tied)\b.{0,30}\b(?:remuneration|pay|bonus|compensation)', '(?:薪酬|花紅|獎勵).{0,30}(?:氣候|ESG|可持續)', '(?:氣候|ESG|可持續).{0,20}(?:掛鈎|掛勾).{0,10}(?:薪酬|花紅)']
+  - id: d_targets
+    part: D
+    pillar: metrics_targets
+    ref: "Part D — Targets (paras 37–40)"
+    title: Climate-related targets — metric, objective, scope, period, base period, milestones and progress
+    zh: 氣候相關目標 — 指標、目的、範圍、適用期間、基準期、里程碑及進度
+    cues: ['\b(?:emissions?|carbon|ghg|climate)\b.{0,30}\btargets?\b.{0,80}\b(?:20[2-5]\d|base\s+(?:year|period)|baseline)', '\b(?:interim|science[-\s]based)\s+targets?\b', '\bbase\s+year\b', '(?:減排|減碳|氣候|碳).{0,10}目標.{0,40}(?:20[2-5]\d|基準)', '(?:基準年|科學基礎減碳目標)']
+
+  - id: issb_statement
+    part: D
+    pillar: general
+    informational: true
+    ref: "para 8"
+    title: States that the report is prepared in accordance with IFRS S1 / S2 or HKFRS S1 / S2
+    zh: 聲明報告按照 IFRS S1／S2 或 HKFRS S1／S2 編製
+    cues: ['\b(?:in\s+accordance|complies|compliance)\s+with\b.{0,30}\b(?:HKFRS|IFRS)\s+S[12]\b', '\bISSB\s+Standards\b', '(?:按照|遵守|符合).{0,12}(?:HKFRS|香港財務報告準則|IFRS|國際財務報告).{0,10}S[12]', 'ISSB.{0,4}準則']

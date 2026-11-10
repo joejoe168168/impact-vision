@@ -439,7 +439,7 @@ impact-vision catalog stats
 impact-vision catalog search "climate"
 
 # ESG / sustainability frameworks
-impact-vision framework list | scan "company description" | xref OI4112 | hkfrs-s1 report.pdf
+impact-vision framework list | scan "company description" | xref OI4112 | hkfrs-s1 report.pdf | hkex-esg report.pdf
 
 # Due-diligence checklist (122 questions / 34 categories)
 impact-vision dd list [--category "What (Outcomes)"] · dd categories
@@ -543,9 +543,9 @@ impact-vision/
 │   │   │   └── verification_bundle.py # 3-pillar signed assurance bundle (HMAC)
 │   │   │
 │   │   ├── report_templates/          # Jinja2-based HTML report templates
-│   │   ├── frameworks/                # 22 ESG/sustainability framework modules
+│   │   ├── frameworks/                # 24 ESG/sustainability framework modules
 │   │   │   ├── sasb.py · gri.py · tcfd.py · sfdr_pai.py · sfdr_recast.py · edci.py · unpri.py
-│   │   │   ├── issb_ifrs_s1.py · issb_ifrs_s2.py · esrs.py · vsme.py · hk_taxonomy.py
+│   │   │   ├── issb_ifrs_s1.py · issb_ifrs_s2.py · esrs.py · vsme.py · hk_taxonomy.py · hkex_esg.py · hkfrs_s1.py
 │   │   │   ├── ifc_opim.py · pcaf.py · sbti.py · eu_taxonomy.py · tnfd.py · cdp.py · …
 │   │   │   └── cross_reference.py     # 61 cross-framework metric mappings
 │   │   ├── mcp_server.py              # MCP server (FastMCP)
@@ -635,7 +635,7 @@ cross-references to IRIS+ metric IDs via the shared
 | | EU Taxonomy | 6 environmental objectives, DNSH + Minimum Safeguards |
 | | UK FCA Anti-Greenwashing Rule | Fair/clear/not-misleading assessment |
 | | EU green claims (ECGT 2024/825) | Likely ECGT/UCPD breaches (generic claims, offset-based neutrality, unplanned future claims) in `greenwashing_detect`; shelved-GCD tests as best practice |
-| | Hong Kong Taxonomy (HKMA) | Eligibility candidates from text + alignment % (Phase 1 / 2A; 2B flagged as consultation) |
+| | HKEX ESG Code · Hong Kong Taxonomy | Appendix C2 gap check of a report: Part B, Part C A1–A3 / B1–B8 KPIs (met, explained or silent), Part D climate by issuer type, en / zh-HK. HKMA Taxonomy: eligibility candidates from text + alignment % (Phase 1 / 2A; 2B flagged as consultation) |
 | | UK SRS (FCA PS26/19) | Listed-issuer comply-or-explain obligation from 2027 in the UK jurisdiction profile |
 | | EU Digital Product Passport (ESPR) | Import + map to IRIS+/ESRS/SDG |
 | | Per-jurisdiction packs | EU-SFDR, EU-CSRD, EU-CSDDD, UK-FCA-SDR, US-SEC-ESG, HK-HKEX-ESG, AU-AASB-S2, ISSB-global; deadline calendars for 10 jurisdictions incl. Hong Kong; China profile with the MoF Basic and Climate No. 1 (Trial) standards (v0.19) |
@@ -675,7 +675,7 @@ tool's description and the counts quoted in these docs, is in
 | Pre-screen & core assessment | `pitch_deck_analyze`, `iris_catalog`, `sdg_mapper`, `five_dimension_assess`, `gap_analysis`, `impact_metric_recommender`, `impact_data_quality` |
 | Due diligence & evidence | `dd_checklist`, `product_passport` |
 | Risk & credibility | `greenwashing_detect` (incl. EU ECGT, UK FCA), `impact_risk_opportunity`, `exclusion_screening` |
-| Frameworks & reporting | `framework_assess` (incl. VSME, HK Taxonomy, SFDR 2.0), `esg_toolbox`, `cross_reference`, `impact_report`, `impact_valuation` |
+| Frameworks & reporting | `framework_assess` (incl. VSME, HK Taxonomy, HKEX ESG Code, HKFRS S1, SFDR 2.0), `esg_toolbox`, `cross_reference`, `impact_report`, `impact_valuation` |
 | Decisions & deadlines | `decision_workflow`, `regulatory_calendar` |
 | Portfolio | `portfolio_analyze`, `portfolio_query`, `pipeline`, `monitoring`, `trend_analysis` |
 | Stakeholder voice & narrative | `stakeholder_voice`, `improvement_advisor`, `lp_narrative` |

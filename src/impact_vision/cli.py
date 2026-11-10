@@ -838,20 +838,14 @@ def catalog_search(
 @framework_app.command("list")
 def framework_list_cmd() -> None:
     """List all supported ESG/sustainability frameworks."""
-    frameworks = [
-        ("sasb", "SASB Industry-Specific Materiality", "17 industries, 77+ topics"),
-        ("gri", "GRI Universal + Topic Standards", "30+ standards, 120+ disclosures"),
-        ("tcfd", "TCFD / IFRS S2 Climate Disclosure", "4 pillars, 11 disclosures"),
-        ("sfdr_pai", "SFDR PAI Indicators", "14 mandatory EU indicators"),
-        ("edci", "EDCI PE/VC Metrics", "2026 KPI fields incl. non-core"),
-        ("unpri", "UN PRI Self-Assessment", "6 principles, 27 actions"),
-        ("toc", "Theory of Change", "RS Group + GIIN ToC Checklist"),
-    ]
+    from impact_vision.tools.impact.framework_tool import FRAMEWORK_CATALOG
+
     print("Supported ESG / Sustainability Frameworks:")
     print(f"{'=' * 60}")
-    for key, name, detail in frameworks:
-        print(f"  {key:<12} {name}")
-        print(f"  {'':12} {detail}")
+    for key, name, detail in FRAMEWORK_CATALOG:
+        print(f"  {key:<16} {name}")
+        print(f"  {'':16} {detail}")
+    print("\nReport gap checks: `framework hkex-esg <report>` and `framework hkfrs-s1 <report>`.")
 
 
 def _read_text_or_path(value: str) -> str:
@@ -940,6 +934,35 @@ def framework_hkfrs_s1(
         print(f"Error: {exc}", file=sys.stderr)
         raise typer.Exit(1) from None
     print(to_text(hkfrs_s1_gap(text, lang=lang)))
+
+
+@framework_app.command("hkex-esg")
+def framework_hkex_esg(
+    path: str = typer.Argument(..., help="ESG / annual report (PDF, DOCX, MD, TXT)"),
+    issuer: str = typer.Option(
+        "main_board", help="largecap (Part D mandatory from FY2026), main_board (comply or explain) or gem"),
+    lang: str = typer.Option("en", help="en or zh-HK (labels)"),
+    as_json: bool = typer.Option(False, "--json", help="Print the full result as JSON"),
+) -> None:
+    """HKEX ESG Reporting Code (Appendix C2) gap check: Part B, Part C KPIs and Part D climate."""
+    from impact_vision.impact.frameworks.hkex_esg import ISSUERS, hkex_esg_gap, to_text
+    from impact_vision.impact.pipeline import read_document
+
+    if issuer not in ISSUERS:
+        print(f"Error: --issuer must be one of {', '.join(ISSUERS)}", file=sys.stderr)
+        raise typer.Exit(2)
+    try:
+        text = read_document(path)
+    except (FileNotFoundError, ValueError) as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        raise typer.Exit(1) from None
+    result = hkex_esg_gap(text, lang=lang, issuer=issuer)
+    if as_json:
+        import json
+
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+    else:
+        print(to_text(result))
 
 
 @framework_app.command("xref")
