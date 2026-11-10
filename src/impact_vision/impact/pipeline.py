@@ -566,14 +566,14 @@ def write_deliverables(
             pass  # python-docx is optional
 
     if include_data:
-        from impact_vision.impact.exports import to_csv, write_xlsx
+        from impact_vision.impact.exports import CSV_ENCODING, to_csv, write_xlsx
 
         try:
             files.append(write_xlsx(bundle.report_data, out / f"{stem}_data.xlsx"))
         except ImportError:
             pass  # openpyxl missing
         data_csv = out / f"{stem}_data.csv"
-        data_csv.write_text(to_csv(bundle.report_data), encoding="utf-8")
+        data_csv.write_text(to_csv(bundle.report_data), encoding=CSV_ENCODING)
         files.append(data_csv)
 
     bundle.files = files

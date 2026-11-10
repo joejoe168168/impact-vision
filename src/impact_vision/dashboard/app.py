@@ -454,7 +454,8 @@ def _deck_assessment():
                            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
     except ImportError:
         d2.caption("Excel export needs openpyxl")
-    d3.download_button("Data (CSV)", exports.to_csv(data), f"{stem}_data.csv", "text/csv")
+    d3.download_button("Data (CSV)", exports.to_csv(data).encode(exports.CSV_ENCODING), f"{stem}_data.csv",
+                       "text/csv")
     d4.download_button("Data (JSON)", exports.to_json(data, slim=True), f"{stem}_data.json",
                        "application/json")
     components.html(html, height=1500, scrolling=True)
@@ -850,7 +851,7 @@ def _portfolio_tab():
         import io
         from impact_vision.impact.models import Company
 
-        content = uploaded.getvalue().decode("utf-8")
+        content = uploaded.getvalue().decode("utf-8-sig")  # Excel's "CSV UTF-8" starts with a BOM
         reader = csv.DictReader(io.StringIO(content))
 
         companies = []

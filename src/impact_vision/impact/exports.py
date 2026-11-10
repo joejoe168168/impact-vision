@@ -184,7 +184,61 @@ def csv_rows(data: dict) -> list[list[Any]]:
         rows.append(["Claim", claim.get("category", "intent"), claim.get("text", ""),
                      "metrics: " + ",".join(str(m) for m in claim.get("mapped_metrics", [])),
                      None, None, ""])
+    return rows + _decision_rows(data)
+
+
+def _outcome_label(outcome: dict) -> str:
+    kind = str(outcome.get("kind", "")).capitalize()
+    who = outcome.get("stakeholder") or ""
+    return f"{kind} · {who}" if who else kind
+
+
+def _decision_rows(data: dict) -> list[list[Any]]:
+    """What the IC reads first: gate, expected impact range, evidence plan, harms, contribution."""
+    rows: list[list[Any]] = []
+    ei = data.get("expected_impact") or {}
+    gate = ei.get("gate") or {}
+    if gate:
+        rows.append(["Expected impact", "IC gate", gate.get("label", ""), "; ".join(gate.get("reasons") or []),
+                     None, None, ""])
+    for o in ei.get("outcomes") or []:
+        label = _outcome_label(o)
+        detail = f"{o.get('uncertainty', '')} uncertainty · evidence level {o.get('evidence_level', '')}"
+        for point in ("p10", "p50", "p90"):
+            rows.append(["Expected impact", f"{label} {point.upper()}", round(float(o[point]), 1), detail,
+                         round(float(o[point]), 1), None, o.get("unit", "")])
+    eq = ei.get("evidence_quality") or {}
+    if eq:
+        rows.append(["Expected impact", "Evidence quality", f"{eq.get('score')}/100", eq.get("label", ""),
+                     eq.get("score"), 100, "score"])
+    if ei.get("data_completeness_pct") is not None:
+        rows.append(["Expected impact", "Data completeness", f"{ei['data_completeness_pct']}%",
+                     "share of the sector's core metrics reported", ei["data_completeness_pct"], 100, "%"])
+    stamp = ei.get("methodology") or {}
+    if stamp:
+        rows.append(["Expected impact", "Methodology", stamp.get("methodology_version", ""),
+                     f"config {stamp.get('config_hash', '')} · {stamp.get('status', '')}".rstrip(" ·"),
+                     None, None, ""])
+    for i, item in enumerate(gate.get("plan") or [], 1):
+        rows.append(["Evidence plan", f"Step {i}", item.get("action", ""), item.get("why", ""), None, None, ""])
+    for item in (data.get("negative_impacts") or {}).get("items") or []:
+        control = "control described" if item.get("controlled") else "no control described"
+        rows.append(["Negative impact", item.get("impact", ""), item.get("band", ""),
+                     f"severity {item.get('severity')} × likelihood {item.get('likelihood')} · {control} · "
+                     f"affects {item.get('stakeholder', '')}", item.get("score"), 9, "score"])
+    split = data.get("contribution_split") or {}
+    for side in ("enterprise", "investor"):
+        block = split.get(side) or {}
+        if "score" in block:
+            rows.append(["Contribution", side.capitalize(), f"{block['score']}/100",
+                         f"evidence level {block['evidence_level']}" if "evidence_level" in block else "",
+                         block["score"], 100, "score"])
     return rows
+
+
+# Excel reads a CSV as the local code page unless it starts with a byte-order
+# mark, which turns Chinese claims into mojibake. Write CSV files with this.
+CSV_ENCODING = "utf-8-sig"
 
 
 def to_csv(data: dict) -> str:
@@ -235,8 +289,10 @@ def _table(ws, headers: list[str], rows: list[list[Any]], *, widths: dict[int, f
     for r, row in enumerate(rows, start_row + 1):
         for col, value in enumerate(row, 1):
             cell = ws.cell(row=r, column=col, value=value)
-            if formats and col in formats and isinstance(value, (int, float)):
-                cell.number_format = formats[col]
+            if formats and col in formats and isinstance(value, (int, float)) and not isinstance(value, bool):
+                # A count is not a score: 12 claims must not read "12.0".
+                whole = isinstance(value, int) and "." in formats[col]
+                cell.number_format = "#,##0" if whole else formats[col]
             if isinstance(value, str) and len(value) > 60:
                 cell.alignment = Alignment(wrap_text=True, vertical="top")
     last_col = get_column_letter(len(headers))
@@ -260,6 +316,12 @@ def build_workbook(data: dict):  # type: ignore[no-untyped-def]
     company = data.get("company", {}) or {}
     decision = data.get("decision") or {}
     fd = data.get("five_dimensions") or {}
+    ei = data.get("expected_impact") or {}
+    gate = ei.get("gate") or {}
+    plan = gate.get("plan") or []
+    outcomes = ei.get("outcomes") or []
+    head = outcomes[0] if outcomes else None
+    eq = ei.get("evidence_quality") or {}
     gw = data.get("greenwashing") or {}
     ga = data.get("gap_analysis") or {}
 
@@ -271,8 +333,14 @@ def build_workbook(data: dict):  # type: ignore[no-untyped-def]
         ["Geography", company.get("geography", "")],
         ["Generated", data.get("generated_at", "")],
         ["Standard", data.get("catalog_version", "")],
-        ["IC gate", decision.get("display_status") or (decision.get("overall_status") or "").upper()],
-        ["Recommendation", decision.get("recommendation", "")],
+        ["IC gate", gate.get("label") or decision.get("display_status")
+         or (decision.get("overall_status") or "").upper()],
+        ["Recommendation", (plan[0].get("action", "") if plan else "") or decision.get("recommendation", "")],
+        *([["Expected impact (P50)", round(float(head["p50"]), 1)],
+           ["Expected impact range (P10 – P90)",
+            f"{round(float(head['p10'])):,} – {round(float(head['p90'])):,} {head.get('unit', '')}"],
+           ["Expected impact unit", f"{head.get('unit', '')} · {_outcome_label(head)}"]] if head else []),
+        *([["Evidence quality (0–100)", _num(eq.get("score"))]] if eq else []),
         ["5D overall (1–5)", _num(fd.get("overall_score"))],
         ["5D grade", fd.get("overall_grade", "")],
         ["Greenwashing risk (0–100)", _num(gw.get("overall_score"))],
@@ -280,6 +348,8 @@ def build_workbook(data: dict):  # type: ignore[no-untyped-def]
         ["Claims extracted", len(data.get("impact_claims", []) or [])],
         ["AI disclosure", _ai(data).disclosure],
         ["Methodology version", _stamp(data)["methodology_version"]],
+        *([["Expected-impact methodology", (ei.get("methodology") or {}).get("methodology_version", "")]]
+          if ei.get("methodology") else []),
         ["Methodology config hash", _stamp(data)["config_hash"]],
         ["Export schema", SCHEMA_VERSION],
     ]
@@ -333,15 +403,47 @@ def build_workbook(data: dict):  # type: ignore[no-untyped-def]
                ["Category", "Claim", "NESTA level", "Confidence", "Mapped metrics", "Extracted by"], rows,
                widths={2: 80}, formats={3: "0", 4: "0.00"})
 
+    if outcomes:
+        _table(wb.create_sheet("Expected impact"),
+               ["Outcome", "Unit", "P10", "P50", "P90", "P90 / P10", "Uncertainty", "Evidence level (NESTA)",
+                "Verified", "Source sentence"],
+               [[_outcome_label(o), o.get("unit", ""), _num(o.get("p10")), _num(o.get("p50")), _num(o.get("p90")),
+                 _num(o.get("spread")), o.get("uncertainty", ""), o.get("evidence_level"),
+                 "yes" if o.get("verified") else "no", o.get("source", "")] for o in outcomes],
+               widths={1: 26, 2: 30, 10: 80}, formats={3: "#,##0", 4: "#,##0", 5: "#,##0", 6: "0.0", 8: "0"})
+        shares = {(_outcome_label(o), d.get("factor")): d.get("share") for o in outcomes
+                  for d in o.get("drivers") or []}
+        _table(wb.create_sheet("Impact factors"),
+               ["Outcome", "Factor", "Median", "Spread (sigma)", "Basis", "Share of uncertainty"],
+               [[_outcome_label(o), f.get("name", ""), _num(f.get("median")), _num(f.get("sigma")), f.get("why", ""),
+                 _num(shares.get((_outcome_label(o), f.get("name"))))]
+                for o in outcomes for f in o.get("factors") or []],
+               widths={1: 26, 2: 26, 5: 50}, formats={3: "#,##0.##", 4: "0.00", 6: "0%"})
+    if plan:
+        _table(wb.create_sheet("Evidence plan"), ["Step", "Evidence to collect", "Why it matters"],
+               [[i, item.get("action", ""), item.get("why", "")] for i, item in enumerate(plan, 1)],
+               widths={1: 8, 2: 80, 3: 70}, formats={1: "0"})
+    negatives = (data.get("negative_impacts") or {}).get("items") or []
+    if negatives:
+        _table(wb.create_sheet("Negative impacts"),
+               ["Potential negative impact", "Who is affected", "Severity (1–3)", "Likelihood (1–3)", "Score (1–9)",
+                "Materiality", "Control described", "Company's words", "SFDR PAI / DNSH"],
+               [[n.get("impact", ""), n.get("stakeholder", ""), n.get("severity"), n.get("likelihood"),
+                 n.get("score"), n.get("band", ""), "yes" if n.get("controlled") else "no",
+                 " | ".join(n.get("evidence") or []), n.get("pai") or n.get("dnsh") or ""] for n in negatives],
+               widths={1: 60, 2: 28, 8: 80}, formats={3: "0", 4: "0", 5: "0"})
+
     _table(wb.create_sheet("All figures"), CSV_HEADER, csv_rows(data), widths={3: 40, 4: 60},
            formats={5: "#,##0.##", 6: "0"})
     prov = _ai(data)
-    ws_ai = wb.create_sheet("AI provenance")
-    _table(ws_ai, ["Field", "Value"], [list(r) for r in prov.as_rows()], widths={1: 28, 2: 100})
-    _table(ws_ai, ["Figure", "Stage", "Method", "Estimated", "Model", "Note"],
-           [[r.figure, r.stage, r.method, "yes" if r.estimated else "no", r.model, r.note]
-            for r in prov.records],
-           widths={1: 34, 6: 40}, start_row=len(prov.as_rows()) + 3)
+    # One table per sheet: a second table would move the frozen header and filter onto itself.
+    _table(wb.create_sheet("AI provenance"), ["Field", "Value"], [list(r) for r in prov.as_rows()],
+           widths={1: 28, 2: 100})
+    if prov.records:
+        _table(wb.create_sheet("AI figures"), ["Figure", "Stage", "Method", "Estimated", "Model", "Note"],
+               [[r.figure, r.stage, r.method, "yes" if r.estimated else "no", r.model, r.note]
+                for r in prov.records],
+               widths={1: 34, 6: 40})
     _table(wb.create_sheet("Methodology"), ["Topic", "How it is calculated"],
            [list(row) for row in methodology_rows()] + [["AI use", prov.disclosure]], widths={1: 18, 2: 100})
     return wb
@@ -355,6 +457,7 @@ def write_xlsx(data: dict, path: str | Path) -> Path:
 
 
 __all__ = [
+    "CSV_ENCODING",
     "CSV_HEADER",
     "SCHEMA_VERSION",
     "build_workbook",
