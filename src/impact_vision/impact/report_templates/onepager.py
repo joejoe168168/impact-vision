@@ -98,7 +98,11 @@ def build_onepager(data: dict[str, Any], lang: str = "en", branding: dict[str, A
 
 def render_ic_onepager(data: dict[str, Any], lang: str = "en", branding: dict[str, Any] | None = None) -> str:
     """One A4 page: verdict, expected impact, three reasons, three conditions, top negative impact."""
-    from impact_vision.impact.ai_provenance import ai_provenance_for_report, machine_marking, mark_html
+    from impact_vision.impact.ai_provenance import (
+        ai_provenance_for_report,
+        machine_marking,
+        mark_html,
+    )
 
     p = build_onepager(data, lang, branding)
     h = _HEADINGS.get(p["lang"], _HEADINGS["en"])

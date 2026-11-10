@@ -4,14 +4,19 @@ from __future__ import annotations
 
 import pytest
 
-from impact_vision.impact.pipeline import SAMPLE_DECKS, assess_file, sample_deck_path, write_deliverables
+from impact_vision.impact.pipeline import (
+    SAMPLE_DECKS,
+    assess_file,
+    sample_deck_path,
+    write_deliverables,
+)
 from impact_vision.impact.report_templates.decision_report import build_view
 from impact_vision.impact.report_templates.onepager import build_onepager, render_ic_onepager
 
 
 @pytest.fixture(scope="module")
 def bundle():
-    return assess_file(sample_deck_path(list(SAMPLE_DECKS)[0]))
+    return assess_file(sample_deck_path(next(iter(SAMPLE_DECKS))))
 
 
 @pytest.mark.parametrize("lang", ["en", "zh-HK"])
