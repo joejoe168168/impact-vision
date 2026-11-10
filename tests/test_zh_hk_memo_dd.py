@@ -6,7 +6,11 @@ import re
 import pytest
 
 from impact_vision.impact.pipeline import assess_file, sample_deck_path, write_deliverables
-from impact_vision.impact.report_templates.localize_html import LABELS_ZH_HK, localize_document, localize_text
+from impact_vision.impact.report_templates.localize_html import (
+    LABELS_ZH_HK,
+    localize_document,
+    localize_text,
+)
 
 _SIMPLIFIED = "这为与项风险证据质额计划报"
 

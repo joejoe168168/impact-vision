@@ -235,7 +235,7 @@ _RECURSE = {"a"}
 _EXTRA = {"INSUFFICIENT EVIDENCE": "證據不足", "insufficient evidence": "證據不足"}
 
 _TEXT = re.compile(r">([^<>]+)<")
-_SKIP = re.compile(r"<(style|script)\b[^>]*>.*?</\1>", re.S | re.I)
+_SKIP = re.compile(r"<(style|script)\b[^>]*>.*?</\1>", re.DOTALL | re.IGNORECASE)
 _TITLE = re.compile(r"(<title>)([^<]*)(</title>)")
 
 
