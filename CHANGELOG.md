@@ -14,6 +14,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 Work from the 0.19.1 review (`IMPROVEMENTS.md`).
 
 ### Added
+- **Deal comparison (F2):** `impact-vision compare a.pdf b.pdf [c.pdf]` puts deals side by side: verdict,
+  expected impact P50 and P10–P90 per outcome kind (never summed or ranked across kinds), evidence quality,
+  greenwashing, top negative impact and open plan items. No composite and no winner; where two ranges overlap
+  the table says the deals cannot be told apart. Writes `comparison.html` and `comparison.json`; `--json` prints it.
+  `impact.compare.compare_bundles` is the API. `decision_workflow.compare_deals` still has its composite.
+- **IC one-pager (F3):** `assess` also writes `<stem>_ic_onepager.html` (and a PDF with `--pdf`): one A4 page
+  with the verdict, expected impact and range bar, up to three reasons and conditions, the top negative impact
+  and whether a control is described, evidence quality, and the methodology stamp and AI disclosure.
 - **HKEX ESG Code gap check:** `impact-vision framework hkex-esg report.pdf --issuer largecap | main_board | gem`
   checks a report against Listing Rules Appendix C2: Part B (mandatory), Part C aspects A1–A3 and B1–B8 with
   their KPIs (met, explained or silent) and Part D climate, whose basis follows the issuer type. English or

@@ -418,9 +418,9 @@ subcommand groups, two quickstart commands and four service commands. Run any co
 `--help` for full flags.
 
 ```bash
-# No-key quickstart
-impact-vision demo [--deck pig-farm|solar|microfinance|all] [--no-open]
+impact-vision demo [--deck pig-farm|solar|microfinance|all] [--no-open]   # no-key quickstart
 impact-vision assess deck.pdf [--sector S] [--audience full|ic|lp|regulator|public] [--thesis fund.yaml] [--lang zh-HK] [-o DIR] [--json] [--open] [--pdf]
+impact-vision compare a.pdf b.pdf [c.pdf] [-o DIR] [--json]   # deals side by side, no composite score
 
 # Interactive agent
 impact-vision                              # Start interactive agent session
