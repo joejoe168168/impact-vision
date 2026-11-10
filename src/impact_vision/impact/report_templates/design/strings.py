@@ -312,6 +312,11 @@ EN: dict[str, str] = {
     'pill_fail': 'Do not proceed',
     'tile_threshold': 'finding threshold 60',
     'mix_legend': 'Claims by NESTA evidence level (1→5)',
+    "share_notice": "Shared read-only · expires {date}",
+    "share_gone_title": "Link withdrawn",
+    "share_gone": "This share link has been withdrawn by the sender. Ask them for a new one.",
+    "share_invalid_title": "Link unavailable",
+    "share_invalid": "This share link is invalid, expired or has been revoked. Ask the sender for a new one.",
 }
 
 ZH_HK: dict[str, str] = {
@@ -606,6 +611,11 @@ ZH_HK: dict[str, str] = {
     'pill_fail': '不建議推進',
     'tile_threshold': '發現門檻 60',
     'mix_legend': '按 NESTA 證據級別劃分的聲明（1→5）',
+    'share_notice': '唯讀分享 · {date} 到期',
+    'share_gone_title': '連結已撤回',
+    'share_gone': '寄件人已撤回此分享連結。請向對方索取新連結。',
+    'share_invalid_title': '連結無法使用',
+    'share_invalid': '此分享連結無效、已過期或已被撤回。請向寄件人索取新連結。',
 }
 
 ZH_CN: dict[str, str] = {
@@ -900,6 +910,11 @@ ZH_CN: dict[str, str] = {
     'pill_fail': '不建议推进',
     'tile_threshold': '发现门槛 60',
     'mix_legend': '按 NESTA 证据级别划分的声明（1→5）',
+    'share_notice': '只读分享 · {date} 到期',
+    'share_gone_title': '链接已撤回',
+    'share_gone': '发送人已撤回此分享链接。请向对方索取新链接。',
+    'share_invalid_title': '链接无法使用',
+    'share_invalid': '此分享链接无效、已过期或已被撤回。请向发送人索取新链接。',
 }
 
 SDG_NAMES_ZH_HK: dict[int, str] = {1: '無貧窮', 2: '零飢餓', 3: '良好健康與福祉', 4: '優質教育', 5: '性別平等', 6: '清潔飲水和衛生設施', 7: '經濟適用的清潔能源', 8: '體面工作和經濟增長', 9: '產業、創新和基礎設施', 10: '減少不平等', 11: '可持續城市和社區', 12: '負責任消費和生產', 13: '氣候行動', 14: '水下生物', 15: '陸地生物', 16: '和平、正義與強大機構', 17: '促進目標實現的夥伴關係'}

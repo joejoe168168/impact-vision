@@ -1282,9 +1282,11 @@ async function refreshShare() {
   const rep = S.viewing; if (!rep) return;
   try {
     const out = await api('/reports/' + rep.id + '/share', {method: 'POST', body: JSON.stringify({
-      audience: $('#shareAudience').value, lang: $('#vLang').value, days: Number($('#shareDays').value)})});
+      audience: $('#shareAudience').value, lang: $('#vLang').value, days: Number($('#shareDays').value),
+      reuse: true})});   /* one live link per edition + language + validity, not a new one per click */
     $('#shareUrl').value = location.origin + out.path;
-    $('#shareExp').textContent = 'Read-only · expires ' + new Date(out.expires_at * 1000).toLocaleDateString();
+    $('#shareExp').textContent = (out.reused ? 'Existing link · ' : '') + 'Read-only · expires ' +
+      new Date(out.expires_at * 1000).toLocaleDateString();
   } catch (e) { toast('Share failed: ' + e.message); }
 }
 

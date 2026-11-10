@@ -101,3 +101,35 @@ def test_views_reach_the_audit_trail(client, report_id):
     share = _share(client, report_id)
     assert client.get(share["path"]).status_code == 200
     assert length() == before + 2          # share_created + share_viewed
+
+
+def test_banner_and_error_pages_are_translated(client, report_id):
+    share = _share(client, report_id, lang="zh-HK")
+    page = client.get(share["path"])
+    day = datetime.fromtimestamp(share["expires_at"], tz=timezone.utc).strftime("%Y-%m-%d")
+    assert f"唯讀分享 · {day} 到期" in page.text and "Shared read-only" not in page.text
+    cn = _share(client, report_id, lang="zh-CN")
+    client.delete(f"/api/v1/chat/reports/{report_id}/shares/{cn['jti']}")
+    gone = client.get(cn["path"])
+    assert gone.status_code == 410 and "<html lang='zh-CN'>" in gone.text and "发送人已撤回" in gone.text
+    # A forged link has no trustworthy claims: the browser's language decides.
+    bad = client.get("/shared/not-a-token", headers={"accept-language": "zh-HK,zh;q=0.9,en;q=0.8"})
+    assert bad.status_code == 404 and "此分享連結無效" in bad.text
+    assert "This share link is invalid" in client.get("/shared/not-a-token").text
+
+
+def test_ui_reuses_one_live_link_per_edition_and_language(client, report_id, events):
+    first = _share(client, report_id, reuse=True)
+    again = _share(client, report_id, reuse=True)
+    assert again["path"] == first["path"] and again["jti"] == first["jti"] and again["reused"]
+    assert len([e for e in events if e[0] == "report.share_created"]) == 1
+    other_lang = _share(client, report_id, reuse=True, lang="zh-HK")
+    longer = _share(client, report_id, reuse=True, days=30)
+    assert len({first["jti"], other_lang["jti"], longer["jti"]}) == 3
+    assert client.get(again["path"]).status_code == 200
+    # A withdrawn link is never handed out again.
+    client.delete(f"/api/v1/chat/reports/{report_id}/shares/{first['jti']}")
+    fresh = _share(client, report_id, reuse=True)
+    assert fresh["jti"] != first["jti"] and not fresh["reused"]
+    # Without reuse (the API default) every call issues its own link, as before.
+    assert _share(client, report_id)["jti"] != fresh["jti"]

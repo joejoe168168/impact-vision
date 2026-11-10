@@ -290,8 +290,10 @@ def _unb64(text: str) -> bytes:
 
 
 def make_share_token(report_id: str, *, audience: str = "lp", lang: str = "en",
-                     days: int = 14, now: float | None = None, jti: str = "") -> tuple[str, int]:
-    exp = int((now or time.time()) + max(1, min(days, SHARE_MAX_DAYS)) * 86400)
+                     days: int = 14, now: float | None = None, jti: str = "",
+                     expires: int | None = None) -> tuple[str, int]:
+    """Sign a link. Given the same claims (``expires`` and ``jti``) it returns the same token."""
+    exp = int(expires) if expires else int((now or time.time()) + max(1, min(days, SHARE_MAX_DAYS)) * 86400)
     from impact_vision.impact.identity import current_tenant
 
     claims = {"r": report_id, "a": audience, "l": lang, "e": exp, "t": current_tenant()}
@@ -344,18 +346,33 @@ def _audit_share(event_type: str, payload: dict[str, Any], *, actor: str) -> Non
 
 
 def create_share(report_id: str, *, audience: str = "lp", lang: str = "en", days: int = 14,
-                 now: float | None = None) -> dict[str, Any]:
-    """Issue a share link and list it on the report so it can be seen and withdrawn."""
+                 now: float | None = None, reuse: bool = False) -> dict[str, Any]:
+    """Issue a share link and list it on the report so it can be seen and withdrawn.
+
+    ``reuse=True`` (the web UI) hands back the live link already issued for the
+    same edition, language and validity instead of minting a new one each time
+    the share box opens; a revoked or expired link is never reused.
+    """
     record = load_report(report_id)
+    moment = now or time.time()
+    if reuse:
+        for entry in reversed(record.get("shares", [])):
+            if (entry.get("audience") == audience and entry.get("lang") == lang and entry.get("days") == days
+                    and not entry.get("revoked") and entry.get("expires", 0) > moment):
+                token, exp = make_share_token(report_id, audience=audience, lang=lang, jti=entry["jti"],
+                                              expires=entry["expires"])
+                return {"path": f"/shared/{token}", "expires_at": exp, "audience": audience, "lang": lang,
+                        "jti": entry["jti"], "reused": True}
     jti = secrets.token_hex(8)
     token, exp = make_share_token(report_id, audience=audience, lang=lang, days=days, now=now, jti=jti)
-    entry = {"jti": jti, "audience": audience, "lang": lang, "created": int(now or time.time()),
+    entry = {"jti": jti, "audience": audience, "lang": lang, "created": int(moment), "days": days,
              "expires": exp, "revoked": False, "views": 0, "previews": 0}
     record.setdefault("shares", []).append(entry)
     _save_record(report_id, record)
     _audit_share("report.share_created", {"report_id": report_id, "jti": jti, "audience": audience,
                                           "lang": lang, "expires": exp}, actor=_actor())
-    return {"path": f"/shared/{token}", "expires_at": exp, "audience": audience, "lang": lang, "jti": jti}
+    return {"path": f"/shared/{token}", "expires_at": exp, "audience": audience, "lang": lang, "jti": jti,
+            "reused": False}
 
 
 def list_shares(report_id: str, *, now: float | None = None) -> list[dict[str, Any]]:
@@ -433,11 +450,15 @@ def record_share_view(claims: dict[str, Any], record: dict[str, Any], *, user_ag
 
 def share_banner(claims: dict[str, Any]) -> str:
     from datetime import datetime, timezone
+    from html import escape
+
+    from impact_vision.impact.report_templates.design.strings import translator
 
     day = datetime.fromtimestamp(int(claims["e"]), tz=timezone.utc).strftime("%Y-%m-%d")
+    text = translator(claims.get("l") or "en")("share_notice", date=day)
     return ('<div class="share-notice" role="note" style="font:14px system-ui;padding:.5rem 1rem;'
             'background:#f3f4f6;color:#111827;border-bottom:1px solid #d1d5db;text-align:center">'
-            f"Shared read-only · expires {day}</div>")
+            f"{escape(text)}</div>")
 
 
 def _with_banner(html: str, banner: str) -> str:
@@ -445,9 +466,36 @@ def _with_banner(html: str, banner: str) -> str:
     return html[:match.end()] + banner + html[match.end():] if match else banner + html
 
 
-_SHARE_GONE = ("<!doctype html><meta charset=utf-8><title>Link withdrawn</title>"
-               "<p style='font:16px system-ui;margin:3rem'>This share link has been withdrawn by the sender. "
-               "Ask them for a new one.</p>")
+def share_lang(token: str, accept_language: str = "") -> str:
+    """Language for a share error page: the link's own (signature not needed to pick a
+    language), else the browser's Accept-Language, else English."""
+    try:
+        lang = json.loads(_unb64(token.split(".", 1)[0])).get("l")
+        if lang in _LANGS:
+            return str(lang)
+    except Exception:  # noqa: BLE001 - a garbled token still gets an error page
+        pass
+    for part in accept_language.lower().replace(" ", "").split(","):
+        tag = part.split(";")[0]
+        if tag in ("zh-hk", "zh-tw", "zh-mo") or tag.startswith("zh-hant"):
+            return "zh-HK"
+        if tag.startswith("zh"):
+            return "zh-CN"
+        if tag.startswith("en"):
+            return "en"
+    return "en"
+
+
+def share_error_page(kind: str, lang: str = "en") -> str:
+    """``kind`` is ``gone`` (withdrawn, 410) or ``invalid`` (bad or expired, 404)."""
+    from html import escape
+
+    from impact_vision.impact.report_templates.design.strings import translator
+
+    t = translator(lang)
+    return (f"<!doctype html><html lang='{escape(lang)}'><meta charset=utf-8>"
+            f"<title>{escape(t(f'share_{kind}_title'))}</title>"
+            f"<p style='font:16px system-ui;margin:3rem'>{escape(t(f'share_{kind}'))}</p></html>")
 
 
 # ---------------------------------------------------------------- routes
@@ -481,6 +529,8 @@ class ShareRequest(BaseModel):
     audience: str = Field("lp", description="full | ic | lp | regulator | public")
     lang: str = "en"
     days: int = Field(14, ge=1, le=SHARE_MAX_DAYS)
+    reuse: bool = Field(False, description="Return the live link already issued for this edition, "
+                                           "language and validity instead of a new one")
 
 
 def _check_view(audience: str, lang: str) -> tuple[str, str]:
@@ -658,7 +708,8 @@ def build_reports_router(*, auth_dependency: Any = None) -> Any:
     async def share(report_id: str, req: ShareRequest) -> dict[str, Any]:
         load_report(report_id)
         audience, lang = _check_view(req.audience, req.lang)
-        return await asyncio.to_thread(create_share, report_id, audience=audience, lang=lang, days=req.days)
+        return await asyncio.to_thread(create_share, report_id, audience=audience, lang=lang, days=req.days,
+                                       reuse=req.reuse)
 
     @router.get("/reports/{report_id}/shares", dependencies=deps)
     async def shares(report_id: str) -> dict[str, Any]:
@@ -717,13 +768,11 @@ def build_shared_router() -> Any:
                 record = load_report(claims["r"])
                 record_share_view(claims, record, user_agent=request.headers.get("user-agent", ""))
         except ShareRevoked:
-            return HTMLResponse(_SHARE_GONE, status_code=410, headers=_SHARE_HEADERS)
+            lang = share_lang(token, request.headers.get("accept-language", ""))
+            return HTMLResponse(share_error_page("gone", lang), status_code=410, headers=_SHARE_HEADERS)
         except (ValueError, HTTPException, PermissionError):
-            return HTMLResponse(
-                "<!doctype html><meta charset=utf-8><title>Link unavailable</title>"
-                "<p style='font:16px system-ui;margin:3rem'>This share link is invalid, expired "
-                "or has been revoked. Ask the sender for a new one.</p>",
-                status_code=404, headers=_SHARE_HEADERS)
+            lang = share_lang(token, request.headers.get("accept-language", ""))
+            return HTMLResponse(share_error_page("invalid", lang), status_code=404, headers=_SHARE_HEADERS)
         with acting_as(viewer):
             html = render_report(record, audience=claims["a"], lang=claims["l"])
         return HTMLResponse(_with_banner(html, share_banner(claims)), headers=_SHARE_HEADERS)
@@ -734,6 +783,8 @@ def build_shared_router() -> Any:
 __all__ = [
     "build_reports_router",
     "build_shared_router",
+    "share_error_page",
+    "share_lang",
     "create_report",
     "list_reports",
     "load_report",
