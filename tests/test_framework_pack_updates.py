@@ -41,3 +41,16 @@ def test_taxonomy_materiality_threshold():
     assert not pu.taxonomy_non_material({"turnover": 4.0, "capex": 10.0})
     assert not pu.taxonomy_non_material({})
     assert any("2026/73" in ref for ref in pu.taxonomy_references())
+
+
+def test_taxonomy_assessment_cites_the_simplification_act_and_flags_non_material():
+    from impact_vision.impact.frameworks.eu_taxonomy import EconomicActivity, assess_taxonomy_alignment
+
+    fields = EconomicActivity.model_fields
+    kwargs = {"eligible": True, "revenue_share_pct": 4.0, "capex_share_pct": 3.0, "opex_share_pct": 1.0}
+    for name, info in fields.items():
+        if info.is_required() and name not in kwargs:
+            kwargs[name] = "Solar PV generation"
+    result = assess_taxonomy_alignment("Acme", [EconomicActivity(**kwargs)])
+    assert any("2026/73" in r for r in result.references)
+    assert any("non-material" in f for f in result.findings)

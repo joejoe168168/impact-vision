@@ -58,6 +58,12 @@ NET_ZERO_TARGET_LATEST_YEAR = 2050
 NET_ZERO_MIN_REDUCTION_PCT = 90.0
 
 
+def _versions_in_force(today: date) -> list[dict]:
+    from impact_vision.impact.frameworks import pack_updates
+
+    return pack_updates.sbti_standard_in_force(today)
+
+
 def check_sbti_alignment(claim: SBTiClaim, *, today: date | None = None) -> SBTiAlignmentCheck:
     today = today or date.today()
     findings: list[str] = []
@@ -155,5 +161,8 @@ def check_sbti_alignment(claim: SBTiClaim, *, today: date | None = None) -> SBTi
         scope3_pass=scope3_pass,
         findings=findings,
         recommendations=recommendations,
-        references=refs,
+        references=refs + [
+            f"{row['title']} — accepted for target submissions on {today.isoformat()} ({row['source_url']})"
+            for row in _versions_in_force(today)
+        ],
     )
