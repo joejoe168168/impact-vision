@@ -666,6 +666,7 @@ def render_ic_memo_html(
     proof_appendix: Any | None = None,
     target_conditions: list[TargetCondition] | None = None,
     expected_impact: dict | None = None,
+    lang: str = "en",
 ) -> str:
     """Render the IC memo as a self-contained, print-ready HTML document.
 
@@ -1097,6 +1098,7 @@ def render_ic_memo_html(
         "</div>"
     )
     return wrap_document(
+        lang=lang,
         title=f"IC Memo — {company.name or 'Unnamed'}",
         body_html=body,
     )

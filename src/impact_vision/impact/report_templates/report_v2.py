@@ -462,6 +462,7 @@ def wrap_document(
     extra_head: str = "",
     include_plotly: bool = False,
     theme: str = "",
+    lang: str = "en",
 ) -> str:
     """Return a complete self-contained HTML document with the shared CSS.
 
@@ -478,7 +479,7 @@ def wrap_document(
     from impact_vision.impact.report_templates.decision_report import design_tokens_css
 
     html_open = '<html lang="en" data-theme="dark"><head>' if dark else '<html lang="en"><head>'
-    return (
+    document = (
         '<!DOCTYPE html>'
         f'{html_open}'
         '<meta charset="UTF-8">'
@@ -494,6 +495,11 @@ def wrap_document(
         '</main>'
         '</body></html>'
     )
+    if lang != "en":
+        from impact_vision.impact.report_templates.localize_html import localize_document
+
+        return localize_document(document, lang)
+    return document
 
 
 def _luminance(hex_colour: str) -> float:

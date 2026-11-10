@@ -554,6 +554,7 @@ def write_deliverables(
             greenwashing_score=bundle.greenwashing.overall_score,
             greenwashing_classification=bundle.greenwashing.classification,
             expected_impact=bundle.report_data.get("expected_impact"),
+            lang=lang,
         ), marking),
         encoding="utf-8",
     )
@@ -566,6 +567,7 @@ def write_deliverables(
             company_name=bundle.company.name,
             document_label=bundle.source_label,
             reviewer="Impact Vision",
+            lang=lang,
         ), marking),
         encoding="utf-8",
     )

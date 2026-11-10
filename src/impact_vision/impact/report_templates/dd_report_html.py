@@ -234,6 +234,7 @@ def render_dd_questionnaire_html(
     document_label: str = "Source document",
     reviewer: str | None = None,
     run_at: str | None = None,
+    lang: str = "en",
 ) -> str:
     """Render the questionnaire helper as a self-contained HTML page."""
     today = run_at or date.today().isoformat()
@@ -637,6 +638,7 @@ def render_dd_questionnaire_html(
     )
 
     return wrap_document(
+        lang=lang,
         title=f"DD Questionnaire Helper — {company_name}",
         body_html=body,
     )
