@@ -85,6 +85,23 @@ evidence_quality:
     - {min: 40, label: "moderate"}
     - {min: 0, label: "weak"}
 
+# Suggested investment conditions (IC memo, "Impact targets as investment
+# conditions"). Each evidence-plan item, by its kind, and each target the
+# company states becomes a draft condition for the IC to adopt, amend or drop.
+# Timings are drafting defaults, not rules.
+conditions:
+  max_items: 6
+  max_stated_targets: 2
+  kinds:
+    quantify: {type: condition_precedent, timing: "before closing"}
+    verify_reach: {type: condition_precedent, timing: "before closing"}
+    negative_control: {type: condition_precedent, timing: "before first disbursement"}
+    measure_depth: {type: covenant, timing: "baseline within 12 months of closing"}
+    comparison: {type: covenant, timing: "study commissioned within 18 months of closing"}
+    stated_target: {type: covenant, timing: "reported every year"}
+    core_metrics: {type: reporting, timing: "in each annual report"}
+    back_figures: {type: reporting, timing: "in each annual report"}
+
 # Gate 2.0 — three states instead of pass / fail.
 gate:
   ready:

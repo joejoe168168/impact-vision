@@ -420,7 +420,7 @@ subcommand groups, two quickstart commands and four service commands. Run any co
 ```bash
 # No-key quickstart
 impact-vision demo [--deck pig-farm|solar|microfinance|all] [--no-open]
-impact-vision assess deck.pdf [--sector S] [--audience full|ic|lp|regulator|public] [-o DIR] [--json] [--open] [--pdf]
+impact-vision assess deck.pdf [--sector S] [--audience full|ic|lp|regulator|public] [--thesis fund.yaml] [--lang zh-HK] [-o DIR] [--json] [--open] [--pdf]
 
 # Interactive agent
 impact-vision                              # Start interactive agent session

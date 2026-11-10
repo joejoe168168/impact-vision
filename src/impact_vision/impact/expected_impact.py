@@ -465,7 +465,8 @@ def _evidence_plan(inp: OutcomeInputs, outcomes: list[dict[str, Any]], eq: dict[
     plan: list[dict[str, str]] = []
     if not outcomes:
         plan.append({"action": "State how many people (or tonnes of CO2e) the business reached in the last 12 months.",
-                     "why": "No quantified outcome was found, so expected impact can't be estimated."})
+                     "why": "No quantified outcome was found, so expected impact can't be estimated.",
+                     "kind": "quantify"})
     people = next((o for o in outcomes if o["kind"] == "people"), None)
     if people is not None:
         top = people["drivers"][0]["factor"] if people["drivers"] else ""
@@ -473,26 +474,59 @@ def _evidence_plan(inp: OutcomeInputs, outcomes: list[dict[str, Any]], eq: dict[
             plan.append({"action": f"Measure how much life changes for the {people['stakeholder']} "
                                    "(before/after on the outcome that matters, e.g. income, cost, health or learning).",
                          "why": f"Depth of change is assumed, and it carries "
-                                f"{_share(people, 'Depth of change')} of the uncertainty."})
+                                f"{_share(people, 'Depth of change')} of the uncertainty.",
+                         "kind": "measure_depth"})
         level = max(inp.depth.level if inp.depth else 1, people["evidence_level"])
         if level < 3:
             plan.append({"action": "Compare with a group that did not get the product (a comparison group or "
                                    "a credible baseline), ideally run by someone independent.",
                          "why": f"Moves evidence from level {level} to 3, nets out deadweight and narrows the "
                                 f"range (now ×{people['spread']} from P10 to P90)." if people["spread"] else
-                                f"Moves evidence from level {level} to 3."})
+                                f"Moves evidence from level {level} to 3.",
+                         "kind": "comparison"})
         if not people["verified"] and top == "Reach" and inp.reach is not None:
             plan.append({"action": f"Have the headline reach figure ({int(inp.reach.value):,} "
                                    f"{people['stakeholder']}) verified by a third party.",
-                         "why": "Reach drives most of the remaining uncertainty."})
+                         "why": "Reach drives most of the remaining uncertainty.", "kind": "verify_reach"})
     if completeness is not None and completeness < float(params()["gate"]["ready"]["min_data_completeness"]):
         names = ", ".join(missing[:3])
         plan.append({"action": f"Report the sector's core metrics{': ' + names if names else ''}.",
-                     "why": f"Only {completeness:.0f}% of the core set is reported."})
+                     "why": f"Only {completeness:.0f}% of the core set is reported.", "kind": "core_metrics"})
     if eq["score"] < 60 and len(plan) < 3:
         plan.append({"action": "Back the main figures with data: monitoring records, surveys or audited accounts.",
-                     "why": f"Evidence quality is {eq['label']} ({eq['score']}/100)."})
+                     "why": f"Evidence quality is {eq['label']} ({eq['score']}/100).", "kind": "back_figures"})
     return plan[:4]
+
+
+def suggest_conditions(block: dict[str, Any] | None) -> list[dict[str, str]]:
+    """Draft investment conditions for the IC to adopt, amend or drop.
+
+    Each evidence-plan item becomes a condition precedent, a covenant or a
+    reporting requirement (``conditions`` in ``methodology/v2.yaml`` says
+    which, and when), and each target the company states itself becomes a
+    covenant to report against. Nothing is suggested for a deal that fails
+    the thesis: conditions do not cure an exclusion.
+    """
+    block = block or {}
+    if (block.get("gate") or {}).get("state") == "fails_thesis":
+        return []
+    cfg = params().get("conditions") or {}
+    kinds: dict[str, dict[str, str]] = cfg.get("kinds") or {}
+    out: list[dict[str, str]] = []
+    for item in block.get("evidence_plan") or []:
+        rule = kinds.get(str(item.get("kind", "")))
+        if rule:
+            out.append({"type": rule["type"], "timing": rule["timing"], "text": item["action"],
+                        "basis": item.get("why", ""), "source": "evidence plan"})
+    rule = kinds.get("stated_target")
+    for sentence in (block.get("targets") or [])[: int(cfg.get("max_stated_targets", 2))] if rule else []:
+        out.append({"type": rule["type"], "timing": rule["timing"],
+                    "text": f"Report progress against the company's own target: “{sentence.strip()}”",
+                    "basis": "The company states this target; a covenant makes it binding rather than aspirational.",
+                    "source": "stated target"})
+    order = {"condition_precedent": 0, "covenant": 1, "reporting": 2}
+    out.sort(key=lambda c: order.get(c["type"], 3))
+    return out[: int(cfg.get("max_items", 6))]
 
 
 def _share(outcome: dict[str, Any], factor: str) -> str:
@@ -544,6 +578,10 @@ def _gate(outcomes: list[dict[str, Any]], eq: dict[str, Any], completeness: floa
         reasons.append(f"{completeness:.0f}% of core metrics reported (needs {ready['min_data_completeness']}%)")
     return {"state": "evidence_plan", "label": "Evidence plan required", "reasons": reasons,
             "plan": plan, "rationale": cfg["rationale"]["evidence_plan"]}
+
+
+CONDITION_LABELS = {"condition_precedent": "Condition precedent", "covenant": "Covenant",
+                    "reporting": "Reporting requirement"}
 
 
 def figure_dict(fig: Figure | None) -> dict[str, Any] | None:

@@ -31,11 +31,23 @@ Work from the 0.19.1 review (`IMPROVEMENTS.md`).
   them now changes the stamp. **The config hash of every report changes with this release.**
 - `impact-vision framework list` shows every framework the agent tool supports (it listed 7 of 20).
 
+- **Suggested investment conditions in the IC memo.** With no binding targets set, section 7 now drafts
+  conditions from the evidence plan and the company's own targets: conditions precedent (verify the headline
+  reach figure, show a control for a material negative impact), covenants (baseline, comparison study, the
+  stated targets) and reporting requirements. The rules are in `data/methodology/v2.yaml` (`conditions`).
+  The JSON summary carries them as `suggested_conditions`.
+- `impact-vision assess --thesis fund.yaml` assesses against your own fund thesis.
 - **Data exports carry the headline.** The workbook has new sheets for expected impact (P10 / P50 / P90),
   impact factors, the evidence plan and negative impacts, and the Summary sheet shows the gate and the
   expected-impact range. The CSV has the same figures plus the contribution split.
 
 ### Fixed
+- **One verdict in every memo format.** The Markdown, Word and PowerPoint memos printed the old thesis-gate
+  recommendation under a header showing the new gate. All formats now give the same verdict; the PowerPoint
+  also shows the expected-impact range, the first evidence-plan steps and the AI disclosure.
+- **The bundled example thesis is labelled.** Without a `data/fund_thesis.yaml`, every memo was headed
+  "Fund: Example Climate Fund I" and gated on its climate weights. The memo, the terminal summary and the
+  JSON summary now say it is the example and how to supply your own.
 - **Dark-theme reports print dark ink on white paper.** The masthead and cards used to print white on white.
 - The data CSV starts with a byte-order mark, so Excel shows Chinese text correctly. The dashboard's portfolio
   upload accepts Excel's "CSV UTF-8".

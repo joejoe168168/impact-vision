@@ -83,7 +83,7 @@ def plan_items(result: dict[str, Any], limit: int = 2) -> list[dict[str, str]]:
     """Evidence-plan entries for material negative impacts with no disclosed control."""
     return [{"action": f"Show how you manage: {r['impact'].lower()} (affects {r['stakeholder']}).",
              "why": f"Material negative impact (severity {r['severity']} × likelihood {r['likelihood']}) "
-                    "with no control described in the documents."}
+                    "with no control described in the documents.", "kind": "negative_control"}
             for r in result.get("material_unaddressed", [])[:limit]]
 
 

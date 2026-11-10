@@ -56,6 +56,23 @@ _GATE2_REC = {
 }
 
 
+def _fund_label(scorecard: Any, thesis: Any) -> str:
+    """The fund name, marked when it is only the bundled example thesis."""
+    return f"{scorecard.fund} (bundled example thesis)" if getattr(thesis, "is_example", False) else scorecard.fund
+
+
+def _suggested_conditions(expected_impact: dict | None) -> list[dict[str, str]]:
+    from impact_vision.impact.expected_impact import suggest_conditions
+
+    return suggest_conditions(expected_impact) if _gate2(expected_impact) else []
+
+
+_CONDITIONS_LEDE = (
+    "No binding impact targets have been set yet. Suggested conditions, drawn from the evidence plan and the "
+    "company's own targets, for the committee to adopt, amend or drop:"
+)
+
+
 def _sig2(value: float) -> str:
     from impact_vision.impact.report_templates.decision_report import _sig
 
@@ -127,7 +144,7 @@ def render_ic_memo_markdown(
     out.append(f"# Investment Committee Memo — {company.name or 'Unnamed Company'}")
     out.append("")
     out.append(f"- **Date**: {today}")
-    out.append(f"- **Fund**: {scorecard.fund}")
+    out.append(f"- **Fund**: {_fund_label(scorecard, thesis)}")
     out.append(f"- **Sector**: {company.sector or 'n/a'}")
     if deal_size_eur_m is not None:
         out.append(f"- **Proposed deal size**: EUR {deal_size_eur_m:.1f}m")
@@ -148,6 +165,12 @@ def render_ic_memo_markdown(
         out.append(
             f"Fund thesis: *{thesis.name}* ({thesis.strategy}, vintage {thesis.vintage_year})"
         )
+        if thesis.is_example:
+            from impact_vision.impact.fund_thesis import EXAMPLE_THESIS_NOTE
+
+            out.append("")
+            out.append(f"> **Example thesis.** {EXAMPLE_THESIS_NOTE}")
+            out.append("")
         if fd:
             w5d = weighted_5d_overall(fd, thesis)
             out.append(
@@ -255,12 +278,28 @@ def render_ic_memo_markdown(
                 f"{target.by_period} | {target.condition_kind} | "
                 f"{target.linked_incentive or ''} |"
             )
+    elif suggested := _suggested_conditions(expected_impact):
+        from impact_vision.impact.expected_impact import CONDITION_LABELS
+
+        out.append(f"*{_CONDITIONS_LEDE}*")
+        out.append("")
+        out.append("| Type | Suggested condition | When | Why |")
+        out.append("|---|---|---|---|")
+        for cond in suggested:
+            out.append(f"| {CONDITION_LABELS.get(cond['type'], cond['type'])} | {cond['text']} | "
+                       f"{cond['timing']} | {cond['basis']} |")
     else:
         out.append("*No binding impact targets were set as investment conditions.*")
     out.append("")
 
     out.append("## 8. Recommendation")
-    out.append(f"> {scorecard.recommendation}")
+    if gate2:
+        # One verdict in every format: the gate shown in the header, not the v1 thesis text.
+        out.append(f"> **{gate2['label']}** — {_GATE2_REC[gate2['state']]}")
+        out.append(">")
+        out.append(f"> Fund thesis checks: {scorecard.display_status}")
+    else:
+        out.append(f"> {scorecard.recommendation}")
     out.append("")
 
     if proof_appendix is not None:
@@ -490,14 +529,19 @@ def render_ic_memo_pptx(
     scorecard: DealScorecard,
     thesis: FundThesis | None = None,
     path: str | Path = "ic_memo.pptx",
+    *,
+    expected_impact: dict | None = None,
 ) -> Path:
     """Render a 4-slide IC summary deck.
+
+    With ``expected_impact`` the gate slide shows the methodology 2 verdict,
+    the expected-impact range and the first evidence-plan steps.
 
     Requires `python-pptx`.
     """
     try:
         from pptx import Presentation  # type: ignore
-        from pptx.util import Inches
+        from pptx.util import Inches, Pt
     except ImportError as exc:
         raise ImportError(
             "PowerPoint export requires 'python-pptx'. Install with: pip install python-pptx"
@@ -534,12 +578,34 @@ def render_ic_memo_pptx(
         Inches(0.5), Inches(1.5), Inches(9), Inches(4)
     ).text_frame.text = sdg_lines
 
-    # Slide 4: IC gate
+    # Slide 4: IC gate — the same verdict as the HTML and Word memos.
+    gate2 = _gate2(expected_impact)
     s4 = prs.slides.add_slide(blank)
-    s4.shapes.title.text = f"IC Gate: {scorecard.display_status}"
-    body = "\n".join(f"- {c.name}: {c.status}" for c in scorecard.checks)
-    body += "\n\nRecommendation:\n" + scorecard.recommendation
+    s4.shapes.title.text = f"IC Gate: {gate2['label'] if gate2 else scorecard.display_status}"
+    body = ""
+    if gate2:
+        body += _GATE2_REC[gate2["state"]] + "\n"
+        for o in (expected_impact or {}).get("outcomes") or []:
+            body += (f"Expected impact: {_sig2(o['p50'])} {o['unit']} "
+                     f"(P10 {_sig2(o['p10'])} – P90 {_sig2(o['p90'])})\n")
+        for item in (expected_impact or {}).get("evidence_plan", [])[:3]:
+            body += f"- {item['action']}\n"
+        body += f"\nFund thesis checks ({_fund_label(scorecard, thesis)}): {scorecard.display_status}\n"
+    body += "\n".join(f"- {c.name}: {c.status}" for c in scorecard.checks)
+    if not gate2:
+        body += "\n\nRecommendation:\n" + scorecard.recommendation
     s4.shapes.add_textbox(Inches(0.5), Inches(1.5), Inches(9), Inches(4)).text_frame.text = body
+
+    # Every deliverable says how it was produced (EU AI Act Art 50) and under which methodology.
+    from impact_vision.impact.ai_provenance import ai_provenance_for_assessment
+
+    note = f"{ai_provenance_for_assessment(assessment).disclosure}\n{_stamp_text(assessment.methodology)}"
+    box = s4.shapes.add_textbox(Inches(0.5), Inches(6.4), Inches(9), Inches(0.9)).text_frame
+    box.word_wrap = True
+    box.text = note
+    for paragraph in box.paragraphs:
+        for run in paragraph.runs:
+            run.font.size = Pt(9)
 
     p = Path(path)
     p.parent.mkdir(parents=True, exist_ok=True)
@@ -614,7 +680,7 @@ def render_ic_memo_html(
     top = sdgs[0] if sdgs else None
 
     # --- Hero -------------------------------------------------------
-    meta = [("Date", today), ("Fund", scorecard.fund)]
+    meta = [("Date", today), ("Fund", _fund_label(scorecard, thesis))]
     if company.sector:
         meta.append(("Sector", company.sector))
     if getattr(company, "geography", ""):
@@ -726,6 +792,11 @@ def render_ic_memo_html(
             f'<p class="section-lede">Fund thesis: <b>{escape(thesis.name)}</b> '
             f"({escape(thesis.strategy or '')}, vintage {thesis.vintage_year}).</p>",
         )
+        if thesis.is_example:
+            from impact_vision.impact.fund_thesis import EXAMPLE_THESIS_NOTE
+
+            thesis_html.append(
+                f'<div class="callout warn"><b>Example thesis.</b> {escape(EXAMPLE_THESIS_NOTE)}</div>')
         thesis_html.append('<div class="cards-row">')
         if fd:
             w5d = weighted_5d_overall(fd, thesis)
@@ -961,6 +1032,17 @@ def render_ic_memo_html(
             "<th>Target</th><th>By period</th><th>Condition</th>"
             f"<th>Linked incentive</th></tr></thead><tbody>{target_rows}</tbody></table>"
         )
+    elif suggested := _suggested_conditions(expected_impact):
+        from impact_vision.impact.expected_impact import CONDITION_LABELS
+
+        rows_html = "".join(
+            f"<tr><td>{escape(CONDITION_LABELS.get(c['type'], c['type']))}</td><td>{escape(c['text'])}</td>"
+            f"<td>{escape(c['timing'])}</td><td>{escape(c['basis'])}</td></tr>" for c in suggested)
+        targets_html.append(
+            f'<p class="section-lede">{escape(_CONDITIONS_LEDE)}</p>'
+            '<table class="data"><thead><tr><th>Type</th><th>Suggested condition</th><th>When</th>'
+            f"<th>Why</th></tr></thead><tbody>{rows_html}</tbody></table>"
+        )
     else:
         targets_html.append(
             '<div class="callout warn">No binding impact targets were set as '
@@ -1053,5 +1135,6 @@ def render_ic_memo(
     if output_format == "docx":
         return render_ic_memo_docx(md, path or "ic_memo.docx")
     if output_format == "pptx":
-        return render_ic_memo_pptx(assessment, scorecard, thesis, path or "ic_memo.pptx")
+        return render_ic_memo_pptx(assessment, scorecard, thesis, path or "ic_memo.pptx",
+                                   expected_impact=kwargs.get("expected_impact"))
     raise ValueError(f"Unknown output_format: {output_format}")

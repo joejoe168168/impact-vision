@@ -74,6 +74,9 @@ class FundThesis(BaseModel):
     reporting_cadence: ReportingCadence = Field(default_factory=ReportingCadence)
 
     is_default: bool = False
+    # True when nothing but the bundled fund_thesis.example.yaml was found: its
+    # name, SDG weights and gate thresholds are a placeholder, not the user's fund.
+    is_example: bool = False
     source_path: str = ""
 
     @model_validator(mode="after")
@@ -95,6 +98,13 @@ class FundThesis(BaseModel):
         return self
 
 
+EXAMPLE_THESIS_FILE = "fund_thesis.example.yaml"
+EXAMPLE_THESIS_NOTE = (
+    "These weights and thresholds come from the bundled example thesis, not from your fund. "
+    "Pass --thesis <file> or create data/fund_thesis.yaml to assess against your own thesis."
+)
+
+
 def _candidates(explicit: str | None) -> list[Path]:
     out: list[Path] = []
     if explicit:
@@ -106,7 +116,7 @@ def _candidates(explicit: str | None) -> list[Path]:
     pkg_root = Path(__file__).parent.parent.parent.parent
     out.extend([
         pkg_root / "data" / "fund_thesis.yaml",
-        pkg_root / "data" / "fund_thesis.example.yaml",
+        pkg_root / "data" / EXAMPLE_THESIS_FILE,
     ])
     return out
 
@@ -133,6 +143,7 @@ def load_fund_thesis(path: str | None = None) -> FundThesis:
             adverse_thresholds=AdverseThresholds(**(raw.get("adverse_thresholds") or {})),
             reporting_cadence=ReportingCadence(**(raw.get("reporting_cadence") or {})),
             source_path=str(candidate),
+            is_example=candidate.name == EXAMPLE_THESIS_FILE,
         )
         return thesis
     return FundThesis(is_default=True)

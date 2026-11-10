@@ -97,7 +97,9 @@ survives a restart.
 
 ## 8. Configure your fund
 
-The IC gate reads `data/fund_thesis.yaml`. Four regional packs ship as
+The IC gate reads `data/fund_thesis.yaml`, or the file you pass with
+`impact-vision assess deck.pdf --thesis my_fund.yaml`. Until you supply one,
+the bundled example thesis is used and the memo says so. Four regional packs ship as
 examples: `fund_thesis.climate_eu.yaml`,
 `fund_thesis.inclusive_finance_africa.yaml`,
 `fund_thesis.gender_lens_south_asia.yaml` and `fund_thesis.indigenous_led_na.yaml`.

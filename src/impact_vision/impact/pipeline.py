@@ -48,7 +48,7 @@ class AssessmentBundle:
             for a in self.assessment.sdg_alignments
             if a.material
         ][:3]
-        from impact_vision.impact.expected_impact import headline, methodology_mode
+        from impact_vision.impact.expected_impact import headline, methodology_mode, suggest_conditions
 
         v2 = self.report_data.get("expected_impact") or {}
         gate2 = v2.get("gate") or {}
@@ -62,6 +62,9 @@ class AssessmentBundle:
             "recommendation": ((plan[0]["action"] if plan else "; ".join(gate2.get("reasons", [])))
                                if use_v2 else self.scorecard.recommendation),
             "thesis_gate": self.scorecard.display_status,
+            "fund_thesis": {"name": getattr(self.thesis, "name", ""),
+                            "example": bool(getattr(self.thesis, "is_example", False))},
+            "suggested_conditions": suggest_conditions(v2) if use_v2 else [],
             "expected_impact": headline(v2),
             "evidence_quality": (v2.get("evidence_quality") or {}).get("score"),
             "five_d_score": round(fd.overall_score, 2) if fd else None,
@@ -258,8 +261,13 @@ def assess_document(
     audience: str = "full",
     theme: str = "",
     stage: str = "",
+    thesis_path: str | Path | None = None,
 ) -> AssessmentBundle:
     """Run the full no-LLM assessment chain on one document.
+
+    ``thesis_path`` is the fund thesis YAML to gate against; without it the
+    usual search applies (``IMPACT_VISION_FUND_THESIS``, ``data/fund_thesis.yaml``,
+    then the bundled example, which the memo labels as such).
 
     Anything not passed explicitly (name, sector, geography, themes, SDG
     claims) is inferred from the text with the same rules as the
@@ -322,7 +330,9 @@ def assess_document(
 
     dd = iv.run_dd_coverage(text, sector=company.sector or "auto")
     gw = iv.screen_greenwashing(assessment)
-    thesis = iv.load_thesis()
+    if thesis_path is not None and not Path(thesis_path).is_file():
+        raise FileNotFoundError(f"Fund thesis not found: {thesis_path}")
+    thesis = iv.load_thesis(thesis_path)
     scorecard = iv.evaluate_deal_against_thesis(
         assessment,
         thesis=thesis,
@@ -654,6 +664,9 @@ def format_summary(bundle: AssessmentBundle) -> str:
         f"  DD coverage:      {s['dd_coverage_pct']:.0f}%",
         f"  Evidence:         {s['claims']} claims, {len(s['reported_metrics'])} IRIS+ metrics",
     ]
+    if getattr(bundle.thesis, "is_example", False):
+        lines.append(f"  Fund thesis:      bundled example ({bundle.thesis.name}). Use --thesis <file> or "
+                     "data/fund_thesis.yaml for your own.")
     return "\n".join(lines)
 
 

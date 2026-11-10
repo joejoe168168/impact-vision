@@ -127,7 +127,7 @@ def dashboard_cmd(
 
 @app.command("assess")
 def assess_cmd(
-    file: Path = typer.Argument(..., help="Pitch deck or memo (.pdf, .txt, .md)"),
+    file: Path = typer.Argument(..., help="Pitch deck or memo (.pdf, .docx, .pptx, .txt, .md)"),
     name: str = typer.Option("", "--name", help="Company name (inferred if omitted)"),
     sector: str = typer.Option("", "--sector", "-s", help="Sector, e.g. agriculture, 'Financial Services'"),
     geography: str = typer.Option("", "--geography", "-g", help="Country or region"),
@@ -139,6 +139,8 @@ def assess_cmd(
     open_report: bool = typer.Option(False, "--open", help="Open the impact report in a browser"),
     pdf: bool = typer.Option(False, "--pdf", help="Also write PDFs of the impact report and IC memo (\\[pdf] extra)"),
     lang: str = typer.Option("en", "--lang", help="Report language: en, zh-HK (Traditional), zh-CN (Simplified)"),
+    thesis: Optional[Path] = typer.Option(
+        None, "--thesis", help="Your fund thesis YAML (see data/fund_thesis.example.yaml); default: data/fund_thesis.yaml"),
 ) -> None:
     """Assess one pitch deck / memo and write the impact report, IC memo and DD report.
 
@@ -150,7 +152,8 @@ def assess_cmd(
         print(f"--audience must be one of: {', '.join(AUDIENCES)}", file=sys.stderr)
         raise typer.Exit(2)
     try:
-        bundle = assess_file(file, name=name, sector=sector, geography=geography, audience=audience)
+        bundle = assess_file(file, name=name, sector=sector, geography=geography, audience=audience,
+                             thesis_path=thesis)
     except (FileNotFoundError, ValueError, ImportError) as exc:
         print(f"Error: {exc}", file=sys.stderr)
         raise typer.Exit(1) from exc
