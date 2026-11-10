@@ -859,6 +859,9 @@ def build_view(data: dict[str, Any], *, audience: str | None = None, lang: str =
         view["methodology"].append(t("method_5"))
     stamp = data.get("methodology") or methodology_stamp()
     view["methodology_stamp"] = stamp
+    view["methodology_label"] = t("stamp_v2" if stamp.get("expected_impact_version") else "stamp_v1",
+                                  v1=stamp["methodology_version"], v2=stamp.get("expected_impact_version", ""),
+                                  hash=stamp["config_hash"])
     view["methodology"].append(t("method_version", version=stamp["methodology_version"], hash=stamp["config_hash"]))
     if view["impact"]:
         from impact_vision.impact.expected_impact import params as v2_params

@@ -1,11 +1,13 @@
 """Versioned scoring methodology (v7 W5.2).
 
 The 5D, SDG and greenwashing scorers read every weight and threshold from
-``data/methodology/v1.yaml``. :func:`methodology_stamp` returns the
-``methodology_version`` plus a ``config_hash`` (SHA-256 over the methodology
-file, ``data/scoring_config.yaml`` (sector baselines, keyword boosts) and
-``data/sdg_keywords.yaml``). Every output carries this stamp, so two reports are comparable only
-when both values match.
+``data/methodology/v1.yaml``; expected impact and the IC gate read
+``data/methodology/v2.yaml``. :func:`methodology_stamp` returns both versions
+plus one ``config_hash``: SHA-256 over every file that can change a score or
+the verdict (the two methodology files, ``scoring_config.yaml``, the SDG
+keyword maps, the contribution rubric and the negative-impact catalogue).
+Every output carries this stamp, so two reports are comparable only when the
+stamps match.
 
 Set ``IMPACT_VISION_METHODOLOGY`` to a YAML path to run a custom methodology;
 its own ``version`` and a different hash then appear on every output.
@@ -24,6 +26,16 @@ import yaml
 from impact_vision.impact._paths import data_path
 
 DEFAULT_METHODOLOGY = "methodology/v1.yaml"
+EXPECTED_IMPACT_METHODOLOGY = "methodology/v2.yaml"
+# Everything besides the methodology file itself that can change a score or the
+# verdict. A file left out of this list can be edited without the stamp moving.
+HASHED_FILES = (
+    "scoring_config.yaml", "sdg_keywords.yaml", "sdg_keywords_es.yaml", "sdg_keywords_fr.yaml",
+    "sdg_keywords_pt.yaml", "sdg_keywords_zh.yaml",
+    EXPECTED_IMPACT_METHODOLOGY,                 # expected impact, evidence quality, the IC gate
+    "methodology/contribution_rubric.yaml",      # 5D Contribution and the enterprise / investor split
+    "negative_impacts.yaml",                     # negative impacts and the evidence plan
+)
 
 
 def _methodology_path() -> Path:
@@ -37,9 +49,8 @@ def _load(path: str) -> tuple[dict[str, Any], str]:
     digest = hashlib.sha256(raw)
     # Sector baselines / keyword boosts and the SDG keyword map shape scores
     # too, so they are part of the hash.
-    for extra in ("scoring_config.yaml", "sdg_keywords.yaml", "sdg_keywords_es.yaml", "sdg_keywords_fr.yaml",
-                  "sdg_keywords_pt.yaml", "sdg_keywords_zh.yaml"):
-        extra_path = data_path(extra)
+    for extra in HASHED_FILES:
+        extra_path = data_path(*extra.split("/"))
         if extra_path.exists():
             digest.update(extra_path.read_bytes())
     return (yaml.safe_load(raw.decode("utf-8")) or {}), digest.hexdigest()
@@ -62,14 +73,42 @@ def config_hash(short: bool = True) -> str:
     return digest[:12] if short else digest
 
 
+def expected_impact_version() -> str:
+    """Version of the expected-impact methodology, or "" when it does not drive the verdict."""
+    from impact_vision.impact.expected_impact import methodology_mode
+
+    if methodology_mode() != "2":
+        return ""
+    from impact_vision.impact.expected_impact import params
+
+    return str(params().get("version", ""))
+
+
 def methodology_stamp() -> dict[str, str]:
-    """``{"methodology_version", "config_hash"}`` for every output."""
-    return {"methodology_version": methodology_version(), "config_hash": config_hash()}
+    """The stamp every output carries.
+
+    ``methodology_version`` is the 5D / SDG / greenwashing methodology,
+    ``expected_impact_version`` the one behind expected impact and the IC gate
+    (absent when ``IMPACT_VISION_METHODOLOGY_VERSION=1``), and ``config_hash``
+    covers both plus the data files in :data:`HASHED_FILES`.
+    """
+    stamp = {"methodology_version": methodology_version(), "config_hash": config_hash()}
+    v2 = expected_impact_version()
+    if v2:
+        stamp["expected_impact_version"] = v2
+    return stamp
+
+
+def stamp_text(stamp: dict[str, str] | None = None) -> str:
+    """One line for footers: both methodology versions and the config hash."""
+    stamp = stamp or methodology_stamp()
+    v1, v2 = stamp.get("methodology_version", ""), stamp.get("expected_impact_version", "")
+    versions = f"v{v2} (expected impact, IC gate) · v{v1} (5D, SDG, greenwashing)" if v2 else f"v{v1}"
+    return f"Methodology {versions} · config {stamp.get('config_hash', '')}"
 
 
 def stamp_label() -> str:
-    stamp = methodology_stamp()
-    return f"Methodology v{stamp['methodology_version']} · config {stamp['config_hash']}"
+    return stamp_text(methodology_stamp())
 
 
 def clear_cache() -> None:
@@ -120,5 +159,9 @@ __all__ = [
     "methodology_stamp",
     "methodology_version",
     "section",
+    "EXPECTED_IMPACT_METHODOLOGY",
+    "HASHED_FILES",
+    "expected_impact_version",
     "stamp_label",
+    "stamp_text",
 ]

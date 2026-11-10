@@ -57,3 +57,52 @@ def test_appendix_is_generated_from_yaml(tmp_path, monkeypatch) -> None:
     finally:
         monkeypatch.delenv("IMPACT_VISION_METHODOLOGY")
     assert methodology.methodology_stamp() == original
+
+
+def test_stamp_names_the_methodology_behind_the_verdict(monkeypatch) -> None:
+    """The footer said "Methodology v1.2.0" while v2.yaml produced the headline and the gate."""
+    from impact_vision.impact import expected_impact, methodology
+    from impact_vision.impact.ic_memo import render_ic_memo_markdown
+    from impact_vision.impact.pipeline import assess_file, sample_deck_path
+    from impact_vision.impact.report_templates.decision_report import render_decision_report
+
+    stamp = methodology.methodology_stamp()
+    v2 = expected_impact.params()["version"]
+    assert stamp["expected_impact_version"] == v2
+    label = methodology.stamp_text(stamp)
+    assert f"v{v2} (expected impact, IC gate)" in label and "v1.2.0 (5D, SDG, greenwashing)" in label
+
+    bundle = assess_file(sample_deck_path("solar"))
+    assert label in render_decision_report(bundle.report_data)
+    assert f"v{v2}（預期影響" in render_decision_report(bundle.report_data, lang="zh-HK")
+    assert label in render_ic_memo_markdown(bundle.assessment, bundle.scorecard, bundle.thesis)
+
+    # With methodology 1 forced, expected impact does not drive the verdict and is not on the stamp.
+    monkeypatch.setenv("IMPACT_VISION_METHODOLOGY_VERSION", "1")
+    assert "expected_impact_version" not in methodology.methodology_stamp()
+    assert methodology.stamp_text() == f"Methodology v1.2.0 · config {stamp['config_hash']}"
+
+
+def test_config_hash_moves_with_every_file_that_can_change_a_score(tmp_path, monkeypatch) -> None:
+    """Editing the contribution rubric or the negative-impact catalogue used to leave the stamp unchanged."""
+    import shutil
+
+    from impact_vision.impact import _paths, methodology
+
+    assert {"methodology/v2.yaml", "methodology/contribution_rubric.yaml",
+            "negative_impacts.yaml"} <= set(methodology.HASHED_FILES)
+    original = methodology.config_hash()
+    real = _paths.data_path()
+    for rel in ("methodology/v2.yaml", "methodology/contribution_rubric.yaml", "negative_impacts.yaml"):
+        copy = tmp_path / rel.replace("/", "_")
+        shutil.copytree(real, copy, ignore=shutil.ignore_patterns("raw", "processed", "sample_decks", "calibration"))
+        target = copy / rel
+        target.write_text(target.read_text(encoding="utf-8") + "\n# edited\n", encoding="utf-8")
+        monkeypatch.setattr(methodology, "data_path", lambda *parts, _root=copy: _root.joinpath(*parts))
+        methodology.clear_cache()
+        try:
+            assert methodology.config_hash() != original, rel
+        finally:
+            monkeypatch.undo()
+            methodology.clear_cache()
+    assert methodology.config_hash() == original

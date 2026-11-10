@@ -329,7 +329,7 @@
   {% if branding.footer_text %}<p style="margin:0 0 4px">{{ branding.footer_text }}</p>{% endif %}
   {% if 'appendix' in sections %}<p style="margin:0 0 4px"><a href="#ai-disclosure">{{ t('ai_title') }}</a></p>
   {% else %}<p style="margin:0 0 4px">{{ ai.disclosure }}</p>{% endif %}
-  <p style="margin:0 0 4px">Methodology v{{ methodology_stamp.methodology_version }} · config {{ methodology_stamp.config_hash }}</p>
+  <p style="margin:0 0 4px">{{ methodology_label }}</p>
   {% if not branding.hide_attribution %}<p style="margin:0">{{ t('generated_by') }}</p>{% endif %}
 </footer>
 </main>

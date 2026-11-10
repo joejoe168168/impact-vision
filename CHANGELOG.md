@@ -25,6 +25,10 @@ Work from the 0.19.1 review (`IMPROVEMENTS.md`).
   the European Parliament endorsed its SFDR 2.0 mandate and trilogues opened, with Parliament's 20 % and the
   Council's 15 % taxonomy-alignment floors recorded; the PCAF registry row matches the Dec-2025 code; the
   EU-SFDR and HK-HKEX-ESG packs carry their legal basis and source.
+- **The methodology stamp names what produced the verdict.** Footers, the summary and the exports now show
+  both versions ("v2.1.0 (expected impact, IC gate) · v1.2.0 (5D, SDG, greenwashing)"), and the config hash
+  also covers `methodology/v2.yaml`, the contribution rubric and the negative-impact catalogue. Editing any of
+  them now changes the stamp. **The config hash of every report changes with this release.**
 - `impact-vision framework list` shows every framework the agent tool supports (it listed 7 of 20).
 
 - **Data exports carry the headline.** The workbook has new sheets for expected impact (P10 / P50 / P90),
