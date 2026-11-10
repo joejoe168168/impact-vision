@@ -452,7 +452,9 @@ def _evidence(data: dict[str, Any], t) -> dict[str, Any]:  # type: ignore[no-unt
             "sources": [{"value": s["value"], "sentence": s["sentence"],
                          "cite": t("cite_page", page=s["page"]) if s.get("page") else ""} for s in c["sources"]],
         })
-    return {"claims": claims, "metrics": metrics, "conflicts": conflicts}
+    checks = [{"text": f["action"], "sentence": str(f.get("sentence", "")).strip(" -•*\t")}
+              for f in (data.get("expected_impact") or {}).get("plausibility") or []]
+    return {"claims": claims, "metrics": metrics, "conflicts": conflicts, "checks": checks}
 
 
 _GW_COMPONENTS = ("claim_metric_gap", "adverse_omission", "specificity", "selectivity", "verification")
@@ -792,6 +794,8 @@ def _localize_view(view: dict[str, Any], lang: str) -> None:
     if view.get("five_d"):
         for row in view["five_d"]["rows"]:
             row["sentence"] = localize(row["sentence"], lang)
+    for check in (view.get("evidence") or {}).get("checks") or []:
+        check["text"] = localize(check["text"], lang)
 
 
 def build_view(data: dict[str, Any], *, audience: str | None = None, lang: str = "en",

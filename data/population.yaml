@@ -1,0 +1,237 @@
+# Population by country and region, used only to flag a reach figure that exceeds the people who live there
+# (impact/consistency.py, plausibility checks). Not used in any score.
+#
+# Generated from the World Bank API (indicator SP.POP.TOTL), latest year available per country:
+#   https://api.worldbank.org/v2/country/all/indicator/SP.POP.TOTL?date=2022:2024&format=json&per_page=1000
+schema_version: 1
+as_of: "2026-11-10"
+last_verified: "2026-11-10"
+source: World Bank, World Development Indicators, Population, total (SP.POP.TOTL); database updated 2026-10-08
+source_url: https://data.worldbank.org/indicator/SP.POP.TOTL
+countries:
+  - {iso3: AFG, name: "Afghanistan", population: 42647492, year: 2024}
+  - {iso3: ALB, name: "Albania", population: 2377128, year: 2024}
+  - {iso3: DZA, name: "Algeria", population: 46814308, year: 2024}
+  - {iso3: ASM, name: "American Samoa", population: 46765, year: 2024}
+  - {iso3: AND, name: "Andorra", population: 81938, year: 2024}
+  - {iso3: AGO, name: "Angola", population: 37885849, year: 2024}
+  - {iso3: ATG, name: "Antigua and Barbuda", population: 93772, year: 2024}
+  - {iso3: ARG, name: "Argentina", population: 45696159, year: 2024}
+  - {iso3: ARM, name: "Armenia", population: 3033500, year: 2024}
+  - {iso3: ABW, name: "Aruba", population: 107995, year: 2024}
+  - {iso3: AUS, name: "Australia", population: 27194286, year: 2024}
+  - {iso3: AUT, name: "Austria", population: 9177982, year: 2024}
+  - {iso3: AZE, name: "Azerbaijan", population: 10202830, year: 2024}
+  - {iso3: BHS, name: "Bahamas, The", population: 401283, year: 2024, aliases: ["Bahamas"]}
+  - {iso3: BHR, name: "Bahrain", population: 1588670, year: 2024}
+  - {iso3: BGD, name: "Bangladesh", population: 173562364, year: 2024}
+  - {iso3: BRB, name: "Barbados", population: 282467, year: 2024}
+  - {iso3: BLR, name: "Belarus", population: 9132629, year: 2024}
+  - {iso3: BEL, name: "Belgium", population: 11858610, year: 2024}
+  - {iso3: BLZ, name: "Belize", population: 417072, year: 2024}
+  - {iso3: BEN, name: "Benin", population: 14462724, year: 2024}
+  - {iso3: BMU, name: "Bermuda", population: 64636, year: 2024}
+  - {iso3: BTN, name: "Bhutan", population: 791524, year: 2024}
+  - {iso3: BOL, name: "Bolivia", population: 12413315, year: 2024}
+  - {iso3: BIH, name: "Bosnia and Herzegovina", population: 3164253, year: 2024}
+  - {iso3: BWA, name: "Botswana", population: 2521139, year: 2024}
+  - {iso3: BRA, name: "Brazil", population: 211998573, year: 2024}
+  - {iso3: VGB, name: "British Virgin Islands", population: 39471, year: 2024}
+  - {iso3: BRN, name: "Brunei Darussalam", population: 462721, year: 2024, aliases: ["Brunei"]}
+  - {iso3: BGR, name: "Bulgaria", population: 6441421, year: 2024}
+  - {iso3: BFA, name: "Burkina Faso", population: 23548781, year: 2024}
+  - {iso3: BDI, name: "Burundi", population: 14047786, year: 2024}
+  - {iso3: CPV, name: "Cabo Verde", population: 524877, year: 2024, aliases: ["Cape Verde"]}
+  - {iso3: KHM, name: "Cambodia", population: 17638801, year: 2024}
+  - {iso3: CMR, name: "Cameroon", population: 29123744, year: 2024}
+  - {iso3: CAN, name: "Canada", population: 41262329, year: 2024}
+  - {iso3: CYM, name: "Cayman Islands", population: 74457, year: 2024}
+  - {iso3: CAF, name: "Central African Republic", population: 5330690, year: 2024}
+  - {iso3: TCD, name: "Chad", population: 20299123, year: 2024}
+  - {iso3: CHI, name: "Channel Islands", population: 168126, year: 2024}
+  - {iso3: CHL, name: "Chile", population: 19764771, year: 2024}
+  - {iso3: CHN, name: "China", population: 1408975000, year: 2024, aliases: ["China", "PRC", "Mainland China", "中國", "中国"]}
+  - {iso3: COL, name: "Colombia", population: 52886363, year: 2024}
+  - {iso3: COM, name: "Comoros", population: 866628, year: 2024}
+  - {iso3: COD, name: "Congo, Dem. Rep.", population: 109276265, year: 2024, aliases: ["DRC", "DR Congo", "Democratic Republic of the Congo"]}
+  - {iso3: COG, name: "Congo, Rep.", population: 6332961, year: 2024, aliases: ["Republic of the Congo"]}
+  - {iso3: CRI, name: "Costa Rica", population: 5129910, year: 2024}
+  - {iso3: CIV, name: "Cote d'Ivoire", population: 31934230, year: 2024, aliases: ["Ivory Coast", "Cote d'Ivoire"]}
+  - {iso3: HRV, name: "Croatia", population: 3866200, year: 2024}
+  - {iso3: CUB, name: "Cuba", population: 10979783, year: 2024}
+  - {iso3: CUW, name: "Curacao", population: 155967, year: 2024}
+  - {iso3: CYP, name: "Cyprus", population: 1358282, year: 2024}
+  - {iso3: CZE, name: "Czechia", population: 10905028, year: 2024}
+  - {iso3: DNK, name: "Denmark", population: 5976992, year: 2024}
+  - {iso3: DJI, name: "Djibouti", population: 1168722, year: 2024}
+  - {iso3: DMA, name: "Dominica", population: 66205, year: 2024}
+  - {iso3: DOM, name: "Dominican Republic", population: 11427557, year: 2024}
+  - {iso3: ECU, name: "Ecuador", population: 18135478, year: 2024}
+  - {iso3: EGY, name: "Egypt, Arab Rep.", population: 116538258, year: 2024, aliases: ["Egypt"]}
+  - {iso3: SLV, name: "El Salvador", population: 6338193, year: 2024}
+  - {iso3: GNQ, name: "Equatorial Guinea", population: 1892516, year: 2024}
+  - {iso3: ERI, name: "Eritrea", population: 3535603, year: 2024}
+  - {iso3: EST, name: "Estonia", population: 1372341, year: 2024}
+  - {iso3: SWZ, name: "Eswatini", population: 1242822, year: 2024, aliases: ["Swaziland"]}
+  - {iso3: ETH, name: "Ethiopia", population: 132059767, year: 2024}
+  - {iso3: FRO, name: "Faroe Islands", population: 54640, year: 2024}
+  - {iso3: FJI, name: "Fiji", population: 928784, year: 2024}
+  - {iso3: FIN, name: "Finland", population: 5619911, year: 2024}
+  - {iso3: FRA, name: "France", population: 68551653, year: 2024}
+  - {iso3: PYF, name: "French Polynesia", population: 281807, year: 2024}
+  - {iso3: GAB, name: "Gabon", population: 2538952, year: 2024}
+  - {iso3: GMB, name: "Gambia, The", population: 2759988, year: 2024, aliases: ["Gambia"]}
+  - {iso3: GEO, name: "Georgia", population: 3812518, year: 2024}
+  - {iso3: DEU, name: "Germany", population: 83516593, year: 2024}
+  - {iso3: GHA, name: "Ghana", population: 34427414, year: 2024}
+  - {iso3: GIB, name: "Gibraltar", population: 39329, year: 2024}
+  - {iso3: GRC, name: "Greece", population: 10405134, year: 2024}
+  - {iso3: GRL, name: "Greenland", population: 56836, year: 2024}
+  - {iso3: GRD, name: "Grenada", population: 117207, year: 2024}
+  - {iso3: GUM, name: "Guam", population: 167777, year: 2024}
+  - {iso3: GTM, name: "Guatemala", population: 18406359, year: 2024}
+  - {iso3: GIN, name: "Guinea", population: 14754785, year: 2024}
+  - {iso3: GNB, name: "Guinea-Bissau", population: 2201352, year: 2024}
+  - {iso3: GUY, name: "Guyana", population: 831087, year: 2024}
+  - {iso3: HTI, name: "Haiti", population: 11772557, year: 2024}
+  - {iso3: HND, name: "Honduras", population: 10825703, year: 2024}
+  - {iso3: HKG, name: "Hong Kong SAR, China", population: 7524100, year: 2024, aliases: ["Hong Kong", "Hong Kong SAR", "香港"]}
+  - {iso3: HUN, name: "Hungary", population: 9562065, year: 2024}
+  - {iso3: ISL, name: "Iceland", population: 386506, year: 2024}
+  - {iso3: IND, name: "India", population: 1450935791, year: 2024, aliases: ["印度"]}
+  - {iso3: IDN, name: "Indonesia", population: 283487931, year: 2024}
+  - {iso3: IRN, name: "Iran, Islamic Rep.", population: 91567738, year: 2024, aliases: ["Iran"]}
+  - {iso3: IRQ, name: "Iraq", population: 46042015, year: 2024}
+  - {iso3: IRL, name: "Ireland", population: 5395790, year: 2024}
+  - {iso3: IMN, name: "Isle of Man", population: 84160, year: 2024}
+  - {iso3: ISR, name: "Israel", population: 10002200, year: 2024}
+  - {iso3: ITA, name: "Italy", population: 58952704, year: 2024}
+  - {iso3: JAM, name: "Jamaica", population: 2839175, year: 2024}
+  - {iso3: JPN, name: "Japan", population: 123975371, year: 2024}
+  - {iso3: JOR, name: "Jordan", population: 11552876, year: 2024}
+  - {iso3: KAZ, name: "Kazakhstan", population: 20592571, year: 2024}
+  - {iso3: KEN, name: "Kenya", population: 56432944, year: 2024, aliases: ["肯尼亞", "肯尼亚"]}
+  - {iso3: KIR, name: "Kiribati", population: 134518, year: 2024}
+  - {iso3: PRK, name: "Korea, Dem. People's Rep.", population: 26498823, year: 2024}
+  - {iso3: KOR, name: "Korea, Rep.", population: 51751065, year: 2024, aliases: ["South Korea", "Korea"]}
+  - {iso3: XKX, name: "Kosovo", population: 1594353, year: 2024}
+  - {iso3: KWT, name: "Kuwait", population: 4897263, year: 2024}
+  - {iso3: KGZ, name: "Kyrgyz Republic", population: 7221868, year: 2024, aliases: ["Kyrgyzstan"]}
+  - {iso3: LAO, name: "Lao PDR", population: 7769819, year: 2024, aliases: ["Laos"]}
+  - {iso3: LVA, name: "Latvia", population: 1866124, year: 2024}
+  - {iso3: LBN, name: "Lebanon", population: 5805962, year: 2024}
+  - {iso3: LSO, name: "Lesotho", population: 2337423, year: 2024}
+  - {iso3: LBR, name: "Liberia", population: 5612817, year: 2024}
+  - {iso3: LBY, name: "Libya", population: 7381023, year: 2024}
+  - {iso3: LIE, name: "Liechtenstein", population: 40450, year: 2024}
+  - {iso3: LTU, name: "Lithuania", population: 2888278, year: 2024}
+  - {iso3: LUX, name: "Luxembourg", population: 677012, year: 2024}
+  - {iso3: MAC, name: "Macao SAR, China", population: 687000, year: 2024, aliases: ["Macau", "Macao"]}
+  - {iso3: MDG, name: "Madagascar", population: 31964956, year: 2024}
+  - {iso3: MWI, name: "Malawi", population: 21655286, year: 2024}
+  - {iso3: MYS, name: "Malaysia", population: 35557673, year: 2024, aliases: ["馬來西亞", "马来西亚"]}
+  - {iso3: MDV, name: "Maldives", population: 527799, year: 2024}
+  - {iso3: MLI, name: "Mali", population: 24478595, year: 2024}
+  - {iso3: MLT, name: "Malta", population: 568847, year: 2024}
+  - {iso3: MHL, name: "Marshall Islands", population: 37548, year: 2024}
+  - {iso3: MRT, name: "Mauritania", population: 5169395, year: 2024}
+  - {iso3: MUS, name: "Mauritius", population: 1245779, year: 2024}
+  - {iso3: MEX, name: "Mexico", population: 130861007, year: 2024}
+  - {iso3: FSM, name: "Micronesia, Fed. Sts.", population: 113160, year: 2024, aliases: ["Micronesia"]}
+  - {iso3: MDA, name: "Moldova", population: 2402306, year: 2024}
+  - {iso3: MCO, name: "Monaco", population: 38631, year: 2024}
+  - {iso3: MNG, name: "Mongolia", population: 3524788, year: 2024}
+  - {iso3: MNE, name: "Montenegro", population: 623525, year: 2024}
+  - {iso3: MAR, name: "Morocco", population: 38081173, year: 2024}
+  - {iso3: MOZ, name: "Mozambique", population: 34631766, year: 2024}
+  - {iso3: MMR, name: "Myanmar", population: 54500091, year: 2024, aliases: ["Burma"]}
+  - {iso3: NAM, name: "Namibia", population: 3030131, year: 2024}
+  - {iso3: NRU, name: "Naoero", population: 11947, year: 2024}
+  - {iso3: NPL, name: "Nepal", population: 29651054, year: 2024}
+  - {iso3: NLD, name: "Netherlands", population: 17993485, year: 2024}
+  - {iso3: NCL, name: "New Caledonia", population: 292639, year: 2024}
+  - {iso3: NZL, name: "New Zealand", population: 5290000, year: 2024}
+  - {iso3: NIC, name: "Nicaragua", population: 6916140, year: 2024}
+  - {iso3: NER, name: "Niger", population: 27032412, year: 2024}
+  - {iso3: NGA, name: "Nigeria", population: 232679478, year: 2024}
+  - {iso3: MKD, name: "North Macedonia", population: 1824359, year: 2024}
+  - {iso3: MNP, name: "Northern Mariana Islands", population: 44278, year: 2024}
+  - {iso3: NOR, name: "Norway", population: 5572279, year: 2024}
+  - {iso3: OMN, name: "Oman", population: 5281538, year: 2024}
+  - {iso3: PAK, name: "Pakistan", population: 251269164, year: 2024}
+  - {iso3: PLW, name: "Palau", population: 17695, year: 2024}
+  - {iso3: PAN, name: "Panama", population: 4515577, year: 2024}
+  - {iso3: PNG, name: "Papua New Guinea", population: 10576502, year: 2024}
+  - {iso3: PRY, name: "Paraguay", population: 6929153, year: 2024}
+  - {iso3: PER, name: "Peru", population: 34217848, year: 2024}
+  - {iso3: PHL, name: "Philippines", population: 115843670, year: 2024}
+  - {iso3: POL, name: "Poland", population: 36559233, year: 2024}
+  - {iso3: PRT, name: "Portugal", population: 10694681, year: 2024}
+  - {iso3: PRI, name: "Puerto Rico (US)", population: 3202521, year: 2024}
+  - {iso3: QAT, name: "Qatar", population: 2857822, year: 2024}
+  - {iso3: ROU, name: "Romania", population: 19051804, year: 2024}
+  - {iso3: RUS, name: "Russian Federation", population: 143669648, year: 2024, aliases: ["Russia"]}
+  - {iso3: RWA, name: "Rwanda", population: 14256567, year: 2024}
+  - {iso3: WSM, name: "Samoa", population: 218019, year: 2024}
+  - {iso3: SMR, name: "San Marino", population: 33977, year: 2024}
+  - {iso3: STP, name: "Sao Tome and Principe", population: 235536, year: 2024}
+  - {iso3: SAU, name: "Saudi Arabia", population: 35300280, year: 2024}
+  - {iso3: SEN, name: "Senegal", population: 18501984, year: 2024}
+  - {iso3: SRB, name: "Serbia", population: 6586476, year: 2024}
+  - {iso3: SYC, name: "Seychelles", population: 121354, year: 2024}
+  - {iso3: SLE, name: "Sierra Leone", population: 8642022, year: 2024}
+  - {iso3: SGP, name: "Singapore", population: 6036860, year: 2024, aliases: ["新加坡"]}
+  - {iso3: SXM, name: "Sint Maarten (Dutch part)", population: 43350, year: 2024}
+  - {iso3: SVK, name: "Slovak Republic", population: 5422069, year: 2024, aliases: ["Slovakia"]}
+  - {iso3: SVN, name: "Slovenia", population: 2127400, year: 2024}
+  - {iso3: SLB, name: "Solomon Islands", population: 819198, year: 2024}
+  - {iso3: SOM, name: "Somalia, Fed. Rep.", population: 19009151, year: 2024}
+  - {iso3: ZAF, name: "South Africa", population: 64007187, year: 2024}
+  - {iso3: SSD, name: "South Sudan", population: 11943408, year: 2024}
+  - {iso3: ESP, name: "Spain", population: 48848840, year: 2024}
+  - {iso3: LKA, name: "Sri Lanka", population: 21916000, year: 2024}
+  - {iso3: KNA, name: "St. Kitts and Nevis", population: 46843, year: 2024}
+  - {iso3: LCA, name: "St. Lucia", population: 179744, year: 2024}
+  - {iso3: MAF, name: "St. Martin (French part)", population: 26129, year: 2024}
+  - {iso3: VCT, name: "St. Vincent and the Grenadines", population: 100616, year: 2024}
+  - {iso3: SDN, name: "Sudan", population: 50448963, year: 2024}
+  - {iso3: SUR, name: "Suriname", population: 634431, year: 2024}
+  - {iso3: SWE, name: "Sweden", population: 10569709, year: 2024}
+  - {iso3: CHE, name: "Switzerland", population: 9005582, year: 2024}
+  - {iso3: SYR, name: "Syrian Arab Republic", population: 24672760, year: 2024, aliases: ["Syria"]}
+  - {iso3: TJK, name: "Tajikistan", population: 10590927, year: 2024}
+  - {iso3: TZA, name: "Tanzania", population: 68560157, year: 2024, aliases: ["Tanzania"]}
+  - {iso3: THA, name: "Thailand", population: 71668011, year: 2024}
+  - {iso3: TLS, name: "Timor-Leste", population: 1400638, year: 2024}
+  - {iso3: TGO, name: "Togo", population: 8406558, year: 2024}
+  - {iso3: TON, name: "Tonga", population: 104175, year: 2024}
+  - {iso3: TTO, name: "Trinidad and Tobago", population: 1368333, year: 2024}
+  - {iso3: TUN, name: "Tunisia", population: 12277109, year: 2024}
+  - {iso3: TUR, name: "Turkiye", population: 85518661, year: 2024, aliases: ["Turkey"]}
+  - {iso3: TKM, name: "Turkmenistan", population: 7494498, year: 2024}
+  - {iso3: TCA, name: "Turks and Caicos Islands", population: 46535, year: 2024}
+  - {iso3: TUV, name: "Tuvalu", population: 9646, year: 2024}
+  - {iso3: UGA, name: "Uganda", population: 50015092, year: 2024}
+  - {iso3: UKR, name: "Ukraine", population: 37860221, year: 2024}
+  - {iso3: ARE, name: "United Arab Emirates", population: 10986400, year: 2024}
+  - {iso3: GBR, name: "United Kingdom", population: 69281000, year: 2024, aliases: ["UK", "Britain", "Great Britain"]}
+  - {iso3: USA, name: "United States", population: 340003797, year: 2024, aliases: ["US", "USA", "United States of America"]}
+  - {iso3: URY, name: "Uruguay", population: 3386588, year: 2024}
+  - {iso3: UZB, name: "Uzbekistan", population: 36361859, year: 2024}
+  - {iso3: VUT, name: "Vanuatu", population: 327777, year: 2024}
+  - {iso3: VEN, name: "Venezuela, RB", population: 28405543, year: 2024, aliases: ["Venezuela"]}
+  - {iso3: VNM, name: "Viet Nam", population: 100987686, year: 2024, aliases: ["Vietnam"]}
+  - {iso3: VIR, name: "Virgin Islands (U.S.)", population: 104377, year: 2024}
+  - {iso3: PSE, name: "West Bank and Gaza", population: 5289152, year: 2024, aliases: ["Palestine"]}
+  - {iso3: YEM, name: "Yemen, Rep.", population: 40583164, year: 2024, aliases: ["Yemen"]}
+  - {iso3: ZMB, name: "Zambia", population: 21314956, year: 2024}
+  - {iso3: ZWE, name: "Zimbabwe", population: 16634373, year: 2024}
+regions:
+  - {iso3: SSF, name: "Sub-Saharan Africa", population: 1289936286, year: 2024, aliases: ["Sub-Saharan Africa", "SSA"]}
+  - {iso3: SAS, name: "South Asia", population: 1677384532, year: 2024, aliases: ["South Asia"]}
+  - {iso3: EAS, name: "East Asia & Pacific", population: 2388319468, year: 2024, aliases: ["East Asia & Pacific", "East Asia and Pacific"]}
+  - {iso3: LCN, name: "Latin America & Caribbean", population: 662185614, year: 2024, aliases: ["Latin America & Caribbean", "Latin America", "LatAm"]}
+  - {iso3: MEA, name: "Middle East, North Africa, Afghanistan & Pakistan", population: 813173936, year: 2024, aliases: ["Middle East & North Africa", "MENA"]}
+  - {iso3: ECS, name: "Europe & Central Asia", population: 928566925, year: 2024, aliases: ["Europe & Central Asia", "Europe"]}
+  - {iso3: WLD, name: "World", population: 8140897523, year: 2024, aliases: ["World", "Global", "Worldwide"]}
+  - {iso3: EUU, name: "European Union", population: 450228188, year: 2024, aliases: ["European Union", "EU"]}

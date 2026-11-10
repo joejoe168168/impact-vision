@@ -50,6 +50,10 @@ Work from the 0.19.1 review (`IMPROVEMENTS.md`).
   sentence that denies, guards against or replaces the activity ("we do not finance coal mining",
   "anti-bribery training") is listed as a topic to confirm, never as a failure. Before, the criteria were
   read only by the agent tool. Bare "petroleum" is no longer a keyword.
+- **Figures to check.** A reach figure above the population of the country the company names, or tonnes far
+  out of proportion to the raise, is flagged with its sentence, leads the evidence plan and widens the range
+  instead of producing a confident number. A change above 100 % is noted as capped. Populations come from
+  World Bank data in `data/population.yaml`.
 - **Data exports carry the headline.** The workbook has new sheets for expected impact (P10 / P50 / P90),
   impact factors, the evidence plan and negative impacts, and the Summary sheet shows the gate and the
   expected-impact range. The CSV has the same figures plus the contribution split.

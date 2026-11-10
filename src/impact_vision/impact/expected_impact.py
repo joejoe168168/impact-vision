@@ -136,6 +136,8 @@ class Figure:
     verified: bool = False
     noun: str = ""
     cumulative: bool = False   # a running total ("since launch"), not a yearly rate
+    raw_value: float | None = None   # the figure as stated, when the calculation capped it
+    doubt: bool = False        # failed a plausibility check: its range is widened
 
 
 @dataclass
@@ -236,10 +238,10 @@ def read_outcomes(claims: Iterable[Any], scoring_text: str = "", *, sector: str 
             if m:
                 depth_val = float(m.group(1))
         if depth_val is not None and 0 < depth_val <= 5:
-            depth_val = min(depth_val, 1.0)
+            stated, depth_val = depth_val, min(depth_val, 1.0)
             better = out.depth is None or (level, depth_val) > (out.depth.level, out.depth.value)
             if better:
-                out.depth = Figure(depth_val, text, level, verified)
+                out.depth = Figure(depth_val, text, level, verified, raw_value=stated)
         for pattern in (_CO2_RE, _CO2_UNIT_RE):
             for m in pattern.finditer(text):
                 if not _AVOID_WORDS.search(text) or re.search(r"\bper\s+(?:kg|unit|item)", text, re.I):
@@ -304,7 +306,11 @@ def _level_cfg(level: int) -> dict[str, Any]:
 
 def _sigma(fig: Figure) -> float:
     sigma = float(_level_cfg(fig.level)["sigma"])
-    return sigma * float(params().get("verified_sigma_factor", 0.7)) if fig.verified else sigma
+    if fig.verified:
+        sigma *= float(params().get("verified_sigma_factor", 0.7))
+    if fig.doubt:  # an implausible figure must not produce a narrow range
+        sigma *= float((params().get("plausibility") or {}).get("sigma_multiplier", 1.5))
+    return sigma
 
 
 def _factors(inp: OutcomeInputs, primary: Figure, *, climate: bool) -> list[Factor]:
@@ -427,6 +433,7 @@ def assess_expected_impact(
     claims_review: dict[str, Any] | None = None,
     full_text: str = "",
     conflicts: list[dict[str, str]] | None = None,
+    geography: str = "",
 ) -> dict[str, Any]:
     """Methodology 2.0 result block stored in ``report_data['expected_impact']``.
 
@@ -436,6 +443,13 @@ def assess_expected_impact(
     """
     claims = list(claims)
     inp = read_outcomes(claims, scoring_text, sector=sector, full_text=full_text)
+    from impact_vision.impact.consistency import plausibility_flags, plausibility_plan_items
+
+    flags = plausibility_flags(inp, geography)
+    for flag in flags:
+        figure = {"reach": inp.reach, "tonnes": inp.tco2e_per_year}.get(flag["figure"])
+        if figure is not None and flag["severity"] == "doubt":
+            figure.doubt = True
     seed = f"{company_name}|{scoring_text[:4000]}"
     outcomes: list[dict[str, Any]] = []
     if inp.reach is not None:
@@ -455,8 +469,7 @@ def assess_expected_impact(
         from impact_vision.impact.negative_impacts import plan_items
 
         plan = (plan[:3] + plan_items(negative, 1) + plan[3:])[:4]
-    if conflicts:
-        plan = ([*conflicts[:1], *plan])[:4]
+    plan = ([*(conflicts or [])[:1], *plausibility_plan_items(flags), *plan])[:4]
     gate = _gate(outcomes, eq, data_completeness_pct, greenwashing, list(v1_checks), plan, claims_review)
     return {
         "methodology": stamp(),
@@ -466,6 +479,7 @@ def assess_expected_impact(
         "targets": inp.targets[:5],
         "ask": {"usd": inp.ask_usd, "text": inp.ask_text} if inp.ask_usd else None,
         "evidence_plan": plan,
+        "plausibility": flags,
         "gate": gate,
     }
 

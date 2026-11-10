@@ -117,6 +117,18 @@ patterns:
 - en: ^Reach drives most of the remaining uncertainty\.$
   zh-HK: 覆蓋人數是餘下不確定性的主要來源。
   zh-CN: 覆盖人数是余下不确定性的主要来源。
+- en: '^Check the reach figure: (?P<n>[\d,]+) (?P<who>.+) is more than the population of (?P<place>.+) \((?P<pop>[\d,]+)\)\.$'
+  zh-HK: 核對覆蓋數字：{n} 名{who:who}多於{place}的人口（{pop}）。
+  zh-CN: 核对覆盖数字：{n} 名{who:who}多于{place}的人口（{pop}）。
+- en: '^Check the emissions figure: (?P<n>[\d,]+) tCO2e against a US\$(?P<ask>[\d,]+) raise is (?P<x>[\d,]+) tonnes per US\$1m\.$'
+  zh-HK: 核對排放數字：以 {ask} 美元的融資額計，{n} 噸二氧化碳當量相當於每百萬美元 {x} 噸。
+  zh-CN: 核对排放数字：以 {ask} 美元的融资额计，{n} 吨二氧化碳当量相当于每百万美元 {x} 吨。
+- en: ^Say what the (?P<p>[\d,]+)% change is a percentage of; the calculation counts it as 100%\.$
+  zh-HK: 說明 {p}% 的改變以甚麼為基數；計算中按 100% 處理。
+  zh-CN: 说明 {p}% 的改变以什么为基数；计算中按 100% 处理。
+- en: ^A figure that cannot be right makes every number built on it unreliable\.$
+  zh-HK: 不可能正確的數字，會令所有以此為基礎的數字變得不可靠。
+  zh-CN: 不可能正确的数字，会令所有以此为基础的数字变得不可靠。
 - en: '^Reconcile the two figures given for (?P<m>.+): (?P<a>.+) and (?P<b>.+)\.$'
   zh-HK: 查明「{m}」兩個數字何者正確：{a} 與 {b}。
   zh-CN: 查明“{m}”两个数字何者正确：{a} 与 {b}。

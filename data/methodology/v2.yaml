@@ -107,6 +107,7 @@ conditions:
   kinds:
     quantify: {type: condition_precedent, timing: "before closing"}
     reconcile: {type: condition_precedent, timing: "before closing"}
+    plausibility: {type: condition_precedent, timing: "before closing"}
     verify_reach: {type: condition_precedent, timing: "before closing"}
     negative_control: {type: condition_precedent, timing: "before first disbursement"}
     measure_depth: {type: covenant, timing: "baseline within 12 months of closing"}
@@ -120,6 +121,16 @@ conditions:
 consistency:
   tolerance: 0.10
   max_items: 5
+
+# Plausibility checks on the headline figures (impact/consistency.py). A figure
+# that fails one keeps its value but its range is widened by `sigma_multiplier`,
+# and the evidence plan asks for it to be checked. Populations come from
+# data/population.yaml. The tonnes cap is a drafting default: 200,000 tCO2e a
+# year per US$1m raised is about US$5 per tonne-year, below any abatement cost.
+plausibility:
+  max_reach_share_of_population: 1.0
+  max_tco2e_per_usd_1m: 200000
+  sigma_multiplier: 1.5
 
 # Gate 2.0 — three states instead of pass / fail.
 gate:

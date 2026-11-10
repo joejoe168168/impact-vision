@@ -230,6 +230,11 @@
   <p class="lede">{{ t('conflicts_lede') }}</p>
   <ul class="risks">{% for c in evidence.conflicts %}<li><b>{{ c.id }}{% if c.name %} · {{ c.name }}{% endif %}</b>: {{ c.summary }}{% for s in c.sources %}<blockquote class="quote small" style="margin:4px 0">“{{ s.sentence }}”{% if s.cite %} <small class="cite">{{ s.cite }}</small>{% endif %}</blockquote>{% endfor %}</li>{% endfor %}</ul>
   {% endif %}
+  {% if evidence.checks %}
+  <h3 id="h-checks" style="margin:18px 0 4px">{{ t('checks_title') }}</h3>
+  <p class="lede">{{ t('checks_lede') }}</p>
+  <ul class="risks">{% for c in evidence.checks %}<li>{{ c.text }}{% if c.sentence %}<blockquote class="quote small" style="margin:4px 0">“{{ c.sentence }}”</blockquote>{% endif %}</li>{% endfor %}</ul>
+  {% endif %}
 </section>
 
 {% elif section == 'greenwashing' %}

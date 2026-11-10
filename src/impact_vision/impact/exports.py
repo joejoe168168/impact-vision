@@ -229,6 +229,9 @@ def _decision_rows(data: dict) -> list[list[Any]]:
     for h in (data.get("exclusions") or {}).get("hits") or []:
         rows.append(["Exclusion", h.get("label", ""), "FAILS" if h.get("kind") == "involvement"
                      and h.get("severity") == "mandatory" else "to confirm", h.get("sentence", ""), None, None, ""])
+    for f in ei.get("plausibility") or []:
+        rows.append(["Figure to check", f.get("kind", ""), f.get("action", ""), f.get("sentence", ""),
+                     f.get("value"), f.get("limit"), ""])
     for c in data.get("figure_conflicts") or []:
         rows.append(["Figure conflict", c.get("metric_id", ""), " vs ".join(c.get("values") or []),
                      f"{c.get('name', '')} · the documents give two values".strip(" ·"),
