@@ -549,7 +549,7 @@ def _evidence_plan(inp: OutcomeInputs, outcomes: list[dict[str, Any]], eq: dict[
             plan.append({"action": f"Have the headline reach figure ({int(inp.reach.value):,} "
                                    f"{people['stakeholder']}) verified by a third party.",
                          "why": "Reach drives most of the remaining uncertainty.", "kind": "verify_reach"})
-    if completeness is not None and completeness < float(params()["gate"]["ready"]["min_data_completeness"]):
+    if completeness is not None and completeness < _completeness_floor(params()["gate"]["ready"]):
         names = ", ".join(missing[:3])
         plan.append({"action": f"Report the sector's core metrics{': ' + names if names else ''}.",
                      "why": f"Only {completeness:.0f}% of the core set is reported.", "kind": "core_metrics"})
@@ -604,6 +604,11 @@ def _all_drivers(outcome: dict[str, Any]) -> list[dict[str, Any]]:
     return drivers
 
 
+def _completeness_floor(ready: dict[str, Any]) -> float:
+    """Core-metric coverage below this is a note and a reporting item, never a gate condition."""
+    return float(ready.get("completeness_note_below", ready.get("min_data_completeness", 40)))
+
+
 def _gate(outcomes: list[dict[str, Any]], eq: dict[str, Any], completeness: float | None,
           greenwashing: Any, v1_checks: list[dict[str, Any]], plan: list[dict[str, str]],
           claims_review: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -627,18 +632,32 @@ def _gate(outcomes: list[dict[str, Any]], eq: dict[str, Any], completeness: floa
     ready = cfg["ready"]
     quantified = bool(outcomes)
     ok_eq = eq["score"] >= ready["min_evidence_quality"]
-    ok_comp = completeness is None or completeness >= ready["min_data_completeness"]
-    if (quantified or not ready.get("require_quantified_outcome", True)) and ok_eq and ok_comp:
-        return {"state": "ready", "label": "Ready for IC",
+    # C8: completeness is disclosure, not evidence, so it no longer gates. The
+    # headline figure must show change and its range must be narrow enough.
+    head = outcomes[0] if outcomes else None
+    min_level = int(ready.get("min_headline_level", 0) or 0)
+    max_spread = float(ready.get("max_spread", 0) or 0)
+    level = int(head.get("evidence_level") or 0) if head else 0
+    spread = float(head.get("spread") or 0) if head else 0.0
+    ok_level = head is None or level >= min_level
+    ok_spread = head is None or not max_spread or spread <= max_spread
+    low_comp = completeness is not None and completeness < _completeness_floor(ready)
+    if (quantified or not ready.get("require_quantified_outcome", True)) and ok_eq and ok_level and ok_spread:
+        gate = {"state": "ready", "label": "Ready for IC",
                 "reasons": [f"evidence quality {eq['label']} ({eq['score']}/100)",
                             *(f"{o['kind']} impact P50 {o['p50']:,.0f} {o['unit']}" for o in outcomes)],
                 "rationale": cfg["rationale"]["ready"]}
+        if low_comp:
+            gate["note"] = f"Ready, with {completeness:.0f}% of the core metric set reported."
+        return gate
     if not quantified:
         reasons.append("no quantified outcome")
     if not ok_eq:
         reasons.append(f"evidence quality {eq['label']} ({eq['score']}/100, needs {ready['min_evidence_quality']})")
-    if not ok_comp:
-        reasons.append(f"{completeness:.0f}% of core metrics reported (needs {ready['min_data_completeness']}%)")
+    if not ok_level:
+        reasons.append(f"the headline figure is at evidence level {level} (needs {min_level}: data showing change)")
+    if not ok_spread:
+        reasons.append(f"the range is too wide to decide on (x{spread:g} from P10 to P90, needs x{max_spread:g} or less)")
     return {"state": "evidence_plan", "label": "Evidence plan required", "reasons": reasons,
             "plan": plan, "rationale": cfg["rationale"]["evidence_plan"]}
 
