@@ -136,13 +136,21 @@ plausibility:
 gate:
   ready:
     min_evidence_quality: 60
-    min_data_completeness: 40
     require_quantified_outcome: true
+    # C8: completeness left the gate (it is disclosure, not evidence). The two
+    # conditions below are about evidence: the headline figure shows change
+    # (NESTA level 2+), and its P90 / P10 range is narrow enough to decide on.
+    min_headline_level: 2
+    max_spread: 8
+    # Below this, a ready verdict carries a note and the plan keeps a reporting item.
+    completeness_note_below: 40
   rationale:
     ready: >-
       Ready when at least one outcome is quantified, evidence quality is
-      "good" (most figures backed by data showing change, or better) and
-      at least 40% of the sector's core metrics are reported.
+      "good" (most figures backed by data showing change, or better), the
+      headline figure shows change (evidence level 2 or better) and its range
+      is no wider than 8x from P10 to P90. Core-metric coverage is noted, not
+      gated.
     evidence_plan: >-
       Everything that is neither ready nor failing gets an evidence plan: the
       inputs that drive most of the uncertainty, and how to close them.
