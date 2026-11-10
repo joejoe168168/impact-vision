@@ -290,12 +290,14 @@ def _unb64(text: str) -> bytes:
 
 
 def make_share_token(report_id: str, *, audience: str = "lp", lang: str = "en",
-                     days: int = 14, now: float | None = None) -> tuple[str, int]:
+                     days: int = 14, now: float | None = None, jti: str = "") -> tuple[str, int]:
     exp = int((now or time.time()) + max(1, min(days, SHARE_MAX_DAYS)) * 86400)
     from impact_vision.impact.identity import current_tenant
 
-    body = _b64(json.dumps({"r": report_id, "a": audience, "l": lang, "e": exp, "t": current_tenant()},
-                           separators=(",", ":")).encode())
+    claims = {"r": report_id, "a": audience, "l": lang, "e": exp, "t": current_tenant()}
+    if jti:
+        claims["j"] = jti
+    body = _b64(json.dumps(claims, separators=(",", ":")).encode())
     sig = _b64(hmac.new(_share_key(), body.encode(), hashlib.sha256).digest())
     return f"{body}.{sig}", exp
 
@@ -315,6 +317,137 @@ def read_share_token(token: str, *, now: float | None = None) -> dict[str, Any]:
     if claims.get("a") not in _AUDIENCES or claims.get("l") not in _LANGS:
         raise ValueError("invalid share link")
     return claims
+
+
+# ---------------------------------------------------------------- share registry (U4)
+
+
+class ShareRevoked(ValueError):
+    """The link was withdrawn by the sender."""
+
+
+def _save_record(report_id: str, record: dict[str, Any]) -> None:
+    (_report_path(report_id) / "report.json").write_text(json.dumps(record, default=str), encoding="utf-8")
+
+
+def _audit_share(event_type: str, payload: dict[str, Any], *, actor: str) -> None:
+    """Hash-chained audit event in the current tenant's trail; never blocks the request."""
+    try:
+        from impact_vision.impact.audit_trail import AuditTrail
+        from impact_vision.impact.identity import current_tenant
+        from impact_vision.impact.state_store import get_state_store
+
+        AuditTrail(tenant_id=current_tenant(), fund_id="reports", store=get_state_store()).record_event(
+            event_type=event_type, actor=actor, payload=payload)
+    except Exception:  # noqa: BLE001 - the view counter on the report is still kept
+        pass
+
+
+def create_share(report_id: str, *, audience: str = "lp", lang: str = "en", days: int = 14,
+                 now: float | None = None) -> dict[str, Any]:
+    """Issue a share link and list it on the report so it can be seen and withdrawn."""
+    record = load_report(report_id)
+    jti = secrets.token_hex(8)
+    token, exp = make_share_token(report_id, audience=audience, lang=lang, days=days, now=now, jti=jti)
+    entry = {"jti": jti, "audience": audience, "lang": lang, "created": int(now or time.time()),
+             "expires": exp, "revoked": False, "views": 0, "previews": 0}
+    record.setdefault("shares", []).append(entry)
+    _save_record(report_id, record)
+    _audit_share("report.share_created", {"report_id": report_id, "jti": jti, "audience": audience,
+                                          "lang": lang, "expires": exp}, actor=_actor())
+    return {"path": f"/shared/{token}", "expires_at": exp, "audience": audience, "lang": lang, "jti": jti}
+
+
+def list_shares(report_id: str, *, now: float | None = None) -> list[dict[str, Any]]:
+    """Every link issued for the report, newest first, each with a ``status``."""
+    moment = now or time.time()
+    rows = []
+    for entry in load_report(report_id).get("shares", []):
+        status = "revoked" if entry.get("revoked") else "expired" if entry.get("expires", 0) < moment else "live"
+        rows.append({**entry, "status": status})
+    rows.sort(key=lambda r: r.get("created", 0), reverse=True)
+    return rows
+
+
+def revoke_share(report_id: str, jti: str) -> dict[str, Any]:
+    """Withdraw one link. The report and its other links are untouched."""
+    record = load_report(report_id)
+    for entry in record.get("shares", []):
+        if entry.get("jti") == jti:
+            if not entry.get("revoked"):
+                entry["revoked"] = True
+                entry["revoked_at"] = int(time.time())
+                _save_record(report_id, record)
+                _audit_share("report.share_revoked", {"report_id": report_id, "jti": jti}, actor=_actor())
+            return dict(entry)
+    raise HTTPException(status_code=404, detail="Share link not found")
+
+
+def _actor() -> str:
+    try:
+        from impact_vision.impact.identity import current_identity
+
+        return str(getattr(current_identity(), "sub", "") or "system")
+    except Exception:  # noqa: BLE001
+        return "system"
+
+
+_PREVIEW_AGENTS = ("bot", "crawler", "spider", "preview", "slack", "whatsapp", "telegram", "facebookexternalhit",
+                   "discord", "skype", "linkedin", "twitter", "wechat", "micromessenger", "line/", "curl", "wget")
+_BROWSERS = (("edg", "edge"), ("firefox", "firefox"), ("chrome", "chrome"), ("safari", "safari"))
+
+
+def user_agent_family(user_agent: str) -> tuple[str, bool]:
+    """A coarse family ("chrome", "preview", "other") and whether it is a link preview.
+
+    The full user-agent string and the IP address are never stored.
+    """
+    ua = (user_agent or "").lower()
+    if any(mark in ua for mark in _PREVIEW_AGENTS):
+        return "preview", True
+    for mark, family in _BROWSERS:
+        if mark in ua:
+            return family, False
+    return "other", False
+
+
+def record_share_view(claims: dict[str, Any], record: dict[str, Any], *, user_agent: str = "") -> None:
+    """Refuse a revoked link; otherwise count the view and write one audit event.
+
+    Tokens issued before U4 have no ``jti``: they open until they expire and are
+    audited as ``legacy``.
+    """
+    jti = claims.get("j") or ""
+    family, preview = user_agent_family(user_agent)
+    if jti:
+        entry = next((e for e in record.get("shares", []) if e.get("jti") == jti), None)
+        if entry is None or entry.get("revoked"):
+            raise ShareRevoked("share link revoked")
+        entry["previews" if preview else "views"] = int(entry.get("previews" if preview else "views", 0)) + 1
+        entry["last_viewed"] = int(time.time())
+        _save_record(claims["r"], record)
+    _audit_share("report.share_viewed", {"report_id": claims["r"], "jti": jti or "legacy",
+                                         "audience": claims.get("a"), "lang": claims.get("l"),
+                                         "user_agent_family": family, "preview": preview}, actor="share-link")
+
+
+def share_banner(claims: dict[str, Any]) -> str:
+    from datetime import datetime, timezone
+
+    day = datetime.fromtimestamp(int(claims["e"]), tz=timezone.utc).strftime("%Y-%m-%d")
+    return ('<div class="share-notice" role="note" style="font:14px system-ui;padding:.5rem 1rem;'
+            'background:#f3f4f6;color:#111827;border-bottom:1px solid #d1d5db;text-align:center">'
+            f"Shared read-only · expires {day}</div>")
+
+
+def _with_banner(html: str, banner: str) -> str:
+    match = re.search(r"<body[^>]*>", html)
+    return html[:match.end()] + banner + html[match.end():] if match else banner + html
+
+
+_SHARE_GONE = ("<!doctype html><meta charset=utf-8><title>Link withdrawn</title>"
+               "<p style='font:16px system-ui;margin:3rem'>This share link has been withdrawn by the sender. "
+               "Ask them for a new one.</p>")
 
 
 # ---------------------------------------------------------------- routes
@@ -525,8 +658,15 @@ def build_reports_router(*, auth_dependency: Any = None) -> Any:
     async def share(report_id: str, req: ShareRequest) -> dict[str, Any]:
         load_report(report_id)
         audience, lang = _check_view(req.audience, req.lang)
-        token, exp = make_share_token(report_id, audience=audience, lang=lang, days=req.days)
-        return {"path": f"/shared/{token}", "expires_at": exp, "audience": audience, "lang": lang}
+        return await asyncio.to_thread(create_share, report_id, audience=audience, lang=lang, days=req.days)
+
+    @router.get("/reports/{report_id}/shares", dependencies=deps)
+    async def shares(report_id: str) -> dict[str, Any]:
+        return {"shares": await asyncio.to_thread(list_shares, report_id)}
+
+    @router.delete("/reports/{report_id}/shares/{jti}", dependencies=deps)
+    async def share_revoke(report_id: str, jti: str) -> dict[str, Any]:
+        return {"revoked": await asyncio.to_thread(revoke_share, report_id, jti)}
 
     return router
 
@@ -565,7 +705,7 @@ def build_shared_router() -> Any:
         return HTMLResponse(render_portal(found[1], done=True), headers=_PORTAL_HEADERS)
 
     @router.get("/shared/{token}", response_class=HTMLResponse, include_in_schema=False)
-    async def shared(token: str) -> HTMLResponse:
+    async def shared(token: str, request: Request) -> HTMLResponse:
         from impact_vision.impact.identity import DEFAULT_TENANT, Identity, acting_as
 
         try:
@@ -575,6 +715,9 @@ def build_shared_router() -> Any:
                               roles=("viewer",), auth="share")
             with acting_as(viewer):
                 record = load_report(claims["r"])
+                record_share_view(claims, record, user_agent=request.headers.get("user-agent", ""))
+        except ShareRevoked:
+            return HTMLResponse(_SHARE_GONE, status_code=410, headers=_SHARE_HEADERS)
         except (ValueError, HTTPException, PermissionError):
             return HTMLResponse(
                 "<!doctype html><meta charset=utf-8><title>Link unavailable</title>"
@@ -583,7 +726,7 @@ def build_shared_router() -> Any:
                 status_code=404, headers=_SHARE_HEADERS)
         with acting_as(viewer):
             html = render_report(record, audience=claims["a"], lang=claims["l"])
-        return HTMLResponse(html, headers=_SHARE_HEADERS)
+        return HTMLResponse(_with_banner(html, share_banner(claims)), headers=_SHARE_HEADERS)
 
     return router
 
@@ -594,6 +737,10 @@ __all__ = [
     "create_report",
     "list_reports",
     "load_report",
+    "create_share",
+    "list_shares",
+    "revoke_share",
+    "record_share_view",
     "make_share_token",
     "read_share_token",
     "render_report",
