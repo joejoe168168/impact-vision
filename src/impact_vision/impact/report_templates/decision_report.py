@@ -546,7 +546,14 @@ def _impact(data: dict[str, Any], t, lang: str = "en") -> dict[str, Any] | None:
             args["who"] = _who(str(args["who"]), lang)
         if "sector" in args:
             args["sector"] = SECTOR_NAMES.get(lang, {}).get(args["sector"], args["sector"])
-        return t(f["why_key"], **args) if f.get("why_key") else f.get("why", "")
+        if not f.get("why_key"):
+            return str(f.get("why", ""))
+        also = args.pop("also", None) or []
+        text = t(f["why_key"], **args)
+        if also:  # C5b: other stakeholders' figures, shown but not used as reach
+            sep = "、" if lang.startswith("zh") else ", "
+            text += t("why_also", items=sep.join(f"{a['n']} {_who(str(a['who']), lang)}" for a in also))
+        return text
 
     block = data.get("expected_impact")
     if not block:

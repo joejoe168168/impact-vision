@@ -368,6 +368,11 @@ def _factors(inp: OutcomeInputs, primary: Figure, *, climate: bool) -> list[Fact
         f"{primary.value:,.0f} {who} reported (NESTA {primary.level}" + (", verified" if primary.verified else "") + ")",
         why_key="why_reported_verified" if primary.verified else "why_reported",
         why_args={"n": f"{primary.value:,.0f}", "who": who, "level": primary.level})]
+    if not climate and inp.other_reach:
+        # C5b: the figures for other stakeholders stay visible on the basis line; they do not change the score.
+        also = [{"n": f"{f.value:,.0f}", "who": stakeholder_label(f.noun)} for f in inp.other_reach[:3]]
+        factors[0].why += "; also reported, not the headline: " + ", ".join(f"{a['n']} {a['who']}" for a in also)
+        factors[0].why_args["also"] = also
     if not climate:
         if inp.depth is not None:
             factors.append(Factor("Depth of change", inp.depth.value, _sigma(inp.depth),

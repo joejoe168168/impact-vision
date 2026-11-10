@@ -328,6 +328,7 @@ EN: dict[str, str] = {
     "cond_condition_precedent": "Condition precedent",
     "cond_covenant": "Covenant",
     "cond_reporting": "Reporting requirement",
+    "why_also": "; also reported, not the headline: {items}",
 }
 
 ZH_HK: dict[str, str] = {
@@ -638,6 +639,7 @@ ZH_HK: dict[str, str] = {
     'cond_condition_precedent': '先決條件',
     'cond_covenant': '契諾',
     'cond_reporting': '匯報要求',
+    'why_also': '；另有報告（非主要數字）：{items}',
 }
 
 ZH_CN: dict[str, str] = {
@@ -948,6 +950,7 @@ ZH_CN: dict[str, str] = {
     'cond_condition_precedent': '先决条件',
     'cond_covenant': '约束性条款',
     'cond_reporting': '报告要求',
+    'why_also': '；另有报告（非主要数字）：{items}',
 }
 
 SDG_NAMES_ZH_HK: dict[int, str] = {1: '無貧窮', 2: '零飢餓', 3: '良好健康與福祉', 4: '優質教育', 5: '性別平等', 6: '清潔飲水和衛生設施', 7: '經濟適用的清潔能源', 8: '體面工作和經濟增長', 9: '產業、創新和基礎設施', 10: '減少不平等', 11: '可持續城市和社區', 12: '負責任消費和生產', 13: '氣候行動', 14: '水下生物', 15: '陸地生物', 16: '和平、正義與強大機構', 17: '促進目標實現的夥伴關係'}
