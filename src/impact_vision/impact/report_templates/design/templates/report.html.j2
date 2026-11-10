@@ -52,6 +52,7 @@
   {% if verdict.reasons %}
   <ul class="why" aria-label="{{ t('why') }}">{% for r in verdict.reasons %}<li>{{ r }}</li>{% endfor %}</ul>
   {% endif %}
+  {% if verdict.note %}<p class="verdict-note">{{ verdict.note }}</p>{% endif %}
   {% if verdict.confidence %}<p class="confidence">{{ verdict.confidence }}</p>{% endif %}
 </section>
 

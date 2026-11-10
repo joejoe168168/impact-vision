@@ -151,6 +151,8 @@ def render_ic_memo_markdown(
     gate2 = _gate2(expected_impact)
     if gate2:
         out.append(f"- **IC gate result**: **{gate2['label']}** — {_GATE2_REC[gate2['state']]}")
+        if gate2.get("note"):
+            out.append(f"- **Note**: {gate2['note']}")
         out.append(f"- **Fund thesis checks**: {scorecard.display_status}")
     else:
         out.append(
@@ -296,6 +298,9 @@ def render_ic_memo_markdown(
     if gate2:
         # One verdict in every format: the gate shown in the header, not the v1 thesis text.
         out.append(f"> **{gate2['label']}** — {_GATE2_REC[gate2['state']]}")
+        if gate2.get("note"):
+            out.append(">")
+            out.append(f"> {gate2['note']}")
         out.append(">")
         out.append(f"> Fund thesis checks: {scorecard.display_status}")
     else:
@@ -585,6 +590,8 @@ def render_ic_memo_pptx(
     body = ""
     if gate2:
         body += _GATE2_REC[gate2["state"]] + "\n"
+        if gate2.get("note"):
+            body += gate2["note"] + "\n"
         for o in (expected_impact or {}).get("outcomes") or []:
             body += (f"Expected impact: {_sig2(o['p50'])} {o['unit']} "
                      f"(P10 {_sig2(o['p10'])} – P90 {_sig2(o['p90'])})\n")
@@ -1057,7 +1064,8 @@ def render_ic_memo_html(
         '<h2 class="section-title">Recommendation</h2>'
         + (f'<div class="callout {"ok" if gate2["state"] == "ready" else "danger" if gate2["state"] == "fails_thesis" else "warn"}" '
            f'style="font-size:1.02em"><b>{escape(gate2["label"])}</b> — {escape(_GATE2_REC[gate2["state"]])}</div>'
-           f'<p class="muted">Fund thesis checks: {escape(scorecard.display_status)}</p>'
+           + (f'<p class="verdict-note"><b>Note:</b> {escape(gate2["note"])}</p>' if gate2.get("note") else "")
+           + f'<p class="muted">Fund thesis checks: {escape(scorecard.display_status)}</p>'
            if gate2 else
            f'<div class="callout {_rec_tone(scorecard)}" style="font-size:1.02em"><b>{scorecard.display_status}</b> '
            f"— {escape(scorecard.recommendation)}</div>")

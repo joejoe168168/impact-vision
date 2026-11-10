@@ -41,6 +41,7 @@ section[id] { scroll-margin-top: 16px; }
 .verdict .status { display: flex; align-items: center; gap: 10px; margin: 0 0 6px; }
 .verdict .status .icon { width: 28px; height: 28px; flex: none; }
 .verdict .status strong { font-size: 1.35rem; }
+.verdict .verdict-note { margin: 6px 0 0; font-weight: 600; }
 .verdict.good .status strong { color: var(--good-ink); }
 .verdict.warning .status strong { color: var(--warning-ink); }
 .verdict.serious .status strong { color: var(--serious-ink); }

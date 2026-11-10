@@ -37,6 +37,9 @@ def test_first_screen_is_decision_first(pig_data):
     assert gate["state"] == "ready" and "core metric set" in gate["note"]
     assert "Ready for IC" in html
     assert "missing data" in html
+    # The note is shown on the verdict card, translated with the report.
+    assert f'<p class="verdict-note">{gate["note"]}</p>' in html
+    assert "核心指標集已報告" in render_decision_report(pig_data, lang="zh-HK")
 
 
 @pytest.mark.parametrize("audience", list(SPECS))

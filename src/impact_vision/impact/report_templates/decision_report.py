@@ -186,6 +186,7 @@ def _verdict(decision: dict[str, Any] | None, fd: dict | None, t,  # type: ignor
             "icon": _ICON.get(tone, _ICON["neutral"]),
             "recommendation": t(f"rec2_{state}"),
             "reasons": list(gate2.get("reasons") or [])[:3],
+            "note": str(gate2.get("note") or ""),
             "confidence": (t("eq_title") + f": {eq['score']}/100 · " + t(f"eq_{eq['label']}")) if eq else "",
         }
     if not decision:
@@ -774,6 +775,8 @@ def _localize_view(view: dict[str, Any], lang: str) -> None:
     from impact_vision.impact.i18n_phrasebook import localize, localize_list
 
     view["verdict"]["reasons"] = localize_list(view["verdict"]["reasons"], lang)
+    if view["verdict"].get("note"):
+        view["verdict"]["note"] = localize(view["verdict"]["note"], lang)
     for item in view["mind"]:
         item["what"], item["why"] = localize(item["what"], lang), localize(item["why"], lang)
     for item in view["actions"]:
