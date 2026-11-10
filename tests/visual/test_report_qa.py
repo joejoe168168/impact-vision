@@ -104,3 +104,17 @@ def test_no_horizontal_scroll(pages, browser, width):
             overflowing.append(f"{path.name}: {scroll}px at {width}px")
         page.close()
     assert overflowing == []
+
+
+@pytest.mark.parametrize("scheme", ["light", "dark"])
+def test_dark_theme_report_prints_dark_ink_on_light_paper(pages, browser, scheme):
+    """Paper is white: the dark theme (or a dark-mode OS) must not carry into print."""
+    path = next(p for p in pages if p.name == "variant_dark.html")
+    page = browser.new_page(color_scheme=scheme)
+    page.goto(path.as_uri())
+    assert page.evaluate("getComputedStyle(document.querySelector('h1')).color") == "rgb(255, 255, 255)"
+    page.emulate_media(media="print")
+    assert page.evaluate("getComputedStyle(document.querySelector('h1')).color") == "rgb(11, 11, 11)"
+    card = page.evaluate("getComputedStyle(document.querySelector('.card')).backgroundColor")
+    page.close()
+    assert card == "rgb(252, 252, 251)"

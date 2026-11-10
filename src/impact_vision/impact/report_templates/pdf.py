@@ -33,7 +33,7 @@ def _chromium(html: str, out: Path) -> None:
         try:
             page = browser.new_page()
             page.set_content(html, wait_until="load")
-            page.emulate_media(media="print")
+            page.emulate_media(media="print", color_scheme="light")  # paper is white, whatever the theme
             # Expand the glossary like the report's beforeprint hook does.
             page.evaluate("document.querySelectorAll('details.glossary').forEach(d => d.open = true)")
             page.pdf(

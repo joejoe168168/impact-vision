@@ -27,7 +27,16 @@ Work from the 0.19.1 review (`IMPROVEMENTS.md`).
   EU-SFDR and HK-HKEX-ESG packs carry their legal basis and source.
 - `impact-vision framework list` shows every framework the agent tool supports (it listed 7 of 20).
 
+- **Data exports carry the headline.** The workbook has new sheets for expected impact (P10 / P50 / P90),
+  impact factors, the evidence plan and negative impacts, and the Summary sheet shows the gate and the
+  expected-impact range. The CSV has the same figures plus the contribution split.
+
 ### Fixed
+- **Dark-theme reports print dark ink on white paper.** The masthead and cards used to print white on white.
+- The data CSV starts with a byte-order mark, so Excel shows Chinese text correctly. The dashboard's portfolio
+  upload accepts Excel's "CSV UTF-8".
+- Workbook: counts no longer read "12.0"; the AI provenance sheet keeps its frozen header (its second table
+  moved to an "AI figures" sheet); "IC gate" is filled on every path.
 - **Negated evidence no longer counts.** "We have no control group yet" was read as a controlled evaluation,
   "has not been audited" lowered verification risk, and "we do not yet have a client protection policy" marked
   the harm as controlled. Planned evidence ("we plan to run an RCT") is treated the same way.

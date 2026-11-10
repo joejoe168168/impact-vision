@@ -142,3 +142,23 @@ def test_every_string_is_translated():
     assert set(ZH_HK) == set(EN) == set(ZH_CN)
     traditional = set("響評機資與夥監審據證險風綠會業標貢獻誰總擇無這來")
     assert not {c for v in ZH_CN.values() for c in v} & traditional
+
+
+def test_print_always_uses_the_light_tokens():
+    """A dark-theme report used to print white ink on a white page."""
+    import re as _re
+
+    from impact_vision.impact.report_templates.decision_report import design_tokens_css
+
+    css = design_tokens_css()
+    dark = css[css.index(':root[data-theme="dark"] {'):]
+    dark_tokens = set(_re.findall(r"(--[\w-]+)\s*:", dark[:dark.index("}")]))
+    start = css.rindex("@media print")
+    assert start > css.index(':root[data-theme="dark"] {')         # last, so it wins over both dark selectors
+    printed = css[start:]
+    assert ':root[data-theme="dark"]' in printed and "color-scheme: light" in printed
+    light = dict(_re.findall(r"(--[\w-]+)\s*:\s*([^;]+);", css[:css.index("}")]))
+    reset = dict(_re.findall(r"(--[\w-]+)\s*:\s*([^;]+);", printed))
+    assert dark_tokens <= set(reset)                                # every token dark changes is put back
+    assert all(reset[name] == light[name] for name in dark_tokens)
+    assert reset["--ink"] == "#0b0b0b"
