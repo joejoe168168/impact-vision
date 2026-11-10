@@ -403,6 +403,7 @@ def assess_document(
         missing_metrics=[m["name"] for m in gap_result.get("missing", [])[:5]],
         negative=report_data["negative_impacts"],
         claims_review=gw_dump.get("claims_review"),
+        full_text=text,
     )
     # v8 W1.4: enterprise vs investor contribution, on evidence only. The
     # investor half reads the whole text (terms usually sit in "The ask").

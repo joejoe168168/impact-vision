@@ -96,9 +96,24 @@ _AVOID_WORDS = re.compile(r"avoid|reduc|sav|cut|replac|displac|abat|lower|offset
 _TARGET_WORDS = re.compile(
     r"\b(target|aim|plan|goal|will|by 20\d\d|next (?:three|two|five|\d+) years|over the next)\b|目標|目标|未來|未来",
     re.I)
+# A purpose clause is a goal, not a result: "USD 10m to reach 1 million students".
+_GOAL_BEFORE = re.compile(
+    r"\b(?:to|will|would|could|can|aims?\s+to|plans?\s+to|in\s+order\s+to)\s+"
+    r"(?:reach|serve|connect|enrol+|train|cover|support|benefit|onboard|help|impact|scale\s+to|grow\s+to|"
+    r"expand\s+to)\s+(?:(?:up\s+to|over|more\s+than|another|an\s+additional|at\s+least|a\s+further)\s+)?$",
+    re.I)
+# A running total is not an annual rate: "avoided 20,000 tCO2e since launch".
+_CUMULATIVE = re.compile(
+    r"\b(?:since\s+(?:launch|inception|20\d\d|we\s+started|founding)|cumulative(?:ly)?|to[\s-]date|so\s+far|"
+    r"lifetime|in\s+total\s+since|over\s+(?:the\s+)?(?:past|last)\s+(?:\d+|two|three|four|five|six|ten)\s+years)\b"
+    r"|累計|累计|至今|自成立以來|自成立以来", re.I)
+# Prefixed dollar signs first (R$, S$, A$ are not US dollars); a bare "$" must not follow a letter.
 _ASK_RE = re.compile(
-    r"(usd|us\$|\$|hkd|hk\$|eur|€|gbp|£|sgd|myr|rm|kes|inr|₹|cop|php|idr|cny|rmb|jpy|aud)\s*"
+    r"(usd|us\$|hkd|hk\$|r\$|brl|s\$|sgd|a\$|aud|c\$|cad|nz\$|nzd|(?<![a-z])\$|eur|€|gbp|£|myr|rm|kes|inr|₹|cop|"
+    r"php|idr|cny|rmb|jpy|mxn|zar|ngn|ghs|thb|vnd|bdt|pkr|chf)\s*"
     r"(\d+(?:\.\d+)?)\s*(m|mn|million|k|bn|billion)?\b", re.I)
+_CURRENCY_ALIASES = {"US$": "USD", "HK$": "HKD", "R$": "BRL", "S$": "SGD", "A$": "AUD", "C$": "CAD", "NZ$": "NZD",
+                     "$": "USD", "€": "EUR", "£": "GBP", "RM": "MYR", "₹": "INR", "RMB": "CNY"}
 
 
 def _number(raw: str, scale: str | None) -> float:
@@ -120,6 +135,7 @@ class Figure:
     level: int = 1
     verified: bool = False
     noun: str = ""
+    cumulative: bool = False   # a running total ("since launch"), not a yearly rate
 
 
 @dataclass
@@ -158,12 +174,14 @@ def _sentence_level(sentence: str) -> tuple[int, bool]:
     return level, bool(signals & {"third_party_verified", "audited", "certified"})
 
 
-def read_outcomes(claims: Iterable[Any], scoring_text: str = "", *, sector: str = "") -> OutcomeInputs:
+def read_outcomes(claims: Iterable[Any], scoring_text: str = "", *, sector: str = "",
+                  full_text: str = "") -> OutcomeInputs:
     """Pick the company's headline reach, depth of change and tCO2e from its claims.
 
     Only sentences that survive problem/market filtering count (so "25 million
     people in Kenya lack power" is context, not reach); targets are kept apart
-    as ex-ante commitments.
+    as ex-ante commitments. ``full_text`` is the whole document: the funding
+    ask sits in the "ask / funding" section that ``scoring_text`` leaves out.
     """
     out = OutcomeInputs(sector=sector)
     scoring_lower = (scoring_text or "").lower()
@@ -201,6 +219,10 @@ def read_outcomes(claims: Iterable[Any], scoring_text: str = "", *, sector: str 
                 continue  # patient visits are not people
             if value < 5:
                 continue
+            if _GOAL_BEFORE.search(text[:match.start()]):
+                if text not in out.targets:
+                    out.targets.append(text)  # what the money is meant to achieve, not what was achieved
+                continue
             if out.reach is None or value > out.reach.value:
                 out.reach = Figure(value, text, level, verified, noun)
         depth_val = None
@@ -224,9 +246,21 @@ def read_outcomes(claims: Iterable[Any], scoring_text: str = "", *, sector: str 
                     continue
                 value = _number(m.group(1), m.group(2))
                 if out.tco2e_per_year is None or value > out.tco2e_per_year.value:
-                    out.tco2e_per_year = Figure(value, text, level, verified, "tCO2e")
-    out.ask_usd, out.ask_text = _ask(scoring_text)
+                    out.tco2e_per_year = Figure(value, text, level, verified, "tCO2e",
+                                                cumulative=bool(_CUMULATIVE.search(text)))
+    out.ask_usd, out.ask_text = _ask(full_text or scoring_text)
     return out
+
+
+def _fx_to_usd(currency: str) -> float | None:
+    """USD per unit of *currency*: the methodology table first, then the offline FX snapshot."""
+    rate = (params().get("fx_to_usd") or {}).get(currency)
+    if rate is not None:
+        return float(rate)
+    from impact_vision.impact.fx import StaticFXRateProvider
+
+    snapshot = StaticFXRateProvider().rate(from_ccy=currency, to_ccy="USD")
+    return float(snapshot) if snapshot else None
 
 
 def _ask(text: str) -> tuple[float | None, str]:
@@ -237,9 +271,8 @@ def _ask(text: str) -> tuple[float | None, str]:
         m = _ASK_RE.search(line)
         if not m:
             continue
-        currency = m.group(1).upper().replace("US$", "USD").replace("HK$", "HKD").replace("$", "USD")
-        currency = {"€": "EUR", "£": "GBP", "RM": "MYR", "₹": "INR", "RMB": "CNY"}.get(currency, currency)
-        rate = (params().get("fx_to_usd") or {}).get(currency)
+        currency = _CURRENCY_ALIASES.get(m.group(1).upper(), m.group(1).upper())
+        rate = _fx_to_usd(currency)
         if rate is None:
             continue
         amount = float(m.group(2))
@@ -294,8 +327,13 @@ def _factors(inp: OutcomeInputs, primary: Figure, *, climate: bool) -> list[Fact
                                   "no change measured: an assumed 10%", cap=1.0, why_key="why_depth_assumed"))
     dur: dict[str, dict[str, float]] = p.get("duration_years") or {}
     d = dur.get(inp.sector) or dur["default"]
-    factors.append(Factor("Duration (years)", d["mean"], d["sigma"], f"typical for {inp.sector or 'this sector'}",
-                          why_key="why_duration", why_args={"sector": inp.sector or "-"}))
+    if climate and primary.cumulative:
+        factors.append(Factor("Duration (years)", 1.0, 0.0, "a running total, counted once (not multiplied by years)",
+                              why_key="why_cumulative"))
+    else:
+        factors.append(Factor("Duration (years)", d["mean"], d["sigma"],
+                              f"typical for {inp.sector or 'this sector'}",
+                              why_key="why_duration", why_args={"sector": inp.sector or "-"}))
     evidence_level = (inp.depth.level if (inp.depth is not None and not climate) else primary.level)
     if evidence_level >= int(p["deadweight"]["netted_from_level"]):
         factors.append(Factor("Without deadweight", 1.0, 0.0, "netted out by the comparison group", cap=1.0,
@@ -387,10 +425,11 @@ def assess_expected_impact(
     missing_metrics: Iterable[str] = (),
     negative: dict[str, Any] | None = None,
     claims_review: dict[str, Any] | None = None,
+    full_text: str = "",
 ) -> dict[str, Any]:
     """Methodology 2.0 result block stored in ``report_data['expected_impact']``."""
     claims = list(claims)
-    inp = read_outcomes(claims, scoring_text, sector=sector)
+    inp = read_outcomes(claims, scoring_text, sector=sector, full_text=full_text)
     seed = f"{company_name}|{scoring_text[:4000]}"
     outcomes: list[dict[str, Any]] = []
     if inp.reach is not None:

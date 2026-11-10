@@ -48,6 +48,10 @@ Work from the 0.19.1 review (`IMPROVEMENTS.md`).
 - **The bundled example thesis is labelled.** Without a `data/fund_thesis.yaml`, every memo was headed
   "Fund: Example Climate Fund I" and gated on its climate weights. The memo, the terminal summary and the
   JSON summary now say it is the example and how to supply your own.
+- **Reading the deck's numbers.** A funding goal ("USD 10m to reach 1 million students") is a target, not
+  reach. The ask is found under any "The ask / Funding / Use of funds" heading. `R$`, `S$` and `A$` are no
+  longer read as US dollars, and MXN, ZAR, NGN, BRL and others are converted. A running total of tonnes
+  ("since launch", "to date") is counted once instead of being multiplied by the sector's duration.
 - **Dark-theme reports print dark ink on white paper.** The masthead and cards used to print white on white.
 - The data CSV starts with a byte-order mark, so Excel shows Chinese text correctly. The dashboard's portfolio
   upload accepts Excel's "CSV UTF-8".
