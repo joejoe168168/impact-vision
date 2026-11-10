@@ -32,8 +32,16 @@ _CSS = """
 html, body { margin: 0; padding: 0; }
 body { font: 10.5pt/1.35 system-ui, -apple-system, "Segoe UI", "Noto Sans CJK TC", "PingFang HK", sans-serif;
        color: #1c2128; background: #fff; }
-.page { width: 210mm; height: 297mm; padding: 14mm 15mm 12mm; display: flex; flex-direction: column;
-        gap: 5mm; overflow: hidden; page-break-after: avoid; break-after: avoid; }
+.page { width: 210mm; max-width: 100%; min-height: 297mm; margin: 0 auto; padding: 14mm 15mm 12mm;
+        display: flex; flex-direction: column; gap: 5mm; overflow-wrap: anywhere; }
+@media screen and (max-width: 210mm) {
+  .page { width: auto; min-height: 0; padding: 6mm 5mm; } .grid { grid-template-columns: 1fr; }
+  header { flex-wrap: wrap; gap: 2mm; }
+}
+@media print {
+  .page { width: 210mm; height: 297mm; min-height: 0; margin: 0; overflow: hidden;
+          page-break-after: avoid; break-after: avoid; }
+}
 header { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1.5pt solid #1c2128;
          padding-bottom: 2mm; }
 h1 { font-size: 17pt; margin: 0; } h2 { font-size: 9pt; letter-spacing: .06em; text-transform: uppercase;

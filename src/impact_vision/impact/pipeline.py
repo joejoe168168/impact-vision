@@ -785,6 +785,7 @@ def _label(path: Path) -> str:
     labels = (
         ("_impact_report", "Impact report"),
         ("_ic_memo", "IC memo"),
+        ("_ic_onepager", "IC one-pager"),
         ("_dd_report", "DD report"),
         ("_dd_questionnaire", "DD questionnaire"),
         ("_summary", "Summary"),
