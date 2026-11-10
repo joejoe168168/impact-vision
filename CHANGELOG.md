@@ -37,6 +37,10 @@ Work from the 0.19.1 review (`IMPROVEMENTS.md`).
   stated targets) and reporting requirements. The rules are in `data/methodology/v2.yaml` (`conditions`).
   The JSON summary carries them as `suggested_conditions`.
 - `impact-vision assess --thesis fund.yaml` assesses against your own fund thesis.
+- **Figures that disagree.** When the documents give two different values for the same metric (42,000
+  households on one page, 24,000 on another), the report lists both sentences with their pages, the evidence
+  plan starts with "reconcile the two figures", and the memo suggests it as a condition precedent. Figures for
+  different years are treated as growth, not a contradiction. The tolerance (10 %) is in `methodology/v2.yaml`.
 - **Data exports carry the headline.** The workbook has new sheets for expected impact (P10 / P50 / P90),
   impact factors, the evidence plan and negative impacts, and the Summary sheet shows the gate and the
   expected-impact range. The CSV has the same figures plus the contribution split.
@@ -55,6 +59,7 @@ Work from the 0.19.1 review (`IMPROVEMENTS.md`).
 - **Chinese reports.** Claim types ("outcome", "intent") and target statuses are translated; the language
   note no longer says recommendations stay in English (they have been translated since 0.19.0). The zh-CN
   phrasebook uses mainland wording (衡量, 什么, 受益, 关联, “ ”) instead of Hong Kong usage.
+- `bayes.fold` counted no contradicting evidence when given a generator.
 - **Dark-theme reports print dark ink on white paper.** The masthead and cards used to print white on white.
 - The data CSV starts with a byte-order mark, so Excel shows Chinese text correctly. The dashboard's portfolio
   upload accepts Excel's "CSV UTF-8".

@@ -225,6 +225,11 @@
     <tbody>{% for m in evidence.metrics %}<tr><th scope="row">{{ m.id }}{% if m.name %} · {{ m.name }}{% endif %}</th><td>{{ m.value }}</td><td>{{ m.origin }}</td></tr>{% endfor %}</tbody>
   </table></div>
   {% endif %}
+  {% if evidence.conflicts %}
+  <h3 id="h-conflicts" style="margin:18px 0 4px">{{ t('conflicts_title') }}</h3>
+  <p class="lede">{{ t('conflicts_lede') }}</p>
+  <ul class="risks">{% for c in evidence.conflicts %}<li><b>{{ c.id }}{% if c.name %} · {{ c.name }}{% endif %}</b>: {{ c.summary }}{% for s in c.sources %}<blockquote class="quote small" style="margin:4px 0">“{{ s.sentence }}”{% if s.cite %} <small class="cite">{{ s.cite }}</small>{% endif %}</blockquote>{% endfor %}</li>{% endfor %}</ul>
+  {% endif %}
 </section>
 
 {% elif section == 'greenwashing' %}

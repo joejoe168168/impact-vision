@@ -94,6 +94,7 @@ conditions:
   max_stated_targets: 2
   kinds:
     quantify: {type: condition_precedent, timing: "before closing"}
+    reconcile: {type: condition_precedent, timing: "before closing"}
     verify_reach: {type: condition_precedent, timing: "before closing"}
     negative_control: {type: condition_precedent, timing: "before first disbursement"}
     measure_depth: {type: covenant, timing: "baseline within 12 months of closing"}
@@ -101,6 +102,12 @@ conditions:
     stated_target: {type: covenant, timing: "reported every year"}
     core_metrics: {type: reporting, timing: "in each annual report"}
     back_figures: {type: reporting, timing: "in each annual report"}
+
+# Two figures for the same metric are reported as a conflict when they differ
+# by more than this share of the larger one (and are not for different years).
+consistency:
+  tolerance: 0.10
+  max_items: 5
 
 # Gate 2.0 — three states instead of pass / fail.
 gate:

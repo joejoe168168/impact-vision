@@ -222,6 +222,11 @@ def attach_citations(bundle: "AssessmentBundle", pages: list[tuple[int, str]], s
                     row["source_file"] = source_file
                 found += 1
                 break
+    # Conflicting figures quote claim sentences: give them the same pages.
+    by_text = {c.text.strip(" -•*\t"): c.source_page for c in bundle.assessment.impact_claims if c.source_page}
+    for conflict in bundle.report_data.get("figure_conflicts") or []:
+        for source in conflict["sources"]:
+            source["page"] = source.get("page") or by_text.get(source["sentence"])
     return found
 
 
@@ -392,6 +397,13 @@ def assess_document(
     from impact_vision.impact.negative_impacts import assess_negative_impacts
 
     report_data["negative_impacts"] = assess_negative_impacts(company.sector, company.assessment_text or text)
+    from impact_vision.impact import consistency
+
+    conflicts = consistency.find_conflicts(assessment.impact_claims)
+    metric_names = {m.id: m.name for m in store.all_metrics()}
+    for conflict in conflicts:
+        conflict["name"] = metric_names.get(conflict["metric_id"], "")
+    report_data["figure_conflicts"] = conflicts
     report_data["expected_impact"] = assess_expected_impact(
         assessment.impact_claims,
         company.assessment_text or text,
@@ -404,6 +416,7 @@ def assess_document(
         negative=report_data["negative_impacts"],
         claims_review=gw_dump.get("claims_review"),
         full_text=text,
+        conflicts=consistency.plan_items(conflicts, metric_names),
     )
     # v8 W1.4: enterprise vs investor contribution, on evidence only. The
     # investor half reads the whole text (terms usually sit in "The ask").

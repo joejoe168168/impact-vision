@@ -444,7 +444,15 @@ def _evidence(data: dict[str, Any], t) -> dict[str, Any]:  # type: ignore[no-unt
             else t("origin_reported")
         )
         metrics.append({"id": metric_id, "name": names.get(metric_id, ""), "value": text, "origin": origin})
-    return {"claims": claims, "metrics": metrics}
+    conflicts = []
+    for c in data.get("figure_conflicts") or []:
+        conflicts.append({
+            "id": c["metric_id"], "name": c.get("name") or names.get(c["metric_id"], ""),
+            "summary": t("conflict_row", low=c["values"][0], high=c["values"][1], pct=c["difference_pct"]),
+            "sources": [{"value": s["value"], "sentence": s["sentence"],
+                         "cite": t("cite_page", page=s["page"]) if s.get("page") else ""} for s in c["sources"]],
+        })
+    return {"claims": claims, "metrics": metrics, "conflicts": conflicts}
 
 
 _GW_COMPONENTS = ("claim_metric_gap", "adverse_omission", "specificity", "selectivity", "verification")

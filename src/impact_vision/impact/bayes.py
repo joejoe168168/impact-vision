@@ -74,8 +74,9 @@ def update(prior: BetaPosterior, *, corroborating: int = 0, contradicting: int =
 
 def fold(prior: BetaPosterior, stream: Iterable[bool]) -> BetaPosterior:
     """Fold a stream of verification outcomes (True = corroborating)."""
-    corr = sum(1 for v in stream if v)
-    cont = sum(1 for v in stream if not v)
+    outcomes = list(stream)  # a generator can only be read once
+    corr = sum(1 for v in outcomes if v)
+    cont = len(outcomes) - corr
     return update(prior, corroborating=corr, contradicting=cont)
 
 

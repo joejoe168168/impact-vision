@@ -65,6 +65,8 @@ PATTERNS: list[tuple[str, str]] = [
     (r"^Only (?P<p>\d+)% of the core set is reported\.$", "只報告了 {p}% 核心指標。"),
     (r"^Have the headline reach figure \((?P<n>[\d,]+) (?P<who>.+)\) verified by a third party\.$", "由第三方核實主要覆蓋數字（{n} 名{who:who}）。"),
     (r"^Reach drives most of the remaining uncertainty\.$", "覆蓋人數是餘下不確定性的主要來源。"),
+    (r"^Reconcile the two figures given for (?P<m>.+): (?P<a>.+) and (?P<b>.+)\.$", "查明「{m}」兩個數字何者正確：{a} 與 {b}。"),
+    (r"^The documents disagree by (?P<p>\d+)%, so every number built on this one is in doubt\.$", "文件中的數字相差 {p}%，所有以此為基礎的數字均存疑。"),
     (r"^Back the main figures with data: monitoring records, surveys or audited accounts\.$", "以數據支持主要數字：監察紀錄、調查或經審核賬目。"),
     (r"^Evidence quality is (?P<l>\w+) \((?P<s>\d+)/100\)\.$", "證據質素{l:eq}（{s}/100）。"),
     (r"^Compare with a group that did not get the product .*$", "與沒有使用產品的群組比較（對照組或可信的基線），最好由獨立機構進行。"),

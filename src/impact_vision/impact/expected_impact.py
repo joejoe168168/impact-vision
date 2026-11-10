@@ -426,8 +426,14 @@ def assess_expected_impact(
     negative: dict[str, Any] | None = None,
     claims_review: dict[str, Any] | None = None,
     full_text: str = "",
+    conflicts: list[dict[str, str]] | None = None,
 ) -> dict[str, Any]:
-    """Methodology 2.0 result block stored in ``report_data['expected_impact']``."""
+    """Methodology 2.0 result block stored in ``report_data['expected_impact']``.
+
+    ``conflicts`` are evidence-plan entries for figures the documents give
+    twice with different values; they go first, because every number built on
+    a disputed figure is in doubt.
+    """
     claims = list(claims)
     inp = read_outcomes(claims, scoring_text, sector=sector, full_text=full_text)
     seed = f"{company_name}|{scoring_text[:4000]}"
@@ -449,6 +455,8 @@ def assess_expected_impact(
         from impact_vision.impact.negative_impacts import plan_items
 
         plan = (plan[:3] + plan_items(negative, 1) + plan[3:])[:4]
+    if conflicts:
+        plan = ([*conflicts[:1], *plan])[:4]
     gate = _gate(outcomes, eq, data_completeness_pct, greenwashing, list(v1_checks), plan, claims_review)
     return {
         "methodology": stamp(),
@@ -557,9 +565,11 @@ def suggest_conditions(block: dict[str, Any] | None) -> list[dict[str, str]]:
         if rule:
             out.append({"type": rule["type"], "timing": rule["timing"], "text": item["action"],
                         "basis": item.get("why", ""), "source": "evidence plan"})
-    rule = kinds.get("stated_target")
-    for sentence in (block.get("targets") or [])[: int(cfg.get("max_stated_targets", 2))] if rule else []:
-        out.append({"type": rule["type"], "timing": rule["timing"],
+    target_rule = kinds.get("stated_target")
+    stated = (block.get("targets") or [])[: int(cfg.get("max_stated_targets", 2))] if target_rule else []
+    for sentence in stated:
+        assert target_rule is not None
+        out.append({"type": target_rule["type"], "timing": target_rule["timing"],
                     "text": f"Report progress against the company's own target: “{sentence.strip()}”",
                     "basis": "The company states this target; a covenant makes it binding rather than aspirational.",
                     "source": "stated target"})

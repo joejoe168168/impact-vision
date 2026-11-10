@@ -117,6 +117,12 @@ patterns:
 - en: ^Reach drives most of the remaining uncertainty\.$
   zh-HK: 覆蓋人數是餘下不確定性的主要來源。
   zh-CN: 覆盖人数是余下不确定性的主要来源。
+- en: '^Reconcile the two figures given for (?P<m>.+): (?P<a>.+) and (?P<b>.+)\.$'
+  zh-HK: 查明「{m}」兩個數字何者正確：{a} 與 {b}。
+  zh-CN: 查明“{m}”两个数字何者正确：{a} 与 {b}。
+- en: ^The documents disagree by (?P<p>\d+)%, so every number built on this one is in doubt\.$
+  zh-HK: 文件中的數字相差 {p}%，所有以此為基礎的數字均存疑。
+  zh-CN: 文件中的数字相差 {p}%，所有以此为基础的数字均存疑。
 - en: '^Back the main figures with data: monitoring records, surveys or audited accounts\.$'
   zh-HK: 以數據支持主要數字：監察紀錄、調查或經審核賬目。
   zh-CN: 以数据支持主要数字：监察纪录、调查或经审核账目。

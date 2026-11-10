@@ -226,6 +226,10 @@ def _decision_rows(data: dict) -> list[list[Any]]:
         rows.append(["Negative impact", item.get("impact", ""), item.get("band", ""),
                      f"severity {item.get('severity')} × likelihood {item.get('likelihood')} · {control} · "
                      f"affects {item.get('stakeholder', '')}", item.get("score"), 9, "score"])
+    for c in data.get("figure_conflicts") or []:
+        rows.append(["Figure conflict", c.get("metric_id", ""), " vs ".join(c.get("values") or []),
+                     f"{c.get('name', '')} · the documents give two values".strip(" ·"),
+                     c.get("difference_pct"), 100, "% apart"])
     split = data.get("contribution_split") or {}
     for side in ("enterprise", "investor"):
         block = split.get(side) or {}
