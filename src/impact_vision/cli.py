@@ -177,6 +177,41 @@ def assess_cmd(
         webbrowser.open(files[0].resolve().as_uri())
 
 
+@app.command("compare")
+def compare_cmd(
+    files: list[Path] = typer.Argument(..., help="Two or more pitch decks / memos to put side by side"),
+    out_dir: Path = typer.Option(Path("impact-vision-output"), "--out-dir", "-o", help="Output folder"),
+    as_json: bool = typer.Option(False, "--json", help="Print the comparison as JSON"),
+    thesis: Optional[Path] = typer.Option(None, "--thesis", help="Your fund thesis YAML"),
+) -> None:
+    """Compare two or more deals side by side. No composite score and no winner.
+
+    Runs fully offline — no API key needed.
+    """
+    from impact_vision.impact.compare import compare_bundles, format_comparison, render_comparison_html
+    from impact_vision.impact.pipeline import assess_file
+
+    if len(files) < 2:
+        print("Error: compare needs at least two files", file=sys.stderr)
+        raise typer.Exit(2)
+    try:
+        bundles = [assess_file(f, thesis_path=thesis) for f in files]
+    except (FileNotFoundError, ValueError, ImportError) as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        raise typer.Exit(1) from exc
+    comparison = compare_bundles(bundles)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    html_path = out_dir / "comparison.html"
+    html_path.write_text(render_comparison_html(comparison), encoding="utf-8")
+    json_path = out_dir / "comparison.json"
+    json_path.write_text(json.dumps(comparison, indent=2, default=str), encoding="utf-8")
+    if as_json:
+        print(json.dumps(comparison, indent=2, default=str))
+    else:
+        print(format_comparison(comparison))
+        print(f"\nWrote:\n  {html_path}\n  {json_path}")
+
+
 @app.command("demo")
 def demo_cmd(
     deck: str = typer.Option(
