@@ -9,7 +9,8 @@ from pydantic import BaseModel, Field, field_validator
 
 from impact_vision.impact._paths import data_path
 
-StandardStatus = Literal["active", "draft", "under_revision", "superseded"]
+# "published": issued, not yet in force (e.g. GRI 102 until 2027-01-01); not a default rule pack.
+StandardStatus = Literal["active", "draft", "published", "under_revision", "superseded"]
 
 
 class StandardArticle(BaseModel):
@@ -188,8 +189,9 @@ def _matches_standard(item: StandardVersion, standard_id: str) -> bool:
 
 def _status_rank(status: StandardStatus) -> int:
     return {
-        "active": 4,
-        "under_revision": 3,
+        "active": 5,
+        "under_revision": 4,
+        "published": 3,
         "draft": 2,
         "superseded": 1,
     }[status]

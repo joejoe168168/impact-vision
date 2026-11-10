@@ -67,8 +67,16 @@ sbti:
       verified: unverified
       note: Version and its 2026-04-14 date seen in a search snippet only.
       source_url: https://files.sciencebasedtargets.org/production/files/SBTi-criteria.pdf
-  # V2.0 thresholds are not recorded: the standard's text was not read. The check in
-  # frameworks/sbti.py still applies the V1 thresholds and says so.
+  # Which version's numerical thresholds frameworks/sbti.py applies. V2.0 thresholds
+  # are not recorded: the standard's text was not read, so none are invented. The
+  # check keeps the V1 numbers, names the versions above and says so in its findings.
+  thresholds:
+    version: CNZS_V1
+    v2_thresholds_recorded: false
+    note: >-
+      V1 numerical thresholds (42% near-term over 10 years for 1.5°C, net-zero by 2050 with
+      at least 90% reduction, Scope 3 target when Scope 3 is 40%+ of the inventory, 67%
+      coverage). V2.0 criteria not encoded.
 
 eu_taxonomy:
   delegated_acts:

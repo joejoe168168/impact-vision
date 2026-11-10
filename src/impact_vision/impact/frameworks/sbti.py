@@ -1,9 +1,11 @@
 """SBTi — Science Based Targets initiative alignment checker.
 
-Evaluates a company's emissions reduction commitments against the
-*SBTi Corporate Net-Zero Standard v1.2* and the older *Science Based Target
-setting criteria v5.1*. Returns a structured assessment that flags missing
-elements and recommends next steps.
+Evaluates a company's emissions reduction commitments against the numerical
+thresholds of the *SBTi Corporate Net-Zero Standard V1* and the near-term
+criteria. The versions accepted for submissions on a given day (V1.3.1 until
+2028-01-31, V2.0 from 2027-02-01) come from ``data/frameworks/updates.yaml``.
+V2.0's own thresholds are not encoded (its text was not read): the check says
+which thresholds it applied and, once V2.0 is accepted, that a V2.0 review is due.
 
 References:
 - https://sciencebasedtargets.org/resources/files/Net-Zero-Standard.pdf
@@ -42,6 +44,8 @@ class SBTiAlignmentCheck(BaseModel):
     near_term_pass: bool
     net_zero_pass: bool
     scope3_pass: bool
+    thresholds_version: str = "CNZS_V1"
+    standards_accepted: list[str] = Field(default_factory=list)
     findings: list[str] = Field(default_factory=list)
     recommendations: list[str] = Field(default_factory=list)
     references: list[str] = Field(default_factory=list)
@@ -68,10 +72,13 @@ def check_sbti_alignment(claim: SBTiClaim, *, today: date | None = None) -> SBTi
     today = today or date.today()
     findings: list[str] = []
     recommendations: list[str] = []
-    refs: list[str] = [
-        "SBTi Net-Zero Standard v1.2",
-        "SBTi Corporate Manual v5.1",
-    ]
+    from impact_vision.impact.frameworks import pack_updates
+
+    thresholds = pack_updates.sbti_thresholds()
+    applied = pack_updates.sbti_standard(str(thresholds.get("version", "CNZS_V1"))) or {}
+    accepted = _versions_in_force(today)
+    refs: list[str] = [f"Thresholds applied: {applied.get('title', thresholds.get('version'))}"
+                       f" ({applied.get('source_url', '')})"]
 
     # Near-term target validation
     near_term_pass = False
@@ -142,6 +149,17 @@ def check_sbti_alignment(claim: SBTiClaim, *, today: date | None = None) -> SBTi
         findings.append(f"SBTi status flagged as {claim.sbti_status} — public commitments lapsed.")
         recommendations.append("Re-submit targets to SBTi for re-validation.")
 
+    # Version window (R6): say which thresholds were used when a later version is accepted.
+    accepted_ids = [row["id"] for row in accepted]
+    if not thresholds.get("v2_thresholds_recorded") and "CNZS_V2" in accepted_ids:
+        only_v2 = thresholds.get("version") not in accepted_ids
+        findings.append(
+            "Checked against the V1 numerical thresholds; Corporate Net-Zero Standard V2.0 "
+            + ("is the only version accepted for new submissions" if only_v2 else "is also accepted")
+            + f" on {today.isoformat()} and its criteria are not encoded here."
+        )
+        recommendations.append("Review the targets against the SBTi Corporate Net-Zero Standard V2.0 criteria.")
+
     # Aggregate
     has_data = bool(claim.target_year_near_term or claim.target_year_net_zero)
     if not has_data:
@@ -159,10 +177,12 @@ def check_sbti_alignment(claim: SBTiClaim, *, today: date | None = None) -> SBTi
         near_term_pass=near_term_pass,
         net_zero_pass=net_zero_pass,
         scope3_pass=scope3_pass,
+        thresholds_version=str(thresholds.get("version", "CNZS_V1")),
+        standards_accepted=accepted_ids,
         findings=findings,
         recommendations=recommendations,
         references=refs + [
             f"{row['title']} — accepted for target submissions on {today.isoformat()} ({row['source_url']})"
-            for row in _versions_in_force(today)
+            for row in accepted
         ],
     )

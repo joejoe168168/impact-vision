@@ -13,6 +13,18 @@ from impact_vision.tools.impact.common import normalize_metric_map
 from impact_vision.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 
+
+def _gri_status_lines(std, indent: str = "    ") -> list[str]:  # noqa: ANN001
+    """Successor / upcoming notes from data/frameworks/updates.yaml (R6)."""
+    out = []
+    if std.effective_date:
+        out.append(f"{indent}In force from {std.effective_date}. Source: {std.source_url}")
+    for code, by in std.superseded_disclosures.items():
+        out.append(f"{indent}{code} replaced by {by}")
+    for note in std.upcoming:
+        out.append(f"{indent}Upcoming: {note}")
+    return out
+
 class FrameworkInput(BaseModel):
     framework: Literal[
         "sasb",
@@ -29,6 +41,8 @@ class FrameworkInput(BaseModel):
         "esrs",
         "vsme",
         "hk_taxonomy",
+        "eu_taxonomy",
+        "sbti",
         "hkex_esg",
         "hkfrs_s1",
         "two_x",
@@ -94,6 +108,8 @@ FRAMEWORK_CATALOG: tuple[tuple[str, str, str], ...] = (
     ("esrs", "EU CSRD/ESRS Double Materiality", "12 standards"),
     ("vsme", "EFRAG Voluntary SME Standard", "Basic B1-B11 + Comprehensive C1-C9"),
     ("hk_taxonomy", "Hong Kong Taxonomy for Sustainable Finance", "eligibility / alignment screen"),
+    ("eu_taxonomy", "EU Taxonomy alignment (Reg. 2020/852)", "turnover / CapEx / OpEx; (EU) 2026/73 simplification"),
+    ("sbti", "SBTi target check", "near-term + net-zero; versions accepted per date"),
     ("hkex_esg", "HKEX ESG Reporting Code (Appendix C2)", "Part B, Part C A1-A3 / B1-B8 KPIs, Part D climate"),
     ("hkfrs_s1", "HKFRS S1 gap check", "= IFRS S1; English or Traditional Chinese reports"),
     ("two_x", "2X Criteria gender-lens investing standard", "2X Global 2024"),
@@ -123,6 +139,10 @@ class FrameworkTool(BaseTool):
         "- **ESRS**: EU CSRD/ESRS double materiality screening (12 standards)\n"
         "- **HK Taxonomy**: Hong Kong Taxonomy eligibility candidates + alignment % "
         "(structured_inputs.activities)\n"
+        "- **eu_taxonomy**: EU Taxonomy alignment % from structured_inputs.activities; cites the "
+        "(EU) 2026/73 simplification (10% materiality threshold)\n"
+        "- **sbti**: SBTi near-term / net-zero target check from structured_inputs (SBTiClaim fields); "
+        "names the standard versions accepted on the day (V1 thresholds applied)\n"
         "- **hkex_esg**: HKEX ESG Reporting Code (Listing Rules Appendix C2) gap check on document_text — "
         "Part B mandatory, Part C A1-A3 / B1-B8 KPIs (comply or explain), Part D climate "
         "(structured_inputs.issuer = largecap | main_board | gem; structured_inputs.lang = en | zh-HK)\n"
@@ -172,6 +192,8 @@ class FrameworkTool(BaseTool):
             "esrs": self._handle_esrs,
             "vsme": self._handle_vsme,
             "hk_taxonomy": self._handle_hk_taxonomy,
+            "eu_taxonomy": self._handle_eu_taxonomy,
+            "sbti": self._handle_sbti,
             "hkex_esg": self._handle_hkex_esg,
             "hkfrs_s1": self._handle_hkfrs_s1,
             "two_x": self._handle_two_x,
@@ -239,6 +261,7 @@ class FrameworkTool(BaseTool):
                     current_series = std.series
                     lines.append(f"\n--- {current_series.upper()} ---")
                 lines.append(f"  {std.code}: {std.name}")
+                lines.extend(_gri_status_lines(std))
                 lines.append(f"    Disclosures: {len(std.disclosures)}")
                 if std.disclosures:
                     for d in std.disclosures[:3]:
@@ -263,6 +286,7 @@ class FrameworkTool(BaseTool):
                 lines.append(f"\nMATERIAL TOPIC STANDARDS ({len(matches)} matched):")
                 for std, score in matches:
                     lines.append(f"\n  {std.code}: {std.name} (relevance: {score})")
+                    lines.extend(_gri_status_lines(std, indent="    "))
                     for d in std.disclosures[:5]:
                         iris = (
                             f" -> IRIS+: {', '.join(d.iris_cross_refs)}"
@@ -957,6 +981,89 @@ class FrameworkTool(BaseTool):
             return ToolResult(output="\n".join(lines), metadata=result.model_dump(mode="json"))
 
         return ToolResult(output=f"hk_taxonomy does not support action: {args.action}", is_error=True)
+
+    def _handle_eu_taxonomy(self, args: FrameworkInput) -> ToolResult:
+        """EU Taxonomy (R7): delegated acts and the (EU) 2026/73 simplification from updates.yaml."""
+        from typing import get_args
+
+        from impact_vision.impact.frameworks import pack_updates
+        from impact_vision.impact.frameworks.eu_taxonomy import (
+            NACE_OBJECTIVE_HINTS,
+            EconomicActivity,
+            EnvObjective,
+            assess_taxonomy_alignment,
+        )
+
+        tax = pack_updates.load_updates()["eu_taxonomy"]
+        simple = tax["simplification"]
+        acts = pack_updates.taxonomy_references()
+        if args.action == "list":
+            lines = ["EU TAXONOMY (Regulation (EU) 2020/852)", "", "Environmental objectives:"]
+            lines += [f"  - {o}" for o in get_args(EnvObjective)]
+            lines += ["", "Delegated acts recorded (data/frameworks/updates.yaml):"] + [f"  - {a}" for a in acts]
+            lines += ["", f"Simplification ({tax['delegated_acts'][0]['id']}):",
+                      f"  - {simple['materiality_rule']}", f"  - {simple['opex_rule']}",
+                      f"  - {simple['templates']}", f"  - {simple['dnsh']}",
+                      "", "NACE hints used when an activity has no objective (rough, not Annex I):"]
+            lines += [f"  {code}: {obj}" for code, obj in NACE_OBJECTIVE_HINTS.items()]
+            return ToolResult(output="\n".join(lines), metadata={"delegated_acts": tax["delegated_acts"],
+                                                                 "simplification": simple})
+        if args.action in ("match", "assess"):
+            raw = list(args.structured_inputs.get("activities") or [])
+            if not raw:
+                return ToolResult(
+                    output=("eu_taxonomy assess needs structured_inputs.activities: a list of {name, nace_code, "
+                            "revenue_share_pct, capex_share_pct, opex_share_pct, eligible, "
+                            "substantial_contribution, dnsh_pass, minimum_safeguards}"),
+                    is_error=True)
+            try:
+                activities = [EconomicActivity(**a) for a in raw]
+            except Exception as exc:  # noqa: BLE001 - pydantic validation message for the agent
+                return ToolResult(output=f"Invalid activity: {exc}", is_error=True)
+            result = assess_taxonomy_alignment(
+                args.description or "Company", activities,
+                minimum_safeguards_corporate=bool(args.structured_inputs.get("minimum_safeguards_corporate", True)),
+            )
+            lines = ["EU TAXONOMY ALIGNMENT", "=" * 50,
+                     f"Turnover: eligible {result.revenue_eligible_pct:.1f}% · aligned {result.revenue_aligned_pct:.1f}%",
+                     f"CapEx:    eligible {result.capex_eligible_pct:.1f}% · aligned {result.capex_aligned_pct:.1f}%",
+                     f"OpEx:     eligible {result.opex_eligible_pct:.1f}% · aligned {result.opex_aligned_pct:.1f}%"]
+            lines += [""] + [f"  ! {f}" for f in result.findings]
+            lines += ["", "References:"] + [f"  - {r}" for r in result.references]
+            return ToolResult(output="\n".join(lines), metadata=result.model_dump(mode="json"))
+        return ToolResult(output=f"eu_taxonomy does not support action: {args.action}", is_error=True)
+
+    def _handle_sbti(self, args: FrameworkInput) -> ToolResult:
+        """SBTi (R6): which standard versions are accepted today; V1 thresholds, said so."""
+        from impact_vision.impact.frameworks import pack_updates
+        from impact_vision.impact.frameworks.sbti import SBTiClaim, check_sbti_alignment
+
+        if args.action == "list":
+            lines = ["SBTi STANDARDS (data/frameworks/updates.yaml)"]
+            for row in pack_updates.load_updates()["sbti"]["standards"]:
+                window = " · ".join(x for x in (f"usable from {row['usable_from']}" if row.get("usable_from") else "",
+                                                f"usable until {row['usable_until']}" if row.get("usable_until") else "")
+                                    if x)
+                lines.append(f"  - {row['title']} [{row['verified']}]" + (f" ({window})" if window else ""))
+            accepted = [r["title"] for r in pack_updates.sbti_standard_in_force()]
+            th = pack_updates.sbti_thresholds()
+            lines += ["", f"Accepted for new submissions today: {', '.join(accepted) or 'none recorded'}",
+                      f"Thresholds applied by the check: {th.get('version')}. {th.get('note', '')}".strip()]
+            return ToolResult(output="\n".join(lines), metadata={"thresholds": th, "accepted": accepted})
+        if args.action in ("match", "assess"):
+            data = {"company_name": args.description or "Company", **args.structured_inputs}
+            try:
+                result = check_sbti_alignment(SBTiClaim(**data))
+            except Exception as exc:  # noqa: BLE001 - pydantic validation message for the agent
+                return ToolResult(output=f"Invalid SBTi claim: {exc}", is_error=True)
+            lines = ["SBTi TARGET CHECK", "=" * 50, f"Overall: {result.overall_alignment}",
+                     f"Thresholds: {result.thresholds_version} · accepted today: "
+                     f"{', '.join(result.standards_accepted) or 'none recorded'}"]
+            lines += [""] + [f"  - {f}" for f in result.findings]
+            lines += ["", "Recommendations:"] + [f"  - {r}" for r in result.recommendations]
+            lines += ["", "References:"] + [f"  - {r}" for r in result.references]
+            return ToolResult(output="\n".join(lines), metadata=result.model_dump(mode="json"))
+        return ToolResult(output=f"sbti does not support action: {args.action}", is_error=True)
 
     def _handle_vsme(self, args: FrameworkInput) -> ToolResult:
         from impact_vision.impact.frameworks.vsme import assess_vsme, get_vsme_disclosures

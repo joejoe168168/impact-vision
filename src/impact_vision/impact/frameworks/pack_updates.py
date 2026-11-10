@@ -71,6 +71,15 @@ def sbti_standard_in_force(on: date | None = None) -> list[dict[str, Any]]:
     return out
 
 
+def sbti_thresholds() -> dict[str, Any]:
+    """Which standard version's numerical thresholds the SBTi check applies, and why."""
+    return dict(load_updates()["sbti"].get("thresholds") or {"version": "CNZS_V1", "v2_thresholds_recorded": False})
+
+
+def sbti_standard(standard_id: str) -> dict[str, Any] | None:
+    return next((r for r in load_updates()["sbti"]["standards"] if r["id"] == standard_id), None)
+
+
 def taxonomy_non_material(shares_pct: dict[str, float]) -> bool:
     """True when activities may be reported as non-material under (EU) 2026/73.
 

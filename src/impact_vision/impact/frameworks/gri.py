@@ -5,9 +5,20 @@ GRI provides the world's most widely used sustainability reporting standards.
 - Topic Standards: Economic (200), Environmental (300), Social (400)
 
 Reference: https://www.globalreporting.org/standards/
+
+``GRI_STANDARDS`` is the catalogue as issued (mostly 2016). What is *in force*
+on a given day comes from :func:`get_gri_standards`, which applies the sourced
+successors in ``data/frameworks/updates.yaml`` (via ``pack_updates``): GRI 101
+Biodiversity 2024 replaces GRI 304 from 2026-01-01; GRI 102 Climate Change 2025
+replaces 305-1…305-5 and 201-2, and GRI 103 Energy 2025 replaces GRI 302, from
+2027-01-01. Successor disclosures are not listed: their text was not read, so
+only the standard, its effective date and its source are given.
 """
 
 from __future__ import annotations
+
+from datetime import date
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -28,6 +39,12 @@ class GRIStandard(BaseModel):
     description: str = ""
     disclosures: list[GRIDisclosure] = Field(default_factory=list)
     keywords: list[str] = Field(default_factory=list)
+    effective_date: str = ""
+    source_url: str = ""
+    # Disclosures of this standard that a successor replaces on the day asked about.
+    superseded_disclosures: dict[str, str] = Field(default_factory=dict)
+    # A published replacement not yet in force on that day ("GRI 102 Climate Change 2025 from 2027-01-01").
+    upcoming: list[str] = Field(default_factory=list)
 
 
 GRI_STANDARDS: list[GRIStandard] = [
@@ -353,16 +370,54 @@ GRI_STANDARDS: list[GRIStandard] = [
 ]
 
 
-def get_gri_standards(series: str | None = None) -> list[GRIStandard]:
+def _successor_standard(row: dict[str, Any], replaced: list[GRIStandard]) -> GRIStandard:
+    title = str(row["title"])
+    keywords = sorted({k for std in replaced for k in std.keywords})
+    return GRIStandard(
+        code=str(row["id"]), name=title, series="environmental",
+        description=(f"Replaces {', '.join(row.get('supersedes', []))} from {row['effective_date']}. "
+                     "Disclosures: see the standard (not reproduced here)."),
+        keywords=keywords, effective_date=str(row["effective_date"]), source_url=str(row.get("source_url", "")),
+    )
+
+
+def get_gri_standards(series: str | None = None, on: date | None = None) -> list[GRIStandard]:
+    """GRI standards in force on *on* (default today), successors applied from updates.yaml."""
+    from impact_vision.impact.frameworks import pack_updates
+
+    on = on or date.today()
+    out: list[GRIStandard] = []
+    successors: dict[str, tuple[dict[str, Any], list[GRIStandard]]] = {}
+    for std in GRI_STANDARDS:
+        whole = pack_updates.gri_successor(std.code, on)
+        if whole:  # the whole standard is replaced (GRI 304 -> GRI 101)
+            successors.setdefault(whole["id"], (whole, []))[1].append(std)
+            continue
+        current = std.model_copy(deep=True)
+        for disclosure in std.disclosures:
+            row = pack_updates.gri_successor(disclosure.code, on)
+            if row:
+                current.superseded_disclosures[disclosure.code] = f"{row['id']} {row['title']}"
+                successors.setdefault(row["id"], (row, []))[1].append(std)
+        current.disclosures = [d for d in std.disclosures if d.code not in current.superseded_disclosures]
+        for code in (std.code, *(d.code for d in std.disclosures)):
+            soon = pack_updates.gri_upcoming(code, on)
+            label = f"{soon['id']} {soon['title']} from {soon['effective_date']}" if soon else ""
+            if label and label not in current.upcoming:
+                current.upcoming.append(label)
+        out.append(current)
+    for row, replaced in successors.values():
+        out.append(_successor_standard(row, replaced))
     if series:
-        return [s for s in GRI_STANDARDS if s.series == series]
-    return GRI_STANDARDS
+        return [s for s in out if s.series == series]
+    return out
 
 
 def match_gri_topics(
     sector: str = "",
     description: str = "",
     themes: list[str] | None = None,
+    on: date | None = None,
 ) -> list[tuple[GRIStandard, float]]:
     """Match a company to the most relevant GRI topic standards.
 
@@ -371,7 +426,7 @@ def match_gri_topics(
     text = f"{sector} {description} {' '.join(themes or [])}".lower()
     scored: list[tuple[GRIStandard, float]] = []
 
-    for std in GRI_STANDARDS:
+    for std in get_gri_standards(on=on):
         if std.series == "universal":
             continue  # universals always apply
 

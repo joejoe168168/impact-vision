@@ -330,6 +330,102 @@ standards:
     is not required for a statement of compliance with ISSB Standards; the ISSB asks whether it should become
     a Standard. Mapping to frameworks/tnfd.py waits for the final text.
   last_verified: '2026-11-10'
+- standard_id: GRI_101
+  name: 'GRI 101: Biodiversity 2024'
+  version: '2024'
+  effective_date: '2026-01-01'
+  source_url: https://www.globalreporting.org/umbraco/Surface/ResourceCentre/PopupResource?id=24534
+  aliases:
+  - GRI 101
+  - GRI Biodiversity 2024
+  scope:
+  - biodiversity
+  - nature
+  notes: Replaces GRI 304 Biodiversity 2016 from 2026-01-01 (data/frameworks/updates.yaml, verified at the
+    issuer). frameworks/gri.py applies the replacement by date.
+  as_of: '2026-11-10'
+  last_verified: '2026-11-10'
+- standard_id: GRI_102
+  name: 'GRI 102: Climate Change 2025'
+  version: '2025'
+  status: published
+  effective_date: '2027-01-01'
+  source_url: https://www.bdo.ch/en-gb/insights/gri-updates-2025-2027-transparency-and-impact-in-sustainability
+  aliases:
+  - GRI 102
+  - GRI Climate Change 2025
+  scope:
+  - climate
+  - GHG emissions
+  - transition plans
+  notes: Published 2025-06; replaces disclosures 305-1 to 305-5 and 201-2 from 2027-01-01. Effective date from
+    a secondary source (BDO); whether the trigger is reports published or periods starting on or after that
+    date is not confirmed.
+  as_of: '2026-11-10'
+  last_verified: '2026-11-10'
+- standard_id: GRI_103
+  name: 'GRI 103: Energy 2025'
+  version: '2025'
+  status: published
+  effective_date: '2027-01-01'
+  source_url: https://www.bdo.ch/en-gb/insights/gri-updates-2025-2027-transparency-and-impact-in-sustainability
+  aliases:
+  - GRI 103
+  - GRI Energy 2025
+  scope:
+  - energy
+  notes: Published 2025-06; replaces GRI 302 Energy 2016 from 2027-01-01 (secondary source, as for GRI 102).
+  as_of: '2026-11-10'
+  last_verified: '2026-11-10'
+- standard_id: SBTI_CNZS
+  name: SBTi Corporate Net-Zero Standard
+  version: V1.3.1
+  source_url: https://sciencebasedtargets.org/net-zero
+  aliases:
+  - SBTi Net-Zero Standard
+  - SBTi CNZS
+  scope:
+  - net-zero targets
+  - science-based targets
+  notes: Accepted for new target submissions until 2028-01-31 (SBTi net-zero page; the 2026-06-11 SBTi blog
+    says "through the end of 2027"). frameworks/sbti.py applies the V1 numerical thresholds.
+  as_of: '2026-11-10'
+  last_verified: '2026-11-10'
+- standard_id: SBTI_CNZS
+  name: SBTi Corporate Net-Zero Standard
+  version: V2.0
+  status: published
+  effective_date: '2027-02-01'
+  source_url: https://sciencebasedtargets.org/blog/the-corporate-net-zero-standard-v2-0-is-here-what-comes-next
+  aliases:
+  - SBTi Net-Zero Standard
+  - SBTi CNZS
+  scope:
+  - net-zero targets
+  - science-based targets
+  notes: Published 2026-06-11; usable for submissions from 2027-02-01 and the only version from 2028-02-01. Its
+    numerical criteria are not encoded in frameworks/sbti.py (the standard's text was not read).
+  as_of: '2026-11-10'
+  last_verified: '2026-11-10'
+- standard_id: EU_TAXONOMY
+  name: EU Taxonomy Regulation (EU) 2020/852 with the Disclosures, Climate and Environmental Delegated Acts
+  version: (EU) 2026/73
+  effective_date: '2026-01-28'
+  source_url: https://kpmg.com/xx/en/our-insights/ifrg/2025/EU-taxonomy-amendments.html
+  requirements_url: https://eur-lex.europa.eu/eli/reg_del/2026/73/oj/eng
+  aliases:
+  - EU Taxonomy
+  - Taxonomy Regulation
+  - EU 2020/852
+  scope:
+  - taxonomy alignment
+  - turnover CapEx OpEx KPIs
+  - DNSH
+  notes: Omnibus simplification act, in force 2026-01-28, for 2025 reporting periods with an option to defer to
+    2026. Activities together below 10% of turnover, CapEx or OpEx may be reported as non-material. Values rest
+    on KPMG's summary (EUR-Lex could not be opened). frameworks/eu_taxonomy.py; framework_assess eu_taxonomy.
+  as_of: '2026-11-10'
+  last_verified: '2026-11-10'
 - standard_id: SFDR
   name: Sustainable Finance Disclosure Regulation Principal Adverse Impact Indicators
   version: 2022-RTS
