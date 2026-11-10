@@ -47,6 +47,10 @@ packs:
   - violations_ungc_oecd
   - board_gender_ratio
   - unadjusted_gender_pay_gap
+  notes: Current law (Articles 6 / 8 / 9 and the PAI statement). The SFDR 2.0 recast is in trilogue and not expected
+    to apply before late 2028; see data/regulatory/sfdr2.yaml and `framework sfdr2` for the category preview.
+  legal_basis: Regulation (EU) 2019/2088 (SFDR); Delegated Regulation (EU) 2022/1288 (RTS)
+  source_url: https://finance.ec.europa.eu/sustainable-finance/disclosures/sustainability-related-disclosure-financial-services-sector_en
 - jurisdiction: EU-CSRD
   issuer: European Commission / EFRAG
   in_scope_summary: 'POST-OMNIBUS I: mandatory only for undertakings meeting BOTH >1,000 employees AND >€450M net
@@ -134,9 +138,14 @@ packs:
   - scope3_ghg
   - climate-transition-plan
   - internal-carbon-price
-  as_of: '2026-10-06'
-  legal_basis: HKEX Main Board Listing Rules Appendix C2 (IFRS S2-based climate requirements)
-  last_verified: '2026-10-06'
+  notes: The ESG Code is wider than climate. Part B is mandatory (board statement, reporting principles, reporting
+    boundary); Part C is comply-or-explain (environmental aspects A1-A3, social aspects B1-B8); Part D is the
+    climate part. Scope 1 and 2 are mandatory for all issuers. A report prepared under IFRS S1 and S2 is deemed
+    to comply with Part D. Run `impact-vision framework hkex-esg <report>` for the provision-by-provision gap list.
+  as_of: '2026-11-10'
+  legal_basis: HKEX Main Board Listing Rules Appendix C2 (ESG Reporting Code), effective 2025-01-01
+  last_verified: '2026-11-10'
+  source_url: https://www.hkex.com.hk/-/media/HKEX-Market/Listing/Rules-and-Guidance/Environmental-Social-and-Governance/Exchanges-guidance-materials-on-ESG/ISSBstd_esgcode.pdf
 - jurisdiction: AU-AASB-S2
   issuer: Australian Accounting Standards Board
   in_scope_summary: Large Australian entities; phased-in from FY2025 via the AASB S2 climate-related standard (based

@@ -11,6 +11,27 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+Work from the 0.19.1 review (`IMPROVEMENTS.md`).
+
+### Added
+- **HKEX ESG Code gap check:** `impact-vision framework hkex-esg report.pdf --issuer largecap | main_board | gem`
+  checks a report against Listing Rules Appendix C2: Part B (mandatory), Part C aspects A1–A3 and B1–B8 with
+  their KPIs (met, explained or silent) and Part D climate, whose basis follows the issuer type. English or
+  Traditional Chinese. Also `framework_assess` with `framework="hkex_esg"`; `hkfrs_s1` is exposed the same way.
+- Registry rows for the HKEX ESG Code and HKFRS S1. The freshness gate now covers both HK checklists.
+
+### Changed
+- **Knowledge refresh (2026-11-10):** the ISSB nature Exposure Draft is published (comments to 2027-02-19);
+  the European Parliament endorsed its SFDR 2.0 mandate and trilogues opened, with Parliament's 20 % and the
+  Council's 15 % taxonomy-alignment floors recorded; the PCAF registry row matches the Dec-2025 code; the
+  EU-SFDR and HK-HKEX-ESG packs carry their legal basis and source.
+- `impact-vision framework list` shows every framework the agent tool supports (it listed 7 of 20).
+
+### Fixed
+- **Negated evidence no longer counts.** "We have no control group yet" was read as a controlled evaluation,
+  "has not been audited" lowered verification risk, and "we do not yet have a client protection policy" marked
+  the harm as controlled. Planned evidence ("we plan to run an RCT") is treated the same way.
+
 ## [0.19.1] - 2026-10-09 - Connected (roadmap v8, completion pass)
 
 The rest of roadmap v8 that doesn't depend on people, API keys or texts that aren't final yet:

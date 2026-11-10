@@ -24,16 +24,18 @@ milestones:
   jurisdiction: HK
   source_url: https://www.info.gov.hk/gia/general/202609/07/P2026090700249.htm
   last_verified: '2026-10-06'
-- event_date: '2026-10-31'
-  event: European Parliament plenary vote on the SFDR 2.0 mandate (expected October 2026)
+- event_date: '2026-10-22'
+  event: SFDR 2.0 trilogues scheduled to open (Parliament endorsed its negotiating mandate in early October 2026;
+    political agreement aimed for end-2026, may slip into early 2027)
   jurisdiction: EU
-  source_url: https://www.debevoise.com/insights/publications/2026/09/sfdr-20-recap-briefing
-  last_verified: '2026-10-06'
+  source_url: https://www.arthurcox.com/knowledge/sfdr-2-0-update/
+  last_verified: '2026-11-10'
 - event_date: '2026-10-31'
-  event: ISSB nature-related Practice Statement exposure draft (targeted for CBD COP17, October 2026)
+  event: ISSB Exposure Draft published in October 2026 — IFRS Sustainability Disclosure Practice Statement 1 Nature-related
+    Disclosures (comments to 2027-02-19)
   jurisdiction: Global
-  source_url: https://www.ifrs.org/content/ifrs/home/news-and-events/updates/issb/2026/issb-update-september-2026.html
-  last_verified: '2026-10-06'
+  source_url: https://www.ifrs.org/projects/work-plan/biodiversity-ecosystems-and-ecosystem-services/ed-cl-nature-related-disclosures/
+  last_verified: '2026-11-10'
 - event_date: '2026-11-10'
   event: First California SB 253 Scope 1+2 GHG reports due (limited assurance waived this cycle)
   jurisdiction: US
@@ -83,6 +85,11 @@ milestones:
   jurisdiction: Global
   source: ISSB
   source_url: https://www.ifrs.org/news-and-events/news/2025/12/issb-issues-targeted-amendments-ifrs-s2/
+- event_date: '2027-02-19'
+  event: ISSB nature-related disclosures Exposure Draft — comment period closes
+  jurisdiction: Global
+  source_url: https://www.ifrs.org/projects/work-plan/biodiversity-ecosystems-and-ecosystem-services/ed-cl-nature-related-disclosures/
+  last_verified: '2026-11-10'
 - event_date: '2027-03-19'
   event: CSRD (as amended by Omnibus I) member-state transposition deadline
   jurisdiction: EU
@@ -107,6 +114,12 @@ milestones:
   jurisdiction: US
   source_url: https://ww2.arb.ca.gov/our-work/programs/california-corporate-greenhouse-gas-reporting
   last_verified: '2026-10-06'
+- event_date: '2028-01-01'
+  event: 'Hong Kong: expected effective date for HKFRS S1/S2-based reporting by listed publicly accountable entities
+    (HKEX to consult in 2027; proportionate approach)'
+  jurisdiction: HK
+  source_url: https://www.hkex.com.hk/-/media/HKEX-Market/Listing/Rules-and-Guidance/Environmental-Social-and-Governance/Exchanges-guidance-materials-on-ESG/ISSBstd_esgcode.pdf
+  last_verified: '2026-11-10'
 - event_date: '2028-01-01'
   event: 'Singapore: non-STI listed issuers ≥S$1bn market cap begin ISSB-based climate reporting (FY2028)'
   jurisdiction: Singapore
