@@ -157,3 +157,78 @@ tests; a 30-deck held-out set gating CI.
 - **F8. Portfolio view of expected vs actual** — P2, M. A fund-level page from the company records, grouped by stakeholder type rather than summed.
 - **F9. HK-specific pack** — P2, M. One command that runs HKEX ESG Code + HKFRS S1 + HK Taxonomy on an issuer's report and prints a single gap list in Traditional Chinese.
 - **F10. Calibration study** — needs people. Every v2 parameter is still `status: illustrative`; the kit is ready (0.19.1) and waits for 2–3 practitioner raters.
+
+---
+
+## DONE notes (2026-11-10)
+
+Branch `claude-improvements-20261110`, 12 commits on top of `a1f5ed7` (0.19.1): this review, ten
+implementation commits and these notes. Nothing was pushed.
+
+### What was implemented
+
+| Shortlist item | Status | Commit |
+|---|---|---|
+| — this review | written first, committed on its own | `3c02d92` |
+| 1. Negated evidence (C1) | Done. `impact/negation.py`, used by the evidence-signal extractor, negative-impact controls, greenwashing verification and control counting. English and Chinese; planned evidence ("we plan to run an RCT") is treated the same way. | `483b614` |
+| 2. HKEX ESG Code gap check (R1) | Done. 65 provisions in `data/regulatory/hkex_esg_code.yaml` (en + zh-HK), `frameworks/hkex_esg.py`, `impact-vision framework hkex-esg`, `framework_assess` (`hkex_esg`, and `hkfrs_s1` exposed too), registry rows. Also R4: `framework list` now comes from one table. | `d3849db` |
+| 3. Knowledge refresh (R2), part of R3 | Done for the facts verified in §1.3. The freshness gate now covers both HK checklists (427 rows). | `d3849db`, `ae0a423` |
+| 4. Exports (U1) | Done. Four new workbook sheets, Summary rows, CSV rows, UTF-8 BOM, whole-number formats, AI provenance split. | `53008ed` |
+| 5. Methodology stamp (C2) | Done. Both versions shown; the hash covers v2.yaml, the contribution rubric and the negative-impact catalogue. | `468da25` |
+| 6. Dark-theme print (U2) | Done, and checked in Chromium (h1 was white in print, now dark). | `edf8c81` |
+| 7. One verdict; suggested IC conditions (C3, F1 first half) | Done for Markdown, Word, PowerPoint and HTML. Conditions come from the evidence plan and the company's stated targets. | `44c71d1` |
+| 8. Example thesis (C4), `assess --thesis` (part of F5) | Done. | `44c71d1` |
+| 9. Parsing (C5) | Done for goals read as reach, the ask's location, currency symbols and cumulative tonnes. **Not done:** reach as "largest people-count whatever the noun", effect sizes ("0.21 SD") read as a percentage, "12 000 households". | `09db1ba` |
+| 10. Translation (U3) | **Partly.** Done: claim types, target statuses, language note, logo alt text, zh-CN wording, three consistency tests. **Not done:** the IC memo and DD report are still English with `--lang`; `impact/i18n.py` and its YAML files are still unused. | `33f95ed` |
+| 11. Contradictions (C6) | Done for conflicting figures (`impact/consistency.py`). **Not done:** plausibility checks (reach above population, percentages above 100). Also fixed here: `bayes.fold` (C15, first bug). | `7958cb4` |
+| 12–15 (exclusions in `assess`, verdict spread, share links, compare / one-pager) | Not started. | |
+
+Everything else in §1–§4 is untouched.
+
+### Tests and builds
+
+Run from the repo root with the project's `.venv` (Python 3.13):
+
+| Command | Result |
+|---|---|
+| `pytest tests/` (with `IMPACT_VISION_CHROMIUM` set so `tests/visual` runs) | **1,864 passed**, 7 skipped, 1 xfailed, **2 failed** |
+| `ruff check src/` (ruff 0.15.22, the CI pin) | clean |
+| `mypy --ignore-missing-imports` on the CI list plus the three new modules | clean |
+| `python scripts/check_knowledge.py` | 427 rows, 0 stale, 0 missing |
+| `python scripts/build_tool_reference.py --check` | up to date |
+| `python -m impact_vision.impact.extraction_eval --extractor regex --summary` | F1 0.976 (gate 0.95) |
+| `python scripts/run_heldout_eval.py` | unchanged: facts F1 0.83, sector 77 %, geography 100 %, SDG 93 %, greenwashing 90 %, verdict 90 % |
+| `python scripts/check_imports.py --verify-init / --smoke / --registry` | pass |
+| `bandit -q -ll -r src/impact_vision/{impact,web,api_gateway}` | no findings |
+
+The baseline on `a1f5ed7` was 1,784 passed, 11 skipped, 2 failed. The pass count rose by 80: the tests
+added on this branch (10 new or extended test files), plus existing tests that were skipped at baseline
+because `playwright`, `python-docx` and `python-pptx` were not installed.
+
+**The two failures are the same two as on `main` and come from this machine, not the code.** I left both alone:
+
+- `tests/test_v7_wave5_package.py::test_module_entry_points` — `.venv/lib/python3.13/site-packages/impact_vision/`
+  holds a leftover stub (`__init__.py` only) from a 0.16 install that shadows `src/` in a subprocess. With
+  `PYTHONPATH=src` the test passes. Fix: delete that folder or `pip install -e ".[dev]"` again.
+- `tests/test_v7_wave5_package.py::test_wheel_excludes_unused_subpackages` — a top-level `ohmo/` folder
+  containing only `__pycache__` remains from before the package was removed. Fix: delete it.
+
+Not run: the frontend TypeScript check (no frontend files changed), `pip-audit`, the wheel smoke test.
+
+### Things to know
+
+- **Every report's config hash changes once** (commit `468da25` widens what is hashed, and `v2.yaml` gained
+  two blocks). Reports made before and after this branch are not comparable by stamp.
+- **`demo/` was not regenerated.** Its committed HTML / JSON still show the old stamp and lack the new
+  sections. Run `python demo/generate_demo.py` at release.
+- **Scores did not move** on the three sample decks, the 10 golden decks or the 30 held-out decks. The fixes
+  change results only for decks that deny evidence, state a goal as reach, give a running total of tonnes,
+  or contradict themselves.
+- **The HKEX checklist's cues are heuristics** (`cue_status: illustrative`). The provisions and their
+  wording are sourced from HKEX; whether a report satisfies one still needs a reader. Part D paragraph
+  numbers are given only where HKEX's linkage document cites them (19, 37–40).
+- **Local environment changes** (inside `.venv`, not committed): installed `playwright`,
+  `axe-playwright-python`, `python-docx`, `python-pptx` and `opencc-python-reimplemented` (all already
+  named by the project's extras or build script) to run the visual, Office and phrasebook paths.
+- `AGENTS.md` is still at 0.17.1 wording (22 framework modules); `CLAUDE.md` and `README.md` are current.
+- Version and release: `pyproject.toml` is still 0.19.1 and the CHANGELOG entries sit under "Unreleased".
