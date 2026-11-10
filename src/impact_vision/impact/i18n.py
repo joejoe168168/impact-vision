@@ -79,6 +79,9 @@ def load_dd_checklist_localized(locale: str = "en") -> dict[str, Any]:
     """Load the localized DD checklist if available."""
     if locale == "en":
         return {}
+    exact = _I18N_DIR / f"dd_checklist_{locale}.yaml"
+    if exact.exists():  # e.g. dd_checklist_zh-HK.yaml (Traditional)
+        return _load_yaml(exact)
     short = locale.split("-")[0].split("_")[0].lower()
     path = _I18N_DIR / f"dd_checklist_{short}.yaml"
     return _load_yaml(path)

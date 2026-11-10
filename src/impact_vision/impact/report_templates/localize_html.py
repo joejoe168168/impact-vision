@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import html as _html
 import re
+from functools import lru_cache
 
 from impact_vision.impact.i18n_phrasebook import localize
 
@@ -113,7 +114,109 @@ LABELS_ZH_HK: dict[str, str] = {
         "此目標由公司自行提出；訂為契諾後即具約束力，而非僅屬願景。",
 }
 
+DD_LABELS_ZH_HK: dict[str, str] = {
+    "Impact DD — Questionnaire Helper": "影響力盡職審查 — 問卷助手",
+    "Key risk areas": "主要風險範疇",
+    "Information request": "資料索取",
+    "Information Request": "資料索取",
+    "Information request (questionnaire to send)": "資料索取（待發出的問卷）",
+    "Evidence & document gaps": "證據及文件缺口",
+    "Coverage snapshot": "覆蓋率概覽",
+    "By category": "按類別",
+    "Coverage by category": "按類別劃分的覆蓋率",
+    "Addressed (appendix)": "已回應（附錄）",
+    "Questions already addressed (appendix)": "已回應的問題（附錄）",
+    "Evidence levels": "證據等級",
+    "Evidence level reference": "證據等級參考",
+    "ASK FIRST": "優先提問",
+    "HIGH RISK": "高風險",
+    "WARN": "注意",
+    "Addressed / Total": "已回應 / 總數",
+    "Attach / ask for:": "請附上 / 索取：",
+    "Avg evidence level": "平均證據等級",
+    "Category": "類別",
+    "Checklist coverage": "清單覆蓋率",
+    "Overall coverage": "整體覆蓋率",
+    "Confidence": "信心",
+    "Coverage": "覆蓋率",
+    "Description": "說明",
+    "Document / evidence": "文件 / 證據",
+    "Founder response:": "創辦人回覆：",
+    "High-priority gaps": "高優先缺口",
+    "Keywords": "關鍵詞",
+    "Level": "等級",
+    "Question": "問題",
+    "Questions to send": "待發出的問題",
+    "Questions:": "問題：",
+    "# questions": "問題數目",
+    "Received": "已收到",
+    "Requested": "已索取",
+    "Reviewer:": "審閱人：",
+    "Probe further:": "進一步追問：",
+    "To ask:": "待提問：",
+    "addressed": "已回應",
+    "Priority 1 — Ask first": "優先次序 1 — 優先提問",
+    "Priority 2 — Ask in follow-up": "優先次序 2 — 跟進時提問",
+    "NESTA Standards of Evidence": "NESTA 證據標準",
+    "NESTA Standards of Evidence — used to grade every matched question.":
+        "NESTA 證據標準 — 用於評定每條已對應問題的等級。",
+    "Worst-covered categories with high-priority gaps float to the top.":
+        "覆蓋率最低而又有高優先缺口的類別排在最前。",
+    "Contribution / additionality": "貢獻 / 額外性",
+    "Exit & long-run sustainability": "退出及長遠可持續性",
+    "Financial sustainability": "財務可持續性",
+    "Governance & ESG": "管治及 ESG",
+    "How much": "多少",
+    "How much — scale, depth, duration": "多少 — 規模、深度、持續時間",
+    "Impact risk": "影響力風險",
+    "Impact thesis & mission": "影響力主題及使命",
+    "Investor alignment": "投資者契合度",
+    "Market context": "市場環境",
+    "Measurement & management systems": "量度及管理系統",
+    "Negative impact / do-no-harm": "負面影響 / 不造成傷害",
+    "Product / service design": "產品 / 服務設計",
+    "Stakeholder voice": "持份者意見",
+    "Supply chain": "供應鏈",
+    "Team & capability": "團隊及能力",
+    "Theory of change": "變革理論",
+    "What — intended outcomes": "甚麼 — 預期成果",
+    "Who — stakeholders & beneficiaries": "誰 — 持份者及受惠者",
+    "Audited or management financial statements": "經審核或管理層財務報表",
+    "Board / impact-committee charter and minutes": "董事會 / 影響力委員會章程及會議紀錄",
+    "Exit / sustainability plan memo": "退出 / 可持續性計劃備忘錄",
+    "Formal policy document (e.g. ESG, safeguarding, data-privacy)": "正式政策文件（例如 ESG、保障措施、資料私隱）",
+    "Live KPI / metric dashboard export (last 12 months)": "即時 KPI / 指標儀表板匯出（過去 12 個月）",
+    "Peer / sector benchmark analysis": "同業 / 行業基準分析",
+    "Stakeholder survey instrument + anonymised results": "持份者問卷工具及匿名結果",
+    "Theory-of-change diagram or written logic model": "變革理論圖或書面邏輯模型",
+    "Third-party audit / verification letter": "第三方審核 / 核實函件",
+    "Data showing change (before/after, baseline, surveys)": "顯示轉變的數據（前後對比、基線、問卷調查）",
+    "Causality shown with a comparison or control group (incl. RCTs)": "以對照組證明因果關係（包括隨機對照試驗）",
+    "Independent replication or evaluation": "獨立重複驗證或評估",
+    "Manualised and replicated at scale": "已編成手冊並大規模複製",
+}
+LABELS_ZH_HK.update({k: v for k, v in DD_LABELS_ZH_HK.items() if k not in LABELS_ZH_HK})
+
+
+@lru_cache(maxsize=1)
+def _dd_questions() -> dict[str, str]:
+    """English DD question text -> zh-HK text, where a translation exists."""
+    from impact_vision.impact.dd_checklist import load_checklist
+    from impact_vision.impact.i18n import load_dd_checklist_localized
+
+    zh = {q["id"]: q["question"] for q in (load_dd_checklist_localized("zh-HK").get("questions") or [])}
+    try:
+        return {q.question.strip(): zh[q.id] for q in load_checklist() if q.id in zh}
+    except Exception:  # noqa: BLE001 - a missing checklist must not break a report
+        return {}
+
+
 _PATTERNS: list[tuple[re.Pattern[str], str]] = [
+    (re.compile(r"^DD Questionnaire Helper — (?P<a>.+)$"), "盡職審查問卷助手 — {a}"),
+    (re.compile(r"^(?P<p>\d+)% coverage$"), "覆蓋率 {p}%"),
+    (re.compile(r"^(?P<p>\d+) of (?P<m>\d+) addressed$"), "{m} 條中已回應 {p} 條"),
+    (re.compile(r"^Level (?P<p>\d)$"), "第 {p} 級"),
+    (re.compile(r"^Sector — (?P<a>.+)$"), "行業 — {a}"),
     (re.compile(r"^IC Memo — (?P<a>.+)$"), "投委會備忘錄 — {a}"),
     (re.compile(r"^(?P<n>\d+)\. (?P<a>.+)$"), "{n}. {a}"),
     (re.compile(r"^— (?P<a>.+)$"), "— {a}"),
@@ -141,7 +244,7 @@ def localize_text(text: str, lang: str = "zh-HK") -> str:
     if lang != "zh-HK" or not text.strip():
         return text
     core = text.strip()
-    hit = LABELS_ZH_HK.get(core) or _EXTRA.get(core)
+    hit = LABELS_ZH_HK.get(core) or _EXTRA.get(core) or _dd_questions().get(core)
     if hit is None:
         for rx, tmpl in _PATTERNS:
             m = rx.match(core)

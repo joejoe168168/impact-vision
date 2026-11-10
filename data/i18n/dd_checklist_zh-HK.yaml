@@ -1,0 +1,72 @@
+# Impact Vision - DD Checklist (Traditional Chinese, Hong Kong / 繁體中文（香港）— derived from dd_checklist_zh.yaml with OpenCC s2hk)
+
+categories:
+  impact_thesis: "影響力論點"
+  theory_of_change: "變革理論"
+  measurement_system: "測量體系"
+  sdg_alignment: "可持續發展目標對齊"
+  beneficiary_voice: "受益人反饋"
+  governance: "治理"
+  risk_management: "風險管理"
+  data_quality: "數據質量"
+  additionality: "額外性"
+  negative_impact: "負面影響"
+  exit_strategy: "退出策略"
+  reporting: "報告"
+
+questions:
+  - id: IT01
+    category: impact_thesis
+    question: "公司的核心影響力論點是什麼？它與公司使命有何關聯？"
+    nesta_level: 1
+  - id: IT02
+    category: impact_thesis
+    question: "公司解決的具體社會或環境問題是什麼？"
+    nesta_level: 1
+  - id: TC01
+    category: theory_of_change
+    question: "公司是否能清晰闡述變革理論（投入→活動→產出→成果→影響）？"
+    nesta_level: 2
+  - id: TC02
+    category: theory_of_change
+    question: "有什麼證據支持變革理論中的因果關係？"
+    nesta_level: 3
+  - id: MS01
+    category: measurement_system
+    question: "公司使用哪些IRIS+指標或標準化指標來衡量影響力？"
+    nesta_level: 2
+  - id: MS02
+    category: measurement_system
+    question: "影響力指標的收集和報告頻率是多少？"
+    nesta_level: 2
+  - id: SA01
+    category: sdg_alignment
+    question: "公司對哪些可持續發展目標有貢獻？有何證據？"
+    nesta_level: 2
+  - id: BV01
+    category: beneficiary_voice
+    question: "公司如何將受益人反饋納入決策？"
+    nesta_level: 3
+  - id: GO01
+    category: governance
+    question: "董事會層面是否有影響力管理的監督機制？"
+    nesta_level: 2
+  - id: RM01
+    category: risk_management
+    question: "哪些風險可能阻礙公司實現預期影響力？"
+    nesta_level: 2
+  - id: AD01
+    category: additionality
+    question: "如果沒有這筆投資會怎樣？投資者的額外性是什麼？"
+    nesta_level: 3
+  - id: NI01
+    category: negative_impact
+    question: "公司是否識別了潛在的負面影響並制定了緩解計劃？"
+    nesta_level: 2
+# v6 China sustainability-reporting surface
+cn_disclosure:
+  mandatory: "強制披露"
+  voluntary: "自願披露"
+  annual_deadline: "年度可持續發展報告應於次年4月30日前披露"
+  content_index: "披露要求索引"
+  materiality: "雙重重要性評估"

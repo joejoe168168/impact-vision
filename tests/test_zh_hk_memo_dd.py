@@ -55,3 +55,14 @@ def test_patterns_and_no_simplified_characters():
     assert localize_text("A verbatim company claim.") == "A verbatim company claim."
     for en, zh in LABELS_ZH_HK.items():
         assert zh.strip() and not (set(zh) & set(_SIMPLIFIED)), en
+
+
+def test_dd_report_labels_and_questions_in_traditional_chinese(packs):
+    from impact_vision.impact.i18n import load_dd_checklist_localized
+
+    dd = packs["zh-HK"]["dd_report.html"]
+    assert "盡職審查問卷助手" in dd and "覆蓋率" in dd
+    assert not re.findall(r"<h2[^>]*>[A-Za-z0-9.&; ()/-]+</h2>", dd)
+    zh = load_dd_checklist_localized("zh-HK")
+    assert zh["categories"]["governance"] == "治理" and "什麼" in zh["questions"][0]["question"]
+    assert not (set(str(zh)) & set("这为与项风险证据质额计划报"))
