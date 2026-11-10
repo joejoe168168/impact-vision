@@ -106,6 +106,43 @@
   --lvl-1: #184f95; --lvl-2: #256abf; --lvl-3: #3987e5; --lvl-4: #6da7ec; --lvl-5: #b7d3f6;
 }
 
+/* Paper is white. A report viewed in the dark theme (or on a dark-mode OS)
+ * must still print dark ink on a white page, so print always uses the light
+ * tokens. Keep this block last: it has to win over both dark selectors above. */
+@media print {
+  :root, :root[data-theme="dark"], :root:where(:not([data-theme="light"])) {
+    color-scheme: light;
+    --page: #f9f9f7;
+    --surface: #fcfcfb;
+    --surface-2: #f3f2ee;
+    --ink: #0b0b0b;
+    --ink-2: #52514e;
+    --muted: #6e6c66;
+    --grid: #e1e0d9;
+    --axis: #c3c2b7;
+    --border: rgba(11, 11, 11, 0.10);
+    --brand: #1c5cab;
+    --brand-ink: #ffffff;
+    --link: #1c5cab;
+    --series-1: #2a78d6;
+    --series-1-wash: rgba(42, 120, 214, 0.10);
+    --series-2: #eb6834;
+    --good: #0ca30c;
+    --good-ink: #006300;
+    --warning: #fab219;
+    --warning-ink: #7a5300;
+    --serious: #ec835a;
+    --serious-ink: #8f3b14;
+    --critical: #d03b3b;
+    --critical-ink: #a32424;
+    --good-wash: rgba(12, 163, 12, 0.10);
+    --warning-wash: rgba(250, 178, 25, 0.16);
+    --serious-wash: rgba(236, 131, 90, 0.14);
+    --critical-wash: rgba(208, 59, 59, 0.10);
+    --lvl-1: #86b6ef; --lvl-2: #5598e7; --lvl-3: #2a78d6; --lvl-4: #1c5cab; --lvl-5: #104281;
+  }
+}
+
 /* Impact Vision report components (v7 W2.1). Uses tokens.css only. */
 *, *::before, *::after { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
@@ -149,6 +186,7 @@ section[id] { scroll-margin-top: 16px; }
 .verdict .status { display: flex; align-items: center; gap: 10px; margin: 0 0 6px; }
 .verdict .status .icon { width: 28px; height: 28px; flex: none; }
 .verdict .status strong { font-size: 1.35rem; }
+.verdict .verdict-note { margin: 6px 0 0; font-weight: 600; }
 .verdict.good .status strong { color: var(--good-ink); }
 .verdict.warning .status strong { color: var(--warning-ink); }
 .verdict.serious .status strong { color: var(--serious-ink); }
@@ -396,11 +434,11 @@ details > summary { cursor: pointer; color: var(--link); font-size: 0.88rem; }
   .bars .bench { background: Highlight; }
 }
 :root { --brand: #0a7f5a; }</style>
-<meta name="generator" content="Impact Vision 0.19.1">
+<meta name="generator" content="Impact Vision 0.20.0">
 <meta name="iptc:digitalsourcetype" content="http://cv.iptc.org/newscodes/digitalsourcetype/algorithmicMedia">
 <meta name="ai-disclosure" content="Automated analysis: produced by rules and a deterministic scoring model; no generative AI was used. 3 of 22 scores are estimated from document text rather than reported metrics. Review before relying on it.">
 <meta name="ai-human-review" content="no">
-<script type="application/ld+json" id="ai-marking">{"@context": "https://schema.org", "@type": "Report", "creator": {"@type": "SoftwareApplication", "name": "Impact Vision 0.19.1"}, "digitalSourceType": "http://cv.iptc.org/newscodes/digitalsourcetype/algorithmicMedia", "description": "Automated analysis: produced by rules and a deterministic scoring model; no generative AI was used. 3 of 22 scores are estimated from document text rather than reported metrics. Review before relying on it."}</script>
+<script type="application/ld+json" id="ai-marking">{"@context": "https://schema.org", "@type": "Report", "creator": {"@type": "SoftwareApplication", "name": "Impact Vision 0.20.0"}, "digitalSourceType": "http://cv.iptc.org/newscodes/digitalsourcetype/algorithmicMedia", "description": "Automated analysis: produced by rules and a deterministic scoring model; no generative AI was used. 3 of 22 scores are estimated from document text rather than reported metrics. Review before relying on it."}</script>
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to report</a>
@@ -413,13 +451,13 @@ details > summary { cursor: pointer; color: var(--link); font-size: 0.88rem; }
     <p class="eyebrow">Meridian Impact Partners (fictional) · Impact assessment</p>
     <h1>Kampung Makmur Sdn Bhd</h1>
     <p class="meta">
-      agriculture · Malaysia · <span class="nw">Generated 2026-10-09</span> · <span class="nw">IRIS+ 5.3c</span> · Source: kampung_makmur_pig_farm.pdf    </p>
+      agriculture · Malaysia · <span class="nw">Generated 2026-11-10</span> · <span class="nw">IRIS+ 5.3c</span> · Source: kampung_makmur_pig_farm.pdf    </p>
     <p class="notice">Confidential — prepared for internal investment and LP use.</p>
     <p class="ai-badges" aria-label="AI &amp; automation disclosure"><span class="chip ai"><span class="dot" aria-hidden="true"></span>Extracted by rules</span> <span class="chip ai"><span class="dot" aria-hidden="true"></span>3/22 scores estimated</span> </p>
   </div>
   </div>
   <div style="display:flex;flex-direction:column;align-items:flex-end;gap:10px">
-<span class="pill warning">Evidence plan</span>  </div>
+<span class="pill good">Ready for IC</span>  </div>
 </header>
 
 <nav class="card no-print" aria-label="Contents">
@@ -427,14 +465,14 @@ details > summary { cursor: pointer; color: var(--link); font-size: 0.88rem; }
   <p class="small" style="margin:0"><a href="#sec-verdict">Recommendation</a> · <a href="#sec-mind">What would change our mind</a> · <a href="#sec-impact">Expected impact</a> · <a href="#sec-glance">Impact at a glance</a> · <a href="#sec-5d">Five Dimensions of Impact</a> · <a href="#sec-sdg">SDG alignment</a> · <a href="#sec-evidence">Evidence ledger</a> · <a href="#sec-greenwashing">Greenwashing review</a> · <a href="#sec-risks">Risks and opportunities</a> · <a href="#sec-actions">Action plan</a> · <a href="#sec-appendix">Methodology and definitions</a></p>
 </nav>
 
-<section id="sec-verdict" class="card verdict warning" aria-labelledby="h-verdict">
+<section id="sec-verdict" class="card verdict good" aria-labelledby="h-verdict">
   <h2 id="h-verdict" class="small muted" style="margin:0 0 6px;font-size:0.82rem">Recommendation</h2>
   <p class="status">
-    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="10.5" stroke-width="1.6"/><path d="M12 7v6" /><path d="M12 16.5v.5" /></svg>
-    <strong>Evidence plan required</strong>
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="10.5" stroke-width="1.6"/><path d="M7 12.5l3.2 3.2L17 9" /></svg>
+    <strong>Ready for IC</strong>
   </p>
-<p style="margin:0">Not a negative finding: the evidence plan below lists what to collect, biggest effect on the answer first.</p>  <ul class="why" aria-label="Why"><li>18% of core metrics reported (needs 40%)</li></ul>
-<p class="confidence">Evidence quality: 63/100 · good</p></section>
+<p style="margin:0">Expected impact is quantified and the evidence is good enough to take to the investment committee.</p>  <ul class="why" aria-label="Why"><li>evidence quality good (63/100)</li><li>people impact P50 61 depth-weighted person-years</li><li>climate impact P50 859 tCO2e</li></ul>
+<p class="verdict-note">Ready, with 18% of the core metric set reported.</p><p class="confidence">Evidence quality: 63/100 · good</p></section>
 
 <section class="kpis" aria-label="Headline numbers">
   <div class="tile">
@@ -706,7 +744,7 @@ details > summary { cursor: pointer; color: var(--link); font-size: 0.88rem; }
 <section id="sec-appendix" class="card" aria-labelledby="h-appendix">
   <h2 id="h-appendix"><span class="h-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h10l4 4v12H5z"/><path d="M9 12h6M9 16h4"/></svg></span>Methodology and definitions</h2>
   <h3 class="small">How this report was produced</h3>
-  <ul class="small"><li>Claims are extracted from the documents and graded on the NESTA standards of evidence; quantities are mapped to IRIS+ metric IDs only when unit and context are unambiguous.</li><li>Five Dimensions scores (1–5) come from reported metrics where available and from document text otherwise; the evidence label says which.</li><li>SDG scores (0–100) combine goal-specific metric coverage, inference from the business and impact themes; cross-cutting metrics count at reduced weight.</li><li>Greenwashing risk weights claim–metric gaps (30%), missing negative impacts (20%), vague language (20%), selective reporting (15%) and lack of verification (15%).</li><li>The IC gate applies the fund thesis thresholds; failures caused by missing data are reported as insufficient evidence, not as a negative finding.</li><li>Scores use methodology v1.2.0 (config ae3e77ecaccf); reports are comparable only when both match.</li><li>Expected impact (methodology 2.1.0, illustrative): reach × depth × duration × (1 − deadweight) × attribution × probability of success; each factor&#39;s spread follows its NESTA evidence level; 4000 seeded Monte Carlo draws give P10/P50/P90. Evidence quality and data completeness are reported separately, never multiplied in.</li></ul>
+  <ul class="small"><li>Claims are extracted from the documents and graded on the NESTA standards of evidence; quantities are mapped to IRIS+ metric IDs only when unit and context are unambiguous.</li><li>Five Dimensions scores (1–5) come from reported metrics where available and from document text otherwise; the evidence label says which.</li><li>SDG scores (0–100) combine goal-specific metric coverage, inference from the business and impact themes; cross-cutting metrics count at reduced weight.</li><li>Greenwashing risk weights claim–metric gaps (30%), missing negative impacts (20%), vague language (20%), selective reporting (15%) and lack of verification (15%).</li><li>The IC gate applies the fund thesis thresholds; failures caused by missing data are reported as insufficient evidence, not as a negative finding.</li><li>Scores use methodology v1.2.0 (config e0d5e058eba0); reports are comparable only when both match.</li><li>Expected impact (methodology 2.2.0, illustrative): reach × depth × duration × (1 − deadweight) × attribution × probability of success; each factor&#39;s spread follows its NESTA evidence level; 4000 seeded Monte Carlo draws give P10/P50/P90. Evidence quality and data completeness are reported separately, never multiplied in.</li></ul>
   <h3 class="small" id="ai-disclosure">AI &amp; automation disclosure</h3>
   <p class="small">Automated analysis: produced by rules and a deterministic scoring model; no generative AI was used. 3 of 22 scores are estimated from document text rather than reported metrics. Review before relying on it.</p>
   <div class="table-wrap"><table class="small">
@@ -719,7 +757,7 @@ details > summary { cursor: pointer; color: var(--link); font-size: 0.88rem; }
 
 <footer class="footer">
 <p style="margin:0 0 4px">Prepared for Meridian&#39;s LP advisory committee — illustrative example.</p><p style="margin:0 0 4px"><a href="#ai-disclosure">AI &amp; automation disclosure</a></p>
-  <p style="margin:0 0 4px">Methodology v1.2.0 · config ae3e77ecaccf</p>
+  <p style="margin:0 0 4px">Methodology v2.2.0 (expected impact, IC gate) · v1.2.0 (5D, SDG, greenwashing) · config e0d5e058eba0</p>
 <p style="margin:0">Generated by Impact Vision — open-source impact measurement.</p></footer>
 </main>
 <script>

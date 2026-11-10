@@ -5,6 +5,51 @@
   "gate": "EVIDENCE PLAN REQUIRED",
   "recommendation": "Have the headline reach figure (42,000 households) verified by a third party.",
   "thesis_gate": "INSUFFICIENT EVIDENCE",
+  "fund_thesis": {
+    "name": "Example Climate Fund I",
+    "example": true
+  },
+  "suggested_conditions": [
+    {
+      "type": "condition_precedent",
+      "timing": "before closing",
+      "text": "Have the headline reach figure (42,000 households) verified by a third party.",
+      "basis": "Reach drives most of the remaining uncertainty.",
+      "source": "evidence plan"
+    },
+    {
+      "type": "condition_precedent",
+      "timing": "before first disbursement",
+      "text": "Show how you manage: forced or child labour in the polysilicon / mineral supply chain (affects supply-chain workers).",
+      "basis": "Material negative impact (severity 3 \u00d7 likelihood 2) with no control described in the documents.",
+      "source": "evidence plan"
+    },
+    {
+      "type": "covenant",
+      "timing": "reported every year",
+      "text": "Report progress against the company's own target: \u201cOver the next three years we target 150,000 connected households and 80,000 tCO2e avoided per year, and we report against IRIS+, SDG 7/1/13 and the GOGLA impact metrics.\u201d",
+      "basis": "The company states this target; a covenant makes it binding rather than aspirational.",
+      "source": "stated target"
+    },
+    {
+      "type": "reporting",
+      "timing": "in each annual report",
+      "text": "Report the sector's core metrics: Energy Generated for Sale: Renewable, Energy Capacity of Products Sold, Client Feedback System.",
+      "basis": "Only 18% of the core set is reported.",
+      "source": "evidence plan"
+    },
+    {
+      "type": "reporting",
+      "timing": "in each annual report",
+      "text": "Back the main figures with data: monitoring records, surveys or audited accounts.",
+      "basis": "Evidence quality is moderate (57/100).",
+      "source": "evidence plan"
+    }
+  ],
+  "exclusions": {
+    "passed": true,
+    "failures": []
+  },
   "expected_impact": {
     "kind": "people",
     "unit": "depth-weighted person-years",
@@ -51,9 +96,11 @@
   "files": [
     "sunpath_energy_ltd_impact_report.html",
     "sunpath_energy_ltd_ic_memo.html",
+    "sunpath_energy_ltd_ic_onepager.html",
     "sunpath_energy_ltd_dd_report.html",
     "sunpath_energy_ltd_impact_report.pdf",
     "sunpath_energy_ltd_ic_memo.pdf",
+    "sunpath_energy_ltd_ic_onepager.pdf",
     "sunpath_energy_ltd_ic_memo.docx",
     "sunpath_energy_ltd_dd_questionnaire.docx",
     "sunpath_energy_ltd_data.xlsx",
@@ -62,7 +109,7 @@
   "ai_disclosure": "Automated analysis: produced by rules and a deterministic scoring model; no generative AI was used. 2 of 21 scores are estimated from document text rather than reported metrics. Review before relying on it.",
   "ai_marking": {
     "digital_source_type": "http://cv.iptc.org/newscodes/digitalsourcetype/algorithmicMedia",
-    "generator": "Impact Vision 0.19.1",
+    "generator": "Impact Vision 0.20.0",
     "ai_generated": false,
     "machine_generated": true,
     "human_reviewed": false,
@@ -71,6 +118,7 @@
   },
   "methodology": {
     "methodology_version": "1.2.0",
-    "config_hash": "ae3e77ecaccf"
+    "config_hash": "e0d5e058eba0",
+    "expected_impact_version": "2.2.0"
   }
 }

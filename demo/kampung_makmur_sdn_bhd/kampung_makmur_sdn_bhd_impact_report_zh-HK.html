@@ -106,6 +106,43 @@
   --lvl-1: #184f95; --lvl-2: #256abf; --lvl-3: #3987e5; --lvl-4: #6da7ec; --lvl-5: #b7d3f6;
 }
 
+/* Paper is white. A report viewed in the dark theme (or on a dark-mode OS)
+ * must still print dark ink on a white page, so print always uses the light
+ * tokens. Keep this block last: it has to win over both dark selectors above. */
+@media print {
+  :root, :root[data-theme="dark"], :root:where(:not([data-theme="light"])) {
+    color-scheme: light;
+    --page: #f9f9f7;
+    --surface: #fcfcfb;
+    --surface-2: #f3f2ee;
+    --ink: #0b0b0b;
+    --ink-2: #52514e;
+    --muted: #6e6c66;
+    --grid: #e1e0d9;
+    --axis: #c3c2b7;
+    --border: rgba(11, 11, 11, 0.10);
+    --brand: #1c5cab;
+    --brand-ink: #ffffff;
+    --link: #1c5cab;
+    --series-1: #2a78d6;
+    --series-1-wash: rgba(42, 120, 214, 0.10);
+    --series-2: #eb6834;
+    --good: #0ca30c;
+    --good-ink: #006300;
+    --warning: #fab219;
+    --warning-ink: #7a5300;
+    --serious: #ec835a;
+    --serious-ink: #8f3b14;
+    --critical: #d03b3b;
+    --critical-ink: #a32424;
+    --good-wash: rgba(12, 163, 12, 0.10);
+    --warning-wash: rgba(250, 178, 25, 0.16);
+    --serious-wash: rgba(236, 131, 90, 0.14);
+    --critical-wash: rgba(208, 59, 59, 0.10);
+    --lvl-1: #86b6ef; --lvl-2: #5598e7; --lvl-3: #2a78d6; --lvl-4: #1c5cab; --lvl-5: #104281;
+  }
+}
+
 /* Impact Vision report components (v7 W2.1). Uses tokens.css only. */
 *, *::before, *::after { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
@@ -149,6 +186,7 @@ section[id] { scroll-margin-top: 16px; }
 .verdict .status { display: flex; align-items: center; gap: 10px; margin: 0 0 6px; }
 .verdict .status .icon { width: 28px; height: 28px; flex: none; }
 .verdict .status strong { font-size: 1.35rem; }
+.verdict .verdict-note { margin: 6px 0 0; font-weight: 600; }
 .verdict.good .status strong { color: var(--good-ink); }
 .verdict.warning .status strong { color: var(--warning-ink); }
 .verdict.serious .status strong { color: var(--serious-ink); }
@@ -396,11 +434,11 @@ details > summary { cursor: pointer; color: var(--link); font-size: 0.88rem; }
   .bars .bench { background: Highlight; }
 }
 </style>
-<meta name="generator" content="Impact Vision 0.19.1">
+<meta name="generator" content="Impact Vision 0.20.0">
 <meta name="iptc:digitalsourcetype" content="http://cv.iptc.org/newscodes/digitalsourcetype/algorithmicMedia">
 <meta name="ai-disclosure" content="Automated analysis: produced by rules and a deterministic scoring model; no generative AI was used. 3 of 22 scores are estimated from document text rather than reported metrics. Review before relying on it.">
 <meta name="ai-human-review" content="no">
-<script type="application/ld+json" id="ai-marking">{"@context": "https://schema.org", "@type": "Report", "creator": {"@type": "SoftwareApplication", "name": "Impact Vision 0.19.1"}, "digitalSourceType": "http://cv.iptc.org/newscodes/digitalsourcetype/algorithmicMedia", "description": "Automated analysis: produced by rules and a deterministic scoring model; no generative AI was used. 3 of 22 scores are estimated from document text rather than reported metrics. Review before relying on it."}</script>
+<script type="application/ld+json" id="ai-marking">{"@context": "https://schema.org", "@type": "Report", "creator": {"@type": "SoftwareApplication", "name": "Impact Vision 0.20.0"}, "digitalSourceType": "http://cv.iptc.org/newscodes/digitalsourcetype/algorithmicMedia", "description": "Automated analysis: produced by rules and a deterministic scoring model; no generative AI was used. 3 of 22 scores are estimated from document text rather than reported metrics. Review before relying on it."}</script>
 </head>
 <body>
 <a class="skip-link" href="#main">跳至報告</a>
@@ -413,13 +451,13 @@ details > summary { cursor: pointer; color: var(--link); font-size: 0.88rem; }
     <p class="eyebrow">影響評估</p>
     <h1>Kampung Makmur Sdn Bhd</h1>
     <p class="meta">
-      農業 · Malaysia · <span class="nw">生成日期 2026-10-09</span> · <span class="nw">IRIS+ 5.3c</span> · 來源：kampung_makmur_pig_farm.pdf    </p>
-    <p class="notice">機密——供內部投資及有限合夥人使用。 引用的聲明、盡職調查問題、建議及行業風險以原文顯示。</p>
+      農業 · Malaysia · <span class="nw">生成日期 2026-11-10</span> · <span class="nw">IRIS+ 5.3c</span> · 來源：kampung_makmur_pig_farm.pdf    </p>
+    <p class="notice">機密——供內部投資及有限合夥人使用。 公司的聲明及引文屬證據，以原文顯示；IRIS+ 指標名稱保留英文。</p>
     <p class="ai-badges" aria-label="人工智能及自動化披露"><span class="chip ai"><span class="dot" aria-hidden="true"></span>以規則擷取</span> <span class="chip ai"><span class="dot" aria-hidden="true"></span>3/22 項評分為估算</span> </p>
   </div>
   </div>
   <div style="display:flex;flex-direction:column;align-items:flex-end;gap:10px">
-<span class="pill warning">證據計劃</span>  </div>
+<span class="pill good">可提交</span>  </div>
 </header>
 
 <nav class="card no-print" aria-label="目錄">
@@ -427,14 +465,14 @@ details > summary { cursor: pointer; color: var(--link); font-size: 0.88rem; }
   <p class="small" style="margin:0"><a href="#sec-verdict">建議</a> · <a href="#sec-mind">甚麼會改變我們的判斷</a> · <a href="#sec-impact">預期影響</a> · <a href="#sec-glance">影響一覽</a> · <a href="#sec-5d">影響力五個維度</a> · <a href="#sec-sdg">可持續發展目標對應</a> · <a href="#sec-evidence">證據清單</a> · <a href="#sec-greenwashing">漂綠審查</a> · <a href="#sec-risks">風險與機遇</a> · <a href="#sec-actions">行動計劃</a> · <a href="#sec-appendix">方法及釋義</a></p>
 </nav>
 
-<section id="sec-verdict" class="card verdict warning" aria-labelledby="h-verdict">
+<section id="sec-verdict" class="card verdict good" aria-labelledby="h-verdict">
   <h2 id="h-verdict" class="small muted" style="margin:0 0 6px;font-size:0.82rem">建議</h2>
   <p class="status">
-    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="10.5" stroke-width="1.6"/><path d="M12 7v6" /><path d="M12 16.5v.5" /></svg>
-    <strong>需要證據計劃</strong>
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="10.5" stroke-width="1.6"/><path d="M7 12.5l3.2 3.2L17 9" /></svg>
+    <strong>可提交投資委員會</strong>
   </p>
-<p style="margin:0">這不是負面發現：以下證據計劃按對結論影響大小列出需要收集的資料。</p>  <ul class="why" aria-label="原因"><li>已報告 18% 核心指標（需要 40%）</li></ul>
-<p class="confidence">證據質素: 63/100 · 良好</p></section>
+<p style="margin:0">預期影響已量化，證據足以提交投資委員會。</p>  <ul class="why" aria-label="原因"><li>證據質素良好（63/100）</li><li>對人的影響 P50 61 按深度加權的人年</li><li>氣候影響 P50 859 噸二氧化碳當量</li></ul>
+<p class="verdict-note">可提交投委會，核心指標集已報告 18%。</p><p class="confidence">證據質素: 63/100 · 良好</p></section>
 
 <section class="kpis" aria-label="重點數字">
   <div class="tile">
@@ -641,7 +679,7 @@ details > summary { cursor: pointer; color: var(--link); font-size: 0.88rem; }
   <div class="table-wrap"><table class="claims"><colgroup><col class="c-claim"><col class="c-type"><col class="c-level"><col class="c-sig"><col class="c-metric"></colgroup>
     <caption>聲明（10）</caption>
     <thead><tr><th scope="col">聲明</th><th scope="col">類型</th><th scope="col" class="num">NESTA 級別</th><th scope="col">證據</th><th scope="col">指標</th></tr></thead>
-    <tbody><tr><td>Since 2022 we have reduced antibiotic use by 62% through vaccination and group-housing, and replaced 100% of conventional slatted housing with deep-litter, enrichment-enabled pens benchmarked against the EU Welfare Quality protocol. <small class="cite">第 3 頁</small></td><td>outcome</td><td class="num"><span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></td><td>—</td><td>—</td></tr><tr><td>Our biogas plant captures methane from manure lagoons and generates 1.8 GWh of electricity per year, replacing ~920 tonnes CO2e of grid emissions and cutting our grid electricity purchases by 74%. <small class="cite">第 4 頁</small></td><td>outcome</td><td class="num"><span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></td><td>—</td><td><span class="mref"><b>OI2496</b> <small>Energy Generated for Use: Renewable</small></span><span class="mref"><b>OI2764</b> <small>Greenhouse Gas Emissions Avoided</small></span></td></tr><tr><td>Water withdrawal per kg of live weight dropped 31% versus our 2020 baseline, independently verified by SIRIM. <small class="cite">第 4 頁</small></td><td>outcome</td><td class="num"><span class="pips" role="img" aria-label="NESTA 3/5"><i class="on lvl-3"></i><i class="on lvl-3"></i><i class="on lvl-3"></i><i class=""></i><i class=""></i></span></td><td><span class="sig"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>第三方核實</span><span class="sig"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>基線比較</span></td><td>—</td></tr><tr><td>We employ 142 staff, of whom 38% are women and 64% are from Kluang district; median wage is 42% above the Johor agricultural minimum and every worker is enrolled in SOCSO and EPF. <small class="cite">第 5 頁</small></td><td>outcome</td><td class="num"><span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></td><td>—</td><td><span class="mref"><b>OI8869</b> <small>Permanent Employees: Total</small></span><span class="mref"><b>OI6213</b> <small>Full-time Employees: Female</small></span></td></tr><tr><td>We run an outgrower programme with 18 smallholder piggeries, supplying feed and veterinary support at wholesale cost; participating smallholders report average income uplifts of RM 1,850 per month (baseline: RM 900). <small class="cite">第 5 頁</small></td><td>outcome</td><td class="num"><span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></td><td><span class="sig"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>基線比較</span></td><td><span class="mref"><b>PI9991</b> <small>Supplier Individuals: Smallholder</small></span></td></tr><tr><td>A 2024 randomized pilot with Universiti Putra Malaysia compared 120 outgrower households to a matched control group and found 23% higher household food-security scores and 17% higher child school attendance. <small class="cite">第 5 頁</small></td><td>outcome</td><td class="num"><span class="pips" role="img" aria-label="NESTA 3/5"><i class="on lvl-3"></i><i class="on lvl-3"></i><i class="on lvl-3"></i><i class=""></i><i class=""></i></span></td><td><span class="sig"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>對照評估</span></td><td>—</td></tr><tr><td>Over the next five years we target: 45% reduction in Scope 1+2 emissions intensity (kg CO2e / kg live weight); 80% of breeding sows in group-housing &gt;= 10 weeks after weaning; 35 outgrower households onboarded; and a SBTi near-term target submission by 2027. <small class="cite">第 5 頁</small></td><td>intent</td><td class="num"><span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></td><td>—</td><td>—</td></tr><tr><td>We are SEDEX-audited and have a 4-tier grievance mechanism. <small class="cite">第 5 頁</small></td><td>output</td><td class="num"><span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></td><td><span class="sig"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>已審計</span></td><td>—</td></tr><tr><td>Risks we actively manage include: (i) ASF biosecurity - all farms are fenced, SPF breeding stock, shower-in/out protocol, quarterly third-party audit by the Department of Veterinary Services; (ii) nutrient run-off during monsoon - on-site retention ponds sized to 1-in-100-year storm, automated ammonia sensors; (iii) community odour - a covered-lagoon retrofit was completed in Q3 2025 and the formal complaints rate has dropped from 14 to 2 per year. <small class="cite">第 6 頁</small></td><td>output</td><td class="num"><span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></td><td><span class="sig"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>已審計</span></td><td>—</td></tr><tr><td>We report against IRIS+, SDG 2/6/7/8/12/13, GRI standards, and have commissioned a first independent ESG audit for FY2026. <small class="cite">第 7 頁</small></td><td>output</td><td class="num"><span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></td><td><span class="sig"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>已審計</span></td><td>—</td></tr></tbody>
+    <tbody><tr><td>Since 2022 we have reduced antibiotic use by 62% through vaccination and group-housing, and replaced 100% of conventional slatted housing with deep-litter, enrichment-enabled pens benchmarked against the EU Welfare Quality protocol. <small class="cite">第 3 頁</small></td><td>成果</td><td class="num"><span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></td><td>—</td><td>—</td></tr><tr><td>Our biogas plant captures methane from manure lagoons and generates 1.8 GWh of electricity per year, replacing ~920 tonnes CO2e of grid emissions and cutting our grid electricity purchases by 74%. <small class="cite">第 4 頁</small></td><td>成果</td><td class="num"><span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></td><td>—</td><td><span class="mref"><b>OI2496</b> <small>Energy Generated for Use: Renewable</small></span><span class="mref"><b>OI2764</b> <small>Greenhouse Gas Emissions Avoided</small></span></td></tr><tr><td>Water withdrawal per kg of live weight dropped 31% versus our 2020 baseline, independently verified by SIRIM. <small class="cite">第 4 頁</small></td><td>成果</td><td class="num"><span class="pips" role="img" aria-label="NESTA 3/5"><i class="on lvl-3"></i><i class="on lvl-3"></i><i class="on lvl-3"></i><i class=""></i><i class=""></i></span></td><td><span class="sig"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>第三方核實</span><span class="sig"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>基線比較</span></td><td>—</td></tr><tr><td>We employ 142 staff, of whom 38% are women and 64% are from Kluang district; median wage is 42% above the Johor agricultural minimum and every worker is enrolled in SOCSO and EPF. <small class="cite">第 5 頁</small></td><td>成果</td><td class="num"><span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></td><td>—</td><td><span class="mref"><b>OI8869</b> <small>Permanent Employees: Total</small></span><span class="mref"><b>OI6213</b> <small>Full-time Employees: Female</small></span></td></tr><tr><td>We run an outgrower programme with 18 smallholder piggeries, supplying feed and veterinary support at wholesale cost; participating smallholders report average income uplifts of RM 1,850 per month (baseline: RM 900). <small class="cite">第 5 頁</small></td><td>成果</td><td class="num"><span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></td><td><span class="sig"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>基線比較</span></td><td><span class="mref"><b>PI9991</b> <small>Supplier Individuals: Smallholder</small></span></td></tr><tr><td>A 2024 randomized pilot with Universiti Putra Malaysia compared 120 outgrower households to a matched control group and found 23% higher household food-security scores and 17% higher child school attendance. <small class="cite">第 5 頁</small></td><td>成果</td><td class="num"><span class="pips" role="img" aria-label="NESTA 3/5"><i class="on lvl-3"></i><i class="on lvl-3"></i><i class="on lvl-3"></i><i class=""></i><i class=""></i></span></td><td><span class="sig"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>對照評估</span></td><td>—</td></tr><tr><td>Over the next five years we target: 45% reduction in Scope 1+2 emissions intensity (kg CO2e / kg live weight); 80% of breeding sows in group-housing &gt;= 10 weeks after weaning; 35 outgrower households onboarded; and a SBTi near-term target submission by 2027. <small class="cite">第 5 頁</small></td><td>目標／意向</td><td class="num"><span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></td><td>—</td><td>—</td></tr><tr><td>We are SEDEX-audited and have a 4-tier grievance mechanism. <small class="cite">第 5 頁</small></td><td>產出</td><td class="num"><span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></td><td><span class="sig"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>已審計</span></td><td>—</td></tr><tr><td>Risks we actively manage include: (i) ASF biosecurity - all farms are fenced, SPF breeding stock, shower-in/out protocol, quarterly third-party audit by the Department of Veterinary Services; (ii) nutrient run-off during monsoon - on-site retention ponds sized to 1-in-100-year storm, automated ammonia sensors; (iii) community odour - a covered-lagoon retrofit was completed in Q3 2025 and the formal complaints rate has dropped from 14 to 2 per year. <small class="cite">第 6 頁</small></td><td>產出</td><td class="num"><span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></td><td><span class="sig"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>已審計</span></td><td>—</td></tr><tr><td>We report against IRIS+, SDG 2/6/7/8/12/13, GRI standards, and have commissioned a first independent ESG audit for FY2026. <small class="cite">第 7 頁</small></td><td>產出</td><td class="num"><span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></td><td><span class="sig"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>已審計</span></td><td>—</td></tr></tbody>
   </table></div>
   <div class="table-wrap" style="margin-top:16px"><table>
     <caption>指標（5）</caption>
@@ -706,7 +744,7 @@ details > summary { cursor: pointer; color: var(--link); font-size: 0.88rem; }
 <section id="sec-appendix" class="card" aria-labelledby="h-appendix">
   <h2 id="h-appendix"><span class="h-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h10l4 4v12H5z"/><path d="M9 12h6M9 16h4"/></svg></span>方法及釋義</h2>
   <h3 class="small">本報告的編製方法</h3>
-  <ul class="small"><li>從文件擷取聲明，並按 NESTA 證據標準評級；只有在單位及語境明確時，才把數量對應至 IRIS+ 指標編號。</li><li>影響力五個維度評分（1–5）在有已報告指標時以指標為依據，否則以文件文字估算；證據標籤會註明。</li><li>可持續發展目標評分（0–100）結合目標專屬指標覆蓋、業務推斷及影響主題；跨領域指標權重較低。</li><li>漂綠風險權重：聲明欠缺指標（30%）、遺漏負面影響（20%）、措辭含糊（20%）、選擇性報告（15%）及未經核實（15%）。</li><li>投資委員會關卡套用基金論點的門檻；因資料缺失而未通過的項目列為證據不足，而非負面發現。</li><li>評分採用方法 v1.2.0（設定 ae3e77ecaccf）；兩者相同的報告才可直接比較。</li><li>預期影響（方法 2.1.0，illustrative）：覆蓋 × 深度 × 年期 × (1 − 無謂部分) × 貢獻比例 × 成功機會；每個因素的分佈取決於其 NESTA 證據等級；以 4000 次固定種子蒙地卡羅模擬得出 P10/P50/P90。證據質素及數據完整度另行列出，不會乘入影響值。</li></ul>
+  <ul class="small"><li>從文件擷取聲明，並按 NESTA 證據標準評級；只有在單位及語境明確時，才把數量對應至 IRIS+ 指標編號。</li><li>影響力五個維度評分（1–5）在有已報告指標時以指標為依據，否則以文件文字估算；證據標籤會註明。</li><li>可持續發展目標評分（0–100）結合目標專屬指標覆蓋、業務推斷及影響主題；跨領域指標權重較低。</li><li>漂綠風險權重：聲明欠缺指標（30%）、遺漏負面影響（20%）、措辭含糊（20%）、選擇性報告（15%）及未經核實（15%）。</li><li>投資委員會關卡套用基金論點的門檻；因資料缺失而未通過的項目列為證據不足，而非負面發現。</li><li>評分採用方法 v1.2.0（設定 e0d5e058eba0）；兩者相同的報告才可直接比較。</li><li>預期影響（方法 2.2.0，illustrative）：覆蓋 × 深度 × 年期 × (1 − 無謂部分) × 貢獻比例 × 成功機會；每個因素的分佈取決於其 NESTA 證據等級；以 4000 次固定種子蒙地卡羅模擬得出 P10/P50/P90。證據質素及數據完整度另行列出，不會乘入影響值。</li></ul>
   <h3 class="small" id="ai-disclosure">人工智能及自動化披露</h3>
   <p class="small">自動化分析：由規則及確定性評分模型產生，未有使用生成式人工智能。 22 項評分中有 3 項是根據文件文字估算，而非已報告指標。 依賴前請先審閱。</p>
   <div class="table-wrap"><table class="small">
@@ -719,7 +757,7 @@ details > summary { cursor: pointer; color: var(--link); font-size: 0.88rem; }
 
 <footer class="footer">
 <p style="margin:0 0 4px"><a href="#ai-disclosure">人工智能及自動化披露</a></p>
-  <p style="margin:0 0 4px">Methodology v1.2.0 · config ae3e77ecaccf</p>
+  <p style="margin:0 0 4px">方法 v2.2.0（預期影響、投資委員會關卡）· v1.2.0（五個維度、可持續發展目標、漂綠）· 設定 e0d5e058eba0</p>
 <p style="margin:0">由 Impact Vision 生成——開源影響力衡量工具。</p></footer>
 </main>
 <script>

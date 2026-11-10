@@ -5,13 +5,44 @@
   "gate": "EVIDENCE PLAN REQUIRED",
   "recommendation": "Compare with a group that did not get the product (a comparison group or a credible baseline), ideally run by someone independent.",
   "thesis_gate": "INSUFFICIENT EVIDENCE",
+  "fund_thesis": {
+    "name": "Example Climate Fund I",
+    "example": true
+  },
+  "suggested_conditions": [
+    {
+      "type": "condition_precedent",
+      "timing": "before closing",
+      "text": "Have the headline reach figure (85 women) verified by a third party.",
+      "basis": "Reach drives most of the remaining uncertainty.",
+      "source": "evidence plan"
+    },
+    {
+      "type": "covenant",
+      "timing": "study commissioned within 18 months of closing",
+      "text": "Compare with a group that did not get the product (a comparison group or a credible baseline), ideally run by someone independent.",
+      "basis": "Moves evidence from level 2 to 3, nets out deadweight and narrows the range (now \u00d710.6 from P10 to P90).",
+      "source": "evidence plan"
+    },
+    {
+      "type": "reporting",
+      "timing": "in each annual report",
+      "text": "Back the main figures with data: monitoring records, surveys or audited accounts.",
+      "basis": "Evidence quality is moderate (40/100).",
+      "source": "evidence plan"
+    }
+  ],
+  "exclusions": {
+    "passed": true,
+    "failures": []
+  },
   "expected_impact": {
     "kind": "people",
     "unit": "depth-weighted person-years",
-    "stakeholder": "clients",
-    "p10": 2660.902969056617,
-    "p50": 9032.479243613889,
-    "p90": 29542.621335105538,
+    "stakeholder": "women",
+    "p10": 5.03626374733707,
+    "p50": 17.1726789118833,
+    "p90": 53.53271625948728,
     "uncertainty": "wide"
   },
   "evidence_quality": 40,
@@ -55,9 +86,11 @@
   "files": [
     "brightpath_finance_impact_report.html",
     "brightpath_finance_ic_memo.html",
+    "brightpath_finance_ic_onepager.html",
     "brightpath_finance_dd_report.html",
     "brightpath_finance_impact_report.pdf",
     "brightpath_finance_ic_memo.pdf",
+    "brightpath_finance_ic_onepager.pdf",
     "brightpath_finance_ic_memo.docx",
     "brightpath_finance_dd_questionnaire.docx",
     "brightpath_finance_data.xlsx",
@@ -66,7 +99,7 @@
   "ai_disclosure": "Automated analysis: produced by rules and a deterministic scoring model; no generative AI was used. 2 of 21 scores are estimated from document text rather than reported metrics. Review before relying on it.",
   "ai_marking": {
     "digital_source_type": "http://cv.iptc.org/newscodes/digitalsourcetype/algorithmicMedia",
-    "generator": "Impact Vision 0.19.1",
+    "generator": "Impact Vision 0.20.0",
     "ai_generated": false,
     "machine_generated": true,
     "human_reviewed": false,
@@ -75,6 +108,7 @@
   },
   "methodology": {
     "methodology_version": "1.2.0",
-    "config_hash": "ae3e77ecaccf"
+    "config_hash": "e0d5e058eba0",
+    "expected_impact_version": "2.2.0"
   }
 }

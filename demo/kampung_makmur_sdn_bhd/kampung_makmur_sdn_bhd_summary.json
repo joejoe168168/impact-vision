@@ -2,9 +2,33 @@
   "company": "Kampung Makmur Sdn Bhd",
   "sector": "agriculture",
   "geography": "Malaysia",
-  "gate": "EVIDENCE PLAN REQUIRED",
+  "gate": "READY FOR IC",
   "recommendation": "Report the sector's core metrics: Payments to Supplier Individuals: Smallholder, Water Withdrawn, Waste Produced: Total.",
   "thesis_gate": "INSUFFICIENT EVIDENCE",
+  "fund_thesis": {
+    "name": "Example Climate Fund I",
+    "example": true
+  },
+  "suggested_conditions": [
+    {
+      "type": "covenant",
+      "timing": "reported every year",
+      "text": "Report progress against the company's own target: \u201cOver the next five years we target: 45% reduction in Scope 1+2 emissions intensity (kg CO2e / kg live weight); 80% of breeding sows in group-housing >= 10 weeks after weaning; 35 outgrower households onboarded; and a SBTi near-term target submission by 2027.\u201d",
+      "basis": "The company states this target; a covenant makes it binding rather than aspirational.",
+      "source": "stated target"
+    },
+    {
+      "type": "reporting",
+      "timing": "in each annual report",
+      "text": "Report the sector's core metrics: Payments to Supplier Individuals: Smallholder, Water Withdrawn, Waste Produced: Total.",
+      "basis": "Only 18% of the core set is reported.",
+      "source": "evidence plan"
+    }
+  ],
+  "exclusions": {
+    "passed": true,
+    "failures": []
+  },
   "expected_impact": {
     "kind": "people",
     "unit": "depth-weighted person-years",
@@ -52,9 +76,11 @@
   "files": [
     "kampung_makmur_sdn_bhd_impact_report.html",
     "kampung_makmur_sdn_bhd_ic_memo.html",
+    "kampung_makmur_sdn_bhd_ic_onepager.html",
     "kampung_makmur_sdn_bhd_dd_report.html",
     "kampung_makmur_sdn_bhd_impact_report.pdf",
     "kampung_makmur_sdn_bhd_ic_memo.pdf",
+    "kampung_makmur_sdn_bhd_ic_onepager.pdf",
     "kampung_makmur_sdn_bhd_ic_memo.docx",
     "kampung_makmur_sdn_bhd_dd_questionnaire.docx",
     "kampung_makmur_sdn_bhd_data.xlsx",
@@ -63,7 +89,7 @@
   "ai_disclosure": "Automated analysis: produced by rules and a deterministic scoring model; no generative AI was used. 3 of 22 scores are estimated from document text rather than reported metrics. Review before relying on it.",
   "ai_marking": {
     "digital_source_type": "http://cv.iptc.org/newscodes/digitalsourcetype/algorithmicMedia",
-    "generator": "Impact Vision 0.19.1",
+    "generator": "Impact Vision 0.20.0",
     "ai_generated": false,
     "machine_generated": true,
     "human_reviewed": false,
@@ -72,6 +98,7 @@
   },
   "methodology": {
     "methodology_version": "1.2.0",
-    "config_hash": "ae3e77ecaccf"
+    "config_hash": "e0d5e058eba0",
+    "expected_impact_version": "2.2.0"
   }
 }

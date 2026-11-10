@@ -106,6 +106,43 @@
   --lvl-1: #184f95; --lvl-2: #256abf; --lvl-3: #3987e5; --lvl-4: #6da7ec; --lvl-5: #b7d3f6;
 }
 
+/* Paper is white. A report viewed in the dark theme (or on a dark-mode OS)
+ * must still print dark ink on a white page, so print always uses the light
+ * tokens. Keep this block last: it has to win over both dark selectors above. */
+@media print {
+  :root, :root[data-theme="dark"], :root:where(:not([data-theme="light"])) {
+    color-scheme: light;
+    --page: #f9f9f7;
+    --surface: #fcfcfb;
+    --surface-2: #f3f2ee;
+    --ink: #0b0b0b;
+    --ink-2: #52514e;
+    --muted: #6e6c66;
+    --grid: #e1e0d9;
+    --axis: #c3c2b7;
+    --border: rgba(11, 11, 11, 0.10);
+    --brand: #1c5cab;
+    --brand-ink: #ffffff;
+    --link: #1c5cab;
+    --series-1: #2a78d6;
+    --series-1-wash: rgba(42, 120, 214, 0.10);
+    --series-2: #eb6834;
+    --good: #0ca30c;
+    --good-ink: #006300;
+    --warning: #fab219;
+    --warning-ink: #7a5300;
+    --serious: #ec835a;
+    --serious-ink: #8f3b14;
+    --critical: #d03b3b;
+    --critical-ink: #a32424;
+    --good-wash: rgba(12, 163, 12, 0.10);
+    --warning-wash: rgba(250, 178, 25, 0.16);
+    --serious-wash: rgba(236, 131, 90, 0.14);
+    --critical-wash: rgba(208, 59, 59, 0.10);
+    --lvl-1: #86b6ef; --lvl-2: #5598e7; --lvl-3: #2a78d6; --lvl-4: #1c5cab; --lvl-5: #104281;
+  }
+}
+
 /* Impact Vision report components (v7 W2.1). Uses tokens.css only. */
 *, *::before, *::after { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
@@ -149,6 +186,7 @@ section[id] { scroll-margin-top: 16px; }
 .verdict .status { display: flex; align-items: center; gap: 10px; margin: 0 0 6px; }
 .verdict .status .icon { width: 28px; height: 28px; flex: none; }
 .verdict .status strong { font-size: 1.35rem; }
+.verdict .verdict-note { margin: 6px 0 0; font-weight: 600; }
 .verdict.good .status strong { color: var(--good-ink); }
 .verdict.warning .status strong { color: var(--warning-ink); }
 .verdict.serious .status strong { color: var(--serious-ink); }
@@ -396,11 +434,11 @@ details > summary { cursor: pointer; color: var(--link); font-size: 0.88rem; }
   .bars .bench { background: Highlight; }
 }
 </style>
-<meta name="generator" content="Impact Vision 0.19.1">
+<meta name="generator" content="Impact Vision 0.20.0">
 <meta name="iptc:digitalsourcetype" content="http://cv.iptc.org/newscodes/digitalsourcetype/algorithmicMedia">
 <meta name="ai-disclosure" content="Automated analysis: produced by rules and a deterministic scoring model; no generative AI was used. 2 of 21 scores are estimated from document text rather than reported metrics. Review before relying on it.">
 <meta name="ai-human-review" content="no">
-<script type="application/ld+json" id="ai-marking">{"@context": "https://schema.org", "@type": "Report", "creator": {"@type": "SoftwareApplication", "name": "Impact Vision 0.19.1"}, "digitalSourceType": "http://cv.iptc.org/newscodes/digitalsourcetype/algorithmicMedia", "description": "Automated analysis: produced by rules and a deterministic scoring model; no generative AI was used. 2 of 21 scores are estimated from document text rather than reported metrics. Review before relying on it."}</script>
+<script type="application/ld+json" id="ai-marking">{"@context": "https://schema.org", "@type": "Report", "creator": {"@type": "SoftwareApplication", "name": "Impact Vision 0.20.0"}, "digitalSourceType": "http://cv.iptc.org/newscodes/digitalsourcetype/algorithmicMedia", "description": "Automated analysis: produced by rules and a deterministic scoring model; no generative AI was used. 2 of 21 scores are estimated from document text rather than reported metrics. Review before relying on it."}</script>
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to report</a>
@@ -413,7 +451,7 @@ details > summary { cursor: pointer; color: var(--link); font-size: 0.88rem; }
     <p class="eyebrow">Impact assessment</p>
     <h1>BrightPath Finance</h1>
     <p class="meta">
-      fintech · Sub-Saharan Africa · <span class="nw">Generated 2026-10-09</span> · <span class="nw">IRIS+ 5.3c</span> · Source: brightpath_microfinance.pdf    </p>
+      fintech · Sub-Saharan Africa · <span class="nw">Generated 2026-11-10</span> · <span class="nw">IRIS+ 5.3c</span> · Source: brightpath_microfinance.pdf    </p>
     <p class="notice">Confidential — prepared for internal investment and LP use.</p>
     <p class="ai-badges" aria-label="AI &amp; automation disclosure"><span class="chip ai"><span class="dot" aria-hidden="true"></span>Extracted by rules</span> <span class="chip ai"><span class="dot" aria-hidden="true"></span>2/21 scores estimated</span> </p>
   </div>
@@ -433,14 +471,14 @@ details > summary { cursor: pointer; color: var(--link); font-size: 0.88rem; }
     <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="10.5" stroke-width="1.6"/><path d="M12 7v6" /><path d="M12 16.5v.5" /></svg>
     <strong>Evidence plan required</strong>
   </p>
-<p style="margin:0">Not a negative finding: the evidence plan below lists what to collect, biggest effect on the answer first.</p>  <ul class="why" aria-label="Why"><li>evidence quality moderate (40/100, needs 60)</li></ul>
+<p style="margin:0">Not a negative finding: the evidence plan below lists what to collect, biggest effect on the answer first.</p>  <ul class="why" aria-label="Why"><li>evidence quality moderate (40/100, needs 60)</li><li>the range is too wide to decide on (x10.6 from P10 to P90, needs x8 or less)</li></ul>
 <p class="confidence">Evidence quality: 40/100 · moderate</p></section>
 
 <section class="kpis" aria-label="Headline numbers">
   <div class="tile">
     <p class="label">Expected impact</p>
-    <p class="value">9,000</p>
-    <p class="sub">depth-weighted person-years · P10 2,700 – P90 30,000</p>
+    <p class="value">17</p>
+    <p class="sub">depth-weighted person-years · P10 5 – P90 54</p>
   </div>
   <div class="tile">
     <p class="label">Evidence quality</p>
@@ -462,7 +500,7 @@ details > summary { cursor: pointer; color: var(--link); font-size: 0.88rem; }
 <section id="sec-mind" class="card" aria-labelledby="h-mind">
   <h2 id="h-mind"><span class="h-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0-3.5 10.9V16h7v-2.1A6 6 0 0 0 12 3z"/><path d="M9.5 19h5M10.5 21.5h3"/></svg></span>What would change our mind</h2>
   <p class="lede">The evidence that would narrow the range most, in order.</p>
-  <ol class="mind"><li><span class="what">Compare with a group that did not get the product (a comparison group or a credible baseline), ideally run by someone independent.</span><span class="why">Moves evidence from level 2 to 3, nets out deadweight and narrows the range (now ×11.1 from P10 to P90).</span></li><li><span class="what">Back the main figures with data: monitoring records, surveys or audited accounts.</span><span class="why">Evidence quality is moderate (40/100).</span></li></ol>
+  <ol class="mind"><li><span class="what">Compare with a group that did not get the product (a comparison group or a credible baseline), ideally run by someone independent.</span><span class="why">Moves evidence from level 2 to 3, nets out deadweight and narrows the range (now ×10.6 from P10 to P90).</span></li><li><span class="what">Have the headline reach figure (85 women) verified by a third party.</span><span class="why">Reach drives most of the remaining uncertainty.</span></li><li><span class="what">Back the main figures with data: monitoring records, surveys or audited accounts.</span><span class="why">Evidence quality is moderate (40/100).</span></li></ol>
 </section>
 
 <section id="sec-impact" class="card" aria-labelledby="h-impact">
@@ -472,25 +510,25 @@ details > summary { cursor: pointer; color: var(--link); font-size: 0.88rem; }
     <div class="eq"><p class="label">Evidence quality</p><p class="value">40<small>/100</small></p><p class="sub">moderate · NESTA 2</p></div>
 <div class="eq"><p class="label">Data completeness</p><p class="value">47<small>%</small></p><p class="sub">of the sector&#39;s core metrics reported</p></div>  </div>
   <div class="outcome">
-    <h3>People · clients</h3>
-    <p class="headline"><b>9,000</b> depth-weighted person-years</p>
-    <div class="range" role="img" aria-label="P10 2,700 · P50 9,000 · P90 30,000">
-      <span class="band" style="left:20.1%;width:59.800000000000004%"></span>
-      <span class="mid" style="left:50.5%"></span>
+    <h3>People · women</h3>
+    <p class="headline"><b>17</b> depth-weighted person-years</p>
+    <div class="range" role="img" aria-label="P10 5 · P50 17 · P90 54">
+      <span class="band" style="left:20.3%;width:59.400000000000006%"></span>
+      <span class="mid" style="left:51.1%"></span>
     </div>
-    <p class="range-labels"><span>P10 2,700</span><span>P50 9,000</span><span>P90 30,000</span></p>
-    <p class="small muted">wide uncertainty: P90 is ×11.1 the P10</p>
+    <p class="range-labels"><span>P10 5</span><span>P50 17</span><span>P90 54</span></p>
+    <p class="small muted">wide uncertainty: P90 is ×10.6 the P10</p>
     <div class="two-col">
       <div>
         <h4>What goes into it</h4>
         <table class="small factors"><caption class="sr-only">What goes into it</caption>
-          <tbody><tr><th scope="row">Reach</th><td class="num">45,000</td><td class="muted">45,000 clients reported (NESTA 2)</td></tr><tr><th scope="row">Depth of change</th><td class="num">32%</td><td class="muted">32% change reported (NESTA 2)</td></tr><tr><th scope="row">Duration (years)</th><td class="num">2</td><td class="muted">typical for fintech</td></tr><tr><th scope="row">Without deadweight</th><td class="num">70%</td><td class="muted">no comparison group: ~30% would have happened anyway</td></tr><tr><th scope="row">Attribution</th><td class="num">70%</td><td class="muted">share credited to the enterprise</td></tr><tr><th scope="row">Probability of success</th><td class="num">65%</td><td class="muted">evidence level 2</td></tr></tbody>
+          <tbody><tr><th scope="row">Reach</th><td class="num">85</td><td class="muted">85 women reported (NESTA 2); also reported, not the headline: 45,000 clients</td></tr><tr><th scope="row">Depth of change</th><td class="num">32%</td><td class="muted">32% change reported (NESTA 2)</td></tr><tr><th scope="row">Duration (years)</th><td class="num">2</td><td class="muted">typical for fintech</td></tr><tr><th scope="row">Without deadweight</th><td class="num">70%</td><td class="muted">no comparison group: ~30% would have happened anyway</td></tr><tr><th scope="row">Attribution</th><td class="num">70%</td><td class="muted">share credited to the enterprise</td></tr><tr><th scope="row">Probability of success</th><td class="num">65%</td><td class="muted">evidence level 2</td></tr></tbody>
         </table>
       </div>
       <div>
         <h4>What drives the uncertainty</h4>
-        <ul class="drivers"><li><span>Duration (years)</span><span class="track" aria-hidden="true"><span style="width:29%"></span></span><b>29%</b></li><li><span>Reach</span><span class="track" aria-hidden="true"><span style="width:29%"></span></span><b>29%</b></li><li><span>Depth of change</span><span class="track" aria-hidden="true"><span style="width:29%"></span></span><b>29%</b></li></ul>
-        <p class="quote small">“We serve 45,000 clients (PI4060: 45,000), 68% of them women.”<span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></p>
+        <ul class="drivers"><li><span>Reach</span><span class="track" aria-hidden="true"><span style="width:30%"></span></span><b>30%</b></li><li><span>Duration (years)</span><span class="track" aria-hidden="true"><span style="width:29%"></span></span><b>29%</b></li><li><span>Depth of change</span><span class="track" aria-hidden="true"><span style="width:29%"></span></span><b>29%</b></li></ul>
+        <p class="quote small">“We employ 180 permanent staff (OI8869: 180), including 85 women (OI6213: 85) and 12 female managers (OI1571: 12).”<span class="pips" role="img" aria-label="NESTA 2/5"><i class="on lvl-2"></i><i class="on lvl-2"></i><i class=""></i><i class=""></i><i class=""></i></span></p>
       </div>
     </div>
   </div>
@@ -652,6 +690,9 @@ details > summary { cursor: pointer; color: var(--link); font-size: 0.88rem; }
     <thead><tr><th scope="col">Negative impact</th><th scope="col" class="num">Severity</th><th scope="col" class="num">Likelihood</th><th scope="col">Materiality</th><th scope="col">Control in the documents</th></tr></thead>
     <tbody><tr><td>Clients become over-indebted<br><small class="muted">borrowers</small></td><td class="num">3/3</td><td class="num">1/3</td><td><span class="pill warning">3/9 · moderate</span></td><td>Described<br><small class="muted">“Over-indebtedness is our main client risk: we check credit bureau data, cap loan sizes against cash flow and train loan officers on responsible lending.”</small><br><small class="muted">“BrightPath Finance is a digital microfinance platform providing affordable credit and savings products to smallholder farmers and women-led micro-enterprises…”</small></td></tr><tr><td>Misuse or breach of clients&#39; personal and financial data<br><small class="muted">clients</small></td><td class="num">2/3</td><td class="num">1/3</td><td><span class="pill ">2/9 · low</span></td><td>Described<br><small class="muted">“Data privacy: client data is encrypted and we comply with Kenya&#39;s Data Protection Act.”</small></td></tr><tr><td>Opaque or abusive pricing and collection practices<br><small class="muted">borrowers</small></td><td class="num">2/3</td><td class="num">1/3</td><td><span class="pill ">2/9 · low</span></td><td>Described<br><small class="muted">“We have a published Client Protection Policy (OI4753) and run NPS surveys plus a grievance system (OI5049).”</small></td></tr></tbody>
   </table></div>
+  <h3 class="small" style="margin-top:16px">Exclusion-list topics the documents mention</h3>
+  <p class="lede">The company names these topics while denying, guarding against or replacing them. That is not a finding. Confirm each one in due diligence.</p>
+  <ul class="risks"><li><b>Predatory Lending</b><blockquote class="quote small" style="margin:4px 0">“Over-indebtedness is our main client risk: we check credit bureau data, cap loan sizes against cash flow and train loan officers on responsible lending.”</blockquote></li></ul>
   <div class="two-col">
     <div>
 <h3 class="small">Disclosed in the documents</h3>
@@ -675,7 +716,7 @@ details > summary { cursor: pointer; color: var(--link); font-size: 0.88rem; }
 <section id="sec-appendix" class="card" aria-labelledby="h-appendix">
   <h2 id="h-appendix"><span class="h-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h10l4 4v12H5z"/><path d="M9 12h6M9 16h4"/></svg></span>Methodology and definitions</h2>
   <h3 class="small">How this report was produced</h3>
-  <ul class="small"><li>Claims are extracted from the documents and graded on the NESTA standards of evidence; quantities are mapped to IRIS+ metric IDs only when unit and context are unambiguous.</li><li>Five Dimensions scores (1–5) come from reported metrics where available and from document text otherwise; the evidence label says which.</li><li>SDG scores (0–100) combine goal-specific metric coverage, inference from the business and impact themes; cross-cutting metrics count at reduced weight.</li><li>Greenwashing risk weights claim–metric gaps (30%), missing negative impacts (20%), vague language (20%), selective reporting (15%) and lack of verification (15%).</li><li>The IC gate applies the fund thesis thresholds; failures caused by missing data are reported as insufficient evidence, not as a negative finding.</li><li>Scores use methodology v1.2.0 (config ae3e77ecaccf); reports are comparable only when both match.</li><li>Expected impact (methodology 2.1.0, illustrative): reach × depth × duration × (1 − deadweight) × attribution × probability of success; each factor&#39;s spread follows its NESTA evidence level; 4000 seeded Monte Carlo draws give P10/P50/P90. Evidence quality and data completeness are reported separately, never multiplied in.</li></ul>
+  <ul class="small"><li>Claims are extracted from the documents and graded on the NESTA standards of evidence; quantities are mapped to IRIS+ metric IDs only when unit and context are unambiguous.</li><li>Five Dimensions scores (1–5) come from reported metrics where available and from document text otherwise; the evidence label says which.</li><li>SDG scores (0–100) combine goal-specific metric coverage, inference from the business and impact themes; cross-cutting metrics count at reduced weight.</li><li>Greenwashing risk weights claim–metric gaps (30%), missing negative impacts (20%), vague language (20%), selective reporting (15%) and lack of verification (15%).</li><li>The IC gate applies the fund thesis thresholds; failures caused by missing data are reported as insufficient evidence, not as a negative finding.</li><li>Scores use methodology v1.2.0 (config e0d5e058eba0); reports are comparable only when both match.</li><li>Expected impact (methodology 2.2.0, illustrative): reach × depth × duration × (1 − deadweight) × attribution × probability of success; each factor&#39;s spread follows its NESTA evidence level; 4000 seeded Monte Carlo draws give P10/P50/P90. Evidence quality and data completeness are reported separately, never multiplied in.</li></ul>
   <h3 class="small" id="ai-disclosure">AI &amp; automation disclosure</h3>
   <p class="small">Automated analysis: produced by rules and a deterministic scoring model; no generative AI was used. 2 of 21 scores are estimated from document text rather than reported metrics. Review before relying on it.</p>
   <div class="table-wrap"><table class="small">
@@ -683,12 +724,12 @@ details > summary { cursor: pointer; color: var(--link); font-size: 0.88rem; }
     <tbody><tr><th scope="row">Claim extraction</th><td>rules</td></tr><tr><th scope="row">Score calculation</th><td>deterministic model</td></tr><tr><th scope="row">Metric / SDG tagging</th><td>rules</td></tr><tr><th scope="row">Narrative drafting</th><td>not used</td></tr></tbody>
   </table></div>
   <p class="small muted">Disclosed under the EU AI Act Art 50 transparency rules.</p>
-  <h2 id="sec-glossary">Terms used in this report</h2><details class="glossary"><summary>Show definitions (14 terms)</summary><dl><dt>Impact claim</dt><dd>A statement in a pitch deck or report about the change a company creates (&quot;we connected 42,000 households&quot;). Impact Vision extracts each claim, maps it to a metric where possible and grades how well it is evidenced.</dd><dt>IRIS+</dt><dd>The Global Impact Investing Network&#x27;s catalogue of standard impact metrics (about 790 in version 5.3c), each with a short ID such as OI2764 for &quot;Greenhouse Gas Emissions Avoided&quot;. Using the same IDs makes results comparable across companies and funds.</dd><dt>Core metric set</dt><dd>The short list of IRIS+ metrics a company in a given sector should report. Coverage is the share of that list the company reports; Impact Vision picks the list by sector.</dd><dt>Five Dimensions of Impact (5D)</dt><dd>The Impact Management Project&#x27;s framework for describing impact: What outcome occurs, Who experiences it, How Much change (scale, depth, duration), the investor&#x27;s and company&#x27;s Contribution compared with what would have happened anyway, and the Risk that impact doesn&#x27;t happen. Impact Vision scores each dimension from 1 to 5.</dd><dt>Evidence-based / partial / estimated</dt><dd>How a score was derived. Evidence-based scores rest on several reported metrics; partial scores on a few; estimated scores only on the text of the documents. Treat estimated scores as a starting hypothesis, not a finding.</dd><dt>SDG alignment</dt><dd>How strongly the company&#x27;s activities and metrics relate to each of the 17 UN Sustainable Development Goals (0-100). A goal is &quot;material&quot; when the company claims it, its business clearly relates to it, or it reports a goal-specific metric; other goals are context only.</dd><dt>NESTA standards of evidence</dt><dd>A five-level scale for how strong evidence of impact is: 1 = a narrative, 2 = data showing change, 3 = a comparison or control group suggesting the company caused it, 4-5 = independent or replicated rigorous evaluations.</dd><dt>Third-party verification</dt><dd>An independent organisation (auditor, certifier, regulator) has checked a figure or practice. It raises confidence in a claim and lowers greenwashing risk.</dd><dt>Additionality</dt><dd>Whether the outcome would have happened anyway without the company or investor. Strong additionality means the impact depends on them.</dd><dt>Greenwashing (impact-washing) risk</dt><dd>A 0-100 score of how far a company&#x27;s claims run ahead of its evidence: vague language, claims without metrics, missing negative impacts, selective reporting and no verification. Below 60 it mostly reflects missing data; at 60 or above it is a finding in itself.</dd><dt>IC gate</dt><dd>The fund&#x27;s minimum thresholds before a deal goes to the investment committee (5D score, top SDG score, DD coverage, greenwashing risk, exclusions). &quot;Insufficient evidence&quot; means the failures are missing data; &quot;Fail&quot; means a negative finding.</dd><dt>Scope 1, 2 and 3 emissions</dt><dd>Greenhouse-gas emissions from a company&#x27;s own operations (Scope 1), from the energy it buys (Scope 2) and from its value chain (Scope 3), as defined by the GHG Protocol.</dd><dt>tCO2e</dt><dd>Tonnes of carbon-dioxide equivalent: a common unit that converts all greenhouse gases to the warming effect of CO2.</dd><dt>ESRS / CSRD / VSME</dt><dd>The EU sustainability reporting rules (CSRD) and their standards (ESRS). The revised ESRS became law in September 2026 and apply from 2027. VSME is the voluntary standard for smaller companies; from 2027 large reporters may not ask partners with up to 1,000 employees for more than VSME data.</dd></dl></details>
+  <h2 id="sec-glossary">Terms used in this report</h2><details class="glossary"><summary>Show definitions (15 terms)</summary><dl><dt>Impact claim</dt><dd>A statement in a pitch deck or report about the change a company creates (&quot;we connected 42,000 households&quot;). Impact Vision extracts each claim, maps it to a metric where possible and grades how well it is evidenced.</dd><dt>IRIS+</dt><dd>The Global Impact Investing Network&#x27;s catalogue of standard impact metrics (about 790 in version 5.3c), each with a short ID such as OI2764 for &quot;Greenhouse Gas Emissions Avoided&quot;. Using the same IDs makes results comparable across companies and funds.</dd><dt>Core metric set</dt><dd>The short list of IRIS+ metrics a company in a given sector should report. Coverage is the share of that list the company reports; Impact Vision picks the list by sector.</dd><dt>Five Dimensions of Impact (5D)</dt><dd>The Impact Management Project&#x27;s framework for describing impact: What outcome occurs, Who experiences it, How Much change (scale, depth, duration), the investor&#x27;s and company&#x27;s Contribution compared with what would have happened anyway, and the Risk that impact doesn&#x27;t happen. Impact Vision scores each dimension from 1 to 5.</dd><dt>Evidence-based / partial / estimated</dt><dd>How a score was derived. Evidence-based scores rest on several reported metrics; partial scores on a few; estimated scores only on the text of the documents. Treat estimated scores as a starting hypothesis, not a finding.</dd><dt>SDG alignment</dt><dd>How strongly the company&#x27;s activities and metrics relate to each of the 17 UN Sustainable Development Goals (0-100). A goal is &quot;material&quot; when the company claims it, its business clearly relates to it, or it reports a goal-specific metric; other goals are context only.</dd><dt>NESTA standards of evidence</dt><dd>A five-level scale for how strong evidence of impact is: 1 = a narrative, 2 = data showing change, 3 = a comparison or control group suggesting the company caused it, 4-5 = independent or replicated rigorous evaluations.</dd><dt>Third-party verification</dt><dd>An independent organisation (auditor, certifier, regulator) has checked a figure or practice. It raises confidence in a claim and lowers greenwashing risk.</dd><dt>Additionality</dt><dd>Whether the outcome would have happened anyway without the company or investor. Strong additionality means the impact depends on them.</dd><dt>Greenwashing (impact-washing) risk</dt><dd>A 0-100 score of how far a company&#x27;s claims run ahead of its evidence: vague language, claims without metrics, missing negative impacts, selective reporting and no verification. Below 60 it mostly reflects missing data; at 60 or above it is a finding in itself.</dd><dt>Due diligence (DD) coverage</dt><dd>The share of the impact due-diligence questions (universal plus the company&#x27;s sector) that the documents already answer. Low coverage means more questions to ask, not a bad company.</dd><dt>IC gate</dt><dd>The fund&#x27;s minimum thresholds before a deal goes to the investment committee (5D score, top SDG score, DD coverage, greenwashing risk, exclusions). &quot;Insufficient evidence&quot; means the failures are missing data; &quot;Fail&quot; means a negative finding.</dd><dt>Scope 1, 2 and 3 emissions</dt><dd>Greenhouse-gas emissions from a company&#x27;s own operations (Scope 1), from the energy it buys (Scope 2) and from its value chain (Scope 3), as defined by the GHG Protocol.</dd><dt>tCO2e</dt><dd>Tonnes of carbon-dioxide equivalent: a common unit that converts all greenhouse gases to the warming effect of CO2.</dd><dt>ESRS / CSRD / VSME</dt><dd>The EU sustainability reporting rules (CSRD) and their standards (ESRS). The revised ESRS became law in September 2026 and apply from 2027. VSME is the voluntary standard for smaller companies; from 2027 large reporters may not ask partners with up to 1,000 employees for more than VSME data.</dd></dl></details>
 </section>
 
 <footer class="footer">
 <p style="margin:0 0 4px"><a href="#ai-disclosure">AI &amp; automation disclosure</a></p>
-  <p style="margin:0 0 4px">Methodology v1.2.0 · config ae3e77ecaccf</p>
+  <p style="margin:0 0 4px">Methodology v2.2.0 (expected impact, IC gate) · v1.2.0 (5D, SDG, greenwashing) · config e0d5e058eba0</p>
 <p style="margin:0">Generated by Impact Vision — open-source impact measurement.</p></footer>
 </main>
 <script>

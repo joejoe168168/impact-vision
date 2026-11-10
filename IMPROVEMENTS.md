@@ -256,8 +256,9 @@ Not run: the frontend TypeScript check (no frontend files changed), `pip-audit`,
 
 - **Every report's config hash changes once** (commit `468da25` widens what is hashed, and `v2.yaml` gained
   two blocks). Reports made before and after this branch are not comparable by stamp.
-- **`demo/` was not regenerated.** Its committed HTML / JSON still show the old stamp and lack the new
-  sections. Run `python demo/generate_demo.py` at release.
+- **`demo/` was regenerated for 0.20.0** (stamp v2.2.0, one-pagers added). The `.venv` metadata is a
+  stale 0.16.0 stub, so it was run with a temporary dist-info shim on `PYTHONPATH` (in `/tmp`, nothing
+  in `.venv` changed) so the artefacts say "Impact Vision 0.20.0".
 - **Scores did not move** on the three sample decks, the 10 golden decks or the 30 held-out decks. The fixes
   change results only for decks that deny evidence, state a goal as reach, give a running total of tonnes,
   or contradict themselves.
@@ -268,4 +269,6 @@ Not run: the frontend TypeScript check (no frontend files changed), `pip-audit`,
   `axe-playwright-python`, `python-docx`, `python-pptx` and `opencc-python-reimplemented` (all already
   named by the project's extras or build script) to run the visual, Office and phrasebook paths.
 - `AGENTS.md` is still at 0.17.1 wording (22 framework modules); `CLAUDE.md` and `README.md` are current.
-- Version and release: `pyproject.toml` is still 0.19.1 and the CHANGELOG entries sit under "Unreleased".
+- Version and release: **0.20.0** (methodology 2.2.0) in `pyproject.toml`, `CLAUDE.md`, `AGENTS.md`
+  (release line only), `docs/roadmap-v8.md` and `CHANGELOG.md` `[0.20.0] - 2026-11-10`. `uv.lock` still
+  records the editable package as 0.16.0, as it did for 0.17–0.19; not touched.

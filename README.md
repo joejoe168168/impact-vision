@@ -84,13 +84,12 @@ browser chat or the `assess_deal` agent tool. Impact Vision will:
 6. **Give a verdict**: *Ready for IC*, *Evidence plan required* (with what to
    collect first) or *Fails thesis* — only for something found, never for
    missing data.
-7. **Write the deliverables**:
+7. **Write the deliverables** (English, or 繁體中文 / 简体中文 with `--lang zh-HK|zh-CN`):
    - decision-first impact report (HTML/PDF), in IC, LP, public and regulator
      editions;
-   - IC memo (HTML/PDF/Word);
+   - IC memo (HTML/PDF/Word) and an IC one-pager (`*_ic_onepager.html`, one A4 page);
    - DD questionnaire (HTML/Word);
-   - JSON summary;
-   - XLSX / CSV / iXBRL exports.
+   - JSON summary and XLSX / CSV / iXBRL exports.
 
    Every output states how AI and automation were used and carries the
    scoring methodology version, so two reports are comparable at a glance.
@@ -142,6 +141,7 @@ then run `playwright install chromium`), `[tui]` and `[all]`. If
 impact-vision demo                                     # sample decks → reports + gallery
 impact-vision assess deck.pdf --open                   # your own deck or memo
 impact-vision assess memo.pdf --sector agriculture --audience lp --lang zh-HK --pdf -o reports/
+impact-vision compare a.pdf b.pdf                      # deals side by side: ranges, evidence, verdict; no winner
 impact-vision catalog search "climate"                 # 787 IRIS+ metrics, bundled
 impact-vision framework xref OI4112                    # metric across frameworks
 impact-vision dd analyze memo.txt --sector energy      # DD coverage for a document
@@ -419,8 +419,8 @@ subcommand groups, two quickstart commands and four service commands. Run any co
 
 ```bash
 impact-vision demo [--deck pig-farm|solar|microfinance|all] [--no-open]   # no-key quickstart
-impact-vision assess deck.pdf [--sector S] [--audience full|ic|lp|regulator|public] [--thesis fund.yaml] [--lang zh-HK] [-o DIR] [--json] [--open] [--pdf]
-impact-vision compare a.pdf b.pdf [c.pdf] [-o DIR] [--json]   # deals side by side, no composite score
+impact-vision assess deck.pdf [--sector S] [--audience full|ic|lp|regulator|public] [--thesis fund.yaml] [--lang zh-HK|zh-CN] [-o DIR] [--json] [--open] [--pdf]
+impact-vision compare a.pdf b.pdf [c.pdf] [-o DIR] [--json]   # comparison.html/.json; no composite, no winner; per-US$1m when the deck states its raise
 
 # Interactive agent
 impact-vision                              # Start interactive agent session
@@ -617,7 +617,7 @@ cross-references to IRIS+ metric IDs via the shared
 | | Sector Benchmarks | 18 sectors (GIIN survey data) with aggregated 5D scores and coverage |
 | | Cross-Reference Mapping | 61 concepts mapped across IRIS+/GRI/EDCI/SFDR PAI/SASB/TCFD/ESRS/ISSB/PCAF/SBTi/TNFD/CDP/EU Taxonomy |
 | **ESG disclosure** | SASB | 17 industries, 77+ material topics |
-| | GRI | 34 standards (Universal + Topic), 120+ disclosures |
+| | GRI | 34 standards (Universal + Topic), 120+ disclosures; successors applied by date: GRI 101 Biodiversity 2024 (from 2026), GRI 102 Climate Change / 103 Energy 2025 (from 2027) (v0.20) |
 | | TCFD / IFRS S2 | 4 pillars, 11 disclosures, scenario analysis, Scope 1/2/3 |
 | | EDCI | 2026 PE/VC KPI fields, including non-core cybersecurity testing |
 | | UNPRI | 6 Principles, 27 actions |
@@ -632,7 +632,7 @@ cross-references to IRIS+ metric IDs via the shared
 | | SFDR 2.0 preview | Sustainable / Transition / ESG Basics preview (Commission, Council or Parliament text; 70% threshold, exclusions, "impact"-wording check against ToC + measured outcomes; proposed law, ~2029) |
 | | EU Omnibus I scope | CSRD/CSDDD in-scope decision tree (employee + turnover thresholds, FY2025-26 pause, VSME fallback) |
 | | CSDDD / HRDD | UNGP + OECD 6-step value-chain human-rights due diligence (salience ranking, grievance score, remediation tracker, readiness band) |
-| | EU Taxonomy | 6 environmental objectives, DNSH + Minimum Safeguards |
+| | EU Taxonomy | 6 environmental objectives, DNSH + Minimum Safeguards; (EU) 2026/73 simplification (10 % materiality threshold); `framework_assess` `eu_taxonomy` (v0.20) |
 | | UK FCA Anti-Greenwashing Rule | Fair/clear/not-misleading assessment |
 | | EU green claims (ECGT 2024/825) | Likely ECGT/UCPD breaches (generic claims, offset-based neutrality, unplanned future claims) in `greenwashing_detect`; shelved-GCD tests as best practice |
 | | HKEX ESG Code · Hong Kong Taxonomy | Appendix C2 gap check of a report: Part B, Part C A1–A3 / B1–B8 KPIs (met, explained or silent), Part D climate by issuer type, en / zh-HK. HKMA Taxonomy: eligibility candidates from text + alignment % (Phase 1 / 2A; 2B flagged as consultation) |
@@ -640,7 +640,7 @@ cross-references to IRIS+ metric IDs via the shared
 | | EU Digital Product Passport (ESPR) | Import + map to IRIS+/ESRS/SDG |
 | | Per-jurisdiction packs | EU-SFDR, EU-CSRD, EU-CSDDD, UK-FCA-SDR, US-SEC-ESG, HK-HKEX-ESG, AU-AASB-S2, ISSB-global; deadline calendars for 10 jurisdictions incl. Hong Kong; China profile with the MoF Basic and Climate No. 1 (Trial) standards (v0.19) |
 | **Climate & nature** | PCAF | Financed-emissions attribution, sector defaults, weighted data quality; Dec-2025 Part A update (new asset classes; undrawn commitments and avoided emissions reported separately) (v0.19) |
-| | SBTi (Net-Zero Standard v1.2) | 1.5 °C pathway, Scope-3 materiality, 2050 cap |
+| | SBTi (Corporate Net-Zero Standard) | 1.5 °C pathway, Scope-3 materiality, 2050 cap (V1 thresholds); names the versions accepted on the day (V1.3.1; V2.0 from 2027-02-01); `framework_assess` `sbti` (v0.20) |
 | | TNFD v1 | 14 LEAP / pillar disclosures (now feeding the ISSB nature Practice Statement) |
 | | CDP | Climate / water / forests questionnaire intake + readiness screen (`framework_assess`) |
 | | GHG Protocol | Scope 1/2 inventory (Scope 3 via PCAF) with versioned factor catalog; Scope 3 method recorded per inventory (v0.19) |
@@ -675,7 +675,7 @@ tool's description and the counts quoted in these docs, is in
 | Pre-screen & core assessment | `pitch_deck_analyze`, `iris_catalog`, `sdg_mapper`, `five_dimension_assess`, `gap_analysis`, `impact_metric_recommender`, `impact_data_quality` |
 | Due diligence & evidence | `dd_checklist`, `product_passport` |
 | Risk & credibility | `greenwashing_detect` (incl. EU ECGT, UK FCA), `impact_risk_opportunity`, `exclusion_screening` |
-| Frameworks & reporting | `framework_assess` (incl. VSME, HK Taxonomy, HKEX ESG Code, HKFRS S1, SFDR 2.0), `esg_toolbox`, `cross_reference`, `impact_report`, `impact_valuation` |
+| Frameworks & reporting | `framework_assess` (incl. VSME, HK Taxonomy, EU Taxonomy, SBTi, HKEX ESG Code, HKFRS S1, SFDR 2.0), `esg_toolbox`, `cross_reference`, `impact_report`, `impact_valuation` |
 | Decisions & deadlines | `decision_workflow`, `regulatory_calendar` |
 | Portfolio | `portfolio_analyze`, `portfolio_query`, `pipeline`, `monitoring`, `trend_analysis` |
 | Stakeholder voice & narrative | `stakeholder_voice`, `improvement_advisor`, `lp_narrative` |

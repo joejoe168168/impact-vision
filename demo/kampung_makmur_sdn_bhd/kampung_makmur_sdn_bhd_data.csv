@@ -1,8 +1,8 @@
-Section,Metric,Value,Details,Numeric,Max,Unit
+﻿Section,Metric,Value,Details,Numeric,Max,Unit
 Company,Name,Kampung Makmur Sdn Bhd,,,,
-Company,Generated,2026-10-09T09:37:38Z,,,,
+Company,Generated,2026-11-10T06:54:08Z,,,,
 Company,AI disclosure,Automated analysis: produced by rules and a deterministic scoring model; no generative AI was used. 3 of 22 scores are estimated from document text rather than reported metrics. Review before relying on it.,,,,
-Company,Methodology,1.2.0,config ae3e77ecaccf,,,
+Company,Methodology,1.2.0,config e0d5e058eba0,,,
 5D,Overall Grade,C,1.9/5.0,1.9,5,score
 5D,What,2.3/5.0,2 metrics reported · 1 of 25 reference metrics,2.3,5,score
 5D,Who,2.5/5.0,3 metrics reported · 1 of 10 reference metrics,2.5,5,score
@@ -55,3 +55,20 @@ Claim,intent,Over the next five years we target: 45% reduction in Scope 1+2 emis
 Claim,output,We are SEDEX-audited and have a 4-tier grievance mechanism.,metrics: ,,,
 Claim,output,"Risks we actively manage include: (i) ASF biosecurity - all farms are fenced, SPF breeding stock, shower-in/out protocol, quarterly third-party audit by the Department of Veterinary Services; (ii) nutrient run-off during monsoon - on-site retention ponds sized to 1-in-100-year storm, automated ammonia sensors; (iii) community odour - a covered-lagoon retrofit was completed in Q3 2025 and the formal complaints rate has dropped from 14 to 2 per year.",metrics: ,,,
 Claim,output,"We report against IRIS+, SDG 2/6/7/8/12/13, GRI standards, and have commissioned a first independent ESG audit for FY2026.",metrics: ,,,
+Expected impact,IC gate,Ready for IC,evidence quality good (63/100); people impact P50 61 depth-weighted person-years; climate impact P50 859 tCO2e,,,
+Expected impact,People · households P10,25.7,moderate uncertainty · evidence level 3,25.7,,depth-weighted person-years
+Expected impact,People · households P50,61.1,moderate uncertainty · evidence level 3,61.1,,depth-weighted person-years
+Expected impact,People · households P90,142.5,moderate uncertainty · evidence level 3,142.5,,depth-weighted person-years
+Expected impact,Climate · tCO2e P10,304.6,wide uncertainty · evidence level 2,304.6,,tCO2e
+Expected impact,Climate · tCO2e P50,858.5,wide uncertainty · evidence level 2,858.5,,tCO2e
+Expected impact,Climate · tCO2e P90,2294.2,wide uncertainty · evidence level 2,2294.2,,tCO2e
+Expected impact,Evidence quality,63/100,good,63,100,score
+Expected impact,Data completeness,17.6%,share of the sector's core metrics reported,17.6,100,%
+Expected impact,Methodology,2.2.0,config 1522f7ece889 · illustrative,,,
+Evidence plan,Step 1,"Report the sector's core metrics: Payments to Supplier Individuals: Smallholder, Water Withdrawn, Waste Produced: Total.",Only 18% of the core set is reported.,,,
+Negative impact,Land conversion or deforestation in the supply base,medium,severity 3 × likelihood 1 · no control described · affects ecosystems,3,9,score
+Negative impact,Antibiotic overuse drives antimicrobial resistance,medium,severity 3 × likelihood 1 · control described · affects public health,3,9,score
+Negative impact,"Manure, run-off or pesticides pollute soil and water",medium,"severity 3 × likelihood 1 · control described · affects communities, ecosystems",3,9,score
+Negative impact,Water abstraction stresses local sources,low,"severity 2 × likelihood 1 · control described · affects communities, ecosystems",2,9,score
+Contribution,Enterprise,75/100,evidence level 3,75,100,score
+Contribution,Investor,0/100,,0,100,score

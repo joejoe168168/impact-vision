@@ -11,17 +11,65 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
-Work from the 0.19.1 review (`IMPROVEMENTS.md`).
+Open from the 0.19.1 review (`IMPROVEMENTS.md`, `TECH_SPEC.md` Part 4): SBTi Corporate Net-Zero
+Standard V2.0 numerical criteria (not encoded until read at the source), EU Taxonomy NACE hints to
+YAML, and the remaining C / U / R / F items.
+
+## [0.20.0] - 2026-11-10 - Methodology 2.2.0 (the gate can say "ready")
+
+Work from the 0.19.1 review (`IMPROVEMENTS.md`). A methodology release: scores and verdicts move for
+the reasons listed under "Breaking", so the release ships alone.
+
+**Held-out evaluation (30 decks):** facts F1 0.83 → 0.844 (recall 76 % → 78 %; Chinese numerals in
+huanxin_recycle_hk and lvtian_nongye_cn), verdict 90 % → 97 % (edupath_in and nilegrid_eg, labelled ready,
+are now ready; per-class recall ready 2/2, evidence plan 23/23, fails thesis 4/5). Sector, geography, SDG
+and greenwashing unchanged. Baseline in `tests/golden/heldout/baseline.json`.
+
+### Breaking
+- **Methodology 2.2.0** (`data/methodology/v2.yaml`, dated comment). **The IC gate can say "Ready for
+  IC".** Core-metric completeness is no longer a gate condition (it is disclosure, not evidence): a ready
+  verdict carries a note ("Ready, with 18% of the core metric set reported.") shown on the report's verdict
+  card, in the IC memo and on the one-pager, and keeps a reporting item in its evidence plan. Two evidence
+  conditions replace it: the headline figure must show change (NESTA level 2+, `min_headline_level`) and its
+  P10–P90 range must be no wider than ×8 (`max_spread`). The pig-farm sample is now Ready for IC. Every
+  report's stamp reads v2.2.0 and its config hash changes once.
+- **`decision_workflow.compare_deals`** (agent tool `decision_workflow`, action `deal_compare`; SDK
+  `compare_deals`) no longer returns `winner` or uses the `5D × 20 − risk × 0.25` composite. It delegates to
+  `impact/compare.py` and returns `deals`, `outcome_kinds` and range-overlap `notes`; `dimension_deltas`,
+  `sdg_top_scores`, `greenwashing_risk` and `tradeoffs` stay as descriptive fields.
+- `impact/i18n.py`: `get_report_strings` and `get_system_prompt_preamble` (never called) are removed with
+  `data/i18n/report_strings.yaml` and `system_prompts.yaml`. `data/i18n/dd_checklist_zh.yaml` is replaced by
+  `dd_checklist_zh-CN.yaml` (its ids did not match the checklist).
 
 ### Added
+- **zh-HK and zh-CN IC memo and DD report.** `--lang zh-HK` / `--lang zh-CN` now gives a Chinese memo and DD
+  report: headings, ledes, verdict, KPI tiles, gate detail, suggested conditions, footer stamp and AI
+  disclosure, and all 122 DD questions and follow-ups (new `dd_checklist_zh-HK.yaml` /
+  `dd_checklist_zh-CN.yaml`, keyed by question id). Company names, claims and quotes, and IRIS+ metric
+  names stay verbatim. zh-CN is derived from the zh-HK source by `scripts/build_phrasebook.py`.
 - **Deal comparison (F2):** `impact-vision compare a.pdf b.pdf [c.pdf]` puts deals side by side: verdict,
   expected impact P50 and P10–P90 per outcome kind (never summed or ranked across kinds), evidence quality,
   greenwashing, top negative impact and open plan items. No composite and no winner; where two ranges overlap
   the table says the deals cannot be told apart. Writes `comparison.html` and `comparison.json`; `--json` prints it.
-  `impact.compare.compare_bundles` is the API. `decision_workflow.compare_deals` still has its composite.
+  `impact.compare.compare_bundles` is the API; `decision_workflow.compare_deals` now uses it. The per-US$1m
+  figure is filled when the deck states its raise (`expected_impact["ask"]`) and left blank otherwise.
 - **IC one-pager (F3):** `assess` also writes `<stem>_ic_onepager.html` (and a PDF with `--pdf`): one A4 page
   with the verdict, expected impact and range bar, up to three reasons and conditions, the top negative impact
-  and whether a control is described, evidence quality, and the methodology stamp and AI disclosure.
+  and whether a control is described, evidence quality, and the methodology stamp and AI disclosure. Labels
+  come from the shared string table (en / zh-HK / zh-CN); a Chromium test checks it prints on exactly one page.
+- **Share links (U4):** a shared report opens with "Shared read-only · expires YYYY-MM-DD" (translated: 唯讀分享 /
+  只读分享); every view is written to the audit trail (browser family only, link previews counted apart);
+  `GET /reports/{id}/shares` lists links and `DELETE /reports/{id}/shares/{jti}` withdraws one (410 page).
+  The withdrawn and invalid-link pages follow the link's language. The web UI reuses one live link per
+  edition, language and validity (`reuse` on `POST /reports/{id}/share`) instead of minting one per click.
+- **Framework packs (R6 / R7):** sourced `data/frameworks/updates.yaml`. GRI 101 Biodiversity 2024 replaces
+  GRI 304 from 2026-01-01; GRI 102 Climate Change 2025 (305-1…305-5, 201-2) and GRI 103 Energy 2025 (GRI 302)
+  from 2027-01-01 — `gri.get_gri_standards(on=)` and the GRI matcher apply them by date. The SBTi check cites
+  the Net-Zero Standard versions accepted on the day (V1.3.1 until 2028-01-31, V2.0 from 2027-02-01) and says
+  it applies the V1 thresholds (V2.0's are not encoded). The EU Taxonomy check cites (EU) 2026/73 and flags
+  activities below its 10 % materiality threshold. `framework_assess` gains `eu_taxonomy` and `sbti`.
+  Standards-registry rows for GRI 101–103, SBTi CNZS V1.3.1 / V2.0 and the EU Taxonomy; new registry status
+  `published` (issued, not yet in force).
 - **HKEX ESG Code gap check:** `impact-vision framework hkex-esg report.pdf --issuer largecap | main_board | gem`
   checks a report against Listing Rules Appendix C2: Part B (mandatory), Part C aspects A1–A3 and B1–B8 with
   their KPIs (met, explained or silent) and Part D climate, whose basis follows the issuer type. English or
@@ -34,7 +82,7 @@ Work from the 0.19.1 review (`IMPROVEMENTS.md`).
   Council's 15 % taxonomy-alignment floors recorded; the PCAF registry row matches the Dec-2025 code; the
   EU-SFDR and HK-HKEX-ESG packs carry their legal basis and source.
 - **The methodology stamp names what produced the verdict.** Footers, the summary and the exports now show
-  both versions ("v2.1.0 (expected impact, IC gate) · v1.2.0 (5D, SDG, greenwashing)"), and the config hash
+  both versions ("v2.2.0 (expected impact, IC gate) · v1.2.0 (5D, SDG, greenwashing)"), and the config hash
   also covers `methodology/v2.yaml`, the contribution rubric and the negative-impact catalogue. Editing any of
   them now changes the stamp. **The config hash of every report changes with this release.**
 - **The DD checklist grades evidence on the NESTA ladder used everywhere else.** An RCT is level 3
@@ -81,6 +129,10 @@ Work from the 0.19.1 review (`IMPROVEMENTS.md`).
   note no longer says recommendations stay in English (they have been translated since 0.19.0). The zh-CN
   phrasebook uses mainland wording (衡量, 什么, 受益, 关联, “ ”) instead of Hong Kong usage.
 - `bayes.fold` counted no contradicting evidence when given a generator.
+- **Parsing (C5b).** Headline reach is chosen by stakeholder, not size ("5,000 farmers" over "900,000 users
+  registered"); other stakeholders' figures are shown on the Reach basis line. "0.21 SD" is an effect size,
+  not 21 %. "12 000 households" (space as thousands separator), "Cohort of 2023 120 students" and Chinese
+  numerals ("3.2 萬名長者", "三千名學生") are read correctly — now also by the regex claim extractor.
 - **Dark-theme reports print dark ink on white paper.** The masthead and cards used to print white on white.
 - The data CSV starts with a byte-order mark, so Excel shows Chinese text correctly. The dashboard's portfolio
   upload accepts Excel's "CSV UTF-8".

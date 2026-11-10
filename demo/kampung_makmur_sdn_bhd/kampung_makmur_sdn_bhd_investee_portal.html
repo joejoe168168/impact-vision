@@ -99,6 +99,43 @@
   --lvl-1: #184f95; --lvl-2: #256abf; --lvl-3: #3987e5; --lvl-4: #6da7ec; --lvl-5: #b7d3f6;
 }
 
+/* Paper is white. A report viewed in the dark theme (or on a dark-mode OS)
+ * must still print dark ink on a white page, so print always uses the light
+ * tokens. Keep this block last: it has to win over both dark selectors above. */
+@media print {
+  :root, :root[data-theme="dark"], :root:where(:not([data-theme="light"])) {
+    color-scheme: light;
+    --page: #f9f9f7;
+    --surface: #fcfcfb;
+    --surface-2: #f3f2ee;
+    --ink: #0b0b0b;
+    --ink-2: #52514e;
+    --muted: #6e6c66;
+    --grid: #e1e0d9;
+    --axis: #c3c2b7;
+    --border: rgba(11, 11, 11, 0.10);
+    --brand: #1c5cab;
+    --brand-ink: #ffffff;
+    --link: #1c5cab;
+    --series-1: #2a78d6;
+    --series-1-wash: rgba(42, 120, 214, 0.10);
+    --series-2: #eb6834;
+    --good: #0ca30c;
+    --good-ink: #006300;
+    --warning: #fab219;
+    --warning-ink: #7a5300;
+    --serious: #ec835a;
+    --serious-ink: #8f3b14;
+    --critical: #d03b3b;
+    --critical-ink: #a32424;
+    --good-wash: rgba(12, 163, 12, 0.10);
+    --warning-wash: rgba(250, 178, 25, 0.16);
+    --serious-wash: rgba(236, 131, 90, 0.14);
+    --critical-wash: rgba(208, 59, 59, 0.10);
+    --lvl-1: #86b6ef; --lvl-2: #5598e7; --lvl-3: #2a78d6; --lvl-4: #1c5cab; --lvl-5: #104281;
+  }
+}
+
 
 /* v7 W2.1: the v2 deliverables (IC memo, DD report, investee portal) alias
    their variable names onto the shared design tokens (design/tokens.css), so

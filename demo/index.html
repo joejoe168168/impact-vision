@@ -105,6 +105,43 @@
   --lvl-1: #184f95; --lvl-2: #256abf; --lvl-3: #3987e5; --lvl-4: #6da7ec; --lvl-5: #b7d3f6;
 }
 
+/* Paper is white. A report viewed in the dark theme (or on a dark-mode OS)
+ * must still print dark ink on a white page, so print always uses the light
+ * tokens. Keep this block last: it has to win over both dark selectors above. */
+@media print {
+  :root, :root[data-theme="dark"], :root:where(:not([data-theme="light"])) {
+    color-scheme: light;
+    --page: #f9f9f7;
+    --surface: #fcfcfb;
+    --surface-2: #f3f2ee;
+    --ink: #0b0b0b;
+    --ink-2: #52514e;
+    --muted: #6e6c66;
+    --grid: #e1e0d9;
+    --axis: #c3c2b7;
+    --border: rgba(11, 11, 11, 0.10);
+    --brand: #1c5cab;
+    --brand-ink: #ffffff;
+    --link: #1c5cab;
+    --series-1: #2a78d6;
+    --series-1-wash: rgba(42, 120, 214, 0.10);
+    --series-2: #eb6834;
+    --good: #0ca30c;
+    --good-ink: #006300;
+    --warning: #fab219;
+    --warning-ink: #7a5300;
+    --serious: #ec835a;
+    --serious-ink: #8f3b14;
+    --critical: #d03b3b;
+    --critical-ink: #a32424;
+    --good-wash: rgba(12, 163, 12, 0.10);
+    --warning-wash: rgba(250, 178, 25, 0.16);
+    --serious-wash: rgba(236, 131, 90, 0.14);
+    --critical-wash: rgba(208, 59, 59, 0.10);
+    --lvl-1: #86b6ef; --lvl-2: #5598e7; --lvl-3: #2a78d6; --lvl-4: #1c5cab; --lvl-5: #104281;
+  }
+}
+
 /* Impact Vision report components (v7 W2.1). Uses tokens.css only. */
 *, *::before, *::after { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
@@ -148,6 +185,7 @@ section[id] { scroll-margin-top: 16px; }
 .verdict .status { display: flex; align-items: center; gap: 10px; margin: 0 0 6px; }
 .verdict .status .icon { width: 28px; height: 28px; flex: none; }
 .verdict .status strong { font-size: 1.35rem; }
+.verdict .verdict-note { margin: 6px 0 0; font-weight: 600; }
 .verdict.good .status strong { color: var(--good-ink); }
 .verdict.warning .status strong { color: var(--warning-ink); }
 .verdict.serious .status strong { color: var(--serious-ink); }
@@ -434,7 +472,7 @@ details > summary { cursor: pointer; color: var(--link); font-size: 0.88rem; }
       <div class="monogram" aria-hidden="true" style="width:44px;height:44px;font-size:1rem">KM</div>
       <div><h2>Kampung Makmur Sdn Bhd</h2><p class="meta">agriculture · Malaysia</p></div>
     </header>
-    <span class="pill " style="align-self:flex-start">Evidence Plan Required</span>
+    <span class="pill " style="align-self:flex-start">Ready For Ic</span>
     <div class="gstats">
       <div class="gstat"><p class="label">5 Dimensions</p><p class="value big">1.9<small class="muted">/5</small></p>
         <div class="meter" aria-hidden="true"><div class="fill" style="width:38.0%"></div></div></div>
@@ -445,7 +483,7 @@ details > summary { cursor: pointer; color: var(--link); font-size: 0.88rem; }
     </div>
     <div>
       <p class="links-label">Deliverables</p>
-      <nav class="links" aria-label="Kampung Makmur Sdn Bhd — Deliverables"><a href="kampung_makmur_sdn_bhd/kampung_makmur_sdn_bhd_impact_report.html"><span class="kind">HTML</span>Impact report</a><a href="kampung_makmur_sdn_bhd/kampung_makmur_sdn_bhd_ic_memo.html"><span class="kind">HTML</span>IC memo</a><a href="kampung_makmur_sdn_bhd/kampung_makmur_sdn_bhd_dd_report.html"><span class="kind">HTML</span>DD report</a><a href="kampung_makmur_sdn_bhd/kampung_makmur_sdn_bhd_impact_report.pdf"><span class="kind">PDF</span>Impact report</a><a href="kampung_makmur_sdn_bhd/kampung_makmur_sdn_bhd_ic_memo.pdf"><span class="kind">PDF</span>IC memo</a><a href="kampung_makmur_sdn_bhd/kampung_makmur_sdn_bhd_ic_memo.docx"><span class="kind">DOCX</span>IC memo</a><a href="kampung_makmur_sdn_bhd/kampung_makmur_sdn_bhd_dd_questionnaire.docx"><span class="kind">DOCX</span>DD questionnaire</a><a href="kampung_makmur_sdn_bhd/kampung_makmur_sdn_bhd_data.xlsx"><span class="kind">XLSX</span>Data</a><a href="kampung_makmur_sdn_bhd/kampung_makmur_sdn_bhd_data.csv"><span class="kind">CSV</span>Data</a><a href="kampung_makmur_sdn_bhd/kampung_makmur_sdn_bhd_summary.json"><span class="kind">JSON</span>Summary</a></nav>
+      <nav class="links" aria-label="Kampung Makmur Sdn Bhd — Deliverables"><a href="kampung_makmur_sdn_bhd/kampung_makmur_sdn_bhd_impact_report.html"><span class="kind">HTML</span>Impact report</a><a href="kampung_makmur_sdn_bhd/kampung_makmur_sdn_bhd_ic_memo.html"><span class="kind">HTML</span>IC memo</a><a href="kampung_makmur_sdn_bhd/kampung_makmur_sdn_bhd_ic_onepager.html"><span class="kind">HTML</span>IC one-pager</a><a href="kampung_makmur_sdn_bhd/kampung_makmur_sdn_bhd_dd_report.html"><span class="kind">HTML</span>DD report</a><a href="kampung_makmur_sdn_bhd/kampung_makmur_sdn_bhd_impact_report.pdf"><span class="kind">PDF</span>Impact report</a><a href="kampung_makmur_sdn_bhd/kampung_makmur_sdn_bhd_ic_memo.pdf"><span class="kind">PDF</span>IC memo</a><a href="kampung_makmur_sdn_bhd/kampung_makmur_sdn_bhd_ic_onepager.pdf"><span class="kind">PDF</span>IC one-pager</a><a href="kampung_makmur_sdn_bhd/kampung_makmur_sdn_bhd_ic_memo.docx"><span class="kind">DOCX</span>IC memo</a><a href="kampung_makmur_sdn_bhd/kampung_makmur_sdn_bhd_dd_questionnaire.docx"><span class="kind">DOCX</span>DD questionnaire</a><a href="kampung_makmur_sdn_bhd/kampung_makmur_sdn_bhd_data.xlsx"><span class="kind">XLSX</span>Data</a><a href="kampung_makmur_sdn_bhd/kampung_makmur_sdn_bhd_data.csv"><span class="kind">CSV</span>Data</a><a href="kampung_makmur_sdn_bhd/kampung_makmur_sdn_bhd_summary.json"><span class="kind">JSON</span>Summary</a></nav>
     </div>
     <div>
       <p class="links-label">Variants</p>
@@ -468,7 +506,7 @@ details > summary { cursor: pointer; color: var(--link); font-size: 0.88rem; }
     </div>
     <div>
       <p class="links-label">Deliverables</p>
-      <nav class="links" aria-label="SunPath Energy Ltd — Deliverables"><a href="sunpath_energy_ltd/sunpath_energy_ltd_impact_report.html"><span class="kind">HTML</span>Impact report</a><a href="sunpath_energy_ltd/sunpath_energy_ltd_ic_memo.html"><span class="kind">HTML</span>IC memo</a><a href="sunpath_energy_ltd/sunpath_energy_ltd_dd_report.html"><span class="kind">HTML</span>DD report</a><a href="sunpath_energy_ltd/sunpath_energy_ltd_impact_report.pdf"><span class="kind">PDF</span>Impact report</a><a href="sunpath_energy_ltd/sunpath_energy_ltd_ic_memo.pdf"><span class="kind">PDF</span>IC memo</a><a href="sunpath_energy_ltd/sunpath_energy_ltd_ic_memo.docx"><span class="kind">DOCX</span>IC memo</a><a href="sunpath_energy_ltd/sunpath_energy_ltd_dd_questionnaire.docx"><span class="kind">DOCX</span>DD questionnaire</a><a href="sunpath_energy_ltd/sunpath_energy_ltd_data.xlsx"><span class="kind">XLSX</span>Data</a><a href="sunpath_energy_ltd/sunpath_energy_ltd_data.csv"><span class="kind">CSV</span>Data</a><a href="sunpath_energy_ltd/sunpath_energy_ltd_summary.json"><span class="kind">JSON</span>Summary</a></nav>
+      <nav class="links" aria-label="SunPath Energy Ltd — Deliverables"><a href="sunpath_energy_ltd/sunpath_energy_ltd_impact_report.html"><span class="kind">HTML</span>Impact report</a><a href="sunpath_energy_ltd/sunpath_energy_ltd_ic_memo.html"><span class="kind">HTML</span>IC memo</a><a href="sunpath_energy_ltd/sunpath_energy_ltd_ic_onepager.html"><span class="kind">HTML</span>IC one-pager</a><a href="sunpath_energy_ltd/sunpath_energy_ltd_dd_report.html"><span class="kind">HTML</span>DD report</a><a href="sunpath_energy_ltd/sunpath_energy_ltd_impact_report.pdf"><span class="kind">PDF</span>Impact report</a><a href="sunpath_energy_ltd/sunpath_energy_ltd_ic_memo.pdf"><span class="kind">PDF</span>IC memo</a><a href="sunpath_energy_ltd/sunpath_energy_ltd_ic_onepager.pdf"><span class="kind">PDF</span>IC one-pager</a><a href="sunpath_energy_ltd/sunpath_energy_ltd_ic_memo.docx"><span class="kind">DOCX</span>IC memo</a><a href="sunpath_energy_ltd/sunpath_energy_ltd_dd_questionnaire.docx"><span class="kind">DOCX</span>DD questionnaire</a><a href="sunpath_energy_ltd/sunpath_energy_ltd_data.xlsx"><span class="kind">XLSX</span>Data</a><a href="sunpath_energy_ltd/sunpath_energy_ltd_data.csv"><span class="kind">CSV</span>Data</a><a href="sunpath_energy_ltd/sunpath_energy_ltd_summary.json"><span class="kind">JSON</span>Summary</a></nav>
     </div>
   </article>
   <article class="gcard">
@@ -487,7 +525,7 @@ details > summary { cursor: pointer; color: var(--link); font-size: 0.88rem; }
     </div>
     <div>
       <p class="links-label">Deliverables</p>
-      <nav class="links" aria-label="BrightPath Finance — Deliverables"><a href="brightpath_finance/brightpath_finance_impact_report.html"><span class="kind">HTML</span>Impact report</a><a href="brightpath_finance/brightpath_finance_ic_memo.html"><span class="kind">HTML</span>IC memo</a><a href="brightpath_finance/brightpath_finance_dd_report.html"><span class="kind">HTML</span>DD report</a><a href="brightpath_finance/brightpath_finance_impact_report.pdf"><span class="kind">PDF</span>Impact report</a><a href="brightpath_finance/brightpath_finance_ic_memo.pdf"><span class="kind">PDF</span>IC memo</a><a href="brightpath_finance/brightpath_finance_ic_memo.docx"><span class="kind">DOCX</span>IC memo</a><a href="brightpath_finance/brightpath_finance_dd_questionnaire.docx"><span class="kind">DOCX</span>DD questionnaire</a><a href="brightpath_finance/brightpath_finance_data.xlsx"><span class="kind">XLSX</span>Data</a><a href="brightpath_finance/brightpath_finance_data.csv"><span class="kind">CSV</span>Data</a><a href="brightpath_finance/brightpath_finance_summary.json"><span class="kind">JSON</span>Summary</a></nav>
+      <nav class="links" aria-label="BrightPath Finance — Deliverables"><a href="brightpath_finance/brightpath_finance_impact_report.html"><span class="kind">HTML</span>Impact report</a><a href="brightpath_finance/brightpath_finance_ic_memo.html"><span class="kind">HTML</span>IC memo</a><a href="brightpath_finance/brightpath_finance_ic_onepager.html"><span class="kind">HTML</span>IC one-pager</a><a href="brightpath_finance/brightpath_finance_dd_report.html"><span class="kind">HTML</span>DD report</a><a href="brightpath_finance/brightpath_finance_impact_report.pdf"><span class="kind">PDF</span>Impact report</a><a href="brightpath_finance/brightpath_finance_ic_memo.pdf"><span class="kind">PDF</span>IC memo</a><a href="brightpath_finance/brightpath_finance_ic_onepager.pdf"><span class="kind">PDF</span>IC one-pager</a><a href="brightpath_finance/brightpath_finance_ic_memo.docx"><span class="kind">DOCX</span>IC memo</a><a href="brightpath_finance/brightpath_finance_dd_questionnaire.docx"><span class="kind">DOCX</span>DD questionnaire</a><a href="brightpath_finance/brightpath_finance_data.xlsx"><span class="kind">XLSX</span>Data</a><a href="brightpath_finance/brightpath_finance_data.csv"><span class="kind">CSV</span>Data</a><a href="brightpath_finance/brightpath_finance_summary.json"><span class="kind">JSON</span>Summary</a></nav>
     </div>
   </article>
 </div>

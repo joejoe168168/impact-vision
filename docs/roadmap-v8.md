@@ -341,7 +341,8 @@ to be fixed on other documents and never by tuning on this set:
 - Three greenwashers with no data are not flagged as greenwashing findings,
   although two still fail the thesis.
 - Strong evidence (an RCT, a verified comparison group) still gives "evidence
-  plan" rather than "ready" when core-metric coverage is low.
+  plan" rather than "ready" when core-metric coverage is low. *(Fixed in 0.20.0:
+  methodology 2.2.0; held-out verdict 97 %, facts F1 0.844.)*
 
 - **0.19.1:**
   - **W2.6:** calibration toolkit (blind packets, Krippendorff's α checked against the published
@@ -350,6 +351,10 @@ to be fixed on other documents and never by tuning on this set:
   - **W3.5:** read-only connectors (data room, Google Drive, SharePoint, Affinity, DealCloud).
   - **Wave 4:** reviewer sign-off for AI Act Art 50; China MoF profile; PCAF Dec-2025 update;
     HKFRS S1 gap tool; Scope 3 method flag; ILPA template on the watchlist.
+- **0.20.0 (2026-11-10):** methodology 2.2.0 — the IC gate can say "ready" (completeness is a note);
+    zh-HK / zh-CN IC memo and DD report; `impact-vision compare`; IC one-pager; share links with notice,
+    view audit and revocation; parsing fixes; GRI 101–103, SBTi version window and EU Taxonomy 2026/73
+    pack updates. Release notes in `CHANGELOG.md`; the review behind it in `IMPROVEMENTS.md`.
 
 **Still to do (needs people, keys or final texts)**
 - **W2.6:** the study is ready to run. The 57-deck corpus and the rater kit (`impact-vision

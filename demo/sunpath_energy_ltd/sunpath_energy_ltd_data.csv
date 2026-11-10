@@ -1,8 +1,8 @@
-Section,Metric,Value,Details,Numeric,Max,Unit
+﻿Section,Metric,Value,Details,Numeric,Max,Unit
 Company,Name,SunPath Energy Ltd,,,,
-Company,Generated,2026-10-09T09:37:46Z,,,,
+Company,Generated,2026-11-10T06:54:19Z,,,,
 Company,AI disclosure,Automated analysis: produced by rules and a deterministic scoring model; no generative AI was used. 2 of 21 scores are estimated from document text rather than reported metrics. Review before relying on it.,,,,
-Company,Methodology,1.2.0,config ae3e77ecaccf,,,
+Company,Methodology,1.2.0,config e0d5e058eba0,,,
 5D,Overall Grade,C+,2.0/5.0,2.0,5,score
 5D,What,2.5/5.0,1 metric reported · 1 of 16 reference metrics,2.5,5,score
 5D,Who,2.5/5.0,3 metrics reported · 0 of 1 reference metrics,2.5,5,score
@@ -51,3 +51,23 @@ Claim,outcome,A 2025 study by an independent evaluator compared customers with a
 Claim,outcome,Over-indebtedness: we cap instalments at 10% of estimated household income and offer payment holidays after crop failures.,metrics: ,,,
 Claim,intent,"Over the next three years we target 150,000 connected households and 80,000 tCO2e avoided per year, and we report against IRIS+, SDG 7/1/13 and the GOGLA impact metrics.",metrics: ,,,
 Claim,output,Our carbon methodology is verified by a third-party auditor under Gold Standard rules.,metrics: ,,,
+Expected impact,IC gate,Evidence plan required,"evidence quality moderate (57/100, needs 60)",,,
+Expected impact,People · households P10,8280.5,wide uncertainty · evidence level 2,8280.5,,depth-weighted person-years
+Expected impact,People · households P50,21497.4,wide uncertainty · evidence level 2,21497.4,,depth-weighted person-years
+Expected impact,People · households P90,56519.7,wide uncertainty · evidence level 2,56519.7,,depth-weighted person-years
+Expected impact,Climate · tCO2e P10,12438.3,wide uncertainty · evidence level 2,12438.3,,tCO2e
+Expected impact,Climate · tCO2e P50,31598.3,wide uncertainty · evidence level 2,31598.3,,tCO2e
+Expected impact,Climate · tCO2e P90,81445.5,wide uncertainty · evidence level 2,81445.5,,tCO2e
+Expected impact,Evidence quality,57/100,moderate,57,100,score
+Expected impact,Data completeness,17.6%,share of the sector's core metrics reported,17.6,100,%
+Expected impact,Methodology,2.2.0,config 1522f7ece889 · illustrative,,,
+Evidence plan,Step 1,"Have the headline reach figure (42,000 households) verified by a third party.",Reach drives most of the remaining uncertainty.,,,
+Evidence plan,Step 2,"Report the sector's core metrics: Energy Generated for Sale: Renewable, Energy Capacity of Products Sold, Client Feedback System.",Only 18% of the core set is reported.,,,
+Evidence plan,Step 3,"Back the main figures with data: monitoring records, surveys or audited accounts.",Evidence quality is moderate (57/100).,,,
+Evidence plan,Step 4,Show how you manage: forced or child labour in the polysilicon / mineral supply chain (affects supply-chain workers).,Material negative impact (severity 3 × likelihood 2) with no control described in the documents.,,,
+Negative impact,Forced or child labour in the polysilicon / mineral supply chain,high,severity 3 × likelihood 2 · no control described · affects supply-chain workers,6,9,score
+Negative impact,End-of-life batteries and panels become hazardous e-waste,medium,"severity 2 × likelihood 2 · control described · affects communities, environment",4,9,score
+Negative impact,Pay-as-you-go customers fall into arrears or lose the asset,low,severity 2 × likelihood 1 · control described · affects low-income customers,2,9,score
+Exclusion,Predatory Lending,to confirm,Over-indebtedness: we cap instalments at 10% of estimated household income and offer payment holidays after crop failures.,,,
+Contribution,Enterprise,45/100,evidence level 2,45,100,score
+Contribution,Investor,0/100,,0,100,score

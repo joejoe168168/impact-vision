@@ -105,6 +105,43 @@
   --lvl-1: #184f95; --lvl-2: #256abf; --lvl-3: #3987e5; --lvl-4: #6da7ec; --lvl-5: #b7d3f6;
 }
 
+/* Paper is white. A report viewed in the dark theme (or on a dark-mode OS)
+ * must still print dark ink on a white page, so print always uses the light
+ * tokens. Keep this block last: it has to win over both dark selectors above. */
+@media print {
+  :root, :root[data-theme="dark"], :root:where(:not([data-theme="light"])) {
+    color-scheme: light;
+    --page: #f9f9f7;
+    --surface: #fcfcfb;
+    --surface-2: #f3f2ee;
+    --ink: #0b0b0b;
+    --ink-2: #52514e;
+    --muted: #6e6c66;
+    --grid: #e1e0d9;
+    --axis: #c3c2b7;
+    --border: rgba(11, 11, 11, 0.10);
+    --brand: #1c5cab;
+    --brand-ink: #ffffff;
+    --link: #1c5cab;
+    --series-1: #2a78d6;
+    --series-1-wash: rgba(42, 120, 214, 0.10);
+    --series-2: #eb6834;
+    --good: #0ca30c;
+    --good-ink: #006300;
+    --warning: #fab219;
+    --warning-ink: #7a5300;
+    --serious: #ec835a;
+    --serious-ink: #8f3b14;
+    --critical: #d03b3b;
+    --critical-ink: #a32424;
+    --good-wash: rgba(12, 163, 12, 0.10);
+    --warning-wash: rgba(250, 178, 25, 0.16);
+    --serious-wash: rgba(236, 131, 90, 0.14);
+    --critical-wash: rgba(208, 59, 59, 0.10);
+    --lvl-1: #86b6ef; --lvl-2: #5598e7; --lvl-3: #2a78d6; --lvl-4: #1c5cab; --lvl-5: #104281;
+  }
+}
+
 /* Impact Vision report components (v7 W2.1). Uses tokens.css only. */
 *, *::before, *::after { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
@@ -148,6 +185,7 @@ section[id] { scroll-margin-top: 16px; }
 .verdict .status { display: flex; align-items: center; gap: 10px; margin: 0 0 6px; }
 .verdict .status .icon { width: 28px; height: 28px; flex: none; }
 .verdict .status strong { font-size: 1.35rem; }
+.verdict .verdict-note { margin: 6px 0 0; font-weight: 600; }
 .verdict.good .status strong { color: var(--good-ink); }
 .verdict.warning .status strong { color: var(--warning-ink); }
 .verdict.serious .status strong { color: var(--serious-ink); }
@@ -440,11 +478,11 @@ table.heat .gap { width: 10px; min-width: 10px; padding: 0; background: none; }
 .co-link { color: inherit; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 </style>
-<meta name="generator" content="Impact Vision 0.19.1">
+<meta name="generator" content="Impact Vision 0.20.0">
 <meta name="iptc:digitalsourcetype" content="http://cv.iptc.org/newscodes/digitalsourcetype/algorithmicMedia">
 <meta name="ai-disclosure" content="Machine-generated document: produced automatically from the supplied inputs; it may contain automatically extracted or estimated figures. Review before relying on it.">
 <meta name="ai-human-review" content="no">
-<script type="application/ld+json" id="ai-marking">{"@context": "https://schema.org", "@type": "Report", "creator": {"@type": "SoftwareApplication", "name": "Impact Vision 0.19.1"}, "digitalSourceType": "http://cv.iptc.org/newscodes/digitalsourcetype/algorithmicMedia", "description": "Machine-generated document: produced automatically from the supplied inputs; it may contain automatically extracted or estimated figures. Review before relying on it."}</script>
+<script type="application/ld+json" id="ai-marking">{"@context": "https://schema.org", "@type": "Report", "creator": {"@type": "SoftwareApplication", "name": "Impact Vision 0.20.0"}, "digitalSourceType": "http://cv.iptc.org/newscodes/digitalsourcetype/algorithmicMedia", "description": "Machine-generated document: produced automatically from the supplied inputs; it may contain automatically extracted or estimated figures. Review before relying on it."}</script>
 </head>
 <body>
 <main class="doc">
@@ -454,7 +492,7 @@ table.heat .gap { width: 10px; min-width: 10px; padding: 0; background: none; }
     <div>
       <p class="eyebrow">Portfolio home</p>
       <h1>Meridian Impact Partners (fictional)</h1>
-      <p class="meta">As of 2026-10-09 · 3 companies · deadlines for HK</p>
+      <p class="meta">As of 2026-11-10 · 3 companies · deadlines for HK</p>
     </div>
   </div>
 </header>
@@ -467,13 +505,13 @@ table.heat .gap { width: 10px; min-width: 10px; padding: 0; background: none; }
   </div>
   <div class="tile kpi">
     <p class="label">Expected impact</p>
-    <p class="value">31,000</p>
+    <p class="value">22,000</p>
     <p class="sub muted">depth-weighted person-years · sum of pipeline P50s</p>
   </div>
   <div class="tile kpi">
     <p class="label">IC-ready</p>
-    <p class="value">0/3</p>
-    <p class="sub muted">3 on an evidence plan</p>
+    <p class="value">1/3</p>
+    <p class="sub muted">2 on an evidence plan</p>
   </div>
   <div class="tile kpi">
     <p class="label">Greenwashing flags</p>
@@ -491,17 +529,17 @@ table.heat .gap { width: 10px; min-width: 10px; padding: 0; background: none; }
   <section class="card" id="sec-pipeline" aria-labelledby="h-pipeline">
     <h2 id="h-pipeline">Pipeline by IC gate</h2>
     <p class="lede">Where each assessed company stands against the fund thesis.</p>
-    <div class="stack" role="img" aria-label="IC-ready: 0, Conditional: 0, Evidence plan: 3, Do not proceed: 0">
-<span class="warning" style="flex:3"></span>    </div>
+    <div class="stack" role="img" aria-label="IC-ready: 1, Conditional: 0, Evidence plan: 2, Do not proceed: 0">
+<span class="good" style="flex:1"></span><span class="warning" style="flex:2"></span>    </div>
     <ul class="legend">
-<li><span class="sw good"></span>IC-ready <strong>0</strong></li><li><span class="sw warning"></span>Conditional <strong>0</strong></li><li><span class="sw warning"></span>Evidence plan <strong>3</strong></li><li><span class="sw critical"></span>Do not proceed <strong>0</strong></li>    </ul>
+<li><span class="sw good"></span>IC-ready <strong>1</strong></li><li><span class="sw warning"></span>Conditional <strong>0</strong></li><li><span class="sw warning"></span>Evidence plan <strong>2</strong></li><li><span class="sw critical"></span>Do not proceed <strong>0</strong></li>    </ul>
   </section>
 
   <section class="card" id="sec-attention" aria-labelledby="h-attention">
     <h2 id="h-attention">Needs attention</h2>
     <p class="lede">Stale assessments, missing data and greenwashing flags.</p>
     <ul class="list">
-<li><span class="pill warning" style="flex:none">BrightPath Finance</span><span class="what">Evidence plan required: held back by missing data, not a negative finding</span></li><li><span class="pill warning" style="flex:none">Kampung Makmur Sdn Bhd</span><span class="what">Evidence plan required: held back by missing data, not a negative finding</span></li><li><span class="pill warning" style="flex:none">SunPath Energy Ltd</span><span class="what">Evidence plan required: held back by missing data, not a negative finding</span></li>    </ul>
+<li><span class="pill warning" style="flex:none">BrightPath Finance</span><span class="what">Evidence plan required: held back by missing data, not a negative finding</span></li><li><span class="pill warning" style="flex:none">SunPath Energy Ltd</span><span class="what">Evidence plan required: held back by missing data, not a negative finding</span></li>    </ul>
   </section>
 </div>
 
@@ -521,14 +559,14 @@ table.heat .gap { width: 10px; min-width: 10px; padding: 0; background: none; }
         <td class="co"><a class="co-link" href="brightpath_finance/brightpath_finance_impact_report.html">BrightPath Finance</a><small>fintech · Sub-Saharan Africa</small></td>
         <td style="background:none">—</td>
         <td style="background:none"><span class="pill warning">Evidence plan</span></td>
-        <td style="background:none" class="num" title="depth-weighted person-years">9,000</td>
+        <td style="background:none" class="num" title="depth-weighted person-years">17</td>
         <td style="background:none" class="num">40</td>
 <td class="l2">1.5</td><td class="l3">2.5</td><td class="l2">2.0</td><td class="l2">1.5</td><td class="l2">1.2</td>        <td class="gap" aria-hidden="true"></td>
 <td class="l2">38</td><td class="l2">35</td><td class="l2">38</td><td class="l1">15</td><td class="l2">37</td><td class="l2">20</td>      </tr>
       <tr>
         <td class="co"><a class="co-link" href="kampung_makmur_sdn_bhd/kampung_makmur_sdn_bhd_impact_report.html">Kampung Makmur Sdn Bhd</a><small>agriculture · Malaysia</small></td>
         <td style="background:none">—</td>
-        <td style="background:none"><span class="pill warning">Evidence plan</span></td>
+        <td style="background:none"><span class="pill good">IC-ready</span></td>
         <td style="background:none" class="num" title="depth-weighted person-years">61</td>
         <td style="background:none" class="num">63</td>
 <td class="l3">2.3</td><td class="l3">2.5</td><td class="l2">1.7</td><td class="l2">1.9</td><td class="l2">1.3</td>        <td class="gap" aria-hidden="true"></td>
@@ -550,7 +588,17 @@ table.heat .gap { width: 10px; min-width: 10px; padding: 0; background: none; }
 <div class="grid2">
   <section class="card" id="sec-deadlines" aria-labelledby="h-deadlines">
     <h2 id="h-deadlines">Regulatory deadlines</h2>
-<p class="lede">Next 180 days for HK (calendar-year reporting) — the fund's domicile plus where its companies operate. Confirm applicability per fund.</p><p class="muted">No deadlines in the window.</p>
+<p class="lede">Next 180 days for HK (calendar-year reporting) — the fund's domicile plus where its companies operate. Confirm applicability per fund.</p>    <ul class="list">
+      <li><span class="when">2027-04-30</span>
+        <span class="what">HKEX ESG report with climate disclosures<small>HKEX climate requirements · HK</small></span>
+        <span class="days upcoming">in 171 d</span></li>
+      <li><span class="when">2027-04-30</span>
+        <span class="what">Climate transition plan (TPT / ISSB-aligned)<small>HKFRS S2 / TPT · HK</small></span>
+        <span class="days upcoming">in 171 d</span></li>
+      <li><span class="when">2027-04-30</span>
+        <span class="what">Hong Kong Taxonomy alignment screen<small>Hong Kong Taxonomy · HK</small></span>
+        <span class="days upcoming">in 171 d</span></li>
+    </ul>
   </section>
 
   <section class="card" id="sec-review" aria-labelledby="h-review">
