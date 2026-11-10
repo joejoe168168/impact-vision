@@ -45,6 +45,13 @@ def _load_exclusion_criteria() -> dict[str, dict]:
     if _criteria_cache is not None:
         return _criteria_cache
 
+    # One loader for the agent tool and the assess pipeline (impact/exclusions.py).
+    from impact_vision.impact.exclusions import criteria
+
+    shared = criteria()
+    if shared:
+        _criteria_cache = shared
+        return _criteria_cache
     paths = [
         data_path("exclusion_criteria.yaml"),
         Path("data/exclusion_criteria.yaml"),

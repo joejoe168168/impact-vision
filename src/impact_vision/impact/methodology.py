@@ -35,6 +35,7 @@ HASHED_FILES = (
     EXPECTED_IMPACT_METHODOLOGY,                 # expected impact, evidence quality, the IC gate
     "methodology/contribution_rubric.yaml",      # 5D Contribution and the enterprise / investor split
     "negative_impacts.yaml",                     # negative impacts and the evidence plan
+    "exclusion_criteria.yaml",                   # exclusion screen: involvement fails the gate
 )
 
 

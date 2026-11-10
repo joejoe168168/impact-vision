@@ -193,6 +193,7 @@ class ImpactVision:
         dd_coverage_pct: float | None = None,
         greenwashing_score: float | None = None,
         exclusion_pass: bool | None = None,
+        exclusion_detail: str = "",
     ) -> DealScorecard:
         thesis = thesis or self.load_thesis(thesis_path)
         return evaluate_deal(
@@ -201,6 +202,7 @@ class ImpactVision:
             dd_coverage_pct=dd_coverage_pct,
             greenwashing_score=greenwashing_score,
             exclusion_pass=exclusion_pass,
+            exclusion_detail=exclusion_detail,
         )
 
     def render_ic_memo(

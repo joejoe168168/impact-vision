@@ -828,6 +828,9 @@ def build_view(data: dict[str, Any], *, audience: str | None = None, lang: str =
         "greenwashing": _greenwashing(data, t) if spec.show_greenwashing else None,
         "risks": _risks(data),
         "negatives": data.get("negative_impacts"),
+        "exclusion_questions": [
+            {"label": h["label"], "sentence": h["sentence"], "pai": h.get("sfdr_pai", "")}
+            for h in (data.get("exclusions") or {}).get("questions", [])],
         "contribution": _contribution(data, t),
         "targets": [dict(x, status_label=_label(t, "tstatus_", x.get("status")))
                     for x in (data.get("target_tracking") or {}).get("targets", []) if isinstance(x, dict)],

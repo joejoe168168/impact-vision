@@ -1,6 +1,28 @@
 # Exclusion Screening Criteria
 # Based on UNGC, SFDR PAI, and common institutional investor exclusion lists.
 # Customize for your fund's mandate.
+#
+# Read by impact/exclusions.py (the `assess` pipeline and the exclusion_screening
+# agent tool). A keyword in a sentence that states the company does the activity
+# is "involvement"; in a mandatory category that fails the IC gate. A keyword in
+# a sentence that denies, guards against or replaces the activity is a "mention"
+# and becomes a question to ask, never a failure.
+as_of: "2026-11-10"
+data_status: illustrative   # keyword lists are a screening aid, not a legal definition
+source: >-
+  UN Global Compact Ten Principles; SFDR Delegated Regulation (EU) 2022/1288 Annex I (PAI 4, 10, 14);
+  IFC Exclusion List (2007)
+source_url: https://www.ifc.org/en/what-we-do/sector-expertise/sustainability/ifc-exclusion-list-2007
+
+# A sentence containing one of these talks about preventing, replacing or
+# managing the activity, so a keyword in it is a mention, not involvement.
+guard_patterns:
+  - '\b(?:replac|displac|substitut|phas(?:e|ing)\s+out|transition(?:ing)?\s+away|switch(?:ed|ing)?\s+(?:(?:away\s+)?from|to)|instead\s+of|alternative\s+to|rather\s+than)\w*'
+  - '\b(?:prevent|prohibit|exclud|ban(?:s|ned)?\b|eliminat|combat|tackl|eradicat|avoid|reduc|mitigat|safeguard|screen(?:s|ed|ing)?\b|audit|monitor|due\s+diligence|zero[-\s]tolerance|polic(?:y|ies)|code\s+of\s+conduct|training|whistle|cap(?:s|ped)?\b|limit)\w*'
+  - '\b(?:risk|risks|exposure\s+to|allegation|victims?|survivors?|free\s+from|protect)\b'
+  - '\banti[-\s]\w+'
+  - '\w+[-\s]free\b'
+  - '(?:防止|禁止|杜絕|杜绝|反對|反对|取代|替代|風險|风险|政策|審核|审核)'
 
 categories:
   controversial_weapons:
@@ -24,7 +46,9 @@ categories:
       - "oil exploration"
       - "oil drilling"
       - "natural gas extraction"
-      - "petroleum"
+      - "petroleum extraction"
+      - "petroleum refining"
+      - "oil refining"
       - "fracking"
       - "tar sands"
       - "oil sands"
@@ -71,6 +95,9 @@ categories:
       - "bribery"
     sfdr_pai: "PAI10"
     severity: "mandatory"
+    # No company states its own violations. From its documents these words can
+    # only raise a question; a finding needs controversy data from outside.
+    self_declared: false
 
   deforestation:
     label: "Deforestation"

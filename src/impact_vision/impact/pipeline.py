@@ -65,6 +65,9 @@ class AssessmentBundle:
             "fund_thesis": {"name": getattr(self.thesis, "name", ""),
                             "example": bool(getattr(self.thesis, "is_example", False))},
             "suggested_conditions": suggest_conditions(v2) if use_v2 else [],
+            "exclusions": {"passed": (self.report_data.get("exclusions") or {}).get("passed", True),
+                           "failures": [h["label"] for h in (self.report_data.get("exclusions") or {}).get(
+                               "failures", [])]},
             "expected_impact": headline(v2),
             "evidence_quality": (v2.get("evidence_quality") or {}).get("score"),
             "five_d_score": round(fd.overall_score, 2) if fd else None,
@@ -338,11 +341,18 @@ def assess_document(
     if thesis_path is not None and not Path(thesis_path).is_file():
         raise FileNotFoundError(f"Fund thesis not found: {thesis_path}")
     thesis = iv.load_thesis(thesis_path)
+    # Exclusions are screened on the company's own statements (not the problem
+    # or market sections): involvement in a mandatory category fails the gate.
+    from impact_vision.impact.exclusions import screen_exclusions
+
+    exclusions = screen_exclusions(company.assessment_text or text)
     scorecard = iv.evaluate_deal_against_thesis(
         assessment,
         thesis=thesis,
         dd_coverage_pct=dd.coverage_pct,
         greenwashing_score=gw.overall_score,
+        exclusion_pass=exclusions["passed"],
+        exclusion_detail="; ".join(f"Exclusion: {h['label']} — “{h['sentence']}”" for h in exclusions["failures"]),
     )
 
     store = get_metric_store()
@@ -396,6 +406,7 @@ def assess_document(
     from impact_vision.impact.expected_impact import assess_expected_impact
     from impact_vision.impact.negative_impacts import assess_negative_impacts
 
+    report_data["exclusions"] = exclusions
     report_data["negative_impacts"] = assess_negative_impacts(company.sector, company.assessment_text or text)
     from impact_vision.impact import consistency
 

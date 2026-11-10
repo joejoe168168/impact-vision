@@ -83,6 +83,8 @@ KNOWLEDGE_FILES: dict[str, tuple[str, Callable[[dict], Iterable[dict]], str]] = 
     "esrs_revised": ("esrs_simplified_2026.yaml", _rows("datapoints"), "datapoint_id"),
     "hk_taxonomy": ("hk_taxonomy.yaml", _rows("activities"), "activity_id"),
     "hkex_esg_code": ("regulatory/hkex_esg_code.yaml", _rows("requirements"), "id"),
+    "exclusion_criteria": ("exclusion_criteria.yaml",
+                           lambda p: [{"category": k, **v} for k, v in (p.get("categories") or {}).items()], "category"),
     "hkfrs_s1": ("regulatory/hkfrs_s1.yaml", _rows("requirements"), "id"),
     "sfdr2": ("regulatory/sfdr2.yaml", lambda p: [{"category": k, **v} for k, v in (p.get("categories") or {}).items()],
               "category"),

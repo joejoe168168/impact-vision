@@ -125,8 +125,12 @@ def evaluate_deal(
     dd_coverage_pct: float | None = None,
     greenwashing_score: float | None = None,
     exclusion_pass: bool | None = None,
+    exclusion_detail: str = "",
 ) -> DealScorecard:
     """Score a deal against the fund thesis IC gate.
+
+    ``exclusion_detail`` says which exclusion was found and where; it becomes
+    the failed check's message.
 
     Returns a `DealScorecard` with `overall_status` of:
       - `pass`: all blocking checks passed and no warns
@@ -209,7 +213,7 @@ def evaluate_deal(
                 message=(
                     "All exclusions cleared"
                     if exclusion_pass
-                    else "One or more exclusion criteria triggered"
+                    else (exclusion_detail or "One or more exclusion criteria triggered")
                 ),
             )
         )

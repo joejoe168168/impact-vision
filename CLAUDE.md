@@ -207,6 +207,7 @@ src/impact_vision/
 │   ├── negative_impacts.py        # v8 W1.6: severity × likelihood (data/negative_impacts.yaml)
 │   ├── negation.py                # is an evidence cue asserted, denied or only planned?
 │   ├── consistency.py             # two different figures for the same metric
+│   ├── exclusions.py              # exclusion screen: involvement fails the gate, a mention is a question
 │   ├── contribution_split.py      # v8 W1.4: enterprise vs investor contribution (rubric YAML)
 │   ├── annual_monitoring.py       # v8 W3.4: yearly results request, portal, variance, reminders
 │   ├── i18n_phrasebook.py         # v8 W3.7: zh-HK / zh-CN report sentences (data/i18n/)

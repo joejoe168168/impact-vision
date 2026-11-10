@@ -268,6 +268,11 @@
     <tbody>{% for r in negatives['items'] %}<tr><td>{{ r.impact }}<br><small class="muted">{{ r.stakeholder }}{% if r.pai %} · {{ r.pai }}{% endif %}</small></td><td class="num">{{ r.severity }}/3</td><td class="num">{{ r.likelihood }}/3</td><td><span class="pill {{ 'critical' if r.band == 'high' and not r.controlled else 'warning' if r.band == 'high' or r.band == 'medium' else '' }}">{{ r.score }}/9 · {{ t('band_' ~ r.band) }}</span></td><td>{% if r.controlled %}{{ t('neg_controlled') }}{% for q in r.evidence %}<br><small class="muted">“{{ q }}”</small>{% endfor %}{% else %}<span class="muted">{{ t('neg_uncontrolled') }}</span>{% endif %}</td></tr>{% endfor %}</tbody>
   </table></div>
   {% endif %}
+  {% if exclusion_questions %}
+  <h3 class="small" style="margin-top:16px">{{ t('excl_title') }}</h3>
+  <p class="lede">{{ t('excl_lede') }}</p>
+  <ul class="risks">{% for q in exclusion_questions %}<li><b>{{ q.label }}</b>{% if q.pai %} <small class="muted">· {{ q.pai }}</small>{% endif %}<blockquote class="quote small" style="margin:4px 0">“{{ q.sentence }}”</blockquote></li>{% endfor %}</ul>
+  {% endif %}
   <div class="two-col">
     <div>
       {% if risks.disclosed %}<h3 class="small">{{ t('risks_disclosed') }}</h3>

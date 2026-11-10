@@ -41,6 +41,11 @@ Work from the 0.19.1 review (`IMPROVEMENTS.md`).
   households on one page, 24,000 on another), the report lists both sentences with their pages, the evidence
   plan starts with "reconcile the two figures", and the memo suggests it as a condition precedent. Figures for
   different years are treated as growth, not a contradiction. The tolerance (10 %) is in `methodology/v2.yaml`.
+- **Exclusion screening runs inside `assess`.** A deck that says the company does an excluded activity
+  ("we also operate a coal mining subsidiary") now fails the gate and the reason quotes the sentence. A
+  sentence that denies, guards against or replaces the activity ("we do not finance coal mining",
+  "anti-bribery training") is listed as a topic to confirm, never as a failure. Before, the criteria were
+  read only by the agent tool. Bare "petroleum" is no longer a keyword.
 - **Data exports carry the headline.** The workbook has new sheets for expected impact (P10 / P50 / P90),
   impact factors, the evidence plan and negative impacts, and the Summary sheet shows the gate and the
   expected-impact range. The CSV has the same figures plus the contribution split.
