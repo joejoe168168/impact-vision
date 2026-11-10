@@ -559,6 +559,12 @@ def write_deliverables(
     )
     files.append(memo)
 
+    from impact_vision.impact.report_templates.onepager import render_ic_onepager
+
+    onepager = out / f"{stem}_ic_onepager.html"
+    onepager.write_text(render_ic_onepager(bundle.report_data, lang=lang), encoding="utf-8")
+    files.append(onepager)
+
     dd_path = out / f"{stem}_dd_report.html"
     dd_path.write_text(
         mark_html(render_dd_report_html(
@@ -574,7 +580,7 @@ def write_deliverables(
     if pdf:
         from impact_vision.impact.report_templates.pdf import html_to_pdf
 
-        for html_file in (report, memo):
+        for html_file in (report, memo, onepager):
             pdf_path, _engine = html_to_pdf(
                 html_file.read_text(encoding="utf-8"), html_file.with_suffix(".pdf")
             )
