@@ -42,3 +42,13 @@ def test_no_regression_against_the_baseline(result):
 def test_report_renders(result):
     md = to_markdown(result)
     assert "Fact F1" in md and md.count("\n| ") >= 30
+
+
+def test_every_verdict_class_is_recalled(result):
+    """C8: a constant "evidence plan" scores 77 % here; the gate must find ready and failing decks too."""
+    rows = result["rows"]
+    for state in ("ready", "evidence_plan", "fails_thesis"):
+        labelled = [r for r in rows if r["verdict_expected"] == state]
+        assert labelled and sum(r["verdict"] for r in labelled) > 0, state
+    majority = max(sum(r["verdict_expected"] == s for r in rows) for s in {r["verdict_expected"] for r in rows})
+    assert result["summary"]["verdict"] > majority / len(rows)

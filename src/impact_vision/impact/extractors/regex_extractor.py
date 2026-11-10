@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import re
 
+from impact_vision.impact.expected_impact import _SP, _ZH_DIGITS, _number
 from impact_vision.impact.extractors.base import (
     ClaimCategory,
     ClaimExtractor,  # noqa: F401 — re-exported protocol for documentation / subclassing
@@ -23,10 +24,13 @@ from impact_vision.impact.extractors.base import (
 )
 
 
+# Numbers are read the way expected_impact reads them (C5b): a left boundary so a
+# year does not bleed in, and a regular / non-breaking / thin space as a thousands
+# separator only in the "12 000" shape.
 _NUMBER_UNIT = re.compile(
     r"""
     (?<![\d.,])
-    (?P<value>\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?)
+    (?P<value>\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d{1,3}(?:""" + _SP + r"""\d{3})+(?!\d)|\d+(?:\.\d+)?)
     \s*
     # Up to two modifiers before a *count* noun: "500 low-income customers",
     # "80 permanent jobs" (never prepositions, articles or scale words).
@@ -42,6 +46,15 @@ _NUMBER_UNIT = re.compile(
     """,
     re.IGNORECASE | re.VERBOSE,
 )
+
+# Chinese counts: "3.2 萬名長者", "三千名學生", "1,200 戶" (same numerals as expected_impact).
+_ZH_PEOPLE_UNITS = {"長者": "people", "长者": "people", "學生": "students", "学生": "students",
+                    "病人": "patients", "患者": "patients", "農民": "farmers", "农民": "farmers",
+                    "居民": "people", "用戶": "users", "用户": "users", "婦女": "people", "妇女": "people",
+                    "兒童": "people", "儿童": "people", "家庭": "families", "員工": "employees", "员工": "employees"}
+_ZH_NUMBER_UNIT = re.compile(
+    r"(?<![\d.,])(?P<value>\d{1,3}(?:,\d{3})+|\d+(?:\.\d+)?|[" + _ZH_DIGITS + r"]+)\s*(?P<scale>萬|万|億|亿)?"
+    r"\s*(?:多|余|餘)?\s*(?:(?:[名位個个]\s*(?P<noun>" + "|".join(_ZH_PEOPLE_UNITS) + r"))|(?P<hh>[戶户](?![口籍])))")
 
 # Evidence-quality signals. These upgrade a claim from "narrative" to evidence
 # an IC can rely on; dropping them made well-evidenced pitches look unverified.
@@ -85,7 +98,7 @@ _EVIDENCE_SIGNALS: tuple[tuple[str, re.Pattern[str]], ...] = (
 # Sentence boundaries: ., ! or ? followed by whitespace/end — never the point
 # inside a decimal such as "1.8 GWh" — and line breaks (headings, list items;
 # reflow wrapped PDF lines before extracting).
-_SENTENCE_END = re.compile(r"(?<!\d)[.!?](?=\s|$)|(?<=\d)\.(?=\s|$)|\n")
+_SENTENCE_END = re.compile(r"(?<!\d)[.!?](?=\s|$)|(?<=\d)\.(?=\s|$)|[。！？]|\n")
 
 
 _FORWARD_RE = re.compile(
@@ -151,17 +164,20 @@ class RegexExtractor:
         claims: list[ExtractedClaim] = []
         seen: set[str] = set()
 
-        for m in _NUMBER_UNIT.finditer(text):
-            sentence = self._sentence_around(text, m.start())
+        matches = [(m.start(), m.group("value"), None, m.group("unit")) for m in _NUMBER_UNIT.finditer(text)]
+        matches += [(m.start(), m.group("value"), m.group("scale"),
+                     "households" if m.group("hh") else _ZH_PEOPLE_UNITS[m.group("noun")])
+                    for m in _ZH_NUMBER_UNIT.finditer(text)]
+        for start, raw, scale, unit in sorted(matches, key=lambda x: x[0]):
+            sentence = self._sentence_around(text, start)
             key = sentence.strip().lower()
             if key in seen:
                 continue
             seen.add(key)
             try:
-                value = float(m.group("value").replace(",", ""))
-            except ValueError:
+                value: float | None = _number(raw, scale)
+            except (ValueError, KeyError):
                 value = None
-            unit = m.group("unit")
             signals = evidence_signals(sentence)
             claims.append(
                 ExtractedClaim(
