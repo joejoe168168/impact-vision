@@ -1,0 +1,93 @@
+# Framework pack updates: GRI, SBTi, EU Taxonomy (R6 / R7).
+# Every row was read at the source on as_of. "verified: secondary" means the issuing
+# body's own page did not state the fact and a secondary source was used;
+# "verified: unverified" rows are watchlist items, not to be relied on.
+schema_version: 1
+as_of: "2026-11-10"
+
+gri:
+  topic_standards:
+    - id: GRI 101
+      title: "Biodiversity 2024"
+      effective_date: "2026-01-01"
+      supersedes: ["GRI 304"]
+      verified: primary
+      source_url: https://www.globalreporting.org/umbraco/Surface/ResourceCentre/PopupResource?id=24534
+    - id: GRI 102
+      title: "Climate Change 2025"
+      published: "2025-06"
+      effective_date: "2027-01-01"
+      supersedes: ["305-1", "305-2", "305-3", "305-4", "305-5", "201-2"]
+      verified: secondary
+      note: >-
+        Effective date and superseded disclosures from BDO; whether the trigger is reports
+        published or reporting periods starting on or after the date is not confirmed.
+      source_url: https://www.bdo.ch/en-gb/insights/gri-updates-2025-2027-transparency-and-impact-in-sustainability
+    - id: GRI 103
+      title: "Energy 2025"
+      published: "2025-06"
+      effective_date: "2027-01-01"
+      supersedes: ["GRI 302"]
+      verified: secondary
+      note: Effective date from BDO, as for GRI 102.
+      source_url: https://www.bdo.ch/en-gb/insights/gri-updates-2025-2027-transparency-and-impact-in-sustainability
+  sector_standards:
+    source_url: https://www.globalreporting.org/standards/sector-program/
+    verified: primary
+    note: >-
+      V1.1 versions aligned to GRI 102/103 are available; earlier versions remain usable
+      for climate and energy reporting until 2026-12-31.
+    published:
+      - {id: GRI 11, title: "Oil and Gas 2021", effective_date: "2023-01"}
+      - {id: GRI 12, title: "Coal 2022", effective_date: "2024-01"}
+      - {id: GRI 13, title: "Agriculture, Aquaculture and Fishing 2022", effective_date: "2024-01"}
+      - {id: GRI 14, title: "Mining 2024", effective_date: "2026-01"}
+    in_development:
+      - "Banking, Capital Markets and Insurance (launch planned 2027)"
+      - "Textiles and Apparel"
+
+sbti:
+  standards:
+    - id: CNZS_V2
+      title: "Corporate Net-Zero Standard V2.0"
+      published: "2026-06-11"
+      usable_from: "2027-02-01"
+      verified: primary
+      source_url: https://sciencebasedtargets.org/blog/the-corporate-net-zero-standard-v2-0-is-here-what-comes-next
+    - id: CNZS_V1
+      title: "Corporate Net-Zero Standard V1.3.1"
+      usable_until: "2028-01-31"
+      verified: primary
+      note: >-
+        Per the SBTi net-zero page; the 2026-06-11 SBTi blog says V1 submissions run
+        "through the end of 2027". From 2028-02-01 new submissions must use V2.0.
+      source_url: https://sciencebasedtargets.org/net-zero
+    - id: NEAR_TERM_CRITERIA
+      title: "Corporate Near-Term Criteria V5.3.1"
+      verified: unverified
+      note: Version and its 2026-04-14 date seen in a search snippet only.
+      source_url: https://files.sciencebasedtargets.org/production/files/SBTi-criteria.pdf
+  # V2.0 thresholds are not recorded: the standard's text was not read. The check in
+  # frameworks/sbti.py still applies the V1 thresholds and says so.
+
+eu_taxonomy:
+  delegated_acts:
+    - id: "(EU) 2026/73"
+      title: "Omnibus simplification of the Taxonomy Disclosures, Climate and Environmental Delegated Acts"
+      oj_date: "2026-01-08"
+      in_force: "2026-01-28"
+      applies_to: "2025 reporting periods, with an option to defer to the 2026 reporting period"
+      verified: secondary
+      note: EUR-Lex could not be opened; all values rest on KPMG's summary of the act.
+      source_url: https://kpmg.com/xx/en/our-insights/ifrg/2025/EU-taxonomy-amendments.html
+      legal_text_url: https://eur-lex.europa.eu/eli/reg_del/2026/73/oj/eng
+  simplification:
+    materiality_threshold_pct: 10.0   # activities together below this share of turnover / CapEx / OpEx
+    materiality_rule: >-
+      Non-financial companies may report activities that together make up less than 10% of
+      turnover, CapEx or OpEx as non-material, without an alignment assessment.
+    opex_rule: >-
+      The OpEx template may be omitted when OpEx is not material to the business model;
+      total OpEx and the reason must be disclosed.
+    templates: "Non-financial templates fall from 78 to 28 data points; gas and nuclear templates are folded in."
+    dnsh: "Appendix C (pollution prevention; use and presence of chemicals) is simplified."
