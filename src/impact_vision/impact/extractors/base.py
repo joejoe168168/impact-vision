@@ -177,14 +177,21 @@ def get_verifier(verifier_id: str = "noop") -> SourceVerifier:
     return _VERIFIERS[verifier_id]
 
 
-# NESTA-inspired evidence level implied by each signal (see ImpactClaim).
-_SIGNAL_EVIDENCE_LEVEL = {
-    "controlled_evaluation": 3,
-    "third_party_verified": 3,
-    "audited": 2,
-    "certified": 2,
-    "baseline_comparison": 2,
-}
+def level_for_signals(signals: list[str], *, quantified: bool = False) -> int:
+    """NESTA evidence level (see ``ImpactClaim``) implied by a claim's evidence signals.
+
+    The table lives in ``data/methodology/v2.yaml`` (``signal_levels``,
+    ``quantified_min_level``) so it is versioned and hashed with the rest of
+    the methodology.
+    """
+    from impact_vision.impact.expected_impact import params
+
+    cfg = params()
+    table: dict[str, int] = cfg.get("signal_levels") or {}
+    level = max([1, *(int(table.get(s, 1)) for s in signals)])
+    if quantified and level == 1:
+        level = int(cfg.get("quantified_min_level", 2))  # quantified data showing change
+    return level
 
 _CATEGORY_TO_IMPACT_CLAIM = {
     "outcome": "outcome",
@@ -212,9 +219,7 @@ def to_impact_claims(claims: list[ExtractedClaim]) -> list["ImpactClaim"]:
 
     out: list[ImpactClaim] = []
     for c in claims:
-        level = max([1, *(_SIGNAL_EVIDENCE_LEVEL.get(s, 1) for s in c.evidence_signals)])
-        if c.metric_value is not None and level == 1:
-            level = 2  # quantified data showing change
+        level = level_for_signals(list(c.evidence_signals), quantified=c.metric_value is not None)
         entities: dict[str, list[str]] = {}
         if c.evidence_signals:
             entities["evidence"] = list(c.evidence_signals)

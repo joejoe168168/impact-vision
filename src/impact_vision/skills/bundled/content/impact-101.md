@@ -82,13 +82,13 @@ How strong is the evidence behind an impact claim? 5 levels:
 
 | Level | Description | Example |
 |------:|-------------|---------|
-| 1 | Narrative only | "We help farmers" (no data) |
-| 2 | Output data | "We trained 500 farmers" (counts activities) |
-| 3 | Outcome data | "Farmer income rose 30% (pre/post survey)" |
-| 4 | Controlled comparison | "Treatment group income rose 30% vs 5% in control" |
-| 5 | Rigorous evaluation | "Independent RCT confirmed 28% income increase (p<0.01)" |
+| 1 | An account of what you do and why | "We trained 500 farmers" (counts activity, shows no change) |
+| 2 | Data showing change | "Farmer income rose 30% (before/after survey)" |
+| 3 | Causality, with a comparison or control group | "Income rose 30% vs 5% in the control group" (incl. RCTs) |
+| 4 | Independent replication or evaluation | "An independent evaluator repeated the study and found 28%" |
+| 5 | Manualised and replicated at scale | "Replicated in six countries from a published manual" |
 
-Most startups are at Level 1-2. Level 3+ is considered credible impact evidence.
+Most startups are at Level 1-2. Level 3 is where a causal claim becomes credible.
 
 ## ESG Frameworks
 

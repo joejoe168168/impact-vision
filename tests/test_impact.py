@@ -321,7 +321,23 @@ class TestEvidenceLevels:
             "SDG 1 and SDG 5. We monitor data with IRIS metrics."
         )
         result = analyze_document_coverage(text)
-        assert result.avg_evidence_level >= 2.0
+        # NESTA ladder: before/after data is level 2; counts and "tracked KPIs" stay at 1,
+        # so the average sits between the two and above a narrative-only text.
+        levels = [m.evidence_level for m in result.addressed]
+        assert max(levels) == 2 and 1.0 < result.avg_evidence_level <= 2.0
+        narrative = analyze_document_coverage("Our mission is to improve lives. We aim to create social good.")
+        assert result.avg_evidence_level > narrative.avg_evidence_level
+
+    def test_evidence_ladder_matches_nesta(self) -> None:
+        from impact_vision.impact.dd_checklist import _assess_evidence_level
+
+        assert _assess_evidence_level(["We served 45,000 clients and tracked KPIs quarterly."]) == 1
+        assert _assess_evidence_level(["A pre-post survey shows income rose 30% against baseline."]) == 2
+        assert _assess_evidence_level(["An RCT found a 12% income gain."]) == 3            # was 5
+        assert _assess_evidence_level(["Income rose 12% versus a matched comparison group."]) == 3   # was 4
+        assert _assess_evidence_level(["An independent evaluation repeated the trial."]) == 4
+        assert _assess_evidence_level(["The model is manualised and replicated at scale."]) == 5
+        assert _assess_evidence_level(["We have no control group yet."]) == 1             # denied
 
     def test_evidence_level_definitions(self) -> None:
         from impact_vision.impact.dd_checklist import EVIDENCE_LEVELS

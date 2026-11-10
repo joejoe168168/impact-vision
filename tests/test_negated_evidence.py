@@ -102,3 +102,28 @@ def test_a_denied_control_leaves_the_negative_impact_unmanaged() -> None:
 def test_asserts_phrase_is_case_insensitive_and_boundary_aware() -> None:
     assert asserts_phrase("Audited", "accounts are audited by KPMG")
     assert not asserts_phrase("audit", "unaudited-looking but really auditorium", word_boundary=True)
+
+
+def test_signal_levels_come_from_the_methodology_file(tmp_path, monkeypatch) -> None:
+    import shutil
+
+    import yaml
+
+    from impact_vision.impact import _paths, expected_impact
+    from impact_vision.impact.extractors.base import level_for_signals
+
+    assert level_for_signals(["controlled_evaluation"]) == 3
+    assert level_for_signals([], quantified=True) == 2 and level_for_signals([]) == 1
+    copy = tmp_path / "data"
+    shutil.copytree(_paths.data_path(), copy, ignore=shutil.ignore_patterns("raw", "processed", "calibration"))
+    target = copy / "methodology" / "v2.yaml"
+    doc = yaml.safe_load(target.read_text(encoding="utf-8"))
+    doc["signal_levels"]["controlled_evaluation"] = 4
+    target.write_text(yaml.safe_dump(doc), encoding="utf-8")
+    monkeypatch.setattr(expected_impact, "data_path", lambda *parts: copy.joinpath(*parts))
+    expected_impact._load.cache_clear()
+    try:
+        assert level_for_signals(["controlled_evaluation"]) == 4
+    finally:
+        monkeypatch.undo()
+        expected_impact._load.cache_clear()

@@ -19,11 +19,11 @@ logger = logging.getLogger(__name__)
 
 
 EVIDENCE_LEVELS = {
-    1: "Narrative / anecdotal only (self-reported, no data)",
-    2: "Output data (quantified activities, e.g. # served, # trained)",
-    3: "Outcome data measured (pre/post, surveys, tracked KPIs)",
-    4: "Controlled comparison (quasi-experimental, benchmarks, cohort studies)",
-    5: "Rigorous evaluation (RCT, independent audit, causal attribution)",
+    1: "An account of what is done and why it matters (narrative, activity and output counts)",
+    2: "Data showing change (before/after, baseline, surveys)",
+    3: "Causality shown with a comparison or control group (incl. RCTs)",
+    4: "Independent replication or evaluation",
+    5: "Manualised and replicated at scale",
 }
 
 
@@ -404,22 +404,26 @@ def _detect_relevant_categories(text: str) -> set[str]:
     return relevant
 
 
-_LEVEL5_SIGNALS = (
-    "rct", "randomized controlled", "randomised controlled", "causal attribution",
-    "independent evaluation", "counterfactual analysis", "experimental design",
-)
+# NESTA Standards of Evidence, the same ladder as ``ImpactClaim.evidence_strength``
+# and ``data/methodology/v2.yaml`` (``evidence_levels``):
+#   1 an account of what you do          2 data showing change
+#   3 causality shown with a comparison  4 independent replication / evaluation
+#   5 manualised and replicated at scale
+# An RCT is level 3 (it shows causality once); monitoring words such as "KPI" or
+# "tracked" and output counts such as "served" describe activity, which is level 1.
+_LEVEL5_SIGNALS = ("replicated at scale", "manualised", "manualized", "multiple independent replications")
 _LEVEL4_SIGNALS = (
-    "quasi-experimental", "comparison group", "control group", "matched sample",
-    "cohort study", "benchmark study", "diff-in-diff", "difference-in-differences",
+    "independent evaluation", "independently evaluated", "external evaluation", "independent replication",
+    "independently replicated", "replication study",
 )
 _LEVEL3_SIGNALS = (
-    "pre-post", "baseline", "survey data", "measured outcome",
-    "tracked quarterly", "monitored quarterly", "year-over-year",
-    "longitudinal", "panel data", "kpi", "tracked",
+    "rct", "randomized controlled", "randomised controlled", "causal attribution", "counterfactual analysis",
+    "experimental design", "quasi-experimental", "comparison group", "control group", "matched sample",
+    "diff-in-diff", "difference-in-differences",
 )
 _LEVEL2_SIGNALS = (
-    "served", "trained", "delivered", "produced", "distributed",
-    "reached", "enrolled", "number of",
+    "pre-post", "before and after", "baseline", "survey data", "measured outcome", "year-over-year",
+    "longitudinal", "panel data", "cohort study", "benchmark study",
 )
 
 
@@ -437,25 +441,19 @@ def _assess_evidence_level(snippets: list[str], full_text: str | None = None) ->
 
     IMPORTANT: this only inspects the matched snippets (not the full document) so
     that an unrelated mention of e.g. 'RCT' does not promote every addressed
-    question to level 5. The `full_text` parameter is kept for API compatibility
+    question to level 3. The `full_text` parameter is kept for API compatibility
     but is intentionally not consulted.
     """
     combined = " ".join(snippets).lower()
     if not combined.strip():
         return 1
 
-    for signal in _LEVEL5_SIGNALS:
-        if _signal_in_text(combined, signal):
-            return 5
-    for signal in _LEVEL4_SIGNALS:
-        if _signal_in_text(combined, signal):
-            return 4
-    for signal in _LEVEL3_SIGNALS:
-        if _signal_in_text(combined, signal):
-            return 3
-    for signal in _LEVEL2_SIGNALS:
-        if _signal_in_text(combined, signal):
-            return 2
+    from impact_vision.impact.negation import asserts_phrase
+
+    # Highest level first; a denied or merely planned study ("no control group yet") does not count.
+    for level, signals in ((5, _LEVEL5_SIGNALS), (4, _LEVEL4_SIGNALS), (3, _LEVEL3_SIGNALS), (2, _LEVEL2_SIGNALS)):
+        if any(asserts_phrase(signal, combined, word_boundary=True) for signal in signals):
+            return level
     return 1
 
 

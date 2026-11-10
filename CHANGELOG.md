@@ -29,6 +29,10 @@ Work from the 0.19.1 review (`IMPROVEMENTS.md`).
   both versions ("v2.1.0 (expected impact, IC gate) · v1.2.0 (5D, SDG, greenwashing)"), and the config hash
   also covers `methodology/v2.yaml`, the contribution rubric and the negative-impact catalogue. Editing any of
   them now changes the stamp. **The config hash of every report changes with this release.**
+- **The DD checklist grades evidence on the NESTA ladder used everywhere else.** An RCT is level 3
+  (it was 5), a comparison group is level 3 (was 4), "KPIs tracked" and output counts are level 1 (were
+  3 and 2), independent replication is 4. Average evidence levels in DD reports go down accordingly; the
+  report's colour bands moved with the ladder (green from 3, amber from 2).
 - `impact-vision framework list` shows every framework the agent tool supports (it listed 7 of 20).
 
 - **Suggested investment conditions in the IC memo.** With no binding targets set, section 7 now drafts

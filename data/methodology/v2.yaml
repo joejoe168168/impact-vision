@@ -41,6 +41,18 @@ evidence_levels:
   3: {label: "Causality shown (comparison or control group)", sigma: 0.3, p_success: 0.80}
   4: {label: "Independent replication or evaluation", sigma: 0.2, p_success: 0.88}
   5: {label: "Replicated at scale", sigma: 0.12, p_success: 0.93}
+# Evidence level each signal found in a claim implies; a claim takes the
+# highest. A quantified claim with no signal is taken as level
+# `quantified_min_level`. (Roadmap C8/C11: verification is assurance, not
+# causality, and a bare count shows no change. Both are due to change with
+# methodology 2.2.0; the values here are the ones 2.1.0 has always used.)
+signal_levels:
+  controlled_evaluation: 3
+  third_party_verified: 3
+  audited: 2
+  certified: 2
+  baseline_comparison: 2
+quantified_min_level: 2
 # Third-party verification of a figure tightens it one notch.
 verified_sigma_factor: 0.7
 

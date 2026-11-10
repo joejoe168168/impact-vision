@@ -182,9 +182,10 @@ def _coverage_band(pct: float) -> tuple[str, str]:
 
 
 def _evidence_band(level: float) -> tuple[str, str]:
-    if level >= 4:
+    # NESTA ladder: 3 = causality shown, 2 = data showing change.
+    if level >= 3:
         return "pass", "green"
-    if level >= 2.5:
+    if level >= 2:
         return "warn", "orange"
     return "fail", "red"
 

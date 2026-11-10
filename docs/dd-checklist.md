@@ -10,9 +10,10 @@ The built-in due diligence checklist includes **122 questions** across **34 cate
 - **Sector-specific**: 15 sectors including fintech, healthcare, agriculture, energy, education, manufacturing, transport, construction, tourism, retail, mining, media, professional services, waste management, and ICT
 
 Each addressed question is assessed using **NESTA Standards of Evidence**,
-from level 1 (narrative/anecdotal only) through level 3 (measured outcome
-data) to level 5 (rigorous evaluation — RCT, independent audit, causal
-attribution).
+the same ladder the report uses for claims: level 1 (an account of what is
+done, including activity counts), level 2 (data showing change), level 3
+(causality shown with a comparison or control group, including RCTs), level 4
+(independent replication or evaluation) and level 5 (replicated at scale).
 
 Questions are organized into **34 categories** (18 core + 15 sector-specific + 1 SDG):
 
