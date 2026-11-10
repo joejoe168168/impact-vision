@@ -699,6 +699,9 @@ def _gate(outcomes: list[dict[str, Any]], eq: dict[str, Any], completeness: floa
                 "rationale": cfg["rationale"]["ready"]}
         if low_comp:
             gate["note"] = f"Ready, with {completeness:.0f}% of the core metric set reported."
+        if plan:
+            # Follow-ups (e.g. core-metric reporting) stay attached to a ready verdict.
+            gate["plan"] = plan
         return gate
     if not quantified:
         reasons.append("no quantified outcome")
