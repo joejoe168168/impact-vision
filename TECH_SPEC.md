@@ -159,6 +159,43 @@ Effort: **S** under a day, **M** 1–3 days, **L** a week or more.
 - **Tests.** `tests/test_figure_conflicts.py` (7).
 - **Follow-ups.** C6b plausibility checks.
 
+## Second pass and parallel branches (2026-11-10)
+
+Landed after this spec was first written: C7 `1ebba38`, C11 part 1 `58b2949`, C6b `3adde10`, then four
+parallel branches (`iv-par-1..4`) merged without conflicts, then three fix-up commits for the test
+failures the merge exposed (`1be5120`, `6fda138`, `3d8bce1`).
+
+- **U3b zh-HK pack** — `9196e30`, `11d2caf`, `af641dd`. The IC memo and DD report chrome is localised by
+  a post-render pass, and a Traditional Chinese DD checklist file is used with `--lang zh-HK`.
+  **Not done:** some English strings remain in both documents; the `impact/i18n.py` helpers and their
+  YAML may still be unused.
+- **C8 readiness gate** — `5e2b3f6`, fix `6fda138`. `_gate` can return *Ready for IC*; core-metric
+  completeness is a `note`, not a condition. The pig-farm sample deck is now Ready for IC. Fix-up: the
+  ready verdict keeps the evidence `plan` when it has items (the core-metric reporting follow-up), so
+  exports keep their "Evidence plan" rows and `pipeline` uses the first plan action as the
+  recommendation. **Not done:** held-out eval / baseline not revisited for the new verdicts;
+  `v2.yaml` is still `2.1.0` (rule 5 asks for a bump); the note is shown on the one-pager but not
+  checked on the report's verdict card or the IC memo.
+- **U4 share links** — `22f4751`. Read-only notice, view audit, per-link revocation. **Not done:** the
+  UI does not reuse one link per audience / language; the banner and error page are not translated;
+  `web/chat_ui.py` not updated.
+- **F2 compare** — `631da75`. `impact-vision compare`: deals side by side, no composite, range
+  overlap stated. **Not done:** `decision_workflow.compare_deals` still uses the old v1 composite; the
+  per-US$1m figure is often blank.
+- **F3 IC one-pager** — `0e81e7f`, fix `3d8bce1`. `report_templates/onepager.py`, written next to the
+  memo and linked in the gallery as "IC one-pager". Fix-up: on screen the page is fluid
+  (`max-width: 100%`, single column below 210mm) so it no longer overflows a 390px viewport; print
+  keeps `@page { size: A4 }` and a 210mm × 297mm page. **Not done:** strings are inline in the module
+  rather than shared templates; no Chromium test that the printed PDF is exactly one page.
+- **C5b parsing** — `072f1ba`. Reach by stakeholder, effect sizes ("0.21 SD") not read as percentages,
+  spaced thousands ("12 000"), Chinese numerals. **Not done:** `other_reach` in the factor basis line;
+  the `regex_extractor._NUMBER_UNIT` side; held-out baseline update.
+- **R6 / R7 packs** — `cad95fb`, `abf0e3d`. Sourced `updates.yaml` rows for GRI 101–103, SBTi
+  Net-Zero V2 and EU Taxonomy 2026/73 (`frameworks/pack_updates.py`, the 25th framework module);
+  the taxonomy and SBTi checks cite them. **Not done:** `frameworks/gri.py` still hard-codes the 2016
+  list; SBTi still applies V1 thresholds; no standards-registry rows; not exposed through
+  `framework_tool`.
+
 ---
 
 # Part 2 — Specifications for the remaining items
@@ -797,3 +834,7 @@ See the end of this file; updated whenever work stops.
 *(2026-11-10, at the time of writing the spec)* Implemented: C1, R1, R2, U1, U2, C2, C3, C4,
 F1 (first half), F5 (`--thesis`), C5 (part), U3 (part), C6 (conflicts), C15 (`bayes.fold`).
 Everything in Part 2 is open.
+
+*(2026-11-10, after the parallel merge)* Also implemented: C7, C11 (part 1), C6b, C8, U3b (part),
+U4 (part), F2 (part), F3, C5b (part), R6 / R7 (part). See "Second pass and parallel branches" in
+Part 1 for what each still lacks. Everything else in Part 2 is open.

@@ -162,8 +162,9 @@ tests; a 30-deck held-out set gating CI.
 
 ## DONE notes (2026-11-10)
 
-Branch `claude-improvements-20261110`, 12 commits on top of `a1f5ed7` (0.19.1): this review, ten
-implementation commits and these notes. Nothing was pushed.
+Branch `claude-improvements-20261110` on top of `a1f5ed7` (0.19.1): this review, the first-pass
+implementation commits, a second pass (C7, C6b, C11 part 1), four merged parallel branches and three
+fix-up commits. Nothing was pushed.
 
 ### What was implemented
 
@@ -181,7 +182,19 @@ implementation commits and these notes. Nothing was pushed.
 | 9. Parsing (C5) | Done for goals read as reach, the ask's location, currency symbols and cumulative tonnes. **Not done:** reach as "largest people-count whatever the noun", effect sizes ("0.21 SD") read as a percentage, "12 000 households". | `09db1ba` |
 | 10. Translation (U3) | **Partly.** Done: claim types, target statuses, language note, logo alt text, zh-CN wording, three consistency tests. **Not done:** the IC memo and DD report are still English with `--lang`; `impact/i18n.py` and its YAML files are still unused. | `33f95ed` |
 | 11. Contradictions (C6) | Done for conflicting figures (`impact/consistency.py`). **Not done:** plausibility checks (reach above population, percentages above 100). Also fixed here: `bayes.fold` (C15, first bug). | `7958cb4` |
-| 12–15 (exclusions in `assess`, verdict spread, share links, compare / one-pager) | Not started. | |
+| 12. Exclusions in `assess` (C7) | Done (second pass). | `1ebba38` |
+| 11b. Plausibility checks (C6b) | Done (second pass). | `3adde10` |
+| 10b. zh-HK IC memo and DD report (U3b) | **Partly** (parallel branch). IC memo and DD report chrome localised by a post-render pass; Traditional Chinese DD checklist file. **Not done:** some English leftovers remain; the `impact/i18n.py` helpers may still be unused. | `9196e30`, `11d2caf`, `af641dd` |
+| 13. Gate can say ready (C8) | **Mostly** (parallel branch + fix). Completeness is a note, not a condition; the pig-farm sample is now Ready for IC. Fix-up `6fda138`: a ready verdict keeps its evidence plan (the core-metric reporting item) so exports still list it. **Not done:** held-out eval not revisited; methodology still `2.1.0` (no bump); the note shows on the one-pager but is not confirmed on the report's verdict card or the IC memo. | `5e2b3f6`, `6fda138` |
+| 14. Share links (U4) | **Partly** (parallel branch). Read-only notice, view audit, per-link revocation. **Not done:** UI reuse of one link per audience / language; translated banner and error page; `web/chat_ui.py`. | `22f4751` |
+| 15. Compare (F2) and IC one-pager (F3) | **Mostly** (parallel branch + fix), with tests. Fix-up `3d8bce1`: one-pager fluid on screen (no 390px overflow), A4 kept for print; gallery labels it "IC one-pager". **Not done:** `decision_workflow.compare_deals` still uses the old composite; the per-US$1m figure is often blank; one-pager strings are inline, not shared templates; no Chromium exact-one-page print test. | `631da75`, `0e81e7f`, `3d8bce1` |
+| 9b. Parsing (C5b) | **Partly** (parallel branch). Reach by stakeholder, effect sizes, spaced thousands, Chinese numerals. **Not done:** `other_reach` in the factor basis line; `regex_extractor._NUMBER_UNIT`; held-out baseline update. | `072f1ba` |
+| R6 / R7 packs (§1.2) | **Partly** (parallel branch). `updates.yaml` for GRI 101–103, SBTi Net-Zero V2, EU Taxonomy 2026/73 (`frameworks/pack_updates.py`, framework module count now 25); taxonomy and SBTi checks partly wired. **Not done:** `gri.py` still hard-codes the 2016 list; SBTi still applies V1 thresholds; no standards-registry rows; not exposed in `framework_tool`. | `cad95fb`, `abf0e3d` |
+| C11 (part 1) | DD checklist grades evidence on the NESTA ladder. | `58b2949` |
+| Merge fix-ups | Framework count 24 → 25 in `CLAUDE.md` and regenerated `docs/reference/tools.md`. | `1be5120` |
+
+The four parallel branches (`iv-par-1..4`) merged into this branch without conflicts; the merge
+exposed four test failures, fixed by the three fix-up commits above.
 
 Everything else in §1–§4 is untouched.
 
@@ -191,7 +204,9 @@ Run from the repo root with the project's `.venv` (Python 3.13):
 
 | Command | Result |
 |---|---|
-| `pytest tests/` (with `IMPACT_VISION_CHROMIUM` set so `tests/visual` runs) | **1,864 passed**, 7 skipped, 1 xfailed, **2 failed** |
+| `pytest tests/` (with `IMPACT_VISION_CHROMIUM` set so `tests/visual` runs), first pass | **1,864 passed**, 7 skipped, 1 xfailed, **2 failed** |
+| `pytest tests/` after the parallel merge, before fix-ups (no `PYTHONPATH`) | 1,925 passed, 7 skipped, 1 xfailed, **6 failed** (the 2 below + 4 new: framework count in `CLAUDE.md`, stale `docs/reference/tools.md`, exports missing the evidence plan on a ready verdict, 390px overflow on the one-pager and gallery) |
+| `pytest tests/` after fix-ups `1be5120`, `6fda138`, `3d8bce1` (with `PYTHONPATH=src` exported) | **1,930 passed**, 7 skipped, 1 xfailed, **1 failed** (`test_wheel_excludes_unused_subpackages`). Without `PYTHONPATH=src`, `test_module_entry_points` fails as well, so the expected result is 1,929 passed, 2 failed: the same two environment failures |
 | `ruff check src/` (ruff 0.15.22, the CI pin) | clean |
 | `mypy --ignore-missing-imports` on the CI list plus the three new modules | clean |
 | `python scripts/check_knowledge.py` | 427 rows, 0 stale, 0 missing |
@@ -201,11 +216,15 @@ Run from the repo root with the project's `.venv` (Python 3.13):
 | `python scripts/check_imports.py --verify-init / --smoke / --registry` | pass |
 | `bandit -q -ll -r src/impact_vision/{impact,web,api_gateway}` | no findings |
 
+The rows below the pytest rows are from the first pass and were **not re-run** after the parallel merge
+(ruff, mypy, knowledge gate, extraction and held-out evals, import checks, bandit). The fix-up commits
+added no new lint on the lines they touched.
+
 The baseline on `a1f5ed7` was 1,784 passed, 11 skipped, 2 failed. The pass count rose by 80: the tests
 added on this branch (10 new or extended test files), plus existing tests that were skipped at baseline
 because `playwright`, `python-docx` and `python-pptx` were not installed.
 
-**The two failures are the same two as on `main` and come from this machine, not the code.** I left both alone:
+**The remaining failures are the same two as on `main` and come from this machine, not the code.** Both left alone:
 
 - `tests/test_v7_wave5_package.py::test_module_entry_points` — `.venv/lib/python3.13/site-packages/impact_vision/`
   holds a leftover stub (`__init__.py` only) from a 0.16 install that shadows `src/` in a subprocess. With
