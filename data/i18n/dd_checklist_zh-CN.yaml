@@ -1,0 +1,486 @@
+# Impact Vision - DD Checklist (Simplified Chinese, Mainland China / 简体中文（中国大陆）). Keyed by the ids in data/dd_checklist.yaml.
+
+categories:
+  impact_thesis: "影响力论点"
+  theory_of_change: "变革理论"
+  what_outcomes: "成果（What）"
+  who_stakeholders: "利益相关方（Who）"
+  how_much_scale: "规模、深度与持续时间（How Much）"
+  contribution: "贡献与额外性"
+  risk: "影响力风险"
+  measurement_systems: "影响力测量与管理体系"
+  governance_esg: "治理与ESG"
+  sdg_alignment: "可持续发展目标（SDG）对标"
+  negative_impact: "负面影响与无害原则"
+  exit_sustainability: "退出与影响力可持续性"
+  sector_fintech: "行业：金融科技／普惠金融"
+  sector_health: "行业：医疗健康"
+  sector_agriculture: "行业：农业"
+  sector_energy: "行业：能源／清洁能源"
+  sector_education: "行业：教育"
+  sector_manufacturing: "行业：制造业"
+  sector_transport: "行业：交通运输与物流"
+  sector_construction: "行业：建筑业"
+  sector_tourism: "行业：旅游业"
+  sector_retail: "行业：零售"
+  sector_mining: "行业：采矿与采掘业"
+  sector_media: "行业：媒体"
+  sector_waste_management: "行业：废弃物管理"
+  sector_ict: "行业：信息通信技术（ICT）"
+  sector_professional_services: "行业：专业服务"
+  financial_sustainability: "财务可持续性"
+  team_capability: "团队与能力"
+  market_context: "市场与环境"
+  product_design: "产品／服务设计"
+  supply_chain: "供应链与运营"
+  stakeholder_voice: "利益相关方意见与参与"
+  investor_alignment: "投资者协同"
+
+questions:
+  # ===== 影响力论点与战略 =====
+  - id: IT01
+    category: impact_thesis
+    question: "公司的核心影响力论点是什么？公司如何阐述其致力于解决的社会或环境问题？"
+  - id: IT02
+    category: theory_of_change
+    question: "公司是否有清晰界定的变革理论，将其活动与预期成果联系起来？"
+    follow_up: "公司能否提供图示或书面形式的变革理论文件？"
+  - id: IT03
+    category: impact_thesis
+    question: "影响力论点与基金的投资授权及影响力目标如何保持一致？"
+  - id: IT04
+    category: impact_thesis
+    question: "影响力是否嵌入核心商业模式，还是仅属于边缘性质／近似企业社会责任（CSR）？"
+    follow_up: "收入中有多大比例来自产生影响力的产品／服务？"
+  - id: IT05
+    category: sdg_alignment
+    question: "公司声称对哪些联合国可持续发展目标（SDG）有贡献？是在目标层面还是具体子目标（target）层面？"
+
+  # ===== 成果（What） =====
+  - id: WH01
+    category: what_outcomes
+    question: "公司为其利益相关方带来了哪些具体成果（而不仅仅是产出）？"
+    follow_up: "公司能否区分产出（交付的单位数量）与成果（生活上的改变）？"
+  - id: WH02
+    category: what_outcomes
+    question: "预期成果是否是正面的？是否已识别潜在的负面成果？"
+  - id: WH03
+    category: what_outcomes
+    question: "这些成果对经历这些成果的利益相关方有多重要？"
+  - id: WH04
+    category: what_outcomes
+    question: "公司是否跟踪成果层面的数据，还是只跟踪活动／产出指标？"
+
+  # ===== 利益相关方（Who） =====
+  - id: WO01
+    category: who_stakeholders
+    question: "主要目标利益相关方／受益人是谁？他们的人口统计特征如何？"
+    follow_up: "利益相关方的地域分布如何？"
+  - id: WO02
+    category: who_stakeholders
+    question: "目标利益相关方是否属于服务不足、被边缘化或弱势的群体？如何界定？"
+  - id: WO03
+    category: who_stakeholders
+    question: "在公司介入之前，目标利益相关方的现状（基线）如何？"
+  - id: WO04
+    category: who_stakeholders
+    question: "公司如何与利益相关方沟通或收集他们的反馈？"
+  - id: WO05
+    category: who_stakeholders
+    question: "是否有利益相关方可能因公司的活动而受到负面影响？"
+
+  # ===== 规模、深度与持续时间（How Much） =====
+  - id: HM01
+    category: how_much_scale
+    question: "公司目前覆盖多少利益相关方／受益人（规模）？"
+  - id: HM02
+    category: how_much_scale
+    question: "利益相关方所经历的改变程度如何（影响力深度）？"
+  - id: HM03
+    category: how_much_scale
+    question: "成果对利益相关方能持续多久（持续时间）？"
+  - id: HM04
+    category: how_much_scale
+    question: "公司对未来3至5年影响力规模的增长预测是什么？"
+  - id: HM05
+    category: how_much_scale
+    question: "公司是否在跟踪规模、深度和持续时间的量化指标？"
+
+  # ===== 贡献 =====
+  - id: CO01
+    category: contribution
+    question: "如果没有这家公司的介入，这些成果是否无论如何都会出现（额外性）？"
+  - id: CO02
+    category: contribution
+    question: "在创造影响力方面，公司的做法与现有替代方案或竞争对手相比如何？"
+  - id: CO03
+    category: contribution
+    question: "公司是否有任何证据证明其贡献（例如对照组、干预前后数据）？"
+  - id: CO04
+    category: contribution
+    question: "投资者的资金本身是否具有额外性？公司能否从非影响力渠道融资？"
+
+  # ===== 风险 =====
+  - id: RI01
+    category: risk
+    question: "证据风险如何？有多充分的证据表明所声称的影响力确实发生？"
+  - id: RI02
+    category: risk
+    question: "执行风险如何？管理团队能否按计划实现影响力？"
+  - id: RI03
+    category: risk
+    question: "有哪些外部风险（监管、市场、政治、气候）可能导致影响力无法实现？"
+  - id: RI04
+    category: risk
+    question: "公司是否已制定影响力风险缓释策略？"
+  - id: RI05
+    category: risk
+    question: "是否存在“影响力漂洗”（impact washing）的风险？声明是否与证据不相称？"
+
+  # ===== 测量与管理体系 =====
+  - id: MM01
+    category: measurement_systems
+    question: "公司是否已建立影响力测量与管理（IMM）体系？"
+  - id: MM02
+    category: measurement_systems
+    question: "公司目前跟踪哪些指标？这些指标是否与IRIS+或其他标准对标？"
+  - id: MM03
+    category: measurement_systems
+    question: "公司收集和报告影响力数据的频率是多少？"
+  - id: MM04
+    category: measurement_systems
+    question: "公司是否有专职人员或资源负责影响力测量？"
+  - id: MM05
+    category: measurement_systems
+    question: "公司是否已聘请第三方评估机构或审计机构进行影响力验证？"
+  - id: MM06
+    category: measurement_systems
+    question: "公司如何利用影响力数据改进其产品、服务或运营？"
+
+  # ===== 治理与ESG =====
+  - id: GE01
+    category: governance_esg
+    question: "董事会或管理层是否具备影响力方面的专业能力或监督职能？"
+  - id: GE02
+    category: governance_esg
+    question: "公司的环境政策与实践（能源、废弃物、排放）是什么？"
+  - id: GE03
+    category: governance_esg
+    question: "公司的劳工实践、员工福利和多元化政策是什么？"
+  - id: GE04
+    category: governance_esg
+    question: "公司是否有反腐败、职业道德和数据隐私政策？"
+  - id: GE05
+    category: governance_esg
+    question: "财务激励（管理层薪酬、奖金结构）是否与影响力绩效挂钩？"
+
+  # ===== 负面影响与无害原则 =====
+  - id: NI01
+    category: negative_impact
+    question: "公司是否已评估对人、社区或环境的潜在负面影响？"
+  - id: NI02
+    category: negative_impact
+    question: "是否有人群或生态系统可能因公司的活动而受到损害？"
+  - id: NI03
+    category: negative_impact
+    question: "公司是否设有申诉机制或其他渠道，供受影响的利益相关方表达关切？"
+
+  # ===== 退出与可持续性 =====
+  - id: EX01
+    category: exit_sustainability
+    question: "投资者退出后，影响力能否持续？影响力退出策略是什么？"
+  - id: EX02
+    category: exit_sustainability
+    question: "未来的收购方或投资者是否可能改变公司使命或削弱影响力？"
+  - id: EX03
+    category: exit_sustainability
+    question: "是否有法律结构（例如B Corp认证、使命锁定）保护影响力使命？"
+
+  # ===== 财务可持续性 =====
+  - id: FS01
+    category: financial_sustainability
+    question: "公司的收入模式以及实现财务可持续的路径是什么？"
+    follow_up: "单位经济效益如何？公司预计何时实现盈亏平衡？"
+  - id: FS02
+    category: financial_sustainability
+    question: "影响力最大化与财务回报之间是否存在矛盾？公司如何管理？"
+  - id: FS03
+    category: financial_sustainability
+    question: "财务预测所依据的经济假设是什么？"
+  - id: FS04
+    category: financial_sustainability
+    question: "公司是否依赖赠款、补贴或优惠性资金？如果这些资金终止会怎样？"
+  - id: FS05
+    category: financial_sustainability
+    question: "获客成本和客户生命周期价值是多少？定价是否让目标人群负担得起？"
+
+  # ===== 团队与能力 =====
+  - id: TC01
+    category: team_capability
+    question: "创始／管理团队是否具备影响力领域的相关经验？"
+    follow_up: "他们与影响力论点相关的具体领域专长是什么？"
+  - id: TC02
+    category: team_capability
+    question: "团队中是否有来自目标社区或与目标社区有深厚联系的成员？"
+  - id: TC03
+    category: team_capability
+    question: "是否存在关键人物风险？如果创始人／首席执行官离职会怎样？"
+  - id: TC04
+    category: team_capability
+    question: "团队是否有能力在业务运营之外同时测量和管理影响力？"
+
+  # ===== 市场与环境 =====
+  - id: MC01
+    category: market_context
+    question: "目标市场的规模和特征如何？市场是否在增长？"
+  - id: MC02
+    category: market_context
+    question: "监管环境如何？是否有支持性或限制性政策？"
+  - id: MC03
+    category: market_context
+    question: "是否存在可能限制影响力的系统性障碍（基础设施、识字水平、网络连接）？"
+  - id: MC04
+    category: market_context
+    question: "竞争格局如何？还有谁在为这一人群提供服务？方式如何？"
+
+  # ===== 产品／服务设计 =====
+  - id: PD01
+    category: product_design
+    question: "产品／服务的设计是否考虑了目标利益相关方的需求和限制条件？"
+    follow_up: "公司是否与目标人群开展过用户研究或试点测试？"
+  - id: PD02
+    category: product_design
+    question: "是否存在产品安全、数据隐私或客户保护方面的问题？"
+  - id: PD03
+    category: product_design
+    question: "公司是否有负责任的定价策略，确保目标用户负担得起？"
+  - id: PD04
+    category: product_design
+    question: "产品／服务在文化上是否适合目标人群？"
+
+  # ===== 供应链与运营 =====
+  - id: SC01
+    category: supply_chain
+    question: "公司是否了解其供应链的ESG实践情况？"
+  - id: SC02
+    category: supply_chain
+    question: "供应链中是否存在强迫劳动、童工或剥削性做法的风险？"
+  - id: SC03
+    category: supply_chain
+    question: "公司运营的环境足迹（能源、用水、废弃物、排放）如何？"
+
+  # ===== 利益相关方意见与参与 =====
+  - id: SV01
+    category: stakeholder_voice
+    question: "公司是否设有正式机制，供利益相关方／受益人提供反馈？"
+  - id: SV02
+    category: stakeholder_voice
+    question: "在设计产品／服务或影响力战略时，公司是否征询过利益相关方的意见？"
+  - id: SV03
+    category: stakeholder_voice
+    question: "公司是否向利益相关方和公众公开影响力成果？"
+
+  # ===== 投资者协同 =====
+  - id: IA01
+    category: investor_alignment
+    question: "公司是否接受与影响力挂钩的约束性条款、报告要求或附函（side letter）？"
+  - id: IA02
+    category: investor_alignment
+    question: "除资金外，投资者可以提供哪些非财务支持来提升影响力？"
+  - id: IA03
+    category: investor_alignment
+    question: "这项投资如何契合基金在投资组合层面的影响力战略？"
+
+  # ---- 行业专项：金融科技／普惠金融 ----
+  - id: SF01
+    category: sector_fintech
+    question: "公司是否有防止借款人过度负债的政策？"
+    follow_up: "公司采用了哪些信用评分或还款能力审查措施？"
+  - id: SF02
+    category: sector_fintech
+    question: "公司遵循哪些客户保护原则（Smart Campaign／CGAP）？"
+  - id: SF03
+    category: sector_fintech
+    question: "除金融服务可得性之外，公司如何衡量客户财务健康状况的改善？"
+  - id: SF04
+    category: sector_fintech
+    question: "实际年化利率是多少？与当地其他替代方案相比如何？"
+  - id: SF05
+    category: sector_fintech
+    question: "公司如何处理催收和贷款违约，以避免造成伤害？"
+
+  # ---- 行业专项：医疗健康 ----
+  - id: SH01
+    category: sector_health
+    question: "公司是否遵守当地医疗卫生法规和国际质量标准（世界卫生组织、ISO 13485）？"
+  - id: SH02
+    category: sector_health
+    question: "公司如何跟踪患者安全结果并报告不良事件？"
+  - id: SH03
+    category: sector_health
+    question: "有哪些证据证明临床疗效或健康结果的改善？"
+    follow_up: "是否开展过临床研究或独立评估？"
+  - id: SH04
+    category: sector_health
+    question: "公司如何确保低收入人群能够负担得起并公平地获得服务？"
+  - id: SH05
+    category: sector_health
+    question: "公司如何处理知情同意和患者数据隐私？"
+
+  # ---- 行业专项：农业 ----
+  - id: SA01
+    category: sector_agriculture
+    question: "公司如何衡量小农户收入或产量的提升？"
+  - id: SA02
+    category: sector_agriculture
+    question: "公司推广哪些可持续农业实践（再生农业、有机农业、病虫害综合防治）？"
+  - id: SA03
+    category: sector_agriculture
+    question: "公司如何提升气候韧性（耐旱品种、灌溉、农业保险）？"
+  - id: SA04
+    category: sector_agriculture
+    question: "公司是否关注食品安全和减少产后损失？"
+  - id: SA05
+    category: sector_agriculture
+    question: "公司在土地权属和自然资源影响方面的政策是什么？"
+
+  # ---- 行业专项：能源／清洁能源 ----
+  - id: SE01
+    category: sector_energy
+    question: "每单位产品／服务经测算的二氧化碳当量（CO2e）避免量或减排量是多少？"
+  - id: SE02
+    category: sector_energy
+    question: "公司如何确保能源可及性惠及服务不足的人群（最后一公里、离网地区）？"
+  - id: SE03
+    category: sector_energy
+    question: "硬件（太阳能电池板、电池）的报废／电子废弃物管理计划是什么？"
+  - id: SE04
+    category: sector_energy
+    question: "如何为低收入客户设计可负担的能源价格和付费模式？"
+  - id: SE05
+    category: sector_energy
+    question: "该解决方案带来了哪些电网可靠性或电能质量方面的改善？"
+
+  # ---- 行业专项：教育 ----
+  - id: SED01
+    category: sector_education
+    question: "有哪些学习成果数据（考试成绩、能力提升、完成率）？"
+    follow_up: "是否对学习成果开展过独立评估？"
+  - id: SED02
+    category: sector_education
+    question: "该解决方案如何覆盖服务不足的学习者（低收入群体、女童、残障人士、农村地区）？"
+  - id: SED03
+    category: sector_education
+    question: "公司的教学方法是什么？有何证据证明其有效性？"
+  - id: SED04
+    category: sector_education
+    question: "如何确保未成年人的网络安全以及内容适龄？"
+  - id: SED05
+    category: sector_education
+    question: "所提供的教育带来了哪些就业或生计成果？"
+
+  # ---- 行业专项：制造业 ----
+  - id: SMAN01
+    category: sector_manufacturing
+    question: "公司采取了哪些职业健康与安全措施？工伤／事故率是多少？"
+  - id: SMAN02
+    category: sector_manufacturing
+    question: "公司如何管理供应链劳工标准，并防止强迫劳动／童工？"
+  - id: SMAN03
+    category: sector_manufacturing
+    question: "公司实施了哪些减废、循环经济或清洁生产实践？"
+
+  # ---- 行业专项：交通运输与物流 ----
+  - id: STR01
+    category: sector_transport
+    question: "车队的排放状况如何？是否有脱碳路线图？"
+  - id: STR02
+    category: sector_transport
+    question: "该解决方案如何改善服务不足社区的最后一公里可达性？"
+  - id: STR03
+    category: sector_transport
+    question: "公司采取了哪些道路安全和事故预防措施？"
+
+  # ---- 行业专项：建筑业 ----
+  - id: SCON01
+    category: sector_construction
+    question: "公司遵循哪些绿色建筑标准或认证（LEED、BREEAM、EDGE）？"
+  - id: SCON02
+    category: sector_construction
+    question: "公司如何满足目标市场的保障性住房需求？"
+  - id: SCON03
+    category: sector_construction
+    question: "有哪些措施减少建筑垃圾和建材中的隐含碳？"
+
+  # ---- 行业专项：旅游业 ----
+  - id: STOUR01
+    category: sector_tourism
+    question: "旅游收入如何惠及当地社区，而不是从中攫取价值？"
+  - id: STOUR02
+    category: sector_tourism
+    question: "在保护自然景区方面采取了哪些环境影响管理措施？"
+
+  # ---- 行业专项：零售 ----
+  - id: SRET01
+    category: sector_retail
+    question: "公司如何确保整个供应链符合道德采购和公平贸易要求？"
+  - id: SRET02
+    category: sector_retail
+    question: "公司采取了哪些产品安全和消费者保护措施？"
+
+  # ---- 行业专项：采矿与采掘业 ----
+  - id: SMIN01
+    category: sector_mining
+    question: "公司建立了哪些社区同意和利益共享机制（自由、事先和知情同意（FPIC）、资源使用费）？"
+  - id: SMIN02
+    category: sector_mining
+    question: "环境修复和矿山关闭计划的资金如何保障、如何治理？"
+  - id: SMIN03
+    category: sector_mining
+    question: "有哪些水资源管理和污染防治措施来保护当地水源？"
+
+  # ---- 行业专项：媒体 ----
+  - id: SMED01
+    category: sector_media
+    question: "公司如何确保内容准确、防范虚假信息并保持编辑独立？"
+  - id: SMED02
+    category: sector_media
+    question: "有哪些措施促进多元声音、包容性代表以及媒体可及性？"
+
+  # ---- 行业专项：废弃物管理 ----
+  - id: SWM01
+    category: sector_waste_management
+    question: "实现的废弃物分流率是多少？如何测量？"
+  - id: SWM02
+    category: sector_waste_management
+    question: "公司如何保障非正规废弃物回收从业者的生计和健康？"
+  - id: SWM03
+    category: sector_waste_management
+    question: "废弃物处理设施采取了哪些污染和排放控制措施？"
+
+  # ---- 行业专项：信息通信技术 ----
+  - id: SICT01
+    category: sector_ict
+    question: "该解决方案如何应对数字鸿沟并确保公平接入？"
+  - id: SICT02
+    category: sector_ict
+    question: "公司采取了哪些数据隐私、网络安全和算法公平性措施？"
+  - id: SICT03
+    category: sector_ict
+    question: "信息通信技术基础设施（数据中心、电子废弃物）的环境足迹如何？"
+
+  # ---- 行业专项：专业服务 ----
+  - id: SPRO01
+    category: sector_professional_services
+    question: "公司如何衡量其咨询／顾问服务的下游影响力？"
+  - id: SPRO02
+    category: sector_professional_services
+    question: "公司为服务不足的客户提供哪些公益（pro bono）或降费服务？"
+
+# v6 China sustainability-reporting surface
+cn_disclosure:
+  mandatory: "强制披露"
+  voluntary: "自愿披露"
+  annual_deadline: "年度可持续发展报告应于次年4月30日前披露"
+  content_index: "披露要求索引"
+  materiality: "双重重要性评估"

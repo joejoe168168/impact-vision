@@ -90,6 +90,18 @@ patterns:
 - en: ^no quantified outcome$
   zh-HK: 沒有量化成果
   zh-CN: 没有量化成果
+- en: ^evidence quality (?P<l>\w+) \((?P<s>\d+)/100\)$
+  zh-HK: 證據質素{l:eq}（{s}/100）
+  zh-CN: 证据质量{l:eq}（{s}/100）
+- en: '^the headline figure is at evidence level (?P<l>\d) \(needs (?P<n>\d): data showing change\)$'
+  zh-HK: 主要數字的證據等級為 {l}（需要 {n}：顯示轉變的數據）
+  zh-CN: 主要数字的证据等级为 {l}（需要 {n}：显示转变的数据）
+- en: ^the range is too wide to decide on \(x(?P<s>[\d.]+) from P10 to P90, needs x(?P<n>[\d.]+) or less\)$
+  zh-HK: 範圍太闊，難以作出決定（P10 至 P90 相差 {s} 倍，需要 {n} 倍或以下）
+  zh-CN: 范围太宽，难以作出决定（P10 至 P90 相差 {s} 倍，需要 {n} 倍或以下）
+- en: ^Ready, with (?P<p>\d+)% of the core metric set reported\.$
+  zh-HK: 可提交投委會，核心指標集已報告 {p}%。
+  zh-CN: 可提交投委会，核心指标集已报告 {p}%。
 - en: ^(?P<n>\d+) claims likely misleading \(claim-level greenwashing (?P<s>\d+)/100\)$
   zh-HK: '{n} 項聲明可能具誤導性（聲明層面漂綠風險 {s}/100）'
   zh-CN: '{n} 项声明可能具误导性（声明层面漂绿风险 {s}/100）'
@@ -102,6 +114,9 @@ patterns:
 - en: ^climate impact P50 (?P<n>[\d,]+) (?P<u>.+)$
   zh-HK: 氣候影響 P50 {n} {u:unit}
   zh-CN: 气候影响 P50 {n} {u:unit}
+- en: '^Report progress against the company''s own target: (?P<q>“.+”)$'
+  zh-HK: 按公司自訂的目標匯報進度：{q}
+  zh-CN: 按公司自订的目标汇报进度：{q}
 - en: '^Report the sector''s core metrics: (?P<m>.+?)\.?$'
   zh-HK: 報告行業核心指標：{m}。
   zh-CN: 报告行业核心指标：{m}。
@@ -137,7 +152,7 @@ patterns:
   zh-CN: 文件中的数字相差 {p}%，所有以此为基础的数字均存疑。
 - en: '^Back the main figures with data: monitoring records, surveys or audited accounts\.$'
   zh-HK: 以數據支持主要數字：監察紀錄、調查或經審核賬目。
-  zh-CN: 以数据支持主要数字：监察纪录、调查或经审核账目。
+  zh-CN: 以数据支持主要数字：监察记录、调查或经审核账目。
 - en: ^Evidence quality is (?P<l>\w+) \((?P<s>\d+)/100\)\.$
   zh-HK: 證據質素{l:eq}（{s}/100）。
   zh-CN: 证据质量{l:eq}（{s}/100）。
@@ -185,7 +200,7 @@ patterns:
   zh-CN: 以可衡量的目标取代流行语：什么数字成果、何时达成、惠及哪些人？
 - en: ^Attach the source document or system export that supports the figure\.$
   zh-HK: 附上支持該數字的來源文件或系統匯出資料。
-  zh-CN: 附上支持该数字的来源文件或系统汇出资料。
+  zh-CN: 附上支持该数字的来源文件或系统导出资料。
 - en: '^Move the evidence up the NESTA ladder: .*$'
   zh-HK: 提升 NESTA 證據等級：前後比較、雙重差分或第三方評估。
   zh-CN: 提升 NESTA 证据等级：前后比较、双重差分或第三方评估。
@@ -451,7 +466,7 @@ exact:
     zh-CN: 过度负债：向弱势人口掠夺性放贷的风险
   'Data privacy: risks around financial data security and misuse':
     zh-HK: 資料私隱：金融數據安全及被濫用的風險
-    zh-CN: 资料私隐：金融数据安全及被滥用的风险
+    zh-CN: 资料隐私：金融数据安全及被滥用的风险
   'Digital exclusion: services inaccessible to those without smartphones/internet':
     zh-HK: 數碼排斥：沒有智能手機／互聯網的人無法使用服務
     zh-CN: 数字排斥：没有智能手机／互联网的人无法使用服务
@@ -475,7 +490,7 @@ exact:
     zh-CN: 质量差异：各地点护理质量不一
   'Data privacy: risks around patient health data security':
     zh-HK: 資料私隱：病人健康數據安全的風險
-    zh-CN: 资料私隐：病人健康数据安全的风险
+    zh-CN: 资料隐私：病人健康数据安全的风险
   'Health outcomes: improving access to quality healthcare services':
     zh-HK: 健康成果：改善優質醫療服務的可及性
     zh-CN: 健康成果：改善优质医疗服务的可及性
@@ -644,3 +659,275 @@ exact:
   Misuse of personal data:
     zh-HK: 個人資料被濫用
     zh-CN: 个人资料被滥用
+labels:
+  INSUFFICIENT EVIDENCE: 证据不足
+  insufficient evidence: 证据不足
+  good: 良好
+  strong: 强
+  moderate: 中等
+  weak: 弱
+  core_set: 核心指标集
+  broad_catalog: 完整指标目录
+  Skip to main content: 跳至主要内容
+  On this page: 本页内容
+  Investment Committee Memo: 投资委员会备忘录
+  Expected impact: 预期影响力
+  Impact thesis fit: 影响力主题契合度
+  5-Dimension impact score: 五维度影响力评分
+  SDG alignment (top 5): 可持续发展目标契合度（前五项）
+  DD & greenwashing: 尽职调查与漂绿风险
+  IC gate detail: 投委会关卡详情
+  Impact targets as investment conditions: 以影响力目标作为投资条件
+  Recommendation: 建议
+  Recommendations: 建议
+  Thesis fit: 主题契合度
+  5-Dimension: 五维度
+  SDG alignment: 可持续发展目标契合度
+  Impact target conditions: 影响力目标条件
+  'Date:': 日期：
+  'Fund:': 基金：
+  'Sector:': 行业：
+  'Geography:': 地区：
+  'IC gate:': 投委会关卡：
+  IC Gate: 投委会关卡
+  Evidence plan required: 需要证据计划
+  EVIDENCE PLAN: 证据计划
+  Evidence plan: 证据计划
+  5D Overall: 五维度总分
+  Top SDG: 首要可持续发展目标
+  DD Coverage: 尽职调查覆盖率
+  Checklist addressed: 已回应的清单项目
+  Greenwashing risk: 漂绿风险
+  low risk: 低风险
+  medium risk: 中度风险
+  high risk: 高风险
+  Evidence quality: 证据质量
+  Outcome: 成果
+  Unit: 单位
+  Uncertainty: 不确定性
+  wide: 阔
+  narrow: 窄
+  'Fund thesis:': 基金主题：
+  Example thesis.: 示例主题。
+  Fund-weighted 5D: 基金加权五维度
+  Fund-weighted SDG: 基金加权可持续发展目标
+  Dimension: 维度
+  Score: 分数
+  Progress: 进度
+  Provenance: 来源
+  Notes: 备注
+  Note: 备注
+  What: 什么
+  Who: 谁
+  How Much: 多少
+  Contribution: 贡献
+  Risk: 风险
+  partial: 部分
+  evidence-based: 有证据支持
+  estimated: 估算
+  SDG: 可持续发展目标
+  Targets matched: 对应的具体目标
+  Basis: 依据
+  Due-diligence checklist coverage: 尽职调查清单覆盖率
+  Greenwashing composite: 漂绿综合评估
+  'Composite risk:': 综合风险：
+  Check: 检查项目
+  Status: 状况
+  Actual: 实际
+  Threshold: 门槛
+  5D overall score: 五维度总分
+  Top SDG score: 首要可持续发展目标分数
+  DD checklist coverage: 尽职调查清单覆盖率
+  Needs data: 需要数据
+  PASS: 通过
+  pass: 通过
+  FAIL: 不通过
+  fail: 不通过
+  must pass: 必须通过
+  Exclusion screening: 排除筛查
+  All exclusions cleared: 所有排除项目均已通过
+  Forbidden sector check: 禁止行业检查
+  Sector not on the forbidden list: 行业不在禁止名单内
+  Evidence to collect before IC: 投委会前须收集的证据
+  (missing data, not negative findings): （属数据缺失，并非负面发现）
+  Type: 类别
+  Suggested condition: 建议条件
+  When: 时间
+  Why: 原因
+  Covenant: 约束性条款
+  Reporting requirement: 汇报要求
+  reported every year: 每年汇报
+  in each annual report: 于每份年报内
+  Generated by: 制作：
+  READY: 可提交
+  FAILS: 不符合
+  NOT READY: 未准备好
+  'Note:': 备注：
+  Condition precedent: 先决条件
+  before closing: 交割前
+  before first disbursement: 首次拨款前
+  study commissioned within 18 months of closing: 交割后 18 个月内委托进行研究
+  elevated: 偏高
+  baseline within 12 months of closing: 交割后 12 个月内建立基线
+  Questions: 问题
+  To ask: 待提问
+  Reviewer: 审阅人
+  Date: 日期
+  Fund: 基金
+  Sector: 行业
+  Geography: 地区
+  Deal size: 交易规模
+  IC gate: 投委会关卡
+  People: 人
+  Climate: 气候
+  data completeness: 数据完整度
+  CLEAR: 无
+  Expected impact is quantified and the evidence is good enough for the investment committee.: 预期影响已量化，证据足以提交投资委员会。
+  Something found in the documents fails the fund's thesis.: 文件中发现的事项不符合基金的投资论点。
+  No quantified outcome in the documents yet.: 文件中尚未有量化成果。
+  No binding impact targets were set as investment conditions.: 尚未把具约束力的影响力目标订为投资条件。
+  ? 'No binding impact targets have been set yet. Suggested conditions, drawn from the evidence plan and the company''s own targets, for the committee to adopt, amend or drop:'
+  : 尚未订立具约束力的影响力目标。以下建议条件取自证据计划及公司自订的目标，供委员会采纳、修订或删除：
+  ? These weights and thresholds come from the bundled example thesis, not from your fund. Pass --thesis <file> or create data/fund_thesis.yaml to assess against your own thesis.
+  : 这些权重及门槛来自随附的示例主题，并非 贵基金的设定。请使用 --thesis <文件> 或建立 data/fund_thesis.yaml，以按 贵基金的主题评估。
+  Review before submission.: 提交前请审阅。
+  Not investment advice.: 并非投资建议。
+  — open-source impact measurement.: — 开源影响力衡量工具。
+  ? 'Machine-generated document: produced automatically from the supplied inputs; it may contain automatically extracted or estimated figures. Review before relying on it.'
+  : 机器生成文件：根据所提供的资料自动制作，可能包含自动撷取或估算的数字。依赖前请先审阅。
+  'Not a negative finding: collect the evidence below, biggest effect on the answer first.': 这并非负面发现：请收集下列证据，对结论影响最大的排在最前。
+  The company states this target; a covenant makes it binding rather than aspirational.: 此目标由公司自行提出；订为约束性条款后即具约束力，而非仅属愿景。
+  Impact DD — Questionnaire Helper: 影响力尽职调查 — 问卷助手
+  Key risk areas: 主要风险范畴
+  Information request: 资料索取
+  Information Request: 资料索取
+  Information request (questionnaire to send): 资料索取（待发出的问卷）
+  Evidence & document gaps: 证据及文件缺口
+  Coverage snapshot: 覆盖率概览
+  By category: 按类别
+  Coverage by category: 按类别划分的覆盖率
+  Addressed (appendix): 已回应（附录）
+  Questions already addressed (appendix): 已回应的问题（附录）
+  Evidence levels: 证据等级
+  Evidence level reference: 证据等级参考
+  ASK FIRST: 优先提问
+  HIGH RISK: 高风险
+  WARN: 注意
+  Addressed / Total: 已回应 / 总数
+  'Attach / ask for:': 请附上 / 索取：
+  Avg evidence level: 平均证据等级
+  Category: 类别
+  Checklist coverage: 清单覆盖率
+  Overall coverage: 整体覆盖率
+  Confidence: 信心
+  Coverage: 覆盖率
+  Description: 说明
+  Document / evidence: 文件 / 证据
+  'Founder response:': 创始人回复：
+  High-priority gaps: 高优先缺口
+  Keywords: 关键词
+  Level: 等级
+  Question: 问题
+  Questions to send: 待发出的问题
+  'Questions:': 问题：
+  '# questions': 问题数目
+  Received: 已收到
+  Requested: 已索取
+  'Reviewer:': 审阅人：
+  'Probe further:': 进一步追问：
+  'To ask:': 待提问：
+  addressed: 已回应
+  Priority 1 — Ask first: 优先次序 1 — 优先提问
+  Priority 2 — Ask in follow-up: 优先次序 2 — 跟进时提问
+  NESTA Standards of Evidence: NESTA 证据标准
+  NESTA Standards of Evidence — used to grade every matched question.: NESTA 证据标准 — 用于评定每条已对应问题的等级。
+  Worst-covered categories with high-priority gaps float to the top.: 覆盖率最低而又有高优先缺口的类别排在最前。
+  Contribution / additionality: 贡献 / 额外性
+  Exit & long-run sustainability: 退出及长远可持续性
+  Financial sustainability: 财务可持续性
+  Governance & ESG: 治理及 ESG
+  How much: 多少
+  How much — scale, depth, duration: 多少 — 规模、深度、持续时间
+  Impact risk: 影响力风险
+  Impact thesis & mission: 影响力主题及使命
+  Investor alignment: 投资者契合度
+  Market context: 市场环境
+  Measurement & management systems: 衡量及管理系统
+  Negative impact / do-no-harm: 负面影响 / 不造成伤害
+  Product / service design: 产品 / 服务设计
+  Stakeholder voice: 利益相关方意见
+  Supply chain: 供应链
+  Team & capability: 团队及能力
+  Theory of change: 变革理论
+  What — intended outcomes: 什么 — 预期成果
+  Who — stakeholders & beneficiaries: 谁 — 利益相关方及受益者
+  Audited or management financial statements: 经审核或管理层财务报表
+  Board / impact-committee charter and minutes: 董事会 / 影响力委员会章程及会议记录
+  Exit / sustainability plan memo: 退出 / 可持续性计划备忘录
+  Formal policy document (e.g. ESG, safeguarding, data-privacy): 正式政策文件（例如 ESG、保障措施、资料隐私）
+  Live KPI / metric dashboard export (last 12 months): 即时 KPI / 指标仪表板导出（过去 12 个月）
+  Peer / sector benchmark analysis: 同业 / 行业基准分析
+  Stakeholder survey instrument + anonymised results: 利益相关方问卷工具及匿名结果
+  Theory-of-change diagram or written logic model: 变革理论图或书面逻辑模型
+  Third-party audit / verification letter: 第三方审核 / 核实函件
+  Data showing change (before/after, baseline, surveys): 显示转变的数据（前后对比、基线、问卷调查）
+  Causality shown with a comparison or control group (incl. RCTs): 以对照组证明因果关系（包括随机对照试验）
+  Independent replication or evaluation: 独立重复验证或评估
+  Manualised and replicated at scale: 已编成手册并大规模复制
+  An account of what is done and why it matters (narrative, activity and output counts): 说明做了什么及其重要性（叙述、活动及产出数字）
+  Risk-first follow-up questionnaire generated from the Impact Vision DD checklist, anchored to: 按风险先后、根据 Impact Vision 尽职调查清单制作的跟进问卷，依据文件
+  . Send the: 。请将下方
+  section below to the founder / sponsor as the next DD step.: 部分发给创始人／保荐人，作为下一步尽职调查。
+  questions flagged priority=high: 标记为高优先的问题
+  full information request below: 完整资料索取见下文
+  high-priority gaps: 个高优先缺口
+  high-priority gap: 个高优先缺口
+  no high-priority gaps: 没有高优先缺口
+  ? Categories ranked by severity (count of high-priority gaps, then coverage percentage). These are the areas to interrogate first in the DD call.
+  : 类别按严重程度排序（先按高优先缺口数目，再按覆盖率）。尽职调查会议应首先追问这些范畴。
+  ? Ordered first by severity, then by the natural DD sequence (Thesis → ToC → What → Who → How-much → Contribution → Risk → Measurement → Governance → Sector → Exit). Each question lists the supporting
+    documents to request alongside the answer.
+  : 先按严重程度排序，再按尽职调查的自然次序（主题 → 变革理论 → 什么 → 谁 → 多少 → 贡献 → 风险 → 衡量 → 治理 → 行业 → 退出）。每条问题均列出须连同答复一并索取的证明文件。
+  'Tip: use': 提示：使用
+  to export an editable Word (.docx) version of this section.: 可把本部分导出为可编辑的 Word（.docx）文件。
+  ? Consolidated list of supporting documents the founder should provide. Each row aggregates all questions that need the same class of evidence, so you can request them in a single email.
+  : 创始人应提供的证明文件总表。每行合并所有需要同类证据的问题，方便以一封电子邮件一并索取。
+  No additional supporting documents required — all unanswered questions can be answered directly by the founder.: 无须额外证明文件 — 所有未回应的问题均可由创始人直接回答。
+  Where the submitted document already answers the checklist. Full category breakdown is further below.: 已提交文件已回应清单的部分。完整的类别明细见下文。
+  ? Audit-trail of what the auto-matcher picked up, grouped by NESTA evidence level. Inspect if you want to sanity-check any match before approving.
+  : 自动配对结果的审计记录，按 NESTA 证据等级分组。如需在批准前核对任何配对，可在此检查。
+  review with the investment team before sending.: 发出前请与投资团队审阅。
+  'Prepared:': 制备日期：
+label_patterns:
+  ^DD Questionnaire Helper — (?P<a>.+)$: 尽职调查问卷助手 — {a}
+  ^(?P<p>\d+)% coverage$: 覆盖率 {p}%
+  ^(?P<p>\d+) of (?P<m>\d+) addressed$: '{m} 条中已回应 {p} 条'
+  ^Level (?P<p>\d)$: 第 {p} 级
+  ^Sector — (?P<a>.+)$: 行业 — {a}
+  ^IC Memo — (?P<a>.+)$: 投委会备忘录 — {a}
+  ^(?P<n>\d+)\. (?P<a>.+)$: '{n}. {a}'
+  ^— (?P<a>.+)$: — {a}
+  ^Grade (?P<g>[A-F][+-]?) · (?P<a>.+)$: 评级 {g} · {a}
+  ^(?P<p>[\d.]+%) of checklist items addressed in the document\.$: 文件已回应 {p} 的清单项目。
+  ^Only (?P<p>[\d.]+%) of the core set is reported\.$: 核心指标只汇报了 {p}。
+  ^(?P<p>[\d.]+%) covered vs\. min (?P<m>[\d.]+%)$: 已覆盖 {p}，最低要求 {m}
+  ^5D overall (?P<p>[\d.]+) vs\. min (?P<m>[\d.]+)$: 五维度总分 {p}，最低要求 {m}
+  ^Risk (?P<p>[\d.]+) vs\. max (?P<m>[\d.]+)$: 风险 {p}，上限 {m}
+  ^SDG (?P<n>\d+) — (?P<a>.+)$: 可持续发展目标 {n} — {a}
+  '^SDG (?P<n>\d+) \((?P<a>[^)]+)\): (?P<s>[\d.]+) vs\. min (?P<m>[\d.]+)$': 可持续发展目标 {n}（{a}）：{s}，最低要求 {m}
+  ^SDG (?P<n>\d+)(?P<rest>\b.*)$: 可持续发展目标 {n}{rest}
+  '^Fund thesis checks: (?P<a>.+)$': 基金主题检查：{a}
+  ^(?P<a>partial|estimated|evidence-based) \((?P<b>\w+)\)$: '{a}（{b}）'
+  ^(?P<a>[A-Z][A-Za-z ,&-]+) · (?P<s>\d+)/100$: '{a} · {s}/100'
+  '^evidence quality (?P<s>\d+)/100 · thesis checks: (?P<a>.+)$': 证据质量 {s}/100 · 主题检查：{a}
+  ^(?P<a>.+?) · P10 (?P<p>[\d,.]+[kKmM]?) – P90 (?P<m>[\d,.]+[kKmM]?)$: '{a} · P10 {p} – P90 {m}'
+  ^(?P<a>People|Climate) · (?P<b>.+)$: '{a} · {b}'
+  ^\((?P<b>\w+), vintage (?P<n>\d{4})\)\.$: （{b}，{n} 年度）。
+  ^(?P<a>.+) \((?P<p>good|strong|moderate|weak)\)$: '{a}（{p}）'
+  ^\((?P<a>good|strong|moderate|weak)\) · (?P<b>data completeness)$: （{a}）· {b}
+  ^(?P<a>[\d.]+% of )(?P<n>\d+) checklist questions addressed · avg evidence level$: '{n} 条清单问题中已回应 {a}· 平均证据等级'
+  ^of (?P<n>\d+) checklist questions addressed · avg evidence level$: （共 {n} 条清单问题）已回应 · 平均证据等级
+  ^e\.g\. “(?P<a>.+)”$: 例如“{a}”
+  ^(?P<b>.+) \(bundled example thesis\)$: '{b}（随附示例主题）'
+  ^· (?P<a>.+)$: · {a}
+  ^(?P<p>\d+)/(?P<m>\d+) addressed$: 已回应 {p}/{m}

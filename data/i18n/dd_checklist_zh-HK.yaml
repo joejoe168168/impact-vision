@@ -1,68 +1,482 @@
-# Impact Vision - DD Checklist (Traditional Chinese, Hong Kong / 繁體中文（香港）— derived from dd_checklist_zh.yaml with OpenCC s2hk)
+# Impact Vision - DD Checklist (Traditional Chinese, Hong Kong / 繁體中文（香港）). Keyed by the ids in data/dd_checklist.yaml.
 
 categories:
   impact_thesis: "影響力論點"
   theory_of_change: "變革理論"
-  measurement_system: "測量體系"
-  sdg_alignment: "可持續發展目標對齊"
-  beneficiary_voice: "受益人反饋"
-  governance: "治理"
-  risk_management: "風險管理"
-  data_quality: "數據質量"
-  additionality: "額外性"
-  negative_impact: "負面影響"
-  exit_strategy: "退出策略"
-  reporting: "報告"
+  what_outcomes: "成果（What）"
+  who_stakeholders: "持份者（Who）"
+  how_much_scale: "規模、深度及持續時間（How Much）"
+  contribution: "貢獻及額外性"
+  risk: "影響力風險"
+  measurement_systems: "影響力衡量及管理系統"
+  governance_esg: "管治及ESG"
+  sdg_alignment: "可持續發展目標（SDG）對應"
+  negative_impact: "負面影響及不造成傷害"
+  exit_sustainability: "退出及影響力持續性"
+  sector_fintech: "行業：金融科技／普惠金融"
+  sector_health: "行業：醫療健康"
+  sector_agriculture: "行業：農業"
+  sector_energy: "行業：能源／潔淨能源"
+  sector_education: "行業：教育"
+  sector_manufacturing: "行業：製造業"
+  sector_transport: "行業：運輸及物流"
+  sector_construction: "行業：建造業"
+  sector_tourism: "行業：旅遊業"
+  sector_retail: "行業：零售"
+  sector_mining: "行業：採礦及開採業"
+  sector_media: "行業：媒體"
+  sector_waste_management: "行業：廢物管理"
+  sector_ict: "行業：資訊及通訊科技"
+  sector_professional_services: "行業：專業服務"
+  financial_sustainability: "財務可持續性"
+  team_capability: "團隊及能力"
+  market_context: "市場及環境"
+  product_design: "產品／服務設計"
+  supply_chain: "供應鏈及營運"
+  stakeholder_voice: "持份者意見及參與"
+  investor_alignment: "投資者一致性"
 
 questions:
+  # ===== 影響力論點及策略 =====
   - id: IT01
     category: impact_thesis
-    question: "公司的核心影響力論點是什麼？它與公司使命有何關聯？"
-    nesta_level: 1
+    question: "公司的核心影響力論點是甚麼？公司如何闡述其致力解決的社會或環境問題？"
   - id: IT02
+    category: theory_of_change
+    question: "公司是否有清晰界定的變革理論，將其活動與預期成果連繫起來？"
+    follow_up: "公司能否提供圖像化或書面的變革理論文件？"
+  - id: IT03
     category: impact_thesis
-    question: "公司解決的具體社會或環境問題是什麼？"
-    nesta_level: 1
-  - id: TC01
-    category: theory_of_change
-    question: "公司是否能清晰闡述變革理論（投入→活動→產出→成果→影響）？"
-    nesta_level: 2
-  - id: TC02
-    category: theory_of_change
-    question: "有什麼證據支持變革理論中的因果關係？"
-    nesta_level: 3
-  - id: MS01
-    category: measurement_system
-    question: "公司使用哪些IRIS+指標或標準化指標來衡量影響力？"
-    nesta_level: 2
-  - id: MS02
-    category: measurement_system
-    question: "影響力指標的收集和報告頻率是多少？"
-    nesta_level: 2
-  - id: SA01
+    question: "影響力論點與基金的投資授權及影響力目標如何配合？"
+  - id: IT04
+    category: impact_thesis
+    question: "影響力是否融入核心商業模式，抑或只屬邊緣性質／近似企業社會責任（CSR）？"
+    follow_up: "收入中有多大百分比來自產生影響力的產品／服務？"
+  - id: IT05
     category: sdg_alignment
-    question: "公司對哪些可持續發展目標有貢獻？有何證據？"
-    nesta_level: 2
-  - id: BV01
-    category: beneficiary_voice
-    question: "公司如何將受益人反饋納入決策？"
-    nesta_level: 3
-  - id: GO01
-    category: governance
-    question: "董事會層面是否有影響力管理的監督機制？"
-    nesta_level: 2
-  - id: RM01
-    category: risk_management
-    question: "哪些風險可能阻礙公司實現預期影響力？"
-    nesta_level: 2
-  - id: AD01
-    category: additionality
-    question: "如果沒有這筆投資會怎樣？投資者的額外性是什麼？"
-    nesta_level: 3
+    question: "公司聲稱對哪些聯合國可持續發展目標（SDG）有貢獻？是在目標層面還是具體指標（target）層面？"
+
+  # ===== 成果（What） =====
+  - id: WH01
+    category: what_outcomes
+    question: "公司為其持份者帶來哪些具體成果（而不僅是產出）？"
+    follow_up: "公司能否區分產出（交付的單位數量）與成果（生活上的改變）？"
+  - id: WH02
+    category: what_outcomes
+    question: "預期成果是否正面？是否已識別潛在的負面成果？"
+  - id: WH03
+    category: what_outcomes
+    question: "這些成果對經歷這些成果的持份者有多重要？"
+  - id: WH04
+    category: what_outcomes
+    question: "公司是否追蹤成果層面的數據，抑或只追蹤活動／產出指標？"
+
+  # ===== 持份者（Who） =====
+  - id: WO01
+    category: who_stakeholders
+    question: "主要目標持份者／受惠者是誰？他們的人口特徵為何？"
+    follow_up: "持份者的地域分佈為何？"
+  - id: WO02
+    category: who_stakeholders
+    question: "目標持份者是否屬於服務不足、被邊緣化或弱勢的群體？如何界定？"
+  - id: WO03
+    category: who_stakeholders
+    question: "在公司介入之前，目標持份者的現況（基線）如何？"
+  - id: WO04
+    category: who_stakeholders
+    question: "公司如何與持份者溝通或收集他們的意見？"
+  - id: WO05
+    category: who_stakeholders
+    question: "是否有持份者可能因公司的活動而受到負面影響？"
+
+  # ===== 規模、深度及持續時間（How Much） =====
+  - id: HM01
+    category: how_much_scale
+    question: "公司目前觸及多少持份者／受惠者（規模）？"
+  - id: HM02
+    category: how_much_scale
+    question: "持份者所經歷的改變程度如何（影響力深度）？"
+  - id: HM03
+    category: how_much_scale
+    question: "成果對持份者能持續多久（持續時間）？"
+  - id: HM04
+    category: how_much_scale
+    question: "公司對未來3至5年影響力規模的增長預測為何？"
+  - id: HM05
+    category: how_much_scale
+    question: "公司是否有追蹤規模、深度及持續時間的量化指標？"
+
+  # ===== 貢獻 =====
+  - id: CO01
+    category: contribution
+    question: "如果沒有這家公司的介入，這些成果是否無論如何都會出現（額外性）？"
+  - id: CO02
+    category: contribution
+    question: "在創造影響力方面，公司的方法與現有替代方案或競爭對手相比如何？"
+  - id: CO03
+    category: contribution
+    question: "公司是否有任何證據證明其貢獻（例如對照組、介入前後數據）？"
+  - id: CO04
+    category: contribution
+    question: "投資者的資本本身是否具額外性？公司能否從非影響力來源籌得資金？"
+
+  # ===== 風險 =====
+  - id: RI01
+    category: risk
+    question: "證據風險為何？有多強的證據顯示所聲稱的影響力確實發生？"
+  - id: RI02
+    category: risk
+    question: "執行風險為何？管理團隊能否按計劃實現影響力？"
+  - id: RI03
+    category: risk
+    question: "有哪些外部風險（監管、市場、政治、氣候）可能令影響力無法實現？"
+  - id: RI04
+    category: risk
+    question: "公司是否已制定影響力風險緩解策略？"
+  - id: RI05
+    category: risk
+    question: "是否存在「影響力清洗」（impact washing）的風險？聲稱是否與證據不相稱？"
+
+  # ===== 衡量及管理系統 =====
+  - id: MM01
+    category: measurement_systems
+    question: "公司是否已設立影響力衡量及管理（IMM）系統？"
+  - id: MM02
+    category: measurement_systems
+    question: "公司目前追蹤哪些指標？這些指標是否與IRIS+或其他標準一致？"
+  - id: MM03
+    category: measurement_systems
+    question: "公司收集及匯報影響力數據的頻率為何？"
+  - id: MM04
+    category: measurement_systems
+    question: "公司是否有專責人員或資源負責影響力衡量？"
+  - id: MM05
+    category: measurement_systems
+    question: "公司是否已委聘第三方評估機構或核數師進行影響力核實？"
+  - id: MM06
+    category: measurement_systems
+    question: "公司如何運用影響力數據改善其產品、服務或營運？"
+
+  # ===== 管治及ESG =====
+  - id: GE01
+    category: governance_esg
+    question: "董事會或領導層是否具備影響力方面的專業知識或監督職能？"
+  - id: GE02
+    category: governance_esg
+    question: "公司的環境政策及實務（能源、廢物、排放）為何？"
+  - id: GE03
+    category: governance_esg
+    question: "公司的勞工實務、僱員福利及多元化政策為何？"
+  - id: GE04
+    category: governance_esg
+    question: "公司是否有反貪污、道德操守及數據私隱政策？"
+  - id: GE05
+    category: governance_esg
+    question: "財務激勵（管理層薪酬、花紅結構）是否與影響力表現掛鈎？"
+
+  # ===== 負面影響及不造成傷害 =====
   - id: NI01
     category: negative_impact
-    question: "公司是否識別了潛在的負面影響並制定了緩解計劃？"
-    nesta_level: 2
+    question: "公司是否已評估對人、社區或環境的潛在負面影響？"
+  - id: NI02
+    category: negative_impact
+    question: "是否有人群或生態系統可能因公司的活動而受到傷害？"
+  - id: NI03
+    category: negative_impact
+    question: "公司是否設有申訴機制或其他途徑，讓受影響的持份者提出關注？"
+
+  # ===== 退出及持續性 =====
+  - id: EX01
+    category: exit_sustainability
+    question: "投資者退出後，影響力能否持續？影響力退出策略為何？"
+  - id: EX02
+    category: exit_sustainability
+    question: "日後的收購方或投資者會否改變公司使命或削弱影響力？"
+  - id: EX03
+    category: exit_sustainability
+    question: "是否有法律架構（例如B Corp認證、使命鎖定）保障影響力使命？"
+
+  # ===== 財務可持續性 =====
+  - id: FS01
+    category: financial_sustainability
+    question: "公司的收入模式及實現財務可持續的路徑為何？"
+    follow_up: "單位經濟效益如何？公司預計何時達到收支平衡？"
+  - id: FS02
+    category: financial_sustainability
+    question: "影響力最大化與財務回報之間是否存在矛盾？公司如何處理？"
+  - id: FS03
+    category: financial_sustainability
+    question: "財務預測背後的經濟假設為何？"
+  - id: FS04
+    category: financial_sustainability
+    question: "公司是否依賴資助、補貼或優惠資本？若這些資金終止會怎樣？"
+  - id: FS05
+    category: financial_sustainability
+    question: "客戶獲取成本及客戶終身價值為何？定價是否讓目標人群負擔得起？"
+
+  # ===== 團隊及能力 =====
+  - id: TC01
+    category: team_capability
+    question: "創辦／領導團隊是否具備影響力領域的相關經驗？"
+    follow_up: "他們與影響力論點相關的具體專業領域知識為何？"
+  - id: TC02
+    category: team_capability
+    question: "團隊是否包括來自目標社群或與目標社群有深厚聯繫的成員？"
+  - id: TC03
+    category: team_capability
+    question: "是否存在關鍵人物風險？若創辦人／行政總裁離任會怎樣？"
+  - id: TC04
+    category: team_capability
+    question: "團隊是否有能力在業務營運之餘衡量及管理影響力？"
+
+  # ===== 市場及環境 =====
+  - id: MC01
+    category: market_context
+    question: "目標市場的規模及特點為何？市場是否正在增長？"
+  - id: MC02
+    category: market_context
+    question: "監管環境如何？是否有支持性或限制性的政策？"
+  - id: MC03
+    category: market_context
+    question: "是否存在可能限制影響力的系統性障礙（基建、識字水平、網絡連接）？"
+  - id: MC04
+    category: market_context
+    question: "競爭格局如何？還有誰為這群人提供服務？方式為何？"
+
+  # ===== 產品／服務設計 =====
+  - id: PD01
+    category: product_design
+    question: "產品／服務的設計是否已考慮目標持份者的需要及限制？"
+    follow_up: "公司是否曾與目標人群進行用戶研究或試點測試？"
+  - id: PD02
+    category: product_design
+    question: "是否存在產品安全、數據私隱或客戶保障方面的問題？"
+  - id: PD03
+    category: product_design
+    question: "公司是否有負責任的定價策略，確保目標用戶負擔得起？"
+  - id: PD04
+    category: product_design
+    question: "產品／服務在文化上是否切合目標人群？"
+
+  # ===== 供應鏈及營運 =====
+  - id: SC01
+    category: supply_chain
+    question: "公司是否清楚掌握其供應鏈的ESG實務？"
+  - id: SC02
+    category: supply_chain
+    question: "供應鏈中是否存在強迫勞動、童工或剝削性做法的風險？"
+  - id: SC03
+    category: supply_chain
+    question: "公司營運的環境足跡（能源、用水、廢物、排放）為何？"
+
+  # ===== 持份者意見及參與 =====
+  - id: SV01
+    category: stakeholder_voice
+    question: "公司是否設有正式機制讓持份者／受惠者提供意見？"
+  - id: SV02
+    category: stakeholder_voice
+    question: "在設計產品／服務或影響力策略時，公司有否諮詢持份者？"
+  - id: SV03
+    category: stakeholder_voice
+    question: "公司是否向持份者及公眾公佈影響力成果？"
+
+  # ===== 投資者一致性 =====
+  - id: IA01
+    category: investor_alignment
+    question: "公司是否接受與影響力掛鈎的契諾、匯報要求或附函（side letter）？"
+  - id: IA02
+    category: investor_alignment
+    question: "除資本以外，投資者可提供哪些非財務支援以提升影響力？"
+  - id: IA03
+    category: investor_alignment
+    question: "這項投資如何配合基金在投資組合層面的影響力策略？"
+
+  # ---- 行業專屬：金融科技／普惠金融 ----
+  - id: SF01
+    category: sector_fintech
+    question: "公司是否有防止借款人過度負債的政策？"
+    follow_up: "公司設有哪些信貸評分或負擔能力審查？"
+  - id: SF02
+    category: sector_fintech
+    question: "公司遵循哪些客戶保障原則（Smart Campaign／CGAP）？"
+  - id: SF03
+    category: sector_fintech
+    question: "除了金融服務的可及性之外，公司如何衡量客戶財務健康的改善？"
+  - id: SF04
+    category: sector_fintech
+    question: "實際年利率是多少？與當地其他替代方案相比如何？"
+  - id: SF05
+    category: sector_fintech
+    question: "公司如何處理收數及貸款違約，以避免造成傷害？"
+
+  # ---- 行業專屬：醫療健康 ----
+  - id: SH01
+    category: sector_health
+    question: "公司是否遵守當地醫療法規及國際質素標準（世界衞生組織、ISO 13485）？"
+  - id: SH02
+    category: sector_health
+    question: "公司如何追蹤病人安全結果及匯報不良事件？"
+  - id: SH03
+    category: sector_health
+    question: "有哪些證據證明臨床療效或健康成果的改善？"
+    follow_up: "是否曾進行臨床研究或獨立評估？"
+  - id: SH04
+    category: sector_health
+    question: "公司如何確保低收入人群可負擔及公平地獲得服務？"
+  - id: SH05
+    category: sector_health
+    question: "公司如何處理知情同意及病人數據私隱？"
+
+  # ---- 行業專屬：農業 ----
+  - id: SA01
+    category: sector_agriculture
+    question: "公司如何衡量小農收入或產量的改善？"
+  - id: SA02
+    category: sector_agriculture
+    question: "公司推廣哪些可持續耕作方式（再生農業、有機耕作、病蟲害綜合防治）？"
+  - id: SA03
+    category: sector_agriculture
+    question: "公司如何應對氣候韌性（耐旱作物、灌溉、農作物保險）？"
+  - id: SA04
+    category: sector_agriculture
+    question: "公司是否處理食物安全及減少收成後損耗的問題？"
+  - id: SA05
+    category: sector_agriculture
+    question: "公司在土地使用權及天然資源影響方面的政策為何？"
+
+  # ---- 行業專屬：能源／潔淨能源 ----
+  - id: SE01
+    category: sector_energy
+    question: "每單位產品／服務經量度的避免或減少二氧化碳當量（CO2e）排放是多少？"
+  - id: SE02
+    category: sector_energy
+    question: "公司如何確保能源供應惠及服務不足的人群（最後一里、離網地區）？"
+  - id: SE03
+    category: sector_energy
+    question: "硬件（太陽能板、電池）的報廢／電子廢物管理計劃為何？"
+  - id: SE04
+    category: sector_energy
+    question: "如何為低收入客戶設計可負擔的能源價格及付款模式？"
+  - id: SE05
+    category: sector_energy
+    question: "該方案為電網可靠性或電力質素帶來哪些改善？"
+
+  # ---- 行業專屬：教育 ----
+  - id: SED01
+    category: sector_education
+    question: "有哪些學習成果數據（測驗成績、能力提升、完成率）？"
+    follow_up: "是否曾就學習成果進行獨立評估？"
+  - id: SED02
+    category: sector_education
+    question: "該方案如何惠及服務不足的學習者（低收入、女童、殘疾人士、鄉郊地區）？"
+  - id: SED03
+    category: sector_education
+    question: "公司的教學方法為何？有何證據證明其成效？"
+  - id: SED04
+    category: sector_education
+    question: "如何確保未成年人的網絡安全及內容適齡？"
+  - id: SED05
+    category: sector_education
+    question: "所提供的教育帶來哪些就業或生計成果？"
+
+  # ---- 行業專屬：製造業 ----
+  - id: SMAN01
+    category: sector_manufacturing
+    question: "公司設有哪些職業健康及安全措施？受傷／事故率是多少？"
+  - id: SMAN02
+    category: sector_manufacturing
+    question: "公司如何管理供應鏈勞工標準，並防止強迫勞動／童工？"
+  - id: SMAN03
+    category: sector_manufacturing
+    question: "公司實施了哪些減少廢物、循環經濟或清潔生產的做法？"
+
+  # ---- 行業專屬：運輸及物流 ----
+  - id: STR01
+    category: sector_transport
+    question: "車隊的排放狀況如何？是否有脫碳路線圖？"
+  - id: STR02
+    category: sector_transport
+    question: "該方案如何改善服務不足社群的最後一里通達？"
+  - id: STR03
+    category: sector_transport
+    question: "公司設有哪些道路安全及意外預防措施？"
+
+  # ---- 行業專屬：建造業 ----
+  - id: SCON01
+    category: sector_construction
+    question: "公司遵循哪些綠色建築標準或認證（LEED、BREEAM、EDGE）？"
+  - id: SCON02
+    category: sector_construction
+    question: "公司如何回應目標市場對可負擔房屋的需求？"
+  - id: SCON03
+    category: sector_construction
+    question: "有哪些措施減少建築廢物及物料的隱含碳？"
+
+  # ---- 行業專屬：旅遊業 ----
+  - id: STOUR01
+    category: sector_tourism
+    question: "旅遊收入如何惠及當地社區，而非從中榨取價值？"
+  - id: STOUR02
+    category: sector_tourism
+    question: "在保育自然景點方面設有哪些環境影響管理措施？"
+
+  # ---- 行業專屬：零售 ----
+  - id: SRET01
+    category: sector_retail
+    question: "公司如何確保整條供應鏈符合道德採購及公平貿易？"
+  - id: SRET02
+    category: sector_retail
+    question: "公司設有哪些產品安全及消費者保障措施？"
+
+  # ---- 行業專屬：採礦及開採業 ----
+  - id: SMIN01
+    category: sector_mining
+    question: "公司設有哪些社區同意及利益分享機制（自由、事先和知情同意（FPIC）、礦區使用費）？"
+  - id: SMIN02
+    category: sector_mining
+    question: "環境修復及礦場關閉計劃的資金來源及管治安排為何？"
+  - id: SMIN03
+    category: sector_mining
+    question: "有哪些水資源管理及污染防治措施保護當地水源？"
+
+  # ---- 行業專屬：媒體 ----
+  - id: SMED01
+    category: sector_media
+    question: "公司如何確保內容準確、防止錯誤資訊傳播及維持編輯獨立？"
+  - id: SMED02
+    category: sector_media
+    question: "有哪些措施促進多元聲音、包容性的代表性及媒體接觸機會？"
+
+  # ---- 行業專屬：廢物管理 ----
+  - id: SWM01
+    category: sector_waste_management
+    question: "所達到的廢物轉移率是多少？如何量度？"
+  - id: SWM02
+    category: sector_waste_management
+    question: "公司如何保障非正規廢物處理工人的生計及健康？"
+  - id: SWM03
+    category: sector_waste_management
+    question: "廢物處理設施設有哪些污染及排放控制措施？"
+
+  # ---- 行業專屬：資訊及通訊科技 ----
+  - id: SICT01
+    category: sector_ict
+    question: "該方案如何應對數碼鴻溝並確保公平使用？"
+  - id: SICT02
+    category: sector_ict
+    question: "公司設有哪些數據私隱、保安及演算法公平性措施？"
+  - id: SICT03
+    category: sector_ict
+    question: "資訊及通訊科技基建（數據中心、電子廢物）的環境足跡為何？"
+
+  # ---- 行業專屬：專業服務 ----
+  - id: SPRO01
+    category: sector_professional_services
+    question: "公司如何衡量其顧問／諮詢服務的下游影響力？"
+  - id: SPRO02
+    category: sector_professional_services
+    question: "公司為服務不足的客戶提供哪些無償（pro bono）或減費服務？"
+
 # v6 China sustainability-reporting surface
 cn_disclosure:
   mandatory: "強制披露"
