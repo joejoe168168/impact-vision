@@ -46,3 +46,35 @@ def test_write_deliverables_writes_the_onepager(bundle, tmp_path):
     files = write_deliverables(bundle, tmp_path, include_docx=False, include_data=False)
     (page,) = [f for f in files if f.name.endswith("_ic_onepager.html")]
     assert "<main class='page'" in page.read_text(encoding="utf-8")
+
+
+def test_labels_come_from_the_shared_string_table(bundle):
+    from impact_vision.impact.report_templates.design.strings import STRINGS
+
+    for lang in ("en", "zh-HK", "zh-CN"):
+        html = render_ic_onepager(bundle.report_data, lang)
+        for key in ("op_title", "op_reasons", "op_conditions", "op_negative", "eq_title"):
+            assert STRINGS[lang][key] in html, (lang, key)
+    zh = render_ic_onepager(bundle.report_data, "zh-HK")
+    assert "covenant:" not in zh and "reporting:" not in zh and "Suggested conditions" not in zh
+
+
+@pytest.mark.parametrize("lang", ["en", "zh-HK"])
+def test_prints_on_exactly_one_a4_page_in_chromium(lang, tmp_path):
+    """The --pdf path (headless Chromium) gives one page for every sample deck."""
+    pytest.importorskip("playwright.sync_api")
+    fitz = pytest.importorskip("pymupdf")
+    from impact_vision.impact.report_templates.pdf import PdfUnavailable, html_to_pdf
+
+    for key in SAMPLE_DECKS:
+        data = assess_file(sample_deck_path(key)).report_data
+        try:
+            path, engine = html_to_pdf(render_ic_onepager(data, lang), tmp_path / f"{key}_{lang}.pdf")
+        except PdfUnavailable as exc:
+            pytest.skip(f"Chromium not available: {exc}")
+        if engine != "chromium":
+            pytest.skip(f"printed with {engine}, not Chromium")
+        with fitz.open(path) as doc:
+            assert doc.page_count == 1, (key, lang, doc.page_count)
+            w, h = doc[0].rect.width, doc[0].rect.height
+            assert abs(w - 595.3) < 2 and abs(h - 841.9) < 2  # A4 in points

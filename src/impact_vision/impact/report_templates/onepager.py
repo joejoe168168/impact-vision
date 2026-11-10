@@ -9,20 +9,20 @@ from __future__ import annotations
 from html import escape as e
 from typing import Any
 
-_HEADINGS = {
-    "en": {"title": "IC one-pager", "impact": "Expected impact", "reasons": "Why this verdict",
-           "conditions": "Suggested conditions", "negative": "Top negative impact",
-           "control": "A control is described", "no_control": "No control is described",
-           "evidence": "Evidence quality", "none": "None identified", "range": "P10–P90"},
-    "zh-HK": {"title": "投資委員會一頁摘要", "impact": "預期影響", "reasons": "裁決理由",
-              "conditions": "建議條件", "negative": "最主要的負面影響",
-              "control": "已說明控制措施", "no_control": "未說明控制措施",
-              "evidence": "證據質素", "none": "未發現", "range": "P10–P90"},
-    "zh-CN": {"title": "投资委员会一页摘要", "impact": "预期影响", "reasons": "裁决理由",
-              "conditions": "建议条件", "negative": "最主要的负面影响",
-              "control": "已说明控制措施", "no_control": "未说明控制措施",
-              "evidence": "证据质量", "none": "未发现", "range": "P10–P90"},
-}
+# Labels come from the shared string table (design/strings.py, keys ``op_*``,
+# ``cond_*``, ``eq_title``, ``impact_*``) so en, zh-HK and zh-CN match the other deliverables.
+_KEYS = {"title": "op_title", "impact": "op_impact", "reasons": "op_reasons", "conditions": "op_conditions",
+         "negative": "op_negative", "control": "op_control", "no_control": "op_no_control",
+         "evidence": "eq_title", "none": "op_none"}
+
+
+def _headings(lang: str) -> dict[str, str]:
+    from impact_vision.impact.report_templates.design.strings import translator
+
+    t = translator(lang)
+    return {**{name: t(key) for name, key in _KEYS.items()}, "range": "P10–P90",
+            "kind_people": t("impact_people"), "kind_climate": t("impact_climate")}
+
 
 _TONES = {"good": "#1a7f4b", "warning": "#a15c00", "serious": "#a15c00", "critical": "#b3261e", "neutral": "#444c56"}
 
@@ -68,17 +68,26 @@ def _items(rows: list[str], empty: str, tag: str = "ol", clamp: int = 2) -> str:
     return f"<{tag}>" + "".join(f"<li><span class='clamp{clamp}'>{e(r)}</span></li>" for r in rows) + f"</{tag}>"
 
 
-def _condition_text(c: Any) -> str:
+def _condition_text(c: Any, lang: str = "en") -> str:
+    """"Covenant: …" — the type label translated, the text through the phrasebook (quotes stay verbatim)."""
+    from impact_vision.impact.i18n_phrasebook import localize
+    from impact_vision.impact.report_templates.design.strings import translator
+
     if isinstance(c, dict):
-        text = c.get("text") or c.get("condition") or c.get("action") or ""
-        kind = c.get("type") or c.get("kind") or ""
-        return f"{kind}: {text}" if kind and text else str(text or next(iter(c.values()), ""))
+        text = localize(str(c.get("text") or c.get("condition") or c.get("action") or ""), lang)
+        kind = str(c.get("type") or c.get("kind") or "")
+        if kind:
+            label = translator(lang)(f"cond_{kind}")
+            kind = kind.replace("_", " ") if label == f"cond_{kind}" else label
+        sep = "：" if lang.startswith("zh") else ": "
+        return f"{kind}{sep}{text}" if kind and text else str(text or next(iter(c.values()), ""))
     return str(c)
 
 
 def build_onepager(data: dict[str, Any], lang: str = "en", branding: dict[str, Any] | None = None) -> dict[str, Any]:
     """The one-pager's content, from the same view the impact report uses."""
     from impact_vision.impact.expected_impact import suggest_conditions
+    from impact_vision.impact.i18n_phrasebook import localize
     from impact_vision.impact.report_templates.decision_report import build_view
 
     view = build_view(data, audience="ic", lang=lang, branding=branding)
@@ -95,8 +104,8 @@ def build_onepager(data: dict[str, Any], lang: str = "en", branding: dict[str, A
         "outcomes": [{k: r[k] for k in ("kind", "unit", "p10", "p50", "p90", "bar", "spread")}
                      for r in (impact.get("rows") or [])[:2]],
         "reasons": reasons,
-        "conditions": [_condition_text(c) for c in suggest_conditions(data.get("expected_impact"))[:3]],
-        "negative": ({"impact": negatives[0].get("impact", ""), "band": negatives[0].get("band", ""),
+        "conditions": [_condition_text(c, view["lang"]) for c in suggest_conditions(data.get("expected_impact"))[:3]],
+        "negative": ({"impact": localize(negatives[0].get("impact", ""), view["lang"]), "band": negatives[0].get("band", ""),
                       "controlled": bool(negatives[0].get("controlled"))} if negatives else None),
         "evidence_quality": impact.get("eq"),
         "stamp": view.get("methodology_label", ""),
@@ -113,10 +122,10 @@ def render_ic_onepager(data: dict[str, Any], lang: str = "en", branding: dict[st
     )
 
     p = build_onepager(data, lang, branding)
-    h = _HEADINGS.get(p["lang"], _HEADINGS["en"])
+    h = _headings(p["lang"])
     tone = _TONES.get(p["verdict"]["tone"], _TONES["neutral"])
     outcomes = "".join(
-        f"<div class='outcome'><b>{e(str(o['p50']))}</b> {e(str(o['unit']))} <small>· {e(str(o['kind']))}</small>"
+        f"<div class='outcome'><b>{e(str(o['p50']))}</b> {e(str(o['unit']))} <small>· {e(h.get('kind_' + str(o['kind']), str(o['kind'])))}</small>"
         f"<div class='bar'><i style='left:{o['bar']['left']}%;width:{o['bar']['width']}%'></i>"
         f"<u style='left:{o['bar']['mid']}%'></u></div>"
         f"<small class='clamp1'>{h['range']}: {e(str(o['p10']))}–{e(str(o['p90']))} · {e(str(o['spread']))}</small></div>"

@@ -317,6 +317,17 @@ EN: dict[str, str] = {
     "share_gone": "This share link has been withdrawn by the sender. Ask them for a new one.",
     "share_invalid_title": "Link unavailable",
     "share_invalid": "This share link is invalid, expired or has been revoked. Ask the sender for a new one.",
+    "op_title": "IC one-pager",
+    "op_impact": "Expected impact",
+    "op_reasons": "Why this verdict",
+    "op_conditions": "Suggested conditions",
+    "op_negative": "Top negative impact",
+    "op_control": "A control is described",
+    "op_no_control": "No control is described",
+    "op_none": "None identified",
+    "cond_condition_precedent": "Condition precedent",
+    "cond_covenant": "Covenant",
+    "cond_reporting": "Reporting requirement",
 }
 
 ZH_HK: dict[str, str] = {
@@ -616,6 +627,17 @@ ZH_HK: dict[str, str] = {
     'share_gone': '寄件人已撤回此分享連結。請向對方索取新連結。',
     'share_invalid_title': '連結無法使用',
     'share_invalid': '此分享連結無效、已過期或已被撤回。請向寄件人索取新連結。',
+    'op_title': '投資委員會一頁摘要',
+    'op_impact': '預期影響',
+    'op_reasons': '裁決理由',
+    'op_conditions': '建議條件',
+    'op_negative': '最主要的負面影響',
+    'op_control': '已說明控制措施',
+    'op_no_control': '未說明控制措施',
+    'op_none': '未發現',
+    'cond_condition_precedent': '先決條件',
+    'cond_covenant': '契諾',
+    'cond_reporting': '匯報要求',
 }
 
 ZH_CN: dict[str, str] = {
@@ -915,6 +937,17 @@ ZH_CN: dict[str, str] = {
     'share_gone': '发送人已撤回此分享链接。请向对方索取新链接。',
     'share_invalid_title': '链接无法使用',
     'share_invalid': '此分享链接无效、已过期或已被撤回。请向发送人索取新链接。',
+    'op_title': '投资委员会一页摘要',
+    'op_impact': '预期影响',
+    'op_reasons': '裁决理由',
+    'op_conditions': '建议条件',
+    'op_negative': '最主要的负面影响',
+    'op_control': '已说明控制措施',
+    'op_no_control': '未说明控制措施',
+    'op_none': '未发现',
+    'cond_condition_precedent': '先决条件',
+    'cond_covenant': '约束性条款',
+    'cond_reporting': '报告要求',
 }
 
 SDG_NAMES_ZH_HK: dict[int, str] = {1: '無貧窮', 2: '零飢餓', 3: '良好健康與福祉', 4: '優質教育', 5: '性別平等', 6: '清潔飲水和衛生設施', 7: '經濟適用的清潔能源', 8: '體面工作和經濟增長', 9: '產業、創新和基礎設施', 10: '減少不平等', 11: '可持續城市和社區', 12: '負責任消費和生產', 13: '氣候行動', 14: '水下生物', 15: '陸地生物', 16: '和平、正義與強大機構', 17: '促進目標實現的夥伴關係'}
