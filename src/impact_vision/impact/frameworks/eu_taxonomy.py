@@ -100,6 +100,19 @@ def assess_taxonomy_alignment(
         "EU 2023/2485 (Climate Amending Act)",
         "EU 2023/2486 (Environmental Delegated Act)",
     ]
+    from impact_vision.impact.frameworks import pack_updates
+
+    refs.extend(pack_updates.taxonomy_references())
+    eligible = [a for a in activities if a.eligible]
+    if eligible and pack_updates.taxonomy_non_material({
+        "turnover": sum(a.revenue_share_pct for a in eligible),
+        "capex": sum(a.capex_share_pct for a in eligible),
+        "opex": sum(a.opex_share_pct for a in eligible),
+    }):
+        findings.append(
+            "Eligible activities are together below the 10% materiality threshold of (EU) 2026/73: "
+            "they may be reported as non-material without an alignment assessment."
+        )
 
     rev_elig = rev_align = cap_elig = cap_align = op_elig = op_align = 0.0
 
